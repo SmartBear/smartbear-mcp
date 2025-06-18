@@ -44,26 +44,9 @@ The MCP server provides access to the following Insight Hub tools:
 **Environment Variable:**
 - `INSIGHT_HUB_AUTH_TOKEN`: Required. The Auth Token for Insight Hub-based tools.
 
-## Resources
-### Insight Hub Resources
-
-The MCP server exposes several Insight Hub resources that can be accessed via the Model Context Protocol:
-
-- **insight_hub_orgs**
-  - URI: `insighthub://orgs`
-  - Description: Lists all organizations available to your Insight Hub account in JSON format.
-  - Example usage: Retrieve a list of all organizations to get their IDs for use with other tools.
-
-- **insight_hub_event**
-  - URI Template: `insighthub://event/{id}`
-  - Description: Fetches details for a specific event by its event ID. Returns the event details in JSON format.
-  - Example usage: Retrieve event details for debugging or analysis by referencing the event ID.
-
-These resources can be accessed programmatically or through compatible MCP clients, and are useful for automation, integrations, or advanced workflows.
-
 ### Swagger Hub
 
-The MCP server provides access to the following Reflect tools:
+The MCP server provides access to the following Swagger Hub tools:
 
 1. `list_swaggerhub_portals`
    - Search for available portals. Results are returned only for portals where you have a designer role, either at the product level or organization level.
@@ -84,10 +67,27 @@ The MCP server provides access to the following Reflect tools:
 9. `delete_swaggerhub_product`
    - Delete a product from a specific portal.
 10. `update_swaggerhub_product`
-    - Update a product in a specific portal.
+   - Update a product in a specific portal.
 
 **Environment Variable:**
 - `SWAGGER_HUB_API_KEY`: Required. The Auth Token for Swagger Hub-based tools.
+
+## Resources
+### Insight Hub Resources
+
+The MCP server exposes several Insight Hub resources that can be accessed via the Model Context Protocol:
+
+- **insight_hub_orgs**
+  - URI: `insighthub://orgs`
+  - Description: Lists all organizations available to your Insight Hub account in JSON format.
+  - Example usage: Retrieve a list of all organizations to get their IDs for use with other tools.
+
+- **insight_hub_event**
+  - URI Template: `insighthub://event/{id}`
+  - Description: Fetches details for a specific event by its event ID. Returns the event details in JSON format.
+  - Example usage: Retrieve event details for debugging or analysis by referencing the event ID.
+
+These resources can be accessed programmatically or through compatible MCP clients, and are useful for automation, integrations, or advanced workflows.
 
 ## Usage
 
