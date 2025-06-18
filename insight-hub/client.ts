@@ -124,7 +124,6 @@ registerTools(server: McpServer): void {
     },
     async (args, _extra) => {
       try {
-        // https://app.bugsnag.com/bugsnag/android-notifier-errors/errors/5dcfae11a81443001a67ca36?filters[error.status]=open&filters[event.since]=30d&event_id=684bfa1f012a59d8b3340000
         if (!args.link) throw new Error("link argument is required");
         const url = new URL(args.link);
         const eventId = url.searchParams.get("event_id");
@@ -132,8 +131,9 @@ registerTools(server: McpServer): void {
         if (!projectName || !eventId) throw new Error("Both projectName and eventId must be present in the link");
 
         // get the project id from list of projects
+        // limitation: this assumes a single page of results, so will not work for orgs with >100 projects
         const orgId = await this.currentUserApi.listUserOrganizations().then(orgs => orgs[0].id);
-        const projectId = await this.listProjects(orgId, projectName).then(projects => projects[0].id)
+        const projectId = await this.listProjects(orgId, projectName).then(projects => projects.find((p: any) => p.slug === projectName)?.id);
 
         const response = await this.getProjectEvent(projectId, eventId);
         return {
