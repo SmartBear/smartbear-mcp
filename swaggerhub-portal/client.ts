@@ -37,7 +37,7 @@ export interface updatePortalArgs extends portalArgs {
 export interface createProductArgs extends portalArgs {
   type: string;
   name: string;
-  slug: boolean;
+  slug: string;
   description?: string;
   public?: boolean;
   hidden?: string;
@@ -46,7 +46,7 @@ export interface createProductArgs extends portalArgs {
 
 export interface updateProductArgs extends productArgs {
   name?: string;
-  slug?: boolean;
+  slug?: string;
   description?: string;
   public?: boolean;
   hidden?: string;
@@ -64,7 +64,7 @@ export class SwaggerHubClient implements Client {
   }
 
   async getSwaggerHubPortals(): Promise<any> {
-    const response = await fetch("https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/portals", {
+    const response = await fetch("https://api.portal.swaggerhub.com/v1/portals", {
       method: "GET",
       headers: this.headers,
     });
@@ -73,7 +73,7 @@ export class SwaggerHubClient implements Client {
   }
 
   async createSwaggerHubPortal(body: createPortalArgs): Promise<any> {
-    const response = await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/portals`,
+    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals`,
       {
         method: "POST",
         headers: this.headers,
@@ -85,7 +85,7 @@ export class SwaggerHubClient implements Client {
   }
 
   async getSwaggerHubPortal(portalId: string): Promise<any> {
-    const response = await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/portals/${portalId}`, {
+    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}`, {
       method: "GET",
       headers: this.headers,
     });
@@ -94,14 +94,14 @@ export class SwaggerHubClient implements Client {
   }
 
   async deleteSwaggerHubPortal(portalId: string): Promise<any> {
-    await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/portals/${portalId}`, {
+    await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}`, {
       method: "DELETE",
       headers: this.headers,
     });
   }
 
   async updateSwaggerHubPortal(portalId: string, body: updatePortalArgs): Promise<any> {
-    const response = await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/portals/${portalId}`, {
+    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}`, {
       method: "PATCH",
       headers: this.headers,
       body: JSON.stringify(body),
@@ -111,7 +111,7 @@ export class SwaggerHubClient implements Client {
   }
 
   async getSwaggerHubProducts(portalId: string): Promise<any> {
-    const response = await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/portals/${portalId}/products`, {
+    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}/products`, {
       method: "GET",
       headers: this.headers,
     });
@@ -120,7 +120,7 @@ export class SwaggerHubClient implements Client {
   }
 
   async createSwaggerHubProduct(portalId: string, body: createProductArgs): Promise<any> {
-    const response = await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/portals/${portalId}/products`,
+    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}/products`,
       {
         method: "POST",
         headers: this.headers,
@@ -132,7 +132,7 @@ export class SwaggerHubClient implements Client {
   }
 
   async getSwaggerHubProduct(productId: string): Promise<any> {
-    const response = await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/products/${productId}`, {
+    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${productId}`, {
       method: "GET",
       headers: this.headers,
     });
@@ -141,14 +141,14 @@ export class SwaggerHubClient implements Client {
   }
 
   async deleteSwaggerHubProduct(productId: string): Promise<any> {
-    await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/products/${productId}`, {
+    await fetch(`https://api.portal.swaggerhub.com/v1/portals/${productId}`, {
       method: "DELETE",
       headers: this.headers,
     });
   }
 
   async updateSwaggerHubProduct(productId: string, body: updateProductArgs): Promise<any> {
-    const response = await fetch(`https://virtserver.swaggerhub.com/smartbear-public/swaggerhub-portal-api/0.5.0-beta/products/${productId}`, {
+    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${productId}`, {
       method: "PATCH",
       headers: this.headers,
       body: JSON.stringify(body),
@@ -249,9 +249,9 @@ export class SwaggerHubClient implements Client {
       "Create a new product for a specific portal.",
       {
         portalId: z.string().describe("Portal UUID or subdomain."),
-        type: z.string().describe("Product type (e.g., 'API', 'SDK')."),
+        type: z.string().describe("Product type (Allowed values: 'new', 'copy')."),
         name: z.string().describe("Product name."),
-        slug: z.boolean().describe("Indicates if the product has a slug."),
+        slug: z.string().describe("URL component for this product. Must be unique within the portal."),
         description: z.string().optional().describe("Product description."),
         public: z.boolean().optional().describe("Indicates if the product is public."),
         hidden: z.string().optional().describe("Indicates if the product is hidden."),
@@ -292,7 +292,7 @@ export class SwaggerHubClient implements Client {
       {
         productId: z.string().describe("Product UUID, or identifier in the format."),
         name: z.string().optional().describe("Product name."),
-        slug: z.boolean().optional().describe("Indicates if the product has a slug."),
+        slug: z.string().optional().describe("URL component for this product. Must be unique within the portal."),
         description: z.string().optional().describe("Product description."),
         public: z.boolean().optional().describe("Indicates if the product is public."),
         hidden: z.string().optional().describe("Indicates if the product is hidden.")
