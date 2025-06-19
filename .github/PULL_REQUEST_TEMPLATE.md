@@ -12,5 +12,4 @@
 
 ## Testing
 
-<!-- How was it tested? What manual and automated tests were
-     run/added? -->
+<!-- How was it tested? -->
