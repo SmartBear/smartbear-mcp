@@ -1,8 +1,8 @@
 <div align="center">
   <a href="https://www.smartbear.com">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/14681c25-73c3-47ff-8b15-0f7b0832f3fc">
-      <img alt="SmartBear logo" src="https://github.com/user-attachments/assets/5ac6af6c-cf85-4928-80c4-2a8d4a125082">
+      <source media="(prefers-color-scheme: dark)" srcset="assets/smartbear-logo-light.svg">
+      <img alt="SmartBear logo" src="assets/smartbear-logo-dark.svg">
     </picture>
   </a>
   <h1>SmartBear MCP server</h1>

@@ -1,6 +1,6 @@
 # Insight Hub
 
-Fetch details of your app crashes and errors from your [Insight Hub](https://www.smartbear.com/insight-hub) dashboard for you LLM to help you diagnose and fix.
+Fetch details of your app crashes and errors from your [Insight Hub](https://www.smartbear.com/insight-hub) dashboard for your LLM to help you diagnose and fix.
 
 ## Example prompts
 
