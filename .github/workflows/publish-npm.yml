@@ -2,11 +2,11 @@ name: Publish to npm
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*' # Triggers on version tags like v1.2.3
-    branches:
-      - main
+  #push:
+    #tags:
+      #- 'v*' # Triggers on version tags like v1.2.3
+    #branches:
+      #- main
 
 jobs:
   publish:
