@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { ReflectClient } from "./reflect/client.js";
-import { InsightHubClient } from "./insight-hub/client.js";
+
 import Bugsnag from "./common/bugsnag.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./common/info.js";
+import { InsightHubClient } from "./insight-hub/client.js";
+import { ReflectClient } from "./reflect/client.js";
 import { SwaggerHubClient } from "./swaggerhub-portal/client.js";
 
 // This is used to report errors in the MCP server itself
@@ -14,11 +16,10 @@ if (McpServerBugsnagAPIKey) {
 }
 
 async function main() {
-  console.info("Starting SmartBear MCP Server...");
   const server = new McpServer(
     {
-      name: "SmartBear MCP Server",
-      version: "1.0.0",
+      name: MCP_SERVER_NAME,
+      version: MCP_SERVER_VERSION,
     },
     {
       capabilities: {
@@ -43,27 +44,21 @@ async function main() {
     const reflectClient = new ReflectClient(reflectToken);
     reflectClient.registerTools(server);
     reflectClient.registerResources(server);
-    console.info("Reflect tools registered");
   }
 
   if (insightHubToken) {
     const insightHubClient = new InsightHubClient(insightHubToken);
     insightHubClient.registerTools(server);
     insightHubClient.registerResources(server);
-    console.info("Insight Hub tools registered");
   }
 
-  if(swaggerHubToken) {
+  if (swaggerHubToken) {
     const swaggerHubClient = new SwaggerHubClient(swaggerHubToken);
     swaggerHubClient.registerTools(server);
-    console.info("SwaggerHub tools registered");
   }
 
   const transport = new StdioServerTransport();
-  console.info("Connecting server to transport...");
   await server.connect(transport);
-
-  console.info("SmartBear MCP Server running...");
 }
 
 main().catch((error) => {

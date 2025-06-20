@@ -1,4 +1,5 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client } from "../common/types.js";
 import { CurrentUserAPI, ErrorAPI, Configuration } from "./client/index.js";
 import { z } from "zod";
@@ -25,7 +26,7 @@ export class InsightHubClient implements Client {
     const config = new Configuration({
       authToken: token,
       headers: {
-        "User-Agent": "InsightHubMCPServer/1.0.0",
+        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
       },
       basePath: "https://api.bugsnag.com",
