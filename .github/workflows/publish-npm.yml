@@ -1,6 +1,7 @@
 name: Publish to npm
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*' # Triggers on version tags like v1.2.3
@@ -34,6 +35,7 @@ jobs:
         run: npm run build # skip this step if not needed
 
       - name: Publish to npm
-        run: npm publish --access public
+        #run: npm publish --access public
+        run: npm publish --dry-run
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
