@@ -31,6 +31,6 @@ jobs:
 
       - name: Publish to npm
         #run: npm publish --access public
-        run: npm publish --dry-run
+        run: npm publish --dry-run # remove after testing
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
