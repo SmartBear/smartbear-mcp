@@ -225,7 +225,7 @@ export class ReflectClient implements Client {
     );
   }
 
-  registerResources(server: McpServer): void {
+  registerResources(_server: McpServer): void {
     // Reflect does not currently support dynamic resources
   }
 }

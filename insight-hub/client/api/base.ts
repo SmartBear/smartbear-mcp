@@ -48,7 +48,7 @@ export class BaseAPI {
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
     };
-    let url = options.url.startsWith('http') ? options.url : `${this.configuration.basePath || ''}${options.url}`;
+    const url = options.url.startsWith('http') ? options.url : `${this.configuration.basePath || ''}${options.url}`;
     let results: T[] = [];
     let nextUrl: string | undefined = url;
     do {

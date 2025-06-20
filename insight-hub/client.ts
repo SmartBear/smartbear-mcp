@@ -60,7 +60,7 @@ export class InsightHubClient implements Client {
 
   async findEventById(eventId: string): Promise<any> {
     const projects = await this.listOrgs().then(([org]) => this.listProjects(org.id));
-    const eventDetails = await Promise.all(projects.map((p: any) => this.getProjectEvent(p.id, eventId).catch(e => null)));
+    const eventDetails = await Promise.all(projects.map((p: any) => this.getProjectEvent(p.id, eventId).catch(_e => null)));
     return eventDetails.find(event => !!event);
   }
 
