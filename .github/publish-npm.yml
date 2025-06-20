@@ -1,0 +1,39 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on version tags like v1.2.3
+    branches:
+      - main
+
+jobs:
+  publish:
+    name: Publish package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # or whatever version you require
+          registry-url: 'https://registry.npmjs.org/'
+          scope: '@smartbear'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build # skip this step if not needed
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
