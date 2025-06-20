@@ -1,6 +1,6 @@
 {
-  "name": "@modelcontextprotocol/server-smartbear",
-  "version": "0.0.1",
+  "name": "@smartbear/mcp",
+  "version": "1.0.0",
   "description": "MCP server for interacting SmartBear Products",
   "license": "MIT",
   "type": "module",
