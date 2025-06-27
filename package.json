@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "mcp-server-smartbear": "dist/index.js"
+    "mcp": "dist/index.js"
   },
   "files": [
     "dist"
