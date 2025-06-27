@@ -1,9 +1,6 @@
 name: Publish to npm
 
 on:
-  push:
-    branches:
-      - OP-33707
   workflow_dispatch:
   release:
     types: [published]
