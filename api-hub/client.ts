@@ -213,7 +213,7 @@ export class ApiHubClient implements Client {
     );
     server.tool(
       "update_portal",
-      "Update a specifc portal's configuration",
+      "Update a specific portal's configuration",
       {
         portalId: z.string().describe("Portal UUID or subdomain."),
         name: z.string().optional().describe("The portal name."),

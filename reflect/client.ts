@@ -32,7 +32,7 @@ export class ReflectClient implements Client {
     };
   }
 
-  async listReflectSuits(): Promise<any> {
+  async listReflectSuites(): Promise<any> {
     const response = await fetch("https://api.reflect.run/v1/suites", {
       method: "GET",
       headers: this.headers,
@@ -125,7 +125,7 @@ export class ReflectClient implements Client {
       "List all reflect suites",
       {},
       async (_args, _extra) => {
-        const response = await this.listReflectSuits();
+        const response = await this.listReflectSuites();
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };

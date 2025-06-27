@@ -16,7 +16,7 @@
 4. `delete_portal`
    - Delete a portal.
 5. `update_portal`
-   - Update a specifc portal's configuration.
+   - Update a specific portal's configuration.
 6. `list_portal_products`
    - Get products for a specific portal matching your criteria.
 7. `create_portal_product`
