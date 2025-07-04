@@ -53,6 +53,11 @@ export class BaseAPI {
     let nextUrl: string | undefined = url;
     do {
       const response: Response = await fetch(nextUrl!, fetchOptions);
+      if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+      }
+
       const data: T = await response.json();
       if (paginate) {
         results = results.concat(data);
