@@ -70,13 +70,6 @@ REFLECT_API_TOKEN=your_reflect_token INSIGHT_HUB_AUTH_TOKEN=your_insight_hub_tok
 
 This will open an inspector window in your browser, where you can test the tools.
 
-## Environment Variables
-
-- `INSIGHT_HUB_AUTH_TOKEN`: Required for Insight Hub tools. The Auth Token for Insight Hub.
-- `REFLECT_API_TOKEN`: Required for Reflect tools. The Reflect Account API Key for Reflect-based tools.
-- `API_HUB_API_KEY`: Required for API Hub tools. The API Key for API Hub tools.
-- `MCP_SERVER_INSIGHT_HUB_API_KEY`: Optional. If set, enables error reporting of the _MCP_server_ code via the BugSnag SDK. This is useful for debugging and monitoring of the MCP server itself and shouldn't be set to the same API key as your app.
-
 ## Supported Tools
 
 See individual guides for suggested prompts and supported tools and resources:
@@ -85,6 +78,15 @@ See individual guides for suggested prompts and supported tools and resources:
   Get your top events and invite your LLM to help you fix them.
 - [Reflect](./reflect/README.md)
 - [API Hub](./api-hub/README.md)
+
+## Environment Variables
+
+- `INSIGHT_HUB_AUTH_TOKEN`: Required for Insight Hub tools. The Auth Token for Insight Hub.
+- `REFLECT_API_TOKEN`: Required for Reflect tools. The Reflect Account API Key for Reflect-based tools.
+- `API_HUB_API_KEY`: Required for API Hub tools. The API Key for API Hub tools.
+- `MCP_SERVER_INSIGHT_HUB_API_KEY`: Optional. If set, enables error reporting of the _MCP_server_ code via the BugSnag SDK. This is useful for debugging and monitoring of the MCP server itself and shouldn't be set to the same API key as your app.
+
+See individual guides for product-specific configuration via environment variables.
 
 ## Local Development
 

@@ -9,6 +9,10 @@ import { Organization, Project } from "./client/api/CurrentUser.js";
 import { EventField, ProjectAPI } from "./client/api/Project.js";
 import { FilterObject, FilterObjectSchema } from "./client/api/filters.js";
 
+const HUB_PREFIX = "00000";
+const HUB_API_ENDPOINT = "https://api.insighthub.smartbear.com";
+const DEFAULT_API_ENDPOINT = "https://api.bugsnag.com";
+
 const cacheKeys = {
   ORG: "insight_hub_org",
   PROJECTS: "insight_hub_projects",
@@ -28,7 +32,6 @@ export interface OrgArgs {
 export interface ErrorArgs extends ProjectArgs {
   errorId: string;
 }
-
 export class InsightHubClient implements Client {
   private currentUserApi: CurrentUserAPI;
   private errorsApi: ErrorAPI;
@@ -36,14 +39,21 @@ export class InsightHubClient implements Client {
   private projectApi: ProjectAPI;
   private projectApiKey?: string;
 
-  constructor(token: string, projectApiKey?: string) {
+  constructor(token: string, projectApiKey?: string, endpoint?: string) {
+    if (!endpoint) {
+      if (projectApiKey && projectApiKey.startsWith(HUB_PREFIX)) {
+        endpoint = HUB_API_ENDPOINT;
+      } else {
+        endpoint = DEFAULT_API_ENDPOINT;
+      }
+    }
     const config = new Configuration({
       authToken: token,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
       },
-      basePath: "https://api.bugsnag.com",
+      basePath: endpoint,
     });
     this.currentUserApi = new CurrentUserAPI(config);
     this.errorsApi = new ErrorAPI(config);
