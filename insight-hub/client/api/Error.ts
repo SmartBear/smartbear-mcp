@@ -52,6 +52,27 @@ export interface ListProjectErrorsOptions {
   [key: string]: any;
 }
 
+export interface ErrorUpdateRequest {
+  operation: 'override_severity' | 'assign' | 'create_issue' | 'link_issue' | 'unlink_issue' | 'open' | 'snooze' | 'fix' | 'ignore' | 'delete' | 'discard' | 'undiscard';
+  assigned_collaborator_id?: string;
+  assigned_team_id?: string;
+  issue_url?: string;
+  verify_issue_url?: boolean;
+  issue_title?: string;
+  notification_id?: string;
+  reopen_rules?: ErrorUpdateReopenRules;
+  severity?: string; // Should match SeverityOptions from the spec
+}
+
+export interface ErrorUpdateReopenRules {
+  reopen_if: 'occurs_after' | 'n_occurrences_in_m_hours' | 'n_additional_occurrences' | 'n_additional_users';
+  additional_users?: number;
+  seconds?: number;
+  occurrences?: number;
+  hours?: number;
+  additional_occurrences?: number;
+}
+
 // --- API Class ---
 
 export class ErrorAPI extends BaseAPI {
@@ -120,10 +141,34 @@ export class ErrorAPI extends BaseAPI {
   async listProjectErrors(projectId: string, options: ListProjectErrorsOptions = {}): Promise<ListProjectErrorsResponse> {
     const url = options.filters
       ? `/projects/${projectId}/errors?${toQueryString(options.filters)}`
-      : `/projects/${projectId}/errors`; 
+      : `/projects/${projectId}/errors`;
     return (await this.request<ListProjectErrorsResponse>({
       method: 'GET',
       url,
     })) as ListProjectErrorsResponse;
+  }
+
+  /**
+   * Update an Error on a Project
+   * PATCH /projects/{project_id}/errors/{error_id}
+   */
+  async updateErrorOnProject(
+    projectId: string,
+    errorId: string,
+    data: ErrorUpdateRequest,
+    options: { [key: string]: any } = {}
+  ): Promise<ErrorApiView> {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(options)) {
+      if (value !== undefined) params.append(key, String(value));
+    }
+    const url = params.toString()
+      ? `/projects/${projectId}/errors/${errorId}?${params}`
+      : `/projects/${projectId}/errors/${errorId}`;
+    return (await this.request<ErrorApiView>({
+      method: 'PATCH',
+      url,
+      body: data,
+    })) as ErrorApiView;
   }
 }
