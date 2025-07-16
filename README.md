@@ -1,8 +1,8 @@
 <div align="center">
   <a href="https://www.smartbear.com">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://assets.smartbear.com/m/105001cc5db1e0bf/original/SmartBear-Logo_Light-Mode.svg">
-      <img alt="SmartBear logo" src="https://assets.smartbear.com/m/79b99a7ff9c81a9a/original/SmartBear-Logo_Dark-Mode.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="https://assets.smartbear.com/m/79b99a7ff9c81a9a/original/SmartBear-Logo_Dark-Mode.svg">
+      <img alt="SmartBear logo" src="https://assets.smartbear.com/m/105001cc5db1e0bf/original/SmartBear-Logo_Light-Mode.svg">
     </picture>
   </a>
   <h1>SmartBear MCP server</h1>
