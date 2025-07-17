@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+- Add vitest for unit testing
+  [#41](https://github.com/SmartBear/smartbear-mcp/pull/41)
+
 ## [0.2.2] - 2025-07-11
 - [API Hub] Add user agent header to API requests
   [#34](https://github.com/SmartBear/smartbear-mcp/pull/34)
