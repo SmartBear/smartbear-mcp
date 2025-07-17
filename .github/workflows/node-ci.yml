@@ -32,3 +32,25 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+
+  testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@85e6279cec87321a52edac9c87bce653a07cf6c2 # v3.6.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run test:run
+      - run: npm run test:coverage
+
+      # Upload coverage reports to GitHub
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4.3.5
+        if: always()
+        with:
+          name: coverage-reports
+          path: coverage/
+          retention-days: 30
