@@ -48,6 +48,16 @@ jobs:
           path: coverage/
           retention-days: 30
 
+      - name: Debug coverage files
+        if: matrix.node-version == 22
+        run: |
+          echo "📁 Current directory contents:"
+          ls -la
+          echo "📁 Coverage directory contents:"
+          ls -la coverage/ || echo "❌ Coverage directory not found"
+          echo "📄 Coverage summary content:"
+          cat coverage/coverage-summary.json || echo "❌ Coverage summary not found"
+
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request' && matrix.node-version == 22
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -56,10 +66,28 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
+            console.log('🔍 Debug info:');
+            console.log('Event type:', '${{ github.event_name }}');
+            console.log('Node version:', '${{ matrix.node-version }}');
+            console.log('Current directory:', process.cwd());
+
+            // List directory contents
+            console.log('📁 Directory contents:', fs.readdirSync('.'));
+
+            // Check if coverage directory exists
+            const coverageDir = path.join(process.cwd(), 'coverage');
+            console.log('📁 Coverage directory exists:', fs.existsSync(coverageDir));
+            if (fs.existsSync(coverageDir)) {
+              console.log('📁 Coverage directory contents:', fs.readdirSync(coverageDir));
+            }
+
             // Try to read coverage summary
             try {
               const coveragePath = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
+              console.log('📄 Looking for coverage file at:', coveragePath);
+
               if (fs.existsSync(coveragePath)) {
+                console.log('✅ Coverage file found!');
                 const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
                 const total = coverage.total;
                 const nodeVersion = '${{ matrix.node-version }}';
@@ -77,15 +105,38 @@ jobs:
                   `Coverage report generated on Node.js ${nodeVersion} ✅`
                 ].join('\n');
 
-                github.rest.issues.createComment({
+                console.log('💬 Posting comment:', comment);
+
+                await github.rest.issues.createComment({
                   issue_number: context.issue.number,
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   body: comment
                 });
+
+                console.log('✅ Comment posted successfully!');
+              } else {
+                console.log('❌ Coverage file not found at:', coveragePath);
+
+                // Post a debug comment
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: "⚠️ Coverage report not generated. Debug info will be available in the workflow logs."
+                });
               }
             } catch (error) {
-              console.log('Could not read coverage report:', error.message);
+              console.log('❌ Error reading coverage report:', error.message);
+              console.log('📋 Error stack:', error.stack);
+
+              // Post error comment
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `❌ Error generating coverage report: ${error.message}`
+              });
             }
 
   test-results:
