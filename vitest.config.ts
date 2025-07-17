@@ -18,6 +18,7 @@ export default defineConfig({
     // Include TypeScript files
     include: ['tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     // Setup files
+    // Placeholder for future setup files. Remove if not needed.
     setupFiles: []
   },
   // Resolve imports correctly for ESM
