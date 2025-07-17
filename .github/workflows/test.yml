@@ -62,17 +62,20 @@ jobs:
               if (fs.existsSync(coveragePath)) {
                 const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
                 const total = coverage.total;
+                const nodeVersion = '${{ matrix.node-version }}';
 
-                const comment = `## 📊 Test Coverage Report
-
-| Metric | Coverage | Threshold |
-|--------|----------|-----------|
-| Lines | ${total.lines.pct}% | 80% |
-| Functions | ${total.functions.pct}% | 80% |
-| Branches | ${total.branches.pct}% | 80% |
-| Statements | ${total.statements.pct}% | 80% |
-
-Coverage report generated on Node.js ${{ matrix.node-version }} ✅`;
+                const comment = [
+                  "## 📊 Test Coverage Report",
+                  "",
+                  "| Metric | Coverage | Threshold |",
+                  "|--------|----------|-----------|",
+                  `| Lines | ${total.lines.pct}% | 80% |`,
+                  `| Functions | ${total.functions.pct}% | 80% |`,
+                  `| Branches | ${total.branches.pct}% | 80% |`,
+                  `| Statements | ${total.statements.pct}% | 80% |`,
+                  "",
+                  `Coverage report generated on Node.js ${nodeVersion} ✅`
+                ].join('\n');
 
                 github.rest.issues.createComment({
                   issue_number: context.issue.number,
