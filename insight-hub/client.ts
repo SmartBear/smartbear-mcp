@@ -7,7 +7,6 @@ import Bugsnag from "../common/bugsnag.js";
 import NodeCache from "node-cache";
 import { Organization, Project } from "./client/api/CurrentUser.js";
 import { EventField, ProjectAPI } from "./client/api/Project.js";
-import { ErrorOperations } from "./client/api/Error.js";
 import { FilterObject, FilterObjectSchema } from "./client/api/filters.js";
 import { toolDescriptionTemplate, createParameter, createExample } from "../common/templates.js";
 
@@ -185,14 +184,6 @@ export class InsightHubClient implements Client {
 
   getErrorUrl(projectId: string, errorId: string): string {
     return `${this.getDashboardUrl(projectId)}/errors/${errorId}`;
-  }
-
-  async updateError(projectId: string, errorId: string, operation: string, options?: any): Promise<any> {
-    const errorUpdateRequest = {
-      operation: operation,
-      ...options
-    };
-    return this.errorsApi.updateErrorOnProject(projectId, errorId, errorUpdateRequest)
   }
 
   registerTools(server: McpServer): void {
