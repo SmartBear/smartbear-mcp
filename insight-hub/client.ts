@@ -22,9 +22,9 @@ const cacheKeys = {
 }
 
 // Exclude certain event fields from the project event filters to improve agent usage
-const EXCLUDED_EVENT_FIELDS = [
+const EXCLUDED_EVENT_FIELDS = new Set([
   "search" // This is searches multiple fields and is more a convenience for humans, we're removing to avoid over-matching
-];
+]);
 
 // Type definitions for tool arguments
 export interface ProjectArgs {
@@ -85,15 +85,11 @@ export class InsightHubClient implements Client {
         throw new Error(`Project with API key ${this.projectApiKey} not found in organization ${orgs[0].name}.`);
       }
       this.cache.set(cacheKeys.CURRENT_PROJECT, project);
-      const projectFields = await this.listProjectEventFields(project.id);
+      let projectFields = await this.listProjectEventFields(project.id);
       if (!projectFields || projectFields.length === 0) {
         throw new Error(`No event fields found for project ${project.name}.`);
       } else {
-        for (let i = projectFields.length - 1; i >= 0; i--) {
-          if (EXCLUDED_EVENT_FIELDS.includes(projectFields[i].display_id)) {
-            projectFields.splice(i, 1);
-          }
-        }
+        projectFields = projectFields.filter(field => !EXCLUDED_EVENT_FIELDS.has(field.display_id));
       }
       this.cache.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFields);
     }
