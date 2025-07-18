@@ -9,6 +9,12 @@ export interface RequestOptions {
   body?: any;
 }
 
+export interface ApiResponse<T> {
+  status: number;
+  headers: Headers;
+  body?: T;
+}
+
 // Utility to pick only allowed fields from an object
 export function pickFields<T>(obj: any, keys: (keyof T)[]): T {
   const result = {} as T;
@@ -35,7 +41,7 @@ export class BaseAPI {
   async request<T = any>(
     options: RequestOptions,
     paginate: boolean = false
-  ): Promise<T | T[]> {
+  ): Promise<ApiResponse<T>> {
     const headers: Record<string, string> = {
       ...this.configuration.headers,
       ...options.headers,
@@ -51,11 +57,17 @@ export class BaseAPI {
     const url = options.url.startsWith('http') ? options.url : `${this.configuration.basePath || ''}${options.url}`;
     let results: T[] = [];
     let nextUrl: string | undefined = url;
+    let apiResponse: ApiResponse<T>
     do {
       const response: Response = await fetch(nextUrl!, fetchOptions);
       if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+      }
+
+      apiResponse = {
+        status: response.status,
+        headers: response.headers
       }
 
       const data: T = await response.json();
@@ -69,9 +81,14 @@ export class BaseAPI {
           nextUrl = undefined;
         }
       } else {
-        return data;
+        apiResponse.body = data;
       }
     } while (paginate && nextUrl);
-    return results;
+    
+    if (paginate) {
+      apiResponse.body = results as T;
+    }
+
+    return apiResponse;
   }
 }

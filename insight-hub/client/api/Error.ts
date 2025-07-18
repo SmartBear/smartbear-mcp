@@ -1,4 +1,4 @@
-import { BaseAPI } from './base.js';
+import { ApiResponse, BaseAPI } from './base.js';
 import { Configuration } from '../configuration.js';
 import { FilterObject, toQueryString } from './filters.js';
 
@@ -29,7 +29,6 @@ export interface ErrorApiView {
 export type ViewErrorOnProjectResponse = Error;
 export type ViewLatestEventOnErrorResponse = Event;
 export type ViewEventByIdResponse = Event;
-export type ListProjectErrorsResponse = ErrorApiView[];
 
 export interface ViewErrorOnProjectOptions {
   [key: string]: any;
@@ -79,8 +78,15 @@ export interface ErrorUpdateRequest {
   severity?: string; // Should match SeverityOptions from the spec
 }
 
+export const ReopenConditions = [
+  'occurs_after',
+  'n_occurrences_in_m_hours',
+  'n_additional_occurrences',
+  'n_additional_users'
+] as const;
+
 export interface ErrorUpdateReopenRules {
-  reopen_if: 'occurs_after' | 'n_occurrences_in_m_hours' | 'n_additional_occurrences' | 'n_additional_users';
+  reopen_if: typeof ReopenConditions[number];
   additional_users?: number;
   seconds?: number;
   occurrences?: number;
@@ -99,7 +105,7 @@ export class ErrorAPI extends BaseAPI {
    * View an Error on a Project
    * GET /projects/{project_id}/errors/{error_id}
    */
-  async viewErrorOnProject(projectId: string, errorId: string, options: ViewErrorOnProjectOptions = {}): Promise<ViewErrorOnProjectResponse> {
+  async viewErrorOnProject(projectId: string, errorId: string, options: ViewErrorOnProjectOptions = {}): Promise<ApiResponse<ViewErrorOnProjectResponse>> {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(options)) {
       if (value !== undefined) params.append(key, String(value));
@@ -110,14 +116,14 @@ export class ErrorAPI extends BaseAPI {
     return (await this.request<ViewErrorOnProjectResponse>({
       method: 'GET',
       url,
-    })) as ViewErrorOnProjectResponse;
+    })) as ApiResponse<ViewErrorOnProjectResponse>;
   }
 
   /**
    * View the latest Event on an Error
    * GET /errors/{error_id}/latest_event
    */
-  async viewLatestEventOnError(errorId: string, options: ViewLatestEventOnErrorOptions = {}): Promise<ViewLatestEventOnErrorResponse> {
+  async viewLatestEventOnError(errorId: string, options: ViewLatestEventOnErrorOptions = {}): Promise<ApiResponse<ViewLatestEventOnErrorResponse>> {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(options)) {
       if (value !== undefined) params.append(key, String(value));
@@ -128,14 +134,14 @@ export class ErrorAPI extends BaseAPI {
     return (await this.request<ViewLatestEventOnErrorResponse>({
       method: 'GET',
       url,
-    })) as ViewLatestEventOnErrorResponse;
+    })) as ApiResponse<ViewLatestEventOnErrorResponse>;
   }
 
   /**
    * View an Event by ID
    * GET /projects/{project_id}/events/{event_id}
    */
-  async viewEventById(projectId: string, eventId: string, options: ViewEventByIdOptions = {}): Promise<ViewEventByIdResponse> {
+  async viewEventById(projectId: string, eventId: string, options: ViewEventByIdOptions = {}): Promise<ApiResponse<ViewEventByIdResponse>> {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(options)) {
       if (value !== undefined) params.append(key, String(value));
@@ -146,21 +152,21 @@ export class ErrorAPI extends BaseAPI {
     return (await this.request<ViewEventByIdResponse>({
       method: 'GET',
       url,
-    })) as ViewEventByIdResponse;
+    })) as ApiResponse<ViewEventByIdResponse>;
   }
 
   /**
    * List the Errors on a Project
    * GET /projects/{project_id}/errors
    */
-  async listProjectErrors(projectId: string, options: ListProjectErrorsOptions = {}): Promise<ListProjectErrorsResponse> {
+  async listProjectErrors(projectId: string, options: ListProjectErrorsOptions = {}): Promise<ApiResponse<ErrorApiView[]>> {
     const url = options.filters
       ? `/projects/${projectId}/errors?${toQueryString(options.filters)}`
       : `/projects/${projectId}/errors`;
-    return (await this.request<ListProjectErrorsResponse>({
+    return (await this.request<ErrorApiView[]>({
       method: 'GET',
       url,
-    })) as ListProjectErrorsResponse;
+    })) as ApiResponse<ErrorApiView[]>;
   }
 
   /**
@@ -172,7 +178,7 @@ export class ErrorAPI extends BaseAPI {
     errorId: string,
     data: ErrorUpdateRequest,
     options: { [key: string]: any } = {}
-  ): Promise<ErrorApiView> {
+  ): Promise<ApiResponse<ErrorApiView>> {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(options)) {
       if (value !== undefined) params.append(key, String(value));
@@ -184,6 +190,6 @@ export class ErrorAPI extends BaseAPI {
       method: 'PATCH',
       url,
       body: data,
-    })) as ErrorApiView;
+    })) as ApiResponse<ErrorApiView>;
   }
 }
