@@ -21,6 +21,11 @@ const cacheKeys = {
   PROJECT_EVENT_FILTERS: "insight_hub_project_event_filters",
 }
 
+// Exclude certain event fields from the project event filters to improve agent usage
+const EXCLUDED_EVENT_FIELDS = [
+  "search" // This is searches multiple fields and is more a convenience for humans, we're removing to avoid over-matching
+];
+
 // Type definitions for tool arguments
 export interface ProjectArgs {
   projectId: string;
@@ -83,6 +88,12 @@ export class InsightHubClient implements Client {
       const projectFields = await this.listProjectEventFields(project.id);
       if (!projectFields || projectFields.length === 0) {
         throw new Error(`No event fields found for project ${project.name}.`);
+      } else {
+        for (let i = projectFields.length - 1; i >= 0; i--) {
+          if (EXCLUDED_EVENT_FIELDS.includes(projectFields[i].display_id)) {
+            projectFields.splice(i, 1);
+          }
+        }
       }
       this.cache.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFields);
     }
@@ -474,7 +485,8 @@ export class InsightHubClient implements Client {
             "Use get_project_event_filters tool first to discover valid filter field names for your project",
             "Combine multiple filters to narrow results - filters are applied with AND logic",
             "For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates",
-            "Common time filters: event.since (from this time), event.before (until this time)"
+            "Common time filters: event.since (from this time), event.before (until this time)",
+            "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors"
           ]
         }),
         inputSchema: {
