@@ -7,6 +7,7 @@ import Bugsnag from "../common/bugsnag.js";
 import NodeCache from "node-cache";
 import { Organization, Project } from "./client/api/CurrentUser.js";
 import { EventField, ProjectAPI } from "./client/api/Project.js";
+import { ErrorOperations } from "./client/api/Error.js";
 import { FilterObject, FilterObjectSchema } from "./client/api/filters.js";
 import { toolDescriptionTemplate, createParameter, createExample } from "../common/templates.js";
 
@@ -151,6 +152,14 @@ export class InsightHubClient implements Client {
 
   async listProjectErrors(projectId: string, filters?: FilterObject): Promise<any> {
     return this.errorsApi.listProjectErrors(projectId, { filters });
+  }
+
+  async updateError(projectId: string, errorId: string, operation: string, options?: any): Promise<any> {
+    const errorUpdateRequest = {
+      operation: operation,
+      ...options
+    };
+    return this.errorsApi.updateErrorOnProject(projectId, errorId, errorUpdateRequest)
   }
 
   registerTools(server: McpServer): void {
@@ -551,6 +560,72 @@ export class InsightHubClient implements Client {
           if (!eventFields) throw new Error("No event filters found in cache.");
           return {
             content: [{ type: "text", text: JSON.stringify(eventFields) }],
+          };
+        } catch (e) {
+          Bugsnag.notify(e as unknown as Error);
+          throw e;
+        }
+      }
+    );
+
+    server.registerTool(
+      "update_error",
+      {
+        description: toolDescriptionTemplate({
+          summary: "Update the status of an error in Insight Hub",
+          purpose: "Change an error's workflow state, such as marking it as resolved or ignored",
+          useCases: [
+            "Mark an error as fixed, ignored or snoozed",
+            "Assign an error to a collaborator",
+            "Link an error to an issue in your issue tracker",
+            "Delete, discard or undiscard an error"
+          ],
+          parameters: [
+            createParameter(
+              "errorId",
+              "string",
+              true,
+              "ID of the error to update",
+              {
+                examples: ["6863e2af8c857c0a5023b411"]
+              }
+            ),
+            createParameter(
+              "operation",
+              "string",
+              true,
+              "The operation to apply to the error",
+              {
+                examples: ["fix", "assign", "snooze"]
+              }
+            )
+          ],
+          examples: [
+            createExample(
+              "Mark an error as fixed",
+              {
+                errorId: "6863e2af8c857c0a5023b411",
+                operation: "fix"
+              },
+              "Success response indicating the error was marked as fixed"
+            )
+          ],
+          hints: [
+            "Only use valid operations - Insight Hub may reject invalid values"
+          ]
+        }),
+        inputSchema: {
+          errorId: z.string().describe("ID of the error to update"),
+          operation: z.enum(ErrorOperations).describe("The operation to apply to the error")
+        }
+      },
+      async (args, _extra) => {
+        const { errorId, operation } = args;
+        try {
+          const projectId = this.cache.get<Project>(cacheKeys.CURRENT_PROJECT)?.id;
+          await this.updateError(projectId!, errorId, operation);
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: true }) }],
           };
         } catch (e) {
           Bugsnag.notify(e as unknown as Error);

@@ -52,8 +52,23 @@ export interface ListProjectErrorsOptions {
   [key: string]: any;
 }
 
+export const ErrorOperations = [
+  'override_severity',
+  'assign',
+  'create_issue',
+  'link_issue',
+  'unlink_issue',
+  'open',
+  'snooze',
+  'fix',
+  'ignore',
+  'delete',
+  'discard',
+  'undiscard'
+] as const;
+
 export interface ErrorUpdateRequest {
-  operation: 'override_severity' | 'assign' | 'create_issue' | 'link_issue' | 'unlink_issue' | 'open' | 'snooze' | 'fix' | 'ignore' | 'delete' | 'discard' | 'undiscard';
+  operation: typeof ErrorOperations[number];
   assigned_collaborator_id?: string;
   assigned_team_id?: string;
   issue_url?: string;
