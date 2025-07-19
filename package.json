@@ -35,7 +35,9 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
-    "test:run": "vitest run"
+    "test:coverage:ci": "vitest --coverage --reporter=verbose",
+    "test:run": "vitest run",
+    "coverage:check": "vitest --coverage --reporter=verbose --config vitest.config.coverage.ts"
   },
   "dependencies": {
     "@bugsnag/js": "^8.2.0",

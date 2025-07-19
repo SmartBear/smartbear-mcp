@@ -6,6 +6,22 @@
     </picture>
   </a>
   <h1>SmartBear MCP server</h1>
+  
+  <!-- Badges -->
+  <div>
+    <a href="https://github.com/SmartBear/smartbear-mcp/actions/workflows/test.yml">
+      <img src="https://github.com/SmartBear/smartbear-mcp/workflows/Test%20Suite/badge.svg" alt="Test Status">
+    </a>
+    <a href="https://smartbear.github.io/smartbear-mcp/">
+      <img src="https://img.shields.io/badge/coverage-dynamic-brightgreen" alt="Coverage">
+    </a>
+    <a href="https://www.npmjs.com/package/@smartbear/mcp">
+      <img src="https://img.shields.io/npm/v/@smartbear/mcp" alt="npm version">
+    </a>
+    <a href="https://modelcontextprotocol.io">
+      <img src="https://img.shields.io/badge/MCP-Compatible-blue" alt="MCP Compatible">
+    </a>
+  </div>
 </div>
 
 An [MCP](https://modelcontextprotocol.io) server for SmartBear's API Hub, Test Hub and Insight Hub.
