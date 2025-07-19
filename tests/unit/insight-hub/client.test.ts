@@ -221,6 +221,9 @@ describe('InsightHubClient', () => {
     it('should initialize NodeCache', async () => {
       const NodeCacheModule = await import('node-cache');
       const MockedNodeCache = vi.mocked(NodeCacheModule.default);
+      
+      // Clear previous calls from beforeEach
+      MockedNodeCache.mockClear();
 
       new InsightHubClient('test-token');
 
