@@ -3,31 +3,41 @@ import { InsightHubClient } from '../../../insight-hub/client.js';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from '../../../common/info.js';
 
 // Mock the dependencies
+const mockCurrentUserAPI = {
+  listUserOrganizations: vi.fn(),
+  getOrganizationProjects: vi.fn()
+};
+
+const mockErrorAPI = {
+  viewErrorOnProject: vi.fn(),
+  viewLatestEventOnError: vi.fn(),
+  viewEventById: vi.fn(),
+  listProjectErrors: vi.fn()
+};
+
+const mockProjectAPI = {
+  listProjectEventFields: vi.fn(),
+  createProject: vi.fn()
+};
+
+const mockCache = {
+  set: vi.fn(),
+  get: vi.fn(),
+  del: vi.fn()
+};
+
 vi.mock('../../../insight-hub/client/index.js', () => ({
-  CurrentUserAPI: vi.fn().mockImplementation(() => ({
-    listUserOrganizations: vi.fn(),
-    getOrganizationProjects: vi.fn()
-  })),
-  ErrorAPI: vi.fn().mockImplementation(() => ({
-    viewErrorOnProject: vi.fn(),
-    viewLatestEventOnError: vi.fn()
-  })),
+  CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserAPI),
+  ErrorAPI: vi.fn().mockImplementation(() => mockErrorAPI),
   Configuration: vi.fn().mockImplementation((config) => config)
 }));
 
 vi.mock('../../../insight-hub/client/api/Project.js', () => ({
-  ProjectAPI: vi.fn().mockImplementation(() => ({
-    listProjectEventFields: vi.fn(),
-    createProject: vi.fn()
-  }))
+  ProjectAPI: vi.fn().mockImplementation(() => mockProjectAPI)
 }));
 
 vi.mock('node-cache', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    set: vi.fn(),
-    get: vi.fn(),
-    del: vi.fn()
-  }))
+  default: vi.fn().mockImplementation(() => mockCache)
 }));
 
 vi.mock('../../../common/bugsnag.js', () => ({
@@ -37,8 +47,11 @@ vi.mock('../../../common/bugsnag.js', () => ({
 }));
 
 describe('InsightHubClient', () => {
+  let client: InsightHubClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    client = new InsightHubClient('test-token');
   });
 
   describe('constructor', () => {
@@ -193,6 +206,11 @@ describe('InsightHubClient', () => {
       const MockedErrorAPI = vi.mocked(ErrorAPI);
       const MockedProjectAPI = vi.mocked(ProjectAPI);
 
+      // Clear previous calls from beforeEach and other tests
+      MockedCurrentUserAPI.mockClear();
+      MockedErrorAPI.mockClear();
+      MockedProjectAPI.mockClear();
+
       new InsightHubClient('test-token');
 
       expect(MockedCurrentUserAPI).toHaveBeenCalledOnce();
@@ -206,7 +224,709 @@ describe('InsightHubClient', () => {
 
       new InsightHubClient('test-token');
 
-      expect(MockedNodeCache).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('initialization', () => {
+    it('should initialize successfully with organizations and projects', async () => {
+      const mockOrg = { id: 'org-1', name: 'Test Org' };
+      const mockProjects = [
+        { id: 'proj-1', name: 'Project 1', api_key: 'key1' },
+        { id: 'proj-2', name: 'Project 2', api_key: 'key2' }
+      ];
+
+      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue([mockOrg]);
+      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+
+      await client.initialize();
+
+      expect(mockCurrentUserAPI.listUserOrganizations).toHaveBeenCalledOnce();
+      expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', { paginate: true });
+      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_org', mockOrg);
+      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_projects', mockProjects);
+    });
+
+    it('should initialize with project API key and set up event filters', async () => {
+      const clientWithApiKey = new InsightHubClient('test-token', 'project-api-key');
+      const mockOrg = { id: 'org-1', name: 'Test Org' };
+      const mockProjects = [
+        { id: 'proj-1', name: 'Project 1', api_key: 'project-api-key' },
+        { id: 'proj-2', name: 'Project 2', api_key: 'other-key' }
+      ];
+      const mockEventFields = [
+        { display_id: 'user.email', custom: false },
+        { display_id: 'error.status', custom: false },
+        { display_id: 'search', custom: false } // This should be filtered out
+      ];
+
+      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue([mockOrg]);
+      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+      mockProjectAPI.listProjectEventFields.mockResolvedValue(mockEventFields);
+
+      await clientWithApiKey.initialize();
+
+      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_current_project', mockProjects[0]);
+      expect(mockProjectAPI.listProjectEventFields).toHaveBeenCalledWith('proj-1');
+
+      // Verify that 'search' field is filtered out
+      const filteredFields = mockEventFields.filter(field => field.display_id !== 'search');
+      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_project_event_filters', filteredFields);
+    });
+
+    it('should throw error when no organizations found', async () => {
+      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue([]);
+
+      await expect(client.initialize()).rejects.toThrow('No organizations found for the current user.');
+    });
+
+    it('should throw error when project with API key not found', async () => {
+      const clientWithApiKey = new InsightHubClient('test-token', 'non-existent-key');
+      const mockOrg = { id: 'org-1', name: 'Test Org' };
+      const mockProjects = [
+        { id: 'proj-1', name: 'Project 1', api_key: 'other-key' }
+      ];
+
+      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue([mockOrg]);
+      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+
+      await expect(clientWithApiKey.initialize()).rejects.toThrow(
+        'Project with API key non-existent-key not found in organization Test Org.'
+      );
+    });
+
+    it('should throw error when no event fields found for project', async () => {
+      const clientWithApiKey = new InsightHubClient('test-token', 'project-api-key');
+      const mockOrg = { id: 'org-1', name: 'Test Org' };
+      const mockProjects = [
+        { id: 'proj-1', name: 'Project 1', api_key: 'project-api-key' }
+      ];
+
+      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue([mockOrg]);
+      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+      mockProjectAPI.listProjectEventFields.mockResolvedValue([]);
+
+      await expect(clientWithApiKey.initialize()).rejects.toThrow(
+        'No event fields found for project Project 1.'
+      );
+    });
+  });
+
+  describe('API methods', () => {
+    describe('listOrgs', () => {
+      it('should call currentUserApi.listUserOrganizations', async () => {
+        const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
+        mockCurrentUserAPI.listUserOrganizations.mockResolvedValue(mockOrgs);
+
+        const result = await client.listOrgs();
+
+        expect(mockCurrentUserAPI.listUserOrganizations).toHaveBeenCalledOnce();
+        expect(result).toEqual(mockOrgs);
+      });
+    });
+
+    describe('listProjects', () => {
+      it('should call currentUserApi.getOrganizationProjects with pagination', async () => {
+        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+
+        const result = await client.listProjects('org-1', { custom: 'option' });
+
+        expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', {
+          custom: 'option',
+          paginate: true
+        });
+        expect(result).toEqual(mockProjects);
+      });
+
+      it('should default to paginate: true when no options provided', async () => {
+        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+
+        await client.listProjects('org-1');
+
+        expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', {
+          paginate: true
+        });
+      });
+    });
+
+    describe('getProjects', () => {
+      it('should return cached projects when available', async () => {
+        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+        mockCache.get.mockReturnValue(mockProjects);
+
+        const result = await client.getProjects();
+
+        expect(mockCache.get).toHaveBeenCalledWith('insight_hub_projects');
+        expect(result).toEqual(mockProjects);
+      });
+
+      it('should fetch projects from API when not cached', async () => {
+        const mockOrg = { id: 'org-1', name: 'Test Org' };
+        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+
+        mockCache.get
+          .mockReturnValueOnce(null) // First call for projects
+          .mockReturnValueOnce(mockOrg); // Second call for org
+        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+
+        const result = await client.getProjects();
+
+        expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', { paginate: true });
+        expect(mockCache.set).toHaveBeenCalledWith('insight_hub_projects', mockProjects);
+        expect(result).toEqual(mockProjects);
+      });
+
+      it('should throw error when no organization in cache', async () => {
+        mockCache.get.mockReturnValue(null);
+
+        await expect(client.getProjects()).rejects.toThrow('No organization found in cache.');
+      });
+
+      it('should throw error when no projects found', async () => {
+        const mockOrg = { id: 'org-1', name: 'Test Org' };
+
+        mockCache.get
+          .mockReturnValueOnce(null) // First call for projects
+          .mockReturnValueOnce(mockOrg); // Second call for org
+        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(null);
+
+        await expect(client.getProjects()).rejects.toThrow('No projects found.');
+      });
+    });
+
+    describe('getErrorDetails', () => {
+      it('should call errorsApi.viewErrorOnProject', async () => {
+        const mockError = { id: 'error-1', message: 'Test error' };
+        mockErrorAPI.viewErrorOnProject.mockResolvedValue(mockError);
+
+        const result = await client.getErrorDetails('proj-1', 'error-1');
+
+        expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith('proj-1', 'error-1');
+        expect(result).toEqual(mockError);
+      });
+    });
+
+    describe('getLatestErrorEvent', () => {
+      it('should call errorsApi.viewLatestEventOnError', async () => {
+        const mockEvent = { id: 'event-1', timestamp: '2023-01-01' };
+        mockErrorAPI.viewLatestEventOnError.mockResolvedValue(mockEvent);
+
+        const result = await client.getLatestErrorEvent('error-1');
+
+        expect(mockErrorAPI.viewLatestEventOnError).toHaveBeenCalledWith('error-1');
+        expect(result).toEqual(mockEvent);
+      });
+    });
+
+    describe('getProjectEvent', () => {
+      it('should call errorsApi.viewEventById', async () => {
+        const mockEvent = { id: 'event-1', project_id: 'proj-1' };
+        mockErrorAPI.viewEventById.mockResolvedValue(mockEvent);
+
+        const result = await client.getProjectEvent('proj-1', 'event-1');
+
+        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-1', 'event-1');
+        expect(result).toEqual(mockEvent);
+      });
+    });
+
+    describe('findEventById', () => {
+      it('should find event across multiple projects', async () => {
+        const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
+        const mockProjects = [
+          { id: 'proj-1', name: 'Project 1' },
+          { id: 'proj-2', name: 'Project 2' }
+        ];
+        const mockEvent = { id: 'event-1', project_id: 'proj-2' };
+
+        mockCurrentUserAPI.listUserOrganizations.mockResolvedValue(mockOrgs);
+        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+        mockErrorAPI.viewEventById
+          .mockRejectedValueOnce(new Error('Not found')) // proj-1
+          .mockResolvedValueOnce(mockEvent); // proj-2
+
+        const result = await client.findEventById('event-1');
+
+        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-1', 'event-1');
+        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-2', 'event-1');
+        expect(result).toEqual(mockEvent);
+      });
+
+      it('should return undefined when event not found in any project', async () => {
+        const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
+        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+
+        mockCurrentUserAPI.listUserOrganizations.mockResolvedValue(mockOrgs);
+        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+        mockErrorAPI.viewEventById.mockRejectedValue(new Error('Not found'));
+
+        const result = await client.findEventById('event-1');
+
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe('listProjectErrors', () => {
+      it('should call errorsApi.listProjectErrors with filters', async () => {
+        const mockErrors = [{ id: 'error-1', message: 'Test error' }];
+        const filters = { 'error.status': [{ type: 'eq' as const, value: 'open' }] };
+        mockErrorAPI.listProjectErrors.mockResolvedValue(mockErrors);
+
+        const result = await client.listProjectErrors('proj-1', filters);
+
+        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters });
+        expect(result).toEqual(mockErrors);
+      });
+
+      it('should call errorsApi.listProjectErrors without filters', async () => {
+        const mockErrors = [{ id: 'error-1', message: 'Test error' }];
+        mockErrorAPI.listProjectErrors.mockResolvedValue(mockErrors);
+
+        const result = await client.listProjectErrors('proj-1');
+
+        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters: undefined });
+        expect(result).toEqual(mockErrors);
+      });
+    });
+
+    describe('listProjectEventFields', () => {
+      it('should call projectApi.listProjectEventFields', async () => {
+        const mockFields = [{ display_id: 'user.email', custom: false }];
+        mockProjectAPI.listProjectEventFields.mockResolvedValue(mockFields);
+
+        const result = await client.listProjectEventFields('proj-1');
+
+        expect(mockProjectAPI.listProjectEventFields).toHaveBeenCalledWith('proj-1');
+        expect(result).toEqual(mockFields);
+      });
+    });
+  });
+
+  describe('tool registration', () => {
+    let mockServer: any;
+
+    beforeEach(() => {
+      mockServer = {
+        registerTool: vi.fn(),
+        resource: vi.fn()
+      };
+    });
+
+    it('should register list_insight_hub_projects tool when no project API key', () => {
+      client.registerTools(mockServer);
+
+      expect(mockServer.registerTool).toHaveBeenCalledWith(
+        'list_insight_hub_projects',
+        expect.any(Object),
+        expect.any(Function)
+      );
+    });
+
+    it('should not register list_insight_hub_projects tool when project API key is provided', () => {
+      const clientWithApiKey = new InsightHubClient('test-token', 'project-api-key');
+      clientWithApiKey.registerTools(mockServer);
+
+      const registeredTools = mockServer.registerTool.mock.calls.map((call: any) => call[0]);
+      expect(registeredTools).not.toContain('list_insight_hub_projects');
+    });
+
+    it('should register common tools regardless of project API key', () => {
+      client.registerTools(mockServer);
+
+      const registeredTools = mockServer.registerTool.mock.calls.map((call: any) => call[0]);
+      expect(registeredTools).toContain('get_insight_hub_error');
+      expect(registeredTools).toContain('get_insight_hub_error_latest_event');
+      expect(registeredTools).toContain('get_insight_hub_event_details');
+      expect(registeredTools).toContain('list_insight_hub_project_errors');
+      expect(registeredTools).toContain('get_project_event_filters');
+    });
+  });
+
+  describe('resource registration', () => {
+    let mockServer: any;
+
+    beforeEach(() => {
+      mockServer = {
+        registerTool: vi.fn(),
+        resource: vi.fn()
+      };
+    });
+
+    it('should register insight_hub_event resource', () => {
+      client.registerResources(mockServer);
+
+      expect(mockServer.resource).toHaveBeenCalledWith(
+        'insight_hub_event',
+        expect.any(Object),
+        expect.any(Function)
+      );
+    });
+  });
+
+  describe('tool handlers', () => {
+    let mockServer: any;
+
+    beforeEach(() => {
+      mockServer = {
+        registerTool: vi.fn(),
+        resource: vi.fn()
+      };
+    });
+
+    describe('list_insight_hub_projects tool handler', () => {
+      it('should return projects with pagination', async () => {
+        const mockProjects = [
+          { id: 'proj-1', name: 'Project 1' },
+          { id: 'proj-2', name: 'Project 2' },
+          { id: 'proj-3', name: 'Project 3' }
+        ];
+        mockCache.get.mockReturnValue(mockProjects);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_projects')[2];
+
+        const result = await toolHandler({ page_size: 2, page: 1 });
+
+        expect(result.content[0].text).toBe(JSON.stringify(mockProjects.slice(0, 2)));
+      });
+
+      it('should return all projects when no pagination specified', async () => {
+        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+        mockCache.get.mockReturnValue(mockProjects);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_projects')[2];
+
+        const result = await toolHandler({});
+
+        expect(result.content[0].text).toBe(JSON.stringify(mockProjects));
+      });
+
+      it('should handle no projects found', async () => {
+        mockCache.get.mockReturnValue([]);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_projects')[2];
+
+        const result = await toolHandler({});
+
+        expect(result.content[0].text).toBe('No projects found.');
+      });
+
+      it('should handle pagination with only page_size', async () => {
+        const mockProjects = [
+          { id: 'proj-1', name: 'Project 1' },
+          { id: 'proj-2', name: 'Project 2' },
+          { id: 'proj-3', name: 'Project 3' }
+        ];
+        mockCache.get.mockReturnValue(mockProjects);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_projects')[2];
+
+        const result = await toolHandler({ page_size: 2 });
+
+        expect(result.content[0].text).toBe(JSON.stringify(mockProjects.slice(0, 2)));
+      });
+
+      it('should handle pagination with only page', async () => {
+        const mockProjects = Array.from({ length: 25 }, (_, i) => ({
+          id: `proj-${i + 1}`,
+          name: `Project ${i + 1}`
+        }));
+        mockCache.get.mockReturnValue(mockProjects);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_projects')[2];
+
+        const result = await toolHandler({ page: 2 });
+
+        // Default page_size is 10, so page 2 should return projects 10-19
+        expect(result.content[0].text).toBe(JSON.stringify(mockProjects.slice(10, 20)));
+      });
+    });
+
+    describe('get_insight_hub_error tool handler', () => {
+      it('should get error details with project from cache', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockError = { id: 'error-1', message: 'Test error' };
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.viewErrorOnProject.mockResolvedValue(mockError);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_error')[2];
+
+        const result = await toolHandler({ errorId: 'error-1' });
+
+        expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith('proj-1', 'error-1');
+        expect(result.content[0].text).toBe(JSON.stringify(mockError));
+      });
+
+      it('should throw error when required arguments missing', async () => {
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_error')[2];
+
+        await expect(toolHandler({})).rejects.toThrow('Both projectId and errorId arguments are required');
+      });
+    });
+
+    describe('get_insight_hub_error_latest_event tool handler', () => {
+      it('should get latest error event', async () => {
+        const mockEvent = { id: 'event-1', timestamp: '2023-01-01' };
+        mockErrorAPI.viewLatestEventOnError.mockResolvedValue(mockEvent);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_error_latest_event')[2];
+
+        const result = await toolHandler({ errorId: 'error-1' });
+
+        expect(mockErrorAPI.viewLatestEventOnError).toHaveBeenCalledWith('error-1');
+        expect(result.content[0].text).toBe(JSON.stringify(mockEvent));
+      });
+
+      it('should throw error when errorId missing', async () => {
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_error_latest_event')[2];
+
+        await expect(toolHandler({})).rejects.toThrow('errorId argument is required');
+      });
+    });
+
+    describe('get_insight_hub_event_details tool handler', () => {
+      it('should get event details from dashboard URL', async () => {
+        const mockProjects = [{ id: 'proj-1', slug: 'my-project', name: 'My Project' }];
+        const mockEvent = { id: 'event-1', project_id: 'proj-1' };
+
+        mockCache.get.mockReturnValue(mockProjects);
+        mockErrorAPI.viewEventById.mockResolvedValue(mockEvent);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_event_details')[2];
+
+        const result = await toolHandler({
+          link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123?event_id=event-1'
+        });
+
+        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-1', 'event-1');
+        expect(result.content[0].text).toBe(JSON.stringify(mockEvent));
+      });
+
+      it('should throw error when link is invalid', async () => {
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_event_details')[2];
+
+        await expect(toolHandler({ link: 'invalid-url' })).rejects.toThrow();
+      });
+
+      it('should throw error when project not found', async () => {
+        mockCache.get.mockReturnValue([{ id: 'proj-1', slug: 'other-project', name: 'Other Project' }]);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_event_details')[2];
+
+        await expect(toolHandler({
+          link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123?event_id=event-1'
+        })).rejects.toThrow('Project with the specified slug not found.');
+      });
+
+      it('should throw error when URL is missing required parameters', async () => {
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_event_details')[2];
+
+        await expect(toolHandler({
+          link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123' // Missing event_id
+        })).rejects.toThrow('Both projectSlug and eventId must be present in the link');
+      });
+
+      it('should throw error when no projects found in cache', async () => {
+        mockCache.get.mockReturnValue(null);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_event_details')[2];
+
+        await expect(toolHandler({
+          link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123?event_id=event-1'
+        })).rejects.toThrow('No projects found in cache.');
+      });
+    });
+
+    describe('list_insight_hub_project_errors tool handler', () => {
+      it('should list project errors with filters', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockEventFields = [
+          { display_id: 'error.status', custom: false },
+          { display_id: 'user.email', custom: false }
+        ];
+        const mockErrors = [{ id: 'error-1', message: 'Test error' }];
+        const filters = { 'error.status': [{ type: 'eq' as const, value: 'open' }] };
+
+        mockCache.get
+          .mockReturnValueOnce(mockProject) // current project
+          .mockReturnValueOnce(mockEventFields); // event fields
+        mockErrorAPI.listProjectErrors.mockResolvedValue(mockErrors);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_project_errors')[2];
+
+        const result = await toolHandler({ filters });
+
+        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters });
+        expect(result.content[0].text).toBe(JSON.stringify(mockErrors));
+      });
+
+      it('should validate filter keys against cached event fields', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockEventFields = [{ display_id: 'error.status', custom: false }];
+        const filters = { 'invalid.field': [{ type: 'eq' as const, value: 'test' }] };
+
+        mockCache.get
+          .mockReturnValueOnce(mockProject)
+          .mockReturnValueOnce(mockEventFields);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_project_errors')[2];
+
+        await expect(toolHandler({ filters })).rejects.toThrow('Invalid filter key: invalid.field');
+      });
+
+      it('should throw error when no project ID available', async () => {
+        mockCache.get.mockReturnValue(null);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_project_errors')[2];
+
+        await expect(toolHandler({})).rejects.toThrow('projectId argument is required');
+      });
+    });
+
+    describe('get_project_event_filters tool handler', () => {
+      it('should return cached event fields', async () => {
+        const mockEventFields = [
+          { display_id: 'error.status', custom: false },
+          { display_id: 'user.email', custom: false }
+        ];
+        mockCache.get.mockReturnValue(mockEventFields);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_project_event_filters')[2];
+
+        const result = await toolHandler({});
+
+        expect(result.content[0].text).toBe(JSON.stringify(mockEventFields));
+      });
+
+      it('should throw error when no event filters in cache', async () => {
+        mockCache.get.mockReturnValue(null);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_project_event_filters')[2];
+
+        await expect(toolHandler({})).rejects.toThrow('No event filters found in cache.');
+      });
+    });
+
+    describe('error handling in tool handlers', () => {
+      it('should notify Bugsnag when error occurs in list_insight_hub_projects', async () => {
+        const Bugsnag = (await import('../../../common/bugsnag.js')).default;
+        const mockError = new Error('Test error');
+        mockCache.get.mockImplementation(() => {
+          throw mockError;
+        });
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'list_insight_hub_projects')[2];
+
+        await expect(toolHandler({})).rejects.toThrow('Test error');
+        expect(Bugsnag.notify).toHaveBeenCalledWith(mockError);
+      });
+
+      it('should notify Bugsnag when error occurs in get_insight_hub_error', async () => {
+        const Bugsnag = (await import('../../../common/bugsnag.js')).default;
+        const mockError = new Error('API error');
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.viewErrorOnProject.mockRejectedValue(mockError);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'get_insight_hub_error')[2];
+
+        await expect(toolHandler({ errorId: 'error-1' })).rejects.toThrow('API error');
+        expect(Bugsnag.notify).toHaveBeenCalledWith(mockError);
+      });
+
+      it('should notify Bugsnag when error occurs in resource handler', async () => {
+        const Bugsnag = (await import('../../../common/bugsnag.js')).default;
+        const mockError = new Error('Resource error');
+
+        mockCurrentUserAPI.listUserOrganizations.mockRejectedValue(mockError);
+
+        client.registerResources(mockServer);
+        const resourceHandler = mockServer.resource.mock.calls[0][2];
+
+        await expect(resourceHandler(
+          { href: 'insighthub://event/event-1' },
+          { id: 'event-1' }
+        )).rejects.toThrow('Resource error');
+        expect(Bugsnag.notify).toHaveBeenCalledWith(mockError);
+      });
+    });
+  });
+
+  describe('resource handlers', () => {
+    let mockServer: any;
+
+    beforeEach(() => {
+      mockServer = {
+        registerTool: vi.fn(),
+        resource: vi.fn()
+      };
+    });
+
+    describe('insight_hub_event resource handler', () => {
+      it('should find event by ID across projects', async () => {
+        const mockEvent = { id: 'event-1', project_id: 'proj-1' };
+        const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
+        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+
+        mockCurrentUserAPI.listUserOrganizations.mockResolvedValue(mockOrgs);
+        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue(mockProjects);
+        mockErrorAPI.viewEventById.mockResolvedValue(mockEvent);
+
+        client.registerResources(mockServer);
+        const resourceHandler = mockServer.resource.mock.calls[0][2];
+
+        const result = await resourceHandler(
+          { href: 'insighthub://event/event-1' },
+          { id: 'event-1' }
+        );
+
+        expect(result.contents[0].uri).toBe('insighthub://event/event-1');
+        expect(result.contents[0].text).toBe(JSON.stringify(mockEvent));
+      });
     });
   });
 });
