@@ -20,5 +20,19 @@ export default defineConfig([
     languageOptions: { globals: globals.node }
   },
   tseslint.configs.recommended,
-  { rules: customRules }
+  { rules: customRules },
+  // Test-specific configuration
+  {
+    files: ["**/*.test.{js,ts}", "**/*.spec.{js,ts}", "**/tests/**/*.{js,ts}"],
+    rules: {
+      // Allow more flexible patterns in tests
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-non-null-assertion": "off", // Sometimes needed for test assertions
+      "@typescript-eslint/no-unused-expressions": "off", // Vitest expect statements
+      // Allow longer lines in tests for descriptive test names
+      "max-len": ["error", { code: 120, ignoreStrings: true, ignoreTemplateLiterals: true }],
+      // Allow console statements in tests (for debugging)
+      "no-console": "off"
+    }
+  }
 ]);

@@ -224,6 +224,7 @@ describe('InsightHubClient', () => {
 
       new InsightHubClient('test-token');
 
+      expect(MockedNodeCache).toHaveBeenCalledOnce();
     });
   });
 
