@@ -6,7 +6,7 @@
     </picture>
   </a>
   <h1>SmartBear MCP server</h1>
-  
+
   <!-- Badges -->
   <div>
     <a href="https://github.com/SmartBear/smartbear-mcp/actions/workflows/test.yml">
