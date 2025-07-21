@@ -6,6 +6,7 @@ import { Configuration } from '../configuration.js';
 export interface Organization {
   id: string;
   name: string;
+  slug: string;
 }
 
 export type ListUserOrganizationsResponse = Organization[];
@@ -20,7 +21,7 @@ export interface Project {
 // --- API Class ---
 
 export class CurrentUserAPI extends BaseAPI {
-  static organizationFields: (keyof Organization)[] = ['id', 'name'];
+  static organizationFields: (keyof Organization)[] = ['id', 'name', 'slug'];
   static projectFields: (keyof Project)[] = ['id', 'name', 'slug', 'api_key'];
 
   constructor(configuration: Configuration) {
