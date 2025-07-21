@@ -131,6 +131,18 @@ export class InsightHubClient implements Client {
     return projects;
   }
 
+  getProject(projectId: string): Project | null {
+    const projects = this.cache.get<Project[]>(cacheKeys.PROJECTS);
+    if (!projects) {
+      return null;
+    }
+    return projects.find(project => project.id === projectId) || null;
+  }
+  
+  getOrganization(): Organization | null {
+    return this.cache.get<Organization>(cacheKeys.ORG) || null;
+  }
+
   async getErrorDetails(projectId: string, errorId: string) {
     const response = await this.errorsApi.viewErrorOnProject(projectId, errorId);
     return response.body;
@@ -164,6 +176,14 @@ export class InsightHubClient implements Client {
     };
     const response = await this.errorsApi.updateErrorOnProject(projectId, errorId, errorUpdateRequest);
     return response.status === 200 || response.status === 204;
+  }
+
+  getDashboardUrl(projectId: string): string {
+    return `https://app.bugsnag.com/${this.getOrganization()?.name}/${this.getProject(projectId)?.slug}`;
+  }
+
+  getErrorUrl(projectId: string, errorId: string): string {
+    return `${this.getDashboardUrl(projectId)}/errors/${errorId}`;
   }
 
   registerTools(server: McpServer): void {
@@ -257,8 +277,8 @@ export class InsightHubClient implements Client {
       "get_insight_hub_error",
       {
         description: toolDescriptionTemplate({
-          summary: "Get detailed information about a specific error from a project",
-          purpose: "Retrieve error details including metadata, events, and context for debugging",
+          summary: "Get detailed information about a specific error from a project and the last occurrence (event) of that error",
+          purpose: "Retrieve error details including metadata, breadcrumb and context for debugging.",
           useCases: [
             "Investigate a specific error found through list_insight_hub_project_errors",
             "Get error details for debugging and root cause analysis",
@@ -283,6 +303,7 @@ export class InsightHubClient implements Client {
               )
             ] : [])
           ],
+          outputFormat: "JSON object with the error details (containing the aggregated data), the latest event (the most recent occurrence of the error) and a URL to the error in the Insight Hub dashboard",
           examples: [
             createExample(
               "Get details for a specific error",
@@ -294,7 +315,8 @@ export class InsightHubClient implements Client {
           ],
           hints: [
             "Error IDs can be found using the list_insight_hub_project_errors tool",
-            "Use this after filtering errors to get detailed information about specific errors"
+            "Use this after filtering errors to get detailed information about specific errors",
+            "The response also includes the latest event for the error to avoid calling get_insight_hub_error_latest_event next."
           ]
         }),
         inputSchema: {
@@ -306,9 +328,17 @@ export class InsightHubClient implements Client {
         try {
           const projectId = typeof args.projectId === 'string' ? args.projectId : this.cache.get<Project>(cacheKeys.CURRENT_PROJECT)?.id;
           if (!projectId || !args.errorId) throw new Error("Both projectId and errorId arguments are required");
-          const response = await this.getErrorDetails(projectId, args.errorId);
+          const errorDetails = await this.getErrorDetails(projectId, args.errorId);
+          if (!errorDetails) {
+            throw new Error(`Error with ID ${args.errorId} not found in project ${projectId}.`);
+          }
+          const content = {
+            error_details: errorDetails,
+            latest_event: await this.getLatestErrorEvent(args.errorId),
+            url: this.getErrorUrl(projectId, args.errorId),
+          }
           return {
-            content: [{ type: "text", text: JSON.stringify(response) }],
+            content: [{ type: "text", text: JSON.stringify(content) }],
           };
         } catch (e) {
           Bugsnag.notify(e as unknown as Error);

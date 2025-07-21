@@ -30,7 +30,8 @@ export function toolDescriptionTemplate(params: ToolDescriptionParams): string {
     useCases,
     examples,
     parameters,
-    hints
+    hints,
+    outputFormat
   } = params;
 
   let description = summary;
@@ -40,6 +41,10 @@ export function toolDescriptionTemplate(params: ToolDescriptionParams): string {
     description += `\n\n**Parameters:** ${parameters.map(p =>
       `${p.name} (${p.type})${p.required ? ' *required*' : ''}`
     ).join(', ')}`;
+  }
+
+  if (outputFormat) {
+    description += `\n\n**Output Format:** ${outputFormat}`;
   }
 
   // Use Cases
