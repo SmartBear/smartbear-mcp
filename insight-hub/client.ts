@@ -586,12 +586,12 @@ export class InsightHubClient implements Client {
     );
 
     const permittedOperations = [
-      'override_severity',
-      'open',
-      'fix',
-      'ignore',
-      'discard',
-      'undiscard'
+      "override_severity",
+      "open",
+      "fix",
+      "ignore",
+      "discard",
+      "undiscard"
     ] as const;
 
     server.registerTool(
