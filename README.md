@@ -16,9 +16,19 @@ The server is started with the API key or auth token that you use with your prod
 
 ### VS Code
 
+[![Add to VS Code](https://img.shields.io/badge/Add%20to-VS%20Code-blue?style=for-the-badge&logo=visual-studio-code)](vscode:mcp/install?%7B%22name%22%3A%22smartbear%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40smartbear%2Fmcp%40latest%22%5D%2C%22env%22%3A%7B%22INSIGHT_HUB_AUTH_TOKEN%22%3A%22%24%7Binput%3Ainsight_hub_auth_token%7D%22%2C%22INSIGHT_HUB_PROJECT_API_KEY%22%3A%22%24%7Binput%3Ainsight_hub_project_api_key%7D%22%2C%22REFLECT_API_TOKEN%22%3A%22%24%7Binput%3Areflect_api_token%7D%22%2C%22API_HUB_API_KEY%22%3A%22%24%7Binput%3Aapi_hub_api_key%7D%22%7D%2C%22inputs%22%3A%5B%7B%22id%22%3A%22insight_hub_auth_token%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Insight%20Hub%20Auth%20Token%20-%20leave%20blank%20to%20disable%20Insight%20Hub%20tools%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22insight_hub_project_api_key%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Insight%20Hub%20Project%20API%20Key%20-%20for%20single%20project%20interactions%22%2C%22password%22%3Afalse%7D%2C%7B%22id%22%3A%22reflect_api_token%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Reflect%20API%20Token%20-%20leave%20blank%20to%20disable%20Reflect%20tools%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22api_hub_api_key%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22API%20Hub%20API%20Key%20-%20leave%20blank%20to%20disable%20API%20Hub%20tools%22%2C%22password%22%3Atrue%7D%5D%7D)
+
+**Quick Setup:**
+- Click the button above to add the SmartBear MCP server to VS Code automatically
+- Or use the "MCP: Add server…" command in VS Code and enter: `@smartbear/mcp`
+- Or manually add the configuration below to `.vscode/mcp.json`
+
 Add the [`@smartbear/mcp`](https://www.npmjs.com/package/@smartbear/mcp) package to your project via NPM or via the "MCP: Add server…" command in VS Code.
 
 If setting up manually, add the following configuration to `.vscode/mcp.json`:
+
+<details>
+<summary><strong>📋 Click to expand configuration</strong></summary>
 
 ```json
 {
@@ -66,13 +76,14 @@ If setting up manually, add the following configuration to `.vscode/mcp.json`:
   ]
 }
 ```
+</details>
 
 ### MCP Inspector
 
 To test the MCP server using the npm package, run:
 
 ```bash
-REFLECT_API_TOKEN=your_reflect_token INSIGHT_HUB_AUTH_TOKEN=your_insight_hub_token API_HUB_API_KEY=your_api_hub_api_key npx @smartbear/mcp
+REFLECT_API_TOKEN=your_reflect_token INSIGHT_HUB_AUTH_TOKEN=your_insight_hub_token API_HUB_API_KEY=your_api_hub_api_key npx @modelcontextprotocol/inspector npx @smartbear/mcp
 ```
 
 This will open an inspector window in your browser, where you can test the tools.
