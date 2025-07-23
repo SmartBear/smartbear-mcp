@@ -24,6 +24,8 @@
   </div>
 </div>
 
+[![Documentation](https://img.shields.io/badge/documentation-latest-blue.svg)](https://developer.smartbear.com/smartbear-mcp)
+
 A Model Context Protocol (MCP) server that provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including Insight Hub, Reflect, and API Hub.
 
 ## What is MCP?
@@ -226,9 +228,9 @@ This MCP server is licensed under the MIT License. This means you are free to us
 
 ## Support
 
-- 🐛 [Report Issues](https://github.com/SmartBear/smartbear-mcp/issues)
-- 💬 [Community Discussions](https://community.smartbear.com/mcp)
-- 📧 [Contact Support](mailto:support@smartbear.com)
+* [Search open and closed issues](https://github.com/SmartBear/smartbear-mcp/issues?utf8=✓&q=is%3Aissue) for similar problems
+* [Report a bug or request a feature](https://github.com/SmartBear/smartbear-mcp/issues/new)
+
 
 ---
 
