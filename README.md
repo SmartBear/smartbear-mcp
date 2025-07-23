@@ -58,7 +58,7 @@ Add the [`@smartbear/mcp`](https://www.npmjs.com/package/@smartbear/mcp) package
 If setting up manually, add the following configuration to `.vscode/mcp.json`:
 
 <details>
-<summary><strong>📋 Click to expand NMP-based configuration</strong></summary>
+<summary><strong>📋 Click to expand NPM-based configuration</strong></summary>
 ```json
 {
   "servers": {
