@@ -41,7 +41,7 @@ See individual guides for suggested prompts and supported tools and resources:
 
 ## Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20+ and npm
 - Access to SmartBear products (Insight Hub, Reflect, or API Hub)
 - Valid API tokens for the products you want to integrate
 
