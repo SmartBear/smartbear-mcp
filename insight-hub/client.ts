@@ -128,9 +128,6 @@ export class InsightHubClient implements Client {
       projects = await this.listProjects(org.id);
       this.cache.set(cacheKeys.PROJECTS, projects);
     }
-    if (!projects) {
-      throw new Error("No projects found.");
-    }
     return projects;
   }
 
