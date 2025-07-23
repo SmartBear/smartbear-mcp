@@ -197,7 +197,9 @@ Add to your `claude_desktop_config.json`:
       "command": "node",
       "args": ["<PATH_TO_SMARTBEAR_MCP>/dist/index.js"],
       "env": {
-        "INSIGHT_HUB_AUTH_TOKEN": "your_token_here"
+        "INSIGHT_HUB_AUTH_TOKEN": "your_token_here",
+        "REFLECT_API_TOKEN": "your_reflect_token",
+        "API_HUB_API_KEY": "your_api_hub_key"
       }
     }
   }
@@ -209,11 +211,8 @@ Add to your `claude_desktop_config.json`:
 Test your installation using the MCP Inspector:
 
 ```bash
-# Install MCP Inspector globally
-npm install -g @modelcontextprotocol/inspector
-
-# Run the inspector
-mcp-inspector node dist/index.js
+# Install and run MCP Inspector
+npx @modelcontextprotocol/inspector node dist/index.js
 ```
 
 This opens a web interface where you can test tools and resources before integrating with your AI assistant.
