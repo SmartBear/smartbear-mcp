@@ -128,19 +128,7 @@ If you want to build and run the MCP server from source (for development or cont
    npm run build
    ```
 
-4. **Set up environment variables:**
-   ```bash
-   # For Insight Hub
-   export INSIGHT_HUB_AUTH_TOKEN="your_insight_hub_token"
-   
-   # For Reflect (optional)
-   export REFLECT_API_TOKEN="your_reflect_token"
-   
-   # For API Hub (optional)
-   export API_HUB_API_KEY="your_api_hub_key"
-   ```
-
-5. **Update your `.vscode/mcp.json` to point to your local build:**
+4. **Update your `.vscode/mcp.json` to point to your local build:**
     <details>
     <summary><strong>📋 Click to expand manual configuration</strong></summary>
     ```json
