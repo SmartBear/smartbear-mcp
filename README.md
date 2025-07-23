@@ -24,6 +24,7 @@
   </div>
 </div>
 
+[![Node CI](https://github.com/SmartBear/smartbear-mcp/actions/workflows/node-ci.yml/badge.svg)](https://github.com/SmartBear/smartbear-mcp/actions/workflows/node-ci.yml)
 [![Documentation](https://img.shields.io/badge/documentation-latest-blue.svg)](https://developer.smartbear.com/smartbear-mcp)
 
 A Model Context Protocol (MCP) server that provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including Insight Hub, Reflect, and API Hub.
