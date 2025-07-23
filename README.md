@@ -60,6 +60,7 @@ If setting up manually, add the following configuration to `.vscode/mcp.json`:
 
 <details>
 <summary><strong>📋 Click to expand NPM-based configuration</strong></summary>
+
 ```json
 {
   "servers": {
@@ -131,6 +132,7 @@ If you want to build and run the MCP server from source (for development or cont
 4. **Update your `.vscode/mcp.json` to point to your local build:**
     <details>
     <summary><strong>📋 Click to expand manual configuration</strong></summary>
+
     ```json
     {
     "servers": {
