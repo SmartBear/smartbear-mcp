@@ -63,7 +63,7 @@ export class InsightHubClient implements Client {
         "X-Bugsnag-API": "true",
         "X-Version": "2",
       },
-      basePath: endpoint || this.getHost(this.projectApiKey, "api"),
+      basePath: endpoint || this.getHost(projectApiKey, "api"),
     });
     this.currentUserApi = new CurrentUserAPI(config);
     this.errorsApi = new ErrorAPI(config);
