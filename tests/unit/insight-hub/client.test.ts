@@ -435,7 +435,7 @@ describe('InsightHubClient', () => {
       });
     });
 
-    describe('findEventById', () => {
+    describe('getEventById', () => {
       it('should find event across multiple projects', async () => {
         const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
         const mockProjects = [
@@ -450,7 +450,7 @@ describe('InsightHubClient', () => {
           .mockRejectedValueOnce(new Error('Not found')) // proj-1
           .mockResolvedValueOnce({ body: mockEvent }); // proj-2
 
-        const result = await client.findEventById('event-1');
+        const result = await client.getEventById('event-1');
 
         expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-1', 'event-1');
         expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-2', 'event-1');
@@ -465,7 +465,7 @@ describe('InsightHubClient', () => {
         mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
         mockErrorAPI.viewEventById.mockRejectedValue(new Error('Not found'));
 
-        const result = await client.findEventById('event-1');
+        const result = await client.getEventById('event-1');
 
         expect(result).toBeUndefined();
       });
