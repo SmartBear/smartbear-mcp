@@ -648,7 +648,7 @@ export class InsightHubClient implements Client {
                 "projectId",
                 "string",
                 true,
-                "ID of the project to query for errors"
+                "ID of the project that contains the error to be updated"
               )
             ]),
             createParameter(
