@@ -52,14 +52,18 @@ See individual guides for suggested prompts and supported tools and resources:
 
 The server is started with the API key or auth token that you use with your product(s). They are optional and can be removed from your configuration if you aren't using the product.
 
-### VS Code via NPM 
+### VS Code using NPM 
 
-Add the [`@smartbear/mcp`](https://www.npmjs.com/package/@smartbear/mcp) package to your project via NPM or via the "MCP: Add server…" command in VS Code.
+The SmartBear MCP server is distributed as an NPM package [`@smartbear/mcp`](https://www.npmjs.com/package/@smartbear/mcp), making it easy to integrate into your development workflow. You can add it to your VS Code environment in three convenient ways:
 
-If setting up manually, add the following configuration to `.vscode/mcp.json`:
+1. **Direct NPM installation** - Install the package directly using npm or your preferred package manager
+2. **VS Code command** - Use the built-in "MCP: Add server…" command in VS Code for guided setup
+3. **Manual configuration** - Add the configuration directly to your `.vscode/mcp.json` file for custom setups
+
+For the quickest setup, we recommend using the Direct NPM installation or VS Code command approach. If setting up manually, add the following configuration to `.vscode/mcp.json`:
 
 <details>
-<summary><strong>📋 Click to expand NPM-based configuration</strong></summary>
+<summary><strong>📋 Click to expand configuration</strong></summary>
 
 ```json
 {
@@ -109,9 +113,11 @@ If setting up manually, add the following configuration to `.vscode/mcp.json`:
 ```
 </details>
 
-### VS Code Manually
+### VS Code using source code
 
-If you want to build and run the MCP server from source (for development or contribution):
+For developers who want to contribute to the SmartBear MCP server, customize its functionality, or work with the latest development features, you can build and run the server directly from source code. This approach gives you full control over the implementation and allows you to make modifications as needed.
+
+To set up the MCP server from source:
 
 1. **Clone the repository:**
    ```bash
@@ -129,9 +135,10 @@ If you want to build and run the MCP server from source (for development or cont
    npm run build
    ```
 
-4. **Update your `.vscode/mcp.json` to point to your local build:**
+4. **Add server to VSCode environment** updating `.vscode/mcp.json` file in your project to point to your local build:
+
     <details>
-    <summary><strong>📋 Click to expand manual configuration</strong></summary>
+    <summary><strong>📋 Click to expand configuration</strong></summary>
 
     ```json
     {
