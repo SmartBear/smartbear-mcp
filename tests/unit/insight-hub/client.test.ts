@@ -55,83 +55,241 @@ describe('InsightHubClient', () => {
   });
 
   describe('constructor', () => {
-    it('should use HUB_API_ENDPOINT when projectApiKey starts with "00000"', () => {
-      const client = new InsightHubClient('test-token', '00000test-key');
-
-      // Since the endpoint is passed to Configuration, we can verify it through the mock
-      expect(client).toBeInstanceOf(InsightHubClient);
-      // The endpoint should be set correctly during construction
-    });
-
-    it('should use DEFAULT_API_ENDPOINT when projectApiKey does not start with "00000"', () => {
-      const client = new InsightHubClient('test-token', 'regular-key');
-
-      expect(client).toBeInstanceOf(InsightHubClient);
-    });
-
-    it('should use DEFAULT_API_ENDPOINT when no projectApiKey is provided', () => {
+    it('should create client instance with proper dependencies', () => {
       const client = new InsightHubClient('test-token');
-
       expect(client).toBeInstanceOf(InsightHubClient);
     });
 
-    it('should use custom endpoint when provided', () => {
-      const customEndpoint = 'https://custom.api.com';
-      const client = new InsightHubClient('test-token', undefined, customEndpoint);
+    it('should configure endpoints correctly during construction', async () => {
+      const { Configuration } = await import('../../../insight-hub/client/index.js');
+      const MockedConfiguration = vi.mocked(Configuration);
 
-      expect(client).toBeInstanceOf(InsightHubClient);
+      new InsightHubClient('test-token', '00000hub-key');
+
+      expect(MockedConfiguration).toHaveBeenCalledWith(
+        expect.objectContaining({
+          basePath: 'https://api.insighthub.smartbear.com',
+          authToken: 'test-token',
+          headers: expect.objectContaining({
+            'User-Agent': `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+            'Content-Type': 'application/json',
+            'X-Bugsnag-API': 'true',
+            'X-Version': '2'
+          })
+        })
+      );
     });
 
     it('should set project API key when provided', () => {
       const client = new InsightHubClient('test-token', 'test-project-key');
-
-      // Since projectApiKey is private, we test its behavior indirectly
       expect(client).toBeInstanceOf(InsightHubClient);
     });
   });
 
-  describe('endpoint selection logic', () => {
-    const testCases = [
-      {
-        description: 'Hub API key with HUB_PREFIX',
-        projectApiKey: '00000hub-key-123',
-        expectedEndpoint: 'https://api.insighthub.smartbear.com'
-      },
-      {
-        description: 'Regular Bugsnag API key',
-        projectApiKey: 'abc123def456',
-        expectedEndpoint: 'https://api.bugsnag.com'
-      },
-      {
-        description: 'API key starting with 00000 but longer',
-        projectApiKey: '00000-special-hub-key',
-        expectedEndpoint: 'https://api.insighthub.smartbear.com'
-      },
-      {
-        description: 'API key with 00000 in middle',
-        projectApiKey: 'key-00000-middle',
-        expectedEndpoint: 'https://api.bugsnag.com'
-      },
-      {
-        description: 'No project API key',
-        projectApiKey: undefined,
-        expectedEndpoint: 'https://api.bugsnag.com'
-      }
-    ];
+  describe('getEndpoint method', () => {
+    let client: InsightHubClient;
 
-    testCases.forEach(({ description, projectApiKey, expectedEndpoint }) => {
-      it(`should select correct endpoint for ${description}`, async () => {
-        // Import the mocked module to check calls
-        const { Configuration } = await import('../../../insight-hub/client/index.js');
-        const MockedConfiguration = vi.mocked(Configuration);
+    beforeEach(() => {
+      client = new InsightHubClient('test-token');
+    });
 
-        new InsightHubClient('test-token', projectApiKey);
+    describe('without custom endpoint', () => {
+      describe('with Hub API key (00000 prefix)', () => {
+        it('should return Hub domain for api subdomain', () => {
+          const result = client.getEndpoint('api', '00000hub-key');
+          expect(result).toBe('https://api.insighthub.smartbear.com');
+        });
 
-        expect(MockedConfiguration).toHaveBeenCalledWith(
-          expect.objectContaining({
-            basePath: expectedEndpoint
-          })
-        );
+        it('should return Hub domain for app subdomain', () => {
+          const result = client.getEndpoint('app', '00000test-key');
+          expect(result).toBe('https://app.insighthub.smartbear.com');
+        });
+
+        it('should return Hub domain for custom subdomain', () => {
+          const result = client.getEndpoint('custom', '00000key');
+          expect(result).toBe('https://custom.insighthub.smartbear.com');
+        });
+
+        it('should handle empty string after prefix', () => {
+          const result = client.getEndpoint('api', '00000');
+          expect(result).toBe('https://api.insighthub.smartbear.com');
+        });
+      });
+
+      describe('with regular API key (non-Hub)', () => {
+        it('should return Bugsnag domain for api subdomain', () => {
+          const result = client.getEndpoint('api', 'regular-key');
+          expect(result).toBe('https://api.bugsnag.com');
+        });
+
+        it('should return Bugsnag domain for app subdomain', () => {
+          const result = client.getEndpoint('app', 'abc123def');
+          expect(result).toBe('https://app.bugsnag.com');
+        });
+
+        it('should return Bugsnag domain for custom subdomain', () => {
+          const result = client.getEndpoint('custom', 'test-key-123');
+          expect(result).toBe('https://custom.bugsnag.com');
+        });
+
+        it('should handle API key with 00000 in middle', () => {
+          const result = client.getEndpoint('api', 'key-00000-middle');
+          expect(result).toBe('https://api.bugsnag.com');
+        });
+      });
+
+      describe('without API key', () => {
+        it('should return Bugsnag domain when API key is undefined', () => {
+          const result = client.getEndpoint('api', undefined);
+          expect(result).toBe('https://api.bugsnag.com');
+        });
+
+        it('should return Bugsnag domain when API key is empty string', () => {
+          const result = client.getEndpoint('api', '');
+          expect(result).toBe('https://api.bugsnag.com');
+        });
+
+        it('should return Bugsnag domain when API key is null', () => {
+          const result = client.getEndpoint('api', null as any);
+          expect(result).toBe('https://api.bugsnag.com');
+        });
+      });
+    });
+
+    describe('with custom endpoint', () => {
+      describe('Hub domain endpoints (always normalized)', () => {
+        it('should normalize to HTTPS subdomain for exact hub domain match', () => {
+          const result = client.getEndpoint('api', '00000key', 'https://api.insighthub.smartbear.com');
+          expect(result).toBe('https://api.insighthub.smartbear.com');
+        });
+
+        it('should normalize to HTTPS subdomain regardless of input protocol', () => {
+          const result = client.getEndpoint('api', '00000key', 'http://app.insighthub.smartbear.com');
+          expect(result).toBe('https://api.insighthub.smartbear.com');
+        });
+
+        it('should normalize to HTTPS subdomain regardless of input subdomain', () => {
+          const result = client.getEndpoint('app', '00000key', 'https://api.insighthub.smartbear.com');
+          expect(result).toBe('https://app.insighthub.smartbear.com');
+        });
+
+        it('should normalize hub domain with port', () => {
+          const result = client.getEndpoint('api', '00000key', 'https://custom.insighthub.smartbear.com:8080');
+          expect(result).toBe('https://api.insighthub.smartbear.com');
+        });
+
+        it('should normalize hub domain with path', () => {
+          const result = client.getEndpoint('api', '00000key', 'https://custom.insighthub.smartbear.com/path');
+          expect(result).toBe('https://api.insighthub.smartbear.com');
+        });
+
+        it('should normalize complex subdomains to standard format', () => {
+          const result = client.getEndpoint('api', '00000key', 'https://staging.app.insighthub.smartbear.com');
+          expect(result).toBe('https://api.insighthub.smartbear.com');
+        });
+      });
+
+      describe('Bugsnag domain endpoints (always normalized)', () => {
+        it('should normalize to HTTPS subdomain for exact bugsnag domain match', () => {
+          const result = client.getEndpoint('api', 'regular-key', 'https://api.bugsnag.com');
+          expect(result).toBe('https://api.bugsnag.com');
+        });
+
+        it('should normalize to HTTPS subdomain regardless of input protocol', () => {
+          const result = client.getEndpoint('api', 'regular-key', 'http://app.bugsnag.com');
+          expect(result).toBe('https://api.bugsnag.com');
+        });
+
+        it('should normalize bugsnag domain with port', () => {
+          const result = client.getEndpoint('app', 'regular-key', 'https://api.bugsnag.com:9000');
+          expect(result).toBe('https://app.bugsnag.com');
+        });
+
+        it('should normalize bugsnag domain with path', () => {
+          const result = client.getEndpoint('app', 'regular-key', 'https://api.bugsnag.com/v2');
+          expect(result).toBe('https://app.bugsnag.com');
+        });
+      });
+
+      describe('Custom domain endpoints (used as-is)', () => {
+        it('should return custom endpoint exactly as provided', () => {
+          const customEndpoint = 'https://custom.api.com';
+          const result = client.getEndpoint('api', '00000key', customEndpoint);
+          expect(result).toBe(customEndpoint);
+        });
+
+        it('should return custom endpoint as-is regardless of API key type', () => {
+          const customEndpoint = 'https://my-custom-domain.com/api';
+          const result = client.getEndpoint('api', 'regular-key', customEndpoint);
+          expect(result).toBe(customEndpoint);
+        });
+
+        it('should preserve HTTP protocol for custom domains', () => {
+          const customEndpoint = 'http://localhost:3000';
+          const result = client.getEndpoint('api', '00000key', customEndpoint);
+          expect(result).toBe(customEndpoint);
+        });
+
+        it('should preserve custom domain with ports and paths', () => {
+          const customEndpoint = 'https://192.168.1.100:8080/api/v1';
+          const result = client.getEndpoint('api', '00000key', customEndpoint);
+          expect(result).toBe(customEndpoint);
+        });
+
+        it('should preserve custom domain with query parameters', () => {
+          const customEndpoint = 'https://custom.domain.com/api?version=1';
+          const result = client.getEndpoint('api', '00000key', customEndpoint);
+          expect(result).toBe(customEndpoint);
+        });
+
+        it('should preserve custom domain with fragments', () => {
+          const customEndpoint = 'https://custom.domain.com/api#section';
+          const result = client.getEndpoint('api', '00000key', customEndpoint);
+          expect(result).toBe(customEndpoint);
+        });
+      });
+
+      describe('edge cases', () => {
+        it('should handle malformed custom endpoints gracefully', () => {
+          // This should throw due to invalid URL, which is expected behavior
+          expect(() => {
+            client.getEndpoint('api', '00000key', 'not-a-valid-url');
+          }).toThrow();
+        });
+
+        it('should preserve custom endpoints with userinfo', () => {
+          const customEndpoint = 'https://user:pass@custom.domain.com';
+          const result = client.getEndpoint('api', '00000key', customEndpoint);
+          expect(result).toBe(customEndpoint);
+        });
+
+        it('should normalize known domains even with userinfo', () => {
+          const result = client.getEndpoint('api', '00000key', 'https://user:pass@app.insighthub.smartbear.com');
+          expect(result).toBe('https://api.insighthub.smartbear.com');
+        });
+      });
+    });
+
+    describe('subdomain validation', () => {
+      it('should handle empty subdomain', () => {
+        const result = client.getEndpoint('', '00000key');
+        expect(result).toBe('https://.insighthub.smartbear.com');
+      });
+
+      it('should handle subdomain with special characters', () => {
+        const result = client.getEndpoint('test-api_v2', '00000key');
+        expect(result).toBe('https://test-api_v2.insighthub.smartbear.com');
+      });
+
+      it('should handle numeric subdomain', () => {
+        const result = client.getEndpoint('v1', 'regular-key');
+        expect(result).toBe('https://v1.bugsnag.com');
+      });
+
+      it('should handle very long subdomains', () => {
+        const longSubdomain = 'very-long-subdomain-name-with-many-characters';
+        const result = client.getEndpoint(longSubdomain, '00000key');
+        expect(result).toBe(`https://${longSubdomain}.insighthub.smartbear.com`);
       });
     });
   });
@@ -240,8 +398,8 @@ describe('InsightHubClient', () => {
       ];
 
       mockCache.get.mockReturnValueOnce(null) // No current projects
-                   .mockReturnValueOnce(null) // No cached projects
-                   .mockReturnValueOnce(null); // No cached organization
+        .mockReturnValueOnce(null) // No cached projects
+        .mockReturnValueOnce(null); // No cached organization
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [mockOrg] });
       mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
 
@@ -266,8 +424,8 @@ describe('InsightHubClient', () => {
       ];
 
       mockCache.get.mockReturnValueOnce(mockProjects)
-                   .mockReturnValueOnce(null)
-                   .mockReturnValueOnce(mockProjects);
+        .mockReturnValueOnce(null)
+        .mockReturnValueOnce(mockProjects);
       mockProjectAPI.listProjectEventFields.mockResolvedValue({ body: mockEventFields });
 
       await clientWithApiKey.initialize();
@@ -567,7 +725,7 @@ describe('InsightHubClient', () => {
         const mockEvent = { id: 'event-1', timestamp: '2023-01-01' };
 
         mockCache.get.mockReturnValueOnce(mockProject)
-                     .mockReturnValueOnce(mockOrg);
+          .mockReturnValueOnce(mockOrg);
         mockErrorAPI.viewErrorOnProject.mockResolvedValue({ body: mockError });
         mockErrorAPI.viewLatestEventOnError.mockResolvedValue({ body: mockEvent });
 

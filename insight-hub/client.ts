@@ -26,14 +26,14 @@ const EXCLUDED_EVENT_FIELDS = new Set([
   "search" // This is searches multiple fields and is more a convenience for humans, we're removing to avoid over-matching
 ]);
 
-  const PERMITTED_UPDATE_OPERATIONS = [
-    "override_severity",
-    "open",
-    "fix",
-    "ignore",
-    "discard",
-    "undiscard"
-  ] as const;
+const PERMITTED_UPDATE_OPERATIONS = [
+  "override_severity",
+  "open",
+  "fix",
+  "ignore",
+  "discard",
+  "undiscard"
+] as const;
 
 // Type definitions for tool arguments
 export interface ProjectArgs {
@@ -53,8 +53,12 @@ export class InsightHubClient implements Client {
   private cache: NodeCache;
   private projectApi: ProjectAPI;
   private projectApiKey?: string;
+  private apiEndpoint: string;
+  private appEndpoint: string;
 
   constructor(token: string, projectApiKey?: string, endpoint?: string) {
+    this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
+    this.appEndpoint = this.getEndpoint("app", projectApiKey, endpoint);
     const config = new Configuration({
       authToken: token,
       headers: {
@@ -63,7 +67,7 @@ export class InsightHubClient implements Client {
         "X-Bugsnag-API": "true",
         "X-Version": "2",
       },
-      basePath: endpoint || this.getHost(projectApiKey, "api"),
+      basePath: this.apiEndpoint,
     });
     this.currentUserApi = new CurrentUserAPI(config);
     this.errorsApi = new ErrorAPI(config);
@@ -86,14 +90,43 @@ export class InsightHubClient implements Client {
     }
   }
 
+  // If the endpoint is not provided, it will use the default API endpoint based on the project API key.
+  // if the project api key is not provided, the endpoint will be the default API endpoint.
+  // if the endpoint is provided, it will be used as is for custom domains, or normalized for known domains.
+  getEndpoint(subdomain: string, apiKey?: string, endpoint?: string,): string {
+    let subDomainEndpoint: string;
+    if (!endpoint) {
+      if (apiKey && apiKey.startsWith(HUB_PREFIX)) {
+        subDomainEndpoint = `https://${subdomain}.${HUB_DOMAIN}`;
+      } else {
+        subDomainEndpoint = `https://${subdomain}.${DEFAULT_DOMAIN}`;
+      }
+    } else {
+      // check if the endpoint matches either the HUB_DOMAIN or DEFAULT_DOMAIN
+      const url = new URL(endpoint);
+      if (url.hostname.endsWith(HUB_DOMAIN) || url.hostname.endsWith(DEFAULT_DOMAIN)) {
+        // For known domains (Hub or Bugsnag), always use HTTPS and standard format
+        if (url.hostname.endsWith(HUB_DOMAIN)) {
+          subDomainEndpoint = `https://${subdomain}.${HUB_DOMAIN}`;
+        } else {
+          subDomainEndpoint = `https://${subdomain}.${DEFAULT_DOMAIN}`;
+        }
+      } else {
+        // For custom domains, use the endpoint exactly as provided
+        subDomainEndpoint = endpoint;
+      }
+    }
+    return subDomainEndpoint;
+  }
+
   async getDashboardUrl(project: Project): Promise<string> {
-    return `${this.getHost(project.api_key, "app")}/${(await this.getOrganization()).slug}/${project.slug}`;
+    return `${this.appEndpoint}/${(await this.getOrganization()).slug}/${project.slug}`;
   }
 
   async getErrorUrl(project: Project, errorId: string): Promise<string> {
     return `${await this.getDashboardUrl(project)}/errors/${errorId}`;
   }
-  
+
   async getOrganization(): Promise<Organization> {
     let org = this.cache.get<Organization>(cacheKeys.ORG)!;
     if (!org) {
@@ -305,9 +338,9 @@ export class InsightHubClient implements Client {
             ])
           ],
           outputFormat: "JSON object containing: " +
-          " - error_details: Aggregated data about the error, including first and last seen occurrence" +
-          " - latest_event: Detailed information about the most recent occurrence of the error, including stacktrace, breadcrumbs, user and context" +
-          " - url: A link to the error in the Insight Hub dashboard - this should be shown to the user for them to perform further analysis",
+            " - error_details: Aggregated data about the error, including first and last seen occurrence" +
+            " - latest_event: Detailed information about the most recent occurrence of the error, including stacktrace, breadcrumbs, user and context" +
+            " - url: A link to the error in the Insight Hub dashboard - this should be shown to the user for them to perform further analysis",
           examples: [
             createExample(
               "Get details for a specific error",
@@ -343,7 +376,7 @@ export class InsightHubClient implements Client {
             url: await this.getErrorUrl(project, args.errorId),
           }
           return {
-            content: [{ type: "text", text: JSON.stringify(content) } ]
+            content: [{ type: "text", text: JSON.stringify(content) }]
           };
         } catch (e) {
           Bugsnag.notify(e as unknown as Error);
