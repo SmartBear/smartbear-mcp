@@ -7,7 +7,7 @@ import Bugsnag from "../common/bugsnag.js";
 import NodeCache from "node-cache";
 import { Organization, Project } from "./client/api/CurrentUser.js";
 import { EventField, ProjectAPI } from "./client/api/Project.js";
-import { FilterObject, FilterObjectSchema } from "./client/api/filters.js";
+import { FilterObjectSchema } from "./client/api/filters.js";
 import { toolDescriptionTemplate, createParameter, createExample } from "../common/templates.js";
 
 const HUB_PREFIX = "00000";
@@ -600,7 +600,7 @@ export class InsightHubClient implements Client {
       },
       async (_args, _extra) => {
         try {
-          let projectFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS);
+          const projectFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS);
           if (!projectFields) throw new Error("No event filters found in cache.");
 
           return {

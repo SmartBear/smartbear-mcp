@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InsightHubClient } from '../../../insight-hub/client.js';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from '../../../common/info.js';
-import { mock } from 'node:test';
 
 // Mock the dependencies
 const mockCurrentUserAPI = {
@@ -256,7 +255,6 @@ describe('InsightHubClient', () => {
 
     it('should initialize with project API key and set up event filters', async () => {
       const clientWithApiKey = new InsightHubClient('test-token', 'project-api-key');
-      const mockOrg = { id: 'org-1', name: 'Test Org' };
       const mockProjects = [
         { id: 'proj-1', name: 'Project 1', api_key: 'project-api-key' },
         { id: 'proj-2', name: 'Project 2', api_key: 'other-key' }
@@ -291,12 +289,10 @@ describe('InsightHubClient', () => {
     it('should throw error when project with API key not found', async () => {
       const clientWithApiKey = new InsightHubClient('test-token', 'non-existent-key');
       const mockOrg = { id: 'org-1', name: 'Test Org' };
-      const mockProjects = [
-        { id: 'proj-1', name: 'Project 1', api_key: 'other-key' }
-      ];
+      const mockProject = { id: 'proj-1', name: 'Project 1', api_key: 'other-key' };
 
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [mockOrg] });
-      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
+      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: [mockProject] });
 
       await expect(clientWithApiKey.initialize()).rejects.toThrow(
         'Unable to find project with API key non-existent-key in organization.'
