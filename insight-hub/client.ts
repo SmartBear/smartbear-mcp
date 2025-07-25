@@ -18,7 +18,7 @@ const cacheKeys = {
   ORG: "insight_hub_org",
   PROJECTS: "insight_hub_projects",
   CURRENT_PROJECT: "insight_hub_current_project",
-  PROJECT_EVENT_FILTERS: "insight_hub_project_event_filters",
+  CURRENT_PROJECT_EVENT_FILTERS: "insight_hub_current_project_event_filters",
 }
 
 // Exclude certain event fields from the project event filters to improve agent usage
@@ -73,67 +73,9 @@ export class InsightHubClient implements Client {
   }
 
   async initialize(): Promise<void> {
-    const orgs = await this.listOrgs();
-    if (!orgs || orgs.length === 0) {
-      throw new Error("No organizations found for the current user.");
-    }
-    // We should only have one org
-    this.cache.set(cacheKeys.ORG, orgs[0]);
-    const projects = await this.listProjects(orgs[0].id);
-    this.cache.set(cacheKeys.PROJECTS, projects);
-    if (this.projectApiKey) {
-      const project = projects.find((project) => project.api_key === this.projectApiKey)
-      if (!project) {
-        throw new Error(`Project with API key ${this.projectApiKey} not found in organization ${orgs[0].name}.`);
-      }
-      this.cache.set(cacheKeys.CURRENT_PROJECT, project);
-      let projectFields = await this.listProjectEventFields(project.id);
-      if (!projectFields || projectFields.length === 0) {
-        throw new Error(`No event fields found for project ${project.name}.`);
-      } else {
-        projectFields = projectFields.filter(field => !EXCLUDED_EVENT_FIELDS.has(field.display_id));
-      }
-      this.cache.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFields);
-    }
-  }
-
-  async listOrgs(): Promise<any> {
-    const response = await this.currentUserApi.listUserOrganizations();
-    return response.body || [];
-  }
-
-  async listProjects(orgId: string, options?: any): Promise<Project[]> {
-    options = {
-      ...options,
-      paginate: true
-    };
-    const response = await this.currentUserApi.getOrganizationProjects(orgId, options);
-    return response.body || [];
-  }
-
-  async listProjectEventFields(projectId: string) {
-    const response = await this.projectApi.listProjectEventFields(projectId);
-    return response.body || [];
-  }
-
-  async listProjectErrors(projectId: string, filters?: FilterObject) {
-    const response = await this.errorsApi.listProjectErrors(projectId, { filters });
-    return response.body || [];
-  }
-
-  async getErrorDetails(projectId: string, errorId: string) {
-    const response = await this.errorsApi.viewErrorOnProject(projectId, errorId);
-    return response.body;
-  }
-
-  async getProjectEvent(projectId: string, eventId: string) {
-    const response = await this.errorsApi.viewEventById(projectId, eventId);
-    return response.body;
-  }
-
-  async getLatestErrorEvent(errorId: string) {
-    const response = await this.errorsApi.viewLatestEventOnError(errorId);
-    return response.body;
+    // Trigger caching of org and projects
+    await this.getProjects();
+    await this.getCurrentProject();
   }
 
   getHost(apiKey: string | undefined, subdomain: string): string {
@@ -144,16 +86,26 @@ export class InsightHubClient implements Client {
     }
   }
 
-  getDashboardUrl(project: Project): string {
-    return `${this.getHost(project.api_key, "app")}/${this.getOrganization().slug}/${project.slug}`;
+  async getDashboardUrl(project: Project): Promise<string> {
+    return `${this.getHost(project.api_key, "app")}/${(await this.getOrganization()).slug}/${project.slug}`;
   }
 
-  getErrorUrl(project: Project, errorId: string): string {
-    return `${this.getDashboardUrl(project)}/errors/${errorId}`;
+  async getErrorUrl(project: Project, errorId: string): Promise<string> {
+    return `${await this.getDashboardUrl(project)}/errors/${errorId}`;
   }
   
-  getOrganization(): Organization {
-    return this.cache.get<Organization>(cacheKeys.ORG)!;
+  async getOrganization(): Promise<Organization> {
+    let org = this.cache.get<Organization>(cacheKeys.ORG)!;
+    if (!org) {
+      const response = await this.currentUserApi.listUserOrganizations();
+      const orgs = response.body || [];
+      if (!orgs || orgs.length === 0) {
+        throw new Error("No organizations found for the current user.");
+      }
+      org = orgs[0];
+      this.cache.set(cacheKeys.ORG, org);
+    }
+    return org;
   }
 
   // This method retrieves all projects for the organization stored in the cache.
@@ -163,28 +115,51 @@ export class InsightHubClient implements Client {
   async getProjects(): Promise<Project[]> {
     let projects = this.cache.get<Project[]>(cacheKeys.PROJECTS);
     if (!projects) {
-      projects = await this.listProjects(this.getOrganization().id);
+      const org = await this.getOrganization();
+      const options = {
+        paginate: true
+      };
+      const response = await this.currentUserApi.getOrganizationProjects(org.id, options);
+      projects = response.body || [];
       this.cache.set(cacheKeys.PROJECTS, projects);
     }
     return projects;
   }
 
-  getCurrentProject(): Project | null {
-    return this.cache.get<Project>(cacheKeys.CURRENT_PROJECT) || null;
-  }
-
-  getProject(projectId: string): Project | null {
-    const projects = this.cache.get<Project[]>(cacheKeys.PROJECTS);
-    if (!projects) {
-      return null;
-    }
-    return projects.find(project => project.id === projectId) || null;
-  }
-
-  async getEventById(eventId: string) {
+  async getProject(projectId: string): Promise<Project | null> {
     const projects = await this.getProjects();
-    const eventDetails = await Promise.all(projects.map((p: any) => this.getProjectEvent(p.id, eventId).catch(_e => null)));
-    return eventDetails.find(event => !!event);
+    return projects.find((p) => p.id === projectId) || null;
+  }
+
+  async getCurrentProject(): Promise<Project | null> {
+    let project = this.cache.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
+    if (!project && this.projectApiKey) {
+      const projects = await this.getProjects();
+      project = projects.find((p) => p.api_key === this.projectApiKey) ?? null;
+      if (!project) {
+        throw new Error(`Unable to find project with API key ${this.projectApiKey} in organization.`);
+      }
+      this.cache.set(cacheKeys.CURRENT_PROJECT, project);
+      if (project) {
+        this.cache.set(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS, await this.getProjectEventFilters(project));
+      }
+    }
+    return project;
+  }
+
+  async getProjectEventFilters(project: Project): Promise<EventField[]> {
+    let filtersResponse = (await this.projectApi.listProjectEventFields(project.id)).body;
+    if (!filtersResponse || filtersResponse.length === 0) {
+      throw new Error(`No event fields found for project ${project.name}.`);
+    }
+    filtersResponse = filtersResponse.filter(field => !EXCLUDED_EVENT_FIELDS.has(field.display_id));
+    return filtersResponse;
+  }
+
+  async getEvent(eventId: string, projectId?: string): Promise<any> {
+    const projectIds = projectId ? [projectId] : (await this.getProjects()).map((p) => p.id);
+    const projectEvents = await Promise.all(projectIds.map((projectId: string) => this.errorsApi.viewEventById(projectId, eventId).catch(_e => null)));
+    return projectEvents.find(event => event && !!event.body)?.body || null;
   }
 
   async updateError(projectId: string, errorId: string, operation: string, options?: any): Promise<boolean> {
@@ -195,16 +170,20 @@ export class InsightHubClient implements Client {
     const response = await this.errorsApi.updateErrorOnProject(projectId, errorId, errorUpdateRequest);
     return response.status === 200 || response.status === 204;
   }
-  
-  private getInputProject(projectId?: unknown | string): Project {
+
+  private async getInputProject(projectId?: unknown | string): Promise<Project> {
     if (typeof projectId === 'string') {
-      const maybeProject = this.getProject(projectId);
+      const maybeProject = await this.getProject(projectId);
       if (!maybeProject) {
         throw new Error(`Project with ID ${projectId} not found.`);
       }
       return maybeProject!;
     } else {
-      return this.getCurrentProject()!;
+      const currentProject = await this.getCurrentProject();
+      if (!currentProject) {
+        throw new Error('No current project found. Please provide a projectId or configure a project API key.');
+      }
+      return currentProject;
     }
   }
 
@@ -352,16 +331,16 @@ export class InsightHubClient implements Client {
       },
       async (args, _extra) => {
         try {
-          const project: Project = this.getInputProject(args.projectId);
+          const project = await this.getInputProject(args.projectId);
           if (!args.errorId) throw new Error("Both projectId and errorId arguments are required");
-          const errorDetails = await this.getErrorDetails(project.id, args.errorId);
+          const errorDetails = (await this.errorsApi.viewErrorOnProject(project.id, args.errorId)).body;
           if (!errorDetails) {
             throw new Error(`Error with ID ${args.errorId} not found in project ${project.id}.`);
           }
           const content = {
             error_details: errorDetails,
-            latest_event: await this.getLatestErrorEvent(args.errorId),
-            url: this.getErrorUrl(project, args.errorId),
+            latest_event: (await this.errorsApi.viewLatestEventOnError(args.errorId)).body,
+            url: await this.getErrorUrl(project, args.errorId),
           }
           return {
             content: [{ type: "text", text: JSON.stringify(content) } ]
@@ -415,7 +394,7 @@ export class InsightHubClient implements Client {
       async (args, _extra) => {
         try {
           if (!args.errorId) throw new Error("errorId argument is required");
-          const response = await this.getLatestErrorEvent(args.errorId);
+          const response = (await this.errorsApi.viewLatestEventOnError(args.errorId)).body;
           return {
             content: [{ type: "text", text: JSON.stringify(response) }],
           };
@@ -485,7 +464,7 @@ export class InsightHubClient implements Client {
             throw new Error("Project with the specified slug not found.");
           }
 
-          const response = await this.getProjectEvent(projectId, eventId);
+          const response = await this.getEvent(eventId, projectId);
           return {
             content: [{ type: "text", text: JSON.stringify(response) }],
           };
@@ -564,10 +543,10 @@ export class InsightHubClient implements Client {
       },
       async (args, _extra) => {
         try {
-          const project: Project = this.getInputProject(args.projectId);
+          const project = await this.getInputProject(args.projectId);
 
           // Optionally, validate filter keys against cached event fields
-          const eventFields = this.cache.get<EventField[]>(cacheKeys.PROJECT_EVENT_FILTERS) || [];
+          const eventFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS) || [];
           if (args.filters) {
             const validKeys = new Set(eventFields.map(f => f.display_id));
             for (const key of Object.keys(args.filters)) {
@@ -576,7 +555,9 @@ export class InsightHubClient implements Client {
               }
             }
           }
-          const errors = await this.listProjectErrors(project.id, args.filters);
+
+          const response = await this.errorsApi.listProjectErrors(project.id, { filters: args.filters });
+          const errors = response.body || [];
           const result = {
             data: errors,
             count: errors.length,
@@ -619,10 +600,11 @@ export class InsightHubClient implements Client {
       },
       async (_args, _extra) => {
         try {
-          const eventFields = this.cache.get<EventField[]>(cacheKeys.PROJECT_EVENT_FILTERS);
-          if (!eventFields) throw new Error("No event filters found in cache.");
+          let projectFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS);
+          if (!projectFields) throw new Error("No event filters found in cache.");
+
           return {
-            content: [{ type: "text", text: JSON.stringify(eventFields) }],
+            content: [{ type: "text", text: JSON.stringify(projectFields) }],
           };
         } catch (e) {
           Bugsnag.notify(e as unknown as Error);
@@ -700,7 +682,7 @@ export class InsightHubClient implements Client {
       async (args, _extra) => {
         const { errorId, operation } = args;
         try {
-          const project: Project = this.getInputProject(args.projectId);
+          const project = await this.getInputProject(args.projectId);
 
           let severity = undefined;
           if (operation === 'override_severity') {
@@ -746,7 +728,7 @@ export class InsightHubClient implements Client {
           return {
             contents: [{
               uri: uri.href,
-              text: JSON.stringify(await this.getEventById(id as string))
+              text: JSON.stringify(await this.getEvent(id as string))
             }]
           }
         } catch (e) {

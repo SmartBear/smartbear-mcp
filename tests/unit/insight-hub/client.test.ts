@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InsightHubClient } from '../../../insight-hub/client.js';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from '../../../common/info.js';
+import { mock } from 'node:test';
 
 // Mock the dependencies
 const mockCurrentUserAPI = {
@@ -239,6 +240,9 @@ describe('InsightHubClient', () => {
         { id: 'proj-2', name: 'Project 2', api_key: 'key2' }
       ];
 
+      mockCache.get.mockReturnValueOnce(null) // No current projects
+                   .mockReturnValueOnce(null) // No cached projects
+                   .mockReturnValueOnce(null); // No cached organization
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [mockOrg] });
       mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
 
@@ -263,8 +267,9 @@ describe('InsightHubClient', () => {
         { display_id: 'search', custom: false } // This should be filtered out
       ];
 
-      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [mockOrg] });
-      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
+      mockCache.get.mockReturnValueOnce(mockProjects)
+                   .mockReturnValueOnce(null)
+                   .mockReturnValueOnce(mockProjects);
       mockProjectAPI.listProjectEventFields.mockResolvedValue({ body: mockEventFields });
 
       await clientWithApiKey.initialize();
@@ -272,9 +277,9 @@ describe('InsightHubClient', () => {
       expect(mockCache.set).toHaveBeenCalledWith('insight_hub_current_project', mockProjects[0]);
       expect(mockProjectAPI.listProjectEventFields).toHaveBeenCalledWith('proj-1');
 
-      // Verify that 'search' field is filtered out
+      // // Verify that 'search' field is filtered out
       const filteredFields = mockEventFields.filter(field => field.display_id !== 'search');
-      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_project_event_filters', filteredFields);
+      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_current_project_event_filters', filteredFields);
     });
 
     it('should throw error when no organizations found', async () => {
@@ -294,7 +299,7 @@ describe('InsightHubClient', () => {
       mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
 
       await expect(clientWithApiKey.initialize()).rejects.toThrow(
-        'Project with API key non-existent-key not found in organization Test Org.'
+        'Unable to find project with API key non-existent-key in organization.'
       );
     });
 
@@ -316,44 +321,6 @@ describe('InsightHubClient', () => {
   });
 
   describe('API methods', () => {
-    describe('listOrgs', () => {
-      it('should call currentUserApi.listUserOrganizations', async () => {
-        const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
-        mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: mockOrgs });
-
-        const result = await client.listOrgs();
-
-        expect(mockCurrentUserAPI.listUserOrganizations).toHaveBeenCalledOnce();
-        expect(result).toEqual(mockOrgs);
-      });
-    });
-
-    describe('listProjects', () => {
-      it('should call currentUserApi.getOrganizationProjects with pagination', async () => {
-        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
-        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
-
-        const result = await client.listProjects('org-1', { custom: 'option' });
-
-        expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', {
-          custom: 'option',
-          paginate: true
-        });
-        expect(result).toEqual(mockProjects);
-      });
-
-      it('should default to paginate: true when no options provided', async () => {
-        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
-        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
-
-        await client.listProjects('org-1');
-
-        expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', {
-          paginate: true
-        });
-      });
-    });
-
     describe('getProjects', () => {
       it('should return cached projects when available', async () => {
         const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
@@ -381,12 +348,6 @@ describe('InsightHubClient', () => {
         expect(result).toEqual(mockProjects);
       });
 
-      it('should throw error when no organization in cache', async () => {
-        mockCache.get.mockReturnValue(null);
-
-        await expect(client.getProjects()).rejects.toThrow('No organization found in cache.');
-      });
-
       it('should return empty array when no projects found', async () => {
         const mockOrg = { id: 'org-1', name: 'Test Org' };
 
@@ -399,42 +360,6 @@ describe('InsightHubClient', () => {
       });
     });
 
-    describe('getErrorDetails', () => {
-      it('should call errorsApi.viewErrorOnProject', async () => {
-        const mockError = { id: 'error-1', message: 'Test error' };
-        mockErrorAPI.viewErrorOnProject.mockResolvedValue({ body: mockError });
-
-        const result = await client.getErrorDetails('proj-1', 'error-1');
-
-        expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith('proj-1', 'error-1');
-        expect(result).toEqual(mockError);
-      });
-    });
-
-    describe('getLatestErrorEvent', () => {
-      it('should call errorsApi.viewLatestEventOnError', async () => {
-        const mockEvent = { id: 'event-1', timestamp: '2023-01-01' };
-        mockErrorAPI.viewLatestEventOnError.mockResolvedValue({ body: mockEvent });
-
-        const result = await client.getLatestErrorEvent('error-1');
-
-        expect(mockErrorAPI.viewLatestEventOnError).toHaveBeenCalledWith('error-1');
-        expect(result).toEqual(mockEvent);
-      });
-    });
-
-    describe('getProjectEvent', () => {
-      it('should call errorsApi.viewEventById', async () => {
-        const mockEvent = { id: 'event-1', project_id: 'proj-1' };
-        mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
-
-        const result = await client.getProjectEvent('proj-1', 'event-1');
-
-        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-1', 'event-1');
-        expect(result).toEqual(mockEvent);
-      });
-    });
-
     describe('getEventById', () => {
       it('should find event across multiple projects', async () => {
         const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
@@ -444,20 +369,21 @@ describe('InsightHubClient', () => {
         ];
         const mockEvent = { id: 'event-1', project_id: 'proj-2' };
 
-        mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: mockOrgs });
+        mockCache.get.mockReturnValueOnce(mockProjects);
+        mockCache.get.mockReturnValueOnce(mockOrgs);
         mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
         mockErrorAPI.viewEventById
           .mockRejectedValueOnce(new Error('Not found')) // proj-1
           .mockResolvedValueOnce({ body: mockEvent }); // proj-2
 
-        const result = await client.getEventById('event-1');
+        const result = await client.getEvent('event-1');
 
         expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-1', 'event-1');
         expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith('proj-2', 'event-1');
         expect(result).toEqual(mockEvent);
       });
 
-      it('should return undefined when event not found in any project', async () => {
+      it('should return null when event not found in any project', async () => {
         const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
         const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
 
@@ -465,44 +391,9 @@ describe('InsightHubClient', () => {
         mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
         mockErrorAPI.viewEventById.mockRejectedValue(new Error('Not found'));
 
-        const result = await client.getEventById('event-1');
+        const result = await client.getEvent('event-1');
 
-        expect(result).toBeUndefined();
-      });
-    });
-
-    describe('listProjectErrors', () => {
-      it('should call errorsApi.listProjectErrors with filters', async () => {
-        const mockErrors = [{ id: 'error-1', message: 'Test error' }];
-        const filters = { 'error.status': [{ type: 'eq' as const, value: 'open' }] };
-        mockErrorAPI.listProjectErrors.mockResolvedValue({ body: mockErrors });
-
-        const result = await client.listProjectErrors('proj-1', filters);
-
-        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters });
-        expect(result).toEqual(mockErrors);
-      });
-
-      it('should call errorsApi.listProjectErrors without filters', async () => {
-        const mockErrors = [{ id: 'error-1', message: 'Test error' }];
-        mockErrorAPI.listProjectErrors.mockResolvedValue({ body: mockErrors });
-
-        const result = await client.listProjectErrors('proj-1');
-
-        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters: undefined });
-        expect(result).toEqual(mockErrors);
-      });
-    });
-
-    describe('listProjectEventFields', () => {
-      it('should call projectApi.listProjectEventFields', async () => {
-        const mockFields = [{ display_id: 'user.email', custom: false }];
-        mockProjectAPI.listProjectEventFields.mockResolvedValue({ body: mockFields });
-
-        const result = await client.listProjectEventFields('proj-1');
-
-        expect(mockProjectAPI.listProjectEventFields).toHaveBeenCalledWith('proj-1');
-        expect(result).toEqual(mockFields);
+        expect(result).toBeNull();
       });
     });
   });
@@ -674,11 +565,15 @@ describe('InsightHubClient', () => {
 
     describe('get_insight_hub_error tool handler', () => {
       it('should get error details with project from cache', async () => {
-        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockProject = { id: 'proj-1', name: 'Project 1', slug: 'my-project' };
         const mockError = { id: 'error-1', message: 'Test error' };
+        const mockOrg = { id: 'org-1', name: 'Test Org', slug: 'test-org' };
+        const mockEvent = { id: 'event-1', timestamp: '2023-01-01' };
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockReturnValueOnce(mockProject)
+                     .mockReturnValueOnce(mockOrg);
         mockErrorAPI.viewErrorOnProject.mockResolvedValue({ body: mockError });
+        mockErrorAPI.viewLatestEventOnError.mockResolvedValue({ body: mockEvent });
 
         client.registerTools(mockServer);
         const toolHandler = mockServer.registerTool.mock.calls
@@ -687,7 +582,11 @@ describe('InsightHubClient', () => {
         const result = await toolHandler({ errorId: 'error-1' });
 
         expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith('proj-1', 'error-1');
-        expect(result.content[0].text).toBe(JSON.stringify(mockError));
+        expect(result.content[0].text).toBe(JSON.stringify({
+          error_details: mockError,
+          latest_event: mockEvent,
+          url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1`
+        }));
       });
 
       it('should throw error when required arguments missing', async () => {
@@ -772,18 +671,6 @@ describe('InsightHubClient', () => {
           link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123' // Missing event_id
         })).rejects.toThrow('Both projectSlug and eventId must be present in the link');
       });
-
-      it('should throw error when no projects found in cache', async () => {
-        mockCache.get.mockReturnValue(null);
-
-        client.registerTools(mockServer);
-        const toolHandler = mockServer.registerTool.mock.calls
-          .find((call: any) => call[0] === 'get_insight_hub_event_details')[2];
-
-        await expect(toolHandler({
-          link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123?event_id=event-1'
-        })).rejects.toThrow('No projects found in cache.');
-      });
     });
 
     describe('list_insight_hub_project_errors tool handler', () => {
@@ -838,7 +725,7 @@ describe('InsightHubClient', () => {
         const toolHandler = mockServer.registerTool.mock.calls
           .find((call: any) => call[0] === 'list_insight_hub_project_errors')[2];
 
-        await expect(toolHandler({})).rejects.toThrow('projectId argument is required');
+        await expect(toolHandler({})).rejects.toThrow('No current project found. Please provide a projectId or configure a project API key.');
       });
     });
 
@@ -906,7 +793,7 @@ describe('InsightHubClient', () => {
         const Bugsnag = (await import('../../../common/bugsnag.js')).default;
         const mockError = new Error('Resource error');
 
-        mockCurrentUserAPI.listUserOrganizations.mockRejectedValue(mockError);
+        mockCache.get.mockRejectedValue(mockError);
 
         client.registerResources(mockServer);
         const resourceHandler = mockServer.resource.mock.calls[0][2];
@@ -933,11 +820,9 @@ describe('InsightHubClient', () => {
     describe('insight_hub_event resource handler', () => {
       it('should find event by ID across projects', async () => {
         const mockEvent = { id: 'event-1', project_id: 'proj-1' };
-        const mockOrgs = [{ id: 'org-1', name: 'Test Org' }];
         const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
 
-        mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: mockOrgs });
-        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
+        mockCache.get.mockReturnValueOnce(mockProjects);
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
         client.registerResources(mockServer);
