@@ -12,7 +12,8 @@ const mockErrorAPI = {
   viewErrorOnProject: vi.fn(),
   viewLatestEventOnError: vi.fn(),
   viewEventById: vi.fn(),
-  listProjectErrors: vi.fn()
+  listProjectErrors: vi.fn(),
+  updateErrorOnProject: vi.fn()
 };
 
 const mockProjectAPI = {
@@ -589,6 +590,7 @@ describe('InsightHubClient', () => {
       expect(registeredTools).toContain('get_insight_hub_event_details');
       expect(registeredTools).toContain('list_insight_hub_project_errors');
       expect(registeredTools).toContain('get_project_event_filters');
+      expect(registeredTools).toContain('update_error');
     });
   });
 
@@ -908,6 +910,229 @@ describe('InsightHubClient', () => {
           .find((call: any) => call[0] === 'get_project_event_filters')[2];
 
         await expect(toolHandler({})).rejects.toThrow('No event filters found in cache.');
+      });
+    });
+
+    describe('update_error tool handler', () => {
+      it('should update error successfully with project from cache', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')[2];
+
+        const result = await toolHandler({
+          errorId: 'error-1',
+          operation: 'fix'
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          'proj-1',
+          'error-1',
+          { operation: 'fix' }
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
+
+      it('should update error successfully with explicit project ID', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockProjects = [mockProject];
+
+        mockCache.get.mockReturnValue(mockProjects);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 204 });
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')[2];
+
+        const result = await toolHandler({
+          projectId: 'proj-1',
+          errorId: 'error-1',
+          operation: 'ignore'
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          'proj-1',
+          'error-1',
+          { operation: 'ignore' }
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
+
+      it('should handle all permitted operations', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        // Test all operations except override_severity which requires special elicitInput handling
+        const operations = ['open', 'fix', 'ignore', 'discard', 'undiscard'];
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')[2];
+
+        for (const operation of operations) {
+          await toolHandler({
+            errorId: 'error-1',
+            operation: operation as any
+          });
+
+          expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+            'proj-1',
+            'error-1',
+            { operation, severity: undefined }
+          );
+        }
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledTimes(operations.length);
+      });
+
+      it('should handle override_severity operation with elicitInput', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockServerWithElicitInput = {
+          registerTool: vi.fn(),
+          server: {
+            elicitInput: vi.fn().mockResolvedValue({
+              action: 'accept',
+              content: { severity: 'warning' }
+            })
+          }
+        } as any;
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(mockServerWithElicitInput);
+        const toolHandler = mockServerWithElicitInput.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')![2];
+
+        const result = await toolHandler({
+          errorId: 'error-1',
+          operation: 'override_severity'
+        });
+
+        expect(mockServerWithElicitInput.server.elicitInput).toHaveBeenCalledWith({
+          message: "Please provide the new severity for the error (e.g. 'info', 'warning', 'error', 'critical')",
+          requestedSchema: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "string",
+                enum: ['info', 'warning', 'error'],
+                description: "The new severity level for the error"
+              }
+            }
+          },
+          required: ["severity"]
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          'proj-1',
+          'error-1',
+          { operation: 'override_severity', severity: 'warning' }
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
+
+      it('should handle override_severity operation when elicitInput is rejected', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockServerWithElicitInput = {
+          registerTool: vi.fn(),
+          server: {
+            elicitInput: vi.fn().mockResolvedValue({
+              action: 'reject'
+            })
+          }
+        } as any;
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(mockServerWithElicitInput);
+        const toolHandler = mockServerWithElicitInput.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')![2];
+
+        const result = await toolHandler({
+          errorId: 'error-1',
+          operation: 'override_severity'
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          'proj-1',
+          'error-1',
+          { operation: 'override_severity', severity: undefined }
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
+
+      it('should return false when API returns non-success status', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 400 });
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')[2];
+
+        const result = await toolHandler({
+          errorId: 'error-1',
+          operation: 'fix'
+        });
+
+        expect(result.content[0].text).toBe(JSON.stringify({ success: false }));
+      });
+
+      it('should throw error when no project found', async () => {
+        mockCache.get.mockReturnValue(null);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')[2];
+
+        await expect(toolHandler({
+          errorId: 'error-1',
+          operation: 'fix'
+        })).rejects.toThrow('No current project found. Please provide a projectId or configure a project API key.');
+      });
+
+      it('should throw error when project ID not found', async () => {
+        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+
+        mockCache.get.mockReturnValue(mockProjects);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')[2];
+
+        await expect(toolHandler({
+          projectId: 'non-existent-project',
+          errorId: 'error-1',
+          operation: 'fix'
+        })).rejects.toThrow('Project with ID non-existent-project not found.');
+      });
+
+      it('should notify Bugsnag when API call fails', async () => {
+        const Bugsnag = (await import('../../../common/bugsnag.js')).default;
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockError = new Error('API error');
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockRejectedValue(mockError);
+
+        client.registerTools(mockServer);
+        const toolHandler = mockServer.registerTool.mock.calls
+          .find((call: any) => call[0] === 'update_error')[2];
+
+        await expect(toolHandler({
+          errorId: 'error-1',
+          operation: 'fix'
+        })).rejects.toThrow('API error');
+
+        expect(Bugsnag.notify).toHaveBeenCalledWith(mockError);
       });
     });
 
