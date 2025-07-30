@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/smartbear-smartbear-mcp-badge.png)](https://mseep.ai/app/smartbear-smartbear-mcp)
+
 <div align="center">
   <a href="https://www.smartbear.com">
     <picture>
