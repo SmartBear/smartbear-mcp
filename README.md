@@ -52,7 +52,7 @@ See individual guides for suggested prompts and supported tools and resources:
 
 The server is started with the API key or auth token that you use with your product(s). They are optional and can be removed from your configuration if you aren't using the product.
 
-### VS Code using NPM 
+### VS Code with Co-Pilot
 
 The SmartBear MCP server is distributed as an NPM package [`@smartbear/mcp`](https://www.npmjs.com/package/@smartbear/mcp), making it easy to integrate into your development workflow. You can add it to your VS Code environment in three convenient ways:
 
@@ -113,11 +113,42 @@ For the quickest setup, we recommend using the Direct NPM installation or VS Cod
 ```
 </details>
 
-### VS Code using source code
+### Claude Desktop
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "smartbear": {
+      "command": "node",
+      "args": ["<PATH_TO_SMARTBEAR_MCP>/dist/index.js"],
+      "env": {
+        "INSIGHT_HUB_AUTH_TOKEN": "your_token_here",
+        "REFLECT_API_TOKEN": "your_reflect_token",
+        "API_HUB_API_KEY": "your_api_hub_key"
+      }
+    }
+  }
+}
+```
+
+### Testing Locally
+
+Test your installation using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+
+```bash
+INSIGHT_HUB_AUTH_TOKEN="your_token" REFLECT_API_TOKEN="your_reflect_token" API_HUB_API_KEY="your_api_hub_key" npx @modelcontextprotocol/inspector npx @smartbear/mcp@latest
+
+```
+
+This npx terminal command opens a web interface where you can test tools and resources before integrating with your AI assistant.
+
+## Local Development with VS Code
 
 For developers who want to contribute to the SmartBear MCP server, customize its functionality, or work with the latest development features, you can build and run the server directly from source code. This approach gives you full control over the implementation and allows you to make modifications as needed.
 
-To set up the MCP server from source:
+<details>
+    <summary><strong>📋 Click to expand step-by-step setup guide</strong></summary>
 
 1. **Clone the repository:**
    ```bash
@@ -137,8 +168,6 @@ To set up the MCP server from source:
 
 4. **Add server to VSCode environment** updating `.vscode/mcp.json` file in your project to point to your local build:
 
-    <details>
-    <summary><strong>📋 Click to expand configuration</strong></summary>
 
     ```json
     {
@@ -184,36 +213,6 @@ To set up the MCP server from source:
     }
     ```
     </details>
-
-### Claude Desktop
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "smartbear": {
-      "command": "node",
-      "args": ["<PATH_TO_SMARTBEAR_MCP>/dist/index.js"],
-      "env": {
-        "INSIGHT_HUB_AUTH_TOKEN": "your_token_here",
-        "REFLECT_API_TOKEN": "your_reflect_token",
-        "API_HUB_API_KEY": "your_api_hub_key"
-      }
-    }
-  }
-}
-```
-
-## Testing Locally
-
-Test your installation using the MCP Inspector:
-
-```bash
-# Install and run MCP Inspector
-npx @modelcontextprotocol/inspector node dist/index.js
-```
-
-This opens a web interface where you can test tools and resources before integrating with your AI assistant.
 
 ## Documentation
 
