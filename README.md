@@ -120,8 +120,11 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "smartbear": {
-      "command": "node",
-      "args": ["<PATH_TO_SMARTBEAR_MCP>/dist/index.js"],
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smartbear/mcp@latest"
+      ],
       "env": {
         "INSIGHT_HUB_AUTH_TOKEN": "your_token_here",
         "REFLECT_API_TOKEN": "your_reflect_token",
