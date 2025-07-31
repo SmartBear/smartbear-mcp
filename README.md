@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server that provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [Insight Hub](https://www.smartbear.com/insight-hub), [Reflect](https://reflect.run), and [API Hub](https://www.smartbear.com/api-hub).
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [Insight Hub](https://www.smartbear.com/insight-hub), [Reflect](https://reflect.run), and [API Hub](https://www.smartbear.com/api-hub).
 
 ## What is MCP?
 
@@ -41,7 +41,9 @@ See individual guides for suggested prompts and supported tools and resources:
 
 ## Installation
 
-The MCP server is distributed as an NPM package [`@smartbear/mcp`](https://www.npmjs.com/package/@smartbear/mcp), making it easy to integrate into your development workflow. The server is started with the API key or auth token that you use with your SmartBear product(s). They are optional and can be removed from your configuration if you aren't using the product.
+The MCP server is distributed as an npm package [`@smartbear/mcp`](https://www.npmjs.com/package/@smartbear/mcp), making it easy to integrate into your development workflow.
+
+The server is started with the API key or auth token that you use with your SmartBear product(s). They are optional and can be removed from your configuration if you aren't using the product. For Insight Hub, if you provide a project API key it will narrow down all searches to a single project in your Insight Hub dashboard. Leave this field blank if you wish to interact across multiple projects at a time.
 
 ### VS Code with Copilot
 
@@ -114,7 +116,8 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "@smartbear/mcp@latest"
       ],
       "env": {
-        "INSIGHT_HUB_AUTH_TOKEN": "your_token_here",
+        "INSIGHT_HUB_AUTH_TOKEN": "your_personal_auth_token",
+        "INSIGHT_HUB_PROJECT_API_KEY": "your_project_api_key",
         "REFLECT_API_TOKEN": "your_reflect_token",
         "API_HUB_API_KEY": "your_api_hub_key"
       }
