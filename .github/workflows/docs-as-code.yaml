@@ -1,0 +1,112 @@
+name: Publish Portal Content
+
+on:
+  push:
+    branches:
+      - main
+      - 'tom/docs-as-code'
+    # paths:
+    #   - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      log_level:
+        description: 'Log level: 1=DEBUG, 2=INFO, 3=WARNING, 4=ERROR'
+        required: false
+        default: '2' # Set the default log level to INFO 
+
+permissions: read-all
+
+env:
+  SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
+  LOG_LEVEL: ${{ github.event.inputs.log_level }}
+
+jobs:
+  spell-check:
+    runs-on: ubuntu-latest
+    environment: Production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install cspell
+        run: npm install -g cspell
+
+      - name: Run cspell
+        run: cspell --config ./.cspell.json "./docs/**/*.md"
+
+  validate-manifests:
+    runs-on: ubuntu-latest
+    environment: Production
+    needs: spell-check
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install AJV CLI
+        run: npm install -g ajv-cli
+
+      - name: Validate manifests
+        run: |
+          . ./docs/scripts/utilities.sh
+          for product in ./docs/products/*; do
+            if [[ -d "$product" ]]; then
+              product_name=${product#./docs/products/}
+              manifest="./docs/products/$product_name/manifest.json"
+              if [[ -f "$manifest" ]]; then
+                # Further actions...
+                log_message $INFO "Validating manifest in product: $product_name"
+                log_message $DEBUG "Validating manifest: $manifest"
+                ajv validate -s ./docs/schemas/manifest.schema.json -d "$manifest" --spec=draft2020
+              fi
+            fi
+          done 
+
+  publish:
+    runs-on: ubuntu-latest
+    environment: Production
+    needs: [spell-check, validate-manifests]
+    if: github.event.inputs.skip_api_linting == 'true' || (needs.spell-check.result == 'success' && needs['validate-manifests'].result == 'success')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Publish docs to Portal
+        shell: bash
+        run: |
+          for product in ./docs/products/*; do
+            echo "Product: $product"
+            if [[ -d "$product" ]]; then
+              echo "Product is a directory"
+              product_name=${product#./docs/products/}
+              echo "Product name: $product_name"
+              manifest="./docs/products/$product_name/manifest.json"
+              echo "Manifest: $manifest"
+              if [[ -f "$manifest" ]]; then
+                echo "Manifest is a file"
+                . ./docs/scripts/publish-portal-content.sh && portal_product_upsert "$manifest" "$product_name"
+                . ./docs/scripts/publish-portal-content.sh && load_and_process_product_manifest_content_metadata "$manifest" "$product_name"
+              else
+                echo "Manifest is not a file"
+              fi
+            else
+              echo "Product is not a directory"
+            fi
+          done
+        env:
+            SWAGGERHUB_PORTAL_SUBDOMAIN: ${{ github.ref == 'refs/heads/main' && 'smartbear-external' || 'smartbear-internal' }}
+            SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
+
+    

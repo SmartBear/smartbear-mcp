@@ -1,0 +1,78 @@
+{
+    "productMetadata": {
+        "description": "A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [Insight Hub](https://www.smartbear.com/insight-hub), [Reflect](https://reflect.run), and [API Hub](https://www.smartbear.com/api-hub).",
+        "slug": "smartbear-mcp",
+        "public": true,
+        "hidden": false,
+        "logo": "images/logo.png",
+        "logoDark": "images/logo.png",
+        "autoPublish": true,
+        "validateAPIs": true
+    },
+    "contentMetadata": [
+        {
+            "order": 0,
+            "parent": "",
+            "name": "SmartBear MCP Server",
+            "slug": "mcp-server",
+            "type": "markdown",
+            "contentUrl": "mcp-server.md"
+        },
+        {
+            "order": 1,
+            "parent": "",
+            "name": "MCP Server Capabilities",
+            "slug": "mcp-server-capabilities",
+            "type": "markdown",
+            "contentUrl": "mcp-server-capabilities.md"
+        },
+        {
+            "order": 0,
+            "parent": "mcp-server-capabilities",
+            "name": "API Hub integration",
+            "slug": "api-hub-integration",
+            "type": "markdown",
+            "contentUrl": "api-hub-integration.md"
+        },
+        {
+            "order": 1,
+            "parent": "mcp-server-capabilities",
+            "name": "Test Hub integration",
+            "slug": "test-hub-integration",
+            "type": "markdown",
+            "contentUrl": "test-hub-integration.md"
+        },
+        {
+            "order": 2,
+            "parent": "mcp-server-capabilities",
+            "name": "Insight Hub integration",
+            "slug": "insight-hub-integration",
+            "type": "markdown",
+            "contentUrl": "insight-hub-integration.md"
+        },
+        {
+            "order": 2,
+            "parent": "",
+            "name": "Getting Started",
+            "slug": "getting-started",
+            "type": "markdown",
+            "contentUrl": "getting-started.md"
+        },
+        {
+            "order": 3,
+            "parent": "",
+            "name": "Best Practices",
+            "slug": "best-practices",
+            "type": "markdown",
+            "contentUrl": "best-practices.md"
+        },
+        {
+            "order": 4,
+            "parent": "",
+            "name": "Troubleshooting",
+            "slug": "troubleshooting",
+            "type": "markdown",
+            "contentUrl": "troubleshooting.md"
+        }
+    ]
+}

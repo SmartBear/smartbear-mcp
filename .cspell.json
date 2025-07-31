@@ -1,0 +1,19 @@
+{
+    "version": "0.2",
+    "language": "en",
+    "dictionaries": [
+      "custom-words"
+    ],
+    "dictionaryDefinitions": [
+      {
+        "name": "custom-words",
+        "path": "./docs/custom-words.txt",
+        "description": "Custom dictionary for specific words that are common and correct within our Portal documentation"
+      }
+    ],
+    "ignorePaths": [
+      "**/node_modules/**",
+      "**/dist/**"
+    ]
+  }
+  
