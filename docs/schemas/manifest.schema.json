@@ -1,0 +1,81 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "productMetadata": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "logo": {
+            "type": "string"
+          },
+          "logoDark": {
+            "type": "string"
+          },
+          "autoPublish": {
+            "type": "boolean"
+          },
+          "validateAPIs": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "description",
+          "slug",
+          "public",
+          "hidden",
+          "logo",
+          "autoPublish",
+          "validateAPIs"
+        ]
+      },
+      "contentMetadata": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "order": {
+              "type": "integer"
+            },
+            "parent": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "slug": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "contentUrl": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "order",
+            "name",
+            "slug",
+            "type",
+            "contentUrl"
+          ]
+        }
+      }
+    },
+    "required": [
+      "productMetadata",
+      "contentMetadata"
+    ]
+  }  
