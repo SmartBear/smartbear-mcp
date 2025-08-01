@@ -340,6 +340,7 @@ export class InsightHubClient implements Client {
           outputFormat: "JSON object containing: " +
             " - error_details: Aggregated data about the error, including first and last seen occurrence" +
             " - latest_event: Detailed information about the most recent occurrence of the error, including stacktrace, breadcrumbs, user and context" +
+            " - pivots: List of pivots for the error, which can be used to analyze patterns in occurrences" +
             " - url: A link to the error in the Insight Hub dashboard - this should be shown to the user for them to perform further analysis",
           examples: [
             createExample(
@@ -373,6 +374,7 @@ export class InsightHubClient implements Client {
           const content = {
             error_details: errorDetails,
             latest_event: (await this.errorsApi.viewLatestEventOnError(args.errorId)).body,
+            pivots: (await this.errorsApi.listErrorPivots(project.id, args.errorId)).body || [],
             url: await this.getErrorUrl(project, args.errorId),
           }
           return {

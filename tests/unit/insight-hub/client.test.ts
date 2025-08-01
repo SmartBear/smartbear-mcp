@@ -1,25 +1,29 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { InsightHubClient } from '../../../insight-hub/client.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from '../../../common/info.js';
+import { InsightHubClient } from '../../../insight-hub/client.js';
+import { BaseAPI } from '../../../insight-hub/client/api/base.js';
+import { ProjectAPI } from '../../../insight-hub/client/api/Project.js';
+import { CurrentUserAPI, ErrorAPI } from '../../../insight-hub/client/index.js';
 
 // Mock the dependencies
 const mockCurrentUserAPI = {
   listUserOrganizations: vi.fn(),
   getOrganizationProjects: vi.fn()
-};
+} satisfies Omit<CurrentUserAPI, keyof BaseAPI>;
 
 const mockErrorAPI = {
   viewErrorOnProject: vi.fn(),
   viewLatestEventOnError: vi.fn(),
   viewEventById: vi.fn(),
   listProjectErrors: vi.fn(),
-  updateErrorOnProject: vi.fn()
-};
+  updateErrorOnProject: vi.fn(),
+  listErrorPivots: vi.fn(),
+} satisfies Omit<ErrorAPI, keyof BaseAPI>;
 
 const mockProjectAPI = {
   listProjectEventFields: vi.fn(),
   createProject: vi.fn()
-};
+} satisfies Omit<ProjectAPI, keyof BaseAPI>;
 
 const mockCache = {
   set: vi.fn(),
@@ -725,11 +729,13 @@ describe('InsightHubClient', () => {
         const mockError = { id: 'error-1', message: 'Test error' };
         const mockOrg = { id: 'org-1', name: 'Test Org', slug: 'test-org' };
         const mockEvent = { id: 'event-1', timestamp: '2023-01-01' };
+        const mockPivots = [{ id: 'pivot-1', name: 'test-pivot' }];
 
         mockCache.get.mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
         mockErrorAPI.viewErrorOnProject.mockResolvedValue({ body: mockError });
         mockErrorAPI.viewLatestEventOnError.mockResolvedValue({ body: mockEvent });
+        mockErrorAPI.listErrorPivots.mockResolvedValue({ body: mockPivots });
 
         client.registerTools(mockServer);
         const toolHandler = mockServer.registerTool.mock.calls
@@ -741,6 +747,7 @@ describe('InsightHubClient', () => {
         expect(result.content[0].text).toBe(JSON.stringify({
           error_details: mockError,
           latest_event: mockEvent,
+          pivots: mockPivots,
           url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1`
         }));
       });

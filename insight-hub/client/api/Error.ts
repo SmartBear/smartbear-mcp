@@ -51,6 +51,29 @@ export interface ListProjectErrorsOptions {
   [key: string]: any;
 }
 
+// Pivot-related interfaces based on the Data Access API
+export interface PivotApiView {
+  event_field_display_id: string;
+  name: string;
+  cardinality?: number;
+  values?: PivotValueApiView[];
+}
+
+export interface PivotValueApiView {
+  name: string;
+  events_count: number;
+  users_count?: number;
+  percentage?: number;
+}
+
+export interface ListPivotsOptions {
+  filters?: FilterObject;
+  summary_size?: number;
+  pivots?: string[]; // Array of field names to pivot by
+  per_page?: number;
+  [key: string]: any;
+}
+
 export const ErrorOperations = [
   'override_severity',
   'assign',
@@ -191,5 +214,43 @@ export class ErrorAPI extends BaseAPI {
       url,
       body: data,
     })) as ApiResponse<ErrorApiView>;
+  }
+
+  /**
+   * List Pivots on an Error
+   * GET /projects/{project_id}/errors/{error_id}/pivots
+   */
+  async listErrorPivots(projectId: string, errorId: string, options: ListPivotsOptions = {}): Promise<ApiResponse<PivotApiView[]>> {
+    const params = new URLSearchParams();
+    
+    if (options.filters) {
+      const filterParams = new URLSearchParams(toQueryString(options.filters));
+      filterParams.forEach((value, key) => {
+        params.append(key, value);
+      });
+    }
+    
+    if (options.summary_size !== undefined) {
+      params.append('summary_size', options.summary_size.toString());
+    }
+    
+    if (options.pivots && options.pivots.length > 0) {
+      options.pivots.forEach(pivot => {
+        params.append('pivots[]', pivot);
+      });
+    }
+    
+    if (options.per_page !== undefined) {
+      params.append('per_page', options.per_page.toString());
+    }
+
+    const url = params.toString()
+      ? `/projects/${projectId}/errors/${errorId}/pivots?${params}`
+      : `/projects/${projectId}/errors/${errorId}/pivots`;
+      
+    return await this.request<PivotApiView[]>({
+      method: 'GET',
+      url,
+    });
   }
 }
