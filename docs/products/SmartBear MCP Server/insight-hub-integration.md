@@ -36,13 +36,6 @@ If you wish to interact with only one Insight Hub project, we also recommend set
 
 ## Available Resources
 
-### `insight_hub_orgs`
-
--   URI: `insighthub://orgs`
--   Purpose: List all organizations accessible with your authentication token.
--   Returns: Organization details including IDs, names, and access permissions..
--   Use case: Account overview and organization discovery.
-
 ### `insight_hub_event`
 
 -   URI Template: `insighthub://event/{id}`.
