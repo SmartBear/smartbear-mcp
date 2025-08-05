@@ -11,7 +11,7 @@
 # - SWAGGERHUB_PORTAL_SUBDOMAIN: SwaggerHub Portal subdomain
 
 # Source the utility script to use its functions
-source ./docs/scripts/utilities.sh
+source "$(dirname "${BASH_SOURCE[0]}")/utilities.sh"
 
 PORTAL_SUBDOMAIN="${SWAGGERHUB_PORTAL_SUBDOMAIN}"
 SWAGGERHUB_API_KEY="${SWAGGERHUB_API_KEY}"
@@ -93,9 +93,7 @@ function portal_branding_image_post() {
     # get the Content-Type of the image from the image path if the file exists  
     local full_path="./docs/products/$image_name/$image_path"
 
-    if [ -f "$full_path" ]; then
-        local content_type=$(file --mime-type -b "$full_path")
-    else
+    if [ ! -f "$full_path" ]; then
         log_message $WARNING "File does not exist: $full_path"
         return
     fi

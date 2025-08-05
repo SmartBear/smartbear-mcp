@@ -22,13 +22,6 @@ If you wish to interact with only one Insight Hub project, we also recommend set
 
 ### `get_insight_hub_error_latest_event`
 
--   Purpose: Retrieve detailed information about a specific error.
--   Parameters: Project ID (`projectId`) and Error ID (`errorId`).
--   Returns: Comprehensive error details including stack traces, occurrence patterns, affected users, and error metadata.
--   Use case: Deep analysis of specific errors for debugging and resolution.
-
-### `get_insight_hub_error_latest_event`
-
 -   Purpose: Fetch the most recent event/occurrence of a specific error.
 -   Parameters: Error ID (`errorId`).
 -   Returns: Latest event details with current context, user information, device data, and complete error payload.
