@@ -6,8 +6,8 @@ on:
       - main
       - next
       - 'tom/docs-as-code'
-    paths:
-      - 'docs/**'
+    # paths:
+      # - 'docs/**'
   workflow_dispatch:
     inputs:
       log_level:
@@ -18,13 +18,11 @@ on:
 permissions: read-all
 
 env:
-  SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
   LOG_LEVEL: ${{ github.event.inputs.log_level }}
 
 jobs:
   spell-check:
     runs-on: ubuntu-latest
-    environment: Production
 
     steps:
       - name: Checkout repository
@@ -40,7 +38,6 @@ jobs:
 
   validate-manifests:
     runs-on: ubuntu-latest
-    environment: Production
     needs: spell-check
 
     steps:
@@ -70,7 +67,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    environment: Production
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
     needs: [spell-check, validate-manifests]
     if: github.event.inputs.skip_api_linting == 'true' || (needs.spell-check.result == 'success' && needs['validate-manifests'].result == 'success')
 
@@ -101,7 +98,5 @@ jobs:
             fi
           done
         env:
-            SWAGGERHUB_PORTAL_SUBDOMAIN: ${{ github.ref == 'refs/heads/main' && 'smartbear-external' || 'smartbear-internal' }}
+            SWAGGERHUB_PORTAL_SUBDOMAIN: ${{ vars.SWAGGERHUB_PORTAL_SUBDOMAIN }}
             SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
-
-    
