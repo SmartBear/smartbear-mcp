@@ -1,6 +1,5 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import { Client } from "../common/types.js";
+import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
 import { z } from "zod";
 
 // Type definitions for tool arguments
@@ -26,6 +25,8 @@ export interface testExecutionArgs {
 export class ReflectClient implements Client {
   private headers: { "X-API-KEY": string; "Content-Type": string, "User-Agent": string };
 
+  name = "reflect";
+  
   constructor(token: string) {
     this.headers = {
       "X-API-KEY": `${token}`,
@@ -121,11 +122,14 @@ export class ReflectClient implements Client {
     return response.json();
   }
 
-  registerTools(server: McpServer): void {
-    server.tool(
-      "list_reflect_suites",
-      "List all reflect suites",
-      {},
+  registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
+    register(
+      "list_suites",
+      {
+        title: "List Reflect Suites",
+        summary: "Retrieve a list of all reflect suites available",
+        parameters: [],
+      },
       async (_args, _extra) => {
         const response = await this.listReflectSuites();
         return {
@@ -133,10 +137,20 @@ export class ReflectClient implements Client {
         };
       }
     );
-    server.tool(
-      "list_reflect_suite_executions",
-      "List all executions for a given reflect suite",
-      { suiteId: z.string().describe("ID of the reflect suite to list executions for") },
+    register(
+      "list_suite_executions",
+      {
+        title: "List Reflect Suite Executions",
+        summary: "List all executions for a given reflect suite",
+        parameters: [
+          {
+            name: "suiteId",
+            type: z.string(),
+            description: "ID of the reflect suite to list executions for",
+            required: true
+          },
+        ],
+      },
       async (args, _extra) => {
         if (!args.suiteId) throw new Error("suiteId argument is required");
         const response = await this.listSuiteExecutions(args.suiteId);
@@ -145,12 +159,25 @@ export class ReflectClient implements Client {
         };
       }
     );
-    server.tool(
-      "reflect_suite_execution_status",
-      "Get the status of a reflect suite execution",
+    register(
+      "suite_execution_status",
       {
-        suiteId: z.string().describe("ID of the reflect suite to list executions for"),
-        executionId: z.string().describe("ID of the reflect suite execution to get status for"),
+        title: "Get Reflect Suite Execution Status",
+        summary: "Get the status of a reflect suite execution",
+        parameters: [
+          {
+            name: "suiteId",
+            type: z.string(),
+            description: "ID of the reflect suite to get execution status for",
+            required: true
+          },
+          {
+            name: "executionId",
+            type: z.string(),
+            description: "ID of the reflect suite execution to get status for",
+            required: true
+          },
+        ],
       },
       async (args, _extra) => {
         if (!args.suiteId || !args.executionId) throw new Error("Both suiteId and executionId arguments are required");
@@ -160,10 +187,20 @@ export class ReflectClient implements Client {
         };
       }
     );
-    server.tool(
-      "reflect_suite_execution",
-      "Execute a reflect suite",
-      { suiteId: z.string().describe("ID of the reflect suite to list executions for") },
+    register(
+      "suite_execution",
+        {
+            title: "Execute Reflect Suite",
+            summary: "Execute a reflect suite",
+            parameters: [
+                {
+                    name: "suiteId",
+                    type: z.string(),
+                    description: "ID of the reflect suite to list executions for",
+                    required: true
+                }
+            ]
+        },
       async (args, _extra) => {
         if (!args.suiteId) throw new Error("suiteId argument is required");
         const response = await this.executeSuite(args.suiteId);
@@ -172,12 +209,25 @@ export class ReflectClient implements Client {
         };
       }
     );
-    server.tool(
-      "cancel_reflect_suite_execution",
-      "Cancel a reflect suite execution",
+    register(
+      "cancel_suite_execution",
       {
-        suiteId: z.string().describe("ID of the reflect suite to cancel execution for"),
-        executionId: z.string().describe("ID of the reflect suite execution to cancel"),
+        title: "Cancel Reflect Suite Execution",
+        summary: "Cancel a reflect suite execution",
+        parameters: [
+          {
+            name: "suiteId",
+            type: z.string(),
+            description: "ID of the reflect suite to cancel execution for",
+            required: true
+          },
+          {
+            name: "executionId",
+            type: z.string(),
+            description: "ID of the reflect suite execution to cancel",
+            required: true
+          },
+        ],
       },
       async (args, _extra) => {
         if (!args.suiteId || !args.executionId) throw new Error("Both suiteId and executionId arguments are required");
@@ -187,10 +237,13 @@ export class ReflectClient implements Client {
         };
       }
     );
-    server.tool(
-      "list_reflect_tests",
-      "List all reflect tests",
-      {},
+    register(
+      "list_tests",
+      {
+        title: "List Reflect Tests",
+        summary: "List all reflect tests",
+        parameters: [],
+      },
       async (_args, _extra) => {
         const response = await this.listReflectTests();
         return {
@@ -198,10 +251,20 @@ export class ReflectClient implements Client {
         };
       }
     );
-    server.tool(
-      "run_reflect_test",
-      "Run a reflect test",
-      { testId: z.string().describe("ID of the reflect test to run") },
+    register(
+      "run_test",
+      {
+        title: "Run Reflect Test",
+        summary: "Run a reflect test",
+        parameters: [
+          {
+            name: "testId",
+            type: z.string(),
+            description: "ID of the reflect test to run",
+            required: true
+          }
+        ],
+      },
       async (args, _extra) => {
         if (!args.testId) throw new Error("testId argument is required");
         const response = await this.runReflectTest(args.testId);
@@ -210,12 +273,25 @@ export class ReflectClient implements Client {
         };
       }
     );
-    server.tool(
-      "reflect_test_status",
-      "Get the status of a reflect test execution",
+    register(
+      "test_status",
       {
-        testId: z.string().describe("ID of the reflect test to run"),
-        executionId: z.string().describe("ID of the reflect test execution to get status for"),
+        title: "Get Reflect Test Status",
+        summary: "Get the status of a reflect test execution",
+        parameters: [
+          {
+            name: "testId",
+            type: z.string(),
+            description: "ID of the reflect test to run",
+            required: true
+          },
+          {
+            name: "executionId",
+            type: z.string(),
+            description: "ID of the reflect test execution to get status for",
+            required: true
+          },
+        ],
       },
       async (args, _extra) => {
         if (!args.testId || !args.executionId) throw new Error("Both testId and executionId arguments are required");
@@ -225,9 +301,5 @@ export class ReflectClient implements Client {
         };
       }
     );
-  }
-
-  registerResources(_server: McpServer): void {
-    // Reflect does not currently support dynamic resources
   }
 }
