@@ -175,18 +175,16 @@ export class ErrorAPI extends BaseAPI {
     params.append('sort', 'timestamp');
     params.append('direction', 'desc');
     params.append('per_page', '1');
+    params.append('full_reports', 'true');
 
     // Add filters as a JSON string if provided
     const filters = options.filters ? toQueryString(options.filters) : '';
+    const url = `/projects/${projectId}/events?${params}&${filters}`;
 
-    const url = params.toString()
-      ? `/projects/${projectId}/events?${params}&${filters}`
-      : `/projects/${projectId}/events`;
-      
-    return (await this.request<Event[]>({
+    return await this.request<Event[]>({
       method: 'GET',
       url,
-    })) as ApiResponse<Event[]>;
+    });
   }
 
   /**
