@@ -5,9 +5,8 @@ on:
     branches:
       - main
       - next
-      - 'tom/docs-as-code'
-    # paths:
-      # - 'docs/**'
+    paths:
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       log_level:
