@@ -35,6 +35,9 @@ export interface ViewErrorOnProjectOptions {
 }
 
 export interface ViewLatestEventOnErrorOptions {
+  base?: string; // date-time format
+  filters?: FilterObject; // Additional filters to apply along with the error.id filter
+  full_reports?: boolean;
   [key: string]: any;
 }
 
@@ -158,6 +161,32 @@ export class ErrorAPI extends BaseAPI {
       method: 'GET',
       url,
     })) as ApiResponse<ViewLatestEventOnErrorResponse>;
+  }
+
+  /**
+   * List the Events on a Project
+   * GET /projects/{project_id}/events
+   */
+  async listEventsOnProject(projectId: string, options: ViewLatestEventOnErrorOptions = {}): Promise<ApiResponse<Event[]>> {
+    // Build query parameters
+    const params = new URLSearchParams();
+    
+    // Add sorting and pagination parameters to get the latest event
+    params.append('sort', 'timestamp');
+    params.append('direction', 'desc');
+    params.append('per_page', '1');
+
+    // Add filters as a JSON string if provided
+    const filters = options.filters ? toQueryString(options.filters) : '';
+
+    const url = params.toString()
+      ? `/projects/${projectId}/events?${params}&${filters}`
+      : `/projects/${projectId}/events`;
+      
+    return (await this.request<Event[]>({
+      method: 'GET',
+      url,
+    })) as ApiResponse<Event[]>;
   }
 
   /**

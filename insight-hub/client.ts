@@ -371,9 +371,24 @@ export class InsightHubClient implements Client {
           if (!errorDetails) {
             throw new Error(`Error with ID ${args.errorId} not found in project ${project.id}.`);
           }
+          // Get the latest event for this error using the events endpoint with filters
+          let latestEvent = null;
+          try {
+            const eventsResponse = await this.errorsApi.listEventsOnProject(project.id, {
+              filters: {
+                "error": [{ type: "eq", value: args.errorId }]
+              }
+            });
+            const events = eventsResponse.body || [];
+            latestEvent = events.length > 0 ? events[0] : null;
+          } catch (e) {
+            console.warn("Failed to fetch latest event:", e);
+            // Continue without latest event rather than failing the entire request
+          }
+
           const content = {
             error_details: errorDetails,
-            latest_event: (await this.errorsApi.viewLatestEventOnError(args.errorId)).body,
+            latest_event: latestEvent,
             pivots: (await this.errorsApi.listErrorPivots(project.id, args.errorId)).body || [],
             url: await this.getErrorUrl(project, args.errorId),
           }

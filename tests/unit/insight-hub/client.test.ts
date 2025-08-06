@@ -18,6 +18,7 @@ const mockErrorAPI = {
   listProjectErrors: vi.fn(),
   updateErrorOnProject: vi.fn(),
   listErrorPivots: vi.fn(),
+  listEventsOnProject: vi.fn()
 } satisfies Omit<ErrorAPI, keyof BaseAPI>;
 
 const mockProjectAPI = {
