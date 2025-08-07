@@ -1,0 +1,315 @@
+name: Sync Main to Next
+
+on:
+  push:
+    branches:
+      - main
+      - sync-test-main
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Source branch to sync from'
+        required: false
+        default: 'main'
+      target_branch:
+        description: 'Target branch to sync into'
+        required: false
+        default: 'next'
+      enable_auto_merge:
+        description: 'Enable auto-merge on the created PR'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  sync-branches:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.source_branch || (github.ref_name == 'sync-test-main' && 'sync-test-main' || 'main') }}
+      TARGET_BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.target_branch || (github.ref_name == 'sync-test-main' && 'sync-test-next' || 'next') }}
+      ENABLE_AUTO_MERGE: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_auto_merge || 'false' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # Fetch all history for all branches
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create sync branch and PR
+        id: create-sync-pr
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            const sourceBranchName = process.env.SOURCE_BRANCH || 'main';
+            const targetBranchName = process.env.TARGET_BRANCH || 'next';
+            const isTestRun = sourceBranchName.startsWith('sync-test-') || targetBranchName.startsWith('sync-test-');
+
+            const syncBranchName = `sync-${sourceBranchName}-to-${targetBranchName}-${Date.now()}`;
+
+            try {
+              // Get the latest commit from source branch
+              const sourceBranch = await github.rest.repos.getBranch({
+                owner,
+                repo,
+                branch: sourceBranchName
+              });
+
+              // Get the target branch reference
+              const targetBranch = await github.rest.repos.getBranch({
+                owner,
+                repo,
+                branch: targetBranchName
+              });
+
+              console.log(`Source (${sourceBranchName}) SHA: ${sourceBranch.data.commit.sha}`);
+              console.log(`Target (${targetBranchName}) SHA: ${targetBranch.data.commit.sha}`);
+
+              // Check if source and target are already in sync
+              if (sourceBranch.data.commit.sha === targetBranch.data.commit.sha) {
+                console.log('✅ Branches are already in sync, no PR needed');
+                core.setOutput('sync_needed', 'false');
+                return;
+              }
+
+              // Create a new branch from target
+              await github.rest.git.createRef({
+                owner,
+                repo,
+                ref: `refs/heads/${syncBranchName}`,
+                sha: targetBranch.data.commit.sha
+              });
+
+              console.log(`✅ Created sync branch: ${syncBranchName}`);
+
+              // Try to merge source into the sync branch using Git API
+              try {
+                const mergeResult = await github.rest.repos.merge({
+                  owner,
+                  repo,
+                  base: syncBranchName,
+                  head: sourceBranchName,
+                  commit_message: [
+                    `Sync ${sourceBranchName} to ${targetBranchName} branch`,
+                    "",
+                    `Automatically syncing changes from ${sourceBranchName} branch to ${targetBranchName} branch.`,
+                    "",
+                    `Source commit: ${sourceBranch.data.commit.sha}`
+                  ].join('\n')
+                });
+
+                console.log(`✅ Successfully merged ${sourceBranchName} into ${syncBranchName}`);
+                console.log(`Merge commit SHA: ${mergeResult.data.sha}`);
+
+                // Create pull request
+                const pr = await github.rest.pulls.create({
+                  owner,
+                  repo,
+                  title: `🔄 Sync ${sourceBranchName} to ${targetBranchName} branch`,
+                  head: syncBranchName,
+                  base: targetBranchName,
+                  body: [
+                    "## Automatic Branch Sync",
+                    "",
+                    `This PR automatically syncs changes from \`${sourceBranchName}\` to \`${targetBranchName}\` branch.`,
+                    "",
+                    "### Details:",
+                    `- **Source branch:** ${sourceBranchName} (${sourceBranch.data.commit.sha})`,
+                    `- **Target branch:** ${targetBranchName} (${targetBranch.data.commit.sha})`,
+                    `- **Trigger:** ${context.eventName === 'workflow_dispatch' ? 'Manual dispatch' : `Push to ${context.ref}`}`,
+                    `- **Trigger commit:** ${context.sha}`,
+                    "",
+                    "### Changes:",
+                    `This PR includes all commits from ${sourceBranchName} that are not yet in the ${targetBranchName} branch.`,
+                    "",
+                    "---",
+                    "*This PR was automatically created by the [Sync Main to Next](.github/workflows/sync-main-to-next.yml) workflow.*"
+                  ].join('\n'),
+                  draft: false
+                });
+
+                console.log(`✅ Created PR #${pr.data.number}: ${pr.data.html_url}`);
+
+                // Optionally request review from team (skip for test runs)
+                try {
+                  if (!isTestRun) {
+                    await github.rest.pulls.requestReviewers({
+                      owner,
+                      repo,
+                      pull_number: pr.data.number,
+                      team_reviewers: ["bugsnag-dev"]
+                    });
+                  }
+                } catch (e) {
+                  console.log('Reviewer request skipped or failed:', e.message);
+                }
+
+                // Optionally enable auto-merge (skip for test runs unless explicitly enabled)
+                const enableAutoMerge = (process.env.ENABLE_AUTO_MERGE || 'false').toLowerCase() === 'true';
+                if (!isTestRun || enableAutoMerge) {
+                  const enableAutoMergeQuery = `
+                    mutation EnableAutoMerge($pullRequestId: ID!) {
+                      enablePullRequestAutoMerge(input: {
+                        pullRequestId: $pullRequestId,
+                        mergeMethod: MERGE
+                      }) {
+                        pullRequest {
+                          autoMergeRequest {
+                            enabledAt
+                          }
+                        }
+                      }
+                    }
+                  `;
+                  try {
+                    await github.graphql(enableAutoMergeQuery, {
+                      pullRequestId: pr.data.node_id
+                    });
+                    console.log('✅ Enabled auto-merge for the PR');
+                  } catch (autoMergeError) {
+                    console.log('⚠️ Could not enable auto-merge:', autoMergeError.message);
+                    console.log('Auto-merge may need to be enabled manually or repository settings may not allow it');
+                  }
+                }
+
+                core.setOutput('pr_number', pr.data.number);
+                core.setOutput('pr_url', pr.data.html_url);
+                core.setOutput('sync_needed', 'true');
+                core.setOutput('sync_status', 'success');
+
+              } catch (mergeError) {
+                console.log('❌ Merge conflict detected!');
+                console.log('Error:', mergeError.message);
+
+                // Delete the sync branch since merge failed
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `heads/${syncBranchName}`
+                });
+
+                core.setOutput('sync_needed', 'true');
+                core.setOutput('sync_status', 'conflict');
+                throw mergeError;
+              }
+
+            } catch (error) {
+              console.error('Error in sync process:', error);
+              core.setFailed(error.message);
+              throw error;
+            }
+
+      - name: Create summary
+        if: always()
+        run: |
+          {
+            if [ "${{ steps.create-sync-pr.outputs.sync_needed }}" = "false" ]; then
+              echo "## Branches Already in Sync ✅"
+              echo ""
+              echo "No sync needed - branches are already in sync."
+            elif [ "${{ steps.create-sync-pr.outputs.sync_status }}" = "success" ]; then
+              echo "## Sync PR Created ✅"
+              echo ""
+              echo "Successfully created a pull request to sync changes."
+              echo ""
+              echo "### Details:"
+              echo "- **Pull Request:** [#${{ steps.create-sync-pr.outputs.pr_number }}](${{ steps.create-sync-pr.outputs.pr_url }})"
+              echo "- **Source branch:** ${SOURCE_BRANCH}"
+              echo "- **Target branch:** ${TARGET_BRANCH}"
+              echo "- **Trigger commit:** ${{ github.sha }}"
+            elif [ "${{ steps.create-sync-pr.outputs.sync_status }}" = "conflict" ]; then
+              echo "## Sync Failed - Conflicts Detected ❌"
+              echo ""
+              echo "**Merge conflict detected!** Manual intervention required."
+              echo ""
+              echo "### What happened:"
+              echo "- Attempted to merge \"${SOURCE_BRANCH}\" into \"${TARGET_BRANCH}\""
+              echo "- Conflicts were detected that require manual resolution"
+              echo "- No PR was created due to conflicts"
+              echo ""
+              echo "### Next steps:"
+              echo "1. Manually create a branch from \"${TARGET_BRANCH}\""
+              echo "2. Merge \"${SOURCE_BRANCH}\" and resolve conflicts"
+              echo "3. Create a PR to merge the resolved changes into \"${TARGET_BRANCH}\""
+              echo ""
+              echo "### Trigger Details:"
+              echo "- **Source branch:** ${SOURCE_BRANCH}"
+              echo "- **Target branch:** ${TARGET_BRANCH}"
+              echo "- **Trigger commit:** ${{ github.sha }}"
+            else
+              echo "## Sync Status Unknown ⚠️"
+              echo ""
+              echo "The sync process completed with an unknown status."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create Issue on Conflict
+        if: failure() && steps.create-sync-pr.outputs.sync_status == 'conflict' && !startsWith(env.SOURCE_BRANCH, 'sync-test-') && !startsWith(env.TARGET_BRANCH, 'sync-test-')
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Branch Sync Conflict: ${process.env.SOURCE_BRANCH} → ${process.env.TARGET_BRANCH}`,
+              body: [
+                "## Automatic Branch Sync Failed",
+                "",
+                `A merge conflict was detected when attempting to sync changes from \`${process.env.SOURCE_BRANCH}\` to \`${process.env.TARGET_BRANCH}\` branch.`,
+                "",
+                `**Trigger Commit:** ${context.sha}`,
+                `**Workflow Run:** [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})`,
+                "",
+                "### Manual Resolution Required",
+                "",
+                "Please follow these steps to resolve the conflict:",
+                "",
+                "1. **Create a new branch from target:**",
+                "   ```bash",
+                `   git checkout ${process.env.TARGET_BRANCH}`,
+                `   git pull origin ${process.env.TARGET_BRANCH}`,
+                "   git checkout -b sync-branches-manual",
+                "   ```",
+                "",
+                "2. **Merge source and resolve conflicts:**",
+                "   ```bash",
+                `   git merge ${process.env.SOURCE_BRANCH}`,
+                "   # Resolve any conflicts in your editor",
+                "   git add .",
+                "   git commit",
+                "   ```",
+                "",
+                "3. **Create a Pull Request:**",
+                "   ```bash",
+                "   git push origin sync-branches-manual",
+                `   # Then create a PR from sync-branches-manual to ${process.env.TARGET_BRANCH}`,
+                "   ```",
+                "",
+                "4. **Close this issue** once the sync PR is merged.",
+                "",
+                "### Files Likely to Have Conflicts",
+                "",
+                "Check these common conflict areas:",
+                "- `package.json` (version numbers)",
+                "- `CHANGELOG.md` (release notes)",
+                "- Configuration files",
+                "- Documentation updates",
+                "",
+                "---",
+                "*This issue was automatically created by the [Sync Main to Next](.github/workflows/sync-main-to-next.yml) workflow.*"
+              ].join('\n'),
+              labels: ['bug', 'automation', 'merge-conflict']
+            });
+
+            console.log('Created issue:', issue.data.html_url);
