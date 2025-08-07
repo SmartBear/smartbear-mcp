@@ -255,7 +255,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create Issue on Conflict
-        if: failure() && steps.create-sync-pr.outputs.sync_status == 'conflict'
+        if: failure() && steps.create-sync-pr.outputs.sync_status == 'conflict' && !startsWith(env.SOURCE_BRANCH, 'sync-test-') && !startsWith(env.TARGET_BRANCH, 'sync-test-')
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
