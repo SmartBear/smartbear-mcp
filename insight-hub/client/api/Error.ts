@@ -167,20 +167,9 @@ export class ErrorAPI extends BaseAPI {
    * List the Events on a Project
    * GET /projects/{project_id}/events
    */
-  async listEventsOnProject(projectId: string, options: ViewLatestEventOnErrorOptions = {}): Promise<ApiResponse<Event[]>> {
-    // Build query parameters
-    const params = new URLSearchParams();
-    
-    // Add sorting and pagination parameters to get the latest event
-    params.append('sort', 'timestamp');
-    params.append('direction', 'desc');
-    params.append('per_page', '1');
-    params.append('full_reports', 'true');
-
-    // Add filters as a JSON string if provided
-    const filters = options.filters ? toQueryString(options.filters) : '';
-    const url = `/projects/${projectId}/events?${params}&${filters}`;
-
+  async listEventsOnProject(projectId: string, queryString = ''): Promise<ApiResponse<Event[]>> {
+    const url = `/projects/${projectId}/events${queryString}`;
+      
     return await this.request<Event[]>({
       method: 'GET',
       url,

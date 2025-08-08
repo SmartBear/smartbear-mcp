@@ -7,7 +7,7 @@ import Bugsnag from "../common/bugsnag.js";
 import NodeCache from "node-cache";
 import { Organization, Project } from "./client/api/CurrentUser.js";
 import { EventField, ProjectAPI } from "./client/api/Project.js";
-import { FilterObjectSchema } from "./client/api/filters.js";
+import { FilterObject, FilterObjectSchema, toQueryString } from "./client/api/filters.js";
 import { toolDescriptionTemplate, createParameter, createExample } from "../common/templates.js";
 
 const HUB_PREFIX = "00000";
@@ -123,8 +123,9 @@ export class InsightHubClient implements Client {
     return `${this.appEndpoint}/${(await this.getOrganization()).slug}/${project.slug}`;
   }
 
-  async getErrorUrl(project: Project, errorId: string): Promise<string> {
-    return `${await this.getDashboardUrl(project)}/errors/${errorId}`;
+  async getErrorUrl(project: Project, errorId: string, queryString = ''): Promise<string> {
+    const dashboardUrl = await this.getDashboardUrl(project);
+    return `${dashboardUrl}/errors/${errorId}${queryString}`;
   }
 
   async getOrganization(): Promise<Organization> {
@@ -393,17 +394,30 @@ export class InsightHubClient implements Client {
           if (!errorDetails) {
             throw new Error(`Error with ID ${args.errorId} not found in project ${project.id}.`);
           }
+
+          // Build query parameters
+          const params = new URLSearchParams();
+          
+          // Add sorting and pagination parameters to get the latest event
+          params.append('sort', 'timestamp');
+          params.append('direction', 'desc');
+          params.append('per_page', '1');
+          params.append('full_reports', 'true');
+
+          const filters: FilterObject = {
+            "error": [{ type: "eq", value: args.errorId }],
+            ...args.filters
+          }
+
+          const filtersQueryString = toQueryString(filters);
+          const listEventsQueryString = `?${params}&${filtersQueryString}`;
+
           // Get the latest event for this error using the events endpoint with filters
           let latestEvent = null;
           try {
-            const eventsResponse = await this.errorsApi.listEventsOnProject(project.id, {
-              filters: {
-                "error": [{ type: "eq", value: args.errorId }],
-                ...args.filters
-              }
-            });
+            const eventsResponse = await this.errorsApi.listEventsOnProject(project.id, listEventsQueryString);
             const events = eventsResponse.body || [];
-            latestEvent = events.length > 0 ? events[0] : null;
+            latestEvent = events[0] || null;
           } catch (e) {
             console.warn("Failed to fetch latest event:", e);
             // Continue without latest event rather than failing the entire request
@@ -412,8 +426,8 @@ export class InsightHubClient implements Client {
           const content = {
             error_details: errorDetails,
             latest_event: latestEvent,
-            pivots: (await this.errorsApi.listErrorPivots(project.id, args.errorId, { ...(args.filters ? { filters: args.filters } : {}) })).body || [],
-            url: await this.getErrorUrl(project, args.errorId),
+            pivots: (await this.errorsApi.listErrorPivots(project.id, args.errorId)).body || [],
+            url: await this.getErrorUrl(project, args.errorId, `?${filtersQueryString}`),
           }
           return {
             content: [{ type: "text", text: JSON.stringify(content) }]

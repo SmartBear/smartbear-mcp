@@ -743,12 +743,14 @@ describe('InsightHubClient', () => {
 
         const result = await toolHandler({ errorId: 'error-1' });
 
+        const queryString = '?filters[error][][type]=eq&filters[error][][value]=error-1'
+        const encodedQueryString = encodeURI(queryString);
         expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith('proj-1', 'error-1');
         expect(result.content[0].text).toBe(JSON.stringify({
           error_details: mockError,
           latest_event: mockEvents[0],
           pivots: mockPivots,
-          url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1`
+          url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1${encodedQueryString}`
         }));
       });
 
