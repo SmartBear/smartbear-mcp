@@ -311,10 +311,11 @@ export class InsightHubClient implements Client {
       "get_insight_hub_error",
       {
         description: toolDescriptionTemplate({
-          summary: "Get aggregate information about an error from a project, including detailed information on latest event (occurrence), use filters to narrow down results",
-          purpose: "Retrieve error details including metadata, breadcrumb and context for debugging.",
+          summary: "Get full details on an error, including aggregated and summarised data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.",
+          purpose: "Retrieve all the information required on a specified error to understand who it is affecting and why.",
           useCases: [
             "Investigate a specific error found through list_insight_hub_project_errors",
+            "Understand which types of user are affected by the error using summarised event data",
             "Get error details for debugging and root cause analysis",
             "Retrieve error metadata for incident reports and documentation"
           ],
@@ -359,7 +360,7 @@ export class InsightHubClient implements Client {
           outputFormat: "JSON object containing: " +
             " - error_details: Aggregated data about the error, including first and last seen occurrence" +
             " - latest_event: Detailed information about the most recent occurrence of the error, including stacktrace, breadcrumbs, user and context" +
-            " - pivots: List of pivots for the error, which can be used to analyze patterns in occurrences" +
+            " - pivots: List of pivots (summaries) for the error, which can be used to analyze patterns in occurrences" +
             " - url: A link to the error in the Insight Hub dashboard - this should be shown to the user for them to perform further analysis",
           examples: [
             createExample(
