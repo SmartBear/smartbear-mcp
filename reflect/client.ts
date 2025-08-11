@@ -25,8 +25,9 @@ export interface testExecutionArgs {
 export class ReflectClient implements Client {
   private headers: { "X-API-KEY": string; "Content-Type": string, "User-Agent": string };
 
-  name = "reflect";
-  
+  name = "Reflect";
+  prefix = "reflect";
+
   constructor(token: string) {
     this.headers = {
       "X-API-KEY": `${token}`,
@@ -124,9 +125,8 @@ export class ReflectClient implements Client {
 
   registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
     register(
-      "list_suites",
       {
-        title: "List Reflect Suites",
+        title: "List Suites",
         summary: "Retrieve a list of all reflect suites available",
         parameters: [],
       },
@@ -138,10 +138,9 @@ export class ReflectClient implements Client {
       }
     );
     register(
-      "list_suite_executions",
       {
-        title: "List Reflect Suite Executions",
-        summary: "List all executions for a given reflect suite",
+        title: "List Suite Executions",
+        summary: "List all executions for a given suite",
         parameters: [
           {
             name: "suiteId",
@@ -160,9 +159,8 @@ export class ReflectClient implements Client {
       }
     );
     register(
-      "suite_execution_status",
       {
-        title: "Get Reflect Suite Execution Status",
+        title: "Get Suite Execution Status",
         summary: "Get the status of a reflect suite execution",
         parameters: [
           {
@@ -188,9 +186,8 @@ export class ReflectClient implements Client {
       }
     );
     register(
-      "suite_execution",
         {
-            title: "Execute Reflect Suite",
+            title: "Execute Suite",
             summary: "Execute a reflect suite",
             parameters: [
                 {
@@ -210,9 +207,8 @@ export class ReflectClient implements Client {
       }
     );
     register(
-      "cancel_suite_execution",
       {
-        title: "Cancel Reflect Suite Execution",
+        title: "Cancel Suite Execution",
         summary: "Cancel a reflect suite execution",
         parameters: [
           {
@@ -238,9 +234,8 @@ export class ReflectClient implements Client {
       }
     );
     register(
-      "list_tests",
       {
-        title: "List Reflect Tests",
+        title: "List Tests",
         summary: "List all reflect tests",
         parameters: [],
       },
@@ -252,9 +247,8 @@ export class ReflectClient implements Client {
       }
     );
     register(
-      "run_test",
       {
-        title: "Run Reflect Test",
+        title: "Run Test",
         summary: "Run a reflect test",
         parameters: [
           {
@@ -274,9 +268,8 @@ export class ReflectClient implements Client {
       }
     );
     register(
-      "test_status",
       {
-        title: "Get Reflect Test Status",
+        title: "Get Test Status",
         summary: "Get the status of a reflect test execution",
         parameters: [
           {

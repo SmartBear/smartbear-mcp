@@ -6,58 +6,45 @@ If you wish to interact with only one Insight Hub project, we also recommend set
 
 ## Available Tools
 
-### `list_insight_hub_projects`
+### List Projects
 
--   Purpose: List all projects in the organization with optional pagination.
--   Parameters: `page_size` (optional number), `page` (optional number).
--   Returns: JSON object with `data` array containing projects and `count` field.
--   Use case: Browse available projects when no specific project API key is configured, find project IDs for other tools.
--   Note: Only available when no project API key is configured.
+-   Lists the projects in your organization.   
+-   Only available when no project API key is configured.
 
-### `get_insight_hub_error`
+### List Errors
 
--   Purpose: Get full details on an error, including aggregated data across all events and details of the latest event.
--   Parameters: `errorId` (required string), `projectId` (optional if project API key configured), `filters` (optional FilterObject).
--   Returns: JSON object containing error_details, latest_event, pivots, and dashboard URL.
--   Use case: Investigate specific errors, understand affected users, get debugging context.
+-   Lists the open errors in the configured project with some basic details, taking an optional set of filters.
+-   The project ID parameter is required if no project API key is configured.
 
-### `get_insight_hub_event_details`
+### Get Error
 
--   Purpose: Extract event details directly from Insight Hub dashboard links.
--   Parameters: `link` (required string) - Full Insight Hub event URL.
--   Returns: Complete event information including breadcrumbs, user context, device information, and stack traces.
--   Use case: Quick analysis when working with shared Insight Hub links.
+-   Retrieves detailed information about the specified error.
+-   In addition to the basic error details, it includes:
+  -   Details of the latest event (occurrence) of the error – including stacktrace, user context and device information.
+  -   Summaries (pivots) of the aggregated event data – for example app version, OS versions and any custom filters configured.
+  -   Link to the error on the dashboard.
+-   This tool also takes filter parameters in the same format as List Errors to specialize the results returned in the summaries/pivots.
 
-### `list_insight_hub_project_errors`
+### Get Event Details
 
--   Purpose: List and search errors in a project using customizable filters.
--   Parameters: `filters` (optional FilterObject), `projectId` (optional if project API key configured).
--   Returns: JSON object with `data` array containing errors and `count` field.
--   Use case: Debug recent errors, generate reports, monitor trends, find errors affecting specific users or environments.
+-   Retrieve event (occurrence) details from a dashboard URL.
+-   This is useful if you are copying the link from your dashboard to your IDE.
 
-### `get_project_event_filters`
+### List Project Event Filters
 
--   Purpose: Get available event filter fields for the current project.
--   Parameters: None.
--   Returns: JSON array of EventField objects with display_id, custom flag, and filter options.
--   Use case: Discover valid filter field names before using list_insight_hub_project_errors.
+-   Lists the filters available for the current/specified project.
+-   These filters can be used in the List Errors and Get Error tools to refine the results.
 
-### `update_error`
+### Update Error
 
--   Purpose: Update the status of an error in Insight Hub.
--   Parameters: `errorId` (required string), `operation` (required string), `projectId` (optional if project API key configured).
--   Returns: Success response indicating the operation was completed.
--   Use case: Mark errors as fixed, open, ignored, discarded, or undiscarded; update error severity.
--   Operations: `override_severity`, `open`, `fix`, `ignore`, `discard`, `undiscard`.
+-   Allows you to update the status of the specified error to mark it as Open, Fixed, Ignored, Discarded or Undiscarded.
+-   The severity can also be overridden from the default calculated value.
 
 ## Available Resources
 
-### `insight_hub_event`
+### Event
 
--   URI Template: `insighthub://event/{id}`.
--   Purpose: Direct access to event details by event ID.
--   Returns: Full event payload with debugging context including breadcrumbs, user information, and stack traces.
--   Use case: Event-specific analysis and cross-referencing when you have an event ID.
+Refers to an occurrence of an error: `insighthub://event/{id}`.
 
 ## Configuration Notes
 

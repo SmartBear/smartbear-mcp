@@ -23,14 +23,16 @@ export class SmartBearMcpServer extends McpServer {
     }
     addClient(client: Client): void {
         client.registerTools(
-            (name, params, cb) => {
+            (params, cb) => {
+                const toolName = `${client.prefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
+                const toolTitle = `${client.name}: ${params.title}`;
                 return super.registerTool(
-                    `${client.name}_${name}`,
+                    toolName,
                     {
-                        title: params.title,
+                        title: toolTitle,
                         description: this.getDescription(params),
                         inputSchema: this.getInputSchema(params),
-                        annotations: this.getAnnotations(params),
+                        annotations: this.getAnnotations(toolTitle, params),
                     },
                     async (args: any, extra: any) => {
                         try {
@@ -49,7 +51,7 @@ export class SmartBearMcpServer extends McpServer {
             client.registerResources((name, path, cb) => {
                 return super.registerResource(
                     name,
-                    new ResourceTemplate(`${client.name}://${name}/${path}`, { list: undefined }),
+                    new ResourceTemplate(`${client.prefix}://${name}/${path}`, { list: undefined }),
                     {},
                     async (url: any, variables: any, extra: any) => {
                         try {
@@ -63,9 +65,9 @@ export class SmartBearMcpServer extends McpServer {
         }
     }
     
-    private getAnnotations(params: ToolParams): any {
+    private getAnnotations(toolTitle: string, params: ToolParams): any {
         const annotations: ToolAnnotations = {
-            title: params.title,
+            title: toolTitle,
             readOnlyHint: params.readOnly ?? true,
             destructiveHint: params.destructive ?? false,
             idempotentHint: params.idempotent ?? true,

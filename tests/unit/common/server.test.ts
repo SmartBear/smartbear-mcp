@@ -33,7 +33,8 @@ describe('SmartBearMcpServer', () => {
 
     beforeEach(() => {
       mockClient = {
-        name: 'test_product',
+        name: 'Test Product',
+        prefix: 'test_product',
         registerTools: vi.fn(),
         registerResources: vi.fn(),
       };
@@ -53,7 +54,6 @@ describe('SmartBearMcpServer', () => {
       const registerFn = mockClient.registerTools.mock.calls[0][0];
       const registerCbMock = vi.fn();
       registerFn(
-        'test_tool',
         {
           title: 'Test Tool',
           summary: 'A test tool',
@@ -69,23 +69,19 @@ describe('SmartBearMcpServer', () => {
         registerCbMock,
       );
 
-      expect(superRegisterToolMock).toHaveBeenCalledExactlyOnceWith(
-        expect.any(String),
-        expect.any(Object),
-        expect.any(Function)
-      );
+      expect(superRegisterToolMock).toHaveBeenCalledOnce();
 
       // Assert some of the details
       const registerToolParams = superRegisterToolMock.mock.calls[0];
       expect(registerToolParams[0]).toBe('test_product_test_tool');
-      expect(registerToolParams[1]['title']).toBe('Test Tool');
+      expect(registerToolParams[1]['title']).toBe('Test Product: Test Tool');
       expect(registerToolParams[1]['description']).toBe(
         'A test tool\n\n' +
         '**Parameters:**\n' +
         '- p1 (string) *required*: The input for the tool');
       expect(registerToolParams[1]['inputSchema']['p1'].toString()).toBe(z.string().describe('The input for the tool').toString());
       expect(registerToolParams[1]['annotations']).toEqual({
-        title: 'Test Tool',
+        title: 'Test Product: Test Tool',
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
@@ -106,7 +102,6 @@ describe('SmartBearMcpServer', () => {
       // Get the register function passed from the server and execute it with test tool details
       const registerFn = mockClient.registerTools.mock.calls[0][0];
       registerFn(
-        'test_tool',
         {
           title: 'Test Tool',
           summary: 'A test tool',
@@ -199,7 +194,7 @@ describe('SmartBearMcpServer', () => {
       // Assert some of the details
       const registerToolParams = superRegisterToolMock.mock.calls[0];
       expect(registerToolParams[0]).toBe('test_product_test_tool');
-      expect(registerToolParams[1]['title']).toBe('Test Tool');
+      expect(registerToolParams[1]['title']).toBe('Test Product: Test Tool');
       expect(registerToolParams[1]['description']).toBe(
         'A test tool\n\n' +
         '**Parameters:**\n' +
@@ -235,7 +230,7 @@ describe('SmartBearMcpServer', () => {
         '**Hints:** 1. First hint 2. Second hint');
       expect(registerToolParams[1]['inputSchema']['p1'].toString()).toBe(z.string().describe('The input for the tool').toString());
       expect(registerToolParams[1]['annotations']).toEqual({
-        title: 'Test Tool',
+        title: 'Test Product: Test Tool',
         readOnlyHint: true,
         destructiveHint: true,
         idempotentHint: true,
@@ -252,7 +247,6 @@ describe('SmartBearMcpServer', () => {
       const registerFn = mockClient.registerTools.mock.calls[0][0];
       const registerCbMock = vi.fn();
       registerFn(
-        'test_tool',
         {
           title: 'Test Tool',
           summary: 'A test tool',
@@ -302,7 +296,8 @@ describe('SmartBearMcpServer', () => {
 
     it('should register resources when client provides them', async () => {
       const mockClient = {
-        name: 'test_product',
+        name: 'Test Product',
+        prefix: 'test_product',
         registerTools: vi.fn(),
         registerResources: vi.fn()
       };
@@ -345,7 +340,8 @@ describe('SmartBearMcpServer', () => {
     it('should not register resources when client does not provide them', async () => {
 
       const mockClient = {
-        name: 'test_product',
+        name: 'Test Product',
+        prefix: 'test_product',
         registerTools: vi.fn(),
         registerResources: undefined
       };

@@ -54,7 +54,8 @@ export class InsightHubClient implements Client {
   private apiEndpoint: string;
   private appEndpoint: string;
 
-  name = "insight_hub";
+  name = "Insight Hub";
+  prefix = "insight_hub";
 
   constructor(token: string, projectApiKey?: string, endpoint?: string) {
     this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
@@ -224,9 +225,8 @@ export class InsightHubClient implements Client {
   registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void {
     if (!this.projectApiKey) {
       register(
-        "list_projects",
         {
-          title: "List Insight Hub Projects",
+          title: "List Projects",
           summary: "List all projects in the organization with optional pagination",
           purpose: "Retrieve available projects for browsing and selecting which project to analyze",
           useCases: [
@@ -295,14 +295,13 @@ export class InsightHubClient implements Client {
     }
 
     register(
-      "get_error",
       {
-        title: "Get Insight Hub Error Details", 
-        summary: "Get full details on an error, including aggregated and summarised data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.",
+        title: "Get Error", 
+        summary: "Get full details on an error, including aggregated and summarized data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.",
         purpose: "Retrieve all the information required on a specified error to understand who it is affecting and why.",
         useCases: [
-          "Investigate a specific error found through list_insight_hub_project_errors",
-          "Understand which types of user are affected by the error using summarised event data",
+          "Investigate a specific error found through the List Project Errors tool",
+          "Understand which types of user are affected by the error using summarized event data",
           "Get error details for debugging and root cause analysis",
           "Retrieve error metadata for incident reports and documentation"
         ],
@@ -326,7 +325,7 @@ export class InsightHubClient implements Client {
             name: "filters",
             type: FilterObjectSchema,
             required: false,
-            description: "Apply filters to narrow down the error list. Use get_project_event_filters to discover available filter fields",
+            description: "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields",
             examples: [
               '{"error.status": [{"type": "eq", "value": "open"}]}',
               '{"event.since": [{"type": "eq", "value": "7d"}]} // Relative time: last 7 days',
@@ -344,7 +343,7 @@ export class InsightHubClient implements Client {
           " - error_details: Aggregated data about the error, including first and last seen occurrence" +
           " - latest_event: Detailed information about the most recent occurrence of the error, including stacktrace, breadcrumbs, user and context" +
           " - pivots: List of pivots (summaries) for the error, which can be used to analyze patterns in occurrences" +
-          " - url: A link to the error in the Insight Hub dashboard - this should be shown to the user for them to perform further analysis",
+          " - url: A link to the error in the dashboard - this should be shown to the user for them to perform further analysis",
         examples: [
           {
             description: "Get details for a specific error",
@@ -355,11 +354,10 @@ export class InsightHubClient implements Client {
           }
         ],
         hints: [
-          "Error IDs can be found using the list_insight_hub_project_errors tool",
+          "Error IDs can be found using the List Errors tool",
           "Use this after filtering errors to get detailed information about specific errors",
           "If you used a filter to get this error, you can pass the same filters here to restrict the results or apply further filters",
-          "The response also includes the latest event for the error, do not call get_insight_hub_error_latest_event afterwards as this will be redundant",
-          "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the Insight Hub dashboard and perform further analysis",
+          "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
         ],
       },
       async (args, _extra) => {
@@ -411,13 +409,12 @@ export class InsightHubClient implements Client {
     );
     
     register(
-      "get_event_details",
       {
-        title: "Get Insight Hub Event Details",
-        summary: "Get detailed information about a specific event using its Insight Hub dashboard URL",
-        purpose: "Retrieve event details directly from an Insight Hub web interface URL for quick debugging",
+        title: "Get Event Details",
+        summary: "Get detailed information about a specific event using its dashboard URL",
+        purpose: "Retrieve event details directly from a dashboard URL for quick debugging",
         useCases: [
-          "Get event details when given an Insight Hub dashboard URL from a user or notification",
+          "Get event details when given a dashboard URL from a user or notification",
           "Extract event information from shared links or browser URLs",
           "Quick lookup of event details without needing separate project and event IDs"
         ],
@@ -431,13 +428,13 @@ export class InsightHubClient implements Client {
               "https://app.bugsnag.com/my-org/my-project/errors/6863e2af8c857c0a5023b411?event_id=6863e2af012caf1d5c320000"
             ],
             constraints: [
-              "Must be a valid Insight Hub dashboard URL containing project slug and event_id parameter"
+              "Must be a valid dashboard URL containing project slug and event_id parameter"
             ]
           }
         ],
         examples: [
           {
-            description: "Get event details from Insight Hub URL",
+            description: "Get event details from a dashboard URL",
             parameters: {
               link: "https://app.bugsnag.com/my-org/my-project/errors/6863e2af8c857c0a5023b411?event_id=6863e2af012caf1d5c320000"
             },
@@ -472,7 +469,6 @@ export class InsightHubClient implements Client {
 
     // Dynamically infer the filters schema from cached project event fields
     register(
-      "list_project_errors",
       {
         title: "List Project Errors",
         summary: "List and search errors in a project using customizable filters",
@@ -487,7 +483,7 @@ export class InsightHubClient implements Client {
           {
             name: "filters",
             type: FilterObjectSchema,
-            description: "Apply filters to narrow down the error list. Use get_project_event_filters to discover available filter fields",
+            description: "Apply filters to narrow down the error list. Use the List Errors or Get Error tools to discover available filter fields",
             required: false,
             examples: [
                 '{"error.status": [{"type": "eq", "value": "open"}]}',
@@ -523,7 +519,7 @@ export class InsightHubClient implements Client {
           }
         ],
         hints: [
-          "Use get_project_event_filters tool first to discover valid filter field names for your project",
+          "Use list_project_event_filters tool first to discover valid filter field names for your project",
           "Combine multiple filters to narrow results - filters are applied with AND logic",
           "For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates",
           "Common time filters: event.since (from this time), event.before (until this time)",
@@ -557,11 +553,10 @@ export class InsightHubClient implements Client {
     );
 
     register(
-      "get_project_event_filters",
       {
-        title: "Get Available Project Event Filters",
+        title: "List Project Event Filters",
         summary: "Get available event filter fields for the current project",
-        purpose: "Discover valid filter field names and options that can be used with list_project_errors",
+        purpose: "Discover valid filter field names and options that can be used with the List Errors or Get Error tools",
         useCases: [
           "Discover what filter fields are available before searching for errors",
           "Find the correct field names for filtering by user, environment, or custom metadata",
@@ -576,7 +571,7 @@ export class InsightHubClient implements Client {
           }
         ],
         hints: [
-          "Use this tool before list_project_errors to understand available filters",
+          "Use this tool before the List Errors or Get Error tools to understand available filters",
           "Look for display_id field in the response - these are the field names to use in filters"
         ]
       },
@@ -591,14 +586,13 @@ export class InsightHubClient implements Client {
     );
 
     register(
-      "update_error",
       {
-        title: "Update an Insight Hub Error",
-        summary: "Update the status of an error in Insight Hub",
+        title: "Update Error",
+        summary: "Update the status of an error",
         purpose: "Change an error's workflow state, such as marking it as resolved or ignored",
         useCases: [
           "Mark an error as open, fixed or ignored",
-          "Discard or undiscard an error",
+          "Discard or un-discard an error",
           "Update the severity of an error"
         ],
         parameters: [
