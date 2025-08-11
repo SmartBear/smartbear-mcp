@@ -3,6 +3,14 @@
 ## [Unreleased]
 - Add vitest for unit testing
   [#41](https://github.com/SmartBear/smartbear-mcp/pull/41)
+- [Insight Hub] Remove search field from filtering
+  [#42](https://github.com/SmartBear/smartbear-mcp/pull/42)
+- [Insight Hub] Add tool to update errors
+  [#45](https://github.com/SmartBear/smartbear-mcp/pull/45)
+- [Insight Hub] Add latest event and URL to error details
+  [#47](https://github.com/SmartBear/smartbear-mcp/pull/47)
+- [Insight Hub] Improve data returned when getting error information
+  [#61](https://github.com/SmartBear/smartbear-mcp/pull/61)
 
 ## [0.2.2] - 2025-07-11
 - [API Hub] Add user agent header to API requests
