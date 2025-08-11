@@ -30,7 +30,6 @@ export interface ToolParams {
 }
 
 export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
-    name: string,
     params: ToolParams,
     cb: ToolCallback<InputArgs>
 ) => RegisteredTool;
@@ -48,6 +47,7 @@ export type GetInputFunction = (
 
 export interface Client {
     name: string;
+    prefix: string;
     registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void;
     registerResources?(register: RegisterResourceFunction): void;
 }

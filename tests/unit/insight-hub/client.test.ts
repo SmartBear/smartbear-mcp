@@ -571,7 +571,6 @@ describe('InsightHubClient', () => {
       client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
       expect(registerToolsSpy).toBeCalledWith(
-        'list_projects',
         expect.any(Object),
         expect.any(Function)
       );
@@ -581,19 +580,19 @@ describe('InsightHubClient', () => {
       const clientWithApiKey = new InsightHubClient('test-token', 'project-api-key');
       clientWithApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-      const registeredTools = registerToolsSpy.mock.calls.map((call: any) => call[0]);
-      expect(registeredTools).not.toContain('list_projects');
+      const registeredTools = registerToolsSpy.mock.calls.map((call: any) => call[0].title);
+      expect(registeredTools).not.toContain('List Projects');
     });
 
     it('should register common tools regardless of project API key', () => {
       client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
-      const registeredTools = registerToolsSpy.mock.calls.map((call: any) => call[0]);
-      expect(registeredTools).toContain('get_error');
-      expect(registeredTools).toContain('get_event_details');
-      expect(registeredTools).toContain('list_project_errors');
-      expect(registeredTools).toContain('get_project_event_filters');
-      expect(registeredTools).toContain('update_error');
+      const registeredTools = registerToolsSpy.mock.calls.map((call: any) => call[0].title);
+      expect(registeredTools).toContain('Get Error');
+      expect(registeredTools).toContain('Get Event Details');
+      expect(registeredTools).toContain('List Project Errors');
+      expect(registeredTools).toContain('List Project Event Filters');
+      expect(registeredTools).toContain('Update Error');
     });
   });
 
@@ -636,7 +635,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'list_projects')[2];
+          .find((call: any) => call[0].title === 'List Projects')[1];
 
         const result = await toolHandler({ page_size: 2, page: 1 });
 
@@ -653,7 +652,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'list_projects')[2];
+          .find((call: any) => call[0].title === 'List Projects')[1];
 
         const result = await toolHandler({});
 
@@ -669,7 +668,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'list_projects')[2];
+          .find((call: any) => call[0].title === 'List Projects')[1];
 
         const result = await toolHandler({});
 
@@ -686,7 +685,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'list_projects')[2];
+          .find((call: any) => call[0].title === 'List Projects')[1];
 
         const result = await toolHandler({ page_size: 2 });
 
@@ -706,7 +705,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'list_projects')[2];
+          .find((call: any) => call[0].title === 'List Projects')[1];
 
         const result = await toolHandler({ page: 2 });
 
@@ -735,7 +734,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'get_error')[2];
+          .find((call: any) => call[0].title === 'Get Error')[1];
 
         const result = await toolHandler({ errorId: 'error-1' });
 
@@ -753,7 +752,7 @@ describe('InsightHubClient', () => {
       it('should throw error when required arguments missing', async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'get_error')[2];
+          .find((call: any) => call[0].title === 'Get Error')[1];
 
         await expect(toolHandler({})).rejects.toThrow('Both projectId and errorId arguments are required');
       });
@@ -769,7 +768,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'get_event_details')[2];
+          .find((call: any) => call[0].title === 'Get Event Details')[1];
 
         const result = await toolHandler({
           link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123?event_id=event-1'
@@ -782,7 +781,7 @@ describe('InsightHubClient', () => {
       it('should throw error when link is invalid', async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'get_event_details')[2];
+          .find((call: any) => call[0].title === 'Get Event Details')[1];
 
         await expect(toolHandler({ link: 'invalid-url' })).rejects.toThrow();
       });
@@ -792,7 +791,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'get_event_details')[2];
+          .find((call: any) => call[0].title === 'Get Event Details')[1];
 
         await expect(toolHandler({
           link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123?event_id=event-1'
@@ -802,7 +801,7 @@ describe('InsightHubClient', () => {
       it('should throw error when URL is missing required parameters', async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'get_event_details')[2];
+          .find((call: any) => call[0].title === 'Get Event Details')[1];
 
         await expect(toolHandler({
           link: 'https://app.bugsnag.com/my-org/my-project/errors/error-123' // Missing event_id
@@ -827,7 +826,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'list_project_errors')[2];
+          .find((call: any) => call[0].title === 'List Project Errors')[1];
 
         const result = await toolHandler({ filters });
 
@@ -850,7 +849,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'list_project_errors')[2];
+          .find((call: any) => call[0].title === 'List Project Errors')[1];
 
         await expect(toolHandler({ filters })).rejects.toThrow('Invalid filter key: invalid.field');
       });
@@ -860,7 +859,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'list_project_errors')[2];
+          .find((call: any) => call[0].title === 'List Project Errors')[1];
 
         await expect(toolHandler({})).rejects.toThrow('No current project found. Please provide a projectId or configure a project API key.');
       });
@@ -876,7 +875,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'get_project_event_filters')[2];
+          .find((call: any) => call[0].title === 'List Project Event Filters')[1];
 
         const result = await toolHandler({});
 
@@ -888,7 +887,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'get_project_event_filters')[2];
+          .find((call: any) => call[0].title === 'List Project Event Filters')[1];
 
         await expect(toolHandler({})).rejects.toThrow('No event filters found in cache.');
       });
@@ -903,7 +902,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'update_error')[2];
+          .find((call: any) => call[0].title === 'Update Error')[1];
 
         const result = await toolHandler({
           errorId: 'error-1',
@@ -927,7 +926,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'update_error')[2];
+          .find((call: any) => call[0].title === 'Update Error')[1];
 
         const result = await toolHandler({
           projectId: 'proj-1',
@@ -953,7 +952,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'update_error')[2];
+          .find((call: any) => call[0].title === 'Update Error')[1];
 
         for (const operation of operations) {
           await toolHandler({
@@ -984,7 +983,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'update_error')![2];
+          .find((call: any) => call[0].title === 'Update Error')[1];
 
         const result = await toolHandler({
           errorId: 'error-1',
@@ -1026,7 +1025,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'update_error')![2];
+          .find((call: any) => call[0].title === 'Update Error')[1];
 
         const result = await toolHandler({
           errorId: 'error-1',
@@ -1049,7 +1048,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'update_error')[2];
+          .find((call: any) => call[0].title === 'Update Error')[1];
 
         const result = await toolHandler({
           errorId: 'error-1',
@@ -1064,7 +1063,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'update_error')[2];
+          .find((call: any) => call[0].title === 'Update Error')[1];
 
         await expect(toolHandler({
           errorId: 'error-1',
@@ -1079,7 +1078,7 @@ describe('InsightHubClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
-          .find((call: any) => call[0] === 'update_error')[2];
+          .find((call: any) => call[0].title === 'Update Error')[1];
 
         await expect(toolHandler({
           projectId: 'non-existent-project',

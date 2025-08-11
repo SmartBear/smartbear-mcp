@@ -56,7 +56,8 @@ export interface updateProductArgs extends productArgs {
 export class ApiHubClient implements Client {
   private headers: { "Authorization": string; "Content-Type": string, "User-Agent": string };
 
-  name = "api_hub";
+  name = "API Hub";
+  prefix = "api_hub";
 
   constructor(token: string) {
     this.headers = {
@@ -162,7 +163,6 @@ export class ApiHubClient implements Client {
 
   registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
     register(
-      "list_portals",
       {
         title: "List Portals",
         summary: "Search for available portals within API Hub. Only portals where you have at least a designer role, either at the product level or organization level, are returned.",
@@ -176,7 +176,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "create_portal",
       {
         title: "Create Portal",
         summary: "Create a new portal within API Hub.",
@@ -242,7 +241,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "get_portal",
       {
         title: "Get Portal",
         summary: "Retrieve information about a specific portal.",
@@ -264,7 +262,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "delete_portal",
       {
         title: "Delete Portal",
         summary: "Delete a specific portal.",
@@ -286,7 +283,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "update_portal",
       {
         title: "Update Portal",
         summary: "Update a specific portal's configuration.",
@@ -362,7 +358,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "list_portal_products",
       {
         title: "List Portal Products",
         summary: "Get products for a specific portal that match your criteria.",
@@ -384,7 +379,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "create_portal_product",
       {
         title: "Create Portal Product",
         summary: "Create a new product for a specific portal.",
@@ -448,7 +442,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "get_portal_product",
       {
         title: "Get Portal Product",
         summary: "Retrieve information about a specific product resource.",
@@ -470,7 +463,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "delete_portal_product",
       {
         title: "Delete Portal Product",
         summary: "Delete a product from a specific portal",
@@ -492,7 +484,6 @@ export class ApiHubClient implements Client {
       },
     );
     register(
-      "update_portal_product",
       {
         title: "Update Portal Product",
         summary: "Update a product's settings within a specific portal.",
