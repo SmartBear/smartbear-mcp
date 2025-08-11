@@ -69,3 +69,4 @@ If you wish to interact with only one Insight Hub project, we also recommend set
     -   Project event filters are pre-cached for better performance
 -   **Filtering**: Use `get_project_event_filters` to discover available filter fields before using `list_insight_hub_project_errors`
 -   **Time Filters**: Support both relative format (e.g., `7d`, `24h`) and ISO 8601 UTC format (e.g., `2018-05-20T00:00:00Z`)
+
