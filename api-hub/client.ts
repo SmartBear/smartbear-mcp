@@ -219,14 +219,14 @@ export class ApiHubClient implements Client {
           },
           {
             name: "openapiRenderer",
-            type: z.string().optional(),
+            type: z.string(),
             required: false,
             description:
               "Portal level setting for the OpenAPI renderer. SWAGGER_UI - Use the Swagger UI renderer. ELEMENTS - Use the Elements renderer. TOGGLE - Switch between the two renderers with elements set as the default.",
           },
           {
             name: "pageContentFormat",
-            type: z.string().optional(),
+            type: z.string(),
             required: false,
             description:
               "The format of the page content.",
