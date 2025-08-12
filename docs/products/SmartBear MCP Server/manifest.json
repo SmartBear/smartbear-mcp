@@ -45,10 +45,10 @@
         {
             "order": 2,
             "parent": "mcp-server-capabilities",
-            "name": "Insight Hub integration",
-            "slug": "insight-hub-integration",
+            "name": "BugSnag integration",
+            "slug": "bugsnag-integration",
             "type": "markdown",
-            "contentUrl": "insight-hub-integration.md"
+            "contentUrl": "bugsnag-integration.md"
         },
         {
             "order": 2,

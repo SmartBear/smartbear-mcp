@@ -1,14 +1,14 @@
 ![insight-hub.png](./images/embedded/insight-hub.png)
 
-The Insight Hub client provides comprehensive error monitoring and debugging capabilities as listed below. Tools for Insight Hub requires an `INSIGHT_HUB_AUTH_TOKEN`.
+The BugSnag client provides comprehensive error monitoring and debugging capabilities as listed below. Tools for BugSnag requires an `INSIGHT_HUB_AUTH_TOKEN`.
 
-If you wish to interact with only one Insight Hub project, we also recommend setting `INSIGHT_HUB_PROJECT_API_KEY` to reduce the scope of the conversation. This allows the MCP server to pre-cache your project's custom filters for better filtering prompts.
+If you wish to interact with only one BugSnag project, we also recommend setting `INSIGHT_HUB_PROJECT_API_KEY` to reduce the scope of the conversation. This allows the MCP server to pre-cache your project's custom filters for better filtering prompts.
 
 ## Available Tools
 
 ### List Projects
 
--   Lists the projects in your organization.   
+-   Lists the projects in your organization.
 -   Only available when no project API key is configured.
 
 ### List Errors
