@@ -5,6 +5,7 @@ COPY common /app/common
 COPY reflect /app/reflect
 COPY insight-hub /app/insight-hub
 COPY api-hub /app/api-hub
+COPY pactflow /app/pactflow
 COPY index.ts /app/
 COPY package.json package-lock.json tsconfig.json /app/
 

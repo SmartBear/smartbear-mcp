@@ -6,6 +6,7 @@ import { InsightHubClient } from "./insight-hub/client.js";
 import { ReflectClient } from "./reflect/client.js";
 import { ApiHubClient } from "./api-hub/client.js";
 import { SmartBearMcpServer } from "./common/server.js";
+import { PactflowClient } from "./pactflow/client.js";
 
 // This is used to report errors in the MCP server itself
 // If you want to use your own BugSnag API key, set the MCP_SERVER_INSIGHT_HUB_API_KEY environment variable
@@ -20,10 +21,15 @@ async function main() {
   const reflectToken = process.env.REFLECT_API_TOKEN;
   const insightHubToken = process.env.INSIGHT_HUB_AUTH_TOKEN;
   const apiHubToken = process.env.API_HUB_API_KEY;
+  const pactBrokerToken = process.env.PACT_BROKER_TOKEN;
+  const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
+  // const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
+  // const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
 
-  if (!reflectToken && !insightHubToken && !apiHubToken) {
+
+  if (!reflectToken && !insightHubToken && !apiHubToken && (!pactBrokerToken && !pactBrokerUrl)) {
     console.error(
-      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN or API_HUB_API_KEY environment variables",
+      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_TOKEN / PACT_BROKER_BASE_URL environment variables",
     );
     process.exit(1);
   }
@@ -42,9 +48,19 @@ async function main() {
     server.addClient(insightHubClient);
   }
 
- if(apiHubToken) {
+  if(apiHubToken) {
     server.addClient(new ApiHubClient(apiHubToken));
   }
+
+  if(pactBrokerToken && pactBrokerUrl) {
+    server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
+  }
+
+  // Once PactBroker tools are implemented, we can uncomment this
+  // if(pactBrokerUrl && pactBrokerUsername && pactBrokerPassword){
+  //   const pactBrokerClient = new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pactbroker");
+  //   server.addClient(pactBrokerClient);
+  // }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
