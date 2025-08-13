@@ -1,12 +1,14 @@
 import { GenerationInput, GenerationResponse, StatusResponse } from "./client/ai.js";
 import { ClientType, TOOLS } from "./client/tools.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import { Client } from "../common/types.js";
+import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
 
 
 // Tool definitions for PactFlow AI API client
 export class PactflowClient implements Client {
+    name = "Contract Testing";
+    prefix = "contract_testing";
+
     private headers: {
       Authorization: string;
       "Content-Type": string;
@@ -113,24 +115,24 @@ export class PactflowClient implements Client {
         `${operationName} timed out after ${timeout / 1000} seconds`
       );
     }
-    
-    registerTools(server: McpServer): void {
+  
+
+    registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
       for (const tool of TOOLS.filter(t => t.clients.includes(this.clientType))) {
-        server.tool(
-          tool.name,
-          tool.description,
-          tool.inputSchema,
-          async (args: any, _extra: any) => {
-            const handler = (this as any)[tool.handler];
-            if (typeof handler !== "function") {
-              throw new Error(`Handler '${tool.handler}' not found on PactClient`);
+        const {handler, clients, formatResponse, ...toolparams} = tool;
+        void clients;
+        
+        register(toolparams, async (args, _extra) => {
+            const handler_fn = (this as any)[handler];
+            if (typeof handler_fn !== "function") {
+              throw new Error(`Handler '${handler}' not found on PactClient`);
             }
-            
-            const result = await handler.call(this, args);
-            
+
+            const result = await handler_fn.call(this, args);
+
             // Use custom response formatter if provided
-            if (tool.formatResponse) {
-              return tool.formatResponse(result);
+            if (formatResponse) {
+              return formatResponse(result);
             }
 
             // Default fallback

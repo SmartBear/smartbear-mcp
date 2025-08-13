@@ -26,6 +26,14 @@ async function main() {
   // const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
   // const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
 
+
+  if (!reflectToken && !insightHubToken && !apiHubToken && (!pactBrokerToken && !pactBrokerUrl)) {
+    console.error(
+      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_TOKEN / PACT_BROKER_BASE_URL environment variables",
+    );
+    process.exit(1);
+  }
+
   if (reflectToken) {
     server.addClient(new ReflectClient(reflectToken));
   }
@@ -40,23 +48,18 @@ async function main() {
     server.addClient(insightHubClient);
   }
 
- if(apiHubToken) {
+  if(apiHubToken) {
     server.addClient(new ApiHubClient(apiHubToken));
-
   }
 
-
-  if(pactBrokerToken && pactBrokerUrl) {    
-    const pactFlowClient = new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow");
-    pactFlowClient.registerTools(server);
-    server.addClient(pactFlowClient);
-
+  if(pactBrokerToken && pactBrokerUrl) {
+    server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
   }
 
   // Once PactBroker tools are implemented, we can uncomment this
   // if(pactBrokerUrl && pactBrokerUsername && pactBrokerPassword){
   //   const pactBrokerClient = new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pactbroker");
-  //   pactBrokerClient.registerTools(server);
+  //   server.addClient(pactBrokerClient);
   // }
 
   const transport = new StdioServerTransport();
