@@ -12,6 +12,7 @@
 
 import { z } from "zod";
 import { ToolParams } from "../../common/types.js";
+import { GenerationLanguages, HttpMethods } from "./ai.js";
 
 export type ClientType = "pactflow" | "pactbroker";
 
@@ -23,23 +24,14 @@ export interface PactflowToolParams extends ToolParams {
 
 export const TOOLS: PactflowToolParams[] = [
   {
-    title: "generate_pact",
+    title: "Generate Pact Tests",
     summary:
       "Generate Pact tests using PactFlow AI. You can provide one or more of the following input types: (1) request/response pairs for specific interactions, (2) code files to analyze and extract interactions from, and/or (3) OpenAPI document to generate tests for specific endpoints. When providing an OpenAPI document, a matcher is required to specify which endpoints to generate tests for.",
     purpose: "Generate Pact tests for API interactions",
     parameters: [
       {
         name: "language",
-        type: z
-          .enum([
-            "typescript",
-            "java",
-            "golang",
-            "dotnet",
-            "kotlin",
-            "swift",
-            "php",
-          ])
+        type: z.enum(GenerationLanguages)
           .optional()
           .describe(
             "Target language for the generated Pact tests. If not provided, will be inferred from other inputs."
@@ -125,7 +117,8 @@ export const TOOLS: PactflowToolParams[] = [
           .object({
             document: z
               .object({
-                openapi: z.string().describe("OpenAPI version (e.g., '3.0.0')"),
+                openapi: z.string().optional().describe("For OpenAPI version (e.g., '3.0.0')"),
+                swagger: z.string().optional().describe("For OpenAPI documents version 2.x (e.g., '2.0')"),
                 paths: z
                   .record(z.record(z.any()))
                   .describe(
@@ -139,7 +132,14 @@ export const TOOLS: PactflowToolParams[] = [
                   ),
               })
               .passthrough()
-              .describe("The complete OpenAPI document describing the API"),
+              .describe("The complete OpenAPI document describing the API")
+              .refine(
+                (data) => !!data.openapi || !!data.swagger,
+                {
+                  message: "Either 'openapi' (for v3+) or 'swagger' (for v2) must be provided",
+                  path: ["openapi"],
+                }
+              ),
             matcher: z
               .object({
                 path: z
@@ -149,18 +149,7 @@ export const TOOLS: PactflowToolParams[] = [
                     "Path pattern to match specific endpoints (e.g., '/users/{id}', '/users/*', '/users/**'). Supports glob patterns: ? (single char), * (excluding /), ** (including /)"
                   ),
                 methods: z
-                  .array(
-                    z.enum([
-                      "GET",
-                      "PUT",
-                      "POST",
-                      "DELETE",
-                      "OPTIONS",
-                      "HEAD",
-                      "PATCH",
-                      "TRACE",
-                    ])
-                  )
+                  .array(z.enum(HttpMethods))
                   .optional()
                   .describe(
                     "HTTP methods to include (e.g., ['GET', 'POST']). If not specified, all methods are matched"
