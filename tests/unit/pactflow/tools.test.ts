@@ -2,9 +2,9 @@
 import { TOOLS } from "../../../pactflow/client/tools.js";
 import { describe, it, expect } from 'vitest';
 
-describe("TOOLS definition for 'generate_pact'", () => {
-  it("defines the generate_pact tool with correct metadata", () => {
-    const tool = TOOLS.find((t) => t.title === "generate_pact");
+describe("TOOLS definition for 'Generate Pact Tests'", () => {
+  it("defines the generate pact tests tool with correct metadata", () => {
+    const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
     expect(tool).toBeDefined();
     expect(tool?.summary).toMatch(/Generate Pact tests using PactFlow AI/);
     expect(tool?.clients).toEqual(["pactflow"]);
@@ -12,7 +12,7 @@ describe("TOOLS definition for 'generate_pact'", () => {
   });
 
   it("enforces presence of matcher when openapi input is provided", () => {
-    const tool = TOOLS.find((t) => t.title === "generate_pact");
+    const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
     const openapiSchema = tool?.parameters.find((p) => p.name === "openapi")?.type;
     expect(openapiSchema).toBeDefined();
 
@@ -29,7 +29,7 @@ describe("TOOLS definition for 'generate_pact'", () => {
   });
 
   it("rejects unsupported language values in the language field", () => {
-    const tool = TOOLS.find((t) => t.title === "generate_pact");
+    const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
     const languageSchema = tool?.parameters.find((p) => p.name === "language")?.type;
     expect(languageSchema).toBeDefined();
 

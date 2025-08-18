@@ -26,16 +26,11 @@ async function main() {
   // const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
   // const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
 
-
-  if (!reflectToken && !insightHubToken && !apiHubToken && (!pactBrokerToken && !pactBrokerUrl)) {
-    console.error(
-      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_TOKEN / PACT_BROKER_BASE_URL environment variables",
-    );
-    process.exit(1);
-  }
+  let client_defined = false;
 
   if (reflectToken) {
     server.addClient(new ReflectClient(reflectToken));
+    client_defined = true;
   }
 
   if (insightHubToken) {
@@ -46,14 +41,17 @@ async function main() {
     );
     await insightHubClient.initialize();
     server.addClient(insightHubClient);
+    client_defined = true;
   }
 
   if(apiHubToken) {
     server.addClient(new ApiHubClient(apiHubToken));
+    client_defined = true;
   }
 
   if(pactBrokerToken && pactBrokerUrl) {
     server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
+    client_defined = true;
   }
 
   // Once PactBroker tools are implemented, we can uncomment this
@@ -61,6 +59,13 @@ async function main() {
   //   const pactBrokerClient = new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pactbroker");
   //   server.addClient(pactBrokerClient);
   // }
+
+  if (!client_defined) {
+    console.error(
+      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_TOKEN / PACT_BROKER_BASE_URL environment variables",
+    );
+    process.exit(1);
+  }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

@@ -44,7 +44,7 @@ export class PactflowClient implements Client {
         method: "POST",
         headers: this.headers,
         body: JSON.stringify(body),
-        });
+      });
   
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

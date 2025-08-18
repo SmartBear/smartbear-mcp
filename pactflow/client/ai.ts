@@ -1,23 +1,30 @@
 // Type definitions for PactFlow AI API
-export type GenerationLanguage =
-  | "javascript"
-  | "typescript"
-  | "java"
-  | "golang"
-  | "dotnet"
-  | "kotlin"
-  | "swift"
-  | "php";
+export const GenerationLanguages = [
+  "javascript",
+  "typescript",
+  "java",
+  "golang",
+  "dotnet",
+  "kotlin",
+  "swift",
+  "php",
+] as const;
 
-export type HttpMethod =
-  | "GET"
-  | "PUT"
-  | "POST"
-  | "DELETE"
-  | "OPTIONS"
-  | "HEAD"
-  | "PATCH"
-  | "TRACE";
+export type GenerationLanguage = typeof GenerationLanguages[number];
+
+export const HttpMethods = [
+  "GET",
+  "PUT",
+  "POST",
+  "DELETE",
+  "OPTIONS",
+  "HEAD",
+  "PATCH",
+  "TRACE"
+] as const;
+
+export type HttpMethod = typeof HttpMethods[number];
+
 
 export interface FileInput {
   filename?: string;
@@ -34,6 +41,7 @@ export interface EndpointMatcher {
 
 export interface OpenApi {
   openapi: string;
+  swagger: string;
   paths: Record<string, Record<string, any>>;
   components?: Record<string, Record<string, any>>;
   [key: string]: any;
