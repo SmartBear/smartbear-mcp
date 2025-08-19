@@ -14,7 +14,7 @@ import { z } from "zod";
 import { ToolParams } from "../../common/types.js";
 import { GenerationLanguages, HttpMethods } from "./ai.js";
 
-export type ClientType = "pactflow" | "pactbroker";
+export type ClientType = "pactflow" | "pact_broker";
 
 export interface PactflowToolParams extends ToolParams {
   handler: string;

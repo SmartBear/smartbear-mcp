@@ -23,8 +23,8 @@ async function main() {
   const apiHubToken = process.env.API_HUB_API_KEY;
   const pactBrokerToken = process.env.PACT_BROKER_TOKEN;
   const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
-  // const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
-  // const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
+  const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
+  const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
 
   let client_defined = false;
 
@@ -54,11 +54,11 @@ async function main() {
     client_defined = true;
   }
 
-  // Once PactBroker tools are implemented, we can uncomment this
-  // if(pactBrokerUrl && pactBrokerUsername && pactBrokerPassword){
-  //   const pactBrokerClient = new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pactbroker");
-  //   server.addClient(pactBrokerClient);
-  // }
+  if(pactBrokerUrl && pactBrokerUsername && pactBrokerPassword){
+    const pactBrokerClient = new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker");
+    server.addClient(pactBrokerClient);
+    client_defined = true; 
+  }
 
   if (!client_defined) {
     console.error(
