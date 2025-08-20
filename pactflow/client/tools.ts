@@ -218,4 +218,19 @@ export const TOOLS: PactflowToolParams[] = [
     handler: "generate",
     clients: ["pactflow"], // ONLY pactflow
   },
+  {
+    title: "Get Provider States",
+    summary: "Retrieve the states of a specific provider",
+    purpose: "A provider state in Pact defines the specific preconditions that must be met on the provider side before a consumer–provider interaction can be tested. It sets up the provider in the right context—such as ensuring a particular user or record exists—so that the provider can return the response the consumer expects. This makes contract tests reliable, repeatable, and isolated by injecting or configuring the necessary data and conditions directly into the provider before each test runs.",
+    parameters: [
+      {
+        name: "provider",
+        type: z.string(),
+        description: "name of the provider to retrieve states for",
+        required: true
+      }
+    ],
+    handler: "getProviderStates",       
+    clients: ["pactflow", "pact_broker"]
+  }
 ];

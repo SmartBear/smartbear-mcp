@@ -1,7 +1,8 @@
 import { GenerationInput, GenerationResponse, StatusResponse } from "./client/ai.js";
 import { ClientType, TOOLS } from "./client/tools.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import { Client, GetInputFunction, RegisterResourceFunction, RegisterToolsFunction } from "../common/types.js";
+import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
+import { ProviderStatesResponse } from "./client/base.js";
 
 
 // Tool definitions for PactFlow AI API client
@@ -121,9 +122,8 @@ export class PactflowClient implements Client {
 
     // PactFlow / Pact_Broker client methods
 
-    async getProviderStates<T>(provider: string): Promise<T> {
-      const uri_encoded_provider_name = provider.replace(/ /g, "%20");
-      
+    async getProviderStates({ provider }: { provider: string }): Promise<ProviderStatesResponse> {
+      const uri_encoded_provider_name = encodeURIComponent(provider);
       const response = await fetch(`${this.baseUrl}/pacts/provider/${uri_encoded_provider_name}/provider-states`, {
         method: "GET",
         headers: this.headers,
@@ -163,19 +163,4 @@ export class PactflowClient implements Client {
       }
     }
 
-    // Register resources for supported clients.
-    // To add a new resource:
-    //   1. Define the list of allowed clients in the `if` condition.
-    //   2. Call `register` with the resource name, path, and handler.
-    //   3. Only clients in the allowed list will have access to that resource.
-    registerResources(register: RegisterResourceFunction): void {
-      if(["pactflow", "pact_broker"].includes(this.clientType)) {
-        register("get-provider-states", "{provider}", async (uri, variables, _extra) => {
-          const states = await this.getProviderStates(variables.provider as string);
-          return {
-            contents: [{ uri: uri.href, text: JSON.stringify(states) }]
-          };
-        });
-      }
-    }
 }

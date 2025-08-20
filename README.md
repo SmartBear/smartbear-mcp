@@ -104,25 +104,25 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
       {
          "id": "pact_broker_base_url",
          "type": "promptString",
-         "description": "Pactflow or Pact Broker base url - leave blank to disable Pactflow tools",
+         "description": "PactFlow or Pact Broker base url - leave blank to disable the tools",
          "password": true
       },
       {
          "id": "pact_broker_token",
          "type": "promptString",
-         "description": "Pactflow token - leave blank to disable Pactflow tools",
+         "description": "PactFlow Authentication Token",
          "password": true
       },
       {
          "id": "pact_broker_username",
          "type": "promptString",
-         "description": "Pact Broker Username - leave blank to disable Pact Broker tools",
+         "description": "Pact Broker Username",
          "password": true
       },
       {
          "id": "pact_broker_password",
          "type": "promptString",
-         "description": "Pact Broker Password  - leave blank to disable Pact Broker tools",
+         "description": "Pact Broker Password",
          "password": true
       },
   ]
@@ -238,27 +238,27 @@ For developers who want to contribute to the SmartBear MCP server, customize its
           "password": true
         },
         {
-         "id": "pact_broker_base_url",
-         "type": "promptString",
-         "description": "Pactflow base url - leave blank to disable Pactflow tools",
-         "password": true
+          "id": "pact_broker_base_url",
+          "type": "promptString",
+          "description": "PactFlow or Pact Broker base url - leave blank to disable PactFlow tools",
+          "password": true
         },
         {
           "id": "pact_broker_token",
           "type": "promptString",
-          "description": "Pactflow token - leave blank to disable Pactflow tools",
+          "description": "PactFlow Authentication Token",
           "password": true
         },
         {
           "id": "pact_broker_username",
           "type": "promptString",
-          "description": "Pact Broker Username - leave blank to disable Pact Broker tools",
+          "description": "Pact Broker Username",
           "password": true
         },
         {
           "id": "pact_broker_password",
           "type": "promptString",
-          "description": "Pact Broker Password  - leave blank to disable Pact Broker tools",
+          "description": "Pact Broker Password",
           "password": true
         },
       ]

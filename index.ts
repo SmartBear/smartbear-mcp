@@ -49,20 +49,21 @@ async function main() {
     client_defined = true;
   }
 
-  if(pactBrokerToken && pactBrokerUrl) {
-    server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
-    client_defined = true;
-  }
-
-  if(pactBrokerUrl && pactBrokerUsername && pactBrokerPassword){
-    const pactBrokerClient = new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker");
-    server.addClient(pactBrokerClient);
-    client_defined = true; 
+  if (pactBrokerUrl) {
+    if (pactBrokerToken) {
+      server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
+      client_defined = true;
+    } else if (pactBrokerUsername && pactBrokerPassword) {
+      server.addClient(new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker"));
+      client_defined = true;
+    } else {
+      console.error("If the Pact Broker base URL is specified, you must specify either (a) a PactFlow token, or (b) a Pact Broker username and password pair.")
+    }
   }
 
   if (!client_defined) {
     console.error(
-      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_TOKEN / PACT_BROKER_BASE_URL environment variables",
+      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
     );
     process.exit(1);
   }
