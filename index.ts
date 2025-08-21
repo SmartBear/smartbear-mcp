@@ -23,8 +23,8 @@ async function main() {
   const apiHubToken = process.env.API_HUB_API_KEY;
   const pactBrokerToken = process.env.PACT_BROKER_TOKEN;
   const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
-  // const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
-  // const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
+  const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
+  const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
 
   let client_defined = false;
 
@@ -49,20 +49,21 @@ async function main() {
     client_defined = true;
   }
 
-  if(pactBrokerToken && pactBrokerUrl) {
-    server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
-    client_defined = true;
+  if (pactBrokerUrl) {
+    if (pactBrokerToken) {
+      server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
+      client_defined = true;
+    } else if (pactBrokerUsername && pactBrokerPassword) {
+      server.addClient(new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker"));
+      client_defined = true;
+    } else {
+      console.error("If the Pact Broker base URL is specified, you must specify either (a) a PactFlow token, or (b) a Pact Broker username and password pair.")
+    }
   }
-
-  // Once PactBroker tools are implemented, we can uncomment this
-  // if(pactBrokerUrl && pactBrokerUsername && pactBrokerPassword){
-  //   const pactBrokerClient = new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pactbroker");
-  //   server.addClient(pactBrokerClient);
-  // }
 
   if (!client_defined) {
     console.error(
-      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_TOKEN / PACT_BROKER_BASE_URL environment variables",
+      "Please set one of REFLECT_API_TOKEN, INSIGHT_HUB_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
     );
     process.exit(1);
   }

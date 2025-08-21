@@ -2,12 +2,13 @@ import { GenerationInput, GenerationResponse, StatusResponse } from "./client/ai
 import { ClientType, TOOLS } from "./client/tools.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
+import { ProviderStatesResponse } from "./client/base.js";
 
 
 // Tool definitions for PactFlow AI API client
 export class PactflowClient implements Client {
     name = "Contract Testing";
-    prefix = "contract_testing";
+    prefix = "contract-testing";
 
     private headers: {
       Authorization: string;
@@ -37,7 +38,9 @@ export class PactflowClient implements Client {
       this.aiBaseUrl = `${this.baseUrl}/api/ai`;
       this.clientType = clientType;
     }
-  
+    
+    // PactFlow AI client methods
+
     async generate(body: GenerationInput): Promise<GenerationResponse> {
       // Submit the generation request
       const response = await fetch(`${this.aiBaseUrl}/generate`, {
@@ -115,7 +118,23 @@ export class PactflowClient implements Client {
         `${operationName} timed out after ${timeout / 1000} seconds`
       );
     }
-  
+    
+
+    // PactFlow / Pact_Broker client methods
+
+    async getProviderStates({ provider }: { provider: string }): Promise<ProviderStatesResponse> {
+      const uri_encoded_provider_name = encodeURIComponent(provider);
+      const response = await fetch(`${this.baseUrl}/pacts/provider/${uri_encoded_provider_name}/provider-states`, {
+        method: "GET",
+        headers: this.headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status} - ${await response.text()}`);
+      }
+
+      return response.json();
+    }
 
     registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
       for (const tool of TOOLS.filter(t => t.clients.includes(this.clientType))) {
@@ -143,4 +162,5 @@ export class PactflowClient implements Client {
         );
       }
     }
+
 }
