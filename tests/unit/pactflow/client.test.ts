@@ -27,7 +27,7 @@ describe("PactflowClient.registerTools", () => {
         purpose: "purpose2",
         parameters: [],
         handler: "generate",
-        clients: ["pactbroker"], // should NOT be registered
+        clients: ["pact_broker"], // should NOT be registered
       },
     ];
     vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
@@ -48,7 +48,7 @@ describe("PactflowClient.registerTools", () => {
         purpose: "purpose2",
         parameters: [],
         handler: "generate",
-        clients: ["pactbroker"],
+        clients: ["pact_broker"],
       },
     ];
     vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
@@ -70,11 +70,11 @@ describe("PactflowClient.registerTools", () => {
     );
   });
 
-  it("sets correct headers for pact-broker", () => {
+  it("sets correct headers for pact_broker", () => {
     const client = new PactflowClient(
       { username: "user", password: "pass" },
       "https://example.com",
-      "pactbroker"
+      "pact_broker"
     );
 
     expect(client["headers"]).toEqual(
