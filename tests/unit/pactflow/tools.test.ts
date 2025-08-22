@@ -13,7 +13,7 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
 
   it("enforces presence of matcher when openapi input is provided", () => {
     const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
-    const openapiSchema = tool?.parameters.find((p) => p.name === "openapi")?.type;
+    const openapiSchema = tool?.parameters?.find((p) => p.name === "openapi")?.type;
     expect(openapiSchema).toBeDefined();
 
     const invalidOpenapi = {
@@ -30,7 +30,7 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
 
   it("rejects unsupported language values in the language field", () => {
     const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
-    const languageSchema = tool?.parameters.find((p) => p.name === "language")?.type;
+    const languageSchema = tool?.parameters?.find((p) => p.name === "language")?.type;
     expect(languageSchema).toBeDefined();
 
     const invalidData = "ruby"; // not in enum

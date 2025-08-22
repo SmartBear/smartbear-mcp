@@ -1,4 +1,4 @@
-import { GenerationInput, GenerationResponse, StatusResponse } from "./client/ai.js";
+import { GenerationInput, GenerationResponse, RefineInput, RefineResponse, StatusResponse } from "./client/ai.js";
 import { ClientType, TOOLS } from "./client/tools.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
@@ -9,14 +9,14 @@ export class PactflowClient implements Client {
     name = "Contract Testing";
     prefix = "contract_testing";
 
-    private headers: {
+    private readonly headers: {
       Authorization: string;
       "Content-Type": string;
       "User-Agent": string;
     };
-    private aiBaseUrl: string;
-    private baseUrl: string;
-    private clientType: ClientType;
+    private readonly aiBaseUrl: string;
+    private readonly baseUrl: string;
+    private readonly clientType: ClientType;
 
     constructor(auth: string | { username: string; password: string }, baseUrl: string, clientType: ClientType) {
       // Set headers based on the type of auth provided
@@ -27,8 +27,9 @@ export class PactflowClient implements Client {
           "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         };
       } else {
+        const authString = `${auth.username}:${auth.password}`;
         this.headers = {
-          Authorization: `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString("base64")}`,
+          Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
           "Content-Type": "application/json",
           "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         };
@@ -54,6 +55,25 @@ export class PactflowClient implements Client {
       return await this.pollForCompletion<GenerationResponse>(
         status_response,
         "Generation"
+      );
+    }
+
+    async review(body: RefineInput): Promise<RefineResponse> {
+      // submit review request
+      const response = await fetch(`${this.aiBaseUrl}/review`, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const status_response: StatusResponse = await response.json();
+      return await this.pollForCompletion<RefineResponse>(
+        status_response,
+        "Review Pacts"
       );
     }
   
@@ -121,13 +141,12 @@ export class PactflowClient implements Client {
       for (const tool of TOOLS.filter(t => t.clients.includes(this.clientType))) {
         const {handler, clients, formatResponse, ...toolparams} = tool;
         void clients;
-        
         register(toolparams, async (args, _extra) => {
             const handler_fn = (this as any)[handler];
             if (typeof handler_fn !== "function") {
               throw new Error(`Handler '${handler}' not found on PactClient`);
             }
-
+            debugger;
             const result = await handler_fn.call(this, args);
 
             // Use custom response formatter if provided

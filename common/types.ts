@@ -1,19 +1,13 @@
 import { ReadResourceTemplateCallback, RegisteredResourceTemplate, RegisteredTool, ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ElicitRequest, ElicitResult } from "@modelcontextprotocol/sdk/types.js";
-import { ZodRawShape, ZodType } from "zod";
+import { ZodRawShape, ZodType, ZodTypeAny } from "zod";
 import { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 
 export interface ToolParams {
   title: string;
   summary: string;
-  parameters: Array<{
-    name: string;
-    type: ZodType;
-    required: boolean;
-    description?: string;
-    examples?: string[];
-    constraints?: string[];
-  }>;
+  parameters?: Parameters; // either parameters or a zodSchema should be present
+  zodSchema?: ZodTypeAny; 
   purpose?: string;
   useCases?: string[];
   examples?: Array<{
@@ -44,6 +38,15 @@ export type GetInputFunction = (
     params: ElicitRequest["params"],
     options?: RequestOptions
 ) => Promise<ElicitResult>
+
+export type Parameters = Array<{
+  name: string;
+  type: ZodType;
+  required: boolean;
+  description?: string;
+  examples?: string[];
+  constraints?: string[];
+}>;
 
 export interface Client {
     name: string;

@@ -12,7 +12,7 @@
 
 import { z } from "zod";
 import { ToolParams } from "../../common/types.js";
-import { GenerationLanguages, HttpMethods } from "./ai.js";
+import { GenerationLanguages, HttpMethods, RefineInputSchema } from "./ai.js";
 
 export type ClientType = "pactflow" | "pactbroker";
 
@@ -218,4 +218,12 @@ export const TOOLS: PactflowToolParams[] = [
     handler: "generate",
     clients: ["pactflow"], // ONLY pactflow
   },
+  {
+    title: "Review Pact Tests",
+    summary: "Review Pact tests using PactFlow AI. You can provide the following inputs: (1) Pact tests to be reviewed along with metadata",
+    purpose: "Review Pact tests for API interactions",
+    zodSchema: RefineInputSchema,
+    handler: "review",
+    clients: ["pactflow"]
+  }
 ];
