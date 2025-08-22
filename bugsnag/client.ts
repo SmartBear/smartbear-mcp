@@ -471,7 +471,7 @@ export class BugsnagClient implements Client {
     register(
       {
         title: "List Project Errors",
-        summary: "List and search errors in a project using customizable filters",
+        summary: "List and search errors in a project using customizable filters and pagination",
         purpose: "Retrieve filtered list of errors from a project for analysis, debugging, and reporting",
         useCases: [
           "Debug recent application errors by filtering for open errors in the last 7 days",
@@ -497,6 +497,35 @@ export class BugsnagClient implements Client {
               "Relative time periods: h (hours), d (days)"
             ]
           },
+          {
+            name: "per_page",
+            type: z.number(),
+            description: "Number of errors to return per page (default is 30, maximum varies by API endpoint)",
+            required: false,
+            examples: ["30", "50", "100", "120"]
+          },
+          {
+            name: "sort",
+            type: z.enum(["first_seen", "last_seen", "events", "users", "unsorted"]),
+            description: "Field to sort the errors by",
+            required: false,
+            examples: ["last_seen"]
+          },
+          {
+            name: "direction",
+            type: z.enum(["asc", "desc"]),
+            description: "Sort direction for ordering results (default: desc)",
+            required: false,
+            examples: ["desc"]
+          },
+          {
+            name: "base",
+            type: z.string(),
+            description: "Base date-time for time-relative queries (ISO 8601 format)",
+            required: false,
+            constraints: ["Must be in ISO 8601 UTC format"],
+            examples: ["2023-12-01T00:00:00Z"]
+          },
           ...(this.projectApiKey ? [] : [
             {
               name: "projectId",
@@ -516,6 +545,18 @@ export class BugsnagClient implements Client {
               }
             },
             expectedOutput: "JSON object with a list of errors in the 'data' field, and an error count in the 'count' field"
+          },
+          {
+            description: "Get first 120 errors from the last 90 days, sorted by most recent",
+            parameters: {
+              filters: {
+                "event.since": [{ "type": "eq", "value": "90d" }]
+              },
+              per_page: 120,
+              sort: "last_seen",
+              direction: "desc"
+            },
+            expectedOutput: "JSON object with up to 120 errors sorted by when they were last seen"  
           }
         ],
         hints: [
@@ -540,7 +581,15 @@ export class BugsnagClient implements Client {
           }
         }
 
-        const response = await this.errorsApi.listProjectErrors(project.id, { filters: args.filters });
+        // Build options object with all parameters
+        const options: any = {};
+        if (args.filters) options.filters = args.filters;
+        if (args.per_page !== undefined) options.per_page = args.per_page;
+        if (args.sort !== undefined) options.sort = args.sort;
+        if (args.direction !== undefined) options.direction = args.direction;
+        if (args.base !== undefined) options.base = args.base;
+
+        const response = await this.errorsApi.listProjectErrors(project.id, options);
         const errors = response.body || [];
         const result = {
           data: errors,
