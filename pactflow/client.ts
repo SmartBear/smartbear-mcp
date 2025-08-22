@@ -146,7 +146,6 @@ export class PactflowClient implements Client {
             if (typeof handler_fn !== "function") {
               throw new Error(`Handler '${handler}' not found on PactClient`);
             }
-            debugger;
             const result = await handler_fn.call(this, args);
 
             // Use custom response formatter if provided
