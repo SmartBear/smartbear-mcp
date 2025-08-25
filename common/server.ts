@@ -78,7 +78,7 @@ export class SmartBearMcpServer extends McpServer {
 
     private getInputSchema(params: ToolParams): any {
         const args: ZodRawShape = {};
-        for (const param of params.parameters) {
+        for (const param of params.parameters ?? []) {
             args[param.name] = param.type;
             if (param.description) {
                 args[param.name] = args[param.name].describe(param.description);
@@ -87,6 +87,21 @@ export class SmartBearMcpServer extends McpServer {
                 args[param.name] = args[param.name].optional();
             }
         }
+
+        if (params.zodSchema && params.zodSchema instanceof ZodObject) {
+            for (const key of Object.keys(params.zodSchema.shape)) {
+                const field = params.zodSchema.shape[key];
+                args[key] = field;
+                if (field.description) {
+                    args[key] = args[key].describe(field.description);
+                }
+
+                if (field.isOptional()) {
+                    args[key] = args[key].optional();
+                }
+            }
+        }
+
         return args;
     }
 
@@ -96,20 +111,29 @@ export class SmartBearMcpServer extends McpServer {
             useCases,
             examples,
             parameters,
+            zodSchema,
             hints,
             outputFormat
         } = params;
 
         let description = summary;
 
-        // Parameters (essential)
-        if (parameters.length > 0) {
-            description += `\n\n**Parameters:**\n${parameters.map(p =>
+        // Parameters if available otherwise use zodSchema
+        if ((parameters ?? []).length > 0) {
+            description += `\n\n**Parameters:**\n${parameters?.map(p =>
                 `- ${p.name} (${this.getReadableTypeName(p.type)})${p.required ? ' *required*' : ''}` +
                 `${p.description ? `: ${p.description}` : ''}` +
                 `${p.examples ? ` (e.g. ${p.examples.join(', ')})` : ''}` +
                 `${p.constraints ? `\n  - ${p.constraints.join('\n  - ')}` : ''}`
             ).join('\n')}`;
+        }
+        
+        if (zodSchema && zodSchema instanceof ZodObject) {
+            description += "\n\n**Parameters:**\n";
+            for (const key of Object.keys(zodSchema.shape)) {
+                const field = zodSchema.shape[key];
+                description += `- ${key} (${this.getReadableTypeName(field)})${field.isOptional() ? '' : ' *required*'}${field.description ? `: ${field.description}` : ''}${key === "examples" ? ` (e.g. ${Object.keys(field.enum).join(', ')})` : ''}${key === "constraints" ? `\n  - ${Object.keys(field.enum).join('\n  - ')}` : ''} \n`;
+            }
         }
 
         if (outputFormat) {
