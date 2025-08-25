@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SmartBearMcpServer } from "../../../common/server.js";
-import z, { ZodSchema } from "zod";
+import z from "zod";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import Bugsnag from "../../../common/bugsnag.js";
 
