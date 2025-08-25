@@ -27,20 +27,6 @@ export const HttpMethods = [
 
 export type HttpMethod = (typeof HttpMethods)[number];
 
-export interface RequestResponsePair {
-  request: FileInput;
-  response: FileInput;
-}
-
-export interface GenerationInput {
-  language?: GenerationLanguage;
-  requestResponse?: RequestResponsePair;
-  code?: FileInput[];
-  openapi?: OpenApiWithMatcher;
-  additionalInstructions?: string;
-  testTemplate?: FileInput;
-}
-
 export interface StatusResponse {
   status: "accepted";
   session_id: string;
@@ -88,10 +74,14 @@ export const FileInputSchema = z.object({
 
 export const OpenAPISchema = z
   .object({
-    openapi: z.string().optional().describe("For OpenAPI version (e.g., '3.0.0')"),
+    openapi: z
+      .string()
+      .optional()
+      .describe("For OpenAPI version (e.g., '3.0.0')"),
     swagger: z
       .string()
-      .describe("For OpenAPI documents version 2.x (e.g., '2.0')").optional(),
+      .describe("For OpenAPI documents version 2.x (e.g., '2.0')")
+      .optional(),
     paths: z
       .record(z.string(), z.record(z.string(), z.any()))
       .describe("OpenAPI paths object containing all API endpoints"),
@@ -106,7 +96,8 @@ export const OpenAPISchema = z
     message:
       "Either 'openapi' (for v3+) or 'swagger' (for v2) must be provided",
     path: ["openapi"],
-  }).optional();
+  })
+  .optional();
 
 export const EndpointMatcherSchema = z
   .object({
@@ -174,9 +165,46 @@ export const RefineInputSchema = z.object({
   openapi: OpenAPIWithMatcherSchema.optional(),
 });
 
+export const RequestResponsePairSchema = z
+  .object({
+    request: FileInputSchema,
+    response: FileInputSchema,
+  })
+  .describe(
+    "Direct request/response pair for a specific interaction. Use this when you have concrete examples of API requests and responses"
+  );
+
+export const GenerationInputSchema = z.object({
+  language: z
+    .enum(GenerationLanguages)
+    .optional()
+    .describe(
+      "Target language for the generated Pact tests. If not provided, will be inferred from other inputs."
+    ),
+  requestResponse: RequestResponsePairSchema.optional(),
+  code: z
+    .array(FileInputSchema)
+    .optional()
+    .describe(
+      "Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls"
+    ),
+  openapi: OpenAPIWithMatcherSchema.optional(),
+  additionalInstructions: z
+    .string()
+    .optional()
+    .describe(
+      "Optional free-form instructions to guide the generation process (e.g., 'Focus on error scenarios', 'Include authentication headers', 'Use specific test framework patterns')"
+    ),
+  testTemplate: FileInputSchema.optional().describe(
+    "Optional test template to use as a basis for generation. Helps ensure generated tests follow your specific patterns, frameworks, and coding standards"
+  ),
+});
+
 // types inferred from schemas
 export type RefineInput = z.infer<typeof RefineInputSchema>;
 export type FileInput = z.infer<typeof FileInputSchema>;
 export type OpenAPI = z.infer<typeof OpenAPISchema>;
 export type EndpointMatcher = z.infer<typeof EndpointMatcherSchema>;
 export type OpenApiWithMatcher = z.infer<typeof OpenAPIWithMatcherSchema>;
+export type GenerationInput = z.infer<typeof GenerationInputSchema>;
+export type RequestResponsePair = z.infer<typeof RequestResponsePairSchema>;
