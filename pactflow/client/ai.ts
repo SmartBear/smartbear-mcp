@@ -88,10 +88,10 @@ export const FileInputSchema = z.object({
 
 export const OpenAPISchema = z
   .object({
-    openapi: z.string().describe("For OpenAPI version (e.g., '3.0.0')"),
+    openapi: z.string().optional().describe("For OpenAPI version (e.g., '3.0.0')"),
     swagger: z
       .string()
-      .describe("For OpenAPI documents version 2.x (e.g., '2.0')"),
+      .describe("For OpenAPI documents version 2.x (e.g., '2.0')").optional(),
     paths: z
       .record(z.string(), z.record(z.string(), z.any()))
       .describe("OpenAPI paths object containing all API endpoints"),
@@ -101,7 +101,12 @@ export const OpenAPISchema = z
       .describe("OpenAPI components section (schemas, responses, etc.)"),
   })
   .passthrough()
-  .describe("The complete OpenAPI document describing the API");
+  .describe("The complete OpenAPI document describing the API")
+  .refine((data) => !!data.openapi || !!data.swagger, {
+    message:
+      "Either 'openapi' (for v3+) or 'swagger' (for v2) must be provided",
+    path: ["openapi"],
+  }).optional();
 
 export const EndpointMatcherSchema = z
   .object({
@@ -152,17 +157,20 @@ export const RefineInputSchema = z.object({
     .array(FileInputSchema)
     .describe(
       "Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls"
-    ).optional(),
+    )
+    .optional(),
   userInstructions: z
     .string()
     .describe(
       "Optional free-form instructions that provide additional context or specify areas of focus during the refinement process of the Pact test."
-    ).optional(),
+    )
+    .optional(),
   errorMessages: z
     .array(z.string())
     .describe(
       "Optional error output from failed contract test runs. These can be used to better understand the context or failures observed and guide the recommendations toward resolving specific issues."
-    ).optional(),
+    )
+    .optional(),
   openapi: OpenAPIWithMatcherSchema.optional(),
 });
 
