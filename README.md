@@ -31,7 +31,7 @@ See individual guides for suggested prompts and supported tools and resources:
 - [Insight Hub](https://developer.smartbear.com/smartbear-mcp/docs/insight-hub-integration) - Comprehensive error monitoring and debugging capabilities
 - [Test Hub](https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration) - Test management and execution capabilities
 - [API Hub](https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration) - Portal management capabilities
-- [Pactlfow](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities.
+- [PactFlow](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
 
 
 ## Prerequisites
