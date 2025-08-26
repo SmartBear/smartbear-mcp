@@ -71,9 +71,9 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
         "API_HUB_API_KEY": "${input:api_hub_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
-        "PACT_BROKER_TOKEN": "${input.pact_broker_token}",
-        "PACT_BROKER_USERNAME": "${input.pact_broker_username}",
-        "PACT_BROKER_PASSWORD": "${input.pact_broker_token}"
+        "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
+        "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
+        "PACT_BROKER_PASSWORD": "${input:pact_broker_password}"
       }
     }
   },
@@ -207,9 +207,9 @@ For developers who want to contribute to the SmartBear MCP server, customize its
             "REFLECT_API_TOKEN": "${input:reflect_api_token}",
             "API_HUB_API_KEY": "${input:api_hub_api_key}",
             "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
-            "PACT_BROKER_TOKEN": "${input.pact_broker_token}",
+            "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
             "PACT_BROKER_USERNAME": "${input.pact_broker_username}",
-            "PACT_BROKER_PASSWORD": "${input.pact_broker_token}"
+            "PACT_BROKER_PASSWORD": "${input:pact_broker_password}"
           }
         }
       },
