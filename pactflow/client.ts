@@ -159,7 +159,7 @@ export class PactflowClient implements Client {
     registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
       for (const tool of TOOLS.filter(t => t.clients.includes(this.clientType))) {
         const {handler, clients, formatResponse, ...toolparams} = tool;
-        void clients;
+        console.log(clients);
         register(toolparams, async (args, _extra) => {
             const handler_fn = (this as any)[handler];
             if (typeof handler_fn !== "function") {
