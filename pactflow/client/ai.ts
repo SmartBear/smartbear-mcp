@@ -92,7 +92,7 @@ export const OpenAPISchema = z
   })
   .passthrough()
   .describe("The complete OpenAPI document describing the API")
-  .refine((data) => !!data.openapi || !!data.swagger, {
+  .refine((data) => data.openapi || data.swagger, {
     message:
       "Either 'openapi' (for v3+) or 'swagger' (for v2) must be provided",
     path: ["openapi"],
