@@ -354,7 +354,7 @@ export class BugsnagClient implements Client {
           }
         ],
         hints: [
-          "Error IDs can be found using the List Errors tool",
+          "Error IDs can be found using the List Project Errors tool",
           "Use this after filtering errors to get detailed information about specific errors",
           "If you used a filter to get this error, you can pass the same filters here to restrict the results or apply further filters",
           "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
@@ -483,7 +483,7 @@ export class BugsnagClient implements Client {
           {
             name: "filters",
             type: FilterObjectSchema,
-            description: "Apply filters to narrow down the error list. Use the List Errors or Get Error tools to discover available filter fields",
+            description: "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields",
             required: false,
             examples: [
                 '{"error.status": [{"type": "eq", "value": "open"}]}',
@@ -544,7 +544,7 @@ export class BugsnagClient implements Client {
                 "event.since": [{ "type": "eq", "value": "24h" }]
               }
             },
-            expectedOutput: "JSON object with a list of errors in the 'data' field, and an error count in the 'count' field"
+            expectedOutput: "JSON object with 3 fields - 'data': a list of errors in the 'data' field, 'count': the number of results returned in data (the current page), 'total': the total number of results across all pages"
           },
           {
             description: "Get first 120 errors from the last 90 days, sorted by most recent",
@@ -591,9 +591,11 @@ export class BugsnagClient implements Client {
 
         const response = await this.errorsApi.listProjectErrors(project.id, options);
         const errors = response.body || [];
+        const totalCount = response.headers.get('X-Total-Count');
         const result = {
           data: errors,
           count: errors.length,
+          total: totalCount
         };
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],
