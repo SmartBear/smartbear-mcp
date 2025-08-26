@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [Insight Hub](https://www.smartbear.com/insight-hub), [Reflect](https://reflect.run), and [API Hub](https://www.smartbear.com/api-hub).
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [Insight Hub](https://www.smartbear.com/insight-hub), [Reflect](https://reflect.run), [API Hub](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/) and [Pact Broker](https://docs.pact.io/)
 
 ## What is MCP?
 
@@ -31,6 +31,7 @@ See individual guides for suggested prompts and supported tools and resources:
 - [Insight Hub](https://developer.smartbear.com/smartbear-mcp/docs/insight-hub-integration) - Comprehensive error monitoring and debugging capabilities
 - [Test Hub](https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration) - Test management and execution capabilities
 - [API Hub](https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration) - Portal management capabilities
+- [PactFlow](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
 
 
 ## Prerequisites
@@ -68,7 +69,11 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "INSIGHT_HUB_AUTH_TOKEN": "${input:insight_hub_auth_token}",
         "INSIGHT_HUB_PROJECT_API_KEY": "${input:insight_hub_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-        "API_HUB_API_KEY": "${input:api_hub_api_key}"
+        "API_HUB_API_KEY": "${input:api_hub_api_key}",
+        "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
+        "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
+        "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
+        "PACT_BROKER_PASSWORD": "${input:pact_broker_password}"
       }
     }
   },
@@ -96,7 +101,31 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
          "type": "promptString",
          "description": "API Hub API Key - leave blank to disable API Hub tools",
          "password": true
-      }
+      },
+      {
+         "id": "pact_broker_base_url",
+         "type": "promptString",
+         "description": "PactFlow or Pact Broker base url - leave blank to disable the tools",
+         "password": true
+      },
+      {
+         "id": "pact_broker_token",
+         "type": "promptString",
+         "description": "PactFlow Authentication Token",
+         "password": true
+      },
+      {
+         "id": "pact_broker_username",
+         "type": "promptString",
+         "description": "Pact Broker Username",
+         "password": true
+      },
+      {
+         "id": "pact_broker_password",
+         "type": "promptString",
+         "description": "Pact Broker Password",
+         "password": true
+      },
   ]
 }
 ```
@@ -119,7 +148,11 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "INSIGHT_HUB_AUTH_TOKEN": "your_personal_auth_token",
         "INSIGHT_HUB_PROJECT_API_KEY": "your_project_api_key",
         "REFLECT_API_TOKEN": "your_reflect_token",
-        "API_HUB_API_KEY": "your_api_hub_key"
+        "API_HUB_API_KEY": "your_api_hub_key",
+        "PACT_BROKER_BASE_URL": "your_pactflow_or_pactbroker_base_url",
+        "PACT_BROKER_TOKEN": "your_pactflow_token",
+        "PACT_BROKER_USERNAME": "your_pact_broker_username",
+        "PACT_BROKER_PASSWORD": "your_pact_broker_password",
       }
     }
   }
@@ -172,7 +205,11 @@ For developers who want to contribute to the SmartBear MCP server, customize its
             "INSIGHT_HUB_AUTH_TOKEN": "${input:insight_hub_auth_token}",
             "INSIGHT_HUB_PROJECT_API_KEY": "${input:insight_hub_project_api_key}",
             "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-            "API_HUB_API_KEY": "${input:api_hub_api_key}"
+            "API_HUB_API_KEY": "${input:api_hub_api_key}",
+            "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
+            "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
+            "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
+            "PACT_BROKER_PASSWORD": "${input:pact_broker_password}"
           }
         }
       },
@@ -200,7 +237,31 @@ For developers who want to contribute to the SmartBear MCP server, customize its
           "type": "promptString",
           "description": "API Hub API Key - leave blank to disable API Hub tools",
           "password": true
-        }
+        },
+        {
+          "id": "pact_broker_base_url",
+          "type": "promptString",
+          "description": "PactFlow or Pact Broker base url - leave blank to disable PactFlow tools",
+          "password": true
+        },
+        {
+          "id": "pact_broker_token",
+          "type": "promptString",
+          "description": "PactFlow Authentication Token",
+          "password": true
+        },
+        {
+          "id": "pact_broker_username",
+          "type": "promptString",
+          "description": "Pact Broker Username",
+          "password": true
+        },
+        {
+          "id": "pact_broker_password",
+          "type": "promptString",
+          "description": "Pact Broker Password",
+          "password": true
+        },
       ]
     }
     ```
@@ -209,7 +270,7 @@ For developers who want to contribute to the SmartBear MCP server, customize its
 5. **Local testing** using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) web interface:
 
     ```bash
-    INSIGHT_HUB_AUTH_TOKEN="your_token" REFLECT_API_TOKEN="your_reflect_token" API_HUB_API_KEY="your_api_hub_key" npx @modelcontextprotocol/inspector npx @smartbear/mcp@latest
+    INSIGHT_HUB_AUTH_TOKEN="your_token" REFLECT_API_TOKEN="your_reflect_token" API_HUB_API_KEY="your_api_hub_key" PACT_BROKER_BASE_URL="your-pactflow-url" PACT_BROKER_TOKEN="your-pactflow-token" PACT_BROKER_USERNAME="your-pact-broker-username" PACT_BROKER_PASSWORD="your-pact-broker-password" npx @modelcontextprotocol/inspector npx @smartbear/mcp@latest
     ```
 
 ## License
