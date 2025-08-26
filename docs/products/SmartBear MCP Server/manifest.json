@@ -52,6 +52,14 @@
         },
         {
             "order": 5,
+            "parent": "mcp-server-capabilities",
+            "name": "Contract Testing with PactFlow",
+            "slug": "contract-testing-with-pactflow",
+            "type": "markdown",
+            "contentUrl": "contract-testing-with-pactflow.md"
+        },
+        {
+            "order": 6,
             "parent": "",
             "name": "Getting Started",
             "slug": "getting-started",
@@ -59,7 +67,7 @@
             "contentUrl": "getting-started.md"
         },
         {
-            "order": 6,
+            "order": 7,
             "parent": "",
             "name": "Best Practices",
             "slug": "best-practices",
@@ -67,7 +75,7 @@
             "contentUrl": "best-practices.md"
         },
         {
-            "order": 7,
+            "order": 8,
             "parent": "",
             "name": "Troubleshooting",
             "slug": "troubleshooting",
