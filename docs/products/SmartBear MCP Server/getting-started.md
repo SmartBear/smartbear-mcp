@@ -44,7 +44,7 @@ The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its ow
 
 - **API Hub - Contract Testing (PactFlow)**
 
-  Copy the relevant API tokens from [`app.pactflow.io`](https://app.pactflow.io/settings/api-tokens). You will also need to note the tenant URL for your organisation (e.g., `{tenant}.pactflow.io`). The MCP server also supports the open source Pact Broker, in which case you will need a username and password instead of a token.
+  Copy the relevant API tokens from [`app.pactflow.io`](https://app.pactflow.io/settings/api-tokens). You will also need to note the tenant URL for your organization (e.g., `{tenant}.pactflow.io`). The MCP server also supports the open source Pact Broker, in which case you will need a username and password instead of a token.
 
 - **Test Hub (Reflect)**
 
