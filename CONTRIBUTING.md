@@ -82,9 +82,10 @@ Documentation lives in the `/docs` directory of this repo. Changes to the docume
 
 4. **Release**
     - Create a PR from `next` into `main`
-    - Changes will be automatically deployed once the PR has been merged
+    - Create a new Github release with the version you decided on earlier
+    - Changes will be automatically deployed once the Github release is created
 
-Please ensure you add a new GitHub release, and update internal ticketing systems accordingly.
+Please ensure you update internal ticketing systems accordingly.
 
 ## Additional Resources
 
