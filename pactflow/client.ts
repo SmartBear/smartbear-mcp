@@ -21,7 +21,7 @@ export class PactflowClient implements Client {
 
     constructor(auth: string | { username: string; password: string }, baseUrl: string, clientType: ClientType) {
       // Set headers based on the type of auth provided
-      if (typeof auth === "string") { 
+      if (typeof auth === "string") {
         this.headers = {
           Authorization: `Bearer ${auth}`,
           "Content-Type": "application/json",
@@ -39,7 +39,7 @@ export class PactflowClient implements Client {
       this.aiBaseUrl = `${this.baseUrl}/api/ai`;
       this.clientType = clientType;
     }
-    
+
     // PactFlow AI client methods
 
     async generate(body: GenerationInput): Promise<GenerationResponse> {
@@ -49,11 +49,11 @@ export class PactflowClient implements Client {
         headers: this.headers,
         body: JSON.stringify(body),
       });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const status_response: StatusResponse = await response.json();
       return await this.pollForCompletion<GenerationResponse>(
         status_response,
@@ -79,7 +79,7 @@ export class PactflowClient implements Client {
         "Review Pacts"
       );
     }
-  
+
     async getStatus(
       statusUrl: string
     ): Promise<{ status: number; isComplete: boolean }> {
@@ -87,13 +87,13 @@ export class PactflowClient implements Client {
         method: "HEAD",
         headers: this.headers,
       });
-  
+
       return {
         status: response.status,
         isComplete: response.status === 200,
       };
     }
-  
+
     async getResult<T>(resultUrl: string): Promise<T> {
       const response = await fetch(resultUrl, {
         method: "GET",
@@ -103,10 +103,10 @@ export class PactflowClient implements Client {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       return response.json();
     }
-  
+
     private async pollForCompletion<T>(
       status_response: StatusResponse,
       operationName: string
@@ -115,7 +115,7 @@ export class PactflowClient implements Client {
       const startTime = Date.now();
       const timeout = 120000; // 120 seconds
       const pollInterval = 1000; // 1 second
-  
+
       while (Date.now() - startTime < timeout) {
         const statusCheck = await this.getStatus(status_response.status_url);
 
@@ -123,22 +123,22 @@ export class PactflowClient implements Client {
           // Operation is complete, get the result
           return await this.getResult<T>(status_response.result_url);
         }
-  
+
         if (statusCheck.status !== 202) {
           throw new Error(
             `${operationName} failed with status: ${statusCheck.status}`
           );
         }
-  
+
         // Wait before next poll
         await new Promise((resolve) => setTimeout(resolve, pollInterval));
       }
-  
+
       throw new Error(
         `${operationName} timed out after ${timeout / 1000} seconds`
       );
     }
-    
+
 
     // PactFlow / Pact_Broker client methods
 

@@ -52,7 +52,7 @@ describe("SmartBearMcpServer", () => {
       expect(description).toBe(`A test tool
 
 **Parameters:**
-- examples (enum) *required* (e.g. test_1, test_2) 
+- examples (enum) *required* (e.g. test_1, test_2)
 - constraints (enum) *required*
   - test_1
   - test_2`);

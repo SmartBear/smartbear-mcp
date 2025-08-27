@@ -18,7 +18,7 @@ export type ClientType = "pactflow" | "pact_broker";
 
 export interface PactflowToolParams extends ToolParams {
   handler: string;
-  clients: ClientType[]; 
+  clients: ClientType[];
   formatResponse?: (result: any) => any;
 }
 
@@ -52,7 +52,7 @@ export const TOOLS: PactflowToolParams[] = [
         required: true
       }
     ],
-    handler: "getProviderStates",       
+    handler: "getProviderStates",
     clients: ["pactflow", "pact_broker"]
   }
 ];
