@@ -2,7 +2,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import Bugsnag from "./common/bugsnag.js";
-import { InsightHubClient } from "./insight-hub/client.js";
+import { InsightHubClient } from "./bugsnag/client.js";
 import { ReflectClient } from "./reflect/client.js";
 import { ApiHubClient } from "./api-hub/client.js";
 import { SmartBearMcpServer } from "./common/server.js";

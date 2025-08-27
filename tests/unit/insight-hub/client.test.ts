@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from '../../../common/info.js';
-import { InsightHubClient } from '../../../insight-hub/client.js';
-import { BaseAPI } from '../../../insight-hub/client/api/base.js';
-import { ProjectAPI } from '../../../insight-hub/client/api/Project.js';
-import { CurrentUserAPI, ErrorAPI } from '../../../insight-hub/client/index.js';
+import { InsightHubClient } from '../../../bugsnag/client.js';
+import { BaseAPI } from '../../../bugsnag/client/api/base.js';
+import { ProjectAPI } from '../../../bugsnag/client/api/Project.js';
+import { CurrentUserAPI, ErrorAPI } from '../../../bugsnag/client/index.js';
 
 // Mock the dependencies
 const mockCurrentUserAPI = {
@@ -32,13 +32,13 @@ const mockCache = {
   del: vi.fn()
 };
 
-vi.mock('../../../insight-hub/client/index.js', () => ({
+vi.mock('../../../bugsnag/client/index.js', () => ({
   CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserAPI),
   ErrorAPI: vi.fn().mockImplementation(() => mockErrorAPI),
   Configuration: vi.fn().mockImplementation((config) => config)
 }));
 
-vi.mock('../../../insight-hub/client/api/Project.js', () => ({
+vi.mock('../../../bugsnag/client/api/Project.js', () => ({
   ProjectAPI: vi.fn().mockImplementation(() => mockProjectAPI)
 }));
 
@@ -67,7 +67,7 @@ describe('InsightHubClient', () => {
     });
 
     it('should configure endpoints correctly during construction', async () => {
-      const { Configuration } = await import('../../../insight-hub/client/index.js');
+      const { Configuration } = await import('../../../bugsnag/client/index.js');
       const MockedConfiguration = vi.mocked(Configuration);
 
       new InsightHubClient('test-token', '00000hub-key');
@@ -332,7 +332,7 @@ describe('InsightHubClient', () => {
 
   describe('configuration validation', () => {
     it('should pass correct authToken to Configuration', async () => {
-      const { Configuration } = await import('../../../insight-hub/client/index.js');
+      const { Configuration } = await import('../../../bugsnag/client/index.js');
       const MockedConfiguration = vi.mocked(Configuration);
       const testToken = 'super-secret-token-123';
 
@@ -346,7 +346,7 @@ describe('InsightHubClient', () => {
     });
 
     it('should include all required headers', async () => {
-      const { Configuration } = await import('../../../insight-hub/client/index.js');
+      const { Configuration } = await import('../../../bugsnag/client/index.js');
       const MockedConfiguration = vi.mocked(Configuration);
 
       new InsightHubClient('test-token');
@@ -363,8 +363,8 @@ describe('InsightHubClient', () => {
 
   describe('API client initialization', () => {
     it('should initialize all required API clients', async () => {
-      const { CurrentUserAPI, ErrorAPI } = await import('../../../insight-hub/client/index.js');
-      const { ProjectAPI } = await import('../../../insight-hub/client/api/Project.js');
+      const { CurrentUserAPI, ErrorAPI } = await import('../../../bugsnag/client/index.js');
+      const { ProjectAPI } = await import('../../../bugsnag/client/api/Project.js');
 
       const MockedCurrentUserAPI = vi.mocked(CurrentUserAPI);
       const MockedErrorAPI = vi.mocked(ErrorAPI);
