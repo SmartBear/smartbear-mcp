@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-08-26
+
+### Added
+
+- [Common] Add abstract server and registerTools / resources to simplify tool registration and standardise error monitoring across products [#70](https://github.com/SmartBear/smartbear-mcp/pull/70)
+- [PactFlow] Add tool to generate Pact tests [#71](https://github.com/SmartBear/smartbear-mcp/pull/71)
+- [PactFlow] Add tool to fetch provider states for PactFlow and Pact Broker [#87](https://github.com/SmartBear/smartbear-mcp/pull/87)
+- [PactFlow] Add tool to review Pact tests [#89](https://github.com/SmartBear/smartbear-mcp/pull/89)
+
+### Changed
+
+- [Common] Derive tool name from title [#83](https://github.com/SmartBear/smartbear-mcp/pull/83)
+
 ## [0.3.0] - 2025-08-11
 
 ### Added
