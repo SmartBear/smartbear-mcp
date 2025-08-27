@@ -132,7 +132,10 @@ export class SmartBearMcpServer extends McpServer {
             description += "\n\n**Parameters:**\n";
             for (const key of Object.keys(zodSchema.shape)) {
                 const field = zodSchema.shape[key];
-                description += `- ${key} (${this.getReadableTypeName(field)})${field.isOptional() ? '' : ' *required*'}${field.description ? `: ${field.description}` : ''}${key === "examples" ? ` (e.g. ${Object.keys(field.enum).join(', ')})` : ''}${key === "constraints" ? `\n  - ${Object.keys(field.enum).join('\n  - ')}` : ''} \n`;
+                description += `- ${key} (${this.getReadableTypeName(field)})${field.isOptional() ? '' : ' *required*'}` +
+                `${field.description ? `: ${field.description}` : ''}` +
+                `${key === "examples" ? ` (e.g. ${Object.keys(field.enum).join(', ')})` : ''}` +
+                `${key === "constraints" ? `\n  - ${Object.keys(field.enum).join('\n  - ')}` : ''}\n`;
             }
         }
 
