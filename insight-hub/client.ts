@@ -296,7 +296,7 @@ export class InsightHubClient implements Client {
 
     register(
       {
-        title: "Get Error", 
+        title: "Get Error",
         summary: "Get full details on an error, including aggregated and summarized data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.",
         purpose: "Retrieve all the information required on a specified error to understand who it is affecting and why.",
         useCases: [
@@ -370,7 +370,7 @@ export class InsightHubClient implements Client {
 
         // Build query parameters
         const params = new URLSearchParams();
-        
+
         // Add sorting and pagination parameters to get the latest event
         params.append('sort', 'timestamp');
         params.append('direction', 'desc');
@@ -407,7 +407,7 @@ export class InsightHubClient implements Client {
         };
       }
     );
-    
+
     register(
       {
         title: "Get Event Details",

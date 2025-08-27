@@ -8,7 +8,7 @@ If you wish to interact with only one Insight Hub project, we also recommend set
 
 ### List Projects
 
--   Lists the projects in your organization.   
+-   Lists the projects in your organization.
 -   Only available when no project API key is configured.
 
 ### List Errors

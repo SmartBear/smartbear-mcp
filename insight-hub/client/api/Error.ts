@@ -169,7 +169,7 @@ export class ErrorAPI extends BaseAPI {
    */
   async listEventsOnProject(projectId: string, queryString = ''): Promise<ApiResponse<Event[]>> {
     const url = `/projects/${projectId}/events${queryString}`;
-      
+
     return await this.request<Event[]>({
       method: 'GET',
       url,
@@ -238,24 +238,24 @@ export class ErrorAPI extends BaseAPI {
    */
   async listErrorPivots(projectId: string, errorId: string, options: ListPivotsOptions = {}): Promise<ApiResponse<PivotApiView[]>> {
     const params = new URLSearchParams();
-    
+
     if (options.filters) {
       const filterParams = new URLSearchParams(toQueryString(options.filters));
       filterParams.forEach((value, key) => {
         params.append(key, value);
       });
     }
-    
+
     if (options.summary_size !== undefined) {
       params.append('summary_size', options.summary_size.toString());
     }
-    
+
     if (options.pivots && options.pivots.length > 0) {
       options.pivots.forEach(pivot => {
         params.append('pivots[]', pivot);
       });
     }
-    
+
     if (options.per_page !== undefined) {
       params.append('per_page', options.per_page.toString());
     }
@@ -263,7 +263,7 @@ export class ErrorAPI extends BaseAPI {
     const url = params.toString()
       ? `/projects/${projectId}/errors/${errorId}/pivots?${params}`
       : `/projects/${projectId}/errors/${errorId}/pivots`;
-      
+
     return await this.request<PivotApiView[]>({
       method: 'GET',
       url,
