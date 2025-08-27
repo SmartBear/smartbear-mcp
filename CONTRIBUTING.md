@@ -61,7 +61,7 @@ npm run test:coverage
 
 ## Documentation
 
-Documentation lives in the `/docs` directory of this repo. Changes to the documentation will automatically bef deployed to the docs site when merged to `main` and to an internal staging site when merged to `next`. For full information please see the [SwaggerHub Portal Management](https://github.com/frankkilcommins/SwaggerHub-Portal-Management) docs.
+Documentation lives in the `/docs` directory of this repo. Changes to the documentation will be automatically deployed to the docs site when merged to `main` and to an internal staging site when merged to `next`. For full information please see the [SwaggerHub Portal Management](https://github.com/frankkilcommins/SwaggerHub-Portal-Management) docs.
 
 ## Releases
 
@@ -78,10 +78,9 @@ Documentation lives in the `/docs` directory of this repo. Changes to the docume
 3. **Update the Version**
     - Use `npm version patch|minor|major` to increment the version number
     - Update the version number and release date in the `CHANGELOG.md` to match
-    - Push the changes to GitHub and create a Pull Request from your release branch back into `next`
+    - Push the changes to GitHub and create a Pull Request from your release branch into `main`
 
 4. **Release**
-    - Create a PR from `next` into `main`
     - Create a new Github release with the version you decided on earlier
     - Changes will be automatically deployed once the Github release is created
 
