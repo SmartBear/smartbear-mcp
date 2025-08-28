@@ -831,9 +831,9 @@ describe('BugsnagClient', () => {
         const toolHandler = registerToolsSpy.mock.calls
           .find((call: any) => call[0].title === 'List Project Errors')[1];
 
-        const result = await toolHandler({ filters });
+        const result = await toolHandler({ filters, sort: 'last_seen', direction: 'desc', per_page: 50 });
 
-        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters, per_page: 50 });
+        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters, sort: 'last_seen', direction: 'desc', per_page: 50 });
         const expectedResult = {
           data: mockErrors,
           count: 1,
