@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [Insight Hub](https://www.smartbear.com/insight-hub), [Reflect](https://reflect.run), [API Hub](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/) and [Pact Broker](https://docs.pact.io/)
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.smartbear.com/bugsnag), [Reflect](https://reflect.run), [API Hub](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/) and [Pact Broker](https://docs.pact.io/)
 
 ## What is MCP?
 
@@ -28,7 +28,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 
 See individual guides for suggested prompts and supported tools and resources:
 
-- [Insight Hub](https://developer.smartbear.com/smartbear-mcp/docs/insight-hub-integration) - Comprehensive error monitoring and debugging capabilities
+- [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - Comprehensive error monitoring and debugging capabilities
 - [Test Hub](https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration) - Test management and execution capabilities
 - [API Hub](https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration) - Portal management capabilities
 - [PactFlow](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
@@ -37,14 +37,14 @@ See individual guides for suggested prompts and supported tools and resources:
 ## Prerequisites
 
 - Node.js 20+ and npm
-- Access to SmartBear products (Insight Hub, Reflect, or API Hub)
+- Access to SmartBear products (BugSnag, Reflect, or API Hub)
 - Valid API tokens for the products you want to integrate
 
 ## Installation
 
 The MCP server is distributed as an npm package [`@smartbear/mcp`](https://www.npmjs.com/package/@smartbear/mcp), making it easy to integrate into your development workflow.
 
-The server is started with the API key or auth token that you use with your SmartBear product(s). They are optional and can be removed from your configuration if you aren't using the product. For Insight Hub, if you provide a project API key it will narrow down all searches to a single project in your Insight Hub dashboard. Leave this field blank if you wish to interact across multiple projects at a time.
+The server is started with the API key or auth token that you use with your SmartBear product(s). They are optional and can be removed from your configuration if you aren't using the product. For BugSnag, if you provide a project API key it will narrow down all searches to a single project in your BugSnag dashboard. Leave this field blank if you wish to interact across multiple projects at a time.
 
 ### VS Code with Copilot
 
@@ -66,8 +66,8 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "@smartbear/mcp@latest"
       ],
       "env": {
-        "INSIGHT_HUB_AUTH_TOKEN": "${input:insight_hub_auth_token}",
-        "INSIGHT_HUB_PROJECT_API_KEY": "${input:insight_hub_project_api_key}",
+        "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
+        "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
         "API_HUB_API_KEY": "${input:api_hub_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
@@ -79,15 +79,15 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
   },
   "inputs": [
       {
-         "id": "insight_hub_auth_token",
+         "id": "bugsnag_auth_token",
          "type": "promptString",
-         "description": "Insight Hub Auth Token - leave blank to disable Insight Hub tools",
+         "description": "BugSnag Auth Token - leave blank to disable BugSnag tools",
          "password": true
       },
       {
-         "id": "insight_hub_project_api_key",
+         "id": "bugsnag_project_api_key",
          "type": "promptString",
-         "description": "Insight Hub Project API Key - for single project interactions",
+         "description": "BugSnag Project API Key - for single project interactions",
          "password": false
       },
       {
@@ -145,8 +145,8 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "@smartbear/mcp@latest"
       ],
       "env": {
-        "INSIGHT_HUB_AUTH_TOKEN": "your_personal_auth_token",
-        "INSIGHT_HUB_PROJECT_API_KEY": "your_project_api_key",
+        "BUGSNAG_AUTH_TOKEN": "your_personal_auth_token",
+        "BUGSNAG_PROJECT_API_KEY": "your_project_api_key",
         "REFLECT_API_TOKEN": "your_reflect_token",
         "API_HUB_API_KEY": "your_api_hub_key",
         "PACT_BROKER_BASE_URL": "your_pactflow_or_pactbroker_base_url",
@@ -202,8 +202,8 @@ For developers who want to contribute to the SmartBear MCP server, customize its
         },
         "args": ["<PATH_TO_SMARTBEAR_MCP_REPO>/dist/index.js"],
         "env": {
-            "INSIGHT_HUB_AUTH_TOKEN": "${input:insight_hub_auth_token}",
-            "INSIGHT_HUB_PROJECT_API_KEY": "${input:insight_hub_project_api_key}",
+            "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
+            "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
             "REFLECT_API_TOKEN": "${input:reflect_api_token}",
             "API_HUB_API_KEY": "${input:api_hub_api_key}",
             "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
@@ -215,15 +215,15 @@ For developers who want to contribute to the SmartBear MCP server, customize its
       },
       "inputs": [
         {
-          "id": "insight_hub_auth_token",
+          "id": "bugsnag_auth_token",
           "type": "promptString",
-          "description": "Insight Hub Auth Token - leave blank to disable Insight Hub tools",
+          "description": "BugSnag Auth Token - leave blank to disable BugSnag tools",
           "password": true
         },
         {
-          "id": "insight_hub_project_api_key",
+          "id": "bugsnag_project_api_key",
           "type": "promptString",
-          "description": "Insight Hub Project API Key - for single project interactions",
+          "description": "BugSnag Project API Key - for single project interactions",
           "password": false
         },
         {
@@ -270,7 +270,7 @@ For developers who want to contribute to the SmartBear MCP server, customize its
 5. **Local testing** using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) web interface:
 
     ```bash
-    INSIGHT_HUB_AUTH_TOKEN="your_token" REFLECT_API_TOKEN="your_reflect_token" API_HUB_API_KEY="your_api_hub_key" PACT_BROKER_BASE_URL="your-pactflow-url" PACT_BROKER_TOKEN="your-pactflow-token" PACT_BROKER_USERNAME="your-pact-broker-username" PACT_BROKER_PASSWORD="your-pact-broker-password" npx @modelcontextprotocol/inspector npx @smartbear/mcp@latest
+    BUGSNAG_AUTH_TOKEN="your_token" REFLECT_API_TOKEN="your_reflect_token" API_HUB_API_KEY="your_api_hub_key" PACT_BROKER_BASE_URL="your-pactflow-url" PACT_BROKER_TOKEN="your-pactflow-token" PACT_BROKER_USERNAME="your-pact-broker-username" PACT_BROKER_PASSWORD="your-pact-broker-password" npx @modelcontextprotocol/inspector npx @smartbear/mcp@latest
     ```
 
 ## License

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from '../../../common/info.js';
-import { InsightHubClient } from '../../../bugsnag/client.js';
+import { BugsnagClient } from '../../../bugsnag/client.js';
 import { BaseAPI } from '../../../bugsnag/client/api/base.js';
 import { ProjectAPI } from '../../../bugsnag/client/api/Project.js';
 import { CurrentUserAPI, ErrorAPI } from '../../../bugsnag/client/index.js';
@@ -52,29 +52,29 @@ vi.mock('../../../common/bugsnag.js', () => ({
   }
 }));
 
-describe('InsightHubClient', () => {
-  let client: InsightHubClient;
+describe('BugsnagClient', () => {
+  let client: BugsnagClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    client = new InsightHubClient('test-token');
+    client = new BugsnagClient('test-token');
   });
 
   describe('constructor', () => {
     it('should create client instance with proper dependencies', () => {
-      const client = new InsightHubClient('test-token');
-      expect(client).toBeInstanceOf(InsightHubClient);
+      const client = new BugsnagClient('test-token');
+      expect(client).toBeInstanceOf(BugsnagClient);
     });
 
     it('should configure endpoints correctly during construction', async () => {
       const { Configuration } = await import('../../../bugsnag/client/index.js');
       const MockedConfiguration = vi.mocked(Configuration);
 
-      new InsightHubClient('test-token', '00000hub-key');
+      new BugsnagClient('test-token', '00000hub-key');
 
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
-          basePath: 'https://api.insighthub.smartbear.com',
+          basePath: 'https://api.bugsnag.smartbear.com',
           authToken: 'test-token',
           headers: expect.objectContaining({
             'User-Agent': `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
@@ -87,38 +87,38 @@ describe('InsightHubClient', () => {
     });
 
     it('should set project API key when provided', () => {
-      const client = new InsightHubClient('test-token', 'test-project-key');
-      expect(client).toBeInstanceOf(InsightHubClient);
+      const client = new BugsnagClient('test-token', 'test-project-key');
+      expect(client).toBeInstanceOf(BugsnagClient);
     });
   });
 
   describe('getEndpoint method', () => {
-    let client: InsightHubClient;
+    let client: BugsnagClient;
 
     beforeEach(() => {
-      client = new InsightHubClient('test-token');
+      client = new BugsnagClient('test-token');
     });
 
     describe('without custom endpoint', () => {
       describe('with Hub API key (00000 prefix)', () => {
         it('should return Hub domain for api subdomain', () => {
           const result = client.getEndpoint('api', '00000hub-key');
-          expect(result).toBe('https://api.insighthub.smartbear.com');
+          expect(result).toBe('https://api.bugsnag.smartbear.com');
         });
 
         it('should return Hub domain for app subdomain', () => {
           const result = client.getEndpoint('app', '00000test-key');
-          expect(result).toBe('https://app.insighthub.smartbear.com');
+          expect(result).toBe('https://app.bugsnag.smartbear.com');
         });
 
         it('should return Hub domain for custom subdomain', () => {
           const result = client.getEndpoint('custom', '00000key');
-          expect(result).toBe('https://custom.insighthub.smartbear.com');
+          expect(result).toBe('https://custom.bugsnag.smartbear.com');
         });
 
         it('should handle empty string after prefix', () => {
           const result = client.getEndpoint('api', '00000');
-          expect(result).toBe('https://api.insighthub.smartbear.com');
+          expect(result).toBe('https://api.bugsnag.smartbear.com');
         });
       });
 
@@ -165,33 +165,33 @@ describe('InsightHubClient', () => {
     describe('with custom endpoint', () => {
       describe('Hub domain endpoints (always normalized)', () => {
         it('should normalize to HTTPS subdomain for exact hub domain match', () => {
-          const result = client.getEndpoint('api', '00000key', 'https://api.insighthub.smartbear.com');
-          expect(result).toBe('https://api.insighthub.smartbear.com');
+          const result = client.getEndpoint('api', '00000key', 'https://api.bugsnag.smartbear.com');
+          expect(result).toBe('https://api.bugsnag.smartbear.com');
         });
 
         it('should normalize to HTTPS subdomain regardless of input protocol', () => {
-          const result = client.getEndpoint('api', '00000key', 'http://app.insighthub.smartbear.com');
-          expect(result).toBe('https://api.insighthub.smartbear.com');
+          const result = client.getEndpoint('api', '00000key', 'http://app.bugsnag.smartbear.com');
+          expect(result).toBe('https://api.bugsnag.smartbear.com');
         });
 
         it('should normalize to HTTPS subdomain regardless of input subdomain', () => {
-          const result = client.getEndpoint('app', '00000key', 'https://api.insighthub.smartbear.com');
-          expect(result).toBe('https://app.insighthub.smartbear.com');
+          const result = client.getEndpoint('app', '00000key', 'https://api.bugsnag.smartbear.com');
+          expect(result).toBe('https://app.bugsnag.smartbear.com');
         });
 
         it('should normalize hub domain with port', () => {
-          const result = client.getEndpoint('api', '00000key', 'https://custom.insighthub.smartbear.com:8080');
-          expect(result).toBe('https://api.insighthub.smartbear.com');
+          const result = client.getEndpoint('api', '00000key', 'https://custom.bugsnag.smartbear.com:8080');
+          expect(result).toBe('https://api.bugsnag.smartbear.com');
         });
 
         it('should normalize hub domain with path', () => {
-          const result = client.getEndpoint('api', '00000key', 'https://custom.insighthub.smartbear.com/path');
-          expect(result).toBe('https://api.insighthub.smartbear.com');
+          const result = client.getEndpoint('api', '00000key', 'https://custom.bugsnag.smartbear.com/path');
+          expect(result).toBe('https://api.bugsnag.smartbear.com');
         });
 
         it('should normalize complex subdomains to standard format', () => {
-          const result = client.getEndpoint('api', '00000key', 'https://staging.app.insighthub.smartbear.com');
-          expect(result).toBe('https://api.insighthub.smartbear.com');
+          const result = client.getEndpoint('api', '00000key', 'https://staging.app.bugsnag.smartbear.com');
+          expect(result).toBe('https://api.bugsnag.smartbear.com');
         });
       });
 
@@ -270,8 +270,8 @@ describe('InsightHubClient', () => {
         });
 
         it('should normalize known domains even with userinfo', () => {
-          const result = client.getEndpoint('api', '00000key', 'https://user:pass@app.insighthub.smartbear.com');
-          expect(result).toBe('https://api.insighthub.smartbear.com');
+          const result = client.getEndpoint('api', '00000key', 'https://user:pass@app.bugsnag.smartbear.com');
+          expect(result).toBe('https://api.bugsnag.smartbear.com');
         });
       });
     });
@@ -279,12 +279,12 @@ describe('InsightHubClient', () => {
     describe('subdomain validation', () => {
       it('should handle empty subdomain', () => {
         const result = client.getEndpoint('', '00000key');
-        expect(result).toBe('https://.insighthub.smartbear.com');
+        expect(result).toBe('https://.bugsnag.smartbear.com');
       });
 
       it('should handle subdomain with special characters', () => {
         const result = client.getEndpoint('test-api_v2', '00000key');
-        expect(result).toBe('https://test-api_v2.insighthub.smartbear.com');
+        expect(result).toBe('https://test-api_v2.bugsnag.smartbear.com');
       });
 
       it('should handle numeric subdomain', () => {
@@ -295,7 +295,7 @@ describe('InsightHubClient', () => {
       it('should handle very long subdomains', () => {
         const longSubdomain = 'very-long-subdomain-name-with-many-characters';
         const result = client.getEndpoint(longSubdomain, '00000key');
-        expect(result).toBe(`https://${longSubdomain}.insighthub.smartbear.com`);
+        expect(result).toBe(`https://${longSubdomain}.bugsnag.smartbear.com`);
       });
     });
   });
@@ -303,7 +303,7 @@ describe('InsightHubClient', () => {
   describe('static utility methods', () => {
     // Test static methods if they exist in the class
     it('should have proper class structure', () => {
-      const client = new InsightHubClient('test-token');
+      const client = new BugsnagClient('test-token');
 
       // Verify the client has expected methods
       expect(typeof client.initialize).toBe('function');
@@ -315,17 +315,17 @@ describe('InsightHubClient', () => {
   describe('error handling', () => {
     it('should handle invalid tokens gracefully during construction', () => {
       expect(() => {
-        new InsightHubClient('');
+        new BugsnagClient('');
       }).not.toThrow();
 
       expect(() => {
-        new InsightHubClient('   ');
+        new BugsnagClient('   ');
       }).not.toThrow();
     });
 
     it('should handle special characters in project API key', () => {
       expect(() => {
-        new InsightHubClient('test-token', '00000-special!@#$%^&*()');
+        new BugsnagClient('test-token', '00000-special!@#$%^&*()');
       }).not.toThrow();
     });
   });
@@ -336,7 +336,7 @@ describe('InsightHubClient', () => {
       const MockedConfiguration = vi.mocked(Configuration);
       const testToken = 'super-secret-token-123';
 
-      new InsightHubClient(testToken);
+      new BugsnagClient(testToken);
 
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -349,7 +349,7 @@ describe('InsightHubClient', () => {
       const { Configuration } = await import('../../../bugsnag/client/index.js');
       const MockedConfiguration = vi.mocked(Configuration);
 
-      new InsightHubClient('test-token');
+      new BugsnagClient('test-token');
 
       const configCall = MockedConfiguration.mock.calls[0][0];
       expect(configCall.headers).toEqual({
@@ -375,7 +375,7 @@ describe('InsightHubClient', () => {
       MockedErrorAPI.mockClear();
       MockedProjectAPI.mockClear();
 
-      new InsightHubClient('test-token');
+      new BugsnagClient('test-token');
 
       expect(MockedCurrentUserAPI).toHaveBeenCalledOnce();
       expect(MockedErrorAPI).toHaveBeenCalledOnce();
@@ -389,7 +389,7 @@ describe('InsightHubClient', () => {
       // Clear previous calls from beforeEach
       MockedNodeCache.mockClear();
 
-      new InsightHubClient('test-token');
+      new BugsnagClient('test-token');
 
       expect(MockedNodeCache).toHaveBeenCalledOnce();
     });
@@ -413,12 +413,12 @@ describe('InsightHubClient', () => {
 
       expect(mockCurrentUserAPI.listUserOrganizations).toHaveBeenCalledOnce();
       expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', { paginate: true });
-      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_org', mockOrg);
-      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_projects', mockProjects);
+      expect(mockCache.set).toHaveBeenCalledWith('bugsnag_org', mockOrg);
+      expect(mockCache.set).toHaveBeenCalledWith('bugsnag_projects', mockProjects);
     });
 
     it('should initialize with project API key and set up event filters', async () => {
-      const clientWithApiKey = new InsightHubClient('test-token', 'project-api-key');
+      const clientWithApiKey = new BugsnagClient('test-token', 'project-api-key');
       const mockProjects = [
         { id: 'proj-1', name: 'Project 1', api_key: 'project-api-key' },
         { id: 'proj-2', name: 'Project 2', api_key: 'other-key' }
@@ -436,12 +436,12 @@ describe('InsightHubClient', () => {
 
       await clientWithApiKey.initialize();
 
-      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_current_project', mockProjects[0]);
+      expect(mockCache.set).toHaveBeenCalledWith('bugsnag_current_project', mockProjects[0]);
       expect(mockProjectAPI.listProjectEventFields).toHaveBeenCalledWith('proj-1');
 
       // // Verify that 'search' field is filtered out
       const filteredFields = mockEventFields.filter(field => field.display_id !== 'search');
-      expect(mockCache.set).toHaveBeenCalledWith('insight_hub_current_project_event_filters', filteredFields);
+      expect(mockCache.set).toHaveBeenCalledWith('bugsnag_current_project_event_filters', filteredFields);
     });
 
     it('should throw error when no organizations found', async () => {
@@ -451,7 +451,7 @@ describe('InsightHubClient', () => {
     });
 
     it('should throw error when project with API key not found', async () => {
-      const clientWithApiKey = new InsightHubClient('test-token', 'non-existent-key');
+      const clientWithApiKey = new BugsnagClient('test-token', 'non-existent-key');
       const mockOrg = { id: 'org-1', name: 'Test Org' };
       const mockProject = { id: 'proj-1', name: 'Project 1', api_key: 'other-key' };
 
@@ -464,7 +464,7 @@ describe('InsightHubClient', () => {
     });
 
     it('should throw error when no event fields found for project', async () => {
-      const clientWithApiKey = new InsightHubClient('test-token', 'project-api-key');
+      const clientWithApiKey = new BugsnagClient('test-token', 'project-api-key');
       const mockOrg = { id: 'org-1', name: 'Test Org' };
       const mockProjects = [
         { id: 'proj-1', name: 'Project 1', api_key: 'project-api-key' }
@@ -488,7 +488,7 @@ describe('InsightHubClient', () => {
 
         const result = await client.getProjects();
 
-        expect(mockCache.get).toHaveBeenCalledWith('insight_hub_projects');
+        expect(mockCache.get).toHaveBeenCalledWith('bugsnag_projects');
         expect(result).toEqual(mockProjects);
       });
 
@@ -504,7 +504,7 @@ describe('InsightHubClient', () => {
         const result = await client.getProjects();
 
         expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', { paginate: true });
-        expect(mockCache.set).toHaveBeenCalledWith('insight_hub_projects', mockProjects);
+        expect(mockCache.set).toHaveBeenCalledWith('bugsnag_projects', mockProjects);
         expect(result).toEqual(mockProjects);
       });
 
@@ -577,7 +577,7 @@ describe('InsightHubClient', () => {
     });
 
     it('should not register list_projects tool when project API key is provided', () => {
-      const clientWithApiKey = new InsightHubClient('test-token', 'project-api-key');
+      const clientWithApiKey = new BugsnagClient('test-token', 'project-api-key');
       clientWithApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
 
       const registeredTools = registerToolsSpy.mock.calls.map((call: any) => call[0].title);
@@ -758,7 +758,7 @@ describe('InsightHubClient', () => {
       });
     });
 
-    describe('get_insight_hub_event_details tool handler', () => {
+    describe('get_bugsnag_event_details tool handler', () => {
       it('should get event details from dashboard URL', async () => {
         const mockProjects = [{ id: 'proj-1', slug: 'my-project', name: 'My Project' }];
         const mockEvent = { id: 'event-1', project_id: 'proj-1' };
@@ -1096,7 +1096,7 @@ describe('InsightHubClient', () => {
       registerResourcesSpy = vi.fn();
     });
 
-    describe('insight_hub_event resource handler', () => {
+    describe('bugsnag_event resource handler', () => {
       it('should find event by ID across projects', async () => {
         const mockEvent = { id: 'event-1', project_id: 'proj-1' };
         const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
@@ -1108,11 +1108,11 @@ describe('InsightHubClient', () => {
         const resourceHandler = registerResourcesSpy.mock.calls[0][2];
 
         const result = await resourceHandler(
-          { href: 'insighthub://event/event-1' },
+          { href: 'bugsnag://event/event-1' },
           { id: 'event-1' }
         );
 
-        expect(result.contents[0].uri).toBe('insighthub://event/event-1');
+        expect(result.contents[0].uri).toBe('bugsnag://event/event-1');
         expect(result.contents[0].text).toBe(JSON.stringify(mockEvent));
       });
     });
