@@ -822,7 +822,10 @@ describe('BugsnagClient', () => {
         mockCache.get
           .mockReturnValueOnce(mockProject) // current project
           .mockReturnValueOnce(mockEventFields); // event fields
-        mockErrorAPI.listProjectErrors.mockResolvedValue({ body: mockErrors });
+        mockErrorAPI.listProjectErrors.mockResolvedValue({ 
+          body: mockErrors,
+          headers: new Headers({ 'X-Total-Count': '1' })
+        });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
@@ -830,10 +833,11 @@ describe('BugsnagClient', () => {
 
         const result = await toolHandler({ filters });
 
-        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters });
+        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters, per_page: 50 });
         const expectedResult = {
           data: mockErrors,
-          count: 1
+          count: 1,
+          total: 1
         };
         expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
       });
