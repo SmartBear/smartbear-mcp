@@ -66,7 +66,7 @@ export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 
 #(Recommended when using BugSnag Tools)
 # The API key for the BugSnag project you wish to interact with. Use this to scope all operations to a single project.
-BUGSNAG_PROJECT_API_KEY:=your-bugsnag-project-api-key
+export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 
 # Required for Reflect tools
 export REFLECT_API_TOKEN=your-reflect-api-token
