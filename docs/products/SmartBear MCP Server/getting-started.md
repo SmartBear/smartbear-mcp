@@ -391,7 +391,7 @@ npx @modelcontextprotocol/inspector node dist/index.js
 
 Once configured, you can interact with SmartBear tools through natural language queries in your AI assistant. Here are examples based on the available tools:
 
-### BugSnagError Investigation
+### BugSnag Error Investigation
 
 -   "Help me fix this crash from BugSnag: https://app.bugsnag.com/my-org/my-project/errors/1a2b3c4d5e6f7g8h9i0j1k2l?&event_id=1a2b3c4d5e6f7g8h9i0j1k2l"
 -   "What are my top events for the 'example' project in BugSnag?"
