@@ -1,4 +1,4 @@
 /*.ts                  @SmartBear/bugsnag-dev
 /*.json                @SmartBear/bugsnag-dev
 /common                @SmartBear/bugsnag-dev
-/insight-hub           @SmartBear/bugsnag-dev
+/bugsnag               @SmartBear/bugsnag-dev

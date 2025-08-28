@@ -10,13 +10,13 @@ import { FilterObject, FilterObjectSchema, toQueryString } from "./client/api/fi
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
-const HUB_DOMAIN = "insighthub.smartbear.com";
+const HUB_DOMAIN = "bugsnag.smartbear.com";
 
 const cacheKeys = {
-  ORG: "insight_hub_org",
-  PROJECTS: "insight_hub_projects",
-  CURRENT_PROJECT: "insight_hub_current_project",
-  CURRENT_PROJECT_EVENT_FILTERS: "insight_hub_current_project_event_filters",
+  ORG: "bugsnag_org",
+  PROJECTS: "bugsnag_projects",
+  CURRENT_PROJECT: "bugsnag_current_project",
+  CURRENT_PROJECT_EVENT_FILTERS: "bugsnag_current_project_event_filters",
 }
 
 // Exclude certain event fields from the project event filters to improve agent usage
@@ -45,7 +45,7 @@ export interface OrgArgs {
 export interface ErrorArgs extends ProjectArgs {
   errorId: string;
 }
-export class InsightHubClient implements Client {
+export class BugsnagClient implements Client {
   private currentUserApi: CurrentUserAPI;
   private errorsApi: ErrorAPI;
   private cache: NodeCache;
@@ -54,8 +54,8 @@ export class InsightHubClient implements Client {
   private apiEndpoint: string;
   private appEndpoint: string;
 
-  name = "Insight Hub";
-  prefix = "insight_hub";
+  name = "Bugsnag";
+  prefix = "bugsnag";
 
   constructor(token: string, projectApiKey?: string, endpoint?: string) {
     this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
@@ -422,7 +422,7 @@ export class InsightHubClient implements Client {
           {
             name: "link",
             type: z.string(),
-            description: "Full URL to the event details page in the Insight Hub dashboard (web interface)",
+            description: "Full URL to the event details page in the BugSnag dashboard (web interface)",
             required: true,
             examples: [
               "https://app.bugsnag.com/my-org/my-project/errors/6863e2af8c857c0a5023b411?event_id=6863e2af012caf1d5c320000"
@@ -443,7 +443,7 @@ export class InsightHubClient implements Client {
         ],
         hints: [
           "The URL must contain both project slug in the path and event_id in query parameters",
-          "This is useful when users share Insight Hub dashboard URLs and you need to extract the event data"
+          "This is useful when users share BugSnag dashboard URLs and you need to extract the event data"
         ]
       },
       async (args: any, _extra: any) => {
@@ -630,7 +630,7 @@ export class InsightHubClient implements Client {
           }
         ],
         hints: [
-          "Only use valid operations - Insight Hub may reject invalid values"
+          "Only use valid operations - BugSnag may reject invalid values"
         ],
         readOnly: false,
         idempotent: false,

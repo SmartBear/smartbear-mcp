@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickFields, pickFieldsFromArray } from '../../../insight-hub/client/api/base.js';
+import { pickFields, pickFieldsFromArray } from '../../../bugsnag/client/api/base.js';
 
 describe('API Utilities', () => {
   describe('pickFields', () => {
