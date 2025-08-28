@@ -7,6 +7,7 @@ import { CurrentUserAPI, ErrorAPI, Configuration } from "./client/index.js";
 import { Organization, Project } from "./client/api/CurrentUser.js";
 import { EventField, ProjectAPI } from "./client/api/Project.js";
 import { FilterObject, FilterObjectSchema, toQueryString } from "./client/api/filters.js";
+import { ListProjectErrorsOptions } from "./client/api/Error.js";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -498,16 +499,9 @@ export class BugsnagClient implements Client {
             ]
           },
           {
-            name: "per_page",
-            type: z.number(),
-            description: "Number of errors to return per page (default is 30, maximum varies by API endpoint)",
-            required: false,
-            examples: ["30", "50", "100", "120"]
-          },
-          {
             name: "sort",
             type: z.enum(["first_seen", "last_seen", "events", "users", "unsorted"]),
-            description: "Field to sort the errors by",
+            description: "Field to sort the errors by (default: last_seen)",
             required: false,
             examples: ["last_seen"]
           },
@@ -519,12 +513,12 @@ export class BugsnagClient implements Client {
             examples: ["desc"]
           },
           {
-            name: "base",
+            name: "next",
             type: z.string(),
-            description: "Base date-time for time-relative queries (ISO 8601 format)",
+            description: "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available.",
             required: false,
-            constraints: ["Must be in ISO 8601 UTC format"],
-            examples: ["2023-12-01T00:00:00Z"]
+            examples: ["https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?offset=590bce131f7314d98eac23ba&sort=last_seen"],
+            constraints: ["Only values provided in the output from this tool can be used."]
           },
           ...(this.projectApiKey ? [] : [
             {
@@ -544,19 +538,19 @@ export class BugsnagClient implements Client {
                 "event.since": [{ "type": "eq", "value": "24h" }]
               }
             },
-            expectedOutput: "JSON object with 3 fields - 'data': a list of errors in the 'data' field, 'count': the number of results returned in data (the current page), 'total': the total number of results across all pages"
+            expectedOutput: "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field"
           },
           {
-            description: "Get first 120 errors from the last 90 days, sorted by most recent",
+            description: "Get open errors from the last 90 days, sorted by most recent",
             parameters: {
               filters: {
-                "event.since": [{ "type": "eq", "value": "90d" }]
+                "event.since": [{ "type": "eq", "value": "90d" }],
+                "error.status": [{ "type": "eq", "value": "open" }]
               },
-              per_page: 120,
               sort: "last_seen",
               direction: "desc"
             },
-            expectedOutput: "JSON object with up to 120 errors sorted by when they were last seen"  
+            expectedOutput: "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field"
           }
         ],
         hints: [
@@ -564,13 +558,17 @@ export class BugsnagClient implements Client {
           "Combine multiple filters to narrow results - filters are applied with AND logic",
           "For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates",
           "Common time filters: event.since (from this time), event.before (until this time)",
-          "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors"
+          "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors",
+          "This tool returns paged results, with a maximum page size of 50.",
+          "The 'count' field indicates the number of results returned in the current page, and the 'total' field indicates the total number of results across all pages.",
+          "If the output contains a 'next' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page.",
+          "Do not attempt to get the next page of results using any parameters other than 'next'."
         ]
       },
       async (args: any, _extra: any) => {
         const project = await this.getInputProject(args.projectId);
 
-        // Optionally, validate filter keys against cached event fields
+        // Validate filter keys against cached event fields
         const eventFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS) || [];
         if (args.filters) {
           const validKeys = new Set(eventFields.map(f => f.display_id));
@@ -581,21 +579,23 @@ export class BugsnagClient implements Client {
           }
         }
 
-        // Build options object with all parameters
-        const options: any = {};
+        const options: ListProjectErrorsOptions = { per_page: 50 };
         if (args.filters) options.filters = args.filters;
-        if (args.per_page !== undefined) options.per_page = args.per_page;
         if (args.sort !== undefined) options.sort = args.sort;
         if (args.direction !== undefined) options.direction = args.direction;
-        if (args.base !== undefined) options.base = args.base;
+        if (args.next !== undefined) options.next = args.next;
 
         const response = await this.errorsApi.listProjectErrors(project.id, options);
+        
         const errors = response.body || [];
         const totalCount = response.headers.get('X-Total-Count');
+        const linkHeader = response.headers.get('Link');
+
         const result = {
           data: errors,
           count: errors.length,
-          total: totalCount
+          total: totalCount ? parseInt(totalCount) : undefined,
+          next: linkHeader?.match(/<([^>]+)>/)?.[1],
         };
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],

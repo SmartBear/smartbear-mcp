@@ -51,7 +51,7 @@ export interface ListProjectErrorsOptions {
   direction?: 'asc' | 'desc';
   per_page?: number;
   filters?: FilterObject; // Filters object as defined in the API spec
-  [key: string]: any;
+  next?: string;
 }
 
 // Pivot-related interfaces based on the Data Access API
@@ -199,44 +199,43 @@ export class ErrorAPI extends BaseAPI {
    * GET /projects/{project_id}/errors
    */
   async listProjectErrors(projectId: string, options: ListProjectErrorsOptions = {}): Promise<ApiResponse<ErrorApiView[]>> {
-    const params = new URLSearchParams();
+    let url = `/projects/${projectId}/errors`
     
-    // Add filter parameters
-    if (options.filters) {
-      const filterParams = new URLSearchParams(toQueryString(options.filters));
-      filterParams.forEach((value, key) => {
-        params.append(key, value);
-      });
-    }
-    
-    // Add pagination and sorting parameters
-    if (options.base !== undefined) {
-      params.append('base', options.base);
-    }
-    
-    if (options.sort !== undefined) {
-      params.append('sort', options.sort);
-    }
-    
-    if (options.direction !== undefined) {
-      params.append('direction', options.direction);
-    }
-    
-    if (options.per_page !== undefined) {
-      params.append('per_page', options.per_page.toString());
-    }
-    
-    // Add any other options
-    for (const [key, value] of Object.entries(options)) {
-      if (value !== undefined && !['filters', 'base', 'sort', 'direction', 'per_page'].includes(key)) {
-        params.append(key, String(value));
+    if (options.next) {
+      url = options.next;
+    } else {
+      const params = new URLSearchParams();
+      
+      // Add filter parameters
+      if (options.filters) {
+        const filterParams = new URLSearchParams(toQueryString(options.filters));
+        filterParams.forEach((value, key) => {
+          params.append(key, value);
+        });
+      }
+      
+      // Add pagination and sorting parameters
+      if (options.base !== undefined) {
+        params.append('base', options.base);
+      }
+      
+      if (options.sort !== undefined) {
+        params.append('sort', options.sort);
+      }
+      
+      if (options.direction !== undefined) {
+        params.append('direction', options.direction);
+      }
+      
+      if (options.per_page !== undefined) {
+        params.append('per_page', options.per_page.toString());
+      }
+      
+      if (params.size > 0) {
+        url = `/projects/${projectId}/errors?${params}`;
       }
     }
-    
-    const url = params.toString()
-      ? `/projects/${projectId}/errors?${params}`
-      : `/projects/${projectId}/errors`;
-      
+
     return (await this.request<ErrorApiView[]>({
       method: 'GET',
       url,
