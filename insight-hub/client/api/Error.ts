@@ -51,7 +51,7 @@ export interface ListProjectErrorsOptions {
   direction?: 'asc' | 'desc';
   per_page?: number;
   filters?: FilterObject; // Filters object as defined in the API spec
-  [key: string]: any;
+  next?: string;
 }
 
 // Pivot-related interfaces based on the Data Access API
@@ -199,9 +199,50 @@ export class ErrorAPI extends BaseAPI {
    * GET /projects/{project_id}/errors
    */
   async listProjectErrors(projectId: string, options: ListProjectErrorsOptions = {}): Promise<ApiResponse<ErrorApiView[]>> {
-    const url = options.filters
-      ? `/projects/${projectId}/errors?${toQueryString(options.filters)}`
-      : `/projects/${projectId}/errors`;
+    let url = `/projects/${projectId}/errors`
+
+    // Next links need to be used as-is to ensure results are consistent, so only the page size can be modified
+    if (options.next !== undefined) {
+      const nextUrl = new URL(options.next);
+
+      if (options.per_page !== undefined) {
+        nextUrl.searchParams.set('per_page', options.per_page.toString());
+      }
+
+      url = nextUrl.toString();
+    } else {
+      const params = new URLSearchParams();
+      
+      // Add filter parameters
+      if (options.filters) {
+        const filterParams = new URLSearchParams(toQueryString(options.filters));
+        filterParams.forEach((value, key) => {
+          params.append(key, value);
+        });
+      }
+      
+      // Add pagination and sorting parameters
+      if (options.base !== undefined) {
+        params.append('base', options.base);
+      }
+      
+      if (options.sort !== undefined) {
+        params.append('sort', options.sort);
+      }
+      
+      if (options.direction !== undefined) {
+        params.append('direction', options.direction);
+      }
+      
+      if (options.per_page !== undefined) {
+        params.append('per_page', options.per_page.toString());
+      }
+      
+      if (params.size > 0) {
+        url = `/projects/${projectId}/errors?${params}`;
+      }
+    }
+
     return (await this.request<ErrorApiView[]>({
       method: 'GET',
       url,
