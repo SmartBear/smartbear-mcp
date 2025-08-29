@@ -1,5 +1,5 @@
 import { Configuration } from "../configuration.js";
-import { BaseAPI, pickFieldsFromArray, ApiResponse } from "./base.js";
+import { BaseAPI, pickFieldsFromArray, ApiResponse, pickFields } from "./base.js";
 import { Project as ProjectApiView } from "./CurrentUser.js";
 
 // --- Response Types ---
@@ -29,72 +29,72 @@ export interface ListProjectEventFieldsOptions {
 }
 
 export type ProjectType =
-  | 'android'
-  | 'angular'
-  | 'asgi'
-  | 'aspnet'
-  | 'aspnet_core'
-  | 'backbone'
-  | 'bottle'
-  | 'cocos2dx'
-  | 'connect'
-  | 'django'
-  | 'dotnet'
-  | 'dotnet_desktop'
-  | 'dotnet_mvc'
-  | 'electron'
-  | 'ember'
-  | 'eventmachine'
-  | 'expo'
-  | 'express'
-  | 'flask'
-  | 'flutter'
-  | 'gin'
-  | 'go'
-  | 'go_net_http'
-  | 'heroku'
-  | 'ios'
-  | 'java'
-  | 'java_desktop'
-  | 'js'
-  | 'koa'
-  | 'laravel'
-  | 'lumen'
-  | 'magento'
-  | 'martini'
-  | 'minidump'
-  | 'ndk'
-  | 'negroni'
-  | 'nintendo_switch'
-  | 'node'
-  | 'osx'
-  | 'other_desktop'
-  | 'other_mobile'
-  | 'other_tv'
-  | 'php'
-  | 'python'
-  | 'rack'
-  | 'rails'
-  | 'react'
-  | 'reactnative'
-  | 'restify'
-  | 'revel'
-  | 'ruby'
-  | 'silex'
-  | 'sinatra'
-  | 'spring'
-  | 'symfony'
-  | 'tornado'
-  | 'tvos'
-  | 'unity'
-  | 'unrealengine'
-  | 'vue'
-  | 'watchos'
-  | 'webapi'
-  | 'wordpress'
-  | 'wpf'
-  | 'wsgi'
-  | 'other';
+  | "android"
+  | "angular"
+  | "asgi"
+  | "aspnet"
+  | "aspnet_core"
+  | "backbone"
+  | "bottle"
+  | "cocos2dx"
+  | "connect"
+  | "django"
+  | "dotnet"
+  | "dotnet_desktop"
+  | "dotnet_mvc"
+  | "electron"
+  | "ember"
+  | "eventmachine"
+  | "expo"
+  | "express"
+  | "flask"
+  | "flutter"
+  | "gin"
+  | "go"
+  | "go_net_http"
+  | "heroku"
+  | "ios"
+  | "java"
+  | "java_desktop"
+  | "js"
+  | "koa"
+  | "laravel"
+  | "lumen"
+  | "magento"
+  | "martini"
+  | "minidump"
+  | "ndk"
+  | "negroni"
+  | "nintendo_switch"
+  | "node"
+  | "osx"
+  | "other_desktop"
+  | "other_mobile"
+  | "other_tv"
+  | "php"
+  | "python"
+  | "rack"
+  | "rails"
+  | "react"
+  | "reactnative"
+  | "restify"
+  | "revel"
+  | "ruby"
+  | "silex"
+  | "sinatra"
+  | "spring"
+  | "symfony"
+  | "tornado"
+  | "tvos"
+  | "unity"
+  | "unrealengine"
+  | "vue"
+  | "watchos"
+  | "webapi"
+  | "wordpress"
+  | "wpf"
+  | "wsgi"
+  | "other";
 
 export interface ProjectCreateRequest {
   name: string;
@@ -102,14 +102,98 @@ export interface ProjectCreateRequest {
   ignore_old_browsers?: boolean;
 }
 
+export interface ListReleasesOptions {
+  release_stage?: string;
+}
+
+export interface ReleaseSummaryResponse {
+  id: string;
+  release_time: string;
+  app_version: string;
+  release_stage: { name: string };
+  errors_introduced_count: number;
+  errors_seen_count: number;
+  total_sessions_count: number;
+  unhandled_sessions_count: number;
+  accumulative_daily_users_seen: number;
+  accumulative_daily_users_with_unhandled: number;
+}
+
+export interface ReleaseResponse {
+  id: string;
+  project_id: string;
+  release_time: string;
+  release_source: string;
+  app_version: string;
+  app_version_code: string;
+  app_bundle_version: string;
+  build_label: string;
+  builder_name: string;
+  build_tool: string;
+  errors_introduced_count: number;
+  errors_seen_count: number;
+  sessions_count_in_last_24h: number;
+  total_sessions_count: number;
+  unhandled_sessions_count: number;
+  accumulative_daily_users_seen: number;
+  accumulative_daily_users_with_unhandled: number;
+  metadata: {
+    [key: string]: string;
+  };
+  release_stage: { name: string };
+  source_control: {
+    service: string;
+    commit_url: string;
+    revision: string;
+    diff_url_to_previous: string;
+  };
+  release_group_id: string;
+}
+
+export type ReleaseResponseAny = ReleaseResponse | ReleaseSummaryResponse;
+
+export type StabilityTargetType = "user" | "session";
+export interface ReleaseStabilityData {
+  user_stability: number;
+  session_stability: number;
+  stability_target_type: StabilityTargetType;
+  target_stability: number;
+  critical_stability: number;
+  meets_target_stability: boolean;
+  meets_critical_stability: boolean;
+}
+
+export interface ProjectStabilityTargets {
+  target_stability: StabilityData;
+  critical_stability: StabilityData;
+  stability_target_type: StabilityTargetType;
+}
+
+export interface StabilityData {
+  value: number;
+  updated_at: string;
+  updated_by_id: string;
+}
 // --- API Class ---
 
 export class ProjectAPI extends BaseAPI {
-  static eventFieldFields: (keyof EventField)[] = [
-    'custom',
-    'display_id',
-    'filter_options',
-    'pivot_options'
+  static eventFieldFields: (keyof EventField)[] = ["custom", "display_id", "filter_options", "pivot_options"];
+  static releaseFields: (keyof ReleaseSummaryResponse)[] = [
+    "id",
+    "release_time",
+    "app_version",
+    "release_stage",
+    "errors_introduced_count",
+    "errors_seen_count",
+    "total_sessions_count",
+    "unhandled_sessions_count",
+    "accumulative_daily_users_seen",
+    "accumulative_daily_users_with_unhandled",
+  ];
+  static stabilityFields: (keyof ProjectStabilityTargets)[] = [
+    "critical_stability",
+    "target_stability",
+    "stability_target_type",
   ];
 
   constructor(configuration: Configuration) {
@@ -126,14 +210,14 @@ export class ProjectAPI extends BaseAPI {
     const url = `/projects/${projectId}/event_fields`;
 
     const data = await this.request<EventField[]>({
-      method: 'GET',
+      method: "GET",
       url,
     });
 
     // Only return allowed fields
     return {
       ...data,
-      body: pickFieldsFromArray<EventField>(data.body || [], ProjectAPI.eventFieldFields)
+      body: pickFieldsFromArray<EventField>(data.body || [], ProjectAPI.eventFieldFields),
     };
   }
 
@@ -147,9 +231,60 @@ export class ProjectAPI extends BaseAPI {
   async createProject(organizationId: string, data: ProjectCreateRequest): Promise<ApiResponse<ProjectApiView>> {
     const url = `/organizations/${organizationId}/projects`;
     return await this.request<ProjectApiView>({
-      method: 'POST',
+      method: "POST",
       url,
       body: data,
+    });
+  }
+
+  async getProjectStabilityTargets(projectId: string) {
+    const url = `/projects/${projectId}`;
+    const response = await this.request<unknown>({
+      method: "GET",
+      url,
+      headers: {
+        "X-Bugsnag-Internal": "true", // needed to get the stability targets
+      },
+    });
+
+    return pickFields<ProjectStabilityTargets>(response.body || {}, ProjectAPI.stabilityFields);
+  }
+
+  /**
+   * Lists releases for a specific project.
+   *
+   * @param projectId The ID of the project.
+   * @param data Options for listing releases, including filtering by release stage.
+   * @returns A promise that resolves to an array of `ListReleasesResponse` objects.
+   */
+  async listReleases(projectId: string, data: ListReleasesOptions) {
+    const url = `/projects/${projectId}/releases${data.release_stage ? `?release_stage=${data.release_stage}` : ""}`;
+    const response = await this.request<ReleaseSummaryResponse[]>(
+      {
+        method: "GET",
+        url,
+      },
+      true
+    );
+
+    return {
+      ...response,
+      body: pickFieldsFromArray<ReleaseSummaryResponse>(response.body || [], ProjectAPI.releaseFields),
+    };
+  }
+
+  /**
+   * Retrieves a specific release from a project.
+   *
+   * @param projectId The ID of the project.
+   * @param releaseId The ID of the release to retrieve.
+   * @returns A promise that resolves to the release data.
+   */
+  async getRelease(projectId: string, releaseId: string) {
+    const url = `/projects/${projectId}/releases/${releaseId}`;
+    return await this.request<ReleaseResponse>({
+      method: "GET",
+      url,
     });
   }
 }
