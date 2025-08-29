@@ -524,8 +524,8 @@ export class BugsnagClient implements Client {
             type: z.string().url(),
             description: "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available.",
             required: false,
-            examples: ["https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?offset=590bce131f7314d98eac23ba&sort=last_seen"],
-            constraints: ["Only values provided in the output from this tool can be used."]
+            examples: ["https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?offset=30&per_page=30&sort=last_seen"],
+            constraints: ["Only values provided in the output from this tool can be used. Do not attempt to construct it manually."]
           },
           ...(this.projectApiKey ? [] : [
             {
@@ -559,6 +559,14 @@ export class BugsnagClient implements Client {
               per_page: 10
             },
             expectedOutput: "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field"
+          },
+          {
+            description: "Get the next 50 results",
+            parameters: {
+              next: "https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?base=2025-08-29T13%3A11%3A37Z&direction=desc&filters%5Berror.status%5D%5B%5D%5Btype%5D=eq&filters%5Berror.status%5D%5B%5D%5Bvalue%5D=open&offset=10&per_page=10&sort=users",
+              per_page: 50
+            },
+            expectedOutput: "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field"
           }
         ],
         hints: [
@@ -567,18 +575,17 @@ export class BugsnagClient implements Client {
           "For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates",
           "Common time filters: event.since (from this time), event.before (until this time)",
           "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors",
-          "This tool returns paged results, with a maximum page size of 100.",
-          "The 'count' field indicates the number of results returned in the current page, and the 'total' field indicates the total number of results across all pages.",
+          "This tool returns paged results. The 'count' field indicates the number of results returned in the current page, and the 'total' field indicates the total number of results across all pages.",
           "If the output contains a 'next' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page.",
-          "Do not attempt to get the next page of results using any parameters other than 'next'."
+          "Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size."
         ]
       },
       async (args: any, _extra: any) => {
         const project = await this.getInputProject(args.projectId);
 
         // Validate filter keys against cached event fields
-        const eventFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS) || [];
         if (args.filters) {
+          const eventFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS) || [];
           const validKeys = new Set(eventFields.map(f => f.display_id));
           for (const key of Object.keys(args.filters)) {
             if (!validKeys.has(key)) {

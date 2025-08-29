@@ -200,9 +200,16 @@ export class ErrorAPI extends BaseAPI {
    */
   async listProjectErrors(projectId: string, options: ListProjectErrorsOptions = {}): Promise<ApiResponse<ErrorApiView[]>> {
     let url = `/projects/${projectId}/errors`
-    
-    if (options.next) {
-      url = options.next;
+
+    // Next links need to be used as-is to ensure results are consistent, so only the page size can be modified
+    if (options.next !== undefined) {
+      const nextUrl = new URL(options.next);
+
+      if (options.per_page !== undefined) {
+        nextUrl.searchParams.set('per_page', options.per_page.toString());
+      }
+
+      url = nextUrl.toString();
     } else {
       const params = new URLSearchParams();
       
