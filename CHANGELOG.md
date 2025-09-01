@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- [BugSnag] BREAKING CHANGE: Rename Insight Hub to BugSnag [#101](https://github.com/SmartBear/smartbear-mcp/pull/101)
+- [BugSnag] BREAKING CHANGE: Rename Insight Hub tool to BugSnag, following rebranding. Configuration variables `INSIGHT_HUB_AUTH_TOKEN` and `INSIGHT_HUB_PROJECT_API_KEY` need to be updated to `BUGSNAG_AUTH_TOKEN` and `BUGSNAG_PROJECT_API_KEY` after upgrade. [#101](https://github.com/SmartBear/smartbear-mcp/pull/101)
 
 ## [0.4.0] - 2025-08-26
 
