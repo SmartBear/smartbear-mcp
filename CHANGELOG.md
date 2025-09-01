@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- [BugSnag] BREAKING CHANGE: Rename Insight Hub tool to BugSnag, following rebranding. Configuration variables `INSIGHT_HUB_AUTH_TOKEN` and `INSIGHT_HUB_PROJECT_API_KEY` need to be updated to `BUGSNAG_AUTH_TOKEN` and `BUGSNAG_PROJECT_API_KEY` after upgrade. [#101](https://github.com/SmartBear/smartbear-mcp/pull/101)
+
 ## [0.4.0] - 2025-08-26
 
 ### Added
@@ -23,16 +29,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add vitest for unit testing [#41](https://github.com/SmartBear/smartbear-mcp/pull/41)
-- [Insight Hub] Add tool to update errors [#45](https://github.com/SmartBear/smartbear-mcp/pull/45)
-- [Insight Hub] Add latest event and URL to error details [#47](https://github.com/SmartBear/smartbear-mcp/pull/47)
+- [BugSnag] Add tool to update errors [#45](https://github.com/SmartBear/smartbear-mcp/pull/45)
+- [BugSnag] Add latest event and URL to error details [#47](https://github.com/SmartBear/smartbear-mcp/pull/47)
 
 ### Changed
 
-- [Insight Hub] Improve data returned when getting error information [#61](https://github.com/SmartBear/smartbear-mcp/pull/61)
+- [BugSnag] Improve data returned when getting error information [#61](https://github.com/SmartBear/smartbear-mcp/pull/61)
 
 ### Removed
 
-- [Insight Hub] Remove search field from filtering [#42](https://github.com/SmartBear/smartbear-mcp/pull/42)
+- [BugSnag] Remove search field from filtering [#42](https://github.com/SmartBear/smartbear-mcp/pull/42)
 
 ## [0.2.2] - 2025-07-11
 
@@ -46,19 +52,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bumped `@modelcontextprotocol/sdk` to latest (v1.15.0) [#29](https://github.com/SmartBear/smartbear-mcp/pull/29)
-- [Insight Hub] Improved tool descriptions [#29](https://github.com/SmartBear/smartbear-mcp/pull/29)
+- [BugSnag] Improved tool descriptions [#29](https://github.com/SmartBear/smartbear-mcp/pull/29)
 
 ### Added
 
-- [Insight Hub] Add API headers to support On-premise installations [#30](https://github.com/SmartBear/smartbear-mcp/pull/30)
+- [BugSnag] Add API headers to support On-premise installations [#30](https://github.com/SmartBear/smartbear-mcp/pull/30)
 
 ## [0.2.0] - 2025-07-08
 
 ### Added
 
-- [Insight Hub] Add project API key configuration and initial caching [#27](https://github.com/SmartBear/smartbear-mcp/pull/27)
-- [Insight Hub] Add error filtering by both standard fields and custom filters [#27](https://github.com/SmartBear/smartbear-mcp/pull/27)
-- [Insight Hub] Add endpoint configuration for non-bugsnag.com endpoints and improve handling for unsuccessful status codes [#26](https://github.com/SmartBear/smartbear-mcp/pull/26)
+- [BugSnag] Add project API key configuration and initial caching [#27](https://github.com/SmartBear/smartbear-mcp/pull/27)
+- [BugSnag] Add error filtering by both standard fields and custom filters [#27](https://github.com/SmartBear/smartbear-mcp/pull/27)
+- [BugSnag] Add endpoint configuration for non-bugsnag.com endpoints and improve handling for unsuccessful status codes [#26](https://github.com/SmartBear/smartbear-mcp/pull/26)
 
 ## [0.1.1] - 2025-07-01
 
@@ -72,6 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial release of SmartBear MCP server npm package
-- Provides programmatic access to SmartBear Insight Hub, Reflect, and API Hub
+- Provides programmatic access to SmartBear BugSnag, Reflect, and API Hub
 - Includes runtime field filtering for API responses based on TypeScript types
 - Documentation and usage instructions for npm and local development

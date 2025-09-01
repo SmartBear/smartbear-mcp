@@ -1,6 +1,6 @@
 autoplay
 frankkilcommins
-insighthub
+bugsnag
 modelcontextprotocol
 smartbear
 SWAGGERHUB
