@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PactflowClient } from "../../../pactflow/client.js";
 import * as toolsModule from "../../../pactflow/client/tools.js";
+import createFetchMock from "vitest-fetch-mock";
+import { afterEach } from "node:test";
 
 describe("PactflowClient.registerTools", () => {
   const mockRegister = vi.fn();
   const mockGetInput = vi.fn();
+  // Enable fetch mocking
+  const fetchMocker = createFetchMock(vi);
+  fetchMocker.enableMocks();
 
   beforeEach(() => {
+    fetchMocker.doMock();
     vi.resetAllMocks();
   });
 
@@ -32,7 +38,11 @@ describe("PactflowClient.registerTools", () => {
     ];
     vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-    const client = new PactflowClient("token", "https://example.com", "pactflow");
+    const client = new PactflowClient(
+      "token",
+      "https://example.com",
+      "pactflow"
+    );
     client.registerTools(mockRegister, mockGetInput);
 
     expect(mockRegister).toHaveBeenCalledTimes(1);
@@ -53,20 +63,28 @@ describe("PactflowClient.registerTools", () => {
     ];
     vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-    const client = new PactflowClient("token", "https://example.com", "pactflow");
+    const client = new PactflowClient(
+      "token",
+      "https://example.com",
+      "pactflow"
+    );
     client.registerTools(mockRegister, mockGetInput);
 
     expect(mockRegister).not.toHaveBeenCalled();
   });
 
   it("sets correct headers for pactflow", () => {
-    const client = new PactflowClient("my-token", "https://example.com", "pactflow");
+    const client = new PactflowClient(
+      "my-token",
+      "https://example.com",
+      "pactflow"
+    );
 
     expect(client["headers"]).toEqual(
-        expect.objectContaining({
-            Authorization: expect.stringContaining("Bearer my-token"),
-            "Content-Type": expect.stringContaining("application/json"),
-        })
+      expect.objectContaining({
+        Authorization: expect.stringContaining("Bearer my-token"),
+        "Content-Type": expect.stringContaining("application/json"),
+      })
     );
   });
 
@@ -78,10 +96,46 @@ describe("PactflowClient.registerTools", () => {
     );
 
     expect(client["headers"]).toEqual(
-        expect.objectContaining({
-            Authorization: expect.stringContaining(`Basic ${Buffer.from("user:pass").toString("base64")}`),
-            "Content-Type": expect.stringContaining("application/json"),
-        })
+      expect.objectContaining({
+        Authorization: expect.stringContaining(
+          `Basic ${Buffer.from("user:pass").toString("base64")}`
+        ),
+        "Content-Type": expect.stringContaining("application/json"),
+      })
     );
+  });
+
+  it("Gets remote spec contents with correct auth token", async () => {
+    const client = new PactflowClient(
+      "my-token",
+      "https://example.com",
+      "pactflow"
+    );
+    fetchMocker.mockResponseOnce(JSON.stringify({ data: "mocked data" }));
+    await client.getRemoteSpecContents({
+      authToken: "my-token",
+      url: "https://api.example.com/openapi.json",
+    });
+    expect(fetch).toHaveBeenCalledWith("https://api.example.com/openapi.json", {
+      headers: {
+        Authorization: "Bearer my-token",
+      },
+      method: "GET",
+    });
+  });
+
+  it("Gets throws an error if url is missing", async () => {
+    const client = new PactflowClient(
+      "my-token",
+      "https://example.com",
+      "pactflow"
+    );
+    await expect(client.getRemoteSpecContents({
+      authToken: "my-token",
+    })).rejects.toThrowError("url' must be provided.");
+  });
+
+  afterEach(() => {
+    fetchMocker.resetMocks();
   });
 });

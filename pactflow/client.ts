@@ -5,6 +5,8 @@ import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types
 import { ProviderStatesResponse } from "./client/base.js";
 // @ts-expect-error missing type declarations
 import Swagger  from "swagger-client";
+// @ts-expect-error missing type declarations
+import yaml from "js-yaml";
 
 
 // Tool definitions for PactFlow AI API client
@@ -107,7 +109,7 @@ export class PactflowClient implements Client {
         let headers = {};
         if (openAPISchema.authToken) {
           headers = {
-            Authorization: `${openAPISchema.authScheme} ${openAPISchema.authToken}`,
+            Authorization: `${openAPISchema.authScheme ?? "Bearer"} ${openAPISchema.authToken}`,
           };
         }
 
@@ -116,7 +118,17 @@ export class PactflowClient implements Client {
           method: "GET",
         });
 
-        return await remoteSpec.json();
+        switch(remoteSpec.headers.get("Content-Type")?.toLowerCase()) {
+          case "application/json":
+            return await remoteSpec.json();
+          case "text/plain":
+          case "text/plain;charset=utf-8":
+          case "text/plain; charset=utf-8":
+          case "application/yaml":
+            return JSON.parse(JSON.stringify(yaml.load(await remoteSpec.text()), null, 2));
+          default:
+            throw new Error(`Unsupported Content-Type: ${remoteSpec.headers.get("Content-Type")}`);
+        }
       }
 
       throw new Error("'url' must be provided.");

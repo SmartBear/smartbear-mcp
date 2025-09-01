@@ -159,7 +159,7 @@ export const RemoteOpenAPIDocumentSchema = z.object({
     .optional(),
   authScheme: z
     .string()
-    .describe("Authentication scheme (e.g., 'Bearer', 'Basic').")
+    .describe("Authentication scheme (e.g., 'Bearer', 'Basic'). Default scheme passed should be Bearer if authToken is specified and this field is not set.")
     .default("Bearer")
     .optional(),
   url: z
