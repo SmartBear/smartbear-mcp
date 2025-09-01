@@ -2,7 +2,7 @@ import { GenerationInput, GenerationResponse, RefineInput, RefineResponse, Statu
 import { ClientType, TOOLS } from "./client/tools.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
-import { ProviderStatesResponse } from "./client/base.js";
+import { CanIDeployInput, CanIDeployResponse, ProviderStatesResponse } from "./client/base.js";
 
 
 // Tool definitions for PactFlow AI API client
@@ -156,10 +156,52 @@ export class PactflowClient implements Client {
       return response.json();
     }
 
+    /**
+     * Checks if a given pacticipant version is safe to deploy
+     * to a specified environment.
+     *
+     * @param body - Input containing:
+     *   - `pacticipant`: The name of the service (pacticipant).
+     *   - `version`: The version of the pacticipant being evaluated for deployment.
+     *   - `environment`: The target environment (e.g., staging, production).
+     * @returns CanIDeployResponse containing deployment decision and verification results.
+     * @throws Error if the request fails or returns a non-OK response.
+     */
+    async canIDeploy(body: CanIDeployInput): Promise<CanIDeployResponse> {
+      const { pacticipant, version, environment } = body;
+      const queryParams = new URLSearchParams({
+        pacticipant,
+        version,
+        environment,
+      });
+      const url = `${this.baseUrl}/can-i-deploy?${queryParams.toString()}`;
+      
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: this.headers,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `Can-I-Deploy Request Failed - status: ${response.status} ${response.statusText}${
+              errorText ? ` - ${errorText}` : ""
+            }`
+          );
+        }
+
+        return (await response.json()) as CanIDeployResponse;
+      } catch (error) {
+        console.error("[CanIDeploy] Unexpected error:", error);
+        throw error;
+      }
+    }
+
     registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
       for (const tool of TOOLS.filter(t => t.clients.includes(this.clientType))) {
         const {handler, clients, formatResponse, ...toolparams} = tool;
-        console.log(clients);
+        void clients;
         register(toolparams, async (args, _extra) => {
             const handler_fn = (this as any)[handler];
             if (typeof handler_fn !== "function") {
