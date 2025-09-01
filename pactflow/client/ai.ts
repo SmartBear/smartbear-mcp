@@ -85,6 +85,23 @@ export const OpenAPISchema = z
     paths: z
       .record(z.string(), z.record(z.string(), z.any()))
       .describe("OpenAPI paths object containing all API endpoints"),
+    info: z
+      .object({
+        title: z.string().describe("API title"),
+        version: z.string().describe("API version"),
+        description: z.string().describe("API description"),
+        contact: z.object({
+          name: z.string().describe("Contact name"),
+          email: z.string().email().describe("Contact email"),
+          url: z.string().url().describe("Contact URL"),
+        }),
+        license: z.object({
+          name: z.string().describe("License name"),
+          url: z.string().url().describe("License URL"),
+        }),
+      })
+      .describe("Information about the API")
+      .optional(),
     components: z
       .record(z.string(), z.record(z.string(), z.any()))
       .optional()
@@ -131,9 +148,26 @@ export const EndpointMatcherSchema = z
     "REQUIRED: Matcher to specify which endpoints from the OpenAPI document to generate tests for. At least one matcher field must be provided"
   );
 
+export const RemoteOpenAPIDocumentSchema = z.object({
+  authToken: z
+    .string()
+    .describe("Auth Bearer Token if the OpenAPI spec requires authentication.")
+    .optional(),
+  authScheme: z
+    .string()
+    .describe("Authentication scheme (e.g., 'Bearer', 'Basic').")
+    .default("Bearer")
+    .optional(),
+  url: z
+    .string()
+    .url("Must be a valid openapi url")
+    .describe("URL of the remote OpenAPI document.")
+    .optional(),
+});
+
 export const OpenAPIWithMatcherSchema = z
   .object({
-    document: OpenAPISchema,
+    document: z.union([OpenAPISchema, RemoteOpenAPIDocumentSchema]),
     matcher: EndpointMatcherSchema,
   })
   .describe(
@@ -208,3 +242,4 @@ export type EndpointMatcher = z.infer<typeof EndpointMatcherSchema>;
 export type OpenApiWithMatcher = z.infer<typeof OpenAPIWithMatcherSchema>;
 export type GenerationInput = z.infer<typeof GenerationInputSchema>;
 export type RequestResponsePair = z.infer<typeof RequestResponsePairSchema>;
+export type RemoteOpenAPIDocument = z.infer<typeof RemoteOpenAPIDocumentSchema>;

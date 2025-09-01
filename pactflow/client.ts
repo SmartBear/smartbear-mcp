@@ -1,8 +1,10 @@
-import { GenerationInput, GenerationResponse, RefineInput, RefineResponse, StatusResponse } from "./client/ai.js";
+import { GenerationInput, GenerationResponse, RefineInput, RefineResponse, StatusResponse, RemoteOpenAPIDocumentSchema, OpenAPI, RemoteOpenAPIDocument } from "./client/ai.js";
 import { ClientType, TOOLS } from "./client/tools.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
 import { ProviderStatesResponse } from "./client/base.js";
+// @ts-expect-error missing type declarations
+import Swagger  from "swagger-client";
 
 
 // Tool definitions for PactFlow AI API client
@@ -42,8 +44,18 @@ export class PactflowClient implements Client {
     
     // PactFlow AI client methods
 
+    /**
+     * Generate new Pact tests based on the provided input.
+     * @param body The input data for the generation process.
+     * @returns The result of the generation process.
+     * @throws Error if the HTTP request fails or the operation times out.
+     */
     async generate(body: GenerationInput): Promise<GenerationResponse> {
       // Submit the generation request
+      if (body.openapi) {
+        body.openapi.document = await this.resolveOpenAPISpec(body);
+      }
+
       const response = await fetch(`${this.aiBaseUrl}/generate`, {
         method: "POST",
         headers: this.headers,
@@ -51,7 +63,7 @@ export class PactflowClient implements Client {
       });
   
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} - ${await response.text()}`);
       }
   
       const status_response: StatusResponse = await response.json();
@@ -61,8 +73,65 @@ export class PactflowClient implements Client {
       );
     }
 
+    /**
+     * Resolve the OpenAPI specification from the provided input.
+     * @param body The input data for the resolution process.
+     * @returns The resolved OpenAPI document.
+     * @throws Error if the resolution fails.
+     */
+    async resolveOpenAPISpec(body: GenerationInput): Promise<OpenAPI> {
+      const openAPISchema = RemoteOpenAPIDocumentSchema.safeParse(body.openapi?.document);
+      
+      if (openAPISchema.success && body.openapi) {
+        const unresolvedSpec = await this.getRemoteSpecContents(openAPISchema.data);
+        const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
+        
+        if (resolvedSpec.errors && !resolvedSpec.errors.length) {
+          return resolvedSpec.spec;
+        }
+
+        throw new Error(`Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`);
+      }
+    }
+
+    /**
+     * Fetch the contents of a remote OpenAPI document.
+     * @param openAPISchema The schema for the remote OpenAPI document.
+     * @returns A promise that resolves to a map of the OpenAPI document contents.
+     * @throws Error if the URL is not provided or the fetch fails.
+     */
+    async getRemoteSpecContents(openAPISchema: RemoteOpenAPIDocument): Promise<Map<string, any>> {
+      if (openAPISchema.url) {
+        let headers = {};
+        if (openAPISchema.authToken) {
+          headers = {
+            Authorization: `${openAPISchema.authScheme} ${openAPISchema.authToken}`,
+          };
+        }
+
+        const remoteSpec = await fetch(openAPISchema.url, {
+          headers,
+          method: "GET",
+        });
+
+        return await remoteSpec.json();
+      }
+
+      throw new Error("'url' must be provided.");
+    }
+
+    /**
+     * Review the provided Pact tests and suggest improvements.
+     * @param body The input data for the review process.
+     * @returns The result of the review process.
+     * @throws Error if the HTTP request fails or the operation times out.
+     */
     async review(body: RefineInput): Promise<RefineResponse> {
-      // submit review request
+      // Submit review request
+      if (body.openapi) {
+        body.openapi.document = await this.resolveOpenAPISpec(body);
+      }
+
       const response = await fetch(`${this.aiBaseUrl}/review`, {
         method: "POST",
         headers: this.headers,
@@ -70,7 +139,7 @@ export class PactflowClient implements Client {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} - ${await response.text()}`);
       }
 
       const status_response: StatusResponse = await response.json();
@@ -180,5 +249,4 @@ export class PactflowClient implements Client {
         );
       }
     }
-
 }
