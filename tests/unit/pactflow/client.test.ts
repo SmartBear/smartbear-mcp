@@ -124,7 +124,7 @@ describe("PactflowClient.registerTools", () => {
     });
   });
 
-  it("Gets throws an error if url is missing", async () => {
+  it("Should throw an error when the remote spec URL is missing", async () => {
     const client = new PactflowClient(
       "my-token",
       "https://example.com",
