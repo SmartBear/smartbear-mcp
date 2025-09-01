@@ -12,7 +12,10 @@
 
 import { z } from "zod";
 import { ToolParams } from "../../common/types.js";
-import { GenerationInputSchema, RefineInputSchema } from "./ai.js";
+import { 
+  GenerationToolInputSchema, 
+  ReviewToolInputSchema
+} from "./ai.js";
 
 export type ClientType = "pactflow" | "pact_broker";
 
@@ -28,7 +31,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary:
       "Generate Pact tests using PactFlow AI. You can provide one or more of the following input types: (1) request/response pairs for specific interactions, (2) code files to analyze and extract interactions from, and/or (3) OpenAPI document to generate tests for specific endpoints. When providing an OpenAPI document, a matcher is required to specify which endpoints to generate tests for.",
     purpose: "Generate Pact tests for API interactions",
-    zodSchema: GenerationInputSchema,
+    zodSchema: GenerationToolInputSchema,
     handler: "generate",
     clients: ["pactflow"], // ONLY pactflow
   },
@@ -36,7 +39,7 @@ export const TOOLS: PactflowToolParams[] = [
     title: "Review Pact Tests",
     summary: "Review Pact tests using PactFlow AI. You can provide the following inputs: (1) Pact tests to be reviewed along with metadata",
     purpose: "Review Pact tests for API interactions",
-    zodSchema: RefineInputSchema,
+    zodSchema: ReviewToolInputSchema,
     handler: "review",
     clients: ["pactflow"]
   },

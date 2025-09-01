@@ -1,12 +1,20 @@
-import { GenerationInput, GenerationResponse, RefineInput, RefineResponse, StatusResponse, RemoteOpenAPIDocumentSchema, OpenAPI, RemoteOpenAPIDocument } from "./client/ai.js";
-import { ClientType, TOOLS } from "./client/tools.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
+import { 
+  GenerationResponse, 
+  GenerationToolInput, 
+  OpenAPI,
+  RefineResponse, 
+  RemoteOpenAPIDocument, 
+  RemoteOpenAPIDocumentSchema, 
+  ReviewToolInput, 
+  StatusResponse 
+} from "./client/ai.js";
 import { ProviderStatesResponse } from "./client/base.js";
-// @ts-expect-error missing type declarations
-import Swagger  from "swagger-client";
-// @ts-expect-error missing type declarations
+import { ClientType, TOOLS } from "./client/tools.js";
 import yaml from "js-yaml";
+// @ts-expect-error missing type declarations
+import Swagger from "swagger-client";
 
 
 // Tool definitions for PactFlow AI API client
@@ -48,20 +56,25 @@ export class PactflowClient implements Client {
 
     /**
      * Generate new Pact tests based on the provided input.
-     * @param body The input data for the generation process.
+     * @param toolInput The input data for the generation process.
      * @returns The result of the generation process.
      * @throws Error if the HTTP request fails or the operation times out.
      */
-    async generate(body: GenerationInput): Promise<GenerationResponse> {
+    async generate(toolInput: GenerationToolInput): Promise<GenerationResponse> {
       // Submit the generation request
-      if (body.openapi) {
-        body.openapi.document = await this.resolveOpenAPISpec(body);
+      if (toolInput.remoteOpenAPIDocument) {
+        const resolvedSpec = await this.resolveOpenAPISpec(toolInput.remoteOpenAPIDocument);
+        if (toolInput.body.openapi) {
+          toolInput.body.openapi.document = resolvedSpec;
+        } else {
+          throw new Error("When providing a remote OpenAPI document, the 'openapi' field must atleast have a matcher if remote openapi credentials are used.");
+        }
       }
 
       const response = await fetch(`${this.aiBaseUrl}/generate`, {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(body),
+        body: JSON.stringify(toolInput.body),
       });
   
       if (!response.ok) {
@@ -77,14 +90,14 @@ export class PactflowClient implements Client {
 
     /**
      * Resolve the OpenAPI specification from the provided input.
-     * @param body The input data for the resolution process.
+     * @param remoteOpenAPIDocument The remote OpenAPI document to resolve.
      * @returns The resolved OpenAPI document.
      * @throws Error if the resolution fails.
      */
-    async resolveOpenAPISpec(body: GenerationInput): Promise<OpenAPI> {
-      const openAPISchema = RemoteOpenAPIDocumentSchema.safeParse(body.openapi?.document);
+    async resolveOpenAPISpec(remoteOpenAPIDocument: RemoteOpenAPIDocument): Promise<OpenAPI> {
+      const openAPISchema = RemoteOpenAPIDocumentSchema.safeParse(remoteOpenAPIDocument);
       
-      if (openAPISchema.success && body.openapi) {
+      if (openAPISchema.success && remoteOpenAPIDocument) {
         const unresolvedSpec = await this.getRemoteSpecContents(openAPISchema.data);
         const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
 
@@ -95,7 +108,7 @@ export class PactflowClient implements Client {
         throw new Error(`Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`);
       }
 
-      throw new Error(`Invalid OpenAPI schema: ${JSON.stringify(openAPISchema.error?.issues)}`);
+      throw new Error(`Invalid RemoteOpenAPIDocument: ${JSON.stringify(openAPISchema.error?.issues)}`);
     }
 
     /**
@@ -136,20 +149,25 @@ export class PactflowClient implements Client {
 
     /**
      * Review the provided Pact tests and suggest improvements.
-     * @param body The input data for the review process.
+     * @param toolInput The input data for the review process.
      * @returns The result of the review process.
      * @throws Error if the HTTP request fails or the operation times out.
      */
-    async review(body: RefineInput): Promise<RefineResponse> {
+    async review(toolInput: ReviewToolInput): Promise<RefineResponse> {
       // Submit review request
-      if (body.openapi) {
-        body.openapi.document = await this.resolveOpenAPISpec(body);
+      if (toolInput.remoteOpenAPIDocument) {
+        const resolvedSpec = await this.resolveOpenAPISpec(toolInput.remoteOpenAPIDocument);
+        if (toolInput.body.openapi) {
+          toolInput.body.openapi.document = resolvedSpec;
+        } else {
+          throw new Error("When providing a remote OpenAPI document, the 'openapi' field must atleast have a matcher if remote openapi credentials are used.");
+        }
       }
 
       const response = await fetch(`${this.aiBaseUrl}/review`, {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(body),
+        body: JSON.stringify(toolInput.body),
       });
 
       if (!response.ok) {
