@@ -85,13 +85,15 @@ export class PactflowClient implements Client {
       if (openAPISchema.success && body.openapi) {
         const unresolvedSpec = await this.getRemoteSpecContents(openAPISchema.data);
         const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
-        
-        if (resolvedSpec.errors && !resolvedSpec.errors.length) {
+
+        if (!resolvedSpec.errors?.length) {
           return resolvedSpec.spec;
         }
 
         throw new Error(`Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`);
       }
+
+      throw new Error(`Invalid OpenAPI schema: ${JSON.stringify(openAPISchema.error?.issues)}`);
     }
 
     /**
@@ -100,7 +102,7 @@ export class PactflowClient implements Client {
      * @returns A promise that resolves to a map of the OpenAPI document contents.
      * @throws Error if the URL is not provided or the fetch fails.
      */
-    async getRemoteSpecContents(openAPISchema: RemoteOpenAPIDocument): Promise<Map<string, any>> {
+    async getRemoteSpecContents(openAPISchema: RemoteOpenAPIDocument): Promise<any> {
       if (openAPISchema.url) {
         let headers = {};
         if (openAPISchema.authToken) {

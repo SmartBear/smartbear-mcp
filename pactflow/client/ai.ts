@@ -90,15 +90,19 @@ export const OpenAPISchema = z
         title: z.string().describe("API title"),
         version: z.string().describe("API version"),
         description: z.string().describe("API description"),
-        contact: z.object({
-          name: z.string().describe("Contact name"),
-          email: z.string().email().describe("Contact email"),
-          url: z.string().url().describe("Contact URL"),
-        }),
-        license: z.object({
-          name: z.string().describe("License name"),
-          url: z.string().url().describe("License URL"),
-        }),
+        contact: z
+          .object({
+            name: z.string().describe("Contact name"),
+            email: z.string().email().describe("Contact email"),
+            url: z.string().url().describe("Contact URL"),
+          })
+          .optional(),
+        license: z
+          .object({
+            name: z.string().describe("License name"),
+            url: z.string().url().describe("License URL"),
+          })
+          .optional(),
       })
       .describe("Information about the API")
       .optional(),
