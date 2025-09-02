@@ -14,9 +14,9 @@ export default defineConfig({
         '*.config.*',
         '**/*.d.ts',
         // Auto-generated API client files
-        'insight-hub/client/api/*.ts',
-        'insight-hub/client/index.ts',
-        'insight-hub/client/configuration.ts',
+        'bugsnag/client/api/*.ts',
+        'bugsnag/client/index.ts',
+        'bugsnag/client/configuration.ts',
         // Main entry point (tested via integration)
         'index.ts',
         // Other client implementations (not currently tested)

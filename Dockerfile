@@ -3,7 +3,7 @@ FROM node:22.12-alpine AS builder
 # Must be entire project because `prepare` script is run during `npm install` and requires all files.
 COPY common /app/common
 COPY reflect /app/reflect
-COPY insight-hub /app/insight-hub
+COPY bugsnag /app/bugsnag
 COPY api-hub /app/api-hub
 COPY pactflow /app/pactflow
 COPY index.ts /app/

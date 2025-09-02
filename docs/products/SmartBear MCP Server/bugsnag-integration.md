@@ -1,8 +1,8 @@
-![insight-hub.png](./images/embedded/insight-hub.png)
+![bugsnag.png](./images/embedded/bugsnag.png)
 
-The Insight Hub client provides comprehensive error monitoring and debugging capabilities as listed below. Tools for Insight Hub requires an `INSIGHT_HUB_AUTH_TOKEN`.
+The BugSnag client provides comprehensive error monitoring and debugging capabilities as listed below. Tools for BugSnag require a `BUGSNAG_AUTH_TOKEN`.
 
-If you wish to interact with only one Insight Hub project, we also recommend setting `INSIGHT_HUB_PROJECT_API_KEY` to reduce the scope of the conversation. This allows the MCP server to pre-cache your project's custom filters for better filtering prompts.
+If you wish to interact with only one BugSnag project, we also recommend setting `BUGSNAG_PROJECT_API_KEY` to reduce the scope of the conversation. This allows the MCP server to pre-cache your project's custom filters for better filtering prompts.
 
 ## Available Tools
 
@@ -44,16 +44,16 @@ If you wish to interact with only one Insight Hub project, we also recommend set
 
 ### Event
 
-Refers to an occurrence of an error: `insighthub://event/{id}`.
+Refers to an occurrence of an error: `bugsnag://event/{id}`.
 
 ## Configuration Notes
 
--   **Required Environment Variables**: `INSIGHT_HUB_AUTH_TOKEN` is required for all operations.
--   **Optional Environment Variables**: `INSIGHT_HUB_PROJECT_API_KEY` to scope operations to a single project and enable project-specific caching.
--   **Project Scoping**: When `INSIGHT_HUB_PROJECT_API_KEY` is configured:
-    -   The `list_insight_hub_projects` tool is not available (since you're already scoped to one project)
+-   **Required Environment Variables**: `BUGSNAG_AUTH_TOKEN` is required for all operations.
+-   **Optional Environment Variables**: `BUGSNAG_PROJECT_API_KEY` to scope operations to a single project and enable project-specific caching.
+-   **Project Scoping**: When `BUGSNAG_PROJECT_API_KEY` is configured:
+    -   The `list_bugsnag_projects` tool is not available (since you're already scoped to one project)
     -   The `projectId` parameter becomes optional for other tools
     -   Project event filters are pre-cached for better performance
--   **Filtering**: Use `get_project_event_filters` to discover available filter fields before using `list_insight_hub_project_errors`
+-   **Filtering**: Use `get_project_event_filters` to discover available filter fields before using `list_bugsnag_project_errors`
 -   **Time Filters**: Support both relative format (e.g., `7d`, `24h`) and ISO 8601 UTC format (e.g., `2018-05-20T00:00:00Z`)
 

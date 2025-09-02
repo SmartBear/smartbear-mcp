@@ -66,7 +66,7 @@ jobs:
           retention-days: 30
 
       - name: Comment coverage on PR
-        if: github.event_name == 'pull_request' && matrix.node-version == 22
+        if: github.event_name == 'pull_request' && matrix.node-version == 22 && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
@@ -96,7 +96,8 @@ jobs:
                 .slice(0, limit);
 
               return files;
-            }            // Try to read coverage summary
+            }
+            // Try to read coverage summary
             try {
               const coveragePath = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
 
@@ -182,6 +183,13 @@ jobs:
                 body: `❌ **Coverage Report Failed**\n\nCould not generate coverage report: ${error.message}\n\nPlease check the [workflow logs](../actions) for more details.`
               });
             }
+
+      - name: Skip PR comment for forks (security)
+        if: github.event.pull_request.head.repo.full_name != github.repository && matrix.node-version == 22
+        run: |
+          echo "ℹ️ Skipping coverage comment for forked PR due to security policy"
+          echo "📊 Coverage report is still generated and available in workflow artifacts"
+          echo "🔒 This prevents potential information disclosure to external contributors"
 
   test-results:
     if: always()

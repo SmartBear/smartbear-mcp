@@ -1,8 +1,8 @@
 /**
- * Filters utility for Insight Hub API
+ * Filters utility for BugSnag API
  * 
  * This file provides utility functions for creating filter URL parameters
- * based on the Insight Hub filtering specification described in the Filtering.md document.
+ * based on the BugSnag filtering specification described in the Filtering.md document.
  */
 import { z } from "zod";
 
@@ -22,7 +22,7 @@ export interface FilterValue {
 }
 
 /**
- * Filter object structure as specified in the Insight Hub API
+ * Filter object structure as specified in the BugSnag API
  * 
  * Example:
  * {
