@@ -15,7 +15,7 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
   it("enforces presence of matcher when openapi input is provided", () => {
     const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
     const schema = tool?.zodSchema as ZodObject<{ [key: string]: ZodTypeAny }>;
-    const openapiSchema = (schema.shape["body"] as ZodObject<{ [key: string]: ZodTypeAny }>).shape["openapi"];
+    const openapiSchema = schema.shape["openapi"];
     expect(openapiSchema).toBeDefined();
 
     const invalidOpenapi = {
@@ -33,7 +33,7 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
   it("rejects unsupported language values in the language field", () => {
     const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
     const schema = tool?.zodSchema as ZodObject<{ [key: string]: ZodTypeAny }>;
-    const languageSchema = (schema.shape["body"] as ZodObject<{ [key: string]: ZodTypeAny }>).shape["language"];
+    const languageSchema = schema.shape["language"];
     expect(languageSchema).toBeDefined();
 
     const invalidData = "ruby"; // not in enum

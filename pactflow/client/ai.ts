@@ -181,7 +181,7 @@ export const OpenAPIWithMatcherSchema = z
     ).optional(),
     matcher: EndpointMatcherSchema,
     remoteDocument: RemoteOpenAPIDocumentSchema.optional().describe(
-      "The remote OpenAPI document to use for the review in case openapi document is not provided. If provided do not include the document field under openapi."
+      "The remote OpenAPI document to use for the review/generation in case openapi document is not provided. If provided do not include the document field under openapi."
     ),
   })
   .describe(

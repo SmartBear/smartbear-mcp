@@ -134,16 +134,15 @@ export class PactflowClient implements Client {
         method: "GET",
       });
 
-      switch(remoteSpec.headers.get("Content-Type")?.toLowerCase()) {
-        case "application/json":
-          return await remoteSpec.json();
-        case "text/plain":
-        case "text/plain;charset=utf-8":
-        case "text/plain; charset=utf-8":
-        case "application/yaml":
-          return JSON.parse(JSON.stringify(yaml.load(await remoteSpec.text()), null, 2));
-        default:
-          throw new Error(`Unsupported Content-Type: ${remoteSpec.headers.get("Content-Type")}`);
+      try {
+        return await remoteSpec.json();
+      } catch {
+        try {
+          const text = await remoteSpec.text();
+          return JSON.parse(JSON.stringify(yaml.load(text), null, 2));
+        } catch {
+          throw new Error(`Unsupported Content-Type: ${remoteSpec.headers.get("Content-Type")} for remote OpenAPI document.`);
+        }
       }
     }
 
