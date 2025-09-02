@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickFields, pickFieldsFromArray } from '../../../bugsnag/client/api/base.js';
+import { pickFields, pickFieldsFromArray, objectForEachRecursively } from '../../../bugsnag/client/api/base.js';
 
 describe('API Utilities', () => {
   describe('pickFields', () => {
@@ -32,6 +32,95 @@ describe('API Utilities', () => {
         { id: '1', name: 'Test1' },
         { id: '2', name: 'Test2' }
       ]);
+    });
+  });
+
+  describe("objectForEachRecursively", () => {
+    it("should iterate through all key-value pairs recursively", () => {
+      const input = {
+        a: 1,
+        b: { c: 2, d: { e: 3 } },
+        f: 4,
+      };
+      const keys: string[] = [];
+      const values: any[] = [];
+
+      objectForEachRecursively(input, (_, key, value) => {
+        keys.push(key);
+        values.push(value);
+      });
+      expect(keys).toEqual(["a", "c", "e", "f"]);
+      expect(values).toEqual([1, 2, 3, 4]);
+    });
+
+    it("should handle empty objects", () => {
+      const input = {
+        a: {},
+        b: 1,
+      };
+      const keys: string[] = [];
+      const values: any[] = [];
+
+      objectForEachRecursively(input, (_, key, value) => {
+        keys.push(key);
+        values.push(value);
+      });
+      expect(keys).toEqual(["b"]);
+      expect(values).toEqual([1]);
+    });
+
+    it("should handle arrays without recursing into them", () => {
+      const input = {
+        a: 1,
+        b: [1, 2, 3],
+        c: { d: [4, 5] },
+      };
+      const keys: string[] = [];
+      const values: any[] = [];
+
+      objectForEachRecursively(input, (_, key, value) => {
+        keys.push(key);
+        values.push(value);
+      });
+      expect(keys).toEqual(["a", "b", "d"]);
+      expect(values).toEqual([1, [1, 2, 3], [4, 5]]);
+    });
+
+    it("should handle null and undefined values", () => {
+      const input = {
+        a: null,
+        b: undefined,
+        c: { d: null },
+        e: 1,
+      };
+      const keys: string[] = [];
+      const values: any[] = [];
+
+      objectForEachRecursively(input, (_, key, value) => {
+        keys.push(key);
+        values.push(value);
+      });
+      expect(keys).toEqual(["a", "b", "d", "e"]);
+      expect(values).toEqual([null, undefined, null, 1]);
+    });
+
+    it("should provide correct parent objects in callback", () => {
+      const input = {
+        a: 1,
+        b: { c: 2, d: { e: 3 } },
+      };
+      const parents: Record<string, any>[] = [];
+      const keys: string[] = [];
+
+      objectForEachRecursively(input, (parent, key, _) => {
+        parents.push(parent);
+        keys.push(key);
+      });
+
+      expect(keys).toEqual(["a", "c", "e"]);
+      expect(parents[0]).toBe(input); // parent of 'a' is the root object
+      expect(parents[1]).toBe(input.b); // parent of 'c' is the 'b' object
+      expect(parents[2]).toBe(input.b.d); // parent of 'e' is the 'd' object
     });
   });
 });

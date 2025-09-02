@@ -31,6 +31,24 @@ export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
   return arr.map(obj => pickFields<T>(obj, keys));
 }
 
+/**
+ * Iterate through each key-value pair of the provided object, applying a callback.
+ * If the value is an object (not an array), it recursively calls itself on that object.
+ * It does not execute the callback on objects which are recursed into.
+ */
+export function objectForEachRecursively(
+  obj: Record<string, any>,
+  cb: (parent: Record<string, any>, key: string, value: any) => void
+) {
+  for (const [key, value] of Object.entries(obj)) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      objectForEachRecursively(value, cb);
+    } else {
+      cb(obj, key, value);
+    }
+  }
+}
+
 export class BaseAPI {
   protected configuration: Configuration;
 
@@ -89,6 +107,19 @@ export class BaseAPI {
       apiResponse.body = results as T;
     }
 
+    this.sanitizeResponseURLs(apiResponse, this.configuration.basePath || 'https://api.bugsnag.com/');
     return apiResponse;
+  }
+
+  /**
+   * Sanitizes an API response by removing string values that match the specified regex.
+   */
+  private sanitizeResponseURLs(response: ApiResponse<any>, prefix: string): void {
+    if (!response.body) return;
+    objectForEachRecursively(response.body, (parent, key, value) => {
+      if (typeof value === "string" && value.startsWith(prefix)) {
+        delete parent[key];
+      }
+    });
   }
 }
