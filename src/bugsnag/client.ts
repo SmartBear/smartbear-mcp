@@ -5,7 +5,15 @@ import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client, GetInputFunction, RegisterResourceFunction, RegisterToolsFunction } from "../common/types.js";
 import { CurrentUserAPI, ErrorAPI, Configuration } from "./client/index.js";
 import { Organization, Project } from "./client/api/CurrentUser.js";
-import { EventField, ProjectAPI } from "./client/api/Project.js";
+import {
+  EventField,
+  ListReleasesOptions,
+  ReleaseSummaryResponse,
+  ProjectAPI,
+  ReleaseResponse,
+  ReleaseStabilityData,
+  ReleaseResponseAny,
+} from "./client/api/Project.js";
 import { FilterObject, FilterObjectSchema, toQueryString } from "./client/api/filters.js";
 import { ListProjectErrorsOptions } from "./client/api/Error.js";
 
@@ -18,6 +26,8 @@ const cacheKeys = {
   PROJECTS: "bugsnag_projects",
   CURRENT_PROJECT: "bugsnag_current_project",
   CURRENT_PROJECT_EVENT_FILTERS: "bugsnag_current_project_event_filters",
+  RELEASES: "bugsnag_releases", // + projectId
+  RELEASE: "bugsnag_release", // + releaseId
 }
 
 // Exclude certain event fields from the project event filters to improve agent usage
@@ -73,7 +83,9 @@ export class BugsnagClient implements Client {
     });
     this.currentUserApi = new CurrentUserAPI(config);
     this.errorsApi = new ErrorAPI(config);
-    this.cache = new NodeCache();
+    this.cache = new NodeCache({
+      stdTTL: 24 * 60 * 60, // default cache TTL of 24 hours
+    });
     this.projectApi = new ProjectAPI(config);
     this.projectApiKey = projectApiKey;
   }
@@ -221,6 +233,74 @@ export class BugsnagClient implements Client {
       }
       return currentProject;
     }
+  }
+
+  async listReleases(projectId: string, options: ListReleasesOptions){
+    const cacheKey = `${cacheKeys.RELEASES}_${projectId}`;
+    const releases = this.cache.get<ReleaseSummaryResponse[]>(cacheKey);
+
+    if (releases) return releases;
+
+    const fetchedReleases = (await this.projectApi.listReleases(projectId, options)).body || [];
+
+    const formattedReleases = await Promise.all(
+      fetchedReleases.map(async (r) => await this.addExtraReleaseData(r, projectId))
+    );
+    this.cache.set(cacheKey, formattedReleases, 5 * 60);
+    return formattedReleases;
+  }
+
+  async getRelease(projectId: string, releaseId: string): Promise<ReleaseResponse & ReleaseStabilityData> {
+    const cacheKey = `${cacheKeys.RELEASE}_${releaseId}`;
+    const release = this.cache.get<ReleaseResponse & ReleaseStabilityData>(cacheKey);
+    if (release) return release;
+
+    const fetchedRelease = (await this.projectApi.getRelease(projectId, releaseId)).body;
+    if (!fetchedRelease) throw new Error(`No release for ${releaseId} found.`);
+
+    const formattedRelease = await this.addExtraReleaseData(fetchedRelease, projectId);
+    this.cache.set(cacheKey, formattedRelease, 5 * 60);
+    return formattedRelease;
+  }
+
+  private async getProjectStabilityTargets(projectId: string) {
+    return await this.projectApi.getProjectStabilityTargets(projectId);
+  }
+
+  private async addExtraReleaseData<T extends ReleaseResponseAny>(
+    release: T,
+    projectId: string
+  ): Promise<T & ReleaseStabilityData> {
+    const { stability_target_type, target_stability, critical_stability } = await this.getProjectStabilityTargets(
+      projectId
+    );
+
+    const user_stability =
+      release.accumulative_daily_users_seen === 0 // avoid division by zero
+        ? 0
+        : (release.accumulative_daily_users_seen - release.accumulative_daily_users_with_unhandled) /
+          release.accumulative_daily_users_seen;
+
+    const session_stability =
+      release.total_sessions_count === 0 // avoid division by zero
+        ? 0
+        : (release.total_sessions_count - release.unhandled_sessions_count) / release.total_sessions_count;
+
+    const stabilityMetric = stability_target_type === "user" ? user_stability : session_stability;
+
+    const meets_target_stability = stabilityMetric >= target_stability.value;
+    const meets_critical_stability = stabilityMetric >= critical_stability.value;
+
+    return {
+      ...release,
+      user_stability,
+      session_stability,
+      stability_target_type,
+      target_stability: target_stability.value,
+      critical_stability: critical_stability.value,
+      meets_target_stability,
+      meets_critical_stability,
+    };
   }
 
   registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void {
@@ -742,6 +822,126 @@ export class BugsnagClient implements Client {
         const result = await this.updateError(project.id!, errorId, operation, { severity });
         return {
           content: [{ type: "text", text: JSON.stringify({ success: result }) }],
+        };
+      }
+    );
+
+    register(
+      {
+        title: "List Releases",
+        summary: "List releases for a project with optional filtering by release stage",
+        purpose: "Retrieve a list of release summaries to analyze deployment history and associated errors",
+        useCases: [
+          "View recent releases to correlate with error spikes",
+          "Filter releases by stage (e.g. production, staging) for targeted analysis",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project to list releases for",
+                  required: true,
+                },
+              ]),
+          {
+            name: "releaseStage",
+            type: z.string(),
+            description: "Filter releases by this stage (e.g. production, staging)",
+            required: false,
+            examples: ["production", "staging"],
+          },
+        ],
+        examples: [
+          {
+            description: "List all releases for a project",
+            parameters: {},
+            expectedOutput: "JSON array of release objects with metadata",
+          },
+          {
+            description: "List production releases for a project",
+            parameters: {
+              releaseStage: "production",
+            },
+            expectedOutput: "JSON array of release objects in the production stage",
+          },
+        ],
+        hints: ["For more detailed results use the Get Release tool"],
+        readOnly: true,
+        idempotent: true,
+        outputFormat: "JSON array of release summary objects with metadata",
+      },
+      async (args, _extra) => {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                await this.listReleases((await this.getInputProject(args.projectId)).id, {
+                  release_stage: args.releaseStage,
+                })
+              ),
+            },
+          ],
+        };
+      }
+    );
+
+    register(
+      {
+        title: "Get Release",
+        summary: "Get more details for a specific release by its ID",
+        purpose: "Retrieve detailed information about a release for analysis and debugging",
+        useCases: [
+          "View release metadata such as version, source control info, and error counts",
+          "Analyze a specific release to correlate with error spikes or deployments",
+          "See the stability targets for a project and if the release meets them",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project containing the release",
+                  required: true,
+                },
+              ]),
+          {
+            name: "releaseId",
+            type: z.string(),
+            description: "ID of the release to retrieve",
+            required: true,
+            examples: ["5f8d0d55c9e77c0017a1b2c3"],
+          },
+        ],
+        examples: [
+          {
+            description: "Get details for a specific release",
+            parameters: {
+              releaseId: "5f8d0d55c9e77c0017a1b2c3",
+            },
+            expectedOutput:
+              "JSON object with release details including version, source control info, error counts and stability data.",
+          },
+        ],
+        hints: ["Release IDs can be found using the List Releases tool"],
+        readOnly: true,
+        idempotent: true,
+        outputFormat:
+          "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
+      },
+      async (args, _extra) => {
+        if (!args.releaseId) throw new Error("releaseId argument is required");
+        const release = await this.getRelease((await this.getInputProject(args.projectId)).id, args.releaseId);
+        if (!release) {
+          throw new Error(`Release with ID ${args.releaseId} not found.`);
+        }
+        return {
+          content: [{ type: "text", text: JSON.stringify(release) }],
         };
       }
     );
