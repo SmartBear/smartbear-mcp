@@ -104,7 +104,7 @@ export class PactflowClient implements Client {
       const unresolvedSpec = await this.getRemoteSpecContents(openAPISchema.data);
       const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
 
-      if (resolvedSpec.errors) {
+      if (resolvedSpec.errors?.length) {
           throw new Error(`Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`);
       }
 
@@ -134,14 +134,15 @@ export class PactflowClient implements Client {
         method: "GET",
       });
 
+      const specRawBody = await remoteSpec.text();
+
       try {
-        return await remoteSpec.json();
+        return JSON.parse(specRawBody);
       } catch {
         try {
-          const text = await remoteSpec.text();
-          return JSON.parse(JSON.stringify(yaml.load(text), null, 2));
-        } catch {
-          throw new Error(`Unsupported Content-Type: ${remoteSpec.headers.get("Content-Type")} for remote OpenAPI document.`);
+          return JSON.parse(JSON.stringify(yaml.load(specRawBody), null, 2));
+        } catch (e) {
+          throw new Error(`Unsupported Content-Type: ${remoteSpec.headers.get("Content-Type")} for remote OpenAPI document. ${e}`);
         }
       }
     }

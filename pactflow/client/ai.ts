@@ -85,27 +85,6 @@ export const OpenAPISchema = z
     paths: z
       .record(z.string(), z.record(z.string(), z.any()))
       .describe("OpenAPI paths object containing all API endpoints"),
-    info: z
-      .object({
-        title: z.string().describe("API title"),
-        version: z.string().describe("API version"),
-        description: z.string().describe("API description"),
-        contact: z
-          .object({
-            name: z.string().describe("Contact name"),
-            email: z.string().email().describe("Contact email"),
-            url: z.string().url().describe("Contact URL"),
-          })
-          .optional(),
-        license: z
-          .object({
-            name: z.string().describe("License name"),
-            url: z.string().url().describe("License URL"),
-          })
-          .optional(),
-      })
-      .describe("Information about the API")
-      .optional(),
     components: z
       .record(z.string(), z.record(z.string(), z.any()))
       .optional()

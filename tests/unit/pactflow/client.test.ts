@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PactflowClient } from "../../../pactflow/client.js";
 import * as toolsModule from "../../../pactflow/client/tools.js";
-import createFetchMock from "vitest-fetch-mock";
-import { afterEach } from "node:test";
 
 describe("PactFlowClient", () => {
   let client: PactflowClient;
