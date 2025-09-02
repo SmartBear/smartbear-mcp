@@ -200,8 +200,7 @@ export class PactflowClient implements Client {
 
     registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
       for (const tool of TOOLS.filter(t => t.clients.includes(this.clientType))) {
-        const {handler, clients, formatResponse, ...toolparams} = tool;
-        void clients;
+        const {handler, clients: _, formatResponse, ...toolparams} = tool; // eslint-disable-line @typescript-eslint/no-unused-vars
         register(toolparams, async (args, _extra) => {
             const handler_fn = (this as any)[handler];
             if (typeof handler_fn !== "function") {
