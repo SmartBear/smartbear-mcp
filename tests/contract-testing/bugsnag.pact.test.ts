@@ -1,14 +1,14 @@
 import { PactV3, MatchersV3 } from '@pact-foundation/pact';
 import { describe, it, expect } from 'vitest';
-import { InsightHubClient } from '../../insight-hub/client.js';
+import { BugsnagClient } from '../../bugsnag/client.js';
 
 const { like, eachLike, string, integer } = MatchersV3;
 
-// Pact contract tests for Insight Hub (Bugsnag) API
-describe('Insight Hub API Client Pact Tests', () => {
+// Pact contract tests for Bugsnag API
+describe('Bugsnag API Client Pact Tests', () => {
   const provider = new PactV3({
     consumer: 'SmartBearMCPServer',
-    provider: 'InsightHubAPI',
+    provider: 'BugsnagAPI',
   });
 
   describe('Organization Management', () => {
@@ -45,7 +45,7 @@ describe('Insight Hub API Client Pact Tests', () => {
           });
 
         return provider.executeTest(async (mockServer) => {
-          const client = new InsightHubClient('valid-auth-token', undefined, mockServer.url);
+          const client = new BugsnagClient('valid-auth-token', undefined, mockServer.url);
           const organizations = await client.getOrganization();
 
           expect(organizations).toBeDefined();
@@ -202,7 +202,7 @@ describe('Insight Hub API Client Pact Tests', () => {
           });
 
         return provider.executeTest(async (mockServer) => {
-          const client = new InsightHubClient('valid-auth-token', undefined, mockServer.url);
+          const client = new BugsnagClient('valid-auth-token', undefined, mockServer.url);
           // Access the errorsApi directly since there's no public method on the client for listing errors
           const response = await client['errorsApi'].listProjectErrors('proj-123');
           const errors = response.body || [];
@@ -256,7 +256,7 @@ describe('Insight Hub API Client Pact Tests', () => {
           });
 
         return provider.executeTest(async (mockServer) => {
-          const client = new InsightHubClient('valid-auth-token', undefined, mockServer.url);
+          const client = new BugsnagClient('valid-auth-token', undefined, mockServer.url);
           const response = await client['errorsApi'].viewErrorOnProject('proj-123', 'error-123');
           const error = response.body as any;
 
@@ -299,7 +299,7 @@ describe('Insight Hub API Client Pact Tests', () => {
           });
 
         return provider.executeTest(async (mockServer) => {
-          const client = new InsightHubClient('valid-auth-token', undefined, mockServer.url);
+          const client = new BugsnagClient('valid-auth-token', undefined, mockServer.url);
           const success = await client.updateError('proj-123', 'error-123', 'fix');
           expect(success).toBe(true);
         });
@@ -428,7 +428,7 @@ describe('Insight Hub API Client Pact Tests', () => {
           });
 
         return provider.executeTest(async (mockServer) => {
-          const client = new InsightHubClient('valid-auth-token', undefined, mockServer.url);
+          const client = new BugsnagClient('valid-auth-token', undefined, mockServer.url);
           const response = await client['projectApi'].listProjectEventFields('proj-123');
           const fields = response.body || [];
 
