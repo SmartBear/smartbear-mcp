@@ -7,7 +7,7 @@ import {
   isoTime,
   toUrlSearchParams,
   FilterObject
-} from '../../../insight-hub/client/api/filters.js';
+} from '../../../bugsnag/client/api/filters.js';
 
 describe('Filter Utilities', () => {
   describe('equals', () => {

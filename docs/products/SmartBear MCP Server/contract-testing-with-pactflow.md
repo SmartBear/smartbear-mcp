@@ -17,6 +17,10 @@ The PactFlow Contract testing client provides comprehensive tools which makes te
 
 - Review Pact tests and provide a list of recommendations that can be applied.
 
+### Can I Deploy
+
+- Determine whether a specific version of a pacticipant can be safely deployed into a given environment.
+
 ## Configuration Notes
 
 - **Required Environment Variables**: `PACT_BROKER_BASE_URL` is required for all operations.

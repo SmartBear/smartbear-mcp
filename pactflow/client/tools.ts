@@ -16,6 +16,7 @@ import {
   GenerationInputSchema, 
   RefineInputSchema
 } from "./ai.js";
+import { CanIDeploySchema } from "./base.js";
 
 export type ClientType = "pactflow" | "pact_broker";
 
@@ -56,6 +57,14 @@ export const TOOLS: PactflowToolParams[] = [
       }
     ],
     handler: "getProviderStates",       
+    clients: ["pactflow", "pact_broker"]
+  },
+  {
+    title: "Can I Deploy",
+    summary: "Performs a comprehensive compatibility check to determine whether a specific version of a service (pacticipant) can be safely deployed into a given environment. It analyzes the complete contract matrix of consumer-provider relationships to confirm that all required integrations are verified and compatible.",
+    purpose: "To serve as a deployment safety check within the PactBroker and PactFlow ecosystem, leveraging contract testing results to validate whether a specific service / pacticipant version is compatible with all integrated services. This feature prevents unsafe releases, reduces integration risks, and enables teams to confidently automate deployments across environments with a clear, auditable record of verification results.",
+    zodSchema: CanIDeploySchema,
+    handler: "canIDeploy",
     clients: ["pactflow", "pact_broker"]
   }
 ];

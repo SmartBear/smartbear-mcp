@@ -7,16 +7,17 @@ import { CurrentUserAPI, ErrorAPI, Configuration } from "./client/index.js";
 import { Organization, Project } from "./client/api/CurrentUser.js";
 import { EventField, ProjectAPI } from "./client/api/Project.js";
 import { FilterObject, FilterObjectSchema, toQueryString } from "./client/api/filters.js";
+import { ListProjectErrorsOptions } from "./client/api/Error.js";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
-const HUB_DOMAIN = "insighthub.smartbear.com";
+const HUB_DOMAIN = "bugsnag.smartbear.com";
 
 const cacheKeys = {
-  ORG: "insight_hub_org",
-  PROJECTS: "insight_hub_projects",
-  CURRENT_PROJECT: "insight_hub_current_project",
-  CURRENT_PROJECT_EVENT_FILTERS: "insight_hub_current_project_event_filters",
+  ORG: "bugsnag_org",
+  PROJECTS: "bugsnag_projects",
+  CURRENT_PROJECT: "bugsnag_current_project",
+  CURRENT_PROJECT_EVENT_FILTERS: "bugsnag_current_project_event_filters",
 }
 
 // Exclude certain event fields from the project event filters to improve agent usage
@@ -45,7 +46,7 @@ export interface OrgArgs {
 export interface ErrorArgs extends ProjectArgs {
   errorId: string;
 }
-export class InsightHubClient implements Client {
+export class BugsnagClient implements Client {
   private currentUserApi: CurrentUserAPI;
   private errorsApi: ErrorAPI;
   private cache: NodeCache;
@@ -54,8 +55,8 @@ export class InsightHubClient implements Client {
   private apiEndpoint: string;
   private appEndpoint: string;
 
-  name = "Insight Hub";
-  prefix = "insight_hub";
+  name = "Bugsnag";
+  prefix = "bugsnag";
 
   constructor(token: string, projectApiKey?: string, endpoint?: string) {
     this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
@@ -354,7 +355,7 @@ export class InsightHubClient implements Client {
           }
         ],
         hints: [
-          "Error IDs can be found using the List Errors tool",
+          "Error IDs can be found using the List Project Errors tool",
           "Use this after filtering errors to get detailed information about specific errors",
           "If you used a filter to get this error, you can pass the same filters here to restrict the results or apply further filters",
           "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
@@ -422,7 +423,7 @@ export class InsightHubClient implements Client {
           {
             name: "link",
             type: z.string(),
-            description: "Full URL to the event details page in the Insight Hub dashboard (web interface)",
+            description: "Full URL to the event details page in the BugSnag dashboard (web interface)",
             required: true,
             examples: [
               "https://app.bugsnag.com/my-org/my-project/errors/6863e2af8c857c0a5023b411?event_id=6863e2af012caf1d5c320000"
@@ -443,7 +444,7 @@ export class InsightHubClient implements Client {
         ],
         hints: [
           "The URL must contain both project slug in the path and event_id in query parameters",
-          "This is useful when users share Insight Hub dashboard URLs and you need to extract the event data"
+          "This is useful when users share BugSnag dashboard URLs and you need to extract the event data"
         ]
       },
       async (args: any, _extra: any) => {
@@ -471,7 +472,7 @@ export class InsightHubClient implements Client {
     register(
       {
         title: "List Project Errors",
-        summary: "List and search errors in a project using customizable filters",
+        summary: "List and search errors in a project using customizable filters and pagination",
         purpose: "Retrieve filtered list of errors from a project for analysis, debugging, and reporting",
         useCases: [
           "Debug recent application errors by filtering for open errors in the last 7 days",
@@ -483,7 +484,7 @@ export class InsightHubClient implements Client {
           {
             name: "filters",
             type: FilterObjectSchema,
-            description: "Apply filters to narrow down the error list. Use the List Errors or Get Error tools to discover available filter fields",
+            description: "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields",
             required: false,
             examples: [
                 '{"error.status": [{"type": "eq", "value": "open"}]}',
@@ -496,6 +497,35 @@ export class InsightHubClient implements Client {
               "ISO 8601 times must be in UTC and use extended format",
               "Relative time periods: h (hours), d (days)"
             ]
+          },
+          {
+            name: "sort",
+            type: z.enum(["first_seen", "last_seen", "events", "users", "unsorted"]),
+            description: "Field to sort the errors by (default: last_seen)",
+            required: false,
+            examples: ["last_seen"]
+          },
+          {
+            name: "direction",
+            type: z.enum(["asc", "desc"]).default("desc"),
+            description: "Sort direction for ordering results",
+            required: false,
+            examples: ["desc"]
+          },
+          {
+            name: "per_page",
+            type: z.number().min(1).max(100),
+            description: "How many results to return per page.",
+            required: false,
+            examples: ["30", "50", "100"]
+          },
+          {
+            name: "next",
+            type: z.string().url(),
+            description: "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available.",
+            required: false,
+            examples: ["https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?offset=30&per_page=30&sort=last_seen"],
+            constraints: ["Only values provided in the output from this tool can be used. Do not attempt to construct it manually."]
           },
           ...(this.projectApiKey ? [] : [
             {
@@ -515,7 +545,28 @@ export class InsightHubClient implements Client {
                 "event.since": [{ "type": "eq", "value": "24h" }]
               }
             },
-            expectedOutput: "JSON object with a list of errors in the 'data' field, and an error count in the 'count' field"
+            expectedOutput: "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field"
+          },
+          {
+            description: "Get the 10 open errors with the most users affected in the last 30 days",
+            parameters: {
+              filters: {
+                "event.since": [{ "type": "eq", "value": "30d" }],
+                "error.status": [{ "type": "eq", "value": "open" }]
+              },
+              sort: "users",
+              direction: "desc",
+              per_page: 10
+            },
+            expectedOutput: "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field"
+          },
+          {
+            description: "Get the next 50 results",
+            parameters: {
+              next: "https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?base=2025-08-29T13%3A11%3A37Z&direction=desc&filters%5Berror.status%5D%5B%5D%5Btype%5D=eq&filters%5Berror.status%5D%5B%5D%5Bvalue%5D=open&offset=10&per_page=10&sort=users",
+              per_page: 50
+            },
+            expectedOutput: "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field"
           }
         ],
         hints: [
@@ -523,15 +574,18 @@ export class InsightHubClient implements Client {
           "Combine multiple filters to narrow results - filters are applied with AND logic",
           "For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates",
           "Common time filters: event.since (from this time), event.before (until this time)",
-          "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors"
+          "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors",
+          "This tool returns paged results. The 'count' field indicates the number of results returned in the current page, and the 'total' field indicates the total number of results across all pages.",
+          "If the output contains a 'next' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page.",
+          "Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size."
         ]
       },
       async (args: any, _extra: any) => {
         const project = await this.getInputProject(args.projectId);
 
-        // Optionally, validate filter keys against cached event fields
-        const eventFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS) || [];
+        // Validate filter keys against cached event fields
         if (args.filters) {
+          const eventFields = this.cache.get<EventField[]>(cacheKeys.CURRENT_PROJECT_EVENT_FILTERS) || [];
           const validKeys = new Set(eventFields.map(f => f.display_id));
           for (const key of Object.keys(args.filters)) {
             if (!validKeys.has(key)) {
@@ -540,11 +594,24 @@ export class InsightHubClient implements Client {
           }
         }
 
-        const response = await this.errorsApi.listProjectErrors(project.id, { filters: args.filters });
+        const options: ListProjectErrorsOptions = {};
+        if (args.filters) options.filters = args.filters;
+        if (args.sort !== undefined) options.sort = args.sort;
+        if (args.direction !== undefined) options.direction = args.direction;
+        if (args.per_page !== undefined) options.per_page = args.per_page;
+        if (args.next !== undefined) options.next = args.next;
+
+        const response = await this.errorsApi.listProjectErrors(project.id, options);
+        
         const errors = response.body || [];
+        const totalCount = response.headers.get('X-Total-Count');
+        const linkHeader = response.headers.get('Link');
+
         const result = {
           data: errors,
           count: errors.length,
+          total: totalCount ? parseInt(totalCount) : undefined,
+          next: linkHeader?.match(/<([^>]+)>/)?.[1],
         };
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],
@@ -630,7 +697,7 @@ export class InsightHubClient implements Client {
           }
         ],
         hints: [
-          "Only use valid operations - Insight Hub may reject invalid values"
+          "Only use valid operations - BugSnag may reject invalid values"
         ],
         readOnly: false,
         idempotent: false,
