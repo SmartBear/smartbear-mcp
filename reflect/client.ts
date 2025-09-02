@@ -24,20 +24,22 @@ export interface testExecutionArgs {
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
   private headers: { "X-API-KEY": string; "Content-Type": string, "User-Agent": string };
+  public baseUrl: string;
 
   name = "Reflect";
   prefix = "reflect";
 
-  constructor(token: string) {
+  constructor(token: string, baseUrl: string = "https://api.reflect.run") {
     this.headers = {
       "X-API-KEY": `${token}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
+    this.baseUrl = baseUrl;
   }
 
   async listReflectSuites(): Promise<any> {
-    const response = await fetch("https://api.reflect.run/v1/suites", {
+    const response = await fetch(`${this.baseUrl}/v1/suites`, {
       method: "GET",
       headers: this.headers,
     });
@@ -47,7 +49,7 @@ export class ReflectClient implements Client {
 
   async listSuiteExecutions(suiteId: string): Promise<any> {
     const response = await fetch(
-      `https://api.reflect.run/v1/suites/${suiteId}/executions`,
+      `${this.baseUrl}/v1/suites/${suiteId}/executions`,
       {
         method: "GET",
         headers: this.headers,
@@ -59,7 +61,7 @@ export class ReflectClient implements Client {
 
   async getSuiteExecutionStatus(suiteId: string, executionId: string): Promise<any> {
     const response = await fetch(
-      `https://api.reflect.run/v1/suites/${suiteId}/executions/${executionId}`,
+      `${this.baseUrl}/v1/suites/${suiteId}/executions/${executionId}`,
       {
         method: "GET",
         headers: this.headers,
@@ -71,7 +73,7 @@ export class ReflectClient implements Client {
 
   async executeSuite(suiteId: string): Promise<any> {
     const response = await fetch(
-      `https://api.reflect.run/v1/suites/${suiteId}/executions`,
+      `${this.baseUrl}/v1/suites/${suiteId}/executions`,
       {
         method: "POST",
         headers: this.headers,
@@ -83,7 +85,7 @@ export class ReflectClient implements Client {
 
   async cancelSuiteExecution(suiteId: string, executionId: string): Promise<any> {
     const response = await fetch(
-      `https://api.reflect.run/v1/suites/${suiteId}/executions/${executionId}/cancel`,
+      `${this.baseUrl}/v1/suites/${suiteId}/executions/${executionId}/cancel`,
       {
         method: "PATCH",
         headers: this.headers,
@@ -94,7 +96,7 @@ export class ReflectClient implements Client {
   }
 
   async listReflectTests(): Promise<any> {
-    const response = await fetch("https://api.reflect.run/v1/tests", {
+    const response = await fetch(`${this.baseUrl}/v1/tests`, {
       method: "GET",
       headers: this.headers,
     });
@@ -103,7 +105,7 @@ export class ReflectClient implements Client {
   }
 
   async runReflectTest(testId: string): Promise<any> {
-    const response = await fetch(`https://api.reflect.run/v1/tests/${testId}/executions`, {
+    const response = await fetch(`${this.baseUrl}/v1/tests/${testId}/executions`, {
       method: "POST",
       headers: this.headers,
     });
@@ -113,7 +115,7 @@ export class ReflectClient implements Client {
 
   async getReflectTestStatus(testId: string, executionId: string): Promise<any> {
     const response = await fetch(
-      `https://api.reflect.run/v1/executions/${executionId}`,
+      `${this.baseUrl}/v1/tests/${testId}/executions/${executionId}`,
       {
         method: "GET",
         headers: this.headers,
@@ -186,18 +188,18 @@ export class ReflectClient implements Client {
       }
     );
     register(
-        {
-            title: "Execute Suite",
-            summary: "Execute a reflect suite",
-            parameters: [
-                {
-                    name: "suiteId",
-                    type: z.string(),
-                    description: "ID of the reflect suite to list executions for",
-                    required: true
-                }
-            ]
-        },
+      {
+        title: "Execute Suite",
+        summary: "Execute a reflect suite",
+        parameters: [
+          {
+            name: "suiteId",
+            type: z.string(),
+            description: "ID of the reflect suite to list executions for",
+            required: true
+          }
+        ]
+      },
       async (args, _extra) => {
         if (!args.suiteId) throw new Error("suiteId argument is required");
         const response = await this.executeSuite(args.suiteId);
