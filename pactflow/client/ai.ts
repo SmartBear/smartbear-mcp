@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { addOpenAPISpecToSchema } from "./utils.js";
 
 // Type definitions for PactFlow AI API
 export const GenerationLanguages = [
@@ -165,7 +166,7 @@ export const OpenAPIWithMatcherSchema = z
   })
   .describe(
     "If provided, the OpenAPI document which describes the API being tested and is accompanied by a matcher which will be used to identify the interactions in the OpenAPI document which are relevant to the Pact refinement process."
-  );
+  ).transform(addOpenAPISpecToSchema);
 
 export const RefineInputSchema = z.object({
   pactTests: FileInputSchema.describe(

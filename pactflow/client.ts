@@ -1,20 +1,19 @@
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
+import { 
+  Client, 
+  GetInputFunction, 
+  RegisterToolsFunction 
+} from "../common/types.js";
 import { 
   GenerationResponse, 
-  GenerationInput, 
-  OpenAPI,
+  GenerationInput,
   RefineResponse, 
-  RemoteOpenAPIDocument, 
-  RemoteOpenAPIDocumentSchema, 
   RefineInput, 
   StatusResponse 
 } from "./client/ai.js";
 import { CanIDeployInput, CanIDeployResponse, ProviderStatesResponse } from "./client/base.js";
 import { ClientType, TOOLS } from "./client/tools.js";
-import yaml from "js-yaml";
-// @ts-expect-error missing type declarations
-import Swagger from "swagger-client";
+
 
 
 // Tool definitions for PactFlow AI API client
@@ -56,22 +55,13 @@ export class PactflowClient implements Client {
 
     /**
      * Generate new Pact tests based on the provided input.
+     * 
      * @param toolInput The input data for the generation process.
      * @returns The result of the generation process.
      * @throws Error if the HTTP request fails or the operation times out.
      */
     async generate(toolInput: GenerationInput): Promise<GenerationResponse> {
       // Submit the generation request
-      if (toolInput.openapi?.remoteDocument) {
-        const resolvedSpec = await this.resolveOpenAPISpec(toolInput.openapi.remoteDocument);
-        if (toolInput.openapi) {
-          toolInput.openapi.document = resolvedSpec;
-          delete toolInput.openapi.remoteDocument;
-        } else {
-          throw new Error("When providing a remote OpenAPI document, the 'openapi' field must at least have a matcher if remote OpenAPI credentials are used.");
-        }
-      }
-
       const response = await fetch(`${this.aiBaseUrl}/generate`, {
         method: "POST",
         headers: this.headers,
@@ -90,81 +80,14 @@ export class PactflowClient implements Client {
     }
 
     /**
-     * Resolve the OpenAPI specification from the provided input.
-     * @param remoteOpenAPIDocument The remote OpenAPI document to resolve.
-     * @returns The resolved OpenAPI document.
-     * @throws Error if the resolution fails.
-     */
-    async resolveOpenAPISpec(remoteOpenAPIDocument: RemoteOpenAPIDocument): Promise<OpenAPI> {
-      const openAPISchema = RemoteOpenAPIDocumentSchema.safeParse(remoteOpenAPIDocument);
-      if (openAPISchema.error || !remoteOpenAPIDocument) {
-        throw new Error(`Invalid RemoteOpenAPIDocument: ${JSON.stringify(openAPISchema.error?.issues)}`);
-      }
-      
-      const unresolvedSpec = await this.getRemoteSpecContents(openAPISchema.data);
-      const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
-
-      if (resolvedSpec.errors?.length) {
-          throw new Error(`Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`);
-      }
-
-      return resolvedSpec.spec;
-    }
-
-    /**
-     * Fetch the contents of a remote OpenAPI document.
-     * @param openAPISchema The schema for the remote OpenAPI document.
-     * @returns A promise that resolves to a map of the OpenAPI document contents.
-     * @throws Error if the URL is not provided or the fetch fails.
-     */
-    async getRemoteSpecContents(openAPISchema: RemoteOpenAPIDocument): Promise<any> {
-      if (!openAPISchema.url) {
-        throw new Error("'url' must be provided.");
-      }
-      
-      let headers = {};
-      if (openAPISchema.authToken) {
-        headers = {
-          Authorization: `${openAPISchema.authScheme ?? "Bearer"} ${openAPISchema.authToken}`,
-        };
-      }
-
-      const remoteSpec = await fetch(openAPISchema.url, {
-        headers,
-        method: "GET",
-      });
-
-      const specRawBody = await remoteSpec.text();
-
-      try {
-        return JSON.parse(specRawBody);
-      } catch {
-        try {
-          return JSON.parse(JSON.stringify(yaml.load(specRawBody), null, 2));
-        } catch (e) {
-          throw new Error(`Unsupported Content-Type: ${remoteSpec.headers.get("Content-Type")} for remote OpenAPI document. ${e}`);
-        }
-      }
-    }
-
-    /**
      * Review the provided Pact tests and suggest improvements.
+     * 
      * @param toolInput The input data for the review process.
      * @returns The result of the review process.
      * @throws Error if the HTTP request fails or the operation times out.
      */
     async review(toolInput: RefineInput): Promise<RefineResponse> {
       // Submit review request
-      if (toolInput.openapi?.remoteDocument) {
-        const resolvedSpec = await this.resolveOpenAPISpec(toolInput.openapi.remoteDocument);
-        if (toolInput.openapi) {
-          toolInput.openapi.document = resolvedSpec;
-          delete toolInput.openapi.remoteDocument;
-        } else {
-          throw new Error("When providing a remote OpenAPI document, the 'openapi' field must at least have a matcher if remote OpenAPI credentials are used.");
-        }
-      }
-
       const response = await fetch(`${this.aiBaseUrl}/review`, {
         method: "POST",
         headers: this.headers,
