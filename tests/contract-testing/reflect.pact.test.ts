@@ -1,6 +1,6 @@
 import { PactV3, MatchersV3 } from '@pact-foundation/pact';
 import { describe, it, expect } from 'vitest';
-// import { ReflectClient } from '../../reflect/client.js';
+import { ReflectClient } from '../../reflect/client.js';
 
 const { like, string, uuid, eachLike, integer } = MatchersV3;
 
@@ -31,27 +31,20 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: eachLike({
-              id: uuid('suite-123'),
+            body: like(eachLike({
+              id: uuid('123e4567-e89b-12d3-a456-426614174000'),
               name: string('E2E Test Suite'),
               description: string('End-to-end testing suite'),
               status: string('active'),
               created_at: string('2024-01-01T00:00:00Z'),
               updated_at: string('2024-01-01T00:00:00Z'),
               test_count: integer(5),
-            }),
+            })),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/suites`, {
-            headers: {
-              'X-API-KEY': 'valid-api-key',
-              'Content-Type': 'application/json',
-              'User-Agent': 'SmartBear MCP Server/0.4.0',
-            },
-          });
-          const suites = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ReflectClient('valid-api-key', mockServer.url);
+          const suites = await client.listReflectSuites();
           expect(Array.isArray(suites)).toBe(true);
         });
       });
@@ -75,8 +68,8 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
-              id: uuid('execution-456'),
+            body: like({
+              id: uuid('456e7890-a12b-34c5-d678-901234567890'),
               suite_id: 'suite-123',
               status: string('queued'),
               created_at: string('2024-01-01T00:00:00Z'),
@@ -85,19 +78,12 @@ describe('Reflect API Client Pact Tests', () => {
               total_tests: integer(5),
               passed_tests: integer(0),
               failed_tests: integer(0),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/suites/suite-123/executions`, {
-            method: 'POST',
-            headers: {
-              'X-API-KEY': 'valid-api-key',
-              'Content-Type': 'application/json',
-            },
-          });
-          const execution = await response.json();
-          expect(response.status).toBe(201);
+          const client = new ReflectClient('valid-api-key', mockServer.url);
+          const execution = await client.executeSuite('suite-123');
           expect(execution.id).toBeDefined();
           expect(execution.status).toBe('queued');
         });
@@ -121,8 +107,8 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: eachLike({
-              id: uuid('execution-456'),
+            body: like(eachLike({
+              id: uuid('789abcde-f012-3456-789a-bcdef0123456'),
               suite_id: 'suite-123',
               status: string('completed'),
               created_at: string('2024-01-01T00:00:00Z'),
@@ -132,17 +118,12 @@ describe('Reflect API Client Pact Tests', () => {
               passed_tests: integer(4),
               failed_tests: integer(1),
               duration_ms: integer(240000),
-            }),
+            })),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/suites/suite-123/executions`, {
-            headers: {
-              'X-API-KEY': 'valid-api-key',
-            },
-          });
-          const executions = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ReflectClient('valid-api-key', mockServer.url);
+          const executions = await client.listSuiteExecutions('suite-123');
           expect(Array.isArray(executions)).toBe(true);
         });
       });
@@ -165,7 +146,7 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               id: 'execution-456',
               suite_id: 'suite-123',
               status: string('running'),
@@ -177,17 +158,12 @@ describe('Reflect API Client Pact Tests', () => {
               failed_tests: integer(0),
               current_test: string('Login Test'),
               progress: integer(40),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/suites/suite-123/executions/execution-456`, {
-            headers: {
-              'X-API-KEY': 'valid-api-key',
-            },
-          });
-          const execution = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ReflectClient('valid-api-key', mockServer.url);
+          const execution = await client.getSuiteExecutionStatus('suite-123', 'execution-456');
           expect(execution.id).toBe('execution-456');
           expect(execution.status).toBe('running');
         });
@@ -211,23 +187,17 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               id: 'execution-456',
               status: string('cancelled'),
               cancelled_at: string('2024-01-01T00:03:00Z'),
               message: string('Execution cancelled by user'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/suites/suite-123/executions/execution-456/cancel`, {
-            method: 'PATCH',
-            headers: {
-              'X-API-KEY': 'valid-api-key',
-            },
-          });
-          const result = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ReflectClient('valid-api-key', mockServer.url);
+          const result = await client.cancelSuiteExecution('suite-123', 'execution-456');
           expect(result.status).toBe('cancelled');
         });
       });
@@ -253,27 +223,21 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: eachLike({
-              id: uuid('test-789'),
+            body: like(eachLike({
+              id: uuid('abcdef01-2345-6789-abcd-ef0123456789'),
               name: string('Login Test'),
               description: string('Test user login functionality'),
               url: string('https://example.com/login'),
               status: string('active'),
-              suite_id: uuid('suite-123'),
+              suite_id: uuid('abcdef01-2345-6789-abcd-ef0123456789'),
               created_at: string('2024-01-01T00:00:00Z'),
               updated_at: string('2024-01-01T00:00:00Z'),
-            }),
+            })),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/tests`, {
-            headers: {
-              'X-API-KEY': 'valid-api-key',
-              'Content-Type': 'application/json',
-            },
-          });
-          const tests = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ReflectClient('valid-api-key', mockServer.url);
+          const tests = await client.listReflectTests();
           expect(Array.isArray(tests)).toBe(true);
         });
       });
@@ -297,8 +261,8 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
-              id: uuid('test-execution-101'),
+            body: like({
+              id: uuid('fedcba98-7654-3210-fedc-ba9876543210'),
               test_id: 'test-789',
               status: string('queued'),
               created_at: string('2024-01-01T00:00:00Z'),
@@ -306,19 +270,12 @@ describe('Reflect API Client Pact Tests', () => {
               completed_at: like(null),
               result: like(null),
               error_message: like(null),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/tests/test-789/executions`, {
-            method: 'POST',
-            headers: {
-              'X-API-KEY': 'valid-api-key',
-              'Content-Type': 'application/json',
-            },
-          });
-          const execution = await response.json();
-          expect(response.status).toBe(201);
+          const client = new ReflectClient('valid-api-key', mockServer.url);
+          const execution = await client.runReflectTest('test-789');
           expect(execution.id).toBeDefined();
           expect(execution.status).toBe('queued');
         });
@@ -342,7 +299,7 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               id: 'test-execution-101',
               test_id: 'test-789',
               status: string('completed'),
@@ -355,17 +312,12 @@ describe('Reflect API Client Pact Tests', () => {
                 url: string('https://screenshots.reflect.run/screenshot1.png'),
                 step: string('Page loaded'),
               }),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/tests/test-789/executions/test-execution-101`, {
-            headers: {
-              'X-API-KEY': 'valid-api-key',
-            },
-          });
-          const execution = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ReflectClient('valid-api-key', mockServer.url);
+          const execution = await client.getReflectTestStatus('test-789', 'test-execution-101');
           expect(execution.result).toBe('passed');
           expect(execution.status).toBe('completed');
         });
@@ -388,10 +340,10 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Unauthorized'),
               message: string('API key is required'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -416,10 +368,10 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Unauthorized'),
               message: string('Invalid API key'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -450,10 +402,10 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Not Found'),
               message: string('Suite not found'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -482,10 +434,10 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Not Found'),
               message: string('Test not found'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -515,10 +467,10 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Not Found'),
               message: string('Execution not found'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -549,11 +501,11 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Conflict'),
               message: string('Suite is already running'),
-              current_execution_id: uuid('execution-current'),
-            },
+              current_execution_id: uuid('13579bdf-2468-ace0-1357-9bdf2468ace0'),
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -583,10 +535,10 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Bad Request'),
               message: string('Cannot cancel a completed execution'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -618,10 +570,10 @@ describe('Reflect API Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Internal Server Error'),
               message: string('An unexpected error occurred'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {

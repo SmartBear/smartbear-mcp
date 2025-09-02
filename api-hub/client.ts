@@ -34,7 +34,31 @@ export interface updatePortalArgs extends portalArgs {
   pageContentFormat?: string;
 }
 
+// API request body types (without IDs)
+export interface updatePortalBody {
+  name?: string;
+  subdomain?: string;
+  customDomain?: boolean;
+  gtmKey?: string;
+  offline?: boolean;
+  routing?: string;
+  credentialsEnabled?: boolean;
+  openapiRenderer?: string;
+  pageContentFormat?: string;
+}
+
 export interface createProductArgs extends portalArgs {
+  type: string;
+  name: string;
+  slug: string;
+  description?: string;
+  public?: boolean;
+  hidden?: string;
+  role?: boolean;
+}
+
+// API request body types (without IDs)
+export interface createProductBody {
   type: string;
   name: string;
   slug: string;
@@ -55,20 +79,22 @@ export interface updateProductArgs extends productArgs {
 // Tool definitions for API Hub API client
 export class ApiHubClient implements Client {
   private headers: { "Authorization": string; "Content-Type": string, "User-Agent": string };
+  public baseUrl: string;
 
   name = "API Hub";
   prefix = "api_hub";
 
-  constructor(token: string) {
+  constructor(token: string, baseUrl: string = "https://api.portal.swaggerhub.com") {
     this.headers = {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
+    this.baseUrl = baseUrl;
   }
 
   async getPortals(): Promise<any> {
-    const response = await fetch("https://api.portal.swaggerhub.com/v1/portals", {
+    const response = await fetch(`${this.baseUrl}/v1/portals`, {
       method: "GET",
       headers: this.headers,
     });
@@ -77,7 +103,7 @@ export class ApiHubClient implements Client {
   }
 
   async createPortal(body: createPortalArgs): Promise<any> {
-    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals`,
+    const response = await fetch(`${this.baseUrl}/v1/portals`,
       {
         method: "POST",
         headers: this.headers,
@@ -89,7 +115,7 @@ export class ApiHubClient implements Client {
   }
 
   async getPortal(portalId: string): Promise<any> {
-    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}`, {
+    const response = await fetch(`${this.baseUrl}/v1/portals/${portalId}`, {
       method: "GET",
       headers: this.headers,
     });
@@ -98,14 +124,14 @@ export class ApiHubClient implements Client {
   }
 
   async deletePortal(portalId: string): Promise<any> {
-    await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}`, {
+    await fetch(`${this.baseUrl}/v1/portals/${portalId}`, {
       method: "DELETE",
       headers: this.headers,
     });
   }
 
-  async updatePortal(portalId: string, body: updatePortalArgs): Promise<any> {
-    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}`, {
+  async updatePortal(portalId: string, body: updatePortalBody): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/v1/portals/${portalId}`, {
       method: "PATCH",
       headers: this.headers,
       body: JSON.stringify(body),
@@ -115,7 +141,7 @@ export class ApiHubClient implements Client {
   }
 
   async getPortalProducts(portalId: string): Promise<any> {
-    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}/products`, {
+    const response = await fetch(`${this.baseUrl}/v1/portals/${portalId}/products`, {
       method: "GET",
       headers: this.headers,
     });
@@ -123,8 +149,8 @@ export class ApiHubClient implements Client {
     return response.json();
   }
 
-  async createPortalProduct(portalId: string, body: createProductArgs): Promise<any> {
-    const response = await fetch(`https://api.portal.swaggerhub.com/v1/portals/${portalId}/products`,
+  async createPortalProduct(portalId: string, body: createProductBody): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/v1/portals/${portalId}/products`,
       {
         method: "POST",
         headers: this.headers,
@@ -136,7 +162,7 @@ export class ApiHubClient implements Client {
   }
 
   async getPortalProduct(productId: string): Promise<any> {
-    const response = await fetch(`https://api.portal.swaggerhub.com/v1/products/${productId}`, {
+    const response = await fetch(`${this.baseUrl}/v1/products/${productId}`, {
       method: "GET",
       headers: this.headers,
     });
@@ -145,14 +171,14 @@ export class ApiHubClient implements Client {
   }
 
   async deletePortalProduct(productId: string): Promise<any> {
-    await fetch(`https://api.portal.swaggerhub.com/v1/products/${productId}`, {
+    await fetch(`${this.baseUrl}/v1/products/${productId}`, {
       method: "DELETE",
       headers: this.headers,
     });
   }
 
   async updatePortalProduct(productId: string, body: updateProductArgs): Promise<any> {
-    const response = await fetch(`https://api.portal.swaggerhub.com/v1/products/${productId}`, {
+    const response = await fetch(`${this.baseUrl}/v1/products/${productId}`, {
       method: "PATCH",
       headers: this.headers,
       body: JSON.stringify(body),

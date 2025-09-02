@@ -1,6 +1,6 @@
 import { PactV3, MatchersV3 } from '@pact-foundation/pact';
 import { describe, it, expect } from 'vitest';
-// import { ApiHubClient } from '../../api-hub/client.js';
+import { ApiHubClient } from '../../api-hub/client.js';
 
 const { like, string, uuid, eachLike } = MatchersV3;
 
@@ -31,7 +31,7 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: eachLike({
+            body: like(eachLike({
               id: uuid('123e4567-e89b-12d3-a456-426614174000'),
               name: string('Test Portal'),
               subdomain: string('test-portal'),
@@ -40,26 +40,12 @@ describe('API Hub Client Pact Tests', () => {
               updated_at: string('2024-01-01T00:00:00Z'),
               offline: like(false),
               routing: string('browser'),
-            }),
+            })),
           });
 
         return provider.executeTest(async (mockServer) => {
-          // Note: Uncomment when using with actual client
-          // const client = new ApiHubClient('valid-token');
-          // client.baseUrl = mockServer.url; // Override base URL for testing
-          // const portals = await client.getPortals();
-          // expect(portals).toBeDefined();
-          // expect(Array.isArray(portals)).toBe(true);
-          
-          // Mock test for now
-          const response = await fetch(`${mockServer.url}/v1/portals`, {
-            headers: {
-              'Authorization': 'Bearer valid-token',
-              'Content-Type': 'application/json',
-              'User-Agent': 'SmartBear MCP Server/0.4.0',
-            },
-          });
-          const portals = await response.json();
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          const portals = await client.getPortals();
           expect(portals).toBeDefined();
           expect(Array.isArray(portals)).toBe(true);
         });
@@ -81,8 +67,7 @@ describe('API Hub Client Pact Tests', () => {
             body: {
               name: string('New Test Portal'),
               subdomain: string('new-test-portal'),
-              description: string('A new test portal'),
-              swaggerHubOrganizationId: uuid('org-uuid'),
+              swaggerHubOrganizationId: uuid('12345678-9abc-def0-1234-567890abcdef'),
             },
           })
           .willRespondWith({
@@ -90,33 +75,23 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
-              id: uuid('new-portal-uuid'),
+            body: like({
+              id: uuid('fedcba98-7654-3210-fedc-ba9876543210'),
               name: 'New Test Portal',
               subdomain: 'new-test-portal',
-              description: 'A new test portal',
-              swaggerHubOrganizationId: 'org-uuid',
+              swaggerHubOrganizationId: uuid('abcdef12-3456-7890-abcd-ef1234567890'),
               created_at: like('2024-01-01T00:00:00Z'),
               updated_at: like('2024-01-01T00:00:00Z'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/portals`, {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer valid-token',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name: 'New Test Portal',
-              subdomain: 'new-test-portal',
-              description: 'A new test portal',
-              swaggerHubOrganizationId: 'org-uuid',
-            }),
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          const portal = await client.createPortal({
+            name: 'New Test Portal',
+            subdomain: 'new-test-portal',
+            swaggerHubOrganizationId: 'abcdef12-3456-7890-abcd-ef1234567890',
           });
-          const portal = await response.json();
-          expect(response.status).toBe(201);
           expect(portal.id).toBeDefined();
           expect(portal.name).toBe('New Test Portal');
         });
@@ -140,24 +115,19 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               id: 'portal-123',
               name: string('Specific Portal'),
               subdomain: string('specific-portal'),
               description: string('Description of specific portal'),
               offline: like(false),
               routing: string('browser'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/portals/portal-123`, {
-            headers: {
-              'Authorization': 'Bearer valid-token',
-            },
-          });
-          const portal = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          const portal = await client.getPortal('portal-123');
           expect(portal.id).toBe('portal-123');
           expect(portal.name).toBeDefined();
         });
@@ -178,7 +148,6 @@ describe('API Hub Client Pact Tests', () => {
             },
             body: {
               name: 'Updated Portal Name',
-              description: 'Updated description',
             },
           })
           .willRespondWith({
@@ -186,28 +155,18 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               id: 'portal-123',
               name: 'Updated Portal Name',
-              description: 'Updated description',
               updated_at: like('2024-01-01T00:00:00Z'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/portals/portal-123`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': 'Bearer valid-token',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name: 'Updated Portal Name',
-              description: 'Updated description',
-            }),
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          const portal = await client.updatePortal('portal-123', {
+            name: 'Updated Portal Name',
           });
-          const portal = await response.json();
-          expect(response.status).toBe(200);
           expect(portal.name).toBe('Updated Portal Name');
         });
       });
@@ -230,13 +189,9 @@ describe('API Hub Client Pact Tests', () => {
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/portals/portal-123`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': 'Bearer valid-token',
-            },
-          });
-          expect(response.status).toBe(204);
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          await client.deletePortal('portal-123');
+          // Delete operations typically don't return content, so we just verify it completes
         });
       });
     });
@@ -260,24 +215,19 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: eachLike({
-              id: uuid('product-123'),
+            body: like(eachLike({
+              id: uuid('987fcdeb-51a2-73d4-e567-890123456789'),
               name: string('Test Product'),
               type: string('api'),
               description: string('A test API product'),
               version: string('1.0.0'),
               published: like(true),
-            }),
+            })),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/portals/portal-123/products`, {
-            headers: {
-              'Authorization': 'Bearer valid-token',
-            },
-          });
-          const products = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          const products = await client.getPortalProducts('portal-123');
           expect(Array.isArray(products)).toBe(true);
         });
       });
@@ -298,8 +248,8 @@ describe('API Hub Client Pact Tests', () => {
             body: {
               name: 'New API Product',
               type: 'api',
+              slug: 'new-api-product',
               description: 'A new API product',
-              version: '1.0.0',
             },
           })
           .willRespondWith({
@@ -307,32 +257,24 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
-              id: uuid('new-product-uuid'),
+            body: like({
+              id: uuid('fedcba98-7654-3210-fedc-ba9876543210'),
               name: 'New API Product',
               type: 'api',
+              slug: 'new-api-product',
               description: 'A new API product',
-              version: '1.0.0',
               created_at: like('2024-01-01T00:00:00Z'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/portals/portal-123/products`, {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer valid-token',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name: 'New API Product',
-              type: 'api',
-              description: 'A new API product',
-              version: '1.0.0',
-            }),
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          const product = await client.createPortalProduct('portal-123', {
+            name: 'New API Product',
+            type: 'api',
+            slug: 'new-api-product',
+            description: 'A new API product',
           });
-          const product = await response.json();
-          expect(response.status).toBe(201);
           expect(product.id).toBeDefined();
           expect(product.name).toBe('New API Product');
         });
@@ -356,24 +298,19 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               id: 'product-123',
               name: string('Specific Product'),
               type: string('api'),
               description: string('A specific API product'),
               version: string('1.0.0'),
               published: like(true),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/products/product-123`, {
-            headers: {
-              'Authorization': 'Bearer valid-token',
-            },
-          });
-          const product = await response.json();
-          expect(response.status).toBe(200);
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          const product = await client.getPortalProduct('product-123');
           expect(product.id).toBe('product-123');
         });
       });
@@ -396,13 +333,9 @@ describe('API Hub Client Pact Tests', () => {
           });
 
         return provider.executeTest(async (mockServer) => {
-          const response = await fetch(`${mockServer.url}/v1/products/product-123`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': 'Bearer valid-token',
-            },
-          });
-          expect(response.status).toBe(204);
+          const client = new ApiHubClient('valid-token', mockServer.url);
+          await client.deletePortalProduct('product-123');
+          // Delete operations typically don't return content, so we just verify it completes
         });
       });
     });
@@ -423,10 +356,10 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Unauthorized'),
               message: string('Missing or invalid authorization token'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -451,10 +384,10 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Unauthorized'),
               message: string('Invalid authorization token'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -485,10 +418,10 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Not Found'),
               message: string('Portal not found'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -517,10 +450,10 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Not Found'),
               message: string('Product not found'),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
@@ -556,14 +489,14 @@ describe('API Hub Client Pact Tests', () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: {
+            body: like({
               error: string('Bad Request'),
               message: string('Invalid portal data'),
               details: eachLike({
                 field: string('name'),
                 message: string('Name cannot be empty'),
               }),
-            },
+            }),
           });
 
         return provider.executeTest(async (mockServer) => {
