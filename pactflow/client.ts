@@ -83,7 +83,9 @@ export class PactflowClient implements Client {
     async getStatus(
       statusUrl: string
     ): Promise<{ status: number; isComplete: boolean }> {
-      const response = await fetch(statusUrl, {
+      // Ensure we have a full URL by prepending baseUrl if it's a relative path
+      const fullUrl = statusUrl.startsWith('http') ? statusUrl : `${this.baseUrl}${statusUrl}`;
+      const response = await fetch(fullUrl, {
         method: "HEAD",
         headers: this.headers,
       });
@@ -95,7 +97,9 @@ export class PactflowClient implements Client {
     }
 
     async getResult<T>(resultUrl: string): Promise<T> {
-      const response = await fetch(resultUrl, {
+      // Ensure we have a full URL by prepending baseUrl if it's a relative path
+      const fullUrl = resultUrl.startsWith('http') ? resultUrl : `${this.baseUrl}${resultUrl}`;
+      const response = await fetch(fullUrl, {
         method: "GET",
         headers: this.headers,
       });
