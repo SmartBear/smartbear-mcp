@@ -2,12 +2,12 @@ import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
 import { 
   GenerationResponse, 
-  GenerationToolInput, 
+  GenerationInput, 
   OpenAPI,
   RefineResponse, 
   RemoteOpenAPIDocument, 
   RemoteOpenAPIDocumentSchema, 
-  ReviewToolInput, 
+  RefineInput, 
   StatusResponse 
 } from "./client/ai.js";
 import { ProviderStatesResponse } from "./client/base.js";
@@ -60,21 +60,22 @@ export class PactflowClient implements Client {
      * @returns The result of the generation process.
      * @throws Error if the HTTP request fails or the operation times out.
      */
-    async generate(toolInput: GenerationToolInput): Promise<GenerationResponse> {
+    async generate(toolInput: GenerationInput): Promise<GenerationResponse> {
       // Submit the generation request
-      if (toolInput.remoteOpenAPIDocument) {
-        const resolvedSpec = await this.resolveOpenAPISpec(toolInput.remoteOpenAPIDocument);
-        if (toolInput.body.openapi) {
-          toolInput.body.openapi.document = resolvedSpec;
+      if (toolInput.openapi?.remoteDocument) {
+        const resolvedSpec = await this.resolveOpenAPISpec(toolInput.openapi.remoteDocument);
+        if (toolInput.openapi) {
+          toolInput.openapi.document = resolvedSpec;
+          delete toolInput.openapi.remoteDocument;
         } else {
-          throw new Error("When providing a remote OpenAPI document, the 'openapi' field must atleast have a matcher if remote openapi credentials are used.");
+          throw new Error("When providing a remote OpenAPI document, the 'openapi' field must at least have a matcher if remote OpenAPI credentials are used.");
         }
       }
 
       const response = await fetch(`${this.aiBaseUrl}/generate`, {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(toolInput.body),
+        body: JSON.stringify(toolInput),
       });
   
       if (!response.ok) {
@@ -96,19 +97,18 @@ export class PactflowClient implements Client {
      */
     async resolveOpenAPISpec(remoteOpenAPIDocument: RemoteOpenAPIDocument): Promise<OpenAPI> {
       const openAPISchema = RemoteOpenAPIDocumentSchema.safeParse(remoteOpenAPIDocument);
+      if (openAPISchema.error || !remoteOpenAPIDocument) {
+        throw new Error(`Invalid RemoteOpenAPIDocument: ${JSON.stringify(openAPISchema.error?.issues)}`);
+      }
       
-      if (openAPISchema.success && remoteOpenAPIDocument) {
-        const unresolvedSpec = await this.getRemoteSpecContents(openAPISchema.data);
-        const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
+      const unresolvedSpec = await this.getRemoteSpecContents(openAPISchema.data);
+      const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
 
-        if (!resolvedSpec.errors?.length) {
-          return resolvedSpec.spec;
-        }
-
-        throw new Error(`Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`);
+      if (resolvedSpec.errors) {
+          throw new Error(`Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`);
       }
 
-      throw new Error(`Invalid RemoteOpenAPIDocument: ${JSON.stringify(openAPISchema.error?.issues)}`);
+      return resolvedSpec.spec;
     }
 
     /**
@@ -118,33 +118,33 @@ export class PactflowClient implements Client {
      * @throws Error if the URL is not provided or the fetch fails.
      */
     async getRemoteSpecContents(openAPISchema: RemoteOpenAPIDocument): Promise<any> {
-      if (openAPISchema.url) {
-        let headers = {};
-        if (openAPISchema.authToken) {
-          headers = {
-            Authorization: `${openAPISchema.authScheme ?? "Bearer"} ${openAPISchema.authToken}`,
-          };
-        }
-
-        const remoteSpec = await fetch(openAPISchema.url, {
-          headers,
-          method: "GET",
-        });
-
-        switch(remoteSpec.headers.get("Content-Type")?.toLowerCase()) {
-          case "application/json":
-            return await remoteSpec.json();
-          case "text/plain":
-          case "text/plain;charset=utf-8":
-          case "text/plain; charset=utf-8":
-          case "application/yaml":
-            return JSON.parse(JSON.stringify(yaml.load(await remoteSpec.text()), null, 2));
-          default:
-            throw new Error(`Unsupported Content-Type: ${remoteSpec.headers.get("Content-Type")}`);
-        }
+      if (!openAPISchema.url) {
+        throw new Error("'url' must be provided.");
+      }
+      
+      let headers = {};
+      if (openAPISchema.authToken) {
+        headers = {
+          Authorization: `${openAPISchema.authScheme ?? "Bearer"} ${openAPISchema.authToken}`,
+        };
       }
 
-      throw new Error("'url' must be provided.");
+      const remoteSpec = await fetch(openAPISchema.url, {
+        headers,
+        method: "GET",
+      });
+
+      switch(remoteSpec.headers.get("Content-Type")?.toLowerCase()) {
+        case "application/json":
+          return await remoteSpec.json();
+        case "text/plain":
+        case "text/plain;charset=utf-8":
+        case "text/plain; charset=utf-8":
+        case "application/yaml":
+          return JSON.parse(JSON.stringify(yaml.load(await remoteSpec.text()), null, 2));
+        default:
+          throw new Error(`Unsupported Content-Type: ${remoteSpec.headers.get("Content-Type")}`);
+      }
     }
 
     /**
@@ -153,21 +153,22 @@ export class PactflowClient implements Client {
      * @returns The result of the review process.
      * @throws Error if the HTTP request fails or the operation times out.
      */
-    async review(toolInput: ReviewToolInput): Promise<RefineResponse> {
+    async review(toolInput: RefineInput): Promise<RefineResponse> {
       // Submit review request
-      if (toolInput.remoteOpenAPIDocument) {
-        const resolvedSpec = await this.resolveOpenAPISpec(toolInput.remoteOpenAPIDocument);
-        if (toolInput.body.openapi) {
-          toolInput.body.openapi.document = resolvedSpec;
+      if (toolInput.openapi?.remoteDocument) {
+        const resolvedSpec = await this.resolveOpenAPISpec(toolInput.openapi.remoteDocument);
+        if (toolInput.openapi) {
+          toolInput.openapi.document = resolvedSpec;
+          delete toolInput.openapi.remoteDocument;
         } else {
-          throw new Error("When providing a remote OpenAPI document, the 'openapi' field must atleast have a matcher if remote openapi credentials are used.");
+          throw new Error("When providing a remote OpenAPI document, the 'openapi' field must at least have a matcher if remote OpenAPI credentials are used.");
         }
       }
 
       const response = await fetch(`${this.aiBaseUrl}/review`, {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(toolInput.body),
+        body: JSON.stringify(toolInput),
       });
 
       if (!response.ok) {

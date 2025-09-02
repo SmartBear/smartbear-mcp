@@ -180,6 +180,9 @@ export const OpenAPIWithMatcherSchema = z
       "The OpenAPI document describing the API being tested. if document is not provided, don't add the field if remoteOpenAPIDocument is provided."
     ).optional(),
     matcher: EndpointMatcherSchema,
+    remoteDocument: RemoteOpenAPIDocumentSchema.optional().describe(
+      "The remote OpenAPI document to use for the review in case openapi document is not provided. If provided do not include the document field under openapi."
+    ),
   })
   .describe(
     "If provided, the OpenAPI document which describes the API being tested and is accompanied by a matcher which will be used to identify the interactions in the OpenAPI document which are relevant to the Pact refinement process."
@@ -245,24 +248,6 @@ export const GenerationInputSchema = z.object({
   ),
 });
 
-export const GenerationToolInputSchema = z.object({
-  body: GenerationInputSchema.describe(
-    "The body of the request to be used for Pact test generation."
-  ),
-  remoteOpenAPIDocument: RemoteOpenAPIDocumentSchema.optional().describe(
-    "The remote OpenAPI document to use for the review in case openapi document is not provided. If provided do not include the document field under openapi."
-  ),
-});
-
-export const ReviewToolInputSchema = z.object({
-  body: RefineInputSchema.describe(
-    "The body of the request to be used for Pact test review."
-  ),
-  remoteOpenAPIDocument: RemoteOpenAPIDocumentSchema.optional().describe(
-    "The remote OpenAPI document to use for the review in case openapi document is not provided. If provided do not include the document field under openapi."
-  ),
-});
-
 // types inferred from schemas
 export type RefineInput = z.infer<typeof RefineInputSchema>;
 export type FileInput = z.infer<typeof FileInputSchema>;
@@ -272,5 +257,3 @@ export type OpenApiWithMatcher = z.infer<typeof OpenAPIWithMatcherSchema>;
 export type GenerationInput = z.infer<typeof GenerationInputSchema>;
 export type RequestResponsePair = z.infer<typeof RequestResponsePairSchema>;
 export type RemoteOpenAPIDocument = z.infer<typeof RemoteOpenAPIDocumentSchema>;
-export type GenerationToolInput = z.infer<typeof GenerationToolInputSchema>;
-export type ReviewToolInput = z.infer<typeof ReviewToolInputSchema>;
