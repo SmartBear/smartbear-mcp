@@ -34,6 +34,8 @@ export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
 /**
  * Iterate through each key-value pair of the provided object, applying a callback.
  * If the value is an object (not an array), it recursively calls itself on that object.
+ * If the value is an array, it applies the callback to each element and recursively processes
+ * any objects within the array.
  * It does not execute the callback on objects which are recursed into.
  */
 export function objectForEachRecursively(
@@ -41,8 +43,19 @@ export function objectForEachRecursively(
   cb: (parent: Record<string, any>, key: string, value: any) => void
 ) {
   for (const [key, value] of Object.entries(obj)) {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      objectForEachRecursively(value, cb);
+    if (value && typeof value === "object") {
+      if (Array.isArray(value)) {
+        cb(obj, key, value);
+        // Process each element in the array
+        for (let i = 0; i < value.length; i++) {
+          const item = value[i];
+          if (item && typeof item === "object") {
+            objectForEachRecursively(item, cb);
+          }
+        }
+      } else {
+        objectForEachRecursively(value, cb);
+      }
     } else {
       cb(obj, key, value);
     }
