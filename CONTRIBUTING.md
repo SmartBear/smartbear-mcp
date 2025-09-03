@@ -66,7 +66,7 @@ Documentation lives in the `/docs` directory of this repo. Changes to the docume
 ## Releases
 
 1. **Decide on a version number**
-    - Check the changes in `CHANGELOG.md` and using semantic versioning, decide on a new version. i.e. `1.2.3`
+    - Check the changes in `CHANGELOG.md` and using [semantic versioning](https://semver.org/), decide on a new version. i.e. `1.2.3`
 
 2. **Create Release Branch**
     ```bash
