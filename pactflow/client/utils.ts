@@ -72,14 +72,14 @@ export async function getRemoteSpecContents(
 
   try {
     return JSON.parse(specRawBody);
-  } catch {
+  } catch (jsonError) {
     try {
       return JSON.parse(JSON.stringify(yaml.load(specRawBody), null, 2));
-    } catch (e) {
+    } catch (yamlError) {
       throw new Error(
         `Unsupported Content-Type: ${remoteSpec.headers.get(
           "Content-Type"
-        )} for remote OpenAPI document. ${e}`
+        )} for remote OpenAPI document. Found following parse errors:-\nJSON parse error: ${jsonError}\nYAML parse error: ${yamlError}`
       );
     }
   }
