@@ -74,7 +74,7 @@ export async function getRemoteSpecContents(
     return JSON.parse(specRawBody);
   } catch (jsonError) {
     try {
-      return JSON.parse(JSON.stringify(yaml.load(specRawBody), null, 2));
+      return yaml.load(specRawBody);
     } catch (yamlError) {
       throw new Error(
         `Unsupported Content-Type: ${remoteSpec.headers.get(
