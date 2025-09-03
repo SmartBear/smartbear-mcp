@@ -1,6 +1,6 @@
 ![api-hub.png](./images/embedded/api-hub.png)
 
-The PactFlow Contract testing client provides comprehensive tools which makes testing and deploying microservices at scale, simple and worry free for thousands of developers and testers around the world.. Tools for PactFlow requires a `PACT_BROKER_BASE_URL` along with either a `PACT_BROKER_TOKEN` or (`PACT_BROKER_USERNAME` and `PACT_BROKER_PASSWORD`).
+The PactFlow Contract testing client provides comprehensive tools which makes testing and deploying microservices at scale, simple and worry free for thousands of developers and testers around the world. Tools for PactFlow requires a `PACT_BROKER_BASE_URL` along with either a `PACT_BROKER_TOKEN` or (`PACT_BROKER_USERNAME` and `PACT_BROKER_PASSWORD`).
 
 
 ## Available Tools
@@ -11,7 +11,7 @@ The PactFlow Contract testing client provides comprehensive tools which makes te
 
 ### Fetch Provider States
 
-- Retrieve the states of a specific provider
+- Retrieve the states of a specific provider.
 
 ### Review Pact Tests
 

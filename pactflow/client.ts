@@ -1,8 +1,19 @@
-import { GenerationInput, GenerationResponse, RefineInput, RefineResponse, StatusResponse } from "./client/ai.js";
-import { ClientType, TOOLS } from "./client/tools.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
+import { 
+  Client, 
+  GetInputFunction, 
+  RegisterToolsFunction 
+} from "../common/types.js";
+import { 
+  GenerationResponse, 
+  GenerationInput,
+  RefineResponse, 
+  RefineInput, 
+  StatusResponse 
+} from "./client/ai.js";
 import { CanIDeployInput, CanIDeployResponse, ProviderStatesResponse } from "./client/base.js";
+import { ClientType, TOOLS } from "./client/tools.js";
+
 
 
 // Tool definitions for PactFlow AI API client
@@ -42,16 +53,23 @@ export class PactflowClient implements Client {
     
     // PactFlow AI client methods
 
-    async generate(body: GenerationInput): Promise<GenerationResponse> {
+    /**
+     * Generate new Pact tests based on the provided input.
+     * 
+     * @param toolInput The input data for the generation process.
+     * @returns The result of the generation process.
+     * @throws Error if the HTTP request fails or the operation times out.
+     */
+    async generate(toolInput: GenerationInput): Promise<GenerationResponse> {
       // Submit the generation request
       const response = await fetch(`${this.aiBaseUrl}/generate`, {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(body),
+        body: JSON.stringify(toolInput),
       });
   
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} - ${await response.text()}`);
       }
   
       const status_response: StatusResponse = await response.json();
@@ -61,16 +79,23 @@ export class PactflowClient implements Client {
       );
     }
 
-    async review(body: RefineInput): Promise<RefineResponse> {
-      // submit review request
+    /**
+     * Review the provided Pact tests and suggest improvements.
+     * 
+     * @param toolInput The input data for the review process.
+     * @returns The result of the review process.
+     * @throws Error if the HTTP request fails or the operation times out.
+     */
+    async review(toolInput: RefineInput): Promise<RefineResponse> {
+      // Submit review request
       const response = await fetch(`${this.aiBaseUrl}/review`, {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(body),
+        body: JSON.stringify(toolInput),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} - ${await response.text()}`);
       }
 
       const status_response: StatusResponse = await response.json();
@@ -221,5 +246,4 @@ export class PactflowClient implements Client {
         );
       }
     }
-
 }

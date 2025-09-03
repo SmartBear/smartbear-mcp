@@ -12,7 +12,10 @@
 
 import { z } from "zod";
 import { ToolParams } from "../../common/types.js";
-import { GenerationInputSchema, RefineInputSchema } from "./ai.js";
+import { 
+  GenerationInputSchema, 
+  RefineInputSchema
+} from "./ai.js";
 import { CanIDeploySchema } from "./base.js";
 
 export type ClientType = "pactflow" | "pact_broker";

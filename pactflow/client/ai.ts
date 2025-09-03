@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { addOpenAPISpecToSchema } from "./utils.js";
 
 // Type definitions for PactFlow AI API
 export const GenerationLanguages = [
@@ -91,13 +92,12 @@ export const OpenAPISchema = z
       .describe("OpenAPI components section (schemas, responses, etc.)"),
   })
   .passthrough()
-  .describe("The complete OpenAPI document describing the API")
+  .describe("The complete OpenAPI document describing the API.")
   .refine((data) => data.openapi || data.swagger, {
     message:
       "Either 'openapi' (for v3+) or 'swagger' (for v2) must be provided",
     path: ["openapi"],
-  })
-  .optional();
+  });
 
 export const EndpointMatcherSchema = z
   .object({
@@ -131,14 +131,42 @@ export const EndpointMatcherSchema = z
     "REQUIRED: Matcher to specify which endpoints from the OpenAPI document to generate tests for. At least one matcher field must be provided"
   );
 
+export const RemoteOpenAPIDocumentSchema = z
+  .object({
+    authToken: z
+      .string()
+      .describe(
+        "Auth Bearer Token if the OpenAPI spec requires authentication."
+      )
+      .optional(),
+    authScheme: z
+      .string()
+      .describe(
+        "Authentication scheme (e.g., 'Bearer', 'Basic'). Default scheme passed should be Bearer if authToken is specified and this field is not set."
+      )
+      .default("Bearer")
+      .optional(),
+    url: z
+      .string()
+      .url("Must be a valid openapi url")
+      .describe("URL of the remote OpenAPI document.")
+      .optional(),
+  })
+  .describe("Use this schema to fetch openapi documents present over a url.");
+
 export const OpenAPIWithMatcherSchema = z
   .object({
-    document: OpenAPISchema,
+    document: OpenAPISchema.describe(
+      "The OpenAPI document describing the API being tested. if document is not provided, don't add the field if remoteOpenAPIDocument is provided."
+    ).optional(),
     matcher: EndpointMatcherSchema,
+    remoteDocument: RemoteOpenAPIDocumentSchema.optional().describe(
+      "The remote OpenAPI document to use for the review/generation in case openapi document is not provided. If provided do not include the document field under openapi."
+    ),
   })
   .describe(
     "If provided, the OpenAPI document which describes the API being tested and is accompanied by a matcher which will be used to identify the interactions in the OpenAPI document which are relevant to the Pact refinement process."
-  );
+  ).transform(addOpenAPISpecToSchema);
 
 export const RefineInputSchema = z.object({
   pactTests: FileInputSchema.describe(
@@ -208,3 +236,4 @@ export type EndpointMatcher = z.infer<typeof EndpointMatcherSchema>;
 export type OpenApiWithMatcher = z.infer<typeof OpenAPIWithMatcherSchema>;
 export type GenerationInput = z.infer<typeof GenerationInputSchema>;
 export type RequestResponsePair = z.infer<typeof RequestResponsePairSchema>;
+export type RemoteOpenAPIDocument = z.infer<typeof RemoteOpenAPIDocumentSchema>;
