@@ -102,11 +102,11 @@ export interface ProjectCreateRequest {
   ignore_old_browsers?: boolean;
 }
 
-export interface ListReleasesOptions {
+export interface ListBuildsOptions {
   release_stage?: string;
 }
 
-export interface ReleaseSummaryResponse {
+export interface BuildSummaryResponse {
   id: string;
   release_time: string;
   app_version: string;
@@ -119,7 +119,7 @@ export interface ReleaseSummaryResponse {
   accumulative_daily_users_with_unhandled: number;
 }
 
-export interface ReleaseResponse {
+export interface BuildResponse {
   id: string;
   project_id: string;
   release_time: string;
@@ -150,10 +150,10 @@ export interface ReleaseResponse {
   release_group_id: string;
 }
 
-export type ReleaseResponseAny = ReleaseResponse | ReleaseSummaryResponse;
+export type BuildResponseAny = BuildResponse | BuildSummaryResponse;
 
 export type StabilityTargetType = "user" | "session";
-export interface ReleaseStabilityData {
+export interface StabilityData {
   user_stability: number;
   session_stability: number;
   stability_target_type: StabilityTargetType;
@@ -164,12 +164,12 @@ export interface ReleaseStabilityData {
 }
 
 export interface ProjectStabilityTargets {
-  target_stability: StabilityData;
-  critical_stability: StabilityData;
+  target_stability: StabilityTargetData;
+  critical_stability: StabilityTargetData;
   stability_target_type: StabilityTargetType;
 }
 
-export interface StabilityData {
+export interface StabilityTargetData {
   value: number;
   updated_at: string;
   updated_by_id: string;
@@ -180,7 +180,7 @@ export interface StabilityData {
 export class ProjectAPI extends BaseAPI {
   static filterFields: string[] = ["errors_url", "events_url", "url", "html_url"]
   static eventFieldFields: (keyof EventField)[] = ["custom", "display_id", "filter_options", "pivot_options"];
-  static releaseFields: (keyof ReleaseSummaryResponse)[] = [
+  static buildFields: (keyof BuildSummaryResponse)[] = [
     "id",
     "release_time",
     "app_version",
@@ -250,24 +250,21 @@ export class ProjectAPI extends BaseAPI {
     const response = await this.request<unknown>({
       method: "GET",
       url,
-      headers: {
-        "X-Bugsnag-Internal": "true", // needed to get the stability targets
-      },
     });
 
     return pickFields<ProjectStabilityTargets>(response.body || {}, ProjectAPI.stabilityFields);
   }
 
   /**
-   * Lists releases for a specific project.
+   * Lists builds for a specific project.
    * GET /projects/{project_id}/releases
    * @param projectId The ID of the project.
    * @param data Options for listing releases, including filtering by release stage.
    * @returns A promise that resolves to an array of `ListReleasesResponse` objects.
    */
-  async listReleases(projectId: string, data: ListReleasesOptions) {
+  async listBuilds(projectId: string, data: ListBuildsOptions) {
     const url = `/projects/${projectId}/releases${data.release_stage ? `?release_stage=${data.release_stage}` : ""}`;
-    const response = await this.request<ReleaseSummaryResponse[]>(
+    const response = await this.request<BuildSummaryResponse[]>(
       {
         method: "GET",
         url,
@@ -277,20 +274,20 @@ export class ProjectAPI extends BaseAPI {
 
     return {
       ...response,
-      body: pickFieldsFromArray<ReleaseSummaryResponse>(response.body || [], ProjectAPI.releaseFields),
+      body: pickFieldsFromArray<BuildSummaryResponse>(response.body || [], ProjectAPI.buildFields),
     };
   }
 
   /**
-   * Retrieves a specific release from a project.
+   * Retrieves a specific build from a project.
    * GET /projects/{project_id}/releases/{release_id}
    * @param projectId The ID of the project.
-   * @param releaseId The ID of the release to retrieve.
+   * @param buildId The ID of the release to retrieve.
    * @returns A promise that resolves to the release data.
    */
-  async getRelease(projectId: string, releaseId: string) {
-    const url = `/projects/${projectId}/releases/${releaseId}`;
-    return await this.request<ReleaseResponse>({
+  async getBuild(projectId: string, buildId: string) {
+    const url = `/projects/${projectId}/releases/${buildId}`;
+    return await this.request<BuildResponse>({
       method: "GET",
       url,
     });

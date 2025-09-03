@@ -7,12 +7,12 @@ import { CurrentUserAPI, ErrorAPI, Configuration } from "./client/index.js";
 import { Organization, Project } from "./client/api/CurrentUser.js";
 import {
   EventField,
-  ListReleasesOptions,
-  ReleaseSummaryResponse,
+  ListBuildsOptions,
+  BuildSummaryResponse,
   ProjectAPI,
-  ReleaseResponse,
-  ReleaseStabilityData,
-  ReleaseResponseAny,
+  BuildResponse,
+  StabilityData,
+  BuildResponseAny,
 } from "./client/api/Project.js";
 import { FilterObject, FilterObjectSchema, toQueryString } from "./client/api/filters.js";
 import { ListProjectErrorsOptions } from "./client/api/Error.js";
@@ -26,8 +26,8 @@ const cacheKeys = {
   PROJECTS: "bugsnag_projects",
   CURRENT_PROJECT: "bugsnag_current_project",
   CURRENT_PROJECT_EVENT_FILTERS: "bugsnag_current_project_event_filters",
-  RELEASES: "bugsnag_releases", // + projectId
-  RELEASE: "bugsnag_release", // + releaseId
+  BUILDS: "bugsnag_builds", // + projectId
+  BUILD: "bugsnag_build", // + buildId
 }
 
 // Exclude certain event fields from the project event filters to improve agent usage
@@ -235,42 +235,42 @@ export class BugsnagClient implements Client {
     }
   }
 
-  async listReleases(projectId: string, options: ListReleasesOptions){
-    const cacheKey = `${cacheKeys.RELEASES}_${projectId}`;
-    const releases = this.cache.get<ReleaseSummaryResponse[]>(cacheKey);
+  async listBuilds(projectId: string, options: ListBuildsOptions){
+    const cacheKey = `${cacheKeys.BUILDS}_${projectId}`;
+    const builds = this.cache.get<BuildSummaryResponse[]>(cacheKey);
 
-    if (releases) return releases;
+    if (builds) return builds;
 
-    const fetchedReleases = (await this.projectApi.listReleases(projectId, options)).body || [];
+    const fetchedBuilds = (await this.projectApi.listBuilds(projectId, options)).body || [];
 
-    const formattedReleases = await Promise.all(
-      fetchedReleases.map(async (r) => await this.addExtraReleaseData(r, projectId))
+    const formattedBuilds = await Promise.all(
+      fetchedBuilds.map(async (r) => await this.addExtraReleaseData(r, projectId))
     );
-    this.cache.set(cacheKey, formattedReleases, 5 * 60);
-    return formattedReleases;
+    this.cache.set(cacheKey, formattedBuilds, 5 * 60);
+    return formattedBuilds;
   }
 
-  async getRelease(projectId: string, releaseId: string): Promise<ReleaseResponse & ReleaseStabilityData> {
-    const cacheKey = `${cacheKeys.RELEASE}_${releaseId}`;
-    const release = this.cache.get<ReleaseResponse & ReleaseStabilityData>(cacheKey);
-    if (release) return release;
+  async getBuild(projectId: string, buildId: string): Promise<BuildResponse & StabilityData> {
+    const cacheKey = `${cacheKeys.BUILD}_${buildId}`;
+    const build = this.cache.get<BuildResponse & StabilityData>(cacheKey);
+    if (build) return build;
 
-    const fetchedRelease = (await this.projectApi.getRelease(projectId, releaseId)).body;
-    if (!fetchedRelease) throw new Error(`No release for ${releaseId} found.`);
+    const fetchedBuild = (await this.projectApi.getBuild(projectId, buildId)).body;
+    if (!fetchedBuild) throw new Error(`No build for ${buildId} found.`);
 
-    const formattedRelease = await this.addExtraReleaseData(fetchedRelease, projectId);
-    this.cache.set(cacheKey, formattedRelease, 5 * 60);
-    return formattedRelease;
+    const formattedBuild = await this.addExtraReleaseData(fetchedBuild, projectId);
+    this.cache.set(cacheKey, formattedBuild, 5 * 60);
+    return formattedBuild;
   }
 
   private async getProjectStabilityTargets(projectId: string) {
     return await this.projectApi.getProjectStabilityTargets(projectId);
   }
 
-  private async addExtraReleaseData<T extends ReleaseResponseAny>(
+  private async addExtraReleaseData<T extends BuildResponseAny>(
     release: T,
     projectId: string
-  ): Promise<T & ReleaseStabilityData> {
+  ): Promise<T & StabilityData> {
     const { stability_target_type, target_stability, critical_stability } = await this.getProjectStabilityTargets(
       projectId
     );
@@ -828,12 +828,12 @@ export class BugsnagClient implements Client {
 
     register(
       {
-        title: "List Releases",
-        summary: "List releases for a project with optional filtering by release stage",
-        purpose: "Retrieve a list of release summaries to analyze deployment history and associated errors",
+        title: "List Builds",
+        summary: "List builds for a project with optional filtering by release stage",
+        purpose: "Retrieve a list of build summaries to analyze deployment history and associated errors",
         useCases: [
-          "View recent releases to correlate with error spikes",
-          "Filter releases by stage (e.g. production, staging) for targeted analysis",
+          "View recent builds to correlate with error spikes",
+          "Filter builds by stage (e.g. production, staging) for targeted analysis",
         ],
         parameters: [
           ...(this.projectApiKey
@@ -842,36 +842,36 @@ export class BugsnagClient implements Client {
                 {
                   name: "projectId",
                   type: z.string(),
-                  description: "ID of the project to list releases for",
+                  description: "ID of the project to list builds for",
                   required: true,
                 },
               ]),
           {
             name: "releaseStage",
             type: z.string(),
-            description: "Filter releases by this stage (e.g. production, staging)",
+            description: "Filter builds by this stage (e.g. production, staging)",
             required: false,
             examples: ["production", "staging"],
           },
         ],
         examples: [
           {
-            description: "List all releases for a project",
+            description: "List all builds for a project",
             parameters: {},
-            expectedOutput: "JSON array of release objects with metadata",
+            expectedOutput: "JSON array of build objects with metadata",
           },
           {
-            description: "List production releases for a project",
+            description: "List production builds for a project",
             parameters: {
               releaseStage: "production",
             },
-            expectedOutput: "JSON array of release objects in the production stage",
+            expectedOutput: "JSON array of build objects in the production stage",
           },
         ],
-        hints: ["For more detailed results use the Get Release tool"],
+        hints: ["For more detailed results use the Get Build tool"],
         readOnly: true,
         idempotent: true,
-        outputFormat: "JSON array of release summary objects with metadata",
+        outputFormat: "JSON array of build summary objects with metadata",
       },
       async (args, _extra) => {
         return {
@@ -879,7 +879,7 @@ export class BugsnagClient implements Client {
             {
               type: "text",
               text: JSON.stringify(
-                await this.listReleases((await this.getInputProject(args.projectId)).id, {
+                await this.listBuilds((await this.getInputProject(args.projectId)).id, {
                   release_stage: args.releaseStage,
                 })
               ),
@@ -891,13 +891,13 @@ export class BugsnagClient implements Client {
 
     register(
       {
-        title: "Get Release",
-        summary: "Get more details for a specific release by its ID",
-        purpose: "Retrieve detailed information about a release for analysis and debugging",
+        title: "Get Build",
+        summary: "Get more details for a specific build by its ID",
+        purpose: "Retrieve detailed information about a build for analysis and debugging",
         useCases: [
-          "View release metadata such as version, source control info, and error counts",
-          "Analyze a specific release to correlate with error spikes or deployments",
-          "See the stability targets for a project and if the release meets them",
+          "View build metadata such as version, source control info, and error counts",
+          "Analyze a specific build to correlate with error spikes or deployments",
+          "See the stability targets for a project and if the build meets them",
         ],
         parameters: [
           ...(this.projectApiKey
@@ -906,42 +906,42 @@ export class BugsnagClient implements Client {
                 {
                   name: "projectId",
                   type: z.string(),
-                  description: "ID of the project containing the release",
+                  description: "ID of the project containing the build",
                   required: true,
                 },
               ]),
           {
-            name: "releaseId",
+            name: "buildId",
             type: z.string(),
-            description: "ID of the release to retrieve",
+            description: "ID of the build to retrieve",
             required: true,
             examples: ["5f8d0d55c9e77c0017a1b2c3"],
           },
         ],
         examples: [
           {
-            description: "Get details for a specific release",
+            description: "Get details for a specific build",
             parameters: {
-              releaseId: "5f8d0d55c9e77c0017a1b2c3",
+              buildId: "5f8d0d55c9e77c0017a1b2c3",
             },
             expectedOutput:
-              "JSON object with release details including version, source control info, error counts and stability data.",
+              "JSON object with build details including version, source control info, error counts and stability data.",
           },
         ],
-        hints: ["Release IDs can be found using the List Releases tool"],
+        hints: ["Build IDs can be found using the List builds tool"],
         readOnly: true,
         idempotent: true,
         outputFormat:
-          "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
+          "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {
-        if (!args.releaseId) throw new Error("releaseId argument is required");
-        const release = await this.getRelease((await this.getInputProject(args.projectId)).id, args.releaseId);
-        if (!release) {
-          throw new Error(`Release with ID ${args.releaseId} not found.`);
+        if (!args.buildId) throw new Error("buildId argument is required");
+        const build = await this.getBuild((await this.getInputProject(args.projectId)).id, args.buildId);
+        if (!build) {
+          throw new Error(`Build with ID ${args.buildId} not found.`);
         }
         return {
-          content: [{ type: "text", text: JSON.stringify(release) }],
+          content: [{ type: "text", text: JSON.stringify(build) }],
         };
       }
     );

@@ -24,21 +24,21 @@ const mockErrorAPI = {
 const mockProjectAPI = {
   listProjectEventFields: vi.fn(),
   createProject: vi.fn(),
-  listReleases: vi.fn(),
-    getRelease: vi.fn(),
-    getProjectStabilityTargets: vi.fn().mockResolvedValue({
-        target_stability: {
-            value: 0.995,
-            updated_at: "2023-01-01",
-            updated_by_id: "user-1",
-        },
-        critical_stability: {
-            value: 0.85,
-            updated_at: "2023-01-01",
-            updated_by_id: "user-1",
-        },
-        stability_target_type: "user" as const,
-    }),
+  listBuilds: vi.fn(),
+  getBuild: vi.fn(),
+  getProjectStabilityTargets: vi.fn().mockResolvedValue({
+      target_stability: {
+          value: 0.995,
+          updated_at: "2023-01-01",
+          updated_by_id: "user-1",
+      },
+      critical_stability: {
+          value: 0.85,
+          updated_at: "2023-01-01",
+          updated_by_id: "user-1",
+      },
+      stability_target_type: "user" as const,
+  }),
 } satisfies Omit<ProjectAPI, keyof BaseAPI>;
 
 const mockCache = {
@@ -539,9 +539,9 @@ describe('BugsnagClient', () => {
       });
     });
 
-    describe("getReleases", () => {
-      it("should return releases from API when not cached", async () => {
-        const mockReleases = [
+    describe("getBuilds", () => {
+      it("should return builds from API when not cached", async () => {
+        const mockBuilds = [
           {
             id: "rel-1",
             release_time: "2023-01-01T00:00:00Z",
@@ -561,8 +561,8 @@ describe('BugsnagClient', () => {
           },
         ];
 
-        const enhancedReleases = mockReleases.map((release) => ({
-          ...release,
+        const enhancedBuilds = mockBuilds.map((build) => ({
+          ...build,
           session_stability: 0.9,
           user_stability: 0.9,
           target_stability: 0.995,
@@ -574,31 +574,31 @@ describe('BugsnagClient', () => {
 
         // Mock cache to return null first to simulate no cached data
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.listReleases.mockResolvedValue({
-          body: mockReleases,
+        mockProjectAPI.listBuilds.mockResolvedValue({
+          body: mockBuilds,
         });
 
-        const result = await client.listReleases("proj-1", {
+        const result = await client.listBuilds("proj-1", {
           release_stage: "production",
         });
 
         expect(mockCache.get).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1"
+          "bugsnag_builds_proj-1"
         );
-        expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
+        expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
           "proj-1",
           { release_stage: "production" }
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
-          enhancedReleases,
+          "bugsnag_builds_proj-1",
+          enhancedBuilds,
           300
         );
-        expect(result).toEqual(enhancedReleases);
+        expect(result).toEqual(enhancedBuilds);
       });
 
-      it("should return cached releases when available", async () => {
-        const mockReleases = [
+      it("should return cached builds when available", async () => {
+        const mockBuilds = [
           {
             id: "rel-1",
             release_time: "2023-01-01T00:00:00Z",
@@ -608,61 +608,61 @@ describe('BugsnagClient', () => {
           },
         ];
 
-        // Mock cache to return releases
-        mockCache.get.mockReturnValueOnce(mockReleases);
+        // Mock cache to return builds
+        mockCache.get.mockReturnValueOnce(mockBuilds);
 
-        const result = await client.listReleases("proj-1", {
+        const result = await client.listBuilds("proj-1", {
           release_stage: "production",
         });
 
         expect(mockCache.get).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1"
+          "bugsnag_builds_proj-1"
         );
-        expect(mockProjectAPI.listReleases).not.toHaveBeenCalled();
-        expect(result).toEqual(mockReleases);
+        expect(mockProjectAPI.listBuilds).not.toHaveBeenCalled();
+        expect(result).toEqual(mockBuilds);
       });
 
-      it("should return empty array when no releases found", async () => {
+      it("should return empty array when no builds found", async () => {
         // Mock cache to return null to simulate no cached data
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.listReleases.mockResolvedValue({ body: null });
+        mockProjectAPI.listBuilds.mockResolvedValue({ body: null });
 
-        const result = await client.listReleases("proj-1", {});
+        const result = await client.listBuilds("proj-1", {});
 
-        expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
+        expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
           "proj-1",
           {}
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
+          "bugsnag_builds_proj-1",
           [],
           300
         );
         expect(result).toEqual([]);
       });
 
-      it("should construct correct URL with release stage", async () => {
+      it("should construct correct URL with build stage", async () => {
         // Mock cache to return null to simulate no cached data
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.listReleases.mockImplementation(() => ({
+        mockProjectAPI.listBuilds.mockImplementation(() => ({
           body: [],
         }));
 
-        await client.listReleases("proj-1", {
+        await client.listBuilds("proj-1", {
           release_stage: "staging",
         });
 
         // This is testing the implementation detail that the ProjectAPI correctly constructs the URL
-        expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
+        expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
           "proj-1",
           { release_stage: "staging" }
         );
       });
     });
 
-    describe("getRelease", () => {
-      it("should return release from API when not cached", async () => {
-        const mockRelease = {
+    describe("getBuild", () => {
+      it("should return build from API when not cached", async () => {
+        const mockBuild = {
           id: "rel-1",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.0",
@@ -682,8 +682,8 @@ describe('BugsnagClient', () => {
           accumulative_daily_users_with_unhandled: 5,
         };
 
-        const enhancedRelease = {
-          ...mockRelease,
+        const enhancedBuild = {
+          ...mockBuild,
           session_stability: 0.9,
           user_stability: 0.9,
           target_stability: 0.995,
@@ -695,30 +695,30 @@ describe('BugsnagClient', () => {
 
         // Mock cache to return null first to simulate no cached data
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({
-          body: mockRelease,
+        mockProjectAPI.getBuild.mockResolvedValue({
+          body: mockBuild,
         });
 
-        const result = await client.getRelease("proj-1", "rel-1");
+        const result = await client.getBuild("proj-1", "rel-1");
 
         expect(mockCache.get).toHaveBeenCalledWith(
-          "bugsnag_release_rel-1"
+          "bugsnag_build_rel-1"
         );
-        expect(mockProjectAPI.getRelease).toHaveBeenCalledWith(
+        expect(mockProjectAPI.getBuild).toHaveBeenCalledWith(
           "proj-1",
           "rel-1"
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_release_rel-1",
-          enhancedRelease,
+          "bugsnag_build_rel-1",
+          enhancedBuild,
           300
         );
-        expect(result).toEqual(enhancedRelease);
+        expect(result).toEqual(enhancedBuild);
       });
 
       // Test for division by zero case for user stability
       it("should handle zero accumulative_daily_users_seen", async () => {
-        const mockRelease = {
+        const mockBuild = {
           id: "rel-2",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.1",
@@ -732,11 +732,11 @@ describe('BugsnagClient', () => {
         };
 
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({
-          body: mockRelease,
+        mockProjectAPI.getBuild.mockResolvedValue({
+          body: mockBuild,
         });
 
-        const result = (await client.getRelease(
+        const result = (await client.getBuild(
           "proj-1",
           "rel-2"
         ));
@@ -748,7 +748,7 @@ describe('BugsnagClient', () => {
 
       // Test for division by zero case for session stability
       it("should handle zero total_sessions_count", async () => {
-        const mockRelease = {
+        const mockBuild = {
           id: "rel-3",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.2",
@@ -762,11 +762,11 @@ describe('BugsnagClient', () => {
         };
 
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({
-          body: mockRelease,
+        mockProjectAPI.getBuild.mockResolvedValue({
+          body: mockBuild,
         });
 
-        const result = (await client.getRelease(
+        const result = (await client.getBuild(
           "proj-1",
           "rel-3"
         ));
@@ -779,7 +779,7 @@ describe('BugsnagClient', () => {
 
       // Test for session-based stability type
       it("should calculate metrics correctly when stability_target_type is session", async () => {
-        const mockRelease = {
+        const mockBuild = {
           id: "rel-4",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.3",
@@ -810,11 +810,11 @@ describe('BugsnagClient', () => {
         );
 
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({
-          body: mockRelease,
+        mockProjectAPI.getBuild.mockResolvedValue({
+          body: mockBuild,
         });
 
-        const result = (await client.getRelease(
+        const result = (await client.getBuild(
           "proj-1",
           "rel-4"
         ));
@@ -827,9 +827,9 @@ describe('BugsnagClient', () => {
         expect(result.meets_critical_stability).toBe(true);
       });
 
-      // Test for a release that meets target stability
-      it("should correctly identify a release that meets target stability", async () => {
-        const mockRelease = {
+      // Test for a build that meets target stability
+      it("should correctly identify a build that meets target stability", async () => {
+        const mockBuild = {
           id: "rel-5",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.4",
@@ -860,11 +860,11 @@ describe('BugsnagClient', () => {
         );
 
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({
-          body: mockRelease,
+        mockProjectAPI.getBuild.mockResolvedValue({
+          body: mockBuild,
         });
 
-        const result = (await client.getRelease(
+        const result = (await client.getBuild(
           "proj-1",
           "rel-5"
         ));
@@ -874,9 +874,9 @@ describe('BugsnagClient', () => {
         expect(result.meets_critical_stability).toBe(true);
       });
 
-      // Test for a release that fails both critical and target stability
-      it("should correctly identify a release that fails both critical and target stability", async () => {
-        const mockRelease = {
+      // Test for a build that fails both critical and target stability
+      it("should correctly identify a build that fails both critical and target stability", async () => {
+        const mockBuild = {
           id: "rel-6",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.5",
@@ -890,11 +890,11 @@ describe('BugsnagClient', () => {
         };
 
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({
-          body: mockRelease,
+        mockProjectAPI.getBuild.mockResolvedValue({
+          body: mockBuild,
         });
 
-        const result = (await client.getRelease(
+        const result = (await client.getBuild(
           "proj-1",
           "rel-6"
         ));
@@ -904,8 +904,8 @@ describe('BugsnagClient', () => {
         expect(result.meets_critical_stability).toBe(false); // 0.8 < 0.85
       });
 
-      it("should return cached release when available", async () => {
-        const mockRelease = {
+      it("should return cached build when available", async () => {
+        const mockBuild = {
           id: "rel-1",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.0",
@@ -914,32 +914,32 @@ describe('BugsnagClient', () => {
           user_stability: "90.00%",
         };
 
-        // Mock cache to return release
-        mockCache.get.mockReturnValueOnce(mockRelease);
+        // Mock cache to return build
+        mockCache.get.mockReturnValueOnce(mockBuild);
 
-        const result = await client.getRelease("proj-1", "rel-1");
+        const result = await client.getBuild("proj-1", "rel-1");
 
         expect(mockCache.get).toHaveBeenCalledWith(
-          "bugsnag_release_rel-1"
+          "bugsnag_build_rel-1"
         );
-        expect(mockProjectAPI.getRelease).not.toHaveBeenCalled();
-        expect(result).toEqual(mockRelease);
+        expect(mockProjectAPI.getBuild).not.toHaveBeenCalled();
+        expect(result).toEqual(mockBuild);
       });
 
-      it("should return null when release not found", async () => {
+      it("should return null when build not found", async () => {
         // Mock cache to return null to simulate no cached data
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({ body: null });
+        mockProjectAPI.getBuild.mockResolvedValue({ body: null });
 
         await expect(
-          client.getRelease("proj-1", "non-existent-release-id")
+          client.getBuild("proj-1", "non-existent-build-id")
         ).rejects.toThrow(
-          "No release for non-existent-release-id found."
+          "No build for non-existent-build-id found."
         );
 
-        expect(mockProjectAPI.getRelease).toHaveBeenCalledWith(
+        expect(mockProjectAPI.getBuild).toHaveBeenCalledWith(
           "proj-1",
-          "non-existent-release-id"
+          "non-existent-build-id"
         );
       });
     });
@@ -1372,10 +1372,10 @@ describe('BugsnagClient', () => {
       });
     });
 
-    describe("list_releases tool handler", () => {
-      it("should list releases with project from cache", async () => {
+    describe("list_builds tool handler", () => {
+      it("should list builds with project from cache", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockReleases = [
+        const mockBuilds = [
           {
             id: "rel-1",
             release_time: "2023-01-01T00:00:00Z",
@@ -1395,8 +1395,8 @@ describe('BugsnagClient', () => {
           },
         ];
 
-        const enhancedReleases = mockReleases.map((release) => ({
-          ...release,
+        const enhancedBuilds = mockBuilds.map((build) => ({
+          ...build,
           user_stability: 0.9,
           session_stability: 0.9,
           stability_target_type: "user",
@@ -1406,43 +1406,43 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
         }));
 
-        // First get for the project, second for cached releases (return null to call API)
+        // First get for the project, second for cached builds (return null to call API)
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(null);
-        mockProjectAPI.listReleases.mockResolvedValue({
-          body: mockReleases,
+        mockProjectAPI.listBuilds.mockResolvedValue({
+          body: mockBuilds,
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Releases"
+          (call: any) => call[0].title === "List Builds"
         )[1];
 
         const result = await toolHandler({
           releaseStage: "production",
         });
 
-        expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
+        expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
           "proj-1",
           { release_stage: "production" }
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
-          enhancedReleases,
+          "bugsnag_builds_proj-1",
+          enhancedBuilds,
           300
         );
         expect(result.content[0].text).toBe(
-          JSON.stringify(enhancedReleases)
+          JSON.stringify(enhancedBuilds)
         );
             });
 
-      it("should list releases with explicit project ID", async () => {
+      it("should list builds with explicit project ID", async () => {
         const mockProjects = [
           { id: "proj-1", name: "Project 1" },
           { id: "proj-2", name: "Project 2" },
         ];
-        const mockReleases = [
+        const mockBuilds = [
           {
             id: "rel-1",
             release_time: "2023-01-01T00:00:00Z",
@@ -1455,8 +1455,8 @@ describe('BugsnagClient', () => {
           },
         ];
 
-        const enhancedReleases = mockReleases.map((release) => ({
-          ...release,
+        const enhancedBuilds = mockBuilds.map((build) => ({
+          ...build,
           user_stability: 0.9,
           session_stability: 0.9,
           stability_target_type: "user",
@@ -1466,17 +1466,17 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
         }));
 
-        // First get for projects, second for cached releases (return null to call API)
+        // First get for projects, second for cached builds (return null to call API)
         mockCache.get
           .mockReturnValueOnce(mockProjects)
           .mockReturnValueOnce(null);
-        mockProjectAPI.listReleases.mockResolvedValue({
-          body: mockReleases,
+        mockProjectAPI.listBuilds.mockResolvedValue({
+          body: mockBuilds,
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Releases"
+          (call: any) => call[0].title === "List Builds"
         )[1];
 
         const result = await toolHandler({
@@ -1484,42 +1484,42 @@ describe('BugsnagClient', () => {
           releaseStage: "staging",
         });
 
-        expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
+        expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
           "proj-1",
           { release_stage: "staging" }
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
-          enhancedReleases,
+          "bugsnag_builds_proj-1",
+          enhancedBuilds,
           300
         );
         expect(result.content[0].text).toBe(
-          JSON.stringify(enhancedReleases)
+          JSON.stringify(enhancedBuilds)
         );
       });
 
-      it("should handle empty releases list", async () => {
+      it("should handle empty builds list", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
 
-        // First get for the project, second for cached releases (return null to call API)
+        // First get for the project, second for cached builds (return null to call API)
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(null);
-        mockProjectAPI.listReleases.mockResolvedValue({ body: [] });
+        mockProjectAPI.listBuilds.mockResolvedValue({ body: [] });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Releases"
+          (call: any) => call[0].title === "List Builds"
         )[1];
 
         const result = await toolHandler({});
 
-        expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
+        expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
           "proj-1",
           {}
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
+          "bugsnag_builds_proj-1",
           [],
           300
         );
@@ -1531,7 +1531,7 @@ describe('BugsnagClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Releases"
+          (call: any) => call[0].title === "List Builds"
         )[1];
 
         await expect(toolHandler({})).rejects.toThrow(
@@ -1540,10 +1540,10 @@ describe('BugsnagClient', () => {
       });
     });
 
-    describe("get_release tool handler", () => {
-      it("should get release details with project from cache", async () => {
+    describe("get_build tool handler", () => {
+      it("should get build details with project from cache", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockRelease = {
+        const mockBuild = {
           id: "rel-1",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.0",
@@ -1561,9 +1561,9 @@ describe('BugsnagClient', () => {
           unhandled_sessions_count: 10,
           accumulative_daily_users_seen: 50,
           accumulative_daily_users_with_unhandled: 5,
-        }  
-        const enhancedRelease = {
-          ...mockRelease,
+        }
+        const enhancedBuild = {
+          ...mockBuild,
           user_stability: 0.9,
           session_stability: 0.9,
           stability_target_type: "user",
@@ -1573,40 +1573,40 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
         };
 
-        // First get for the project, second for cached release (return null to call API)
+        // First get for the project, second for cached build (return null to call API)
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({
-          body: mockRelease,
+        mockProjectAPI.getBuild.mockResolvedValue({
+          body: mockBuild,
         });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Release"
+          (call: any) => call[0].title === "Get Build"
         )[1];
 
-        const result = await toolHandler({ releaseId: "rel-1" });
+        const result = await toolHandler({ buildId: "rel-1" });
 
-        expect(mockProjectAPI.getRelease).toHaveBeenCalledWith(
+        expect(mockProjectAPI.getBuild).toHaveBeenCalledWith(
           "proj-1",
           "rel-1"
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_release_rel-1",
-          enhancedRelease,
+          "bugsnag_build_rel-1",
+          enhancedBuild,
           300
         );
         expect(result.content[0].text).toBe(
-          JSON.stringify(enhancedRelease)
+          JSON.stringify(enhancedBuild)
         );
       });
 
-      it("should get release with explicit project ID", async () => {
+      it("should get build with explicit project ID", async () => {
         const mockProjects = [
           { id: "proj-1", name: "Project 1" },
           { id: "proj-2", name: "Project 2" },
         ];
-        const mockRelease = {
+        const mockBuild = {
           id: "rel-1",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.0",
@@ -1617,8 +1617,8 @@ describe('BugsnagClient', () => {
           accumulative_daily_users_with_unhandled: 3,
         };
 
-        const enhancedRelease = {
-          ...mockRelease,
+        const enhancedBuild = {
+          ...mockBuild,
           user_stability: 0.9,
           session_stability: 0.9,
           stability_target_type: "user",
@@ -1628,70 +1628,70 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
         };
 
-        // First get for projects, second for cached release (return null to call API)
+        // First get for projects, second for cached build (return null to call API)
         mockCache.get
           .mockReturnValueOnce(mockProjects)
           .mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({
-          body: mockRelease,
+        mockProjectAPI.getBuild.mockResolvedValue({
+          body: mockBuild,
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Release"
+          (call: any) => call[0].title === "Get Build"
         )[1];
 
         const result = await toolHandler({
           projectId: "proj-1",
-          releaseId: "rel-1",
+          buildId: "rel-1",
         });
 
-        expect(mockProjectAPI.getRelease).toHaveBeenCalledWith(
+        expect(mockProjectAPI.getBuild).toHaveBeenCalledWith(
           "proj-1",
           "rel-1"
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_release_rel-1",
-          enhancedRelease,
+          "bugsnag_build_rel-1",
+          enhancedBuild,
           300
         );
         expect(result.content[0].text).toBe(
-          JSON.stringify(enhancedRelease)
+          JSON.stringify(enhancedBuild)
         );
       });
 
-      it("should throw error when release not found", async () => {
+      it("should throw error when build not found", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
 
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(null);
-        mockProjectAPI.getRelease.mockResolvedValue({ body: null });
+        mockProjectAPI.getBuild.mockResolvedValue({ body: null });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Release"
+          (call: any) => call[0].title === "Get Build"
         )[1];
 
         await expect(
-          toolHandler({ releaseId: "non-existent-release-id" })
+          toolHandler({ buildId: "non-existent-release-id" })
         ).rejects.toThrow(
-          "No release for non-existent-release-id found."
+          "No build for non-existent-release-id found."
         );
       });
 
-      it("should throw error when releaseId argument is missing", async () => {
+      it("should throw error when buildId argument is missing", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
 
         mockCache.get.mockReturnValueOnce(mockProject);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Release"
+          (call: any) => call[0].title === "Get Build"
         )[1];
 
         await expect(toolHandler({})).rejects.toThrow(
-          "releaseId argument is required"
+          "buildId argument is required"
         );
       });
 
@@ -1700,15 +1700,15 @@ describe('BugsnagClient', () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Release"
+          (call: any) => call[0].title === "Get Build"
         )[1];
 
         await expect(
-          toolHandler({ releaseId: "rel-1" })
-        ).rejects.toThrow("No release for rel-1 found.");
+          toolHandler({ buildId: "rel-1" })
+        ).rejects.toThrow("No build for rel-1 found.");
       });
     });
-    
+
     describe('update_error tool handler', () => {
       it('should update error successfully with project from cache', async () => {
         const mockProject = { id: 'proj-1', name: 'Project 1' };
