@@ -1010,7 +1010,7 @@ export class BugsnagClient implements Client {
             ]),
         {
           name: "releaseStage",
-          type: z.string().default("production"),
+          type: z.string(),
           description: "Filter releases by this stage (e.g. production, staging)",
           required: false,
           examples: ["production", "staging"],
@@ -1048,7 +1048,7 @@ export class BugsnagClient implements Client {
             type: "text",
             text: JSON.stringify(
               await this.listReleases((await this.getInputProject(args.projectId)).id, {
-                release_stage_name: args.releaseStage,
+                release_stage_name: args.releaseStage ?? "production",
                 visible_only: args.visibleOnly,
               })
             ),
