@@ -63,6 +63,13 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
 ### Can I Deploy
 
 - Purpose: Determine whether a specific version of a pacticipant can be safely deployed into a given environment.
+- Parameters:
+  - **`participant`**
+  The name of the service (pacticipant).
+  - **`version`**
+  The version of the pacticipant being evaluated for deployment.
+  - **`environment`**
+  The target environment (e.g., staging, production).
 
 ## Configuration Notes
 
