@@ -2394,9 +2394,6 @@ describe('BugsnagClient', () => {
       });
 
       it("should throw error when releaseId argument is missing", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-
-        mockCache.get.mockReturnValueOnce(mockProject);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2411,7 +2408,6 @@ describe('BugsnagClient', () => {
 
     describe("list_builds_in_release tool handler", () => {
       it("should list builds in release with project from cache", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
         const mockBuildsInRelease = [
           {
             id: "build-1",
@@ -2425,13 +2421,8 @@ describe('BugsnagClient', () => {
           }
         ];
 
-        // First get for the project, second for cached builds in release (return null to call API)
         mockCache.get
-          .mockReturnValueOnce(mockProject)
-          .mockReturnValueOnce(null);
-        mockProjectAPI.listBuildsInRelease.mockResolvedValue({
-          body: mockBuildsInRelease,
-        });
+          .mockReturnValueOnce(mockBuildsInRelease);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2442,24 +2433,18 @@ describe('BugsnagClient', () => {
           releaseId: "rel-group-1"
         });
 
-        expect(mockProjectAPI.listBuildsInRelease).toHaveBeenCalledWith(
-          "rel-group-1"
+        expect(mockCache.get).toHaveBeenCalledWith(
+          "bugsnag_builds_in_release_rel-group-1"
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_builds_in_release_rel-group-1",
-          mockBuildsInRelease,
-          300
-        );
+        expect(mockProjectAPI.listBuildsInRelease).toHaveBeenCalledTimes(0);
+        expect(mockCache.set).toHaveBeenCalledTimes(0);
+
         expect(result.content[0].text).toBe(
           JSON.stringify(mockBuildsInRelease)
         );
       });
 
-      it("should list builds in release with explicit project ID", async () => {
-        const mockProjects = [
-          { id: "proj-1", name: "Project 1" },
-          { id: "proj-2", name: "Project 2" },
-        ];
+      it("should list builds in release with explicit release ID", async () => {
         const mockBuildsInRelease = [
           {
             id: "build-1",
@@ -2468,9 +2453,7 @@ describe('BugsnagClient', () => {
           }
         ];
 
-        // First get for projects, second for cached builds in release (return null to call API)
         mockCache.get
-          .mockReturnValueOnce(mockProjects)
           .mockReturnValueOnce(null);
         mockProjectAPI.listBuildsInRelease.mockResolvedValue({
           body: mockBuildsInRelease,
@@ -2482,14 +2465,17 @@ describe('BugsnagClient', () => {
         )[1];
 
         const result = await toolHandler({
-          releaseId: "rel-group-1"
+          releaseId: "rel-group-2"
         });
 
+        expect(mockCache.get).toHaveBeenCalledWith(
+          "bugsnag_builds_in_release_rel-group-2"
+        );
         expect(mockProjectAPI.listBuildsInRelease).toHaveBeenCalledWith(
-          "rel-group-1"
+          "rel-group-2"
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_builds_in_release_rel-group-1",
+          "bugsnag_builds_in_release_rel-group-2",
           mockBuildsInRelease,
           300
         );
@@ -2499,11 +2485,8 @@ describe('BugsnagClient', () => {
       });
 
       it("should handle empty builds in release list", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
 
-        // First get for the project, second for cached builds in release (return null to call API)
         mockCache.get
-          .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(null);
         mockProjectAPI.listBuildsInRelease.mockResolvedValue({ body: [] });
 
@@ -2511,7 +2494,7 @@ describe('BugsnagClient', () => {
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Builds in Release"
         )[1];
-        
+
         const result = await toolHandler({
           releaseId: "rel-group-1"
         });
