@@ -2,3 +2,4 @@
 /*.json                @SmartBear/bugsnag-dev
 /common                @SmartBear/bugsnag-dev
 /bugsnag               @SmartBear/bugsnag-dev
+/pactflow              @SmartBear/bugsnag-dev
