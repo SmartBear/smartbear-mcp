@@ -251,9 +251,10 @@ export class BugsnagClient implements Client {
     const fetchedBuilds = (await this.projectApi.listBuilds(projectId, options)).body || [];
 
     const stabilityTargets = await this.getProjectStabilityTargets(projectId);
-    const formattedBuilds = await Promise.all(
-      fetchedBuilds.map(async (b) => await this.addStabilityData(b, stabilityTargets))
+    const formattedBuilds = fetchedBuilds.map(
+      (b) => this.addStabilityData(b, stabilityTargets)
     );
+
     this.cache.set(cacheKey, formattedBuilds, 5 * 60);
     return formattedBuilds;
   }
@@ -267,7 +268,7 @@ export class BugsnagClient implements Client {
     if (!fetchedBuild) throw new Error(`No build for ${buildId} found.`);
 
     const stabilityTargets = await this.getProjectStabilityTargets(projectId);
-    const formattedBuild = await this.addStabilityData(fetchedBuild, stabilityTargets);
+    const formattedBuild = this.addStabilityData(fetchedBuild, stabilityTargets);
     this.cache.set(cacheKey, formattedBuild, 5 * 60);
     return formattedBuild;
   }
@@ -280,9 +281,10 @@ export class BugsnagClient implements Client {
     const fetchedReleases = (await this.projectApi.listReleases(projectId, opts)).body || [];
 
     const stabilityTargets = await this.getProjectStabilityTargets(projectId);
-    const formattedReleases = await Promise.all(
-      fetchedReleases.map(async (r) => await this.addStabilityData(r, stabilityTargets))
+    const formattedReleases = fetchedReleases.map(
+      (r) => this.addStabilityData(r, stabilityTargets)
     );
+
     this.cache.set(cacheKey, formattedReleases, 5 * 60);
     return formattedReleases;
   }
@@ -296,7 +298,7 @@ export class BugsnagClient implements Client {
     if (!fetchedRelease) throw new Error(`No release for ${releaseId} found.`);
 
     const stabilityTargets = await this.getProjectStabilityTargets(projectId);
-    const formattedRelease = await this.addStabilityData(fetchedRelease, stabilityTargets);
+    const formattedRelease = this.addStabilityData(fetchedRelease, stabilityTargets);
     this.cache.set(cacheKey, formattedRelease, 5 * 60);
     return formattedRelease;
   }
