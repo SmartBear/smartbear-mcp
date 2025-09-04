@@ -11,7 +11,7 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
 - Purpose: Generate Pact tests from a number of inputs.
 - Returns: Generated Pact test
 - Parameters:
-  - **`lanuage`** (optional)
+  - **`language`** (optional)
   The target language in which the Pact tests should be generated. If absent, the language will be inferred from other inputs, such as any provided code files. This field is optional if and only if it can be inferred from other inputs
   - **`request_response`** (optional)
   Request/response pair for the interaction.
