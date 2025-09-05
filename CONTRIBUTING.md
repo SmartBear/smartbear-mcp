@@ -15,7 +15,7 @@ Thank you for your contributing to SmartBear MCP!
 
 ```
 ├── api-hub/          # API Hub integration
-├── insight-hub/      # Insight Hub integration  
+├── insight-hub/      # Insight Hub integration
 ├── pactflow/         # PactFlow integration
 ├── reflect/          # Reflect integration
 ├── common/           # Shared utilities and types

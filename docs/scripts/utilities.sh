@@ -1,4 +1,4 @@
-#!/bin/bash
+# shellcheck shell=bash
 
 # Author: @frankkilcommins
 # The script is used to define utility functions that are used by the other scripts in the workflow.

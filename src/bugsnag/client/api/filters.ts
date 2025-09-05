@@ -1,6 +1,6 @@
 /**
  * Filters utility for BugSnag API
- * 
+ *
  * This file provides utility functions for creating filter URL parameters
  * based on the BugSnag filtering specification described in the Filtering.md document.
  */
@@ -23,7 +23,7 @@ export interface FilterValue {
 
 /**
  * Filter object structure as specified in the BugSnag API
- * 
+ *
  * Example:
  * {
  *   "event.field": [{ "type": "eq", "value": "filter value 1" }],
@@ -43,7 +43,7 @@ export const FilterObjectSchema = z.record(z.array(FilterValueSchema));
 
 /**
  * Creates a filter value object for equality comparison
- * 
+ *
  * @param value The value to compare against
  * @returns FilterValue with type 'eq'
  */
@@ -56,7 +56,7 @@ export function equals(value: string | number): FilterValue {
 
 /**
  * Creates a filter value object for inequality comparison
- * 
+ *
  * @param value The value to compare against
  * @returns FilterValue with type 'ne'
  */
@@ -69,7 +69,7 @@ export function notEquals(value: string | number): FilterValue {
 
 /**
  * Creates a filter value object for checking if a field is empty or not
- * 
+ *
  * @param isEmpty Whether the field should be empty (true) or not (false)
  * @returns FilterValue with type 'empty'
  */
@@ -82,7 +82,7 @@ export function empty(isEmpty: boolean): FilterValue {
 
 /**
  * Creates a relative time filter for event.since or event.before
- * 
+ *
  * @param value The amount of time
  * @param unit The time unit ('h' for hours, 'd' for days)
  * @returns FilterValue for the relative time
@@ -96,7 +96,7 @@ export function relativeTime(value: number, unit: 'h' | 'd'): FilterValue {
 
 /**
  * Creates an ISO 8601 time filter (must be in UTC format like 2018-05-20T00:00:00Z)
- * 
+ *
  * @param date The date object to convert to ISO string
  * @returns FilterValue for the ISO time
  */
@@ -109,26 +109,26 @@ export function isoTime(date: Date): FilterValue {
 
 /**
  * Converts a FilterObject to URL search parameters
- * 
+ *
  * @param filters The filter object to convert
  * @returns URLSearchParams object with the encoded filters
  */
 export function toUrlSearchParams(filters: FilterObject): URLSearchParams {
   const params = new URLSearchParams();
-  
+
   Object.entries(filters).forEach(([field, filterValues]) => {
     filterValues.forEach((filterValue) => {
       params.append(`filters[${field}][][type]`, filterValue.type);
       params.append(`filters[${field}][][value]`, filterValue.value.toString());
     });
   });
-  
+
   return params;
 }
 
 /**
  * Converts a FilterObject to a query string
- * 
+ *
  * @param filters The filter object to convert
  * @returns Query string representation of the filters
  */
@@ -138,7 +138,7 @@ export function toQueryString(filters: FilterObject): string {
 
 /**
  * Helper to build a FilterObject with type safety
- * 
+ *
  * @returns An empty FilterObject that can be built upon
  */
 export function createFilter(): FilterObject {
@@ -147,7 +147,7 @@ export function createFilter(): FilterObject {
 
 /**
  * Adds a field filter to an existing FilterObject
- * 
+ *
  * @param filters The FilterObject to add to
  * @param field The field name (e.g., 'error.status', 'event.since')
  * @param filterValue The FilterValue to add
@@ -167,7 +167,7 @@ export function addFilter(
 
 /**
  * Utility to create a time range filter between two dates
- * 
+ *
  * @param filters The FilterObject to add to
  * @param since Start date
  * @param before End date
@@ -185,7 +185,7 @@ export function addTimeRange(
 
 /**
  * Utility to create a relative time range filter
- * 
+ *
  * @param filters The FilterObject to add to
  * @param amount The amount of time (e.g., 7 for 7 days)
  * @param unit The time unit ('h' for hours, 'd' for days)
@@ -202,20 +202,20 @@ export function addRelativeTimeRange(
 
 /**
  * Usage examples:
- * 
+ *
  * // Example 1: Open errors with events in the last day
  * const filters = createFilter();
  * addRelativeTimeRange(filters, 1, 'd');
  * addFilter(filters, 'error.status', equals('open'));
  * const queryString = toQueryString(filters);
- * 
+ *
  * // Example 2: Events affecting specific users on a specific day
  * const filters = createFilter();
  * addTimeRange(filters, new Date('2017-01-01'), new Date('2017-01-02'));
  * addFilter(filters, 'user.email', equals('user1@example.com'));
  * addFilter(filters, 'user.email', equals('user2@example.com'));
  * const queryString = toQueryString(filters);
- * 
+ *
  * // Example 3: Events that have user data
  * const filters = createFilter();
  * addFilter(filters, 'user.id', empty(false));

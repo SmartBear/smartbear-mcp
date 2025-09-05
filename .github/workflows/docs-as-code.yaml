@@ -12,7 +12,7 @@ on:
       log_level:
         description: 'Log level: 1=DEBUG, 2=INFO, 3=WARNING, 4=ERROR'
         required: false
-        default: '2' # Set the default log level to INFO 
+        default: '2' # Set the default log level to INFO
 
 permissions: read-all
 
@@ -62,7 +62,7 @@ jobs:
                 npx -y ajv-cli validate -s ./docs/schemas/manifest.schema.json -d "$manifest" --spec=draft2020
               fi
             fi
-          done 
+          done
 
   publish:
     runs-on: ubuntu-latest

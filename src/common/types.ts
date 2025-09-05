@@ -7,7 +7,7 @@ export interface ToolParams {
   title: string;
   summary: string;
   parameters?: Parameters; // either parameters or a zodSchema should be present
-  zodSchema?: ZodTypeAny; 
+  zodSchema?: ZodTypeAny;
   purpose?: string;
   useCases?: string[];
   examples?: Array<{
