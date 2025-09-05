@@ -31,37 +31,6 @@ export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
   return arr.map(obj => pickFields<T>(obj, keys));
 }
 
-/**
- * Iterate through each key-value pair of the provided object, applying a callback.
- * If the value is an object (not an array), it recursively calls itself on that object.
- * If the value is an array, it applies the callback to each element and recursively processes
- * any objects within the array.
- * It does not execute the callback on objects which are recursed into.
- */
-export function objectForEachRecursively(
-  obj: Record<string, any>,
-  cb: (parent: Record<string, any>, key: string, value: any) => void
-) {
-  for (const [key, value] of Object.entries(obj)) {
-    if (value && typeof value === "object") {
-      if (Array.isArray(value)) {
-        cb(obj, key, value);
-        // Process each element in the array
-        for (let i = 0; i < value.length; i++) {
-          const item = value[i];
-          if (item && typeof item === "object") {
-            objectForEachRecursively(item, cb);
-          }
-        }
-      } else {
-        objectForEachRecursively(value, cb);
-      }
-    } else {
-      cb(obj, key, value);
-    }
-  }
-}
-
 export class BaseAPI {
   protected configuration: Configuration;
   protected filterFields: string[];
@@ -122,16 +91,20 @@ export class BaseAPI {
       apiResponse.body = results as T;
     }
 
-    this.sanitizeResponse(apiResponse);
+    if (Array.isArray(apiResponse.body)) {
+      apiResponse.body.forEach(this.sanitizeResponse.bind(this));
+    } else {
+      this.sanitizeResponse(apiResponse.body ?? {});
+    }
     return apiResponse;
   }
 
-  private sanitizeResponse(response: ApiResponse<any>): void {
-    if (!response.body) return;
-    objectForEachRecursively(response.body, (parent, key, value) => {
-      if (this.filterFields.includes(key) && typeof value === "string" && value.startsWith("http")) {
-        delete parent[key];
+  private sanitizeResponse<T extends Record<string, any>>(data: T): void {
+    if (!data) return;
+    for (const key of this.filterFields) {
+      if (key in data) {
+        delete data[key];
       }
-    });
+    }
   }
 }
