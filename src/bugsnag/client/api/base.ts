@@ -64,9 +64,11 @@ export function objectForEachRecursively(
 
 export class BaseAPI {
   protected configuration: Configuration;
+  protected filterFields: string[];
 
-  constructor(configuration: Configuration) {
+  constructor(configuration: Configuration, filterFields?: string[]) {
     this.configuration = configuration;
+    this.filterFields = filterFields || [];
   }
 
   async request<T = any>(
@@ -120,17 +122,14 @@ export class BaseAPI {
       apiResponse.body = results as T;
     }
 
-    this.sanitizeResponseURLs(apiResponse, this.configuration.basePath || 'https://api.bugsnag.com/');
+    this.sanitizeResponse(apiResponse);
     return apiResponse;
   }
 
-  /**
-   * Sanitizes an API response by removing string values that match the specified regex.
-   */
-  private sanitizeResponseURLs(response: ApiResponse<any>, prefix: string): void {
+  private sanitizeResponse(response: ApiResponse<any>): void {
     if (!response.body) return;
     objectForEachRecursively(response.body, (parent, key, value) => {
-      if (typeof value === "string" && value.startsWith(prefix)) {
+      if (this.filterFields.includes(key) && typeof value === "string" && value.startsWith("http")) {
         delete parent[key];
       }
     });

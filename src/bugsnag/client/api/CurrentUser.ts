@@ -21,11 +21,12 @@ export interface Project {
 // --- API Class ---
 
 export class CurrentUserAPI extends BaseAPI {
+  static filterFields: string[] = ["collaborators_url", "projects_url", "upgrade_url"]
   static organizationFields: (keyof Organization)[] = ['id', 'name', 'slug'];
   static projectFields: (keyof Project)[] = ['id', 'name', 'slug', 'api_key'];
 
   constructor(configuration: Configuration) {
-    super(configuration);
+    super(configuration, CurrentUserAPI.filterFields);
   }
 
   /**
