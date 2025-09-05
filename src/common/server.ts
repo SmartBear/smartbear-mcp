@@ -130,10 +130,9 @@ export class SmartBearMcpServer extends McpServer {
         
         if (zodSchema && zodSchema instanceof ZodObject) {
             description += "\n\n**Parameters:**\n";
-            for (const key of Object.keys(zodSchema.shape)) {
-                const field = zodSchema.shape[key];
-                description += this.formatParameterDescription(key, field);
-            }
+            description += Object.keys(zodSchema.shape)
+                .map(key => this.formatParameterDescription(key, zodSchema.shape[key]))
+                .join('\n');
         }
 
         if (outputFormat) {
@@ -161,7 +160,11 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     private formatParameterDescription(key: string, field: any) {
-        return `- ${key} (${this.getReadableTypeName(field)})${field.isOptional() ? '' : ' *required*'}${field.description ? `: ${field.description}` : ''}${key === "examples" && field instanceof ZodEnum ? ` (e.g. ${Object.keys(field.enum).join(', ')})` : ''}${key === "constraints" && field instanceof ZodEnum ? `\n  - ${Object.keys(field.enum).join('\n  - ')}` : ''} \n`;
+        return `- ${key} (${this.getReadableTypeName(field)})` +
+            `${field.isOptional() ? '' : ' *required*'}` +
+            `${field.description ? `: ${field.description}` : ''}` +
+            `${key === "examples" && field instanceof ZodEnum ? ` (e.g. ${Object.keys(field.enum).join(', ')})` : ''}` +
+            `${key === "constraints" && field instanceof ZodEnum ? `\n  - ${Object.keys(field.enum).join('\n  - ')}` : ''}`;
     }
 
     private getReadableTypeName(zodType: ZodType): string {
