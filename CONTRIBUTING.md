@@ -2,12 +2,16 @@
 
 Thank you for your contributing to SmartBear MCP!
 
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [Testing Guidelines](#testing-guidelines)
-- [Documentation](#documentation)
-- [Releases](#releases)
-- [Additional Resources](#additional-resources)
+1. [Contributing](#contributing)
+   1. [Getting Started](#getting-started)
+      1. [Repository Structure](#repository-structure)
+   2. [Development Setup](#development-setup)
+   3. [Testing Guidelines](#testing-guidelines)
+      1. [Test Requirements](#test-requirements)
+      2. [Running Tests](#running-tests)
+   4. [Documentation](#documentation)
+   5. [Releases](#releases)
+   6. [Additional Resources](#additional-resources)
 
 ## Getting Started
 
