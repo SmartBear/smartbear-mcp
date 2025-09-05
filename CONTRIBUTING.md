@@ -27,8 +27,17 @@ Thank you for your contributing to SmartBear MCP!
 ## Development Setup
 
 1. **Install Dependencies**
+
+  Make sure you have a current version of Node.js and then run:
+
    ```bash
    npm install
+   ```
+
+   We also recommend installing [`pre-commit`](https://pre-commit.com/) hooks to automatically run linting and formatting checks before each commit:
+
+   ```bash
+   pre-commit install
    ```
 
 3. **Verify Setup**
