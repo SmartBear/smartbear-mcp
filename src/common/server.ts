@@ -64,7 +64,7 @@ export class SmartBearMcpServer extends McpServer {
             });
         }
     }
-    
+
     private getAnnotations(toolTitle: string, params: ToolParams): any {
         const annotations: ToolAnnotations = {
             title: toolTitle,
@@ -127,7 +127,7 @@ export class SmartBearMcpServer extends McpServer {
                 `${p.constraints ? `\n  - ${p.constraints.join('\n  - ')}` : ''}`
             ).join('\n')}`;
         }
-        
+
         if (zodSchema && zodSchema instanceof ZodObject) {
             description += "\n\n**Parameters:**\n";
             description += Object.keys(zodSchema.shape)

@@ -84,7 +84,7 @@ export class BaseAPI {
         apiResponse.body = data;
       }
     } while (paginate && nextUrl);
-    
+
     if (paginate) {
       apiResponse.body = results as T;
     }

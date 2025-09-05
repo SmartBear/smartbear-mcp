@@ -822,7 +822,7 @@ describe('BugsnagClient', () => {
         mockCache.get
           .mockReturnValueOnce(mockProject) // current project
           .mockReturnValueOnce(mockEventFields); // event fields
-        mockErrorAPI.listProjectErrors.mockResolvedValue({ 
+        mockErrorAPI.listProjectErrors.mockResolvedValue({
           body: mockErrors,
           headers: new Headers({ 'X-Total-Count': '1' })
         });

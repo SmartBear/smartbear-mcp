@@ -297,7 +297,7 @@ export class BugsnagClient implements Client {
 
     register(
       {
-        title: "Get Error", 
+        title: "Get Error",
         summary: "Get full details on an error, including aggregated and summarized data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.",
         purpose: "Retrieve all the information required on a specified error to understand who it is affecting and why.",
         useCases: [
@@ -371,7 +371,7 @@ export class BugsnagClient implements Client {
 
         // Build query parameters
         const params = new URLSearchParams();
-        
+
         // Add sorting and pagination parameters to get the latest event
         params.append('sort', 'timestamp');
         params.append('direction', 'desc');
@@ -408,7 +408,7 @@ export class BugsnagClient implements Client {
         };
       }
     );
-    
+
     register(
       {
         title: "Get Event Details",
@@ -602,7 +602,7 @@ export class BugsnagClient implements Client {
         if (args.next !== undefined) options.next = args.next;
 
         const response = await this.errorsApi.listProjectErrors(project.id, options);
-        
+
         const errors = response.body || [];
         const totalCount = response.headers.get('X-Total-Count');
         const linkHeader = response.headers.get('Link');
