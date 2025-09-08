@@ -105,6 +105,7 @@ export interface ProjectCreateRequest {
 // --- API Class ---
 
 export class ProjectAPI extends BaseAPI {
+  static filterFields: string[] = ["errors_url", "events_url", "url", "html_url"]
   static eventFieldFields: (keyof EventField)[] = [
     'custom',
     'display_id',
@@ -113,7 +114,7 @@ export class ProjectAPI extends BaseAPI {
   ];
 
   constructor(configuration: Configuration) {
-    super(configuration);
+    super(configuration, ProjectAPI.filterFields);
   }
 
   /**

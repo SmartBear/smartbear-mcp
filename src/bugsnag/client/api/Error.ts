@@ -123,8 +123,9 @@ export interface ErrorUpdateReopenRules {
 // --- API Class ---
 
 export class ErrorAPI extends BaseAPI {
+  static filterFields: string[] = ["url", "project_url", "events_url"]
   constructor(configuration: Configuration) {
-    super(configuration);
+    super(configuration, ErrorAPI.filterFields);
   }
 
   /**

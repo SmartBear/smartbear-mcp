@@ -33,9 +33,11 @@ export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
 
 export class BaseAPI {
   protected configuration: Configuration;
+  protected filterFields: string[];
 
-  constructor(configuration: Configuration) {
+  constructor(configuration: Configuration, filterFields?: string[]) {
     this.configuration = configuration;
+    this.filterFields = filterFields || [];
   }
 
   async request<T = any>(
@@ -89,6 +91,20 @@ export class BaseAPI {
       apiResponse.body = results as T;
     }
 
+    if (Array.isArray(apiResponse.body)) {
+      apiResponse.body.forEach(this.sanitizeResponse.bind(this));
+    } else {
+      this.sanitizeResponse(apiResponse.body ?? {});
+    }
     return apiResponse;
+  }
+
+  private sanitizeResponse<T extends Record<string, any>>(data: T): void {
+    if (!data) return;
+    for (const key of this.filterFields) {
+      if (key in data) {
+        delete data[key];
+      }
+    }
   }
 }
