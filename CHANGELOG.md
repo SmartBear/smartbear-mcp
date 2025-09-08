@@ -5,14 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2025-09-08
+
+### Added
+
+- [BugSnag] Add pagination, sorting and total counts to list errors tool [#88](https://github.com/SmartBear/smartbear-mcp/pull/88)
+- [PactFlow] Add remote OAD reading support to Generate and Review tool [#104](https://github.com/SmartBear/smartbear-mcp/pull/104)
+- [PactFlow] Add tool for can-i-deploy PactFlow API [#106](https://github.com/SmartBear/smartbear-mcp/pull/106)
 
 ### Changed
 
 - [BugSnag] BREAKING CHANGE: Rename Insight Hub tool to BugSnag, following rebranding. Configuration variables `INSIGHT_HUB_AUTH_TOKEN` and `INSIGHT_HUB_PROJECT_API_KEY` need to be updated to `BUGSNAG_AUTH_TOKEN` and `BUGSNAG_PROJECT_API_KEY` after upgrade. [#101](https://github.com/SmartBear/smartbear-mcp/pull/101)
-- [BugSnag] Add pagination, sorting and total counts to list errors tool [#88](https://github.com/SmartBear/smartbear-mcp/pull/88)
-- [PactFlow] Add tool for can-i-deploy PactFlow API [#106](https://github.com/SmartBear/smartbear-mcp/pull/106)
-- [PactFlow] Add remote OAD reading support to Generate and Review tool [#104](https://github.com/SmartBear/smartbear-mcp/pull/104)
+- [BugSnag] Remove API links from API responses [#110](https://github.com/SmartBear/smartbear-mcp/pull/110)
 
 ## [0.4.0] - 2025-08-26
 
