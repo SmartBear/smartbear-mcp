@@ -331,8 +331,7 @@ export class ProjectAPI extends BaseAPI {
     const response = await this.request<BuildSummaryResponse[]>({
       method: "GET",
       url,
-    },
-    true);
+    });
 
     return {
       ...response,
@@ -363,12 +362,11 @@ export class ProjectAPI extends BaseAPI {
    * @returns A promise that resolves to an array of `ReleaseSummaryResponse` objects.
    */
   async listReleases(projectId: string, opts: ListReleasesOptions) {
-    const url = `/projects/${projectId}/release_groups?release_stage_name=${opts.release_stage_name}&visible_only=${opts.visible_only}`
+    const url = `/projects/${projectId}/release_groups?release_stage_name=${opts.release_stage_name}&visible_only=${opts.visible_only}&top_only=true`
     const response = await this.request<ReleaseSummaryResponse[]>({
       method: "GET",
       url
-    },
-    true);
+    });
 
     return {
       ...response,
@@ -401,7 +399,6 @@ export class ProjectAPI extends BaseAPI {
     return await this.request<BuildResponse[]>({
       method: "GET",
       url,
-    },
-    true);
+    });
   }
 }
