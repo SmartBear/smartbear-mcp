@@ -2,29 +2,29 @@
 
 Thank you for your contributing to SmartBear MCP!
 
-1. [Contributing](#contributing)
-   1. [Getting Started](#getting-started)
-      1. [Repository Structure](#repository-structure)
-   2. [Development Setup](#development-setup)
-   3. [Testing Guidelines](#testing-guidelines)
-      1. [Test Requirements](#test-requirements)
-      2. [Running Tests](#running-tests)
-   4. [Documentation](#documentation)
-   5. [Releases](#releases)
-   6. [Additional Resources](#additional-resources)
+- [Contributing](#contributing)
+  - [Getting Started](#getting-started)
+    - [Repository Structure](#repository-structure)
+  - [Development Setup](#development-setup)
+  - [Testing Guidelines](#testing-guidelines)
+    - [Test Requirements](#test-requirements)
+    - [Running Tests](#running-tests)
+  - [Documentation](#documentation)
+  - [Releases](#releases)
+  - [Additional Resources](#additional-resources)
 
 ## Getting Started
 
 ### Repository Structure
 
 ```
-├── api-hub/          # API Hub integration
-├── insight-hub/      # Insight Hub integration
-├── pactflow/         # PactFlow integration
-├── reflect/          # Reflect integration
-├── common/           # Shared utilities and types
+├── src/api-hub/      # API Hub integration
+├── src/bugsnag/      # BugSnag integration
+├── src/pactflow/     # PactFlow integration
+├── src/reflect/      # Reflect integration
+├── src/common/       # Shared utilities and types
+├── src/tests/        # Test files
 ├── docs/             # Documentation
-├── tests/            # Test files
 └── scripts/          # Build and utility scripts
 ```
 
