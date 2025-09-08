@@ -4,15 +4,15 @@ The SmartBear MCP Server enables a secure and intelligent bridge between SmartBe
 
 ![mcp-concept.png](./images/embedded/mcp-concept.png)
 
-By surfacing actionable context from across API Hub, Test Hub, and Insight Hub into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients, the MCP Server empowers teams to accelerate design, testing, and troubleshooting workflows---all while keeping developers within their natural flow of work.
+By surfacing actionable context from across API Hub, Test Hub, and BugSnag into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients, the MCP Server empowers teams to accelerate design, testing, and troubleshooting workflows---all while keeping developers within their natural flow of work.
 
-This integration empowers development teams to accelerate troubleshooting workflows by bringing rich contextual data from Insight Hub directly into their development conversations with AI tools like GitHub Co-Pilot, Cursor, Claude, and other MCP-compatible clients.
+This integration empowers development teams to accelerate troubleshooting workflows by bringing rich contextual data from BugSnag directly into their development conversations with AI tools like GitHub Co-Pilot, Cursor, Claude, and other MCP-compatible clients.
 
-Here's a quick example of the power we're bringing to your AI development experiences. In this demo, we showcase how you can solve a real software bug using the our Insight Hub tools combined with GitHub Co-pilot:
+Here's a quick example of the power we're bringing to your AI development experiences. In this demo, we showcase how you can solve a real software bug using the our BugSnag tools combined with GitHub Co-pilot:
 
 [![MCP-Demo](https://img.youtube.com/vi/NbKnK3rbcFE/0.jpg)](https://www.youtube.com/watch?v=NbKnK3rbcFE)
 
-See our full capabilities [here](./mcp-server-capabilities).
+See our full capabilities [here](./mcp-server-capabilities.md).
 
 ## What is the Model Context Protocol?
 

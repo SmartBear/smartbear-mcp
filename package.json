@@ -1,11 +1,11 @@
 {
   "name": "@smartbear/mcp",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "MCP server for interacting SmartBear Products",
   "keywords": [
     "smartbear",
     "mcp",
-    "insight-hub",
+    "bugsnag",
     "reflect",
     "api-hub",
     "pactflow"
@@ -44,10 +44,12 @@
     "@bugsnag/js": "^8.2.0",
     "@modelcontextprotocol/sdk": "^1.15.0",
     "node-cache": "^5.1.2",
+    "swagger-client": "^3.35.6",
     "zod": "^3"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22",
     "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.29.0",
@@ -55,6 +57,7 @@
     "shx": "^0.3.4",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.34.1",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "vitest-fetch-mock": "^0.4.5"
   }
 }

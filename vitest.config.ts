@@ -10,21 +10,21 @@ export default defineConfig({
       exclude: [
         'dist/**',
         'node_modules/**',
-        'tests/**',
+        'src/tests/**',
         '*.config.*',
         '**/*.d.ts',
         // Auto-generated API client files
-        'insight-hub/client/api/*.ts',
-        'insight-hub/client/index.ts',
-        'insight-hub/client/configuration.ts',
+        'src/bugsnag/client/api/*.ts',
+        'src/bugsnag/client/index.ts',
+        'src/bugsnag/client/configuration.ts',
         // Main entry point (tested via integration)
-        'index.ts',
+        'src/index.ts',
         // Other client implementations (not currently tested)
-        'api-hub/client.ts',
-        'reflect/client.ts',
+        'src/api-hub/client.ts',
+        'src/reflect/client.ts',
         // Utility modules
-        'common/bugsnag.ts',
-        'common/types.ts'
+        'src/common/bugsnag.ts',
+        'src/common/types.ts'
       ],
       // Coverage thresholds for business logic only
       thresholds: {
@@ -44,7 +44,7 @@ export default defineConfig({
       reportsDirectory: './coverage'
     },
     // Include TypeScript files
-    include: ['tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: ['src/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     // Setup files
     // Placeholder for future setup files. Remove if not needed.
     setupFiles: []

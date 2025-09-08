@@ -4,7 +4,7 @@
 
 -   Verify your auth tokens are valid.
 -   Check that environment variables are properly set and match the expected names:
-    -   `INSIGHT_HUB_AUTH_TOKEN` for Insight Hub
+    -   `BUGSNAG_AUTH_TOKEN` for BugSnag
     -   `REFLECT_API_TOKEN` for Reflect
     -   `API_HUB_API_KEY` for API Hub
 -   Ensure you have the correct token type (Auth Token vs API Key) for each service.
