@@ -1,5 +1,5 @@
 /*.ts                  @SmartBear/bugsnag-dev
 /*.json                @SmartBear/bugsnag-dev
-/common                @SmartBear/bugsnag-dev
+/common                @SmartBear/bugsnag-dev, @pactflow/engineering-team
 /bugsnag               @SmartBear/bugsnag-dev
-/pactflow              @SmartBear/bugsnag-dev
+/pactflow              @pactflow/engineering-team
