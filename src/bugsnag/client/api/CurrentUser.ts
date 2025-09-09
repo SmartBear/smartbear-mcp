@@ -1,4 +1,4 @@
-import { BaseAPI, pickFieldsFromArray, ApiResponse } from './base.js';
+import { BaseAPI, pickFieldsFromArray, ApiResponse, pickFields } from './base.js';
 import { Configuration } from '../configuration.js';
 
 // --- Response Types ---
@@ -60,7 +60,7 @@ export class CurrentUserAPI extends BaseAPI {
    * @returns A promise that resolves to the list of projects in the organization
    */
   async getOrganizationProjects(organizationId: string, options: GetOrganizationProjectsOptions = {}): Promise<ApiResponse<Project[]>> {
-    const { paginate = false, ...queryOptions } = options;
+    const { ...queryOptions } = options;
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(queryOptions)) {
       if (value !== undefined) params.append(key, String(value));
@@ -71,11 +71,29 @@ export class CurrentUserAPI extends BaseAPI {
     const data = await this.request<Project[]>({
       method: 'GET',
       url,
-    }, paginate);
-    // Only return allowed fields
+    }, true); // Always paginate for projects
     return {
       ...data,
       body: pickFieldsFromArray<Project>(data.body || [], CurrentUserAPI.projectFields)
+    };
+  }
+
+  /**
+   * Get a specific project within an organization
+   * GET /organizations/{organization_id}/projects/{project_id}
+   * @param organizationId The organization ID
+   * @param projectId The project ID or the project slug
+   * @returns A promise that resolves to the project details
+   */
+  async getOrganizationProject(organizationId: string, projectId: string): Promise<ApiResponse<Project>> {
+    const url = `/organizations/${organizationId}/projects/${projectId}`;
+    const data = await this.request<Project>({
+      method: 'GET',
+      url,
+    });
+    return {
+      ...data,
+      body: pickFields<Project>(data.body, CurrentUserAPI.projectFields)
     };
   }
 }
@@ -87,6 +105,5 @@ export interface ListUserOrganizationsOptions {
 }
 
 export interface GetOrganizationProjectsOptions {
-  paginate?: boolean;
   [key: string]: any;
 }

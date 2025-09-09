@@ -21,6 +21,7 @@ import {
   ReleaseSummaryResponse,
   ReleaseResponse,
 } from "./client/api/Project.js";
+import { getNextUrlPathFromHeader } from "./client/api/base.js";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -29,6 +30,7 @@ const HUB_DOMAIN = "bugsnag.smartbear.com";
 const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
+  PROJECT: "bugsnag_project", // + projectId
   CURRENT_PROJECT: "bugsnag_current_project",
   CURRENT_PROJECT_EVENT_FILTERS: "bugsnag_current_project_event_filters",
   BUILDS: "bugsnag_builds", // + projectId
@@ -172,19 +174,26 @@ export class BugsnagClient implements Client {
     let projects = this.cache.get<Project[]>(cacheKeys.PROJECTS);
     if (!projects) {
       const org = await this.getOrganization();
-      const options = {
-        paginate: true
-      };
-      const response = await this.currentUserApi.getOrganizationProjects(org.id, options);
+      const response = await this.currentUserApi.getOrganizationProjects(org.id);
       projects = response.body || [];
       this.cache.set(cacheKeys.PROJECTS, projects);
     }
     return projects;
   }
 
-  async getProject(projectId: string): Promise<Project | null> {
-    const projects = await this.getProjects();
-    return projects.find((p) => p.id === projectId) || null;
+  async getProject(projectId: string): Promise<Project> {
+    const cacheKey = `${cacheKeys.PROJECT}_${projectId}`; // As "projectId" can be either ID or slug, both versions are cached to maximize the chance of a cache hit
+    const project = this.cache.get<Project>(cacheKey);
+    if (project) return project;
+
+    const projectResponse = await this.currentUserApi.getOrganizationProject((await this.getOrganization()).id, projectId)
+    if (!projectResponse || !projectResponse.body) throw new Error(`Project with ID ${projectId} not found.`);
+    const fetchedProject = projectResponse.body;
+
+    // Cache by both ID and slug for maximum cache hit chance
+    this.cache.set(`${cacheKeys.PROJECT}_${fetchedProject.id}`, fetchedProject);
+    this.cache.set(`${cacheKeys.PROJECT}_${fetchedProject.slug}`, fetchedProject);
+    return fetchedProject;
   }
 
   async getCurrentProject(): Promise<Project | null> {
@@ -229,26 +238,24 @@ export class BugsnagClient implements Client {
 
   private async getInputProject(projectId?: unknown | string): Promise<Project> {
     if (typeof projectId === 'string') {
-      const maybeProject = await this.getProject(projectId);
-      if (!maybeProject) {
-        throw new Error(`Project with ID ${projectId} not found.`);
-      }
-      return maybeProject!;
+      return await this.getProject(projectId);
     } else {
       const currentProject = await this.getCurrentProject();
       if (!currentProject) {
         throw new Error('No current project found. Please provide a projectId or configure a project API key.');
       }
       return currentProject;
-    }
-  }
+    }}
 
-  async listBuilds(projectId: string, options: ListBuildsOptions) {
-    const cacheKey = `${cacheKeys.BUILDS}_${projectId}`;
-    const builds = this.cache.get<BuildSummaryResponse[]>(cacheKey);
-    if (builds) return builds;
+  async listBuilds(projectId: string, opts: ListBuildsOptions) {
+    // TODO: Fix this
+    const cacheKey = `${cacheKeys.BUILDS}_${projectId}${opts.next_url ?? ''}`; // Append the next url to the cache key to prevent different paginations overwriting each other
+    const builds = this.cache.get<(BuildSummaryResponse & StabilityData)[]>(cacheKey);
+    if (builds) return { builds, nextUrl: null };
 
-    const fetchedBuilds = (await this.projectApi.listBuilds(projectId, options)).body || [];
+    const response = await this.projectApi.listBuilds(projectId, opts);
+    const fetchedBuilds = response.body || [];
+    const nextUrl = getNextUrlPathFromHeader(response.headers, this.apiEndpoint);
 
     const stabilityTargets = await this.getProjectStabilityTargets(projectId);
     const formattedBuilds = fetchedBuilds.map(
@@ -256,7 +263,7 @@ export class BugsnagClient implements Client {
     );
 
     this.cache.set(cacheKey, formattedBuilds, 5 * 60);
-    return formattedBuilds;
+    return { builds: formattedBuilds, nextUrl };
   }
 
   async getBuild(projectId: string, buildId: string) {
@@ -274,11 +281,14 @@ export class BugsnagClient implements Client {
   }
 
   async listReleases(projectId: string, opts: ListReleasesOptions) {
-    const cacheKey = `${cacheKeys.RELEASES}_${projectId}`;
-    const releases = this.cache.get<ReleaseSummaryResponse[]>(cacheKey);
-    if (releases) return releases;
+    // TODO: Fix this
+    const cacheKey = `${cacheKeys.RELEASES}_${projectId}${opts.next_url ?? ''}`; // Append the next url to the cache key to prevent different paginations overwriting each other
+    const releases = this.cache.get<(ReleaseSummaryResponse & StabilityData)[]>(cacheKey);
+    if (releases) return { releases, nextUrl: null };
 
-    const fetchedReleases = (await this.projectApi.listReleases(projectId, opts)).body || [];
+    const response = await this.projectApi.listReleases(projectId, opts)
+    const fetchedReleases = response.body || [];
+    const nextUrl = getNextUrlPathFromHeader(response.headers, this.apiEndpoint);
 
     const stabilityTargets = await this.getProjectStabilityTargets(projectId);
     const formattedReleases = fetchedReleases.map(
@@ -286,7 +296,7 @@ export class BugsnagClient implements Client {
     );
 
     this.cache.set(cacheKey, formattedReleases, 5 * 60);
-    return formattedReleases;
+    return { releases: formattedReleases, nextUrl };
   }
 
   async getRelease(projectId: string, releaseId: string) {
@@ -422,6 +432,49 @@ export class BugsnagClient implements Client {
         }
       );
     }
+
+    register({
+      title: "Get Project",
+      summary: "Get details of a specific project by ID or slug",
+      purpose: "Retrieve detailed information about a specific project for analysis and configuration",
+      useCases: [
+        "Get project details when a specific project ID or slug is known",
+      ],
+      parameters: [
+        {
+          name: "projectId",
+          type: z.string(),
+          description: "ID or slug of the project to retrieve",
+          required: true,
+          examples: ["5f8d0d55c9e77c0017a1b2c3", "my-project-slug"]
+        }
+      ],
+      examples: [
+        {
+          description: "Get details for a specific project by ID",
+          parameters: {
+            projectId: "5f8d0d55c9e77c0017a1b2c3"
+          },
+          expectedOutput: "JSON object with project details including name, slug, and API key"
+        },
+        {
+          description: "Get details for a specific project by slug",
+          parameters: {
+            projectId: "my-project-slug"
+          },
+          expectedOutput: "JSON object with project details including name, slug, and API key"
+        }
+      ],
+      hints: [
+        "Project ID or slug can be found using the List Projects tool if not known",
+      ],
+    }, async (args, _extra) => {
+      if (!args.projectId) throw new Error("projectId argument is required");
+      const project = await this.getProject(args.projectId);
+      return {
+        content: [{ type: "text", text: JSON.stringify(project) }],
+      };
+    })
 
     register(
       {
@@ -582,14 +635,18 @@ export class BugsnagClient implements Client {
         const projectSlug = url.pathname.split('/')[2];
         if (!projectSlug || !eventId) throw new Error("Both projectSlug and eventId must be present in the link");
 
-        // get the project id from list of projects
-        const projects = await this.getProjects();
-        const projectId = projects.find((p: any) => p.slug === projectSlug)?.id;
-        if (!projectId) {
+        let project;
+        try {
+          project = await this.getProject(projectSlug);
+          if (!project || !project.id) {
+            throw new Error("Project with the specified slug not found.");
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_e) {
           throw new Error("Project with the specified slug not found.");
         }
 
-        const response = await this.getEvent(eventId, projectId);
+        const response = await this.getEvent(eventId, project.id);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
@@ -891,6 +948,16 @@ export class BugsnagClient implements Client {
             required: false,
             examples: ["production", "staging"],
           },
+          {
+            name: "nextUrl",
+            type: z.string().url(),
+            description:
+              "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. If provided, other parameters are ignored.",
+            required: false,
+            examples: [
+              "/projects/515fb9337c1074f6fd000003/builds?offset=30&per_page=30",
+            ],
+          },
         ],
         examples: [
           {
@@ -905,6 +972,13 @@ export class BugsnagClient implements Client {
             },
             expectedOutput: "JSON array of build objects in the production stage",
           },
+          {
+            description: "Get the next page of results",
+            parameters: {
+              nextUrl: "/projects/515fb9337c1074f6fd000003/builds?offset=30&per_page=30",
+            },
+            expectedOutput: "JSON array of build objects with metadata from the next page",
+          }
         ],
         hints: ["For more detailed results use the Get Build tool"],
         readOnly: true,
@@ -912,16 +986,22 @@ export class BugsnagClient implements Client {
         outputFormat: "JSON array of build summary objects with metadata",
       },
       async (args, _extra) => {
+        const project = await this.getInputProject(args.projectId);
+        console.log(project)
+        const { builds, nextUrl } = await this.listBuilds(project.id, {
+          release_stage: args.releaseStage,
+          next_url: args.nextUrl,
+        })
+
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(
-                await this.listBuilds((await this.getInputProject(args.projectId)).id, {
-                  release_stage: args.releaseStage,
-                })
-              ),
-            },
+              text: JSON.stringify({
+                builds,
+                next: nextUrl,
+              }),
+            }
           ],
         };
       }
@@ -1013,7 +1093,17 @@ export class BugsnagClient implements Client {
           description: "Whether to only include releases that are marked as visible (default: true)",
           required: true,
           examples: ["true", "false"],
-        }
+        },
+        {
+          name: "nextUrl",
+          type: z.string().url(),
+          description:
+            "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. If provided, other parameters are ignored.",
+          required: false,
+          examples: [
+            "/projects/515fb9337c1074f6fd000003/releases?offset=30&per_page=30",
+          ],
+        },
       ],
       examples: [
         {
@@ -1028,22 +1118,33 @@ export class BugsnagClient implements Client {
           },
           expectedOutput: "JSON array of release objects in the production stage",
         },
+        {
+          description: "Get the next page of results",
+          parameters: {
+            nextUrl: "/projects/515fb9337c1074f6fd000003/releases?offset=30&per_page=30",
+          },
+          expectedOutput: "JSON array of release objects with metadata from the next page",
+        },
       ],
       hints: ["For more detailed results use the Get Release tool"],
       readOnly: true,
       idempotent: true,
       outputFormat: "JSON array of release summary objects with metadata",
     }, async (args, _extra) => {
+      const { releases, nextUrl } = await this.listReleases((await this.getInputProject(args.projectId)).id, {
+        release_stage_name: args.releaseStage ?? "production",
+        visible_only: args.visibleOnly,
+        next_url: args.nextUrl ?? null,
+      })
+
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              await this.listReleases((await this.getInputProject(args.projectId)).id, {
-                release_stage_name: args.releaseStage ?? "production",
-                visible_only: args.visibleOnly,
-              })
-            ),
+            text: JSON.stringify({
+              releases,
+              next: nextUrl ?? null,
+            }),
           },
         ],
       };

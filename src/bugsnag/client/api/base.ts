@@ -31,6 +31,16 @@ export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
   return arr.map(obj => pickFields<T>(obj, keys));
 }
 
+// Utility to extract next URL path from Link header
+export function getNextUrlPathFromHeader(headers: Headers, basePath: string) {
+  if (!headers) return null;
+  const link = headers.get("link") || headers.get("Link");
+  if (!link) return null;
+  const match = link.match(/<([^>]+)>;\s*rel="next"/)?.[1];
+  if (!match) return null;
+  return match.replace(basePath, "");
+}
+
 export class BaseAPI {
   protected configuration: Configuration;
   protected filterFields: string[];
@@ -58,11 +68,11 @@ export class BaseAPI {
     };
     const url = options.url.startsWith('http') ? options.url : `${this.configuration.basePath || ''}${options.url}`;
     let results: T[] = [];
-    let nextUrl: string | undefined = url;
+    let nextUrl: string | null = url;
     let apiResponse: ApiResponse<T>
     do {
       const response: Response = await fetch(nextUrl!, fetchOptions);
-      if (!response.ok) {
+      if (!response.ok && response.status !== 429) { // 429 is handled separately
           const errorText = await response.text();
           throw new Error(`Request failed with status ${response.status}: ${errorText}`);
       }
@@ -71,17 +81,19 @@ export class BaseAPI {
         status: response.status,
         headers: response.headers
       }
+      
+      // Just to make sure the server handles rate limiting properly
+      if (response.status === 429) { 
+        const retryAfter = response.headers.get('Retry-After')!; // According to spec, this header is present
+        const waitTime = Number(retryAfter) * 1000;
+        await new Promise(r => setTimeout(r, waitTime));
+        continue; // Retry the request
+      }
 
       const data: T = await response.json();
       if (paginate) {
         results = results.concat(data);
-        const link: string | null = response.headers.get('Link');
-        if (link) {
-          const match: RegExpMatchArray | null = link.match(/<([^>]+)>;\s*rel="next"/);
-          nextUrl = match ? match[1] : undefined;
-        } else {
-          nextUrl = undefined;
-        }
+        nextUrl = getNextUrlPathFromHeader(response.headers, this.configuration.basePath!);
       } else {
         apiResponse.body = data;
       }

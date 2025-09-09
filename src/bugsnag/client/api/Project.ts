@@ -106,6 +106,7 @@ export interface ProjectCreateRequest {
 // Builds
 export interface ListBuildsOptions {
   release_stage?: string;
+  next_url?: string;
 }
 
 export interface SourceControl {
@@ -161,6 +162,7 @@ export type BuildResponseAny = BuildResponse | BuildSummaryResponse;
 export interface ListReleasesOptions {
   release_stage_name: string;
   visible_only: boolean;
+  next_url?: string;
 }
 
 export interface ReleaseSummaryResponse {
@@ -327,7 +329,7 @@ export class ProjectAPI extends BaseAPI {
    * @returns A promise that resolves to an array of `ListReleasesResponse` objects.
    */
   async listBuilds(projectId: string, opts: ListBuildsOptions) {
-    const url = `/projects/${projectId}/releases${opts.release_stage ? `?release_stage=${opts.release_stage}` : ""}`;
+    const url = opts.next_url ?? `/projects/${projectId}/releases${opts.release_stage ? `?release_stage=${opts.release_stage}` : ""}`;
     const response = await this.request<BuildSummaryResponse[]>({
       method: "GET",
       url,
@@ -362,7 +364,7 @@ export class ProjectAPI extends BaseAPI {
    * @returns A promise that resolves to an array of `ReleaseSummaryResponse` objects.
    */
   async listReleases(projectId: string, opts: ListReleasesOptions) {
-    const url = `/projects/${projectId}/release_groups?release_stage_name=${opts.release_stage_name}&visible_only=${opts.visible_only}&top_only=true`
+    const url = opts.next_url ?? `/projects/${projectId}/release_groups?release_stage_name=${opts.release_stage_name}&visible_only=${opts.visible_only}&top_only=true`
     const response = await this.request<ReleaseSummaryResponse[]>({
       method: "GET",
       url
@@ -399,6 +401,6 @@ export class ProjectAPI extends BaseAPI {
     return await this.request<BuildResponse[]>({
       method: "GET",
       url,
-    });
+    }, true);
   }
 }
