@@ -434,7 +434,7 @@ describe('BugsnagClient', () => {
       await client.initialize();
 
       expect(mockCurrentUserAPI.listUserOrganizations).toHaveBeenCalledOnce();
-      expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', { paginate: true });
+      expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1');
       expect(mockCache.set).toHaveBeenCalledWith('bugsnag_org', mockOrg);
       expect(mockCache.set).toHaveBeenCalledWith('bugsnag_projects', mockProjects);
     });
@@ -525,7 +525,7 @@ describe('BugsnagClient', () => {
 
         const result = await client.getProjects();
 
-        expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1', { paginate: true });
+        expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith('org-1');
         expect(mockCache.set).toHaveBeenCalledWith('bugsnag_projects', mockProjects);
         expect(result).toEqual(mockProjects);
       });
@@ -543,7 +543,7 @@ describe('BugsnagClient', () => {
     });
 
     describe("getBuilds", () => {
-      it("should return builds from API when not cached", async () => {
+      it("should return builds from API", async () => {
         const mockBuilds = [
           {
             id: "rel-1",
@@ -575,60 +575,25 @@ describe('BugsnagClient', () => {
           stability_target_type: "user",
         }));
 
-        // Mock cache to return null first to simulate no cached data
-        mockCache.get.mockReturnValueOnce(null);
         mockProjectAPI.listBuilds.mockResolvedValue({
           body: mockBuilds,
+          headers: new Headers(),
+          status: 200
         });
 
         const result = await client.listBuilds("proj-1", {
           release_stage: "production",
         });
 
-        expect(mockCache.get).toHaveBeenCalledWith(
-          "bugsnag_builds_proj-1"
-        );
         expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
           "proj-1",
           { release_stage: "production" }
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_builds_proj-1",
-          enhancedBuilds,
-          300
-        );
-        expect(result).toEqual(enhancedBuilds);
-      });
-
-      it("should return cached builds when available", async () => {
-        const mockBuilds = [
-          {
-            id: "rel-1",
-            release_time: "2023-01-01T00:00:00Z",
-            app_version: "1.0.0",
-            session_stability: "90.00%",
-            user_stability: "90.00%",
-          },
-        ];
-
-        // Mock cache to return builds
-        mockCache.get.mockReturnValueOnce(mockBuilds);
-
-        const result = await client.listBuilds("proj-1", {
-          release_stage: "production",
-        });
-
-        expect(mockCache.get).toHaveBeenCalledWith(
-          "bugsnag_builds_proj-1"
-        );
-        expect(mockProjectAPI.listBuilds).not.toHaveBeenCalled();
-        expect(result).toEqual(mockBuilds);
+        expect(result).toEqual({ builds: enhancedBuilds, nextUrl: null });
       });
 
       it("should return empty array when no builds found", async () => {
-        // Mock cache to return null to simulate no cached data
-        mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.listBuilds.mockResolvedValue({ body: null });
+        mockProjectAPI.listBuilds.mockResolvedValue({ body: null, headers: new Headers(), status: 200 });
 
         const result = await client.listBuilds("proj-1", {});
 
@@ -636,19 +601,14 @@ describe('BugsnagClient', () => {
           "proj-1",
           {}
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_builds_proj-1",
-          [],
-          300
-        );
-        expect(result).toEqual([]);
+        expect(result).toEqual({ builds: [], nextUrl: null });
       });
 
       it("should construct correct URL with build stage", async () => {
-        // Mock cache to return null to simulate no cached data
-        mockCache.get.mockReturnValueOnce(null);
         mockProjectAPI.listBuilds.mockImplementation(() => ({
           body: [],
+          headers: new Headers(),
+          status: 200
         }));
 
         await client.listBuilds("proj-1", {
@@ -659,6 +619,68 @@ describe('BugsnagClient', () => {
         expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
           "proj-1",
           { release_stage: "staging" }
+        );
+      });
+      
+      it("should handle pagination with next URL", async () => {
+        const mockBuilds = [
+          {
+            id: "rel-1",
+            release_time: "2023-01-01T00:00:00Z",
+            app_version: "1.0.0",
+            release_stage: { name: "production" },
+            errors_introduced_count: 5,
+            errors_seen_count: 10,
+            total_sessions_count: 100,
+            unhandled_sessions_count: 10,
+            accumulative_daily_users_seen: 50,
+            accumulative_daily_users_with_unhandled: 5,
+          },
+        ];
+
+        const enhancedBuilds = mockBuilds.map((build) => ({
+          ...build,
+          session_stability: 0.9,
+          user_stability: 0.9,
+          target_stability: 0.995,
+          critical_stability: 0.85,
+          meets_target_stability: false,
+          meets_critical_stability: true,
+          stability_target_type: "user",
+        }));
+        
+        // Create headers with Link for pagination
+        const headers = new Headers();
+        headers.append('Link', '<https://api.bugsnag.com/projects/proj-1/releases?offset=30&per_page=30>; rel="next"');
+        
+        mockProjectAPI.listBuilds.mockResolvedValue({
+          body: mockBuilds,
+          headers,
+          status: 200
+        });
+
+        const result = await client.listBuilds("proj-1", {});
+
+        expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith("proj-1", {});
+        expect(result.builds).toEqual(enhancedBuilds);
+        expect(result.nextUrl).toBe('/projects/proj-1/releases?offset=30&per_page=30');
+      });
+      
+      it("should pass next_url parameter to ProjectAPI", async () => {
+        mockProjectAPI.listBuilds.mockImplementation(() => ({
+          body: [],
+          headers: new Headers(),
+          status: 200
+        }));
+
+        const nextUrl = '/projects/proj-1/releases?offset=30&per_page=30';
+        await client.listBuilds("proj-1", {
+          next_url: nextUrl
+        });
+
+        expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith(
+          "proj-1",
+          { next_url: nextUrl }
         );
       });
     });
@@ -948,7 +970,7 @@ describe('BugsnagClient', () => {
     });
 
     describe("listReleases", () => {
-      it("should return releases from API when not cached", async () => {
+      it("should return releases from API", async () => {
         const mockReleases = [
           {
             id: "rel-group-1",
@@ -977,10 +999,10 @@ describe('BugsnagClient', () => {
           stability_target_type: "user",
         }));
 
-        // Mock cache to return null first to simulate no cached data
-        mockCache.get.mockReturnValueOnce(null);
         mockProjectAPI.listReleases.mockResolvedValue({
           body: mockReleases,
+          headers: new Headers(),
+          status: 200
         });
 
         const result = await client.listReleases("proj-1", {
@@ -988,51 +1010,15 @@ describe('BugsnagClient', () => {
           visible_only: true,
         });
 
-        expect(mockCache.get).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1"
-        );
         expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
           "proj-1",
           { release_stage_name: "production", visible_only: true }
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
-          enhancedReleases,
-          300
-        );
-        expect(result).toEqual(enhancedReleases);
-      });
-
-      it("should return cached releases when available", async () => {
-        const mockReleases = [
-          {
-            id: "rel-group-1",
-            release_stage_name: "production",
-            app_version: "1.0.0",
-            session_stability: 0.9,
-            user_stability: 0.9,
-          },
-        ];
-
-        // Mock cache to return releases
-        mockCache.get.mockReturnValueOnce(mockReleases);
-
-        const result = await client.listReleases("proj-1", {
-          release_stage_name: "production",
-          visible_only: true,
-        });
-
-        expect(mockCache.get).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1"
-        );
-        expect(mockProjectAPI.listReleases).not.toHaveBeenCalled();
-        expect(result).toEqual(mockReleases);
+        expect(result).toEqual({ releases: enhancedReleases, nextUrl: null });
       });
 
       it("should return empty array when no releases found", async () => {
-        // Mock cache to return null to simulate no cached data
-        mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.listReleases.mockResolvedValue({ body: null });
+        mockProjectAPI.listReleases.mockResolvedValue({ body: null, headers: new Headers(), status: 200 });
 
         const result = await client.listReleases("proj-1", {
           release_stage_name: "production",
@@ -1043,19 +1029,14 @@ describe('BugsnagClient', () => {
           "proj-1",
           { release_stage_name: "production", visible_only: true }
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
-          [],
-          300
-        );
-        expect(result).toEqual([]);
+        expect(result).toEqual({ releases: [], nextUrl: null });
       });
 
       it("should correctly pass release stage and visibility parameters", async () => {
-        // Mock cache to return null to simulate no cached data
-        mockCache.get.mockReturnValueOnce(null);
         mockProjectAPI.listReleases.mockImplementation(() => ({
           body: [],
+          headers: new Headers(),
+          status: 200
         }));
 
         await client.listReleases("proj-1", {
@@ -1066,6 +1047,74 @@ describe('BugsnagClient', () => {
         expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
           "proj-1",
           { release_stage_name: "staging", visible_only: false }
+        );
+      });
+      
+      it("should handle pagination with next URL in listReleases", async () => {
+        const mockReleases = [
+          {
+            id: "rel-group-1",
+            release_stage_name: "production",
+            app_version: "1.0.0",
+            first_released_at: "2023-01-01T00:00:00Z",
+            first_release_id: "build-1",
+            releases_count: 2,
+            visible: true,
+            total_sessions_count: 100,
+            unhandled_sessions_count: 10,
+            sessions_count_in_last_24h: 20,
+            accumulative_daily_users_seen: 50,
+            accumulative_daily_users_with_unhandled: 5,
+          },
+        ];
+
+        const enhancedReleases = mockReleases.map((release) => ({
+          ...release,
+          session_stability: 0.9,
+          user_stability: 0.9,
+          target_stability: 0.995,
+          critical_stability: 0.85,
+          meets_target_stability: false,
+          meets_critical_stability: true,
+          stability_target_type: "user",
+        }));
+        
+        // Create headers with Link for pagination
+        const headers = new Headers();
+        headers.append('Link', '<https://api.bugsnag.com/projects/proj-1/release_groups?offset=30&per_page=30>; rel="next"');
+        
+        mockProjectAPI.listReleases.mockResolvedValue({
+          body: mockReleases,
+          headers,
+          status: 200
+        });
+
+        const result = await client.listReleases("proj-1", {
+          release_stage_name: "production",
+          visible_only: true
+        });
+
+        expect(result.releases).toEqual(enhancedReleases);
+        expect(result.nextUrl).toBe('/projects/proj-1/release_groups?offset=30&per_page=30');
+      });
+      
+      it("should pass next_url parameter to ProjectAPI in listReleases", async () => {
+        mockProjectAPI.listReleases.mockImplementation(() => ({
+          body: [],
+          headers: new Headers(),
+          status: 200
+        }));
+
+        const nextUrl = '/projects/proj-1/release_groups?offset=30&per_page=30';
+        await client.listReleases("proj-1", {
+          release_stage_name: "production",
+          visible_only: true,
+          next_url: nextUrl
+        });
+
+        expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
+          "proj-1",
+          { release_stage_name: "production", visible_only: true, next_url: nextUrl }
         );
       });
     });
@@ -1267,6 +1316,8 @@ describe('BugsnagClient', () => {
         mockCache.get.mockReturnValueOnce(null);
         mockProjectAPI.listBuildsInRelease.mockResolvedValue({
           body: mockBuildsInRelease,
+          headers: new Headers(),
+          status: 200
         });
 
         const result = await client.listBuildsInRelease("rel-group-1");
@@ -1309,7 +1360,7 @@ describe('BugsnagClient', () => {
       it("should return empty array when no builds in release found", async () => {
         // Mock cache to return null to simulate no cached data
         mockCache.get.mockReturnValueOnce(null);
-        mockProjectAPI.listBuildsInRelease.mockResolvedValue({ body: null });
+        mockProjectAPI.listBuildsInRelease.mockResolvedValue({ body: null, headers: new Headers(), status: 200 });
 
         const result = await client.listBuildsInRelease("rel-group-1");
 
@@ -1585,6 +1636,7 @@ describe('BugsnagClient', () => {
         const mockEvent = { id: 'event-1', project_id: 'proj-1' };
 
         mockCache.get.mockReturnValue(mockProjects);
+
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1792,10 +1844,8 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
         }));
 
-        // First get for the project, second for cached builds (return null to call API)
-        mockCache.get
-          .mockReturnValueOnce(mockProject)
-          .mockReturnValueOnce(null);
+        // Mock project cache to return the project
+        mockCache.get.mockReturnValueOnce(mockProject);
         mockProjectAPI.listBuilds.mockResolvedValue({
           body: mockBuilds,
         });
@@ -1813,21 +1863,16 @@ describe('BugsnagClient', () => {
           "proj-1",
           { release_stage: "production" }
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_builds_proj-1",
-          enhancedBuilds,
-          300
-        );
         expect(result.content[0].text).toBe(
-          JSON.stringify(enhancedBuilds)
+          JSON.stringify({ builds: enhancedBuilds, next: null })
         );
-            });
+      });
 
       it("should list builds with explicit project ID", async () => {
         const mockProjects = [
           { id: "proj-1", name: "Project 1" },
           { id: "proj-2", name: "Project 2" },
-        ];
+        ];        
         const mockBuilds = [
           {
             id: "rel-1",
@@ -1852,10 +1897,8 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
         }));
 
-        // First get for projects, second for cached builds (return null to call API)
-        mockCache.get
-          .mockReturnValueOnce(mockProjects)
-          .mockReturnValueOnce(null);
+        // Mock projects cache to return the projects list
+        mockCache.get.mockReturnValueOnce(mockProjects);
         mockProjectAPI.listBuilds.mockResolvedValue({
           body: mockBuilds,
         });
@@ -1874,23 +1917,16 @@ describe('BugsnagClient', () => {
           "proj-1",
           { release_stage: "staging" }
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_builds_proj-1",
-          enhancedBuilds,
-          300
-        );
         expect(result.content[0].text).toBe(
-          JSON.stringify(enhancedBuilds)
+          JSON.stringify({ builds: enhancedBuilds, next: null})
         );
       });
 
       it("should handle empty builds list", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
 
-        // First get for the project, second for cached builds (return null to call API)
-        mockCache.get
-          .mockReturnValueOnce(mockProject)
-          .mockReturnValueOnce(null);
+        // Mock project cache to return the project
+        mockCache.get.mockReturnValueOnce(mockProject);
         mockProjectAPI.listBuilds.mockResolvedValue({ body: [] });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1904,12 +1940,7 @@ describe('BugsnagClient', () => {
           "proj-1",
           {}
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_builds_proj-1",
-          [],
-          300
-        );
-        expect(result.content[0].text).toBe(JSON.stringify([]));
+        expect(result.content[0].text).toBe(JSON.stringify({ builds: [], next: null }));
       });
 
       it("should throw error when no project ID available", async () => {
@@ -1991,8 +2022,7 @@ describe('BugsnagClient', () => {
         const mockProjects = [
           { id: "proj-1", name: "Project 1" },
           { id: "proj-2", name: "Project 2" },
-        ];
-        const mockBuild = {
+        ];        const mockBuild = {
           id: "rel-1",
           release_time: "2023-01-01T00:00:00Z",
           app_version: "1.0.0",
@@ -2122,10 +2152,8 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
         }));
 
-        // First get for the project, second for cached releases (return null to call API)
-        mockCache.get
-          .mockReturnValueOnce(mockProject)
-          .mockReturnValueOnce(null);
+        // Mock project cache to return the project
+        mockCache.get.mockReturnValueOnce(mockProject);
         mockProjectAPI.listReleases.mockResolvedValue({
           body: mockReleases,
         });
@@ -2142,15 +2170,10 @@ describe('BugsnagClient', () => {
 
         expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
           "proj-1",
-          { release_stage_name: "production", visible_only: true }
-        );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
-          enhancedReleases,
-          300
+          { release_stage_name: "production", visible_only: true,next_url: null }
         );
         expect(result.content[0].text).toBe(
-          JSON.stringify(enhancedReleases)
+          JSON.stringify({ releases: enhancedReleases, next: null })
         );
       });
 
@@ -2182,10 +2205,8 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
         }));
 
-        // First get for projects, second for cached releases (return null to call API)
-        mockCache.get
-          .mockReturnValueOnce(mockProjects)
-          .mockReturnValueOnce(null);
+        // Mock projects cache to return the projects list
+        mockCache.get.mockReturnValueOnce(mockProjects);
         mockProjectAPI.listReleases.mockResolvedValue({
           body: mockReleases,
         });
@@ -2203,25 +2224,18 @@ describe('BugsnagClient', () => {
 
         expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
           "proj-2",
-          { release_stage_name: "staging", visible_only: false }
-        );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-2",
-          enhancedReleases,
-          300
+          { release_stage_name: "staging", visible_only: false, next_url: null }
         );
         expect(result.content[0].text).toBe(
-          JSON.stringify(enhancedReleases)
+          JSON.stringify({ releases: enhancedReleases, next: null })
         );
       });
 
       it("should handle empty releases list", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
 
-        // First get for the project, second for cached releases (return null to call API)
-        mockCache.get
-          .mockReturnValueOnce(mockProject)
-          .mockReturnValueOnce(null);
+        // Mock project cache to return the project
+        mockCache.get.mockReturnValueOnce(mockProject);
         mockProjectAPI.listReleases.mockResolvedValue({ body: [] });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2236,14 +2250,9 @@ describe('BugsnagClient', () => {
 
         expect(mockProjectAPI.listReleases).toHaveBeenCalledWith(
           "proj-1",
-          { release_stage_name: "production", visible_only: true }
+          { release_stage_name: "production", visible_only: true, next_url: null }
         );
-        expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_releases_proj-1",
-          [],
-          300
-        );
-        expect(result.content[0].text).toBe(JSON.stringify([]));
+        expect(result.content[0].text).toBe(JSON.stringify({ releases: [], next: null }));
       });
 
       it("should throw error when no project ID available", async () => {
@@ -2551,9 +2560,10 @@ describe('BugsnagClient', () => {
       });
 
       it('should update error successfully with explicit project ID', async () => {
-        const mockProject = { id: 'proj-1', name: 'Project 1' };
-        const mockProjects = [mockProject];
-
+        const mockProjects = [
+          { id: "proj-1", name: "Project 1" },
+          { id: "proj-2", name: "Project 2" },
+        ];
         mockCache.get.mockReturnValue(mockProjects);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 204 });
 
@@ -2705,9 +2715,9 @@ describe('BugsnagClient', () => {
       });
 
       it('should throw error when project ID not found', async () => {
-        const mockProjects = [{ id: 'proj-1', name: 'Project 1' }];
+        const mockOrg = { id: 'org-1', name: 'Org 1', slug: 'org-1' };
 
-        mockCache.get.mockReturnValue(mockProjects);
+        mockCache.get.mockReturnValueOnce(null).mockReturnValueOnce(mockOrg)
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
