@@ -218,7 +218,7 @@ export class PactflowClient implements Client {
 
         return (await response.json()) as CanIDeployResponse;
       } catch (error) {
-        console.log(`[CanIDeploy] Unexpected error: ${error}\n`);
+        console.error(`[CanIDeploy] Unexpected error: ${error}\n`);
         throw error;
       }
     }
@@ -290,7 +290,7 @@ export class PactflowClient implements Client {
 
         return (await response.json()) as MatrixResponse;
       } catch (error) {
-        console.log("[GetMatrix] Unexpected error:", error);
+        console.error("[GetMatrix] Unexpected error:", error);
         throw error;
       }
     }

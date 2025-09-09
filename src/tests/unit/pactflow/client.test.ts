@@ -1,12 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { PactflowClient } from "../../../pactflow/client.js";
 import * as toolsModule from "../../../pactflow/client/tools.js";
+import createFetchMock from "vitest-fetch-mock";
+
+const fetchMock = createFetchMock(vi);
 
 describe("PactFlowClient", () => {
   let client: PactflowClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fetchMock.enableMocks();
+    fetchMock.resetMocks();
+  });
+
+  afterEach(() => {
+    fetchMock.disableMocks();
   });
 
   describe("constructor", () => {
@@ -103,7 +112,6 @@ describe("PactFlowClient", () => {
   describe("API Methods", () => {
     beforeEach(() => {
       client = new PactflowClient("test-token", "https://example.com", "pactflow");
-      global.fetch = vi.fn();
     });
 
     describe("canIDeploy", () => {
@@ -118,14 +126,11 @@ describe("PactFlowClient", () => {
           summary: { deployable: true, failed: 0 },
         };
 
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValueOnce(mockResponse),
-        });
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
         const result = await client.canIDeploy(mockInput);
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/can-i-deploy?pacticipant=my-service&version=1.0.0&environment=production",
           {
             method: "GET",
@@ -140,10 +145,7 @@ describe("PactFlowClient", () => {
           summary: { deployable: false },
         };
 
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValueOnce(mockResponse),
-        });
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
         const result = await client.canIDeploy(mockInput);
 
@@ -152,11 +154,9 @@ describe("PactFlowClient", () => {
 
       it("should handle HTTP errors correctly", async () => {
         const errorText = "Pacticipant not found";
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: false,
+        fetchMock.mockResponseOnce(errorText, {
           status: 404,
-          statusText: "Not Found",
-          text: vi.fn().mockResolvedValueOnce(errorText),
+          statusText: "Not Found"
         });
 
         await expect(client.canIDeploy(mockInput)).rejects.toThrow(
@@ -171,14 +171,11 @@ describe("PactFlowClient", () => {
           environment: "test/staging",
         };
 
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValueOnce({ summary: { deployable: true } }),
-        });
+        fetchMock.mockResponseOnce(JSON.stringify({ summary: { deployable: true } }));
 
         await client.canIDeploy(inputWithSpecialChars);
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/can-i-deploy?pacticipant=my-service%40special&version=1.0.0-beta%2Bbuild.123&environment=test%2Fstaging",
           {
             method: "GET",
@@ -226,14 +223,11 @@ describe("PactFlowClient", () => {
       };
 
       it("should successfully retrieve matrix with basic parameters", async () => {
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValueOnce(mockMatrixResponse),
-        });
+        fetchMock.mockResponseOnce(JSON.stringify(mockMatrixResponse));
 
         const result = await client.getMatrix(mockMatrixInput);
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/matrix?latestby=cvp&limit=100&q[]pacticipant=Example%20API&q[]version=1.0.0&q[]latest=true",
           {
             method: "GET",
@@ -261,14 +255,11 @@ describe("PactFlowClient", () => {
           ],
         };
 
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValueOnce(mockMatrixResponse),
-        });
+        fetchMock.mockResponseOnce(JSON.stringify(mockMatrixResponse));
 
         await client.getMatrix(multiSelectorInput);
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/matrix?latestby=cvpv&q[]pacticipant=Consumer%20App&q[]branch=main&q[]latest=true&q[]pacticipant=Provider%20API&q[]environment=production&q[]tag=v1.0",
           {
             method: "GET",
@@ -293,14 +284,11 @@ describe("PactFlowClient", () => {
           ],
         };
 
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValueOnce(mockMatrixResponse),
-        });
+        fetchMock.mockResponseOnce(JSON.stringify(mockMatrixResponse));
 
         await client.getMatrix(fullSelectorInput);
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/matrix?limit=50&q[]pacticipant=Full%20Service&q[]version=2.1.0&q[]branch=feature%2Fnew-api&q[]environment=staging&q[]latest=false&q[]tag=beta&q[]mainBranch=true",
           {
             method: "GET",
@@ -318,14 +306,11 @@ describe("PactFlowClient", () => {
           ],
         };
 
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValueOnce(mockMatrixResponse),
-        });
+        fetchMock.mockResponseOnce(JSON.stringify(mockMatrixResponse));
 
         await client.getMatrix(minimalInput);
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/matrix?q[]pacticipant=Simple%20Service",
           {
             method: "GET",
@@ -347,14 +332,11 @@ describe("PactFlowClient", () => {
           ],
         };
 
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValueOnce(mockMatrixResponse),
-        });
+        fetchMock.mockResponseOnce(JSON.stringify(mockMatrixResponse));
 
         await client.getMatrix(specialCharsInput);
 
-        expect(global.fetch).toHaveBeenCalledWith(
+        expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/matrix?q[]pacticipant=Service%40Company%2FAPI&q[]version=1.0.0-beta%2Bbuild.123&q[]branch=feature%2Ffix-bug%23123&q[]environment=test%2Fstaging&q[]tag=v1.0.0-rc.1",
           {
             method: "GET",
@@ -365,11 +347,9 @@ describe("PactFlowClient", () => {
 
       it("should handle HTTP 400 error with meaningful message", async () => {
         const errorText = "Invalid query parameters";
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: false,
+        fetchMock.mockResponseOnce(errorText, {
           status: 400,
-          statusText: "Bad Request",
-          text: vi.fn().mockResolvedValueOnce(errorText),
+          statusText: "Bad Request"
         });
 
         await expect(client.getMatrix(mockMatrixInput)).rejects.toThrow(
@@ -379,11 +359,9 @@ describe("PactFlowClient", () => {
 
       it("should handle HTTP 404 error when pacticipant not found", async () => {
         const errorText = "Pacticipant not found";
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: false,
+        fetchMock.mockResponseOnce(errorText, {
           status: 404,
-          statusText: "Not Found",
-          text: vi.fn().mockResolvedValueOnce(errorText),
+          statusText: "Not Found"
         });
 
         await expect(client.getMatrix(mockMatrixInput)).rejects.toThrow(
