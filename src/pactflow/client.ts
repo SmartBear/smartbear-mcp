@@ -218,7 +218,7 @@ export class PactflowClient implements Client {
 
         return (await response.json()) as CanIDeployResponse;
       } catch (error) {
-        console.error("[CanIDeploy] Unexpected error:", error);
+        console.log(`[CanIDeploy] Unexpected error: ${error}\n`);
         throw error;
       }
     }
@@ -233,19 +233,21 @@ export class PactflowClient implements Client {
      * @throws Error if the request fails or returns a non-OK response
      */
     async getMatrix(body: MatrixInput): Promise<MatrixResponse> {
-      // Build query parameters manually to get the correct format
+      const { q, latestby, limit } = body;
+
+      // Build query parameters manually to avoid URL encoding of square brackets
       const queryParts: string[] = [];
-      
+
       // Add optional parameters
-      if (body.latestby) {
-        queryParts.push(`latestby=${encodeURIComponent(body.latestby)}`);
+      if (latestby) {
+        queryParts.push(`latestby=${encodeURIComponent(latestby)}`);
       }
-      if (body.limit !== undefined) {
-        queryParts.push(`limit=${body.limit}`);
+      if (limit !== undefined) {
+        queryParts.push(`limit=${limit}`);
       }
 
       // Add the q parameters (pacticipant selectors)
-      body.q.forEach((selector) => {
+      q.forEach((selector) => {
         queryParts.push(`q[]pacticipant=${encodeURIComponent(selector.pacticipant)}`);
 
         if(selector.version){
@@ -270,14 +272,11 @@ export class PactflowClient implements Client {
       });
 
       const url = `${this.baseUrl}/matrix?${queryParts.join('&')}`;
-      
+
       try {
         const response = await fetch(url, {
           method: "GET",
-          headers: {
-            ...this.headers,
-            "Content-Type": "application/hal+json", // Matrix API might expect HAL format
-          },
+          headers: this.headers,
         });
 
         if (!response.ok) {
@@ -291,7 +290,7 @@ export class PactflowClient implements Client {
 
         return (await response.json()) as MatrixResponse;
       } catch (error) {
-        console.error("[GetMatrix] Unexpected error:", error);
+        console.log("[GetMatrix] Unexpected error:", error);
         throw error;
       }
     }
