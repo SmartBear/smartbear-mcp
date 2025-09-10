@@ -11,7 +11,7 @@ import {
   RefineInput,
   StatusResponse
 } from "./client/ai.js";
-import { CanIDeployInput, CanIDeployResponse, ProviderStatesResponse } from "./client/base.js";
+import { CanIDeployInput, CanIDeployResponse, ProviderStatesResponse, MatrixInput, MatrixResponse } from "./client/base.js";
 import { ClientType, TOOLS } from "./client/tools.js";
 
 
@@ -218,7 +218,79 @@ export class PactflowClient implements Client {
 
         return (await response.json()) as CanIDeployResponse;
       } catch (error) {
-        console.error("[CanIDeploy] Unexpected error:", error);
+        console.error(`[CanIDeploy] Unexpected error: ${error}\n`);
+        throw error;
+      }
+    }
+
+    /**
+     * Retrieves the matrix of pact verification results for the specified pacticipants.
+     * This allows you to see which consumer/provider combinations have been verified
+     * and make deployment decisions based on contract test results.
+     *
+     * @param body - Matrix query parameters including pacticipants, versions, environments, etc.
+     * @returns MatrixResponse containing the verification matrix, notices, and summary
+     * @throws Error if the request fails or returns a non-OK response
+     */
+    async getMatrix(body: MatrixInput): Promise<MatrixResponse> {
+      const { q, latestby, limit } = body;
+
+      // Build query parameters manually to avoid URL encoding of square brackets
+      const queryParts: string[] = [];
+
+      // Add optional parameters
+      if (latestby) {
+        queryParts.push(`latestby=${encodeURIComponent(latestby)}`);
+      }
+      if (limit !== undefined) {
+        queryParts.push(`limit=${limit}`);
+      }
+
+      // Add the q parameters (pacticipant selectors)
+      q.forEach((selector) => {
+        queryParts.push(`q[]pacticipant=${encodeURIComponent(selector.pacticipant)}`);
+
+        if(selector.version){
+          queryParts.push(`q[]version=${encodeURIComponent(selector.version)}`);
+        }
+
+        if (selector.branch) {
+          queryParts.push(`q[]branch=${encodeURIComponent(selector.branch)}`);
+        }
+        if (selector.environment) {
+          queryParts.push(`q[]environment=${encodeURIComponent(selector.environment)}`);
+        }
+        if (selector.latest !== undefined) {
+          queryParts.push(`q[]latest=${selector.latest}`);
+        }
+        if (selector.tag) {
+          queryParts.push(`q[]tag=${encodeURIComponent(selector.tag)}`);
+        }
+        if (selector.mainBranch !== undefined) {
+          queryParts.push(`q[]mainBranch=${selector.mainBranch}`);
+        }
+      });
+
+      const url = `${this.baseUrl}/matrix?${queryParts.join('&')}`;
+
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: this.headers,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `Matrix Request Failed - status: ${response.status} ${response.statusText}${
+              errorText ? ` - ${errorText}` : ""
+            }`
+          );
+        }
+
+        return (await response.json()) as MatrixResponse;
+      } catch (error) {
+        console.error("[GetMatrix] Unexpected error:", error);
         throw error;
       }
     }

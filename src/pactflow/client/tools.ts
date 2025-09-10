@@ -16,7 +16,7 @@ import {
   GenerationInputSchema,
   RefineInputSchema
 } from "./ai.js";
-import { CanIDeploySchema } from "./base.js";
+import { CanIDeploySchema, MatrixSchema } from "./base.js";
 
 export type ClientType = "pactflow" | "pact_broker";
 
@@ -65,6 +65,22 @@ export const TOOLS: PactflowToolParams[] = [
     purpose: "To serve as a deployment safety check within the PactBroker and PactFlow ecosystem, leveraging contract testing results to validate whether a specific service / pacticipant version is compatible with all integrated services. This feature prevents unsafe releases, reduces integration risks, and enables teams to confidently automate deployments across environments with a clear, auditable record of verification results.",
     zodSchema: CanIDeploySchema,
     handler: "canIDeploy",
+    clients: ["pactflow", "pact_broker"]
+  },
+  {
+    title: "Matrix",
+    summary: "Retrieve the comprehensive contract verification matrix that shows the relationship between consumer and provider versions, their associated pact files, and verification results stored in the Pact Broker or Pactflow. The matrix provides detailed visibility into which consumer and provider versions have been successfully verified against each other, and highlights failures with detailed information about the cause.",
+    purpose: "The Matrix serves as a powerful tool for teams to understand the state of their contract testing ecosystem. It enables tracking of all interactions between consumer and provider versions over time, with detailed insights into verification successes and failures. This helps teams rapidly identify compatibility issues, understand why specific verifications failed, and make informed decisions about deployments. Matrix offers a more intuitive and consolidated view of the verification status, making it easier to spot trends or problematic versions. Additionally, the Matrix supports complex queries using selectors, and can answer specific 'can-i-deploy' questions, ensuring that only compatible versions are deployed to production environments.",
+    useCases: [
+      "Quickly identify which consumer and provider version combinations have passed or failed verification.",
+      "Diagnose and investigate why a particular consumer-provider verification failed.",
+      "Visualize the overall contract compatibility across two pacticipants / services.",
+      "Perform advanced queries using selectors to understand compatibility within specific branches, environments, or version ranges.",
+      "Support informed deployment decisions by answering 'can I deploy version X of this service to production?'",
+      "Expose contract verification details to non-frequent API users in a more accessible format."
+    ],
+    zodSchema: MatrixSchema,
+    handler: "getMatrix",
     clients: ["pactflow", "pact_broker"]
   }
 ];
