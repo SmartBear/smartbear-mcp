@@ -38,10 +38,10 @@ Thank you for your contributing to SmartBear MCP!
    npm install
    ```
 
-   We also recommend installing [`pre-commit`](https://pre-commit.com/) hooks to automatically run linting and formatting checks before each commit:
+   We also recommend installing [`prek`](https://prek.j178.dev/) git hooks to automatically run linting and formatting checks before each commit:
 
    ```bash
-   pre-commit install
+   prek install
    ```
 
 3. **Verify Setup**
