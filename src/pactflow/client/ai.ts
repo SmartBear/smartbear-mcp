@@ -126,7 +126,7 @@ export const EndpointMatcherSchema = z
         "OpenAPI operation ID to match (e.g., 'getUserById', 'get*'). Supports glob patterns"
       ),
   })
-  .required()
+  .optional()
   .describe(
     "REQUIRED: Matcher to specify which endpoints from the OpenAPI document to generate tests for. At least one matcher field must be provided"
   );
@@ -166,7 +166,8 @@ export const OpenAPIWithMatcherSchema = z
   })
   .describe(
     "If provided, the OpenAPI document which describes the API being tested and is accompanied by a matcher which will be used to identify the interactions in the OpenAPI document which are relevant to the Pact refinement process."
-  ).transform(addOpenAPISpecToSchema);
+  )
+  .transform(addOpenAPISpecToSchema);
 
 export const RefineInputSchema = z.object({
   pactTests: FileInputSchema.describe(
@@ -228,6 +229,8 @@ export const GenerationInputSchema = z.object({
   ),
 });
 
+export const MatcherRecommendationInputSchema = z.array(EndpointMatcherSchema);
+
 // types inferred from schemas
 export type RefineInput = z.infer<typeof RefineInputSchema>;
 export type FileInput = z.infer<typeof FileInputSchema>;
@@ -237,3 +240,6 @@ export type OpenApiWithMatcher = z.infer<typeof OpenAPIWithMatcherSchema>;
 export type GenerationInput = z.infer<typeof GenerationInputSchema>;
 export type RequestResponsePair = z.infer<typeof RequestResponsePairSchema>;
 export type RemoteOpenAPIDocument = z.infer<typeof RemoteOpenAPIDocumentSchema>;
+export type MatcherRecommendations = z.infer<
+  typeof MatcherRecommendationInputSchema
+>;

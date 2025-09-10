@@ -1,4 +1,5 @@
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import { SmartBearMcpServer } from "../common/server.js";
 import {
   Client,
   GetInputFunction,
@@ -9,11 +10,13 @@ import {
   GenerationInput,
   RefineResponse,
   RefineInput,
-  StatusResponse
+  StatusResponse,
 } from "./client/ai.js";
 import { CanIDeployInput, CanIDeployResponse, ProviderStatesResponse, MatrixInput, MatrixResponse } from "./client/base.js";
 import { ClientType, TOOLS } from "./client/tools.js";
-
+import { getOADMatcherRecommendations, getUserMatcherSelection } from "./client/utils.js";
+import { OADMatcherPrompt } from "./client/prompts.js";
+import { z } from "zod";
 
 
 // Tool definitions for PactFlow AI API client
@@ -29,8 +32,9 @@ export class PactflowClient implements Client {
     private readonly aiBaseUrl: string;
     private readonly baseUrl: string;
     private readonly clientType: ClientType;
+    private readonly mcpServer?: SmartBearMcpServer;
 
-    constructor(auth: string | { username: string; password: string }, baseUrl: string, clientType: ClientType) {
+    constructor(auth: string | { username: string; password: string }, baseUrl: string, clientType: ClientType, server?: SmartBearMcpServer) {
       // Set headers based on the type of auth provided
       if (typeof auth === "string") {
         this.headers = {
@@ -49,6 +53,26 @@ export class PactflowClient implements Client {
       this.baseUrl = baseUrl;
       this.aiBaseUrl = `${this.baseUrl}/api/ai`;
       this.clientType = clientType;
+      this.mcpServer = server;
+      server?.registerPrompt(
+        "OpenAPI Matcher recommendations",
+        {
+          argsSchema: { openAPI: z.string() },
+          description: "Get OpenAPI matcher recommendations using sampling",
+          title: "OpenAPI Matcher recommendations",
+        },
+        ({ openAPI }) => ({
+          messages: [
+            {
+                    role: "user",
+                    content: {
+                      type: "text",
+                      text: OADMatcherPrompt.replace("{0}", openAPI),
+                    },
+                  },
+          ]
+        })
+      );
     }
 
     // PactFlow AI client methods
@@ -62,6 +86,12 @@ export class PactflowClient implements Client {
      */
     async generate(toolInput: GenerationInput): Promise<GenerationResponse> {
       // Submit the generation request
+      if(toolInput.openapi?.document && (!toolInput.openapi?.matcher || typeof toolInput.openapi?.matcher === "object" && Object.keys(toolInput.openapi.matcher).length === 0) && this.mcpServer) {
+        const matcherResponse = await getOADMatcherRecommendations(toolInput.openapi.document, this.mcpServer!);
+        const userSelection = await getUserMatcherSelection(matcherResponse, this.mcpServer!);
+        toolInput.openapi.matcher = userSelection;
+      }
+
       const response = await fetch(`${this.aiBaseUrl}/generate`, {
         method: "POST",
         headers: this.headers,

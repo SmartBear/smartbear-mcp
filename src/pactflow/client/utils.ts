@@ -2,10 +2,16 @@ import {
   RemoteOpenAPIDocument,
   RemoteOpenAPIDocumentSchema,
   OpenAPI,
+  MatcherRecommendationInputSchema,
+  MatcherRecommendations,
+  EndpointMatcherSchema,
+  EndpointMatcher
 } from "./ai.js";
 import yaml from "js-yaml";
 // @ts-expect-error missing type declarations
 import Swagger from "swagger-client";
+import { SmartBearMcpServer } from "../../common/server.js";
+import { OADMatcherPrompt } from "./prompts.js";
 
 /**
  * Resolve the OpenAPI specification from the provided input.
@@ -98,4 +104,89 @@ export async function addOpenAPISpecToSchema(inputSchema: any) {
   }
 
   return inputSchema;
+}
+
+/**
+ * Get OpenAPI matcher recommendations using sampling.
+ *
+ * @param openAPI The OpenAPI document to analyze.
+ * @param mcpServer The SmartBear MCP server instance.
+ * @returns A promise that resolves to the matcher recommendations.
+ * @throws Error if unable to parse recommendations.
+ */
+export async function getOADMatcherRecommendations(
+  openAPI: OpenAPI,
+  mcpServer: SmartBearMcpServer
+): Promise<MatcherRecommendations> {
+  const matcherResponse = await mcpServer?.server.createMessage({
+    messages: [
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: OADMatcherPrompt.replace("{0}", JSON.stringify(openAPI)),
+        },
+      },
+    ],
+    maxTokens: 1000,
+  });
+
+  const regex = /```json([\s\S]*?)```/;
+  const match = regex.exec(matcherResponse.content.text as string);
+
+  if (match) {
+    const jsonText = match[1].trim();
+    const parsed = JSON.parse(jsonText);
+    const matcherRecommendations =
+      MatcherRecommendationInputSchema.parse(parsed);
+    return matcherRecommendations;
+  } else {
+    throw new Error(
+      "Unable to parse recommendations please provide OpenAPI matchers manually."
+    );
+  }
+}
+
+
+/**
+ * Get user selection for matcher recommendations.
+ * 
+ * @param recommendations The list of matcher recommendations.
+ * @param mcpServer The SmartBear MCP server instance.
+ * @returns The selected endpoint matcher.
+ */
+export async function getUserMatcherSelection(
+  recommendations: MatcherRecommendations,
+  mcpServer: SmartBearMcpServer
+): Promise<EndpointMatcher> {
+  mcpServer.server.notification({
+    "method": "notifications/message",
+    "params": {
+      "type": "info",
+      "message": `Received ${recommendations.length} matcher recommendations from the AI. Please select one of the recommendations to proceed. recommendations are := ${JSON.stringify(recommendations)}`
+    }
+  });
+
+  const result = await mcpServer?.server.elicitInput({
+    message: `Select one of the generated matchers you would want to use \n\n ${recommendations.map((rec, index) => `\n\nRecommendation ${index + 1}: \n\n\n ${JSON.stringify(rec)}`).join("\n\n")}`,
+    requestedSchema: {
+      type: "object",
+      properties: {
+        generatedMatchers: {
+          type: "string",
+          title: "Generated Matchers",
+          description: "Use the matchers generated for the OpenAPI document",
+          enumNames: recommendations.map(
+            (_, index) => `Recommendation ${index + 1}`
+          ),
+          enum: recommendations.map((rec, _) => JSON.stringify(rec)),
+        },
+      },
+      required: ["generatedMatchers"],
+    },
+  });
+
+  if (result.action === "accept") {
+    return EndpointMatcherSchema.parse(JSON.parse(result.content?.generatedMatchers as string));
+  }
 }
