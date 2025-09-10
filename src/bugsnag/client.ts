@@ -468,7 +468,6 @@ export class BugsnagClient implements Client {
       }
     );
 
-    // Dynamically infer the filters schema from cached project event fields
     register(
       {
         title: "List Project Errors",
@@ -483,7 +482,10 @@ export class BugsnagClient implements Client {
         parameters: [
           {
             name: "filters",
-            type: FilterObjectSchema,
+            type: FilterObjectSchema.default({
+              "event.since": [{ type: "eq", value: "30d" }],
+              "error.status": [{ type: "eq", value: "open" }]
+            }),
             description: "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields",
             required: false,
             examples: [
@@ -500,8 +502,8 @@ export class BugsnagClient implements Client {
           },
           {
             name: "sort",
-            type: z.enum(["first_seen", "last_seen", "events", "users", "unsorted"]),
-            description: "Field to sort the errors by (default: last_seen)",
+            type: z.enum(["first_seen", "last_seen", "events", "users", "unsorted"]).default("last_seen"),
+            description: "Field to sort the errors by",
             required: false,
             examples: ["last_seen"]
           },
@@ -514,7 +516,7 @@ export class BugsnagClient implements Client {
           },
           {
             name: "per_page",
-            type: z.number().min(1).max(100),
+            type: z.number().min(1).max(100).default(30),
             description: "How many results to return per page.",
             required: false,
             examples: ["30", "50", "100"]
@@ -574,6 +576,7 @@ export class BugsnagClient implements Client {
           "Combine multiple filters to narrow results - filters are applied with AND logic",
           "For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates",
           "Common time filters: event.since (from this time), event.before (until this time)",
+          "The 'event.since' filter and 'error.status' filters are always applied and if not specified are set to '30d' and 'open' respectively",
           "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors",
           "This tool returns paged results. The 'count' field indicates the number of results returned in the current page, and the 'total' field indicates the total number of results across all pages.",
           "If the output contains a 'next' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page.",
@@ -594,8 +597,15 @@ export class BugsnagClient implements Client {
           }
         }
 
-        const options: ListProjectErrorsOptions = {};
-        if (args.filters) options.filters = args.filters;
+        const defaultFilters: FilterObject = {
+          "event.since": [{ "type": "eq", "value": "30d" }],
+          "error.status": [{ "type": "eq", "value": "open" }]
+        }
+
+        const options: ListProjectErrorsOptions = {
+          filters: { ...defaultFilters, ...args.filters }
+        };
+
         if (args.sort !== undefined) options.sort = args.sort;
         if (args.direction !== undefined) options.direction = args.direction;
         if (args.per_page !== undefined) options.per_page = args.per_page;

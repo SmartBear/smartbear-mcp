@@ -57,6 +57,10 @@ describe('BugsnagClient', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock implementations to ensure no persistent return values affect tests
+    mockCache.get.mockReset();
+    mockCache.set.mockReset();
+    mockCache.del.mockReset();
     client = new BugsnagClient('test-token');
   });
 
@@ -749,7 +753,18 @@ describe('BugsnagClient', () => {
         }));
       });
 
-      it('should throw error when required arguments missing', async () => {
+      it('should throw error when projectId is not set', async () => {
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls
+          .find((call: any) => call[0].title === 'Get Error')[1];
+
+        await expect(toolHandler({})).rejects.toThrow('No current project found. Please provide a projectId or configure a project API key.');
+      });
+
+      it('should throw error when error ID is not set', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1', slug: 'my-project' };
+        mockCache.get.mockReturnValueOnce(mockProject);
+
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls
           .find((call: any) => call[0].title === 'Get Error')[1];
@@ -810,14 +825,18 @@ describe('BugsnagClient', () => {
     });
 
     describe('list_project_errors tool handler', () => {
-      it('should list project errors with filters', async () => {
+      it('should list project errors with supplied parameters', async () => {
         const mockProject = { id: 'proj-1', name: 'Project 1' };
         const mockEventFields = [
           { display_id: 'error.status', custom: false },
-          { display_id: 'user.email', custom: false }
+          { display_id: 'user.email', custom: false },
+          { display_id: 'event.since', custom: false }
         ];
         const mockErrors = [{ id: 'error-1', message: 'Test error' }];
-        const filters = { 'error.status': [{ type: 'eq' as const, value: 'open' }] };
+        const filters = {
+          'error.status': [{ type: 'eq' as const, value: 'for_review' }],
+          'event.since': [{ type: 'eq', value: '7d' }]
+        };
 
         mockCache.get
           .mockReturnValueOnce(mockProject) // current project
@@ -840,6 +859,42 @@ describe('BugsnagClient', () => {
           total: 1
         };
         expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
+      });
+
+      it('should use default filters when not specified', async () => {
+        const mockProject = { id: 'proj-1', name: 'Project 1' };
+        const mockEventFields = [
+          { display_id: 'error.status', custom: false },
+          { display_id: 'user.email', custom: false },
+          { display_id: 'event.since', custom: false }
+        ];
+        const mockErrors = [{ id: 'error-1', message: 'Test error' }];
+        const defaultFilters = {
+          'error.status': [{ type: 'eq' as const, value: 'open' }],
+          'event.since': [{ type: 'eq', value: '30d' }]
+        };
+
+        mockCache.get
+          .mockReturnValueOnce(mockProject) // current project
+          .mockReturnValueOnce(mockEventFields); // event fields
+        mockErrorAPI.listProjectErrors.mockResolvedValue({
+          body: mockErrors,
+          headers: new Headers({ 'X-Total-Count': '1' })
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls
+          .find((call: any) => call[0].title === 'List Project Errors')[1];
+
+        const defaultFilterResult = await toolHandler({ sort: 'last_seen', direction: 'desc', per_page: 50 });
+
+        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith('proj-1', { filters: defaultFilters, sort: 'last_seen', direction: 'desc', per_page: 50 });
+        const expectedResult = {
+          data: mockErrors,
+          count: 1,
+          total: 1
+        };
+        expect(defaultFilterResult.content[0].text).toBe(JSON.stringify(expectedResult));
       });
 
       it('should validate filter keys against cached event fields', async () => {
