@@ -11,6 +11,7 @@ import {
   RefineResponse,
   RefineInput,
   StatusResponse,
+  Entitlement
 } from "./client/ai.js";
 import {
   CanIDeployInput,
@@ -136,6 +137,39 @@ export class PactflowClient implements Client {
         status_response,
         "Review Pacts"
       );
+    }
+
+    /**
+     * Retrieves AI credits and entitlements information for the current user
+     * and organization.
+     *
+     * @returns Entitlement containing AI credits information, organization
+     *   entitlements, and user entitlements.
+     * @throws Error if the request fails or returns a non-OK response.
+     */
+    async getAICredits(): Promise<Entitlement> {
+      const url = `${this.aiBaseUrl}/entitlement`;
+
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: this.headers,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `PactFlow AI Credits Request Failed - status: ${response.status} ${response.statusText}${
+              errorText ? ` - ${errorText}` : ""
+            }`
+          );
+        }
+
+        return (await response.json()) as Entitlement;
+      } catch (error) {
+        process.stderr.write(`[GetAICredits] Unexpected error: ${error}\n`);
+        throw error;
+      }
     }
 
     async getStatus(

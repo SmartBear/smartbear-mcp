@@ -14,7 +14,7 @@ import { z } from "zod";
 import { ToolParams } from "../../common/types.js";
 import {
   GenerationInputSchema,
-  RefineInputSchema
+  RefineInputSchema,
 } from "./ai.js";
 import { CanIDeploySchema, MatrixSchema } from "./base.js";
 
@@ -85,5 +85,19 @@ export const TOOLS: PactflowToolParams[] = [
     zodSchema: MatrixSchema,
     handler: "getMatrix",
     clients: ["pactflow", "pact_broker"]
+  },
+  {
+    title: "PactFlow AI Credits",
+    summary: "Check PactFlow AI usage status, remaining credits, and eligibility",
+    purpose: "Retrieve the AI feature status for the PactFlow account, including whether AI is enabled, the number of remaining and consumed AI credits, and entitlement or permission issues preventing usage.",
+    useCases: [
+      "Verify if AI functionality is enabled for the account before attempting to use AI-powered features",
+      "Monitor remaining and consumed AI credits to manage usage and avoid unexpected disruptions",
+      "Detect entitlement or permission issues when a user tries to access AI features and guide corrective actions",
+      "Integrate into deployment pipelines to ensure the environment is correctly configured with necessary entitlements and sufficient credits before executing AI-driven tasks",
+      "Fetches usage and entitlement reports for auditing, budgeting, and compliance purposes"
+    ],
+    handler: "getAICredits",
+    clients: ["pactflow"]
   }
 ];
