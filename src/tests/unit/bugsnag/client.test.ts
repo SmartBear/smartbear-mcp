@@ -621,7 +621,7 @@ describe('BugsnagClient', () => {
           { release_stage: "staging" }
         );
       });
-      
+
       it("should handle pagination with next URL", async () => {
         const mockBuilds = [
           {
@@ -652,7 +652,7 @@ describe('BugsnagClient', () => {
         // Create headers with Link for pagination
         const headers = new Headers();
         headers.append('Link', '<https://api.bugsnag.com/projects/proj-1/releases?offset=30&per_page=30>; rel="next"');
-        
+
         mockProjectAPI.listBuilds.mockResolvedValue({
           body: mockBuilds,
           headers,
@@ -665,7 +665,7 @@ describe('BugsnagClient', () => {
         expect(result.builds).toEqual(enhancedBuilds);
         expect(result.nextUrl).toBe('/projects/proj-1/releases?offset=30&per_page=30');
       });
-      
+
       it("should pass next_url parameter to ProjectAPI", async () => {
         mockProjectAPI.listBuilds.mockImplementation(() => ({
           body: [],
@@ -1049,7 +1049,7 @@ describe('BugsnagClient', () => {
           { release_stage_name: "staging", visible_only: false }
         );
       });
-      
+
       it("should handle pagination with next URL in listReleases", async () => {
         const mockReleases = [
           {
@@ -1082,7 +1082,7 @@ describe('BugsnagClient', () => {
         // Create headers with Link for pagination
         const headers = new Headers();
         headers.append('Link', '<https://api.bugsnag.com/projects/proj-1/release_groups?offset=30&per_page=30>; rel="next"');
-        
+
         mockProjectAPI.listReleases.mockResolvedValue({
           body: mockReleases,
           headers,
@@ -1097,7 +1097,7 @@ describe('BugsnagClient', () => {
         expect(result.releases).toEqual(enhancedReleases);
         expect(result.nextUrl).toBe('/projects/proj-1/release_groups?offset=30&per_page=30');
       });
-      
+
       it("should pass next_url parameter to ProjectAPI in listReleases", async () => {
         mockProjectAPI.listReleases.mockImplementation(() => ({
           body: [],
@@ -1446,6 +1446,7 @@ describe('BugsnagClient', () => {
       const registeredTools = registerToolsSpy.mock.calls.map((call: any) => call[0].title);
       expect(registeredTools).toContain('Get Error');
       expect(registeredTools).toContain('Get Event Details');
+      expect(registeredTools).toContain('Get Project');
       expect(registeredTools).toContain('List Project Errors');
       expect(registeredTools).toContain('List Project Event Filters');
       expect(registeredTools).toContain('Update Error');

@@ -71,6 +71,8 @@ export class BaseAPI {
     let nextUrl: string | null = url;
     let apiResponse: ApiResponse<T>
     do {
+      // TODO: Make this smarter
+      nextUrl = nextUrl.startsWith('http') ? nextUrl : `${this.configuration.basePath || ''}${nextUrl}`;
       const response: Response = await fetch(nextUrl!, fetchOptions);
       if (!response.ok && response.status !== 429) { // 429 is handled separately
           const errorText = await response.text();
