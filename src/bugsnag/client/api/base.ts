@@ -73,9 +73,8 @@ export class BaseAPI {
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
     };
-    const url = ensureFullUrl(options.url, this.configuration.basePath!);
     let results: T[] = [];
-    let nextUrl: string | null = url;
+    let nextUrl: string | null = options.url;
     let apiResponse: ApiResponse<T>
     do {
       nextUrl = ensureFullUrl(nextUrl!, this.configuration.basePath!);
