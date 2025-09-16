@@ -542,7 +542,7 @@ describe('BugsnagClient', () => {
       });
     });
 
-    describe("getBuilds", () => {
+    describe("listBuilds", () => {
       it("should return builds from API", async () => {
         const mockBuilds = [
           {
