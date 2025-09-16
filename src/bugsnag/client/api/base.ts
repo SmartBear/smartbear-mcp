@@ -41,6 +41,13 @@ export function getNextUrlPathFromHeader(headers: Headers, basePath: string) {
   return match.replace(basePath, "");
 }
 
+// Ensure URL is absolute
+// The MCP tools exposed use only the path for pagination
+// For making requests, we need to ensure the URL is absolute
+export function ensureFullUrl(url: string, basePath: string) {
+  return url.startsWith('http') ? url : `${basePath}${url}`;
+}
+
 export class BaseAPI {
   protected configuration: Configuration;
   protected filterFields: string[];
@@ -66,13 +73,12 @@ export class BaseAPI {
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
     };
-    const url = options.url.startsWith('http') ? options.url : `${this.configuration.basePath || ''}${options.url}`;
+    const url = ensureFullUrl(options.url, this.configuration.basePath!);
     let results: T[] = [];
     let nextUrl: string | null = url;
     let apiResponse: ApiResponse<T>
     do {
-      // TODO: Make this smarter
-      nextUrl = nextUrl.startsWith('http') ? nextUrl : `${this.configuration.basePath || ''}${nextUrl}`;
+      nextUrl = ensureFullUrl(nextUrl!, this.configuration.basePath!);
       const response: Response = await fetch(nextUrl!, fetchOptions);
       if (!response.ok && response.status !== 429) { // 429 is handled separately
           const errorText = await response.text();

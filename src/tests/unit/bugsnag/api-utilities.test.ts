@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getNextUrlPathFromHeader, pickFields, pickFieldsFromArray } from '../../../bugsnag/client/api/base.js';
+import { getNextUrlPathFromHeader, pickFields, pickFieldsFromArray, ensureFullUrl } from '../../../bugsnag/client/api/base.js';
 
 describe('API Utilities', () => {
   describe('pickFields', () => {
@@ -85,6 +85,44 @@ describe('API Utilities', () => {
         "https://api.bugsnag.com"
       );
       expect(result).toBeNull();
+    });
+  });
+
+  describe("ensureFullUrl", () => {
+    it("should return the original URL if it already starts with http", () => {
+      const url = "https://api.bugsnag.com/projects/12345/errors";
+      const basePath = "https://api.bugsnag.com";
+      
+      const result = ensureFullUrl(url, basePath);
+      
+      expect(result).toBe(url);
+    });
+
+    it("should prepend the base path to a relative URL", () => {
+      const url = "/projects/12345/errors";
+      const basePath = "https://api.bugsnag.com";
+      
+      const result = ensureFullUrl(url, basePath);
+      
+      expect(result).toBe("https://api.bugsnag.com/projects/12345/errors");
+    });
+
+    it("should handle URLs with http protocol", () => {
+      const url = "http://api.bugsnag.com/projects/12345/errors";
+      const basePath = "https://api.bugsnag.com";
+      
+      const result = ensureFullUrl(url, basePath);
+      
+      expect(result).toBe(url);
+    });
+
+    it("should handle empty URL input", () => {
+      const url = "";
+      const basePath = "https://api.bugsnag.com";
+      
+      const result = ensureFullUrl(url, basePath);
+      
+      expect(result).toBe("https://api.bugsnag.com");
     });
   });
 });
