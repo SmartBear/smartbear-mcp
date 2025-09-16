@@ -648,7 +648,7 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
           stability_target_type: "user",
         }));
-        
+
         // Create headers with Link for pagination
         const headers = new Headers();
         headers.append('Link', '<https://api.bugsnag.com/projects/proj-1/releases?offset=30&per_page=30>; rel="next"');
@@ -1078,7 +1078,7 @@ describe('BugsnagClient', () => {
           meets_critical_stability: true,
           stability_target_type: "user",
         }));
-        
+
         // Create headers with Link for pagination
         const headers = new Headers();
         headers.append('Link', '<https://api.bugsnag.com/projects/proj-1/release_groups?offset=30&per_page=30>; rel="next"');
@@ -1872,7 +1872,7 @@ describe('BugsnagClient', () => {
         const mockProjects = [
           { id: "proj-1", name: "Project 1" },
           { id: "proj-2", name: "Project 2" },
-        ];        
+        ];
         const mockBuilds = [
           {
             id: "rel-1",

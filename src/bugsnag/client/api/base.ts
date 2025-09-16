@@ -89,9 +89,9 @@ export class BaseAPI {
         status: response.status,
         headers: response.headers
       }
-      
+
       // Just to make sure the server handles rate limiting properly
-      if (response.status === 429) { 
+      if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After')!; // According to spec, this header is present
         const waitTime = Number(retryAfter) * 1000;
         await new Promise(r => setTimeout(r, waitTime));
