@@ -121,10 +121,9 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
   - Perform advanced queries using selectors to understand compatibility within specific branches or environments
   - Support informed deployment decisions by answering "can I deploy version X of this service to production?"
 
-### PactFlow AI Credits
+### PactFlow AI Status
 
-- Purpose: Retrieve the AI feature status for the PactFlow account, including whether AI is enabled, the number of remaining and consumed AI credits, and entitlement or permission issues preventing usage.
-
+- Purpose: Retrieve the status of AI features for the PactFlow workspace, including whether AI features are enabled, the number of remaining and consumed AI credits, and user-level permissions issues preventing usage.
 
 ## Configuration Notes
 

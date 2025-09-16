@@ -87,7 +87,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow", "pact_broker"]
   },
   {
-    title: "PactFlow AI Credits",
+    title: "PactFlow AI Status",
     summary: "Check PactFlow AI usage status, remaining credits, and eligibility",
     purpose: "Retrieve the AI feature status for the PactFlow account, including whether AI is enabled, the number of remaining and consumed AI credits, and entitlement or permission issues preventing usage.",
     useCases: [
@@ -97,7 +97,7 @@ export const TOOLS: PactflowToolParams[] = [
       "Integrate into deployment pipelines to ensure the environment is correctly configured with necessary entitlements and sufficient credits before executing AI-driven tasks",
       "Fetches usage and entitlement reports for auditing, budgeting, and compliance purposes"
     ],
-    handler: "getAICredits",
+    handler: "getAIStatus",
     clients: ["pactflow"]
   }
 ];

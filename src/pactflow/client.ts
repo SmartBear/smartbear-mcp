@@ -140,14 +140,14 @@ export class PactflowClient implements Client {
     }
 
     /**
-     * Retrieves AI credits and entitlements information for the current user
+     * Retrieves AI status information for the current user
      * and organization.
      *
-     * @returns Entitlement containing AI credits information, organization
+     * @returns Entitlement containing AI status information, organization
      *   entitlements, and user entitlements.
      * @throws Error if the request fails or returns a non-OK response.
      */
-    async getAICredits(): Promise<Entitlement> {
+    async getAIStatus(): Promise<Entitlement> {
       const url = `${this.aiBaseUrl}/entitlement`;
 
       try {
@@ -159,7 +159,7 @@ export class PactflowClient implements Client {
         if (!response.ok) {
           const errorText = await response.text().catch(() => "");
           throw new Error(
-            `PactFlow AI Credits Request Failed - status: ${response.status} ${response.statusText}${
+            `PactFlow AI Status Request Failed - status: ${response.status} ${response.statusText}${
               errorText ? ` - ${errorText}` : ""
             }`
           );
