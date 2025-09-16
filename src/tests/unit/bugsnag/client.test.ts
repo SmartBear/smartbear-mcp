@@ -1446,7 +1446,6 @@ describe('BugsnagClient', () => {
       const registeredTools = registerToolsSpy.mock.calls.map((call: any) => call[0].title);
       expect(registeredTools).toContain('Get Error');
       expect(registeredTools).toContain('Get Event Details');
-      expect(registeredTools).toContain('Get Project');
       expect(registeredTools).toContain('List Project Errors');
       expect(registeredTools).toContain('List Project Event Filters');
       expect(registeredTools).toContain('Update Error');

@@ -891,7 +891,7 @@ export class BugsnagClient implements Client {
           },
           {
             name: "nextUrl",
-            type: z.string().url(),
+            type: z.string(),
             description:
               "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. If provided, other parameters are ignored.",
             required: false,
@@ -1036,7 +1036,7 @@ export class BugsnagClient implements Client {
         },
         {
           name: "nextUrl",
-          type: z.string().url(),
+          type: z.string(),
           description:
             "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. If provided, other parameters are ignored.",
           required: false,
