@@ -2113,7 +2113,8 @@ describe('BugsnagClient', () => {
       });
 
       it("should throw error when no project ID available", async () => {
-        mockCache.get.mockReturnValue(null);
+        mockCache.get
+          .mockReturnValue(null);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2122,7 +2123,7 @@ describe('BugsnagClient', () => {
 
         await expect(
           toolHandler({ buildId: "rel-1" })
-        ).rejects.toThrow("No build for rel-1 found.");
+        ).rejects.toThrow("No current project found. Please provide a projectId or configure a project API key.");
       });
     });
 
