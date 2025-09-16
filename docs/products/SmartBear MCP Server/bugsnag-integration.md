@@ -1,4 +1,4 @@
-![bugsnag.png](./images/embedded/bugsnag.png)
+![BugSnag](https://assets.smartbear.com/m/3945e02cdc983893/original/BugSnag-Repository-Header-Light.svg)
 
 The BugSnag client provides comprehensive error monitoring and debugging capabilities as listed below. Tools for BugSnag require a `BUGSNAG_AUTH_TOKEN`.
 
