@@ -79,7 +79,7 @@ export class BaseAPI {
     do {
       nextUrl = ensureFullUrl(nextUrl!, this.configuration.basePath!);
       const response: Response = await fetch(nextUrl!, fetchOptions);
-      if (!response.ok && response.status !== 429) { // 429 is handled separately
+      if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Request failed with status ${response.status}: ${errorText}`);
       }
@@ -87,14 +87,6 @@ export class BaseAPI {
       apiResponse = {
         status: response.status,
         headers: response.headers
-      }
-
-      // Just to make sure the server handles rate limiting properly
-      if (response.status === 429) {
-        const retryAfter = response.headers.get('Retry-After')!; // According to spec, this header is present
-        const waitTime = Number(retryAfter) * 1000;
-        await new Promise(r => setTimeout(r, waitTime));
-        continue; // Retry the request
       }
 
       const data: T = await response.json();
