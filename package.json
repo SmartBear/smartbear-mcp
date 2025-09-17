@@ -45,7 +45,8 @@
     "@modelcontextprotocol/sdk": "^1.15.0",
     "node-cache": "^5.1.2",
     "swagger-client": "^3.35.6",
-    "zod": "^3"
+    "zod": "^3",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

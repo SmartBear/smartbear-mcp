@@ -24,6 +24,7 @@ export interface PactflowToolParams extends ToolParams {
   handler: string;
   clients: ClientType[];
   formatResponse?: (result: any) => any;
+  enableElicitation?: boolean;
 }
 
 export const TOOLS: PactflowToolParams[] = [
@@ -35,6 +36,7 @@ export const TOOLS: PactflowToolParams[] = [
     zodSchema: GenerationInputSchema,
     handler: "generate",
     clients: ["pactflow"], // ONLY pactflow
+    enableElicitation: true,
   },
   {
     title: "Review Pact Tests",
@@ -42,7 +44,8 @@ export const TOOLS: PactflowToolParams[] = [
     purpose: "Review Pact tests for API interactions",
     zodSchema: RefineInputSchema,
     handler: "review",
-    clients: ["pactflow"]
+    clients: ["pactflow"],
+    enableElicitation: true,
   },
   {
     title: "Get Provider States",

@@ -17,10 +17,15 @@ export class SmartBearMcpServer extends McpServer {
                 capabilities: {
                     resources: { listChanged: true },   // Server supports dynamic resource lists
                     tools: { listChanged: true },       // Server supports dynamic tool lists
+                    sampling:  {},                      // Server supports sampling requests to Host
+                    elicitation: {},                    // Server supports eliciting input from the user
+                    logging: {},                        // Server supports logging messages
+                    prompts: {},                        // Server supports sending prompts to Host
                 },
             },
         );
     }
+
     addClient(client: Client): void {
         client.registerTools(
             (params, cb) => {
@@ -47,6 +52,7 @@ export class SmartBearMcpServer extends McpServer {
                 return this.server.elicitInput(params, options);
             }
         );
+
         if (client.registerResources) {
             client.registerResources((name, path, cb) => {
                 return super.registerResource(
@@ -61,6 +67,12 @@ export class SmartBearMcpServer extends McpServer {
                             throw e;
                         }
                     });
+            });
+        }
+
+        if (client.registerPrompts) {
+            client.registerPrompts((name, config, cb) => {
+                return super.registerPrompt(name, config, cb);
             });
         }
     }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { PactflowClient } from "../../../pactflow/client.js";
-import * as toolsModule from "../../../pactflow/client/tools.js";
+import { PactflowClient } from "../../../pactflow/client";
+import * as toolsModule from "../../../pactflow/client/tools";
 import createFetchMock from "vitest-fetch-mock";
 
 const fetchMock = createFetchMock(vi);
@@ -20,14 +20,14 @@ describe("PactFlowClient", () => {
 
   describe("constructor", () => {
     it("should initialize with correct parameters", () => {
-      client = new PactflowClient("test-token", "https://example.com", "pactflow");
+      client = new PactflowClient("test-token", "https://example.com", "pactflow", vi.fn() as any);
       expect(client).toBeInstanceOf(PactflowClient);
       expect(client["baseUrl"]).toBe("https://example.com");
       expect(client["clientType"]).toBe("pactflow");
     });
 
     it("sets correct headers when client is pactflow", () => {
-      client = new PactflowClient("my-token", "https://example.com", "pactflow");
+      client = new PactflowClient("my-token", "https://example.com", "pactflow", vi.fn() as any);
 
       expect(client["headers"]).toEqual(
         expect.objectContaining({
@@ -41,7 +41,8 @@ describe("PactFlowClient", () => {
       client = new PactflowClient(
         { username: "user", password: "pass" },
         "https://example.com",
-        "pact_broker"
+        "pact_broker",
+        vi.fn() as any
       );
 
       expect(client["headers"]).toEqual(
@@ -81,7 +82,7 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = new PactflowClient("token", "https://example.com", "pactflow");
+      const client = new PactflowClient("token", "https://example.com", "pactflow", vi.fn() as any);
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(1);
@@ -102,7 +103,7 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = new PactflowClient("token", "https://example.com", "pactflow");
+      const client = new PactflowClient("token", "https://example.com", "pactflow", vi.fn() as any);
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).not.toHaveBeenCalled();
@@ -111,7 +112,7 @@ describe("PactFlowClient", () => {
 
   describe("API Methods", () => {
     beforeEach(() => {
-      client = new PactflowClient("test-token", "https://example.com", "pactflow");
+      client = new PactflowClient("test-token", "https://example.com", "pactflow", vi.fn() as any);
     });
 
     describe("canIDeploy", () => {
