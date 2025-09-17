@@ -31,8 +31,128 @@ const PERMITTED_UPDATE_OPERATIONS = [
   "fix",
   "ignore",
   "discard",
-  "undiscard"
+  "undiscard",
+  "snooze"
 ] as const;
+
+// Reopen rules payload
+export type ReopenRules = {
+  reopen_if:
+    | 'n_additional_occurrences'
+    | 'n_additional_users'
+    | 'occurs_after'
+    | string; // fallback for any future values
+  // time-based
+  seconds?: number;
+  additional_occurrences?: number;
+  additional_users?: number;
+};
+
+function parseUserSnoozeInstruction(instruction?: unknown): ReopenRules | null {
+  if (typeof instruction !== 'string') return null;
+  const text = instruction.trim().toLowerCase();
+
+  const m = text.match(/(?:affect|affects|after|over|more than|\+)?\s*(\d+)\s*(?:user|users)\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (!isNaN(n) && n > 0) {
+      return { reopen_if: 'n_additional_users', additional_users: n };
+    }
+  }
+
+  return null;
+}
+
+function parseOccurrencesSnoozeInstruction(instruction?: unknown): ReopenRules | null {
+  if (typeof instruction !== 'string') return null;
+  const text = instruction.trim().toLowerCase();
+
+  const m = text.match(/(?:after|over|more than|\+)?\s*(\d+)\s*(?:occurrence|occurrences|event|events)\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (!isNaN(n) && n > 0) {
+      return { reopen_if: 'n_additional_occurrences', additional_occurrences: n };
+    }
+  }
+
+  return null;
+}
+
+function parseTimeSnoozeInstruction(instruction?: unknown): ReopenRules | null {
+  if (typeof instruction !== 'string') return null;
+  const text = instruction.trim().toLowerCase();
+
+  let m = text.match(/(?:for|in)\s+(\d+)\s*(hour|hours|hr|hrs)\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (!isNaN(n) && n >= 0) {
+      return { reopen_if: 'occurs_after', seconds: n * 60 * 60 };
+    }
+  }
+  m = text.match(/(?:for|in)\s+(\d+)\s*(minute|minutes|min|mins)\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (!isNaN(n) && n >= 0) {
+      return { reopen_if: 'occurs_after', seconds: n * 60 };
+    }
+  }
+  m = text.match(/(?:for|in)\s+(\d+)\s*(second|seconds|sec|secs)\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (!isNaN(n) && n >= 0) {
+      return { reopen_if: 'occurs_after', seconds: n };
+    }
+  }
+
+  // Duration-based: days
+  m = text.match(/(?:for|in)\s+(\d+)\s*(day|days|d)\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (!isNaN(n) && n >= 0) {
+      return { reopen_if: 'occurs_after', seconds: n * 24 * 60 * 60 };
+    }
+  }
+
+  // Duration-based: weeks
+  m = text.match(/(?:for|in)\s+(\d+)\s*(week|weeks|wk|wks|w)\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (!isNaN(n) && n >= 0) {
+      return { reopen_if: 'occurs_after', seconds: n * 7 * 24 * 60 * 60};
+    }
+  }
+
+  // Duration-based: months (approximate as 30 days)
+  m = text.match(/(?:for|in)\s+(\d+)\s*(month|months|mo|mos)\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (!isNaN(n) && n >= 0) {
+      return { reopen_if: 'occurs_after', seconds: n * 30 * 24 * 60 * 60};
+    }
+  }
+
+  return null;
+}
+
+// Parse simple natural-language snooze instructions into ReopenRules
+function parseSnoozeInstruction(instruction?: unknown): ReopenRules | null {
+  if (typeof instruction !== 'string') return null;
+  const text = instruction.trim().toLowerCase();
+
+  // Users-based: "affects more than 10 users", "after 5 users", "+7 users"
+  const userBased = parseUserSnoozeInstruction(text);
+  if (userBased) return userBased;
+
+  // Occurrence-based: "after 12 occurrences", "+3 occurrences"
+  const occurrenceBased = parseOccurrencesSnoozeInstruction(text);
+  if (occurrenceBased) return occurrenceBased;
+
+  // time based snooze instructions
+  const timeBased = parseTimeSnoozeInstruction(text);
+  if (timeBased) return timeBased;
+
+  return null;
+}
 
 // Type definitions for tool arguments
 export interface ProjectArgs {
@@ -683,7 +803,18 @@ export class BugsnagClient implements Client {
             type: z.enum(PERMITTED_UPDATE_OPERATIONS),
             description: "The operation to apply to the error",
             required: true,
-            examples: ["fix", "open", "ignore", "discard", "undiscard"]
+            examples: ["fix", "open", "ignore", "discard", "undiscard", "snooze"]
+          },
+          {
+            name: "instruction",
+            type: z.string(),
+            description: "Natural language instruction for snoozing, e.g. 'snooze the error for 2 hours' or 'reopen if it affects more than 10 users'",
+            required: false,
+            examples: [
+              "snooze the error for 2 hours",
+              "snooze and reopen if it affects more than 10 users",
+              "snooze and reopen if it occurs more than 100 times",
+            ]
           }
         ],
         examples: [
@@ -703,7 +834,7 @@ export class BugsnagClient implements Client {
         idempotent: false,
       },
       async (args: any, _extra: any) => {
-        const { errorId, operation } = args;
+        const { errorId, operation, instruction } = args;
         const project = await this.getInputProject(args.projectId);
 
         let severity = undefined;
@@ -729,7 +860,129 @@ export class BugsnagClient implements Client {
           }
         }
 
-        const result = await this.updateError(project.id!, errorId, operation, { severity });
+        let reopen_rules: ReopenRules | undefined = undefined;
+        if (operation === 'snooze') {
+          // Try to parse a natural-language instruction first
+          const parsed = parseSnoozeInstruction(instruction);
+          if (parsed) {
+            reopen_rules = parsed;
+          }
+          if (!reopen_rules) {
+            // Ask the user how to snooze the error
+            const result = await getInput({
+              message: "How should this error be snoozed? e.g for 2 hours, if it affects 10 people, or if it occurs 100 times",
+              requestedSchema: {
+                type: "object",
+                properties: {
+                  condition: {
+                    type: "string",
+                    description: "The condition under which the error should reopen"
+                  }
+                }
+              }
+            });
+
+            if (result.action === 'accept' && result.content && result.content.condition) {
+              const parsed = parseSnoozeInstruction(result.content.condition);
+              if (parsed) {
+                reopen_rules = parsed;
+              }
+            }
+
+            if (!reopen_rules) {
+              // If still not parsed, ask more specific questions
+              const result = await getInput({
+                message: "Which condition should be used to reopen the error?",
+                requestedSchema: {
+                  type: "object",
+                  properties: {
+                    condition: { 
+                      type: "string", 
+                      enum: [
+                        "after X time",
+                        "after X occurrences",
+                        "affects X users",
+                      ], 
+                      description: "Condition under which the error should reopen",
+                    }
+                  }
+                }
+              });
+
+              if (result.action === 'accept' && result.content && result.content.condition) {
+                if (result.content.condition === 'after X time') {
+                  const result = await getInput({
+                    message: "After how much time should the error reopen? You can specify in hours, days, weeks or months. E.g. '2 hours', '3 days', '1 week', '1 month'",
+                    requestedSchema: {
+                      type: "object",
+                      properties: {
+                        time: {
+                          type: "string",
+                          description: "The time period after which to reopen the error"
+                        }
+                      }
+                    }
+                  });
+
+                  if (result.action === 'accept' && result.content && result.content.time) {
+                    const parsed = parseTimeSnoozeInstruction("in " + result.content.time);
+                    if (parsed) {
+                      reopen_rules = parsed;
+                    }
+                  }
+
+                } else if (result.content.condition === 'after X occurrences') {
+                  const result = await getInput({
+                    message: "After how many occurrences should the error reopen? E.g. '100 times', '500 times'",
+                    requestedSchema: {
+                      type: "object",
+                      properties: {
+                        occurrences: {
+                          type: "string",
+                          description: "The number of occurrences after which to reopen the error"
+                        }
+                      }
+                    }
+                  });
+
+                  if (result.action === 'accept' && result.content && result.content.occurrences) {
+                    const parsed = parseOccurrencesSnoozeInstruction("after " + result.content.occurrences);
+                    if (parsed) {
+                      reopen_rules = parsed;
+                    }
+                  }
+
+                } else if (result.content.condition === 'affects X users') {
+                  const result = await getInput({
+                    message: "After how many users should the error reopen? E.g. '100 users', '500 users'",
+                    requestedSchema: {
+                      type: "object",
+                      properties: {
+                        users: {
+                          type: "string",
+                          description: "The number of users after which to reopen the error"
+                        }
+                      }
+                    }
+                  });
+
+                  if (result.action === 'accept' && result.content && result.content.users) {
+                    const parsed = parseUserSnoozeInstruction("after " + result.content.users);
+                    if (parsed) {
+                      reopen_rules = parsed;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if (!reopen_rules) {
+            throw new Error("Snooze operation cancelled, unable to determine reopen rules.");
+          }
+        }
+
+        const result = await this.updateError(project.id!, errorId, operation, { severity, reopen_rules });
         return {
           content: [{ type: "text", text: JSON.stringify({ success: result }) }],
         };
