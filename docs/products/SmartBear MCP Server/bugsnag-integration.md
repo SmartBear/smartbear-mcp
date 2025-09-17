@@ -56,3 +56,4 @@ Refers to an occurrence of an error: `bugsnag://event/{id}`.
     -   Project event filters are pre-cached for better performance
 -   **Filtering**: Use `get_project_event_filters` to discover available filter fields before using `list_bugsnag_project_errors`
 -   **Time Filters**: Support both relative format (e.g., `7d`, `24h`) and ISO 8601 UTC format (e.g., `2018-05-20T00:00:00Z`)
+-   **On-Premise Support**: Set the `BUGSNAG_ENDPOINT` environment variable to your custom endpoint if you're using an on-premise installation of BugSnag.
