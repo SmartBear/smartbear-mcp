@@ -132,7 +132,7 @@ export async function getOADMatcherRecommendations(
     maxTokens: 1000,
   });
 
-  const regex = /```json([\s\S]*?)```/;
+  const regex = /```json[c5]?(.*?)```/i;
   const match = regex.exec(matcherResponse.content.text as string);
 
   if (match) {

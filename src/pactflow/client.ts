@@ -81,7 +81,7 @@ export class PactflowClient implements Client {
      * @throws Error if the HTTP request fails or the operation times out.
      */
     async generate(toolInput: GenerationInput, getInput: GetInputFunction): Promise<GenerationResponse> {
-      if(toolInput.openapi?.document && (!toolInput.openapi?.matcher || typeof toolInput.openapi?.matcher === "object" && Object.keys(toolInput.openapi.matcher).length === 0)) {
+      if(toolInput.openapi?.document && (!toolInput.openapi?.matcher || Object.keys(toolInput.openapi.matcher).length === 0)) {
         const matcherResponse = await getOADMatcherRecommendations(toolInput.openapi.document, this.server);
         const userSelection = await getUserMatcherSelection(matcherResponse, getInput);
         toolInput.openapi.matcher = userSelection;
@@ -114,7 +114,7 @@ export class PactflowClient implements Client {
      * @throws Error if the HTTP request fails or the operation times out.
      */
     async review(toolInput: RefineInput, getInput: GetInputFunction): Promise<RefineResponse> {
-      if(toolInput.openapi?.document && (!toolInput.openapi?.matcher || typeof toolInput.openapi?.matcher === "object" && Object.keys(toolInput.openapi.matcher).length === 0)) {
+      if(toolInput.openapi?.document && (!toolInput.openapi?.matcher || Object.keys(toolInput.openapi.matcher).length === 0)) {
         const matcherResponse = await getOADMatcherRecommendations(toolInput.openapi.document, this.server);
         const userSelection = await getUserMatcherSelection(matcherResponse, getInput);
         toolInput.openapi.matcher = userSelection;
