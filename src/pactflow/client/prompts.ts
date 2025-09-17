@@ -3,33 +3,6 @@ import { PromptParams } from "../../common/types.js";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { EndpointMatcherSchema } from "./ai.js";
 
-export const PROMPTS: PromptParams[] = [
-  {
-    name: "OpenAPI Matcher recommendations",
-    params: {
-      description: "Get OpenAPI matcher recommendations using sampling",
-      title: "OpenAPI Matcher recommendations",
-      argsSchema: {
-        openAPI: z.string(),
-      },
-    },
-    callback: function ({ openAPI }: { openAPI: string }): object {
-      return {
-        messages: [
-          {
-            role: "user",
-            content: {
-              type: "text",
-              text: OADMatcherPrompt.replace("{0}", openAPI),
-            },
-          },
-        ],
-      };
-    },
-  },
-];
-
-const EndpointMatcherJSONSchema = zodToJsonSchema(EndpointMatcherSchema);
 const OADMatcherPromptOpenAPIDocExample = {
   openapi: "3.1.0",
   info: {
@@ -76,6 +49,7 @@ const OADMatcherPromptOpenAPIDocExample = {
     },
   },
 };
+
 const OADMatcherPromptRecommendationExample = [
   {
     path: "/users",
@@ -109,7 +83,7 @@ Generate a list of recommendations(maximum of 5) in JSON to use with an OpenAPI 
 Zod Schema for the matcher to be generated is provided below in the markdown block of javascript use this to generate the recommendations for the matcher. Recommendations should contain all the fields from the schema and only output the JSON in a markdown formatted block.
 
 \`\`\`javascript
-const EndpointMatcherSchema = ${EndpointMatcherJSONSchema};
+const EndpointMatcherSchema = ${JSON.stringify(zodToJsonSchema(EndpointMatcherSchema))};
 \`\`\`
 
 Example OpenAPI document:-
@@ -136,3 +110,29 @@ Now provided the below OpenAPI document:-
 
 Give JSON recommendations only provide the JSON block in markdown don't include any additional text.
 `;
+
+export const PROMPTS: PromptParams[] = [
+  {
+    name: "OpenAPI Matcher recommendations",
+    params: {
+      description: "Get OpenAPI matcher recommendations using sampling",
+      title: "OpenAPI Matcher recommendations",
+      argsSchema: {
+        openAPI: z.string(),
+      },
+    },
+    callback: function ({ openAPI }: { openAPI: string }): object {
+      return {
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: OADMatcherPrompt.replace("{0}", openAPI),
+            },
+          },
+        ],
+      };
+    },
+  },
+];

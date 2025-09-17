@@ -20,7 +20,7 @@ import {
   MatrixResponse
 } from "./client/base.js";
 import { ClientType, TOOLS } from "./client/tools.js";
-import { getOADMatcherRecommendations, getUserMatcherSelection } from "./client/utils.js";
+import { getOADMatcherRecommendations, getUserMatcherSelection } from "./client/prompt-utils.js";
 import { PROMPTS } from "./client/prompts.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 

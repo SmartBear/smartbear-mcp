@@ -3,11 +3,13 @@ import {
   resolveOpenAPISpec,
   addOpenAPISpecToSchema,
   getRemoteSpecContents,
-  getOADMatcherRecommendations,
-  getUserMatcherSelection,
 } from "../../../pactflow/client/utils.js";
 import { OpenApiWithMatcher } from "../../../pactflow/client/ai.js";
 import createFetchMock from "vitest-fetch-mock";
+import {
+  getOADMatcherRecommendations,
+  getUserMatcherSelection,
+} from "../../../../dist/pactflow/client/prompt-utils.js";
 
 describe("Utility tests", () => {
   const fetchMocker = createFetchMock(vi);
@@ -184,7 +186,7 @@ describe("Utility tests", () => {
               }
             ]
             \`\`\`
-            `
+            `.trim(),
           },
         }),
       };
@@ -198,29 +200,29 @@ describe("Utility tests", () => {
           path: "/users",
           methods: ["GET"],
           statusCodes: [200, "2XX"],
-          operationId: "get*"
+          operationId: "get*",
         },
         {
           path: "/users/*",
           methods: ["GET"],
           statusCodes: ["2XX"],
-          operationId: "*User*"
+          operationId: "*User*",
         },
         {
           path: "/users",
           methods: ["GET"],
           statusCodes: [200],
-          operationId: "getAllUsers"
+          operationId: "getAllUsers",
         },
         {
           path: "/users/**",
           methods: ["GET"],
           statusCodes: ["2XX", 404],
-          operationId: "get*"
-        }
+          operationId: "get*",
+        },
       ]);
     });
-  })
+  });
 
   describe("getUserMatcherSelection tests", () => {
     it("returns user selected matcher", async () => {
@@ -229,23 +231,26 @@ describe("Utility tests", () => {
           path: "/users",
           methods: ["GET" as const],
           statusCodes: [200],
-          operationId: "getAllUsers"
+          operationId: "getAllUsers",
         },
         {
           path: "/users/**",
           methods: ["GET" as const],
           statusCodes: ["2XX", 404],
-          operationId: "get*"
-        }
+          operationId: "get*",
+        },
       ];
 
       const mockGetInput = vi.fn().mockResolvedValue({
         action: "accept",
         content: {
-          generatedMatchers: "Recommendation 1"
-        }
+          generatedMatchers: "Recommendation 1",
+        },
       });
-      const result = await getUserMatcherSelection(recommendations, mockGetInput);
+      const result = await getUserMatcherSelection(
+        recommendations,
+        mockGetInput
+      );
       expect(result).toEqual(recommendations[0]);
     });
   });
