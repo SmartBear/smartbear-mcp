@@ -1,5 +1,5 @@
 import { Configuration } from "../configuration.js";
-import { BaseAPI, pickFieldsFromArray, ApiResponse } from "./base.js";
+import { BaseAPI, pickFieldsFromArray, ApiResponse, pickFields } from "./base.js";
 import { Project as ProjectApiView } from "./CurrentUser.js";
 
 // --- Response Types ---
@@ -96,21 +96,172 @@ export type ProjectType =
   | 'wsgi'
   | 'other';
 
+// Project create
 export interface ProjectCreateRequest {
   name: string;
   type: ProjectType;
   ignore_old_browsers?: boolean;
 }
 
+// Builds
+export interface ListBuildsOptions {
+  release_stage?: string;
+  next_url?: string;
+}
+
+export interface SourceControl {
+  service: string;
+  commit_url: string;
+  revision: string;
+  diff_url_to_previous: string;
+  previous_app_version?: string;
+}
+
+export interface BuildSummaryResponse {
+  id: string;
+  release_time: string;
+  app_version: string;
+  release_stage: { name: string };
+  errors_introduced_count: number;
+  errors_seen_count: number;
+  total_sessions_count: number;
+  unhandled_sessions_count: number;
+  accumulative_daily_users_seen: number;
+  accumulative_daily_users_with_unhandled: number;
+}
+
+export interface BuildResponse {
+  id: string;
+  project_id: string;
+  release_time: string;
+  release_source: string;
+  app_version: string;
+  app_version_code: string;
+  app_bundle_version: string;
+  build_label: string;
+  builder_name: string;
+  build_tool: string;
+  errors_introduced_count: number;
+  errors_seen_count: number;
+  sessions_count_in_last_24h: number;
+  total_sessions_count: number;
+  unhandled_sessions_count: number;
+  accumulative_daily_users_seen: number;
+  accumulative_daily_users_with_unhandled: number;
+  metadata: {
+    [key: string]: string;
+  };
+  release_stage: { name: string };
+  source_control: SourceControl;
+  release_group_id: string;
+}
+
+export type BuildResponseAny = BuildResponse | BuildSummaryResponse;
+
+// Releases
+export interface ListReleasesOptions {
+  release_stage_name: string;
+  visible_only: boolean;
+  next_url?: string;
+}
+
+export interface ReleaseSummaryResponse {
+  id: string
+  release_stage_name: string;
+  app_version: string;
+  first_released_at: string;
+  first_release_id: string;
+  releases_count: number;
+  visible: boolean;
+  total_sessions_count: number;
+  unhandled_sessions_count: number;
+  sessions_count_in_last_24h: number;
+  accumulative_daily_users_seen: number;
+  accumulative_daily_users_with_unhandled: number;
+}
+
+export interface ReleaseResponse {
+  id: string;
+  project_id: string;
+  release_stage_name: string;
+  app_version: string;
+  first_released_at: string;
+  first_release_id: string;
+  releases_count: number;
+  has_secondary_versions: boolean;
+  build_tool: string;
+  builder_name: string;
+  source_control: SourceControl;
+  top_release_group: boolean;
+  visible: boolean;
+  total_sessions_count: number;
+  unhandled_sessions_count: number;
+  sessions_count_in_last_24h: number;
+  accumulative_daily_users_seen: number;
+  accumulative_daily_users_with_unhandled: number;
+}
+
+export type ReleaseResponseAny = ReleaseResponse | ReleaseSummaryResponse;
+
+// Stability
+export type StabilityTargetType = "user" | "session";
+export interface StabilityData {
+  user_stability: number;
+  session_stability: number;
+  stability_target_type: StabilityTargetType;
+  target_stability: number;
+  critical_stability: number;
+  meets_target_stability: boolean;
+  meets_critical_stability: boolean;
+}
+
+export interface ProjectStabilityTargets {
+  target_stability: StabilityTargetData;
+  critical_stability: StabilityTargetData;
+  stability_target_type: StabilityTargetType;
+}
+
+export interface StabilityTargetData {
+  value: number;
+  updated_at: string;
+  updated_by_id: string;
+}
+
 // --- API Class ---
 
 export class ProjectAPI extends BaseAPI {
   static filterFields: string[] = ["errors_url", "events_url", "url", "html_url"]
-  static eventFieldFields: (keyof EventField)[] = [
-    'custom',
-    'display_id',
-    'filter_options',
-    'pivot_options'
+  static eventFieldFields: (keyof EventField)[] = ["custom", "display_id", "filter_options", "pivot_options"];
+  static buildFields: (keyof BuildSummaryResponse)[] = [
+    "id",
+    "release_time",
+    "app_version",
+    "release_stage",
+    "errors_introduced_count",
+    "errors_seen_count",
+    "total_sessions_count",
+    "unhandled_sessions_count",
+    "accumulative_daily_users_seen",
+    "accumulative_daily_users_with_unhandled",
+  ];
+  static releaseFields: (keyof ReleaseSummaryResponse)[] = [
+    "id",
+    "release_stage_name",
+    "app_version",
+    "first_released_at",
+    "first_release_id",
+    "releases_count",
+    "visible",
+    "total_sessions_count",
+    "unhandled_sessions_count",
+    "sessions_count_in_last_24h",
+    "accumulative_daily_users_seen",
+    "accumulative_daily_users_with_unhandled",
+  ]
+  static stabilityFields: (keyof ProjectStabilityTargets)[] = [
+    "critical_stability",
+    "target_stability",
+    "stability_target_type",
   ];
 
   constructor(configuration: Configuration) {
@@ -152,5 +303,104 @@ export class ProjectAPI extends BaseAPI {
       url,
       body: data,
     });
+  }
+
+  /**
+   * Retrieves the stability targets for a specific project.
+   * GET /projects/{project_id} (with internal header)
+   * @param projectId The ID of the project.
+   * @returns A promise that resolves to the project's stability targets.
+   */
+  async getProjectStabilityTargets(projectId: string) {
+    const url = `/projects/${projectId}`;
+    const response = await this.request<unknown>({
+      method: "GET",
+      url,
+    });
+
+    return pickFields<ProjectStabilityTargets>(response.body || {}, ProjectAPI.stabilityFields);
+  }
+
+  /**
+   * Lists builds for a specific project.
+   * GET /projects/{project_id}/releases
+   * @param projectId The ID of the project.
+   * @param opts Options for listing releases, including filtering by release stage.
+   * @returns A promise that resolves to an array of `ListReleasesResponse` objects.
+   */
+  async listBuilds(projectId: string, opts: ListBuildsOptions) {
+    const url = opts.next_url ?? `/projects/${projectId}/releases${opts.release_stage ? `?release_stage=${opts.release_stage}` : ""}`;
+    const response = await this.request<BuildSummaryResponse[]>({
+      method: "GET",
+      url,
+    });
+
+    return {
+      ...response,
+      body: pickFieldsFromArray<BuildSummaryResponse>(response.body || [], ProjectAPI.buildFields),
+    };
+  }
+
+  /**
+   * Retrieves a specific build from a project.
+   * GET /projects/{project_id}/releases/{release_id}
+   * @param projectId The ID of the project.
+   * @param buildId The ID of the release to retrieve.
+   * @returns A promise that resolves to the release data.
+   */
+  async getBuild(projectId: string, buildId: string) {
+    const url = `/projects/${projectId}/releases/${buildId}`;
+    return await this.request<BuildResponse>({
+      method: "GET",
+      url,
+    });
+  }
+
+  /**
+   * Lists releases for a specific project.
+   * GET /projects/{project_id}/release_groups
+   * @param projectId The ID of the project.
+   * @param opts Options for listing releases, including filtering by release stage and visibility.
+   * @returns A promise that resolves to an array of `ReleaseSummaryResponse` objects.
+   */
+  async listReleases(projectId: string, opts: ListReleasesOptions) {
+    const url = opts.next_url ?? `/projects/${projectId}/release_groups?release_stage_name=${opts.release_stage_name}&visible_only=${opts.visible_only}&top_only=true`
+    const response = await this.request<ReleaseSummaryResponse[]>({
+      method: "GET",
+      url
+    });
+
+    return {
+      ...response,
+      body: pickFieldsFromArray<ReleaseSummaryResponse>(response.body || [], ProjectAPI.releaseFields),
+    };
+  }
+
+  /**
+   * Retrieves a specific release by its ID.
+   * GET /release_groups/{release_id}
+   * @param releaseId The ID of the release to retrieve.
+   * @returns A promise that resolves to the release data.
+   */
+  async getRelease(releaseId: string) {
+    const url = `/release_groups/${releaseId}`;
+    return await this.request<ReleaseResponse>({
+      method: "GET",
+      url,
+    });
+  }
+
+  /**
+   * Lists builds associated with a specific release group.
+   * GET /release_groups/{release_id}/releases
+   * @param releaseId The ID of the release group.
+   * @return A promise that resolves to an array of `BuildResponse` objects.
+   */
+  async listBuildsInRelease(releaseId: string) {
+    const url = `/release_groups/${releaseId}/releases`;
+    return await this.request<BuildResponse[]>({
+      method: "GET",
+      url,
+    }, true);
   }
 }
