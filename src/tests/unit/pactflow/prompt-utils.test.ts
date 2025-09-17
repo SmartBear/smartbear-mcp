@@ -1,7 +1,7 @@
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
-} from "../../../../dist/pactflow/client/prompt-utils.js";
+} from "../../../../dist/pactflow/client/prompt-utils";
 
 import { describe, it, expect, vi } from "vitest";
 

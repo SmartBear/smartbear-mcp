@@ -1,6 +1,6 @@
 // tools.test.ts
 import { ZodObject, ZodTypeAny } from "zod";
-import { TOOLS } from "../../../pactflow/client/tools.js";
+import { TOOLS } from "../../../pactflow/client/tools";
 import { describe, it, expect } from 'vitest';
 
 describe("TOOLS definition for 'Generate Pact Tests'", () => {

@@ -3,8 +3,8 @@ import {
   resolveOpenAPISpec,
   addOpenAPISpecToSchema,
   getRemoteSpecContents,
-} from "../../../pactflow/client/utils.js";
-import { OpenApiWithMatcher } from "../../../pactflow/client/ai.js";
+} from "../../../pactflow/client/utils";
+import { OpenApiWithMatcher } from "../../../pactflow/client/ai";
 import createFetchMock from "vitest-fetch-mock";
 
 describe("Utility tests", () => {
