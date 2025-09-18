@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import createFetchMock from "vitest-fetch-mock";
+import type { OpenApiWithMatcher } from "../../../pactflow/client/ai";
 import {
-  resolveOpenAPISpec,
   addOpenAPISpecToSchema,
   getRemoteSpecContents,
+  resolveOpenAPISpec,
 } from "../../../pactflow/client/utils";
-import { OpenApiWithMatcher } from "../../../pactflow/client/ai";
-import createFetchMock from "vitest-fetch-mock";
 
 describe("Utility tests", () => {
   const fetchMocker = createFetchMock(vi);
@@ -94,7 +94,7 @@ describe("Utility tests", () => {
             Authorization: "Bearer token",
           },
           method: "GET",
-        }
+        },
       );
     });
   });
