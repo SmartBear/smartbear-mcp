@@ -39,7 +39,8 @@
     "test:coverage:ci": "vitest --coverage --reporter=verbose",
     "test:run": "vitest run",
     "coverage:check": "vitest --coverage --reporter=verbose --config vitest.config.coverage.ts",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
   },
   "dependencies": {
     "@bugsnag/js": "^8.2.0",
@@ -54,6 +55,7 @@
     "@types/node": "^22",
     "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.29.0",
+    "eslint-config-prettier": "^10.1.8",
     "globals": "^16.2.0",
     "prettier": "^3.6.2",
     "shx": "^0.3.4",
