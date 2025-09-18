@@ -26,3 +26,8 @@ repos:
       # modify the formatting.
       - id: check-toml
       - id: check-xml
+
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v2.2.4
+    hooks:
+    - id: biome-check
