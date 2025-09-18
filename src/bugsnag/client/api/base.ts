@@ -39,7 +39,10 @@ export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
 }
 
 // Utility to extract next URL path from Link header
-export function getNextUrlPathFromHeader(headers: Headers, basePath: string) {
+export function getNextUrlPathFromHeader(
+  headers: Headers,
+  basePath: string,
+): string | null {
   if (!headers) return null;
   const link = headers.get("link") || headers.get("Link");
   if (!link) return null;
@@ -73,7 +76,7 @@ export class BaseAPI {
       ...options.headers,
     };
 
-    headers["Authorization"] = `token ${this.configuration.authToken}`;
+    headers.Authorization = `token ${this.configuration.authToken}`;
 
     const fetchOptions: RequestInit = {
       method: options.method,
@@ -84,8 +87,11 @@ export class BaseAPI {
     let nextUrl: string | null = options.url;
     let apiResponse: ApiResponse<T>;
     do {
-      nextUrl = ensureFullUrl(nextUrl!, this.configuration.basePath!);
-      const response: Response = await fetch(nextUrl!, fetchOptions);
+      if (!this.configuration.basePath) {
+        throw new Error("Base path is not configured for API requests");
+      }
+      nextUrl = ensureFullUrl(nextUrl, this.configuration.basePath);
+      const response: Response = await fetch(nextUrl, fetchOptions);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
@@ -103,7 +109,7 @@ export class BaseAPI {
         results = results.concat(data);
         nextUrl = getNextUrlPathFromHeader(
           response.headers,
-          this.configuration.basePath!,
+          this.configuration.basePath,
         );
       } else {
         apiResponse.body = data;

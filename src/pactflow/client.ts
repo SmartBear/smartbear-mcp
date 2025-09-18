@@ -431,7 +431,7 @@ export class PactflowClient implements Client {
           throw new Error(`Handler '${handler}' not found on PactClient`);
         }
 
-        let result;
+        let result: any;
         if (tool.enableElicitation) {
           result = await handler_fn.call(this, args, getInput);
         } else {

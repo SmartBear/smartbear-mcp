@@ -1,3 +1,4 @@
+import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { describe, expect, it, vi } from "vitest";
 import {
   getOADMatcherRecommendations,
@@ -64,11 +65,11 @@ describe("Prompt Utils", () => {
             `.trim(),
           },
         }),
-      };
+      } satisfies Pick<Server, "createMessage">;
 
       const result = await getOADMatcherRecommendations(
         openApiSpec,
-        mockServer as any,
+        mockServer,
       );
       expect(result).toEqual([
         {

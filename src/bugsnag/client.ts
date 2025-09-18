@@ -131,7 +131,7 @@ export class BugsnagClient implements Client {
   }
 
   getHost(apiKey: string | undefined, subdomain: string): string {
-    if (apiKey && apiKey.startsWith(HUB_PREFIX)) {
+    if (apiKey?.startsWith(HUB_PREFIX)) {
       return `https://${subdomain}.${HUB_DOMAIN}`;
     } else {
       return `https://${subdomain}.${DEFAULT_DOMAIN}`;
@@ -144,7 +144,7 @@ export class BugsnagClient implements Client {
   getEndpoint(subdomain: string, apiKey?: string, endpoint?: string): string {
     let subDomainEndpoint: string;
     if (!endpoint) {
-      if (apiKey && apiKey.startsWith(HUB_PREFIX)) {
+      if (apiKey?.startsWith(HUB_PREFIX)) {
         subDomainEndpoint = `https://${subdomain}.${HUB_DOMAIN}`;
       } else {
         subDomainEndpoint = `https://${subdomain}.${DEFAULT_DOMAIN}`;
@@ -184,7 +184,7 @@ export class BugsnagClient implements Client {
   }
 
   async getOrganization(): Promise<Organization> {
-    let org = this.cache.get<Organization>(cacheKeys.ORG)!;
+    let org = this.cache.get<Organization>(cacheKeys.ORG);
     if (!org) {
       const response = await this.currentUserApi.listUserOrganizations();
       const orgs = response.body || [];
@@ -291,7 +291,7 @@ export class BugsnagClient implements Client {
       if (!maybeProject) {
         throw new Error(`Project with ID ${projectId} not found.`);
       }
-      return maybeProject!;
+      return maybeProject;
     } else {
       const currentProject = await this.getCurrentProject();
       if (!currentProject) {
@@ -879,7 +879,7 @@ export class BugsnagClient implements Client {
         const result = {
           data: errors,
           count: errors.length,
-          total: totalCount ? parseInt(totalCount) : undefined,
+          total: totalCount ? parseInt(totalCount, 10) : undefined,
           next: linkHeader?.match(/<([^>]+)>/)?.[1],
         };
         return {
@@ -984,7 +984,7 @@ export class BugsnagClient implements Client {
         const { errorId, operation } = args;
         const project = await this.getInputProject(args.projectId);
 
-        let severity;
+        let severity: any;
         if (operation === "override_severity") {
           // illicit the severity from the user
           const result = await getInput({
@@ -1008,7 +1008,7 @@ export class BugsnagClient implements Client {
           }
         }
 
-        const result = await this.updateError(project.id!, errorId, operation, {
+        const result = await this.updateError(project.id, errorId, operation, {
           severity,
         });
         return {

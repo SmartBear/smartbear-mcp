@@ -48,7 +48,7 @@ describe("SmartBearMcpServer", () => {
         summary: "A test tool",
         zodSchema: zSchema,
       };
-      const description = server["getDescription"](toolparams);
+      const description = server.getDescription(toolparams);
       expect(description).toBe(`A test tool
 
 **Parameters:**
@@ -104,16 +104,16 @@ describe("SmartBearMcpServer", () => {
       // Assert some of the details
       const registerToolParams = superRegisterToolMock.mock.calls[0];
       expect(registerToolParams[0]).toBe("test_product_test_tool");
-      expect(registerToolParams[1]["title"]).toBe("Test Product: Test Tool");
-      expect(registerToolParams[1]["description"]).toBe(
+      expect(registerToolParams[1].title).toBe("Test Product: Test Tool");
+      expect(registerToolParams[1].description).toBe(
         "A test tool\n\n" +
           "**Parameters:**\n" +
           "- p1 (string) *required*: The input for the tool",
       );
-      expect(registerToolParams[1]["inputSchema"]["p1"].toString()).toBe(
+      expect(registerToolParams[1].inputSchema.p1.toString()).toBe(
         z.string().describe("The input for the tool").toString(),
       );
-      expect(registerToolParams[1]["annotations"]).toEqual({
+      expect(registerToolParams[1].annotations).toEqual({
         title: "Test Product: Test Tool",
         readOnlyHint: true,
         destructiveHint: false,
@@ -223,8 +223,8 @@ describe("SmartBearMcpServer", () => {
       // Assert some of the details
       const registerToolParams = superRegisterToolMock.mock.calls[0];
       expect(registerToolParams[0]).toBe("test_product_test_tool");
-      expect(registerToolParams[1]["title"]).toBe("Test Product: Test Tool");
-      expect(registerToolParams[1]["description"]).toBe(
+      expect(registerToolParams[1].title).toBe("Test Product: Test Tool");
+      expect(registerToolParams[1].description).toBe(
         "A test tool\n\n" +
           "**Parameters:**\n" +
           "- p1 (string) *required*: The input for the tool (e.g. example1, example2)\n" +
@@ -258,10 +258,10 @@ describe("SmartBearMcpServer", () => {
           "```\n\n" +
           "**Hints:** 1. First hint 2. Second hint",
       );
-      expect(registerToolParams[1]["inputSchema"]["p1"].toString()).toBe(
+      expect(registerToolParams[1].inputSchema.p1.toString()).toBe(
         z.string().describe("The input for the tool").toString(),
       );
-      expect(registerToolParams[1]["annotations"]).toEqual({
+      expect(registerToolParams[1].annotations).toEqual({
         title: "Test Product: Test Tool",
         readOnlyHint: true,
         destructiveHint: true,
