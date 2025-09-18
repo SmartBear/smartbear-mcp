@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import createFetchMock from "vitest-fetch-mock";
 import { PactflowClient } from "../../../pactflow/client";
 import * as toolsModule from "../../../pactflow/client/tools";
-import createFetchMock from "vitest-fetch-mock";
 
 const fetchMock = createFetchMock(vi);
 
@@ -20,20 +20,30 @@ describe("PactFlowClient", () => {
 
   describe("constructor", () => {
     it("should initialize with correct parameters", () => {
-      client = new PactflowClient("test-token", "https://example.com", "pactflow", vi.fn() as any);
+      client = new PactflowClient(
+        "test-token",
+        "https://example.com",
+        "pactflow",
+        vi.fn() as any,
+      );
       expect(client).toBeInstanceOf(PactflowClient);
       expect(client["baseUrl"]).toBe("https://example.com");
       expect(client["clientType"]).toBe("pactflow");
     });
 
     it("sets correct headers when client is pactflow", () => {
-      client = new PactflowClient("my-token", "https://example.com", "pactflow", vi.fn() as any);
+      client = new PactflowClient(
+        "my-token",
+        "https://example.com",
+        "pactflow",
+        vi.fn() as any,
+      );
 
       expect(client["headers"]).toEqual(
         expect.objectContaining({
           Authorization: expect.stringContaining("Bearer my-token"),
           "Content-Type": expect.stringContaining("application/json"),
-        })
+        }),
       );
     });
 
@@ -42,16 +52,16 @@ describe("PactFlowClient", () => {
         { username: "user", password: "pass" },
         "https://example.com",
         "pact_broker",
-        vi.fn() as any
+        vi.fn() as any,
       );
 
       expect(client["headers"]).toEqual(
         expect.objectContaining({
           Authorization: expect.stringContaining(
-            `Basic ${Buffer.from("user:pass").toString("base64")}`
+            `Basic ${Buffer.from("user:pass").toString("base64")}`,
           ),
           "Content-Type": expect.stringContaining("application/json"),
-        })
+        }),
       );
     });
   });
@@ -82,7 +92,12 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = new PactflowClient("token", "https://example.com", "pactflow", vi.fn() as any);
+      const client = new PactflowClient(
+        "token",
+        "https://example.com",
+        "pactflow",
+        vi.fn() as any,
+      );
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(1);
@@ -103,7 +118,12 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = new PactflowClient("token", "https://example.com", "pactflow", vi.fn() as any);
+      const client = new PactflowClient(
+        "token",
+        "https://example.com",
+        "pactflow",
+        vi.fn() as any,
+      );
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).not.toHaveBeenCalled();
@@ -112,7 +132,12 @@ describe("PactFlowClient", () => {
 
   describe("API Methods", () => {
     beforeEach(() => {
-      client = new PactflowClient("test-token", "https://example.com", "pactflow", vi.fn() as any);
+      client = new PactflowClient(
+        "test-token",
+        "https://example.com",
+        "pactflow",
+        vi.fn() as any,
+      );
     });
 
     describe("canIDeploy", () => {
@@ -136,7 +161,7 @@ describe("PactFlowClient", () => {
           {
             method: "GET",
             headers: client["headers"],
-          }
+          },
         );
         expect(result.summary.deployable).toBe(true);
       });
@@ -157,11 +182,11 @@ describe("PactFlowClient", () => {
         const errorText = "Pacticipant not found";
         fetchMock.mockResponseOnce(errorText, {
           status: 404,
-          statusText: "Not Found"
+          statusText: "Not Found",
         });
 
         await expect(client.canIDeploy(mockInput)).rejects.toThrow(
-          "Can-I-Deploy Request Failed - status: 404 Not Found - Pacticipant not found"
+          "Can-I-Deploy Request Failed - status: 404 Not Found - Pacticipant not found",
         );
       });
 
@@ -172,7 +197,9 @@ describe("PactFlowClient", () => {
           environment: "test/staging",
         };
 
-        fetchMock.mockResponseOnce(JSON.stringify({ summary: { deployable: true } }));
+        fetchMock.mockResponseOnce(
+          JSON.stringify({ summary: { deployable: true } }),
+        );
 
         await client.canIDeploy(inputWithSpecialChars);
 
@@ -181,7 +208,7 @@ describe("PactFlowClient", () => {
           {
             method: "GET",
             headers: client["headers"],
-          }
+          },
         );
       });
     });
@@ -205,7 +232,10 @@ describe("PactFlowClient", () => {
             consumer: { name: "Consumer App", version: { number: "1.0.0" } },
             provider: { name: "Example API", version: { number: "1.0.0" } },
             pact: { createdAt: "2024-01-01T00:00:00Z" },
-            verificationResult: { success: true, verifiedAt: "2024-01-01T01:00:00Z" },
+            verificationResult: {
+              success: true,
+              verifiedAt: "2024-01-01T01:00:00Z",
+            },
           },
         ],
         notices: [
@@ -233,7 +263,7 @@ describe("PactFlowClient", () => {
           {
             method: "GET",
             headers: client["headers"],
-          }
+          },
         );
         expect(result.summary.deployable).toBe(true);
         expect(result.matrix).toHaveLength(1);
@@ -265,7 +295,7 @@ describe("PactFlowClient", () => {
           {
             method: "GET",
             headers: client["headers"],
-          }
+          },
         );
       });
 
@@ -294,7 +324,7 @@ describe("PactFlowClient", () => {
           {
             method: "GET",
             headers: client["headers"],
-          }
+          },
         );
       });
 
@@ -316,7 +346,7 @@ describe("PactFlowClient", () => {
           {
             method: "GET",
             headers: client["headers"],
-          }
+          },
         );
       });
 
@@ -342,7 +372,7 @@ describe("PactFlowClient", () => {
           {
             method: "GET",
             headers: client["headers"],
-          }
+          },
         );
       });
 
@@ -350,11 +380,11 @@ describe("PactFlowClient", () => {
         const errorText = "Invalid query parameters";
         fetchMock.mockResponseOnce(errorText, {
           status: 400,
-          statusText: "Bad Request"
+          statusText: "Bad Request",
         });
 
         await expect(client.getMatrix(mockMatrixInput)).rejects.toThrow(
-          "Matrix Request Failed - status: 400 Bad Request - Invalid query parameters"
+          "Matrix Request Failed - status: 400 Bad Request - Invalid query parameters",
         );
       });
 
@@ -362,14 +392,13 @@ describe("PactFlowClient", () => {
         const errorText = "Pacticipant not found";
         fetchMock.mockResponseOnce(errorText, {
           status: 404,
-          statusText: "Not Found"
+          statusText: "Not Found",
         });
 
         await expect(client.getMatrix(mockMatrixInput)).rejects.toThrow(
-          "Matrix Request Failed - status: 404 Not Found - Pacticipant not found"
+          "Matrix Request Failed - status: 404 Not Found - Pacticipant not found",
         );
       });
-
     });
 
     describe("getAICredits", () => {
@@ -393,7 +422,7 @@ describe("PactFlowClient", () => {
           {
             method: "GET",
             headers: client["headers"],
-          }
+          },
         );
         expect(result.organizationEntitlements.name).toBe("test-org");
         expect(result.organizationEntitlements.aiCredits.total).toBe(1000);
@@ -404,10 +433,10 @@ describe("PactFlowClient", () => {
         const errorText = "Unauthorized";
         fetchMock.mockResponseOnce(errorText, {
           status: 401,
-          statusText: "Unauthorized"
+          statusText: "Unauthorized",
         });
         await expect(client.getAIStatus()).rejects.toThrow(
-          "PactFlow AI Status Request Failed - status: 401 Unauthorized - Unauthorized"
+          "PactFlow AI Status Request Failed - status: 401 Unauthorized - Unauthorized",
         );
       });
     });

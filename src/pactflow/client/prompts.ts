@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { PromptParams } from "../../common/types.js";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import type { PromptParams } from "../../common/types.js";
 import { EndpointMatcherSchema } from "./ai.js";
 
 const OADMatcherPromptOpenAPIDocExample = {
@@ -121,18 +121,16 @@ export const PROMPTS: PromptParams[] = [
         openAPI: z.string(),
       },
     },
-    callback: function ({ openAPI }: { openAPI: string }): object {
-      return {
-        messages: [
-          {
-            role: "user",
-            content: {
-              type: "text",
-              text: OADMatcherPrompt.replace("{0}", openAPI),
-            },
+    callback: ({ openAPI }: { openAPI: string }): object => ({
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: OADMatcherPrompt.replace("{0}", openAPI),
           },
-        ],
-      };
-    },
+        },
+      ],
+    }),
   },
 ];

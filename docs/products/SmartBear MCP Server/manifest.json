@@ -1,86 +1,86 @@
 {
-    "productMetadata": {
-        "description": "Integrate capabilities from SmartBear's API Hub, Test Hub, and BugSnag into your AI development workflow.",
-        "slug": "smartbear-mcp",
-        "public": true,
-        "hidden": false,
-        "logo": "images/logo.png",
-        "logoDark": "images/logo.png",
-        "autoPublish": true,
-        "validateAPIs": true
+  "productMetadata": {
+    "description": "Integrate capabilities from SmartBear's API Hub, Test Hub, and BugSnag into your AI development workflow.",
+    "slug": "smartbear-mcp",
+    "public": true,
+    "hidden": false,
+    "logo": "images/logo.png",
+    "logoDark": "images/logo.png",
+    "autoPublish": true,
+    "validateAPIs": true
+  },
+  "contentMetadata": [
+    {
+      "order": 0,
+      "parent": "",
+      "name": "SmartBear MCP Server",
+      "slug": "mcp-server",
+      "type": "markdown",
+      "contentUrl": "mcp-server.md"
     },
-    "contentMetadata": [
-        {
-            "order": 0,
-            "parent": "",
-            "name": "SmartBear MCP Server",
-            "slug": "mcp-server",
-            "type": "markdown",
-            "contentUrl": "mcp-server.md"
-        },
-        {
-            "order": 1,
-            "parent": "",
-            "name": "MCP Server Capabilities",
-            "slug": "mcp-server-capabilities",
-            "type": "markdown",
-            "contentUrl": "mcp-server-capabilities.md"
-        },
-        {
-            "order": 2,
-            "parent": "mcp-server-capabilities",
-            "name": "API Hub Integration",
-            "slug": "api-hub-integration",
-            "type": "markdown",
-            "contentUrl": "api-hub-integration.md"
-        },
-        {
-            "order": 3,
-            "parent": "mcp-server-capabilities",
-            "name": "Test Hub Integration",
-            "slug": "test-hub-integration",
-            "type": "markdown",
-            "contentUrl": "test-hub-integration.md"
-        },
-        {
-            "order": 4,
-            "parent": "mcp-server-capabilities",
-            "name": "BugSnag Integration",
-            "slug": "bugsnag-integration",
-            "type": "markdown",
-            "contentUrl": "bugsnag-integration.md"
-        },
-        {
-            "order": 5,
-            "parent": "mcp-server-capabilities",
-            "name": "Contract Testing with PactFlow",
-            "slug": "contract-testing-with-pactflow",
-            "type": "markdown",
-            "contentUrl": "contract-testing-with-pactflow.md"
-        },
-        {
-            "order": 6,
-            "parent": "",
-            "name": "Getting Started",
-            "slug": "getting-started",
-            "type": "markdown",
-            "contentUrl": "getting-started.md"
-        },
-        {
-            "order": 7,
-            "parent": "",
-            "name": "Best Practices",
-            "slug": "best-practices",
-            "type": "markdown",
-            "contentUrl": "best-practices.md"
-        },
-        {
-            "order": 8,
-            "parent": "",
-            "name": "Troubleshooting",
-            "slug": "troubleshooting",
-            "type": "markdown",
-            "contentUrl": "troubleshooting.md"
-        }
-    ]
+    {
+      "order": 1,
+      "parent": "",
+      "name": "MCP Server Capabilities",
+      "slug": "mcp-server-capabilities",
+      "type": "markdown",
+      "contentUrl": "mcp-server-capabilities.md"
+    },
+    {
+      "order": 2,
+      "parent": "mcp-server-capabilities",
+      "name": "API Hub Integration",
+      "slug": "api-hub-integration",
+      "type": "markdown",
+      "contentUrl": "api-hub-integration.md"
+    },
+    {
+      "order": 3,
+      "parent": "mcp-server-capabilities",
+      "name": "Test Hub Integration",
+      "slug": "test-hub-integration",
+      "type": "markdown",
+      "contentUrl": "test-hub-integration.md"
+    },
+    {
+      "order": 4,
+      "parent": "mcp-server-capabilities",
+      "name": "BugSnag Integration",
+      "slug": "bugsnag-integration",
+      "type": "markdown",
+      "contentUrl": "bugsnag-integration.md"
+    },
+    {
+      "order": 5,
+      "parent": "mcp-server-capabilities",
+      "name": "Contract Testing with PactFlow",
+      "slug": "contract-testing-with-pactflow",
+      "type": "markdown",
+      "contentUrl": "contract-testing-with-pactflow.md"
+    },
+    {
+      "order": 6,
+      "parent": "",
+      "name": "Getting Started",
+      "slug": "getting-started",
+      "type": "markdown",
+      "contentUrl": "getting-started.md"
+    },
+    {
+      "order": 7,
+      "parent": "",
+      "name": "Best Practices",
+      "slug": "best-practices",
+      "type": "markdown",
+      "contentUrl": "best-practices.md"
+    },
+    {
+      "order": 8,
+      "parent": "",
+      "name": "Troubleshooting",
+      "slug": "troubleshooting",
+      "type": "markdown",
+      "contentUrl": "troubleshooting.md"
+    }
+  ]
 }

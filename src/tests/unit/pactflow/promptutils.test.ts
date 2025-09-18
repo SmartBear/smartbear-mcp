@@ -1,9 +1,8 @@
+import { describe, expect, it, vi } from "vitest";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
 } from "../../../pactflow/client/prompt-utils";
-
-import { describe, it, expect, vi } from "vitest";
 
 describe("Prompt Utils", () => {
   describe("getOADMatcherRecommendations tests", () => {
@@ -69,7 +68,7 @@ describe("Prompt Utils", () => {
 
       const result = await getOADMatcherRecommendations(
         openApiSpec,
-        mockServer as any
+        mockServer as any,
       );
       expect(result).toEqual([
         {
@@ -125,7 +124,7 @@ describe("Prompt Utils", () => {
       });
       const result = await getUserMatcherSelection(
         recommendations,
-        mockGetInput
+        mockGetInput,
       );
       expect(result).toEqual(recommendations[0]);
     });

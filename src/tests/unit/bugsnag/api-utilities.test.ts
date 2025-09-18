@@ -1,36 +1,41 @@
-import { describe, it, expect } from 'vitest';
-import { getNextUrlPathFromHeader, pickFields, pickFieldsFromArray, ensureFullUrl } from '../../../bugsnag/client/api/base.js';
+import { describe, expect, it } from "vitest";
+import {
+  ensureFullUrl,
+  getNextUrlPathFromHeader,
+  pickFields,
+  pickFieldsFromArray,
+} from "../../../bugsnag/client/api/base.js";
 
-describe('API Utilities', () => {
-  describe('pickFields', () => {
-    it('should pick only specified fields from object', () => {
-      const input = { id: '1', name: 'Test', secret: 'hidden', extra: 'data' };
-      const result = pickFields(input, ['id', 'name']);
+describe("API Utilities", () => {
+  describe("pickFields", () => {
+    it("should pick only specified fields from object", () => {
+      const input = { id: "1", name: "Test", secret: "hidden", extra: "data" };
+      const result = pickFields(input, ["id", "name"]);
 
-      expect(result).toEqual({ id: '1', name: 'Test' });
-      expect(result).not.toHaveProperty('secret');
-      expect(result).not.toHaveProperty('extra');
+      expect(result).toEqual({ id: "1", name: "Test" });
+      expect(result).not.toHaveProperty("secret");
+      expect(result).not.toHaveProperty("extra");
     });
 
-    it('should handle missing fields gracefully', () => {
-      const input = { id: '1' };
-      const result = pickFields(input, ['id', 'name', 'missing']);
+    it("should handle missing fields gracefully", () => {
+      const input = { id: "1" };
+      const result = pickFields(input, ["id", "name", "missing"]);
 
-      expect(result).toEqual({ id: '1' });
+      expect(result).toEqual({ id: "1" });
     });
   });
 
-  describe('pickFieldsFromArray', () => {
-    it('should pick fields from array of objects', () => {
+  describe("pickFieldsFromArray", () => {
+    it("should pick fields from array of objects", () => {
       const input = [
-        { id: '1', name: 'Test1', secret: 'hidden1' },
-        { id: '2', name: 'Test2', secret: 'hidden2' }
+        { id: "1", name: "Test1", secret: "hidden1" },
+        { id: "2", name: "Test2", secret: "hidden2" },
       ];
-      const result = pickFieldsFromArray(input, ['id', 'name']);
+      const result = pickFieldsFromArray(input, ["id", "name"]);
 
       expect(result).toEqual([
-        { id: '1', name: 'Test1' },
-        { id: '2', name: 'Test2' }
+        { id: "1", name: "Test1" },
+        { id: "2", name: "Test2" },
       ]);
     });
   });
@@ -38,28 +43,28 @@ describe('API Utilities', () => {
   describe("getNextUrlPathFromHeader", () => {
     it("should extract next URL path from Link header", () => {
       const headers = new Headers();
-        headers.append(
-          "Link",
-          '<https://api.bugsnag.com/projects/12345/errors?offset=30&per_page=30>; rel="next"'
-        );
+      headers.append(
+        "Link",
+        '<https://api.bugsnag.com/projects/12345/errors?offset=30&per_page=30>; rel="next"',
+      );
 
       const result = getNextUrlPathFromHeader(
         headers,
-        "https://api.bugsnag.com"
+        "https://api.bugsnag.com",
       );
       expect(result).toBe("/projects/12345/errors?offset=30&per_page=30");
     });
 
     it("should handle case-insensitive Link header name", () => {
       const headers = new Headers();
-        headers.append(
-          "link",
-          '<https://api.bugsnag.com/projects/12345/errors?offset=30&per_page=30>; rel="next"'
+      headers.append(
+        "link",
+        '<https://api.bugsnag.com/projects/12345/errors?offset=30&per_page=30>; rel="next"',
       );
 
       const result = getNextUrlPathFromHeader(
         headers,
-          "https://api.bugsnag.com"
+        "https://api.bugsnag.com",
       );
       expect(result).toBe("/projects/12345/errors?offset=30&per_page=30");
     });
@@ -68,7 +73,7 @@ describe('API Utilities', () => {
       const headers = new Headers();
       const result = getNextUrlPathFromHeader(
         headers,
-        "https://api.bugsnag.com"
+        "https://api.bugsnag.com",
       );
       expect(result).toBeNull();
     });
@@ -77,12 +82,12 @@ describe('API Utilities', () => {
       const headers = new Headers();
       headers.append(
         "Link",
-        '<https://api.bugsnag.com/projects/12345/errors?offset=30&per_page=30>; rel="prev"'
+        '<https://api.bugsnag.com/projects/12345/errors?offset=30&per_page=30>; rel="prev"',
       );
 
       const result = getNextUrlPathFromHeader(
         headers,
-        "https://api.bugsnag.com"
+        "https://api.bugsnag.com",
       );
       expect(result).toBeNull();
     });

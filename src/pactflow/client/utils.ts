@@ -1,11 +1,11 @@
-import {
-  RemoteOpenAPIDocument,
-  RemoteOpenAPIDocumentSchema,
-  OpenAPI,
-} from "./ai.js";
 import yaml from "js-yaml";
 // @ts-expect-error missing type declarations
 import Swagger from "swagger-client";
+import {
+  type OpenAPI,
+  type RemoteOpenAPIDocument,
+  RemoteOpenAPIDocumentSchema,
+} from "./ai.js";
 
 /**
  * Resolve the OpenAPI specification from the provided input.
@@ -15,16 +15,16 @@ import Swagger from "swagger-client";
  * @throws Error if the resolution fails.
  */
 export async function resolveOpenAPISpec(
-  remoteOpenAPIDocument: RemoteOpenAPIDocument
+  remoteOpenAPIDocument: RemoteOpenAPIDocument,
 ): Promise<OpenAPI> {
   const openAPISchema = RemoteOpenAPIDocumentSchema.safeParse(
-    remoteOpenAPIDocument
+    remoteOpenAPIDocument,
   );
   if (openAPISchema.error || !remoteOpenAPIDocument) {
     throw new Error(
       `Invalid RemoteOpenAPIDocument: ${JSON.stringify(
-        openAPISchema.error?.issues
-      )}`
+        openAPISchema.error?.issues,
+      )}`,
     );
   }
 
@@ -33,7 +33,7 @@ export async function resolveOpenAPISpec(
 
   if (resolvedSpec.errors?.length) {
     throw new Error(
-      `Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`
+      `Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`,
     );
   }
 
@@ -48,7 +48,7 @@ export async function resolveOpenAPISpec(
  * @throws Error if the URL is not provided or the fetch fails.
  */
 export async function getRemoteSpecContents(
-  openAPISchema: RemoteOpenAPIDocument
+  openAPISchema: RemoteOpenAPIDocument,
 ): Promise<any> {
   if (!openAPISchema.url) {
     throw new Error("'url' must be provided.");
@@ -78,8 +78,8 @@ export async function getRemoteSpecContents(
     } catch (yamlError) {
       throw new Error(
         `Unsupported Content-Type: ${remoteSpec.headers.get(
-          "Content-Type"
-        )} for remote OpenAPI document. Found following parse errors:-\nJSON parse error: ${jsonError}\nYAML parse error: ${yamlError}`
+          "Content-Type",
+        )} for remote OpenAPI document. Found following parse errors:-\nJSON parse error: ${jsonError}\nYAML parse error: ${yamlError}`,
       );
     }
   }
