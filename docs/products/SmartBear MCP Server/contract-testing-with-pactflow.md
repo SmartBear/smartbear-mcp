@@ -121,6 +121,10 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
   - Perform advanced queries using selectors to understand compatibility within specific branches or environments
   - Support informed deployment decisions by answering "can I deploy version X of this service to production?"
 
+### PactFlow AI Status
+
+- Purpose: Retrieve the status of AI features for the PactFlow workspace, including whether AI features are enabled, the number of remaining and consumed AI credits, and user-level permissions issues preventing usage.
+
 ## Configuration Notes
 
 - **Required Environment Variables**: `PACT_BROKER_BASE_URL` is required for all operations.

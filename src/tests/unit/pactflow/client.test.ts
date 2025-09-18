@@ -371,5 +371,45 @@ describe("PactFlowClient", () => {
       });
 
     });
+
+    describe("getAICredits", () => {
+      const mockEntitlement = {
+        organizationEntitlements: {
+          name: "test-org",
+          planAiEnabled: true,
+          preferencesAiEnabled: true,
+          aiCredits: { total: 1000, used: 100 },
+        },
+        userEntitlements: {
+          aiPermissions: ["ai:generate", "ai:review"],
+        },
+      };
+
+      it("should successfully retrieve AI status and entitlements", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify(mockEntitlement));
+        const result = await client.getAIStatus();
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/api/ai/entitlement",
+          {
+            method: "GET",
+            headers: client["headers"],
+          }
+        );
+        expect(result.organizationEntitlements.name).toBe("test-org");
+        expect(result.organizationEntitlements.aiCredits.total).toBe(1000);
+        expect(result.userEntitlements.aiPermissions).toContain("ai:generate");
+      });
+
+      it("should handle HTTP errors correctly", async () => {
+        const errorText = "Unauthorized";
+        fetchMock.mockResponseOnce(errorText, {
+          status: 401,
+          statusText: "Unauthorized"
+        });
+        await expect(client.getAIStatus()).rejects.toThrow(
+          "PactFlow AI Status Request Failed - status: 401 Unauthorized - Unauthorized"
+        );
+      });
+    });
   });
 });

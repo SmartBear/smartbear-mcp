@@ -231,6 +231,44 @@ export const GenerationInputSchema = z.object({
 
 export const MatcherRecommendationInputSchema = z.array(EndpointMatcherSchema);
 
+export const AiCreditsSchema = z.object({
+  total: z
+    .number()
+    .describe("The total number of AI credits available."),
+  used: z
+    .number()
+    .describe("The number of AI credits used."),
+}).describe("AI credits information.");
+
+
+export const OrganizationEntitlementsSchema = z.object({
+  name: z
+    .string()
+    .describe("The name of the organization."),
+  planAiEnabled: z
+    .boolean()
+    .describe("Whether AI features are enabled at the plan level."),
+  preferencesAiEnabled: z
+    .boolean()
+    .describe("Whether AI features are enabled at the preferences level."),
+  aiCredits: AiCreditsSchema.describe("AI credits information."),
+}).describe("Organization entitlements information.");
+
+export const UserEntitlementsSchema = z.object({
+  aiPermissions: z
+    .array(z.string())
+    .describe("List of AI permissions."),
+}).describe("User entitlements information.");
+
+export const EntitlementsSchema = z.object({
+  organizationEntitlements: OrganizationEntitlementsSchema.describe(
+    "Organization entitlements information."
+  ),
+  userEntitlements: UserEntitlementsSchema.describe(
+    "User entitlements information."
+  ),
+}).describe("Entitlements information.");
+
 // types inferred from schemas
 export type RefineInput = z.infer<typeof RefineInputSchema>;
 export type FileInput = z.infer<typeof FileInputSchema>;
@@ -243,3 +281,4 @@ export type RemoteOpenAPIDocument = z.infer<typeof RemoteOpenAPIDocumentSchema>;
 export type MatcherRecommendations = z.infer<
   typeof MatcherRecommendationInputSchema
 >;
+export type Entitlement = z.infer<typeof EntitlementsSchema>;
