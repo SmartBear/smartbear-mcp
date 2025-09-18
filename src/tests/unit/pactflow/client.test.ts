@@ -20,14 +20,22 @@ describe("PactFlowClient", () => {
 
   describe("constructor", () => {
     it("should initialize with correct parameters", () => {
-      client = new PactflowClient("test-token", "https://example.com", "pactflow");
+      client = new PactflowClient(
+        "test-token",
+        "https://example.com",
+        "pactflow"
+      );
       expect(client).toBeInstanceOf(PactflowClient);
       expect(client["baseUrl"]).toBe("https://example.com");
       expect(client["clientType"]).toBe("pactflow");
     });
 
     it("sets correct headers when client is pactflow", () => {
-      client = new PactflowClient("my-token", "https://example.com", "pactflow");
+      client = new PactflowClient(
+        "my-token",
+        "https://example.com",
+        "pactflow"
+      );
 
       expect(client["headers"]).toEqual(
         expect.objectContaining({
@@ -81,7 +89,11 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = new PactflowClient("token", "https://example.com", "pactflow");
+      const client = new PactflowClient(
+        "token",
+        "https://example.com",
+        "pactflow"
+      );
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(1);
@@ -102,7 +114,11 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = new PactflowClient("token", "https://example.com", "pactflow");
+      const client = new PactflowClient(
+        "token",
+        "https://example.com",
+        "pactflow"
+      );
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).not.toHaveBeenCalled();
@@ -111,7 +127,11 @@ describe("PactFlowClient", () => {
 
   describe("API Methods", () => {
     beforeEach(() => {
-      client = new PactflowClient("test-token", "https://example.com", "pactflow");
+      client = new PactflowClient(
+        "test-token",
+        "https://example.com",
+        "pactflow"
+      );
     });
 
     describe("canIDeploy", () => {
@@ -156,7 +176,7 @@ describe("PactFlowClient", () => {
         const errorText = "Pacticipant not found";
         fetchMock.mockResponseOnce(errorText, {
           status: 404,
-          statusText: "Not Found"
+          statusText: "Not Found",
         });
 
         await expect(client.canIDeploy(mockInput)).rejects.toThrow(
@@ -171,7 +191,9 @@ describe("PactFlowClient", () => {
           environment: "test/staging",
         };
 
-        fetchMock.mockResponseOnce(JSON.stringify({ summary: { deployable: true } }));
+        fetchMock.mockResponseOnce(
+          JSON.stringify({ summary: { deployable: true } })
+        );
 
         await client.canIDeploy(inputWithSpecialChars);
 
@@ -204,7 +226,10 @@ describe("PactFlowClient", () => {
             consumer: { name: "Consumer App", version: { number: "1.0.0" } },
             provider: { name: "Example API", version: { number: "1.0.0" } },
             pact: { createdAt: "2024-01-01T00:00:00Z" },
-            verificationResult: { success: true, verifiedAt: "2024-01-01T01:00:00Z" },
+            verificationResult: {
+              success: true,
+              verifiedAt: "2024-01-01T01:00:00Z",
+            },
           },
         ],
         notices: [
@@ -349,7 +374,7 @@ describe("PactFlowClient", () => {
         const errorText = "Invalid query parameters";
         fetchMock.mockResponseOnce(errorText, {
           status: 400,
-          statusText: "Bad Request"
+          statusText: "Bad Request",
         });
 
         await expect(client.getMatrix(mockMatrixInput)).rejects.toThrow(
@@ -361,14 +386,13 @@ describe("PactFlowClient", () => {
         const errorText = "Pacticipant not found";
         fetchMock.mockResponseOnce(errorText, {
           status: 404,
-          statusText: "Not Found"
+          statusText: "Not Found",
         });
 
         await expect(client.getMatrix(mockMatrixInput)).rejects.toThrow(
           "Matrix Request Failed - status: 404 Not Found - Pacticipant not found"
         );
       });
-
     });
   });
 });

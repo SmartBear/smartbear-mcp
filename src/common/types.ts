@@ -1,5 +1,13 @@
-import { ReadResourceTemplateCallback, RegisteredResourceTemplate, RegisteredTool, ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { ElicitRequest, ElicitResult } from "@modelcontextprotocol/sdk/types.js";
+import {
+  ReadResourceTemplateCallback,
+  RegisteredResourceTemplate,
+  RegisteredTool,
+  ToolCallback,
+} from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  ElicitRequest,
+  ElicitResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import { ZodRawShape, ZodType, ZodTypeAny } from "zod";
 import { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 
@@ -24,20 +32,20 @@ export interface ToolParams {
 }
 
 export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
-    params: ToolParams,
-    cb: ToolCallback<InputArgs>
+  params: ToolParams,
+  cb: ToolCallback<InputArgs>
 ) => RegisteredTool;
 
 export type RegisterResourceFunction = (
-    name: string,
-    path: string,
-    cb: ReadResourceTemplateCallback
+  name: string,
+  path: string,
+  cb: ReadResourceTemplateCallback
 ) => RegisteredResourceTemplate;
 
 export type GetInputFunction = (
-    params: ElicitRequest["params"],
-    options?: RequestOptions
-) => Promise<ElicitResult>
+  params: ElicitRequest["params"],
+  options?: RequestOptions
+) => Promise<ElicitResult>;
 
 export type Parameters = Array<{
   name: string;
@@ -49,8 +57,11 @@ export type Parameters = Array<{
 }>;
 
 export interface Client {
-    name: string;
-    prefix: string;
-    registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void;
-    registerResources?(register: RegisterResourceFunction): void;
+  name: string;
+  prefix: string;
+  registerTools(
+    register: RegisterToolsFunction,
+    getInput: GetInputFunction
+  ): void;
+  registerResources?(register: RegisterResourceFunction): void;
 }

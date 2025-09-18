@@ -44,26 +44,36 @@ async function main() {
     client_defined = true;
   }
 
-  if(apiHubToken) {
+  if (apiHubToken) {
     server.addClient(new ApiHubClient(apiHubToken));
     client_defined = true;
   }
 
   if (pactBrokerUrl) {
     if (pactBrokerToken) {
-      server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
+      server.addClient(
+        new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow")
+      );
       client_defined = true;
     } else if (pactBrokerUsername && pactBrokerPassword) {
-      server.addClient(new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker"));
+      server.addClient(
+        new PactflowClient(
+          { username: pactBrokerUsername, password: pactBrokerPassword },
+          pactBrokerUrl,
+          "pact_broker"
+        )
+      );
       client_defined = true;
     } else {
-      console.error("If the Pact Broker base URL is specified, you must specify either (a) a PactFlow token, or (b) a Pact Broker username and password pair.")
+      console.error(
+        "If the Pact Broker base URL is specified, you must specify either (a) a PactFlow token, or (b) a Pact Broker username and password pair."
+      );
     }
   }
 
   if (!client_defined) {
     console.error(
-      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
+      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables"
     );
     process.exit(1);
   }

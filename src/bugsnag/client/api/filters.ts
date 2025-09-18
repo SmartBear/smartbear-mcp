@@ -9,7 +9,7 @@ import { z } from "zod";
 /**
  * Types of filter comparison operations
  */
-export type FilterType = 'eq' | 'ne' | 'empty';
+export type FilterType = "eq" | "ne" | "empty";
 
 /**
  * Single filter value with its comparison type
@@ -35,7 +35,7 @@ export interface FilterObject {
 }
 
 export const FilterValueSchema = z.object({
-  type: z.enum(['eq', 'ne', 'empty']),
+  type: z.enum(["eq", "ne", "empty"]),
   value: z.union([z.string(), z.boolean(), z.number()]),
 });
 
@@ -49,7 +49,7 @@ export const FilterObjectSchema = z.record(z.array(FilterValueSchema));
  */
 export function equals(value: string | number): FilterValue {
   return {
-    type: 'eq',
+    type: "eq",
     value,
   };
 }
@@ -62,7 +62,7 @@ export function equals(value: string | number): FilterValue {
  */
 export function notEquals(value: string | number): FilterValue {
   return {
-    type: 'ne',
+    type: "ne",
     value,
   };
 }
@@ -75,7 +75,7 @@ export function notEquals(value: string | number): FilterValue {
  */
 export function empty(isEmpty: boolean): FilterValue {
   return {
-    type: 'empty',
+    type: "empty",
     value: isEmpty.toString(),
   };
 }
@@ -87,9 +87,9 @@ export function empty(isEmpty: boolean): FilterValue {
  * @param unit The time unit ('h' for hours, 'd' for days)
  * @returns FilterValue for the relative time
  */
-export function relativeTime(value: number, unit: 'h' | 'd'): FilterValue {
+export function relativeTime(value: number, unit: "h" | "d"): FilterValue {
   return {
-    type: 'eq',
+    type: "eq",
     value: `${value}${unit}`,
   };
 }
@@ -102,7 +102,7 @@ export function relativeTime(value: number, unit: 'h' | 'd'): FilterValue {
  */
 export function isoTime(date: Date): FilterValue {
   return {
-    type: 'eq',
+    type: "eq",
     value: date.toISOString(),
   };
 }
@@ -178,8 +178,8 @@ export function addTimeRange(
   since: Date,
   before: Date
 ): FilterObject {
-  addFilter(filters, 'event.since', isoTime(since));
-  addFilter(filters, 'event.before', isoTime(before));
+  addFilter(filters, "event.since", isoTime(since));
+  addFilter(filters, "event.before", isoTime(before));
   return filters;
 }
 
@@ -194,9 +194,9 @@ export function addTimeRange(
 export function addRelativeTimeRange(
   filters: FilterObject,
   amount: number,
-  unit: 'h' | 'd'
+  unit: "h" | "d"
 ): FilterObject {
-  addFilter(filters, 'event.since', relativeTime(amount, unit));
+  addFilter(filters, "event.since", relativeTime(amount, unit));
   return filters;
 }
 

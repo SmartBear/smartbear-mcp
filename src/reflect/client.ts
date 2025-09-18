@@ -1,5 +1,9 @@
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
+import {
+  Client,
+  GetInputFunction,
+  RegisterToolsFunction,
+} from "../common/types.js";
 import { z } from "zod";
 
 // Type definitions for tool arguments
@@ -23,7 +27,11 @@ export interface testExecutionArgs {
 
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
-  private headers: { "X-API-KEY": string; "Content-Type": string, "User-Agent": string };
+  private headers: {
+    "X-API-KEY": string;
+    "Content-Type": string;
+    "User-Agent": string;
+  };
 
   name = "Reflect";
   prefix = "reflect";
@@ -51,19 +59,22 @@ export class ReflectClient implements Client {
       {
         method: "GET",
         headers: this.headers,
-      },
+      }
     );
 
     return response.json();
   }
 
-  async getSuiteExecutionStatus(suiteId: string, executionId: string): Promise<any> {
+  async getSuiteExecutionStatus(
+    suiteId: string,
+    executionId: string
+  ): Promise<any> {
     const response = await fetch(
       `https://api.reflect.run/v1/suites/${suiteId}/executions/${executionId}`,
       {
         method: "GET",
         headers: this.headers,
-      },
+      }
     );
 
     return response.json();
@@ -75,19 +86,22 @@ export class ReflectClient implements Client {
       {
         method: "POST",
         headers: this.headers,
-      },
+      }
     );
 
     return response.json();
   }
 
-  async cancelSuiteExecution(suiteId: string, executionId: string): Promise<any> {
+  async cancelSuiteExecution(
+    suiteId: string,
+    executionId: string
+  ): Promise<any> {
     const response = await fetch(
       `https://api.reflect.run/v1/suites/${suiteId}/executions/${executionId}/cancel`,
       {
         method: "PATCH",
         headers: this.headers,
-      },
+      }
     );
 
     return response.json();
@@ -103,27 +117,36 @@ export class ReflectClient implements Client {
   }
 
   async runReflectTest(testId: string): Promise<any> {
-    const response = await fetch(`https://api.reflect.run/v1/tests/${testId}/executions`, {
-      method: "POST",
-      headers: this.headers,
-    });
-
-    return response.json();
-  }
-
-  async getReflectTestStatus(testId: string, executionId: string): Promise<any> {
     const response = await fetch(
-      `https://api.reflect.run/v1/executions/${executionId}`,
+      `https://api.reflect.run/v1/tests/${testId}/executions`,
       {
-        method: "GET",
+        method: "POST",
         headers: this.headers,
-      },
+      }
     );
 
     return response.json();
   }
 
-  registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
+  async getReflectTestStatus(
+    testId: string,
+    executionId: string
+  ): Promise<any> {
+    const response = await fetch(
+      `https://api.reflect.run/v1/executions/${executionId}`,
+      {
+        method: "GET",
+        headers: this.headers,
+      }
+    );
+
+    return response.json();
+  }
+
+  registerTools(
+    register: RegisterToolsFunction,
+    _getInput: GetInputFunction
+  ): void {
     register(
       {
         title: "List Suites",
@@ -146,7 +169,7 @@ export class ReflectClient implements Client {
             name: "suiteId",
             type: z.string(),
             description: "ID of the reflect suite to list executions for",
-            required: true
+            required: true,
           },
         ],
       },
@@ -167,37 +190,43 @@ export class ReflectClient implements Client {
             name: "suiteId",
             type: z.string(),
             description: "ID of the reflect suite to get execution status for",
-            required: true
+            required: true,
           },
           {
             name: "executionId",
             type: z.string(),
             description: "ID of the reflect suite execution to get status for",
-            required: true
+            required: true,
           },
         ],
       },
       async (args, _extra) => {
-        if (!args.suiteId || !args.executionId) throw new Error("Both suiteId and executionId arguments are required");
-        const response = await this.getSuiteExecutionStatus(args.suiteId, args.executionId);
+        if (!args.suiteId || !args.executionId)
+          throw new Error(
+            "Both suiteId and executionId arguments are required"
+          );
+        const response = await this.getSuiteExecutionStatus(
+          args.suiteId,
+          args.executionId
+        );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
       }
     );
     register(
-        {
-            title: "Execute Suite",
-            summary: "Execute a reflect suite",
-            parameters: [
-                {
-                    name: "suiteId",
-                    type: z.string(),
-                    description: "ID of the reflect suite to list executions for",
-                    required: true
-                }
-            ]
-        },
+      {
+        title: "Execute Suite",
+        summary: "Execute a reflect suite",
+        parameters: [
+          {
+            name: "suiteId",
+            type: z.string(),
+            description: "ID of the reflect suite to list executions for",
+            required: true,
+          },
+        ],
+      },
       async (args, _extra) => {
         if (!args.suiteId) throw new Error("suiteId argument is required");
         const response = await this.executeSuite(args.suiteId);
@@ -215,19 +244,25 @@ export class ReflectClient implements Client {
             name: "suiteId",
             type: z.string(),
             description: "ID of the reflect suite to cancel execution for",
-            required: true
+            required: true,
           },
           {
             name: "executionId",
             type: z.string(),
             description: "ID of the reflect suite execution to cancel",
-            required: true
+            required: true,
           },
         ],
       },
       async (args, _extra) => {
-        if (!args.suiteId || !args.executionId) throw new Error("Both suiteId and executionId arguments are required");
-        const response = await this.cancelSuiteExecution(args.suiteId, args.executionId);
+        if (!args.suiteId || !args.executionId)
+          throw new Error(
+            "Both suiteId and executionId arguments are required"
+          );
+        const response = await this.cancelSuiteExecution(
+          args.suiteId,
+          args.executionId
+        );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
@@ -255,8 +290,8 @@ export class ReflectClient implements Client {
             name: "testId",
             type: z.string(),
             description: "ID of the reflect test to run",
-            required: true
-          }
+            required: true,
+          },
         ],
       },
       async (args, _extra) => {
@@ -276,19 +311,23 @@ export class ReflectClient implements Client {
             name: "testId",
             type: z.string(),
             description: "ID of the reflect test to run",
-            required: true
+            required: true,
           },
           {
             name: "executionId",
             type: z.string(),
             description: "ID of the reflect test execution to get status for",
-            required: true
+            required: true,
           },
         ],
       },
       async (args, _extra) => {
-        if (!args.testId || !args.executionId) throw new Error("Both testId and executionId arguments are required");
-        const response = await this.getReflectTestStatus(args.testId, args.executionId);
+        if (!args.testId || !args.executionId)
+          throw new Error("Both testId and executionId arguments are required");
+        const response = await this.getReflectTestStatus(
+          args.testId,
+          args.executionId
+        );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };

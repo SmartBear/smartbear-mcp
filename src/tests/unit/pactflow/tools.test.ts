@@ -1,7 +1,7 @@
 // tools.test.ts
 import { ZodObject, ZodTypeAny } from "zod";
 import { TOOLS } from "../../../pactflow/client/tools.js";
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
 describe("TOOLS definition for 'Generate Pact Tests'", () => {
   it("defines the generate pact tests tool with correct metadata", () => {
@@ -27,7 +27,9 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
       },
     };
 
-    expect(() => openapiSchema?.parse(invalidOpenapi.openapi)).toThrow(/matcher/);
+    expect(() => openapiSchema?.parse(invalidOpenapi.openapi)).toThrow(
+      /matcher/
+    );
   });
 
   it("rejects unsupported language values in the language field", () => {
@@ -37,6 +39,8 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
     expect(languageSchema).toBeDefined();
 
     const invalidData = "ruby"; // not in enum
-    expect(() => languageSchema?.parse(invalidData)).toThrow(/Invalid enum value/);
+    expect(() => languageSchema?.parse(invalidData)).toThrow(
+      /Invalid enum value/
+    );
   });
 });
