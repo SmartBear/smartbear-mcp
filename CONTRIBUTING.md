@@ -39,7 +39,6 @@ Please read the following guidance:
 - This is a public repo, so consider a squash-commit of your feature PRs to give a cleaner history
 - Create `integration/` branches from `next` if you want to keep a larger change away from the release during development
 - Don't forget to update the `docs/` directory with any noteworthy changes to functionality or configuration
-- Use internal communication channels to coordinate a release when you are ready
 
 ## Development Setup
 
@@ -137,6 +136,10 @@ Documentation lives in the `/docs` directory of this repo. Changes to the docume
 
 ## Releases
 
+A release will be carried out by a member of the SmartBear team when a set of releasable changes is ready on the `next` branch. If the are commits from more than one product, the releasing engineer will coordinate with the each product team to ensure the release is appropriate and sufficiently documented in the changelog/docs.
+
+Please follow these steps to create a new release:
+
 1. **Decide on a version number**
     - Check the changes in `CHANGELOG.md` and using [semantic versioning](https://semver.org/), decide on a new version. i.e. `1.2.3`
 
@@ -158,6 +161,7 @@ Documentation lives in the `/docs` directory of this repo. Changes to the docume
 
 5. **Post-Release**
     - A PR should automatically be created to merge `main` back into `next`, this should be merged down soon after release
+    - Check https://developer.smartbear.com/smartbear-mcp/ to ensure the docs have been updated correctly
 
 Please ensure you update internal ticketing systems accordingly.
 
