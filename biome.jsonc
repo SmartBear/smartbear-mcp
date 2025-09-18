@@ -5,6 +5,13 @@
     "domains": {
       "project": "recommended",
       "test": "recommended"
+    },
+    "rules": {
+      "suspicious": {
+        // TODO: Change this to an error. The use of 'any' should be avoided
+        // where possible and is indicative of a lack of proper typing.
+        "noExplicitAny": "off"
+      }
     }
   },
   "assist": {

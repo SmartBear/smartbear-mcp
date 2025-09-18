@@ -19,7 +19,7 @@ import { OADMatcherPrompt } from "./prompts.js";
  */
 export async function getOADMatcherRecommendations(
   openAPI: OpenAPI,
-  server: Server,
+  server: Pick<Server, "createMessage">,
 ): Promise<MatcherRecommendations> {
   const matcherResponse = await server.createMessage({
     messages: [

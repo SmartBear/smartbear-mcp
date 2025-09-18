@@ -129,7 +129,7 @@ export class ReflectClient implements Client {
   }
 
   async getReflectTestStatus(
-    testId: string,
+    _testId: string,
     executionId: string,
   ): Promise<any> {
     const response = await fetch(

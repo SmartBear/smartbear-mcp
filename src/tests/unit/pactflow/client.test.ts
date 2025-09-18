@@ -27,8 +27,8 @@ describe("PactFlowClient", () => {
         vi.fn() as any,
       );
       expect(client).toBeInstanceOf(PactflowClient);
-      expect(client["baseUrl"]).toBe("https://example.com");
-      expect(client["clientType"]).toBe("pactflow");
+      expect(client.baseUrl).toBe("https://example.com");
+      expect(client.clientType).toBe("pactflow");
     });
 
     it("sets correct headers when client is pactflow", () => {
@@ -39,7 +39,7 @@ describe("PactFlowClient", () => {
         vi.fn() as any,
       );
 
-      expect(client["headers"]).toEqual(
+      expect(client.headers).toEqual(
         expect.objectContaining({
           Authorization: expect.stringContaining("Bearer my-token"),
           "Content-Type": expect.stringContaining("application/json"),
@@ -55,7 +55,7 @@ describe("PactFlowClient", () => {
         vi.fn() as any,
       );
 
-      expect(client["headers"]).toEqual(
+      expect(client.headers).toEqual(
         expect.objectContaining({
           Authorization: expect.stringContaining(
             `Basic ${Buffer.from("user:pass").toString("base64")}`,
@@ -160,7 +160,7 @@ describe("PactFlowClient", () => {
           "https://example.com/can-i-deploy?pacticipant=my-service&version=1.0.0&environment=production",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.headers,
           },
         );
         expect(result.summary.deployable).toBe(true);
@@ -207,7 +207,7 @@ describe("PactFlowClient", () => {
           "https://example.com/can-i-deploy?pacticipant=my-service%40special&version=1.0.0-beta%2Bbuild.123&environment=test%2Fstaging",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.headers,
           },
         );
       });
@@ -262,7 +262,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?latestby=cvp&limit=100&q[]pacticipant=Example%20API&q[]version=1.0.0&q[]latest=true",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.headers,
           },
         );
         expect(result.summary.deployable).toBe(true);
@@ -294,7 +294,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?latestby=cvpv&q[]pacticipant=Consumer%20App&q[]branch=main&q[]latest=true&q[]pacticipant=Provider%20API&q[]environment=production&q[]tag=v1.0",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.headers,
           },
         );
       });
@@ -323,7 +323,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?limit=50&q[]pacticipant=Full%20Service&q[]version=2.1.0&q[]branch=feature%2Fnew-api&q[]environment=staging&q[]latest=false&q[]tag=beta&q[]mainBranch=true",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.headers,
           },
         );
       });
@@ -345,7 +345,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?q[]pacticipant=Simple%20Service",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.headers,
           },
         );
       });
@@ -371,7 +371,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?q[]pacticipant=Service%40Company%2FAPI&q[]version=1.0.0-beta%2Bbuild.123&q[]branch=feature%2Ffix-bug%23123&q[]environment=test%2Fstaging&q[]tag=v1.0.0-rc.1",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.headers,
           },
         );
       });
@@ -421,7 +421,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/entitlement",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.headers,
           },
         );
         expect(result.organizationEntitlements.name).toBe("test-org");
