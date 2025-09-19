@@ -1,21 +1,19 @@
-# This aims to unify publishing processes to ECR, NPM and MCP Registry
-name: Publish
+name: Publish to ECR
 
 permissions:
   id-token: write
   contents: read
 
 on:
-  push:
-    branches:
-      - publish-to-ecr-public-registry
-  # workflow_dispatch:
-  # release:
-  #   types: [published]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to publish'
+        required: true
 
 jobs:
   publish-ecr:
-    name: Publish to ECR Public Registry
+    name: Publish to ECR Registry
     runs-on: ubuntu-24.04
 
     steps:
@@ -28,10 +26,13 @@ jobs:
           role-to-assume: ${{ secrets.ECR_IAM_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Login to Amazon ECR
+      - name: Login to Amazon ECR public
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # 2.0.1
         with:
           registry-type: public
+      
+      - name: Login to Amazon ECR private
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076
 
       - name: Build, tag, and push docker image to Amazon ECR Public    
         env:
@@ -39,6 +40,11 @@ jobs:
           REPOSITORY: smartbear-mcp
           IMAGE_TAG: 0.5.0
         run: |
-          IMAGE="public.ecr.aws/${ECR_PUBLIC_ALIAS}/${REPOSITORY}:${IMAGE_TAG}"
-          docker build -t "$IMAGE" .
-          docker push "$IMAGE"
+          PUBLIC_IMAGE="public.ecr.aws/${ECR_PUBLIC_ALIAS}/${REPOSITORY}:${IMAGE_TAG}"
+          PRIVATE_IMAGE=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}/${REPOSITORY}:${IMAGE_TAG}
+          
+          docker build -t "$PUBLIC_IMAGE" -t "$PRIVATE_IMAGE" .
+          
+          docker push "$PUBLIC_IMAGE"
+          
+          docker push "$PRIVATE_IMAGE"
