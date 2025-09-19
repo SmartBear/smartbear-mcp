@@ -1,33 +1,38 @@
 name: Publish to npm
 
 permissions:
+  id-token: write
   contents: read
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
 
 jobs:
-  publish:
-    name: Publish package
+  publish-ecr:
+    name: Publish to ECR Public Registry
     runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838 # v5.0.0
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org/'
-          scope: '@smartbear'
+          role-to-assume: ${{ secrets.ECR_IAM_ROLE_ARN }}
+          aws-region: us-east-1
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # 2.0.1
+        with:
+          registry-type: public
 
-      - name: Publish to npm
-        run: npm publish --access public
+      - name: Build, tag, and push docker image to Amazon ECR Public    
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          ECR_PUBLIC_ALIAS: r2q3q1g5
+          REPOSITORY: smartbear-mcp
+          IMAGE_TAG: 0.5.0
+        run: |
+          IMAGE="public.ecr.aws/${ECR_PUBLIC_ALIAS}/${REPOSITORY}:${IMAGE_TAG}"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
