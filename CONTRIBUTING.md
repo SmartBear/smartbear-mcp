@@ -136,7 +136,7 @@ Documentation lives in the `/docs` directory of this repo. Changes to the docume
 
 ## Releases
 
-A release will be carried out by a member of the SmartBear team when a set of releasable changes is ready on the `next` branch. If the are commits from more than one product, the releasing engineer will coordinate with the each product team to ensure the release is appropriate and sufficiently documented in the changelog/docs.
+A release will be carried out by a member of the SmartBear team when a set of releasable changes is ready on the `next` branch. If there are commits from more than one product, the releasing engineer will coordinate with each product team to ensure the release is appropriate and sufficiently documented in the changelog/docs.
 
 Please follow these steps to create a new release:
 
