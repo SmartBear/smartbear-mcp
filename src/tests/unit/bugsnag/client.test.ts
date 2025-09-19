@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from '../../../common/info.js';
 import { BugsnagClient } from '../../../bugsnag/client.js';
 import { BaseAPI } from '../../../bugsnag/client/api/base.js';
@@ -70,6 +70,24 @@ vi.mock('../../../common/bugsnag.js', () => ({
   }
 }));
 
+// Mock console methods to prevent noisy test output and allow verification
+const mockConsole = {
+  error: vi.fn(),
+  warn: vi.fn(),
+  log: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn()
+};
+
+// Store original console methods
+const originalConsole = {
+  error: console.error,
+  warn: console.warn,
+  log: console.log,
+  info: console.info,
+  debug: console.debug
+};
+
 describe('BugsnagClient', () => {
   let client: BugsnagClient;
 
@@ -79,7 +97,31 @@ describe('BugsnagClient', () => {
     mockCache.get.mockReset();
     mockCache.set.mockReset();
     mockCache.del.mockReset();
+
+    // Mock console methods
+    console.error = mockConsole.error;
+    console.warn = mockConsole.warn;
+    console.log = mockConsole.log;
+    console.info = mockConsole.info;
+    console.debug = mockConsole.debug;
+
+    // Reset console mocks
+    mockConsole.error.mockClear();
+    mockConsole.warn.mockClear();
+    mockConsole.log.mockClear();
+    mockConsole.info.mockClear();
+    mockConsole.debug.mockClear();
+
     client = new BugsnagClient('test-token');
+  });
+
+  afterEach(() => {
+    // Restore original console methods
+    console.error = originalConsole.error;
+    console.warn = originalConsole.warn;
+    console.log = originalConsole.log;
+    console.info = originalConsole.info;
+    console.debug = originalConsole.debug;
   });
 
   describe('constructor', () => {
@@ -466,13 +508,14 @@ describe('BugsnagClient', () => {
       expect(mockCache.set).toHaveBeenCalledWith('bugsnag_current_project_event_filters', filteredFields);
     });
 
-    it('should throw error when no organizations found', async () => {
+    it('should not throw error when no organizations found', async () => {
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [] });
 
-      await expect(client.initialize()).rejects.toThrow('No organizations found for the current user.');
+      await expect(client.initialize()).resolves.toBeUndefined();
+      expect(console.error).toHaveBeenCalledWith('Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.', expect.any(Error));
     });
 
-    it('should throw error when project with API key not found', async () => {
+    it('should not throw error when project with API key not found', async () => {
       const clientWithApiKey = new BugsnagClient('test-token', 'non-existent-key');
       const mockOrg = { id: 'org-1', name: 'Test Org' };
       const mockProject = { id: 'proj-1', name: 'Project 1', api_key: 'other-key' };
@@ -480,9 +523,8 @@ describe('BugsnagClient', () => {
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [mockOrg] });
       mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: [mockProject] });
 
-      await expect(clientWithApiKey.initialize()).rejects.toThrow(
-        'Unable to find project with API key non-existent-key in organization.'
-      );
+      await expect(clientWithApiKey.initialize()).resolves.toBeUndefined();
+      expect(console.error).toHaveBeenCalledWith('Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. Check your configured BugSnag project API key.', expect.any(Error));
     });
 
     it('should throw error when no event fields found for project', async () => {
@@ -496,9 +538,8 @@ describe('BugsnagClient', () => {
       mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({ body: mockProjects });
       mockProjectAPI.listProjectEventFields.mockResolvedValue({ body: [] });
 
-      await expect(clientWithApiKey.initialize()).rejects.toThrow(
-        'No event fields found for project Project 1.'
-      );
+      await expect(clientWithApiKey.initialize()).resolves.toBeUndefined();
+      expect(console.error).toHaveBeenCalledWith('Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. Check your configured BugSnag project API key.', expect.any(Error));
     });
   });
 
