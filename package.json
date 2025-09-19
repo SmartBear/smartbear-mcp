@@ -34,6 +34,7 @@
     "lint": "biome lint .",
     "lint:fix": "biome lint . --fix",
     "format": "biome format . --write",
+    "format:check": "biome format .",
     "prepare": "npm run build",
     "watch": "tsc --watch",
     "test": "vitest",
