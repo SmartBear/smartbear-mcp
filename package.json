@@ -11,6 +11,7 @@
     "pactflow"
   ],
   "homepage": "https://developer.smartbear.com/smartbear-mcp",
+  "mcpName": "com.smartbear/smartbear-mcp",
   "repository": {
     "type": "git",
     "url": "git@github.com:SmartBear/smartbear-mcp.git"
