@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [PactFlow] Add tool for fetching AI entitlement [#129](https://github.com/SmartBear/smartbear-mcp/pull/129)
 - [PactFlow] Add matcher recommendation in generate and review tool [#130](https://github.com/SmartBear/smartbear-mcp/pull/130)
 
+### Changed
+
+- [BugSnag] Catch initialization errors to allow tools to remain discoverable [#139](https://github.com/SmartBear/smartbear-mcp/pull/139)
+
 ## [0.5.0] - 2025-09-08
 
 ### Added

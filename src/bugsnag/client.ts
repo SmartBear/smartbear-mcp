@@ -70,7 +70,7 @@ export class BugsnagClient implements Client {
   private apiEndpoint: string;
   private appEndpoint: string;
 
-  name = "Bugsnag";
+  name = "BugSnag";
   prefix = "bugsnag";
 
   constructor(token: string, projectApiKey?: string, endpoint?: string) {
@@ -97,8 +97,22 @@ export class BugsnagClient implements Client {
 
   async initialize(): Promise<void> {
     // Trigger caching of org and projects
-    await this.getProjects();
-    await this.getCurrentProject();
+    try {
+      await this.getProjects();
+    } catch (error) {
+      // Swallow auth errors here to allow the tools to be registered for visibility, even if the token is invalid
+      console.error("Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.", error);
+    }
+    if (this.projectApiKey) {
+      try {
+        await this.getCurrentProject();
+      } catch (error) {
+        // Clear the project API key to allow tools to work across all projects
+        this.projectApiKey = undefined;
+        console.error("Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
+                      "Check your configured BugSnag project API key.", error);
+      }
+    }
   }
 
   getHost(apiKey: string | undefined, subdomain: string): string {
