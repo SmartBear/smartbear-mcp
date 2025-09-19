@@ -1,0 +1,39 @@
+#!/usr/bin/env node
+
+/**
+ * Generates a coverage badge JSON file based on the coverage summary.
+ *
+ * This script reads the coverage percentage from 'coverage/coverage-summary.json'
+ * and creates a badge JSON file at 'coverage/badge.json' with appropriate color coding.
+ *
+ * Usage: node scripts/generate-badge.js
+ */
+import fs from "node:fs";
+import path from "node:path";
+
+const ROOT = path.resolve(new URL("..", import.meta.url).pathname);
+const COVERAGE_SUMMARY_PATH = path.join(
+  ROOT,
+  "coverage",
+  "coverage-summary.json"
+);
+const BADGE_OUTPUT_PATH = path.join(ROOT, "coverage", "badge.json");
+
+if (!fs.existsSync(COVERAGE_SUMMARY_PATH)) {
+  const relativePath = path.relative(ROOT, COVERAGE_SUMMARY_PATH);
+  console.error(
+    `Error: ${relativePath} not found. Please run \`npm run test:coverage\` first.`
+  );
+  process.exit(1);
+}
+const coverage = JSON.parse(fs.readFileSync(COVERAGE_SUMMARY_PATH, "utf8"));
+const pct = coverage.total.lines.pct;
+const color = pct >= 80 ? "brightgreen" : pct >= 60 ? "yellow" : "red";
+const badge = {
+  schemaVersion: 1,
+  label: "coverage",
+  message: `${pct.toFixed(1)}%`,
+  color: color,
+};
+fs.writeFileSync(BADGE_OUTPUT_PATH, JSON.stringify(badge, null, 2));
+console.log("Coverage badge generated:", `${pct.toFixed(1)}%`);
