@@ -49,6 +49,9 @@ function formatPercentage(pct) {
 /**
  * Get the top uncovered files from the coverage report.
  *
+ * This will ignore files within `scripts/` as they are not part of the main
+ * codebase.
+ *
  * @param {Object} coverage - The coverage report object.
  * @param {number} limit - The maximum number of files to return.
  * @returns {Array} List of uncovered files.
@@ -56,8 +59,9 @@ function formatPercentage(pct) {
 function getTopUncoveredFiles(coverage, limit = 5) {
   const files = Object.entries(coverage)
     .filter(([key]) => key !== "total")
+    .filter(([key]) => !key.startsWith("scripts/"))
     .map(([file, data]) => ({
-      file: file.replace(`${process.cwd()}/`, ""),
+      file: file.replace(`${ROOT}/`, ""),
       lines: data.lines.pct,
     }))
     .filter((item) => item.lines < 100)
