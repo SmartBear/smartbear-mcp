@@ -64,26 +64,11 @@ export class BugsnagClient implements Client {
   }
 
   async initialize(): Promise<void> {
-    const startTime = performance.now();
-
-    try {
-      // Trigger caching of org and projects through shared services
-      await Promise.all([
-        this.sharedServices.getProjects(),
-        this.sharedServices.getCurrentProject()
-      ]);
-
-      const initTime = performance.now() - startTime;
-      if (process.env.NODE_ENV === 'development' || process.env.BUGSNAG_PERFORMANCE_MONITORING === 'true') {
-        console.debug(`BugsnagClient initialized in ${initTime.toFixed(2)}ms`);
-      }
-    } catch (error) {
-      const initTime = performance.now() - startTime;
-      if (process.env.NODE_ENV === 'development' || process.env.BUGSNAG_PERFORMANCE_MONITORING === 'true') {
-        console.debug(`BugsnagClient initialization failed after ${initTime.toFixed(2)}ms:`, error);
-      }
-      throw error;
-    }
+    // Trigger caching of org and projects through shared services
+    await Promise.all([
+      this.sharedServices.getProjects(),
+      this.sharedServices.getCurrentProject()
+    ]);
   }
 
   /**

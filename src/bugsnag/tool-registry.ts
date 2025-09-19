@@ -69,7 +69,6 @@ export class BugsnagToolRegistry implements ToolRegistry {
    * Register all discovered tools with the MCP server
    */
   registerAllTools(register: RegisterToolsFunction, context: ToolExecutionContext, config?: ToolDiscoveryConfig): void {
-    const startTime = performance.now();
     const tools = this.discoverTools(config);
 
     // Clear existing tools and register discovered ones
@@ -98,27 +97,12 @@ export class BugsnagToolRegistry implements ToolRegistry {
         outputFormat: tool.definition.outputFormat
       };
 
-      // Register the tool with the MCP server with performance monitoring
+      // Register the tool with the MCP server
       register(toolParams, async (args: any) => {
-        const executionStartTime = performance.now();
         try {
           const result = await tool.execute(args, context);
-          const executionTime = performance.now() - executionStartTime;
-
-          // Log performance metrics for monitoring (only in development or when enabled)
-          if (process.env.NODE_ENV === 'development' || process.env.BUGSNAG_PERFORMANCE_MONITORING === 'true') {
-            console.debug(`Tool '${tool.name}' executed in ${executionTime.toFixed(2)}ms`);
-          }
-
           return result;
         } catch (error) {
-          const executionTime = performance.now() - executionStartTime;
-
-          // Log error with timing information
-          if (process.env.NODE_ENV === 'development' || process.env.BUGSNAG_PERFORMANCE_MONITORING === 'true') {
-            console.debug(`Tool '${tool.name}' failed after ${executionTime.toFixed(2)}ms:`, error);
-          }
-
           if (error instanceof BugsnagToolError) {
             return {
               content: [{ type: "text", text: error.message }],
@@ -139,11 +123,6 @@ export class BugsnagToolRegistry implements ToolRegistry {
           };
         }
       });
-    }
-
-    const registrationTime = performance.now() - startTime;
-    if (process.env.NODE_ENV === 'development' || process.env.BUGSNAG_PERFORMANCE_MONITORING === 'true') {
-      console.debug(`Registered ${tools.length} tools in ${registrationTime.toFixed(2)}ms`);
     }
   }
 
