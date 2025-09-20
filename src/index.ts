@@ -29,7 +29,7 @@ async function main() {
   let client_defined = false;
 
   if (reflectToken) {
-    server.addClient(new ReflectClient(reflectToken));
+    await server.addClient(new ReflectClient(reflectToken));
     client_defined = true;
   }
 
@@ -40,21 +40,21 @@ async function main() {
       process.env.BUGSNAG_ENDPOINT
     );
     await bugsnagClient.initialize();
-    server.addClient(bugsnagClient);
+    await server.addClient(bugsnagClient);
     client_defined = true;
   }
 
   if(apiHubToken) {
-    server.addClient(new ApiHubClient(apiHubToken));
+    await server.addClient(new ApiHubClient(apiHubToken));
     client_defined = true;
   }
 
   if (pactBrokerUrl) {
     if (pactBrokerToken) {
-      server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow", server.server));
+      await server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow", server.server));
       client_defined = true;
     } else if (pactBrokerUsername && pactBrokerPassword) {
-      server.addClient(new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker", server.server));
+      await server.addClient(new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker", server.server));
       client_defined = true;
     } else {
       console.error("If the Pact Broker base URL is specified, you must specify either (a) a PactFlow token, or (b) a Pact Broker username and password pair.")

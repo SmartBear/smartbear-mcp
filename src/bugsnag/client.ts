@@ -4,10 +4,10 @@ import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import { Client, GetInputFunction, RegisterResourceFunction, RegisterToolsFunction } from "../common/types.js";
 import { CurrentUserAPI, ErrorAPI, Configuration } from "./client/index.js";
 import { ProjectAPI } from "./client/api/Project.js";
-import { BugsnagToolRegistry } from "./tool-registry.js";
 import { BugsnagSharedServices } from "./shared-services.js";
 import { ToolExecutionContext } from "./types.js";
-import { ToolDiscoveryConfig } from "./tool-factory.js";
+import { BugsnagToolFactory } from "./tool-factory.js";
+import { CommonParameterDefinitions } from "./tool-utilities.js";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -21,7 +21,6 @@ export class BugsnagClient implements Client {
   private projectApiKey?: string;
   private apiEndpoint: string;
   private appEndpoint: string;
-  private toolRegistry: BugsnagToolRegistry;
   private sharedServices: BugsnagSharedServices;
 
   name = "Bugsnag";
@@ -58,9 +57,6 @@ export class BugsnagClient implements Client {
       this.apiEndpoint,
       this.projectApiKey
     );
-
-    // Initialize tool registry (tools will be auto-discovered during registration)
-    this.toolRegistry = new BugsnagToolRegistry();
   }
 
   async initialize(): Promise<void> {
@@ -69,16 +65,6 @@ export class BugsnagClient implements Client {
       this.sharedServices.getProjects(),
       this.sharedServices.getCurrentProject()
     ]);
-  }
-
-  /**
-   * Get tool discovery configuration based on client settings
-   */
-  private getToolDiscoveryConfig(): ToolDiscoveryConfig {
-    return {
-      // Include List Projects tool only when no project API key is configured
-      includeListProjects: !this.projectApiKey
-    };
   }
 
   getHost(apiKey: string | undefined, subdomain: string): string {
@@ -121,15 +107,61 @@ export class BugsnagClient implements Client {
   /**
    * Register tools with the MCP server using automatic discovery
    */
-  registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void {
+  async registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): Promise<void> {
     const context: ToolExecutionContext = {
       services: this.sharedServices,
       getInput
     };
 
     // Use the tool registry with auto-discovery to register all tools
-    const config = this.getToolDiscoveryConfig();
-    this.toolRegistry.registerAllTools(register, context, config);
+    const tools = await BugsnagToolFactory.discoverTools([]);
+    
+    for (const tool of tools) {
+
+      if (tool.enableInSingleProjectMode === false && this.projectApiKey) {
+        // Skip tools that don't run in single project mode when a project API key is configured
+        continue;
+      }
+
+      // Convert our tool definition to the MCP server format
+      const toolParams = {
+        title: tool.definition.title,
+        summary: tool.definition.summary,
+        purpose: tool.definition.purpose,
+        useCases: tool.definition.useCases,
+        parameters: tool.definition.parameters.map((param: any) => ({
+          name: param.name,
+          type: param.type,
+          required: param.required,
+          description: param.description,
+          examples: param.examples,
+          constraints: param.constraints
+        })),
+        examples: tool.definition.examples,
+        hints: tool.definition.hints,
+        outputFormat: tool.definition.outputFormat
+      };
+
+      if (tool.hasProjectIdParameter && !this.projectApiKey) {
+        const projectIdParam = CommonParameterDefinitions.projectId(true);
+        toolParams.parameters.unshift({
+          name: projectIdParam.name,
+          type: projectIdParam.type,
+          required: projectIdParam.required,
+          description: projectIdParam.description,
+          examples: projectIdParam.examples,
+          constraints: projectIdParam.constraints || undefined
+        });
+      }
+
+      // Register the tool with the MCP server
+      register(toolParams, async (args: any) => {
+        const result = await tool.execute(args, context);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      });
+    }
   }
 
   /**

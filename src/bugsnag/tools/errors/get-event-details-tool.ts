@@ -6,20 +6,18 @@
  * the event details from the API.
  */
 
+import { ToolError } from "../../../common/types.js";
 import {
   ToolDefinition,
   ToolExecutionContext,
-  ToolResult,
-  BaseBugsnagTool,
-  BugsnagToolError
-} from "../types.js";
+  BugsnagTool
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-  executeWithErrorHandling,
   extractProjectSlugFromUrl,
   extractEventIdFromUrl
-} from "../utils/tool-utilities.js";
+} from "../../tool-utilities.js";
 
 /**
  * Arguments interface for the Get Event Details tool
@@ -34,8 +32,10 @@ export interface GetEventDetailsArgs {
  * Parses dashboard URLs to extract project and event information,
  * then retrieves detailed event data from the API.
  */
-export class GetEventDetailsTool extends BaseBugsnagTool {
+export class GetEventDetailsTool implements BugsnagTool {
   readonly name = "get_event_details";
+  readonly hasProjectIdParameter = false;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "Get Event Details",
@@ -64,57 +64,55 @@ export class GetEventDetailsTool extends BaseBugsnagTool {
     ]
   };
 
-  async execute(args: GetEventDetailsArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+  async execute(args: GetEventDetailsArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-      const { services } = context;
+    const { services } = context;
 
-      if (!args.link) {
-        throw new BugsnagToolError("link argument is required", this.name);
+    if (!args.link) {
+      throw new ToolError("link argument is required", this.name);
+    }
+
+    // Extract project slug and event ID from the URL
+    let projectSlug: string;
+    let eventId: string;
+
+    try {
+      projectSlug = extractProjectSlugFromUrl(args.link);
+      eventId = extractEventIdFromUrl(args.link);
+    } catch (error) {
+      if (error instanceof ToolError) {
+        throw error;
       }
+      throw new ToolError(
+        "Both projectSlug and eventId must be present in the link",
+        this.name,
+        error as Error
+      );
+    }
 
-      // Extract project slug and event ID from the URL
-      let projectSlug: string;
-      let eventId: string;
+    // Find the project by slug
+    const projects = await services.getProjects();
+    const project = projects.find((p) => p.slug === projectSlug);
 
-      try {
-        projectSlug = extractProjectSlugFromUrl(args.link);
-        eventId = extractEventIdFromUrl(args.link);
-      } catch (error) {
-        if (error instanceof BugsnagToolError) {
-          throw error;
-        }
-        throw new BugsnagToolError(
-          "Both projectSlug and eventId must be present in the link",
-          this.name,
-          error as Error
-        );
-      }
+    if (!project) {
+      throw new ToolError(
+        "Project with the specified slug not found.",
+        this.name
+      );
+    }
 
-      // Find the project by slug
-      const projects = await services.getProjects();
-      const project = projects.find((p) => p.slug === projectSlug);
+    // Get the event details using the shared service
+    const eventDetails = await services.getEvent(eventId, project.id);
 
-      if (!project) {
-        throw new BugsnagToolError(
-          "Project with the specified slug not found.",
-          this.name
-        );
-      }
+    if (!eventDetails) {
+      throw new ToolError(
+        `Event with ID ${eventId} not found in project ${project.id}.`,
+        this.name
+      );
+    }
 
-      // Get the event details using the shared service
-      const eventDetails = await services.getEvent(eventId, project.id);
-
-      if (!eventDetails) {
-        throw new BugsnagToolError(
-          `Event with ID ${eventId} not found in project ${project.id}.`,
-          this.name
-        );
-      }
-
-      return eventDetails;
-    });
+    return eventDetails;
   }
 }

@@ -24,7 +24,9 @@ import {
 export interface BugsnagTool {
   readonly name: string;
   readonly definition: ToolDefinition;
-  execute(args: any, context: ToolExecutionContext): Promise<ToolResult>;
+  readonly hasProjectIdParameter: boolean;
+  readonly enableInSingleProjectMode: boolean;
+  execute(args: any, context: ToolExecutionContext): Promise<object>;
 }
 
 /**
@@ -134,86 +136,6 @@ export interface SharedServices {
 }
 
 /**
- * Error class for tool-specific errors
- */
-export class BugsnagToolError extends Error {
-  constructor(
-    message: string,
-    public readonly toolName: string,
-    public readonly cause?: Error
-  ) {
-    super(message);
-    this.name = "BugsnagToolError";
-  }
-}
-
-/**
- * Registry for managing tool discovery and registration
- */
-export interface ToolRegistry {
-  registerTool(tool: BugsnagTool): void;
-  getTool(name: string): BugsnagTool | undefined;
-  getAllTools(): BugsnagTool[];
-  discoverTools(): BugsnagTool[];
-  registerAllTools(register: any, context: ToolExecutionContext): void;
-}
-
-/**
- * Base class for implementing tools with common functionality
- */
-export abstract class BaseBugsnagTool implements BugsnagTool {
-  abstract readonly name: string;
-  abstract readonly definition: ToolDefinition;
-
-  abstract execute(args: any, context: ToolExecutionContext): Promise<ToolResult>;
-
-  /**
-   * Validate tool arguments using the parameter definitions
-   */
-  protected validateArgs(args: any): void {
-    for (const param of this.definition.parameters) {
-      if (param.required && (args[param.name] === undefined || args[param.name] === null)) {
-        throw new BugsnagToolError(
-          `Required parameter '${param.name}' is missing`,
-          this.name
-        );
-      }
-
-      if (args[param.name] !== undefined) {
-        try {
-          param.type.parse(args[param.name]);
-        } catch (error) {
-          throw new BugsnagToolError(
-            `Invalid value for parameter '${param.name}': ${error}`,
-            this.name,
-            error as Error
-          );
-        }
-      }
-    }
-  }
-
-  /**
-   * Create a successful tool result
-   */
-  protected createResult(data: any): ToolResult {
-    return {
-      content: [{ type: "text", text: JSON.stringify(data) }]
-    };
-  }
-
-  /**
-   * Create an error tool result
-   */
-  protected createErrorResult(message: string, _error?: Error): ToolResult {
-    return {
-      content: [{ type: "text", text: message }],
-      isError: true
-    };
-  }
-}
-
-/**
  * Type definitions for common tool arguments
  */
 export interface ProjectArgs {
@@ -235,13 +157,3 @@ export interface SortingArgs {
   sort?: string;
   direction?: "asc" | "desc";
 }
-
-/**
- * Constants for tool configuration
- */
-export const TOOL_CONSTANTS = {
-  DEFAULT_PAGE_SIZE: 30,
-  MAX_PAGE_SIZE: 100,
-  DEFAULT_CACHE_TTL: 24 * 60 * 60, // 24 hours in seconds
-  SHORT_CACHE_TTL: 5 * 60, // 5 minutes in seconds
-} as const;

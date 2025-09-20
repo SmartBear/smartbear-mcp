@@ -30,6 +30,21 @@ export interface ToolParams {
   openWorld?: boolean;
 }
 
+/**
+ * Error class for tool-specific errors – these result in a response to the LLM with `isError: true`
+ * and are not reported to Bugsnag
+ */
+export class ToolError extends Error {
+  constructor(
+    message: string,
+    public readonly toolName: string,
+    public readonly cause?: Error
+  ) {
+    super(message);
+    this.name = `${toolName}ToolError`;
+  }
+}
+
 export interface PromptParams {
   name: string;
   callback: any;
@@ -74,7 +89,7 @@ export type Parameters = Array<{
 export interface Client {
     name: string;
     prefix: string;
-    registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void;
+    registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): Promise<void> | void;
     registerResources?(register: RegisterResourceFunction): void;
     registerPrompts?(register: RegisterPromptFunction): void;
 }

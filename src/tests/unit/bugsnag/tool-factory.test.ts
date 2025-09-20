@@ -8,8 +8,8 @@ import { BugsnagTool, BugsnagToolError } from "../../../bugsnag/types.js";
 
 describe("BugsnagToolFactory", () => {
   describe("discoverTools", () => {
-    it("should discover all default tools when no config is provided", () => {
-      const tools = BugsnagToolFactory.discoverTools();
+    it("should discover all default tools when no config is provided", async () => {
+      const tools = await BugsnagToolFactory.discoverTools();
 
       expect(tools).toBeDefined();
       expect(Array.isArray(tools)).toBe(true);
@@ -27,7 +27,7 @@ describe("BugsnagToolFactory", () => {
 
     it("should include ListProjectsTool when configured", () => {
       const config: ToolDiscoveryConfig = {
-        includeListProjects: true
+        singleProjectMode: true
       };
 
       const tools = BugsnagToolFactory.discoverTools(config);

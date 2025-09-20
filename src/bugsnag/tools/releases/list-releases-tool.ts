@@ -7,22 +7,17 @@
 
 import { z } from "zod";
 import {
-
   ToolDefinition,
   ToolExecutionContext,
   ToolResult,
-  BaseBugsnagTool,
   ProjectArgs,
-  PaginationArgs
-} from "../types.js";
+  PaginationArgs,
+  BugsnagTool
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-  createSuccessResult,
-  executeWithErrorHandling,
-
-  createConditionalProjectIdParam
-} from "../utils/tool-utilities.js";
+} from "../../tool-utilities.js";
 
 /**
  * Arguments interface for the List Releases tool
@@ -39,8 +34,10 @@ export interface ListReleasesArgs extends ProjectArgs, PaginationArgs {
  * Lists releases for a project with optional filtering by release stage.
  * Includes stability data and pagination support for comprehensive release analysis.
  */
-export class ListReleasesTool extends BaseBugsnagTool {
+export class ListReleasesTool implements BugsnagTool {
   readonly name = "list_releases";
+  readonly hasProjectIdParameter = true;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "List Releases",
@@ -53,7 +50,6 @@ export class ListReleasesTool extends BaseBugsnagTool {
       "Track deployment history and associated error patterns"
     ],
     parameters: [
-      ...createConditionalProjectIdParam(false), // Will be set properly during registration
       CommonParameterDefinitions.releaseStage(),
       {
         name: "visibleOnly",
@@ -97,51 +93,31 @@ export class ListReleasesTool extends BaseBugsnagTool {
     ]
   };
 
-  async execute(args: ListReleasesArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+  async execute(args: ListReleasesArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-      const { services } = context;
+    const { services } = context;
 
-      // Get the project
-      const project = await services.getInputProject(args.projectId);
+    // Get the project
+    const project = await services.getInputProject(args.projectId);
 
-      // Prepare options for the API call
-      const options: any = {
-        release_stage_name: args.releaseStage ?? "production",
-        visible_only: args.visibleOnly ?? true,
-        next_url: args.nextUrl ?? null
-      };
+    // Prepare options for the API call
+    const options: any = {
+      release_stage_name: args.releaseStage ?? "production",
+      visible_only: args.visibleOnly ?? true,
+      next_url: args.nextUrl ?? null
+    };
 
-      // Call the service to list releases
-      const { releases, nextUrl } = await services.listReleases(project.id, options);
+    // Call the service to list releases
+    const { releases, nextUrl } = await services.listReleases(project.id, options);
 
-      // Format the result with pagination info
-      const result = {
-        releases,
-        next: nextUrl ?? null
-      };
+    // Format the result with pagination info
+    const result = {
+      releases,
+      next: nextUrl ?? null
+    };
 
-      return createSuccessResult(result);
-    });
-  }
-
-  /**
-   * Update parameter definitions based on whether project API key is configured
-   */
-  updateParametersForProjectApiKey(hasProjectApiKey: boolean): void {
-    this.definition.parameters = [
-      ...createConditionalProjectIdParam(hasProjectApiKey),
-      CommonParameterDefinitions.releaseStage(),
-      {
-        name: "visibleOnly",
-        type: z.boolean().default(true),
-        required: false,
-        description: "Whether to only include releases that are marked as visible (default: true)",
-        examples: ["true", "false"]
-      },
-      CommonParameterDefinitions.nextUrl()
-    ];
+    return result;
   }
 }

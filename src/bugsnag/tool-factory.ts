@@ -1,21 +1,8 @@
-/**
- * Tool Factory for automatic discovery and instantiation of Bugsnag tools
- */
-
-import { BugsnagTool, BugsnagToolError } from "./types.js";
-
-// Import all tool classes for auto-discovery
-import { ListProjectsTool } from "./tools/list-projects-tool.js";
-import { GetErrorTool } from "./tools/get-error-tool.js";
-import { GetEventDetailsTool } from "./tools/get-event-details-tool.js";
-import { ListProjectErrorsTool } from "./tools/list-project-errors-tool.js";
-import { ListProjectEventFiltersTool } from "./tools/list-project-event-filters-tool.js";
-import { UpdateErrorTool } from "./tools/update-error-tool.js";
-import { ListBuildsTool } from "./tools/list-builds-tool.js";
-import { GetBuildTool } from "./tools/get-build-tool.js";
-import { ListBuildsInReleaseTool } from "./tools/list-builds-in-release-tool.js";
-import { ListReleasesTool } from "./tools/list-releases-tool.js";
-import { GetReleaseTool } from "./tools/get-release-tool.js";
+import { BugsnagTool } from "./types.js";
+import * as fs from "fs";
+import * as path from "path";
+import { fileURLToPath, pathToFileURL } from "url";
+import { ToolError } from "../common/types.js";
 
 /**
  * Interface for tool class constructors
@@ -25,91 +12,94 @@ export interface ToolConstructor {
 }
 
 /**
- * Configuration for tool discovery
- */
-export interface ToolDiscoveryConfig {
-  /** Whether to include the ListProjectsTool (only when no project API key is configured) */
-  includeListProjects?: boolean;
-  /** Custom tool classes to include in addition to the default ones */
-  customTools?: ToolConstructor[];
-  /** Tool names to exclude from discovery */
-  excludeTools?: string[];
-}
-
-/**
  * Tool Factory class for automatic tool discovery and instantiation
  */
 export class BugsnagToolFactory {
-  private static readonly DEFAULT_TOOL_CLASSES: ToolConstructor[] = [
-    GetErrorTool,
-    GetEventDetailsTool,
-    ListProjectErrorsTool,
-    ListProjectEventFiltersTool,
-    UpdateErrorTool,
-    ListBuildsTool,
-    GetBuildTool,
-    ListBuildsInReleaseTool,
-    ListReleasesTool,
-    GetReleaseTool
-  ];
 
-  private static toolInstanceCache = new Map<string, BugsnagTool>();
+  /**
+   * Discover tool files in the tools directory
+   */
+  private static async discoverToolFiles(toolsDir: string): Promise<string[]> {
+    try {
+      const files = await fs.promises.readdir(toolsDir, { withFileTypes: true, recursive: true });
+      return files
+        .filter(file => file.isFile() && (file.name.endsWith("-tool.ts") || file.name.endsWith("-tool.js")))
+        .map(file => path.join(file.parentPath, file.name));
+    } catch (error) {
+      throw new ToolError(
+        `Failed to read tools directory: ${error}`,
+        "ToolFactory",
+        error as Error
+      );
+    }
+  }
+
+  /**
+   * Dynamically import a tool class from a file
+   */
+  private static async importToolClass(filePath: string): Promise<ToolConstructor | null> {
+    try {
+      const fileUrl = pathToFileURL(filePath).href;
+      const module = await import(fileUrl);
+      
+      // Find the exported tool class (should be the class that extends BaseBugsnagTool)
+      const toolClass = Object.values(module).find(
+        (exportedItem: any) => 
+          typeof exportedItem === 'function'
+      ) as ToolConstructor;
+
+      return toolClass;
+    } catch (error) {
+      console.warn(`Failed to import tool from ${filePath}: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Get all tool classes through filesystem discovery
+   */
+  private static async getToolClasses(toolDirectories: string[]): Promise<ToolConstructor[]> {
+
+    // Discover tool files from inside the package first and then from any configured locations
+    const toolsDirPath = path.join(path.dirname(import.meta.filename), "tools");
+    const toolFiles = await this.discoverToolFiles(toolsDirPath);
+    for (const dir of toolDirectories) {
+      toolFiles.push(...await this.discoverToolFiles(dir));
+    }
+    
+    // Import tool classes
+    const toolClasses: ToolConstructor[] = [];
+    for (const filename of toolFiles) {
+      const ToolClass = await this.importToolClass(filename);
+      if (ToolClass) {
+        toolClasses.push(ToolClass);
+      }
+    }
+    return toolClasses;
+  }
 
   /**
    * Discover and instantiate all available tools based on configuration
    */
-  static discoverTools(config: ToolDiscoveryConfig = {}): BugsnagTool[] {
+  static async discoverTools(toolDirectories: string[]): Promise<BugsnagTool[]> {
     const tools: BugsnagTool[] = [];
-    const toolClasses = this.getToolClasses(config);
-
+    const toolClasses = await this.getToolClasses(toolDirectories);
     for (const ToolClass of toolClasses) {
       try {
-        // Use cached instance if available (tools are stateless)
-        const cacheKey = ToolClass.name;
-        let tool = this.toolInstanceCache.get(cacheKey);
-
-        if (!tool) {
-          tool = new ToolClass();
-          // Validate that the tool implements the required interface
-          this.validateTool(tool);
-          this.toolInstanceCache.set(cacheKey, tool);
-        }
-
-        // Skip excluded tools
-        if (config.excludeTools?.includes(tool.name)) {
-          continue;
-        }
-
+        
+        const tool = new ToolClass();
+        // Validate that the tool implements the required interface
+        this.validateTool(tool);
         tools.push(tool);
       } catch (error) {
-        throw new BugsnagToolError(
+        throw new ToolError(
           `Failed to instantiate tool class ${ToolClass.name}: ${error}`,
           "ToolFactory",
           error as Error
         );
       }
     }
-
     return tools;
-  }
-
-  /**
-   * Get all tool classes based on configuration
-   */
-  private static getToolClasses(config: ToolDiscoveryConfig): ToolConstructor[] {
-    const toolClasses: ToolConstructor[] = [...this.DEFAULT_TOOL_CLASSES];
-
-    // Add ListProjectsTool if configured
-    if (config.includeListProjects) {
-      toolClasses.unshift(ListProjectsTool);
-    }
-
-    // Add custom tools if provided
-    if (config.customTools) {
-      toolClasses.push(...config.customTools);
-    }
-
-    return toolClasses;
   }
 
   /**
@@ -153,43 +143,5 @@ export class BugsnagToolFactory {
     if (!Array.isArray(definition.useCases)) {
       throw new Error('Tool definition useCases must be an array');
     }
-  }
-
-  /**
-   * Create a tool instance by name (optimized for single tool creation)
-   */
-  static createTool(toolName: string, config: ToolDiscoveryConfig = {}): BugsnagTool | null {
-    // Use full discovery to respect configuration
-    const tools = this.discoverTools(config);
-    return tools.find(tool => tool.name === toolName) || null;
-  }
-
-  /**
-   * Clear the tool instance cache (useful for testing)
-   */
-  static clearCache(): void {
-    this.toolInstanceCache.clear();
-  }
-
-  /**
-   * Get all available tool names
-   */
-  static getAvailableToolNames(config: ToolDiscoveryConfig = {}): string[] {
-    const tools = this.discoverTools(config);
-    return tools.map(tool => tool.name);
-  }
-
-  /**
-   * Check if a tool is available
-   */
-  static isToolAvailable(toolName: string, config: ToolDiscoveryConfig = {}): boolean {
-    return this.getAvailableToolNames(config).includes(toolName);
-  }
-
-  /**
-   * Get tool count based on configuration
-   */
-  static getToolCount(config: ToolDiscoveryConfig = {}): number {
-    return this.discoverTools(config).length;
   }
 }

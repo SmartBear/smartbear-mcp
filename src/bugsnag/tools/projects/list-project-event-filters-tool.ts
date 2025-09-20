@@ -7,19 +7,15 @@
  */
 
 import {
-
   ToolDefinition,
   ToolExecutionContext,
-  ToolResult,
-  BaseBugsnagTool,
-  BugsnagToolError
-} from "../types.js";
+  BugsnagTool
+} from "../../types.js";
 import {
   validateToolArgs,
-
-  executeWithErrorHandling
-} from "../utils/tool-utilities.js";
-import { EventField } from "../client/api/Project.js";
+} from "../../tool-utilities.js";
+import { EventField } from "../../client/api/Project.js";
+import { ToolError } from "../../../common/types.js";
 
 /**
  * Arguments interface for the List Project Event Filters tool
@@ -37,8 +33,10 @@ export interface ListProjectEventFiltersArgs {
  * The results are cached and filtered to exclude fields that are not
  * useful for programmatic filtering (like the "search" field).
  */
-export class ListProjectEventFiltersTool extends BaseBugsnagTool {
+export class ListProjectEventFiltersTool implements BugsnagTool {
   readonly name = "list_project_event_filters";
+  readonly hasProjectIdParameter = false;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "List Project Event Filters",
@@ -65,42 +63,40 @@ export class ListProjectEventFiltersTool extends BaseBugsnagTool {
     ]
   };
 
-  async execute(args: ListProjectEventFiltersArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments (though there are none for this tool)
-      validateToolArgs(args, this.definition.parameters, this.name);
+  async execute(args: ListProjectEventFiltersArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments (though there are none for this tool)
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-      const { services } = context;
+    const { services } = context;
 
-      // Try to get cached filters first
-      const cache = services.getCache();
-      const cacheKey = "bugsnag_current_project_event_filters";
-      let projectFields = cache.get<EventField[]>(cacheKey);
+    // Try to get cached filters first
+    const cache = services.getCache();
+    const cacheKey = "bugsnag_current_project_event_filters";
+    let projectFields = cache.get<EventField[]>(cacheKey);
 
-      if (!projectFields) {
-        // If not cached, get current project and fetch filters
-        const currentProject = await services.getCurrentProject();
-        if (!currentProject) {
-          throw new BugsnagToolError(
-            "No current project found. Please configure a project API key or specify a project ID.",
-            this.name
-          );
-        }
-
-        // Fetch and cache the filters
-        projectFields = await services.getProjectEventFilters(currentProject);
-        cache.set(cacheKey, projectFields);
-      }
-
-      if (!projectFields || projectFields.length === 0) {
-        throw new BugsnagToolError(
-          "No event filters found for the current project.",
+    if (!projectFields) {
+      // If not cached, get current project and fetch filters
+      const currentProject = await services.getCurrentProject();
+      if (!currentProject) {
+        throw new ToolError(
+          "No current project found. Please configure a project API key or specify a project ID.",
           this.name
         );
       }
 
-      // Return the raw data - executeWithErrorHandling will wrap it in createSuccessResult
-      return projectFields;
-    });
+      // Fetch and cache the filters
+      projectFields = await services.getProjectEventFilters(currentProject);
+      cache.set(cacheKey, projectFields);
+    }
+
+    if (!projectFields || projectFields.length === 0) {
+      throw new ToolError(
+        "No event filters found for the current project.",
+        this.name
+      );
+    }
+
+    // Return the raw data - executeWithErrorHandling will wrap it in createSuccessResult
+    return projectFields;
   }
 }

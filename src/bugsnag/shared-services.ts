@@ -1,5 +1,5 @@
 import * as NodeCache from "node-cache";
-import { SharedServices, BugsnagToolError } from "./types.js";
+import { SharedServices } from "./types.js";
 import { CurrentUserAPI, ErrorAPI } from "./client/index.js";
 import { Organization, Project } from "./client/api/CurrentUser.js";
 import {
@@ -17,6 +17,7 @@ import {
   ReleaseResponseAny
 } from "./client/api/Project.js";
 import { getNextUrlPathFromHeader } from "./client/api/base.js";
+import { ToolError } from "../common/types.js";
 
 
 /**
@@ -123,7 +124,7 @@ export class BugsnagSharedServices implements SharedServices {
       const projects = await this.getProjects();
       project = projects.find((p) => p.api_key === this.projectApiKey) ?? null;
       if (!project) {
-        throw new BugsnagToolError(
+        throw new ToolError(
           `Unable to find project with API key ${this.projectApiKey} in organization.`,
           "SharedServices"
         );
@@ -148,7 +149,7 @@ export class BugsnagSharedServices implements SharedServices {
     if (typeof projectId === 'string') {
       const maybeProject = await this.getProject(projectId);
       if (!maybeProject) {
-        throw new BugsnagToolError(
+        throw new ToolError(
           `Project with ID ${projectId} not found.`,
           "SharedServices"
         );
@@ -157,7 +158,7 @@ export class BugsnagSharedServices implements SharedServices {
     } else {
       const currentProject = await this.getCurrentProject();
       if (!currentProject) {
-        throw new BugsnagToolError(
+        throw new ToolError(
           'No current project found. Please provide a projectId or configure a project API key.',
           "SharedServices"
         );
@@ -210,7 +211,7 @@ export class BugsnagSharedServices implements SharedServices {
       const response = await this.currentUserApi.listUserOrganizations();
       const orgs = response.body || [];
       if (!orgs || orgs.length === 0) {
-        throw new BugsnagToolError(
+        throw new ToolError(
           "No organizations found for the current user.",
           "SharedServices"
         );
@@ -225,7 +226,7 @@ export class BugsnagSharedServices implements SharedServices {
   async getProjectEventFilters(project: Project): Promise<EventField[]> {
     let filtersResponse = (await this.projectApi.listProjectEventFields(project.id)).body;
     if (!filtersResponse || filtersResponse.length === 0) {
-      throw new BugsnagToolError(
+      throw new ToolError(
         `No event fields found for project ${project.name}.`,
         "SharedServices"
       );
@@ -275,7 +276,7 @@ export class BugsnagSharedServices implements SharedServices {
 
     const fetchedBuild = (await this.projectApi.getBuild(projectId, buildId)).body;
     if (!fetchedBuild) {
-      throw new BugsnagToolError(
+      throw new ToolError(
         `No build for ${buildId} found.`,
         "SharedServices"
       );
@@ -308,7 +309,7 @@ export class BugsnagSharedServices implements SharedServices {
 
     const fetchedRelease = (await this.projectApi.getRelease(releaseId)).body;
     if (!fetchedRelease) {
-      throw new BugsnagToolError(
+      throw new ToolError(
         `No release for ${releaseId} found.`,
         "SharedServices"
       );

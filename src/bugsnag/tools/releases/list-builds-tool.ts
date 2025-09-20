@@ -8,19 +8,14 @@
 import {
   ToolDefinition,
   ToolExecutionContext,
-  ToolResult,
-  BaseBugsnagTool,
   ProjectArgs,
-  PaginationArgs
-} from "../types.js";
+  PaginationArgs,
+  BugsnagTool
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-  createSuccessResult,
-  executeWithErrorHandling,
-
-  createConditionalProjectIdParam
-} from "../utils/tool-utilities.js";
+} from "../../tool-utilities.js";
 
 /**
  * Arguments interface for the List Builds tool
@@ -36,8 +31,10 @@ export interface ListBuildsArgs extends ProjectArgs, PaginationArgs {
  * Lists builds for a project with optional filtering by release stage.
  * Includes stability data and pagination support for comprehensive build analysis.
  */
-export class ListBuildsTool extends BaseBugsnagTool {
+export class ListBuildsTool implements BugsnagTool {
   readonly name = "list_builds";
+  readonly hasProjectIdParameter = true;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "List Builds",
@@ -50,7 +47,6 @@ export class ListBuildsTool extends BaseBugsnagTool {
       "Track stability metrics and targets for builds"
     ],
     parameters: [
-      ...createConditionalProjectIdParam(false), // Will be set properly during registration
       CommonParameterDefinitions.releaseStage(),
       CommonParameterDefinitions.perPage(30),
       CommonParameterDefinitions.nextUrl()
@@ -88,57 +84,43 @@ export class ListBuildsTool extends BaseBugsnagTool {
     ]
   };
 
-  async execute(args: ListBuildsArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+  async execute(args: ListBuildsArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-      const { services } = context;
+    const { services } = context;
 
-      // Get the project
-      const project = await services.getInputProject(args.projectId);
+    // Get the project
+    const project = await services.getInputProject(args.projectId);
 
-      // Prepare options for the API call
-      const options: any = {};
+    // Prepare options for the API call
+    const options: any = {};
 
-      if (args.releaseStage) {
-        options.release_stage = args.releaseStage;
-      }
+    if (args.releaseStage) {
+      options.release_stage = args.releaseStage;
+    }
 
-      if (args.per_page) {
-        options.per_page = args.per_page;
-      }
+    if (args.per_page) {
+      options.per_page = args.per_page;
+    }
 
-      if (args.nextUrl) {
-        options.next_url = args.nextUrl;
-      }
+    if (args.nextUrl) {
+      options.next_url = args.nextUrl;
+    }
 
-      // Call the service to list builds
-      const { builds, nextUrl } = await services.listBuilds(project.id, options);
+    // Call the service to list builds
+    const { builds, nextUrl } = await services.listBuilds(project.id, options);
 
-      // Format the result with standard data structure
-      const result: any = {
-        data: builds,
-        count: builds.length
-      };
+    // Format the result with standard data structure
+    const result: any = {
+      data: builds,
+      count: builds.length
+    };
 
-      if (nextUrl) {
-        result.next = nextUrl;
-      }
+    if (nextUrl) {
+      result.next = nextUrl;
+    }
 
-      return createSuccessResult(result);
-    });
-  }
-
-  /**
-   * Update parameter definitions based on whether project API key is configured
-   */
-  updateParametersForProjectApiKey(hasProjectApiKey: boolean): void {
-    this.definition.parameters = [
-      ...createConditionalProjectIdParam(hasProjectApiKey),
-      CommonParameterDefinitions.releaseStage(),
-      CommonParameterDefinitions.perPage(30),
-      CommonParameterDefinitions.nextUrl()
-    ];
+    return result;
   }
 }

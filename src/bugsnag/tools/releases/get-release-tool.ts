@@ -9,16 +9,13 @@ import {
   ToolDefinition,
   ToolExecutionContext,
   ToolResult,
-  BaseBugsnagTool,
-  ProjectArgs
-} from "../types.js";
+  ProjectArgs,
+  BugsnagTool
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-  createSuccessResult,
-  executeWithErrorHandling,
-  createConditionalProjectIdParam
-} from "../utils/tool-utilities.js";
+} from "../../tool-utilities.js";
 
 /**
  * Arguments interface for the Get Release tool
@@ -34,8 +31,10 @@ export interface GetReleaseArgs extends ProjectArgs {
  * version information, source control details, and stability metrics.
  * Uses caching for improved performance.
  */
-export class GetReleaseTool extends BaseBugsnagTool {
+export class GetReleaseTool implements BugsnagTool {
   readonly name = "get_release";
+  readonly hasProjectIdParameter = true;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "Get Release",
@@ -48,7 +47,6 @@ export class GetReleaseTool extends BaseBugsnagTool {
       "Get comprehensive release information for incident analysis"
     ],
     parameters: [
-      ...createConditionalProjectIdParam(false), // Will be set properly during registration
       CommonParameterDefinitions.releaseId()
     ],
     examples: [
@@ -70,30 +68,18 @@ export class GetReleaseTool extends BaseBugsnagTool {
     outputFormat: "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets"
   };
 
-  async execute(args: GetReleaseArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+  async execute(args: GetReleaseArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-      const { services } = context;
+    const { services } = context;
 
-      // Get the project
-      const project = await services.getInputProject(args.projectId);
+    // Get the project
+    const project = await services.getInputProject(args.projectId);
 
-      // Get the release with caching and stability data
-      const release = await services.getRelease(project.id, args.releaseId);
+    // Get the release with caching and stability data
+    const release = await services.getRelease(project.id, args.releaseId);
 
-      return createSuccessResult(release);
-    });
-  }
-
-  /**
-   * Update parameter definitions based on whether project API key is configured
-   */
-  updateParametersForProjectApiKey(hasProjectApiKey: boolean): void {
-    this.definition.parameters = [
-      ...createConditionalProjectIdParam(hasProjectApiKey),
-      CommonParameterDefinitions.releaseId()
-    ];
+    return release;
   }
 }

@@ -6,8 +6,15 @@
  */
 
 import { z } from "zod";
-import { BugsnagToolError, ToolResult, ParameterDefinition } from "../types.js";
-import { FilterObjectSchema } from "../client/api/filters.js";
+import { ParameterDefinition } from "./types.js";
+import { FilterObjectSchema } from "./client/api/filters.js";
+import { ToolError } from "../common/types.js";
+import { ApiResponse } from "./client/api/base.js";
+
+export const DEFAULT_FILTERS = {
+  "event.since": [{ type: "eq", value: "30d" }],
+  "error.status": [{ type: "eq", value: "open" }]
+};
 
 /**
  * Common parameter schemas used across multiple tools
@@ -234,7 +241,7 @@ export function validateToolArgs(
 
     // Check required parameters
     if (param.required && (value === undefined || value === null)) {
-      throw new BugsnagToolError(
+      throw new ToolError(
         `Required parameter '${param.name}' is missing`,
         toolName
       );
@@ -247,7 +254,7 @@ export function validateToolArgs(
       } catch (error) {
         const zodError = error as z.ZodError;
         const errorMessage = zodError.errors.map(e => e.message).join(", ");
-        throw new BugsnagToolError(
+        throw new ToolError(
           `Invalid value for parameter '${param.name}': ${errorMessage}`,
           toolName,
           error as Error
@@ -258,87 +265,28 @@ export function validateToolArgs(
 }
 
 /**
- * Creates a successful tool result with JSON content
- *
- * @param data The data to return
- * @returns ToolResult with the data serialized as JSON
- */
-export function createSuccessResult(data: any): ToolResult {
-  return {
-    content: [{ type: "text", text: JSON.stringify(data) }]
-  };
-}
-
-/**
- * Creates an error tool result
- *
- * @param message The error message
- * @param error Optional underlying error
- * @returns ToolResult marked as an error
- */
-export function createErrorResult(message: string, _error?: Error): ToolResult {
-  return {
-    content: [{ type: "text", text: message }],
-    isError: true
-  };
-}
-
-/**
- * Wraps tool execution with consistent error handling
- *
- * @param toolName The name of the tool
- * @param execution The tool execution function
- * @returns Promise that resolves to a ToolResult
- */
-export async function executeWithErrorHandling(
-  toolName: string,
-  execution: () => Promise<any>
-): Promise<ToolResult> {
-  try {
-    const result = await execution();
-    return createSuccessResult(result);
-  } catch (error) {
-    if (error instanceof BugsnagToolError) {
-      return createErrorResult(error.message, error);
-    } else if (error instanceof Error) {
-      return createErrorResult(
-        `Tool execution failed: ${error.message}`,
-        error
-      );
-    } else {
-      return createErrorResult(
-        `Tool execution failed with unknown error: ${String(error)}`
-      );
-    }
-  }
-}
-
-/**
  * Formats paginated results with consistent structure
  *
- * @param data The array of data items
- * @param count The number of items in current page
- * @param total Optional total count across all pages
- * @param nextUrl Optional URL for next page
+ * @param response The API response containing paginated data
  * @returns Formatted result object
  */
-export function formatPaginatedResult(
-  data: any[],
-  count: number,
-  total?: number,
-  nextUrl?: string | null
-): any {
+export function formatPaginatedResult(response: ApiResponse<any>): any {
   const result: any = {
-    data,
-    count
+    data: response.body || [],
+    count: (response.body || []).length
   };
 
-  if (total !== undefined) {
-    result.total = total;
+  const totalCount = response.headers.get('X-Total-Count');
+  if (totalCount) {
+    result.total = parseInt(totalCount, undefined);
   }
 
-  if (nextUrl) {
-    result.next = nextUrl;
+  if (response.headers.get('Link')) {
+    const linkHeader = response.headers.get('Link');
+    const nextUrl = linkHeader?.match(/<([^>]+)>/)?.[1] || null;
+    if (nextUrl) {
+      result.next = nextUrl;
+    }
   }
 
   return result;
@@ -381,7 +329,7 @@ export function extractProjectSlugFromUrl(url: string): string {
 
     return projectSlug;
   } catch (error) {
-    throw new BugsnagToolError(
+    throw new ToolError(
       `Invalid dashboard URL format: ${error instanceof Error ? error.message : String(error)}`,
       "UrlExtraction"
     );
@@ -406,92 +354,9 @@ export function extractEventIdFromUrl(url: string): string {
 
     return eventId;
   } catch (error) {
-    throw new BugsnagToolError(
+    throw new ToolError(
       `Cannot extract event ID from URL: ${error instanceof Error ? error.message : String(error)}`,
       "UrlExtraction"
-    );
-  }
-}
-
-/**
- * Validates that required URL parameters are present
- *
- * @param url The URL to validate
- * @param requiredParams Array of required parameter names
- * @param toolName The name of the tool (for error messages)
- * @throws BugsnagToolError if required parameters are missing
- */
-export function validateUrlParameters(
-  url: string,
-  requiredParams: string[],
-  toolName: string
-): void {
-  try {
-    const urlObj = new URL(url);
-
-    for (const param of requiredParams) {
-      if (!urlObj.searchParams.has(param)) {
-        throw new BugsnagToolError(
-          `Required URL parameter '${param}' is missing`,
-          toolName
-        );
-      }
-    }
-  } catch (error) {
-    if (error instanceof BugsnagToolError) {
-      throw error;
-    }
-    throw new BugsnagToolError(
-      `Invalid URL format: ${error instanceof Error ? error.message : String(error)}`,
-      toolName
-    );
-  }
-}
-
-/**
- * Constants for common default values and limits
- */
-export const TOOL_DEFAULTS = {
-  PAGE_SIZE: 30,
-  MAX_PAGE_SIZE: 100,
-  SORT_DIRECTION: "desc" as const,
-  CACHE_TTL_LONG: 24 * 60 * 60, // 24 hours
-  CACHE_TTL_SHORT: 5 * 60, // 5 minutes
-  DEFAULT_FILTERS: {
-    "event.since": [{ type: "eq" as const, value: "30d" }],
-    "error.status": [{ type: "eq" as const, value: "open" }]
-  }
-} as const;
-
-/**
- * Helper to create parameter definitions for conditional project ID
- * Used when project ID is required only if no project API key is configured
- *
- * @param hasProjectApiKey Whether a project API key is configured
- * @returns Array of parameter definitions
- */
-export function createConditionalProjectIdParam(hasProjectApiKey: boolean): ParameterDefinition[] {
-  if (hasProjectApiKey) {
-    return [];
-  }
-
-  return [CommonParameterDefinitions.projectId(true)];
-}
-
-/**
- * Validates conditional parameters based on other parameter values
- * For example, severity is required when operation is "override_severity"
- *
- * @param args The arguments to validate
- * @param toolName The name of the tool
- * @throws BugsnagToolError if conditional validation fails
- */
-export function validateConditionalParameters(args: any, toolName: string): void {
-  // Validate severity is provided when operation is override_severity
-  if (args.operation === "override_severity" && !args.severity) {
-    throw new BugsnagToolError(
-      "Parameter 'severity' is required when operation is 'override_severity'",
-      toolName
     );
   }
 }

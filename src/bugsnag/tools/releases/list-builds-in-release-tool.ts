@@ -6,18 +6,16 @@
  */
 
 import {
+  BugsnagTool,
   ToolDefinition,
   ToolExecutionContext,
   ToolResult,
-  BaseBugsnagTool
-} from "../types.js";
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-  createSuccessResult,
-  executeWithErrorHandling,
   formatListResult
-} from "../utils/tool-utilities.js";
+} from "../../tool-utilities.js";
 
 /**
  * Arguments interface for the List Builds in Release tool
@@ -32,8 +30,10 @@ export interface ListBuildsInReleaseArgs {
  * Lists all builds associated with a specific release. Uses caching for improved
  * performance and provides comprehensive error handling for invalid release IDs.
  */
-export class ListBuildsInReleaseTool extends BaseBugsnagTool {
+export class ListBuildsInReleaseTool implements BugsnagTool {
   readonly name = "list_builds_in_release";
+  readonly hasProjectIdParameter = false;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "List Builds in Release",
@@ -65,10 +65,9 @@ export class ListBuildsInReleaseTool extends BaseBugsnagTool {
     ]
   };
 
-  async execute(args: ListBuildsInReleaseArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+  async execute(args: ListBuildsInReleaseArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
       const { services } = context;
 
@@ -84,7 +83,7 @@ export class ListBuildsInReleaseTool extends BaseBugsnagTool {
         // Format the result as a list
         const result = formatListResult(builds, builds.length);
 
-        return createSuccessResult(result);
+        return result;
       } catch (error) {
         // Handle specific error cases for invalid release IDs
         if (error instanceof Error) {
@@ -99,6 +98,5 @@ export class ListBuildsInReleaseTool extends BaseBugsnagTool {
         // Re-throw other errors as-is
         throw error;
       }
-    });
   }
 }

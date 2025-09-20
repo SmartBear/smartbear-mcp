@@ -9,16 +9,13 @@ import {
   ToolDefinition,
   ToolExecutionContext,
   ToolResult,
-  BaseBugsnagTool,
-  ProjectArgs
-} from "../types.js";
+  ProjectArgs,
+  BugsnagTool
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-  createSuccessResult,
-  executeWithErrorHandling,
-  createConditionalProjectIdParam
-} from "../utils/tool-utilities.js";
+} from "../../tool-utilities.js";
 
 /**
  * Arguments interface for the Get Build tool
@@ -33,8 +30,10 @@ export interface GetBuildArgs extends ProjectArgs {
  * Retrieves detailed information about a specific build including stability data,
  * error rates, and target compliance. Uses caching for improved performance.
  */
-export class GetBuildTool extends BaseBugsnagTool {
+export class GetBuildTool implements BugsnagTool {
   readonly name = "get_build";
+  readonly hasProjectIdParameter = true;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "Get Build",
@@ -47,7 +46,6 @@ export class GetBuildTool extends BaseBugsnagTool {
       "Debug build-specific issues and performance metrics"
     ],
     parameters: [
-      ...createConditionalProjectIdParam(false), // Will be set properly during registration
       CommonParameterDefinitions.buildId()
     ],
     examples: [
@@ -68,35 +66,23 @@ export class GetBuildTool extends BaseBugsnagTool {
     ]
   };
 
-  async execute(args: GetBuildArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+  async execute(args: GetBuildArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-      const { services } = context;
+    const { services } = context;
 
-      // Validate required parameters
-      if (!args.buildId) {
-        throw new Error("buildId argument is required");
-      }
+    // Validate required parameters
+    if (!args.buildId) {
+      throw new Error("buildId argument is required");
+    }
 
-      // Get the project
-      const project = await services.getInputProject(args.projectId);
+    // Get the project
+    const project = await services.getInputProject(args.projectId);
 
-      // Get the build details with caching and stability data
-      const build = await services.getBuild(project.id, args.buildId);
+    // Get the build details with caching and stability data
+    const build = await services.getBuild(project.id, args.buildId);
 
-      return createSuccessResult(build);
-    });
-  }
-
-  /**
-   * Update parameter definitions based on whether project API key is configured
-   */
-  updateParametersForProjectApiKey(hasProjectApiKey: boolean): void {
-    this.definition.parameters = [
-      ...createConditionalProjectIdParam(hasProjectApiKey),
-      CommonParameterDefinitions.buildId()
-    ];
+    return build;
   }
 }

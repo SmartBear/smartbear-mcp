@@ -9,16 +9,13 @@ import {
   ToolDefinition,
   ToolExecutionContext,
   ToolResult,
-  BaseBugsnagTool,
-  PaginationArgs
-} from "../types.js";
+  PaginationArgs,
+  BugsnagTool
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-  createSuccessResult,
-  executeWithErrorHandling,
-
-} from "../utils/tool-utilities.js";
+} from "../../tool-utilities.js";
 
 /**
  * Arguments interface for the List Projects tool
@@ -35,8 +32,10 @@ export interface ListProjectsArgs extends PaginationArgs {
  * Only available when no project API key is configured, as it's used for
  * project discovery and selection.
  */
-export class ListProjectsTool extends BaseBugsnagTool {
+export class ListProjectsTool implements BugsnagTool {
   readonly name = "list_projects";
+  readonly hasProjectIdParameter = false;
+  readonly enableInSingleProjectMode = false;
 
   readonly definition: ToolDefinition = {
     title: "List Projects",
@@ -72,39 +71,33 @@ export class ListProjectsTool extends BaseBugsnagTool {
     ]
   };
 
-  async execute(args: ListProjectsArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    try {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+  async execute(args: ListProjectsArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-      const { services } = context;
+    const { services } = context;
 
-      // Get all projects from the organization
-      let projects = await services.getProjects();
+    // Get all projects from the organization
+    let projects = await services.getProjects();
 
-      if (!projects || projects.length === 0) {
-        return {
-          content: [{ type: "text", text: "No projects found." }]
-        };
-      }
-
-      // Apply pagination if requested
-      if (args.page_size || args.page) {
-        const pageSize = args.page_size || 10;
-        const page = args.page || 1;
-        const startIndex = (page - 1) * pageSize;
-        const endIndex = startIndex + pageSize;
-        projects = projects.slice(startIndex, endIndex);
-      }
-
-      return createSuccessResult({
-        data: projects,
-        count: projects.length
-      });
-    } catch (error) {
-      return executeWithErrorHandling(this.name, async () => {
-        throw error;
-      });
+    if (!projects || projects.length === 0) {
+      return {
+        content: [{ type: "text", text: "No projects found." }]
+      };
     }
+
+    // Apply pagination if requested
+    if (args.page_size || args.page) {
+      const pageSize = args.page_size || 10;
+      const page = args.page || 1;
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      projects = projects.slice(startIndex, endIndex);
+    }
+
+    return {
+      data: projects,
+      count: projects.length
+    };
   }
 }

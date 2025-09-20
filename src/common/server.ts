@@ -3,7 +3,7 @@ import { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { ZodAny, ZodArray, ZodBoolean, ZodEnum, ZodLiteral, ZodNumber, ZodObject, ZodRawShape, ZodString, ZodType, ZodUnion, } from "zod";
 import Bugsnag from "../common/bugsnag.js";
 
-import { Client, ToolParams } from "./types.js";
+import { Client, ToolError, ToolParams } from "./types.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
 
 export class SmartBearMcpServer extends McpServer {
@@ -26,8 +26,8 @@ export class SmartBearMcpServer extends McpServer {
         );
     }
 
-    addClient(client: Client): void {
-        client.registerTools(
+    async addClient(client: Client): Promise<void> {
+        await client.registerTools(
             (params, cb) => {
                 const toolName = `${client.prefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
                 const toolTitle = `${client.name}: ${params.title}`;
@@ -43,8 +43,17 @@ export class SmartBearMcpServer extends McpServer {
                         try {
                             return await cb(args, extra);
                         } catch (e) {
-                            Bugsnag.notify(e as unknown as Error);
-                            throw e;
+                            if (e instanceof ToolError) {
+                                return {
+                                    isError: true,
+                                    content: [{ type: "text", text: `Error executing tool: ${e.message}` }]
+                                };
+                            } else {
+                                Bugsnag.notify(e as unknown as Error, event => {
+                                    event.unhandled = true;
+                                });
+                                throw e;
+                            }
                         }
                     });
             },
@@ -63,7 +72,9 @@ export class SmartBearMcpServer extends McpServer {
                         try {
                             return await cb(url, variables, extra);
                         } catch (e) {
-                            Bugsnag.notify(e as unknown as Error);
+                            Bugsnag.notify(e as unknown as Error, event => {
+                                event.unhandled = true;
+                            });
                             throw e;
                         }
                     });

@@ -8,24 +8,21 @@
 import {
   ToolDefinition,
   ToolExecutionContext,
-  ToolResult,
-  BaseBugsnagTool,
   ProjectArgs,
   PaginationArgs,
   SortingArgs,
-  SharedServices
-} from "../types.js";
+  SharedServices,
+  BugsnagTool
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-
-  executeWithErrorHandling,
   formatPaginatedResult,
-  TOOL_DEFAULTS
-} from "../utils/tool-utilities.js";
-import { FilterObject } from "../client/api/filters.js";
-import { ListProjectErrorsOptions } from "../client/api/Error.js";
-import { EventField } from "../client/api/Project.js";
+  DEFAULT_FILTERS,
+} from "../../tool-utilities.js";
+import { FilterObject } from "../../client/api/filters.js";
+import { ListProjectErrorsOptions } from "../../client/api/Error.js";
+import { EventField } from "../../client/api/Project.js";
 
 /**
  * Arguments interface for the List Project Errors tool
@@ -44,8 +41,10 @@ export interface ListProjectErrorsArgs extends ProjectArgs, PaginationArgs, Sort
  * Provides comprehensive error listing with filtering, sorting, and pagination capabilities.
  * Includes default filters for common use cases and validates filter keys against project event fields.
  */
-export class ListProjectErrorsTool extends BaseBugsnagTool {
+export class ListProjectErrorsTool implements BugsnagTool {
   readonly name = "list_project_errors";
+  readonly hasProjectIdParameter = true;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "List Project Errors",
@@ -58,7 +57,7 @@ export class ListProjectErrorsTool extends BaseBugsnagTool {
       "Find errors affecting specific users or environments using metadata filters"
     ],
     parameters: [
-      CommonParameterDefinitions.filters(false, TOOL_DEFAULTS.DEFAULT_FILTERS),
+      CommonParameterDefinitions.filters(false, DEFAULT_FILTERS),
       CommonParameterDefinitions.sort(["first_seen", "last_seen", "events", "users", "unsorted"], "last_seen"),
       CommonParameterDefinitions.direction("desc"),
       CommonParameterDefinitions.perPage(30),
@@ -110,66 +109,41 @@ export class ListProjectErrorsTool extends BaseBugsnagTool {
     ]
   };
 
-  constructor(hasProjectApiKey: boolean = false) {
-    super();
+  async execute(args: ListProjectErrorsArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-    // Add conditional projectId parameter if no project API key is configured
-    if (!hasProjectApiKey) {
-      this.definition.parameters.unshift(CommonParameterDefinitions.projectId(true));
+    const { services } = context;
+
+    // Get the project (either from projectId or current project)
+    const project = await services.getInputProject(args.projectId);
+
+    // Validate filter keys against cached event fields if filters are provided
+    if (args.filters) {
+      await this.validateFilterKeys(args.filters, services);
     }
-  }
 
-  async execute(args: ListProjectErrorsArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+    // Apply default filters if not provided
+    const defaultFilters: FilterObject = JSON.parse(JSON.stringify(DEFAULT_FILTERS));
+    const mergedFilters = { ...defaultFilters, ...args.filters };
 
-      const { services } = context;
+    // Build options for the API call
+    const options: ListProjectErrorsOptions = {
+      filters: mergedFilters
+    };
 
-      // Get the project (either from projectId or current project)
-      const project = await services.getInputProject(args.projectId);
+    // Add optional parameters if provided
+    if (args.sort !== undefined) options.sort = args.sort;
+    if (args.direction !== undefined) options.direction = args.direction;
+    if (args.per_page !== undefined) options.per_page = args.per_page;
+    if (args.next !== undefined) options.next = args.next;
 
-      // Validate filter keys against cached event fields if filters are provided
-      if (args.filters) {
-        await this.validateFilterKeys(args.filters, services);
-      }
+    const errorsApi = services.getErrorsApi();
+    const response = await errorsApi.listProjectErrors(project.id, options);
 
-      // Apply default filters if not provided
-      const defaultFilters: FilterObject = JSON.parse(JSON.stringify(TOOL_DEFAULTS.DEFAULT_FILTERS));
-      const mergedFilters = { ...defaultFilters, ...args.filters };
+    const result = formatPaginatedResult(response);
 
-      // Build options for the API call
-      const options: ListProjectErrorsOptions = {
-        filters: mergedFilters
-      };
-
-      // Add optional parameters if provided
-      if (args.sort !== undefined) options.sort = args.sort;
-      if (args.direction !== undefined) options.direction = args.direction;
-      if (args.per_page !== undefined) options.per_page = args.per_page;
-      if (args.next !== undefined) options.next = args.next;
-
-      // Make the API call
-      const errorsApi = services.getErrorsApi();
-      const response = await errorsApi.listProjectErrors(project.id, options);
-
-      const errors = response.body || [];
-      const totalCount = response.headers.get('X-Total-Count');
-      const linkHeader = response.headers.get('Link');
-
-      // Extract next URL from Link header
-      const nextUrl = linkHeader?.match(/<([^>]+)>/)?.[1] || null;
-
-      // Format the result with pagination information
-      const result = formatPaginatedResult(
-        errors,
-        errors.length,
-        totalCount ? parseInt(totalCount) : undefined,
-        nextUrl
-      );
-
-      return result;
-    });
+    return result;
   }
 
   /**

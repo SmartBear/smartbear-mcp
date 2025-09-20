@@ -8,16 +8,14 @@
 import {
   ToolDefinition,
   ToolExecutionContext,
-  ToolResult,
-  BaseBugsnagTool,
-  ErrorArgs
-} from "../types.js";
+  ErrorArgs,
+  BugsnagTool
+} from "../../types.js";
 import {
   CommonParameterDefinitions,
   validateToolArgs,
-  executeWithErrorHandling
-} from "../utils/tool-utilities.js";
-import { FilterObject, toQueryString } from "../client/api/filters.js";
+} from "../../tool-utilities.js";
+import { FilterObject, toQueryString } from "../../client/api/filters.js";
 
 /**
  * Arguments interface for the Get Error tool
@@ -32,8 +30,10 @@ export interface GetErrorArgs extends ErrorArgs {
  * Retrieves comprehensive error details including aggregated data, latest event details,
  * pivots for analysis, and a dashboard URL for further investigation.
  */
-export class GetErrorTool extends BaseBugsnagTool {
+export class GetErrorTool implements BugsnagTool {
   readonly name = "get_error";
+  readonly hasProjectIdParameter = true;
+  readonly enableInSingleProjectMode = true;
 
   readonly definition: ToolDefinition = {
     title: "Get Error",
@@ -82,87 +82,76 @@ export class GetErrorTool extends BaseBugsnagTool {
       " - url: A link to the error in the dashboard - this should be shown to the user for them to perform further analysis"
   };
 
-  constructor(hasProjectApiKey: boolean = false) {
-    super();
+  async execute(args: GetErrorArgs, context: ToolExecutionContext): Promise<object> {
+    // Validate arguments
+    validateToolArgs(args, this.definition.parameters, this.name);
 
-    // Add conditional projectId parameter if no project API key is configured
-    if (!hasProjectApiKey) {
-      this.definition.parameters.unshift(CommonParameterDefinitions.projectId(true));
+    const { services } = context;
+
+    // Validate required errorId
+    if (!args.errorId) {
+      throw new Error("Both projectId and errorId arguments are required");
     }
-  }
 
-  async execute(args: GetErrorArgs, context: ToolExecutionContext): Promise<ToolResult> {
-    return executeWithErrorHandling(this.name, async () => {
-      // Validate arguments
-      validateToolArgs(args, this.definition.parameters, this.name);
+    // Get the project (either from projectId or current project)
+    const project = await services.getInputProject(args.projectId);
 
-      const { services } = context;
+    // Get error details from the API
+    const errorsApi = services.getErrorsApi();
+    const errorDetailsResponse = await errorsApi.viewErrorOnProject(project.id, args.errorId);
+    const errorDetails = errorDetailsResponse.body;
 
-      // Validate required errorId
-      if (!args.errorId) {
-        throw new Error("Both projectId and errorId arguments are required");
-      }
+    if (!errorDetails) {
+      throw new Error(`Error with ID ${args.errorId} not found in project ${project.id}.`);
+    }
 
-      // Get the project (either from projectId or current project)
-      const project = await services.getInputProject(args.projectId);
+    // Build query parameters for getting the latest event
+    const params = new URLSearchParams();
+    params.append('sort', 'timestamp');
+    params.append('direction', 'desc');
+    params.append('per_page', '1');
+    params.append('full_reports', 'true');
 
-      // Get error details from the API
-      const errorsApi = services.getErrorsApi();
-      const errorDetailsResponse = await errorsApi.viewErrorOnProject(project.id, args.errorId);
-      const errorDetails = errorDetailsResponse.body;
+    // Combine error filter with any additional filters provided
+    const filters: FilterObject = {
+      "error": [{ type: "eq", value: args.errorId }],
+      ...args.filters
+    };
 
-      if (!errorDetails) {
-        throw new Error(`Error with ID ${args.errorId} not found in project ${project.id}.`);
-      }
+    const filtersQueryString = toQueryString(filters);
+    const listEventsQueryString = `?${params}&${filtersQueryString}`;
 
-      // Build query parameters for getting the latest event
-      const params = new URLSearchParams();
-      params.append('sort', 'timestamp');
-      params.append('direction', 'desc');
-      params.append('per_page', '1');
-      params.append('full_reports', 'true');
+    // Get the latest event for this error using the events endpoint with filters
+    let latestEvent = null;
+    try {
+      const eventsResponse = await errorsApi.listEventsOnProject(project.id, listEventsQueryString);
+      const events = eventsResponse.body || [];
+      latestEvent = events[0] || null;
+    } catch (e) {
+      console.warn("Failed to fetch latest event:", e);
+      // Continue without latest event rather than failing the entire request
+    }
 
-      // Combine error filter with any additional filters provided
-      const filters: FilterObject = {
-        "error": [{ type: "eq", value: args.errorId }],
-        ...args.filters
-      };
+    // Get error pivots for analysis
+    let pivots: any[] = [];
+    try {
+      const pivotsResponse = await errorsApi.listErrorPivots(project.id, args.errorId);
+      pivots = pivotsResponse.body || [];
+    } catch (e) {
+      console.warn("Failed to fetch error pivots:", e);
+      // Continue without pivots rather than failing the entire request
+    }
 
-      const filtersQueryString = toQueryString(filters);
-      const listEventsQueryString = `?${params}&${filtersQueryString}`;
+    // Generate dashboard URL with filters
+    const errorUrl = await services.getErrorUrl(project, args.errorId, `?${filtersQueryString}`);
 
-      // Get the latest event for this error using the events endpoint with filters
-      let latestEvent = null;
-      try {
-        const eventsResponse = await errorsApi.listEventsOnProject(project.id, listEventsQueryString);
-        const events = eventsResponse.body || [];
-        latestEvent = events[0] || null;
-      } catch (e) {
-        console.warn("Failed to fetch latest event:", e);
-        // Continue without latest event rather than failing the entire request
-      }
+    const result = {
+      error_details: errorDetails,
+      latest_event: latestEvent,
+      pivots: pivots,
+      url: errorUrl
+    };
 
-      // Get error pivots for analysis
-      let pivots: any[] = [];
-      try {
-        const pivotsResponse = await errorsApi.listErrorPivots(project.id, args.errorId);
-        pivots = pivotsResponse.body || [];
-      } catch (e) {
-        console.warn("Failed to fetch error pivots:", e);
-        // Continue without pivots rather than failing the entire request
-      }
-
-      // Generate dashboard URL with filters
-      const errorUrl = await services.getErrorUrl(project, args.errorId, `?${filtersQueryString}`);
-
-      const result = {
-        error_details: errorDetails,
-        latest_event: latestEvent,
-        pivots: pivots,
-        url: errorUrl
-      };
-
-      return result;
-    });
+    return result;
   }
 }
