@@ -27,8 +27,8 @@ jobs:
           git clone https://github.com/modelcontextprotocol/registry
           cd registry
           make publisher
-          ls -la
-          cp target/release/mcp-publisher "$GITHUB_WORKSPACE"/mcp-publisher
+          ls -la bin/
+          cp bin/mcp-publisher "$GITHUB_WORKSPACE"/mcp-publisher
 
       - name: Login
         run: |
