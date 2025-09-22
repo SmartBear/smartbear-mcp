@@ -10,28 +10,21 @@
   "version": "0.6.0",
   "packages": [
     {
-      "registry_type": "npm",
-      "registry_base_url": "https://registry.npmjs.org",
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@smartbear/mcp",
       "version": "0.6.0",
       "transport": { "type": "stdio" },
-      "package_arguments": [],
-      "environment_variables": [
-        { "name": "BUGSNAG_AUTH_TOKEN", "description": "BugSnag auth token. Leave empty to disable BugSnag tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration", "is_required": false, "is_secret": true },
-
-        { "name": "BUGSNAG_PROJECT_API_KEY", "description": "BugSnag project API key (optional; narrows interactions to a single project). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration", "is_required": false, "is_secret": false },
-        
-        { "name": "REFLECT_API_TOKEN", "description": "Reflect API token. Leave empty to disable Reflect tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration", "is_required": false, "is_secret": true },
-        
-        { "name": "API_HUB_API_KEY", "description": "API Hub API key. Leave empty to disable API Hub tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration", "is_required": false, "is_secret": true },
-        
-        { "name": "PACT_BROKER_BASE_URL", "description": "PactFlow/Pact Broker base URL. Leave empty to disable Pact tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow", "is_required": false, "is_secret": false },
-        
-        { "name": "PACT_BROKER_TOKEN", "description": "PactFlow authentication token. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow", "is_required": false, "is_secret": true },
-        
-        { "name": "PACT_BROKER_USERNAME", "description": "Pact Broker username (alternative to token). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow", "is_required": false, "is_secret": false },
-        
-        { "name": "PACT_BROKER_PASSWORD", "description": "Pact Broker password (alternative to token). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow", "is_required": false, "is_secret": true }
+      "packageArguments": [],
+      "environmentVariables": [
+        { "name": "BUGSNAG_AUTH_TOKEN", "description": "BugSnag auth token. Leave empty to disable BugSnag tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration", "isRequired": false, "isSecret": true },
+        { "name": "BUGSNAG_PROJECT_API_KEY", "description": "BugSnag project API key (optional; narrows interactions to a single project). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration", "isRequired": false, "isSecret": false },
+        { "name": "REFLECT_API_TOKEN", "description": "Reflect API token. Leave empty to disable Reflect tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration", "isRequired": false, "isSecret": true },
+        { "name": "API_HUB_API_KEY", "description": "API Hub API key. Leave empty to disable API Hub tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration", "isRequired": false, "isSecret": true },
+        { "name": "PACT_BROKER_BASE_URL", "description": "PactFlow/Pact Broker base URL. Leave empty to disable Pact tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow", "isRequired": false, "isSecret": false },
+        { "name": "PACT_BROKER_TOKEN", "description": "PactFlow authentication token. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow", "isRequired": false, "isSecret": true },
+        { "name": "PACT_BROKER_USERNAME", "description": "Pact Broker username (alternative to token). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow", "isRequired": false, "isSecret": false },
+        { "name": "PACT_BROKER_PASSWORD", "description": "Pact Broker password (alternative to token). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow", "isRequired": false, "isSecret": true }
       ]
     }
   ]
