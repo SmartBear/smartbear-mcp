@@ -2,6 +2,7 @@ name: Publish to npm
 
 permissions:
   contents: read
+  id-token: write
 
 on:
   workflow_dispatch:
@@ -17,17 +18,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org/'
-          scope: '@smartbear'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Prepare mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.0.0/mcp-publisher_1.0.0_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+      
+      - name: Login to MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher login dns --domain smartbear.com --private-key ${{ secrets.GH_MCP_REGISTRY_KEY }}
+      
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish
