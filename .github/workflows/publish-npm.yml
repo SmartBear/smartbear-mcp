@@ -29,7 +29,9 @@ jobs:
 
       - name: Extract version from package.json
         id: extract_version
-        run: echo "VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUTS"
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: View version
         run: echo "Version is ${{ steps.extract_version.outputs.VERSION }}"
