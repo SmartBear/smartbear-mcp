@@ -225,9 +225,7 @@ export class BugsnagClient implements Client {
       const projects = await this.getProjects();
       project = projects.find((p) => p.api_key === this.projectApiKey) ?? null;
       if (!project) {
-        throw new Error(
-          `Unable to find project with API key ${this.projectApiKey} in organization.`,
-        );
+        throw new Error("Unable to find project with the configured API key.");
       }
       this.cache.set(cacheKeys.CURRENT_PROJECT, project);
       if (project) {
