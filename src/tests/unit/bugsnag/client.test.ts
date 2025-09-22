@@ -2903,7 +2903,8 @@ describe("BugsnagClient", () => {
           "error-1",
           { operation: "override_severity", severity: undefined },
         );
-        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+        expect(
+          result.content[0].text).toBe(JSON.stringify({ success: true }));
       });
 
       it("should return false when API returns non-success status", async () => {
