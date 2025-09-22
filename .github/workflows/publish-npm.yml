@@ -27,7 +27,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Extract version from package.json
+        id: extract_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUTS"
+
+      - name: View version
+        run: echo "Version is ${{ steps.extract_version.outputs.VERSION }}"
+
+      # - name: Publish to npm
+      #   run: npm publish --access public
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
