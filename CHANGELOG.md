@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2025-09-15
 
 ### Added
 
 - [PactFlow] Add tool for matrix [#118](https://github.com/SmartBear/smartbear-mcp/pull/118)
 - [PactFlow] Add tool for fetching AI entitlement [#129](https://github.com/SmartBear/smartbear-mcp/pull/129)
 - [PactFlow] Add matcher recommendation in generate and review tool [#130](https://github.com/SmartBear/smartbear-mcp/pull/130)
+- [BugSnag] Retrieve releases and builds, including stability scores [#139](https://github.com/SmartBear/smartbear-mcp/pull/109)
 
 ### Changed
 
