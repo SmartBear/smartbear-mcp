@@ -1,4 +1,4 @@
-![bugsnag.png](./images/embedded/bugsnag.png)
+![BugSnag](https://assets.smartbear.com/m/3945e02cdc983893/original/BugSnag-Repository-Header-Light.svg)
 
 The BugSnag client provides comprehensive error monitoring and debugging capabilities as listed below. Tools for BugSnag require a `BUGSNAG_AUTH_TOKEN`.
 
@@ -11,7 +11,7 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 -   Lists the projects in your organization.
 -   Only available when no project API key is configured.
 
-### List Errors
+### List Project Errors
 
 -   Lists the open errors in the configured project with some basic details, taking an optional set of filters.
 -   The project ID parameter is required if no project API key is configured.
@@ -40,6 +40,29 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 -   Allows you to update the status of the specified error to mark it as Open, Fixed, Ignored, Discarded or Undiscarded.
 -   The severity can also be overridden from the default calculated value.
 
+### List Releases
+
+-   List the releases for a project.
+-   Provides additional filtering by release stage.
+
+### Get Release
+
+-   Get detailed information about a specific release, including stability score.
+
+### List Builds
+
+-   List all the builds in all releases for a project.
+-   Provides additional filtering by release stage.
+
+### List Builds in Release
+
+-   List the builds that make up a release.
+-   Provides additional filtering by release stage.
+
+### Get Build
+
+-   Get detailed information about a specific build, including stability score.
+
 ## Available Resources
 
 ### Event
@@ -56,3 +79,4 @@ Refers to an occurrence of an error: `bugsnag://event/{id}`.
     -   Project event filters are pre-cached for better performance
 -   **Filtering**: Use `get_project_event_filters` to discover available filter fields before using `list_bugsnag_project_errors`
 -   **Time Filters**: Support both relative format (e.g., `7d`, `24h`) and ISO 8601 UTC format (e.g., `2018-05-20T00:00:00Z`)
+-   **On-Premise Support**: Set the `BUGSNAG_ENDPOINT` environment variable to your custom endpoint if you're using an on-premise installation of BugSnag.

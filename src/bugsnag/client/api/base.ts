@@ -31,6 +31,23 @@ export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
   return arr.map(obj => pickFields<T>(obj, keys));
 }
 
+// Utility to extract next URL path from Link header
+export function getNextUrlPathFromHeader(headers: Headers, basePath: string) {
+  if (!headers) return null;
+  const link = headers.get("link") || headers.get("Link");
+  if (!link) return null;
+  const match = link.match(/<([^>]+)>;\s*rel="next"/)?.[1];
+  if (!match) return null;
+  return match.replace(basePath, "");
+}
+
+// Ensure URL is absolute
+// The MCP tools exposed use only the path for pagination
+// For making requests, we need to ensure the URL is absolute
+export function ensureFullUrl(url: string, basePath: string) {
+  return url.startsWith('http') ? url : `${basePath}${url}`;
+}
+
 export class BaseAPI {
   protected configuration: Configuration;
   protected filterFields: string[];
@@ -56,11 +73,11 @@ export class BaseAPI {
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
     };
-    const url = options.url.startsWith('http') ? options.url : `${this.configuration.basePath || ''}${options.url}`;
     let results: T[] = [];
-    let nextUrl: string | undefined = url;
+    let nextUrl: string | null = options.url;
     let apiResponse: ApiResponse<T>
     do {
+      nextUrl = ensureFullUrl(nextUrl!, this.configuration.basePath!);
       const response: Response = await fetch(nextUrl!, fetchOptions);
       if (!response.ok) {
           const errorText = await response.text();
@@ -75,13 +92,7 @@ export class BaseAPI {
       const data: T = await response.json();
       if (paginate) {
         results = results.concat(data);
-        const link: string | null = response.headers.get('Link');
-        if (link) {
-          const match: RegExpMatchArray | null = link.match(/<([^>]+)>;\s*rel="next"/);
-          nextUrl = match ? match[1] : undefined;
-        } else {
-          nextUrl = undefined;
-        }
+        nextUrl = getNextUrlPathFromHeader(response.headers, this.configuration.basePath!);
       } else {
         apiResponse.body = data;
       }

@@ -9,7 +9,7 @@
 
   <!-- Badges -->
   <div>
-    <a href="https://github.com/SmartBear/smartbear-mcp/actions/workflows/test.yml"><img src="https://github.com/SmartBear/smartbear-mcp/workflows/Test%20Suite/badge.svg" alt="Test Status"></a>
+    <a href="https://github.com/SmartBear/smartbear-mcp/actions/workflows/node-ci.yml"><img src="https://github.com/SmartBear/smartbear-mcp/actions/workflows/node-ci.yml/badge.svg?branch=next" alt="Test Status"></a>
     <a href="https://smartbear.github.io/smartbear-mcp/"><img src="https://img.shields.io/badge/coverage-dynamic-brightgreen" alt="Coverage"></a>
     <a href="https://www.npmjs.com/package/@smartbear/mcp"><img src="https://img.shields.io/npm/v/@smartbear/mcp" alt="npm version"></a>
     <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-Compatible-blue" alt="MCP Compatible"></a>
@@ -165,113 +165,7 @@ For detailed introduction, examples, and advanced configuration visit our 📖 [
 
 ## Local Development
 
-For developers who want to contribute to the SmartBear MCP server, customize its functionality, or work with the latest development features, you can build and run the server directly from source code. This approach gives you full control over the implementation and allows you to make modifications as needed.
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/SmartBear/smartbear-mcp.git
-   cd smartbear-mcp
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Build the server:**
-   ```bash
-   npm run build
-   ```
-
-4. **Add the server to your IDE** configuration updating `.vscode/mcp.json` (or equivalent) to point to your local build
-
-    <details>
-    <summary><strong>📋 VSCode (mcp.json)</strong></summary>
-
-    ```json
-    {
-      "servers": {
-        "smartbear": {
-        "type": "stdio",
-        "command": "node",
-        "dev": {                            // <-- To allow debugging in VS Code
-          "watch": "dist/**/*.js",
-          "debug": {
-              "type": "node"
-          },
-        },
-        "args": ["<PATH_TO_SMARTBEAR_MCP_REPO>/dist/index.js"],
-        "env": {
-            "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
-            "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
-            "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-            "API_HUB_API_KEY": "${input:api_hub_api_key}",
-            "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
-            "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
-            "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
-            "PACT_BROKER_PASSWORD": "${input:pact_broker_password}"
-          }
-        }
-      },
-      "inputs": [
-        {
-          "id": "bugsnag_auth_token",
-          "type": "promptString",
-          "description": "BugSnag Auth Token - leave blank to disable BugSnag tools",
-          "password": true
-        },
-        {
-          "id": "bugsnag_project_api_key",
-          "type": "promptString",
-          "description": "BugSnag Project API Key - for single project interactions",
-          "password": false
-        },
-        {
-          "id": "reflect_api_token",
-          "type": "promptString",
-          "description": "Reflect API Token - leave blank to disable Reflect tools",
-          "password": true
-        },
-        {
-          "id": "api_hub_api_key",
-          "type": "promptString",
-          "description": "API Hub API Key - leave blank to disable API Hub tools",
-          "password": true
-        },
-        {
-          "id": "pact_broker_base_url",
-          "type": "promptString",
-          "description": "PactFlow or Pact Broker base url - leave blank to disable PactFlow tools",
-          "password": true
-        },
-        {
-          "id": "pact_broker_token",
-          "type": "promptString",
-          "description": "PactFlow Authentication Token",
-          "password": true
-        },
-        {
-          "id": "pact_broker_username",
-          "type": "promptString",
-          "description": "Pact Broker Username",
-          "password": true
-        },
-        {
-          "id": "pact_broker_password",
-          "type": "promptString",
-          "description": "Pact Broker Password",
-          "password": true
-        },
-      ]
-    }
-    ```
-    </details>
-
-5. **Local testing** using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) web interface:
-
-    ```bash
-    BUGSNAG_AUTH_TOKEN="your_token" REFLECT_API_TOKEN="your_reflect_token" API_HUB_API_KEY="your_api_hub_key" PACT_BROKER_BASE_URL="your-pactflow-url" PACT_BROKER_TOKEN="your-pactflow-token" PACT_BROKER_USERNAME="your-pact-broker-username" PACT_BROKER_PASSWORD="your-pact-broker-password" npx @modelcontextprotocol/inspector npx @smartbear/mcp@latest
-    ```
+For developers who want to contribute to the SmartBear MCP server, please see the [CONTRIBUTING.md](CONTRIBUTING.md) guide.
 
 ## License
 

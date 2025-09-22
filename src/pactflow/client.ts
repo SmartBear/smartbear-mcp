@@ -2,6 +2,7 @@ import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import {
   Client,
   GetInputFunction,
+  RegisterPromptFunction,
   RegisterToolsFunction
 } from "../common/types.js";
 import {
@@ -9,11 +10,20 @@ import {
   GenerationInput,
   RefineResponse,
   RefineInput,
-  StatusResponse
+  StatusResponse,
+  Entitlement
 } from "./client/ai.js";
-import { CanIDeployInput, CanIDeployResponse, ProviderStatesResponse } from "./client/base.js";
+import {
+  CanIDeployInput,
+  CanIDeployResponse,
+  ProviderStatesResponse,
+  MatrixInput,
+  MatrixResponse
+} from "./client/base.js";
 import { ClientType, TOOLS } from "./client/tools.js";
-
+import { getOADMatcherRecommendations, getUserMatcherSelection } from "./client/prompt-utils.js";
+import { PROMPTS } from "./client/prompts.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 
 
 // Tool definitions for PactFlow AI API client
@@ -29,8 +39,17 @@ export class PactflowClient implements Client {
     private readonly aiBaseUrl: string;
     private readonly baseUrl: string;
     private readonly clientType: ClientType;
+    private readonly server: Server;
 
-    constructor(auth: string | { username: string; password: string }, baseUrl: string, clientType: ClientType) {
+    /**
+     * Creates an instance of the PactflowClient.
+     *
+     * @param auth The authentication token or credentials.
+     * @param baseUrl The base URL for the API.
+     * @param clientType The type of client (e.g., PactFlow, Pact Broker).
+     * @param server The SmartBear MCP server instance.
+     */
+    constructor(auth: string | { username: string; password: string }, baseUrl: string, clientType: ClientType, server: Server) {
       // Set headers based on the type of auth provided
       if (typeof auth === "string") {
         this.headers = {
@@ -49,6 +68,7 @@ export class PactflowClient implements Client {
       this.baseUrl = baseUrl;
       this.aiBaseUrl = `${this.baseUrl}/api/ai`;
       this.clientType = clientType;
+      this.server = server;
     }
 
     // PactFlow AI client methods
@@ -57,10 +77,17 @@ export class PactflowClient implements Client {
      * Generate new Pact tests based on the provided input.
      *
      * @param toolInput The input data for the generation process.
+     * @param getInput Function to get additional input from the user if needed.
      * @returns The result of the generation process.
      * @throws Error if the HTTP request fails or the operation times out.
      */
-    async generate(toolInput: GenerationInput): Promise<GenerationResponse> {
+    async generate(toolInput: GenerationInput, getInput: GetInputFunction): Promise<GenerationResponse> {
+      if(toolInput.openapi?.document && (!toolInput.openapi?.matcher || Object.keys(toolInput.openapi.matcher).length === 0)) {
+        const matcherResponse = await getOADMatcherRecommendations(toolInput.openapi.document, this.server);
+        const userSelection = await getUserMatcherSelection(matcherResponse, getInput);
+        toolInput.openapi.matcher = userSelection;
+      }
+
       // Submit the generation request
       const response = await fetch(`${this.aiBaseUrl}/generate`, {
         method: "POST",
@@ -83,10 +110,17 @@ export class PactflowClient implements Client {
      * Review the provided Pact tests and suggest improvements.
      *
      * @param toolInput The input data for the review process.
+     * @param getInput Function to get additional input from the user if needed.
      * @returns The result of the review process.
      * @throws Error if the HTTP request fails or the operation times out.
      */
-    async review(toolInput: RefineInput): Promise<RefineResponse> {
+    async review(toolInput: RefineInput, getInput: GetInputFunction): Promise<RefineResponse> {
+      if(toolInput.openapi?.document && (!toolInput.openapi?.matcher || Object.keys(toolInput.openapi.matcher).length === 0)) {
+        const matcherResponse = await getOADMatcherRecommendations(toolInput.openapi.document, this.server);
+        const userSelection = await getUserMatcherSelection(matcherResponse, getInput);
+        toolInput.openapi.matcher = userSelection;
+      }
+
       // Submit review request
       const response = await fetch(`${this.aiBaseUrl}/review`, {
         method: "POST",
@@ -103,6 +137,39 @@ export class PactflowClient implements Client {
         status_response,
         "Review Pacts"
       );
+    }
+
+    /**
+     * Retrieves AI status information for the current user
+     * and organization.
+     *
+     * @returns Entitlement containing AI status information, organization
+     *   entitlements, and user entitlements.
+     * @throws Error if the request fails or returns a non-OK response.
+     */
+    async getAIStatus(): Promise<Entitlement> {
+      const url = `${this.aiBaseUrl}/entitlement`;
+
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: this.headers,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `PactFlow AI Status Request Failed - status: ${response.status} ${response.statusText}${
+              errorText ? ` - ${errorText}` : ""
+            }`
+          );
+        }
+
+        return (await response.json()) as Entitlement;
+      } catch (error) {
+        process.stderr.write(`[GetAICredits] Unexpected error: ${error}\n`);
+        throw error;
+      }
     }
 
     async getStatus(
@@ -218,12 +285,90 @@ export class PactflowClient implements Client {
 
         return (await response.json()) as CanIDeployResponse;
       } catch (error) {
-        console.error("[CanIDeploy] Unexpected error:", error);
+        console.error(`[CanIDeploy] Unexpected error: ${error}\n`);
         throw error;
       }
     }
 
-    registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
+    /**
+     * Retrieves the matrix of pact verification results for the specified pacticipants.
+     * This allows you to see which consumer/provider combinations have been verified
+     * and make deployment decisions based on contract test results.
+     *
+     * @param body - Matrix query parameters including pacticipants, versions, environments, etc.
+     * @returns MatrixResponse containing the verification matrix, notices, and summary
+     * @throws Error if the request fails or returns a non-OK response
+     */
+    async getMatrix(body: MatrixInput): Promise<MatrixResponse> {
+      const { q, latestby, limit } = body;
+
+      // Build query parameters manually to avoid URL encoding of square brackets
+      const queryParts: string[] = [];
+
+      // Add optional parameters
+      if (latestby) {
+        queryParts.push(`latestby=${encodeURIComponent(latestby)}`);
+      }
+      if (limit !== undefined) {
+        queryParts.push(`limit=${limit}`);
+      }
+
+      // Add the q parameters (pacticipant selectors)
+      q.forEach((selector) => {
+        queryParts.push(`q[]pacticipant=${encodeURIComponent(selector.pacticipant)}`);
+
+        if(selector.version){
+          queryParts.push(`q[]version=${encodeURIComponent(selector.version)}`);
+        }
+
+        if (selector.branch) {
+          queryParts.push(`q[]branch=${encodeURIComponent(selector.branch)}`);
+        }
+        if (selector.environment) {
+          queryParts.push(`q[]environment=${encodeURIComponent(selector.environment)}`);
+        }
+        if (selector.latest !== undefined) {
+          queryParts.push(`q[]latest=${selector.latest}`);
+        }
+        if (selector.tag) {
+          queryParts.push(`q[]tag=${encodeURIComponent(selector.tag)}`);
+        }
+        if (selector.mainBranch !== undefined) {
+          queryParts.push(`q[]mainBranch=${selector.mainBranch}`);
+        }
+      });
+
+      const url = `${this.baseUrl}/matrix?${queryParts.join('&')}`;
+
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: this.headers,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            `Matrix Request Failed - status: ${response.status} ${response.statusText}${
+              errorText ? ` - ${errorText}` : ""
+            }`
+          );
+        }
+
+        return (await response.json()) as MatrixResponse;
+      } catch (error) {
+        console.error("[GetMatrix] Unexpected error:", error);
+        throw error;
+      }
+    }
+
+    /**
+     * Registers tools with the provided register function.
+     *
+     * @param register - The function used to register tools.
+     * @param getInput - The function used to get input for tools.
+     */
+    registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void {
       for (const tool of TOOLS.filter(t => t.clients.includes(this.clientType))) {
         const {handler, clients: _, formatResponse, ...toolparams} = tool; // eslint-disable-line @typescript-eslint/no-unused-vars
         register(toolparams, async (args, _extra) => {
@@ -231,7 +376,13 @@ export class PactflowClient implements Client {
             if (typeof handler_fn !== "function") {
               throw new Error(`Handler '${handler}' not found on PactClient`);
             }
-            const result = await handler_fn.call(this, args);
+
+            let result;
+            if (tool.enableElicitation) {
+              result = await handler_fn.call(this, args, getInput);
+            } else {
+              result = await handler_fn.call(this, args);
+            }
 
             // Use custom response formatter if provided
             if (formatResponse) {
@@ -245,5 +396,20 @@ export class PactflowClient implements Client {
           }
         );
       }
+    }
+
+    /**
+     * Registers prompts with the provided register function.
+     *
+     * @param register - The function used to register prompts.
+     */
+    registerPrompts(register: RegisterPromptFunction): void {
+      PROMPTS.forEach(prompt => {
+        register(
+          prompt.name,
+          prompt.params,
+          prompt.callback
+        );
+      });
     }
 }

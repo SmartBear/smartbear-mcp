@@ -51,10 +51,10 @@ async function main() {
 
   if (pactBrokerUrl) {
     if (pactBrokerToken) {
-      server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow"));
+      server.addClient(new PactflowClient(pactBrokerToken, pactBrokerUrl, "pactflow", server.server));
       client_defined = true;
     } else if (pactBrokerUsername && pactBrokerPassword) {
-      server.addClient(new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker"));
+      server.addClient(new PactflowClient({ username: pactBrokerUsername, password: pactBrokerPassword }, pactBrokerUrl, "pact_broker", server.server));
       client_defined = true;
     } else {
       console.error("If the Pact Broker base URL is specified, you must specify either (a) a PactFlow token, or (b) a Pact Broker username and password pair.")

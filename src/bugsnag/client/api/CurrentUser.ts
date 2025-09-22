@@ -60,7 +60,7 @@ export class CurrentUserAPI extends BaseAPI {
    * @returns A promise that resolves to the list of projects in the organization
    */
   async getOrganizationProjects(organizationId: string, options: GetOrganizationProjectsOptions = {}): Promise<ApiResponse<Project[]>> {
-    const { paginate = false, ...queryOptions } = options;
+    const { ...queryOptions } = options;
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(queryOptions)) {
       if (value !== undefined) params.append(key, String(value));
@@ -71,8 +71,7 @@ export class CurrentUserAPI extends BaseAPI {
     const data = await this.request<Project[]>({
       method: 'GET',
       url,
-    }, paginate);
-    // Only return allowed fields
+    }, true); // Always paginate for projects
     return {
       ...data,
       body: pickFieldsFromArray<Project>(data.body || [], CurrentUserAPI.projectFields)
@@ -87,6 +86,5 @@ export interface ListUserOrganizationsOptions {
 }
 
 export interface GetOrganizationProjectsOptions {
-  paginate?: boolean;
   [key: string]: any;
 }

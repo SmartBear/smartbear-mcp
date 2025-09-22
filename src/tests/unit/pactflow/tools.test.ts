@@ -1,6 +1,6 @@
 // tools.test.ts
 import { ZodObject, ZodTypeAny } from "zod";
-import { TOOLS } from "../../../pactflow/client/tools.js";
+import { TOOLS } from "../../../pactflow/client/tools";
 import { describe, it, expect } from 'vitest';
 
 describe("TOOLS definition for 'Generate Pact Tests'", () => {
@@ -10,24 +10,6 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
     expect(tool?.summary).toMatch(/Generate Pact tests using PactFlow AI/);
     expect(tool?.clients).toEqual(["pactflow"]);
     expect(tool?.handler).toBe("generate");
-  });
-
-  it("enforces presence of matcher when openapi input is provided", () => {
-    const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
-    const schema = tool?.zodSchema as ZodObject<{ [key: string]: ZodTypeAny }>;
-    const openapiSchema = schema.shape["openapi"];
-    expect(openapiSchema).toBeDefined();
-
-    const invalidOpenapi = {
-      openapi: {
-        document: {
-          openapi: "3.0.0",
-          paths: {},
-        },
-      },
-    };
-
-    expect(() => openapiSchema?.parse(invalidOpenapi.openapi)).toThrow(/matcher/);
   });
 
   it("rejects unsupported language values in the language field", () => {
