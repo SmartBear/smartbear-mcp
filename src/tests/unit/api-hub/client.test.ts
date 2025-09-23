@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { ApiHubClient } from "../../../api-hub/client.js";
 import { TOOLS } from "../../../api-hub/client/tools.js";
+import { ApiHubClient } from "../../../api-hub/client.js";
 
 const fetchMock = createFetchMock(vi);
 
@@ -12,7 +12,7 @@ describe("ApiHubClient", () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
-    
+
     client = new ApiHubClient("test-token");
   });
 
@@ -45,10 +45,10 @@ describe("ApiHubClient", () => {
         expect.objectContaining({
           method: "GET",
           headers: expect.objectContaining({
-            "Authorization": "Bearer test-token",
-            "Content-Type": "application/json"
-          })
-        })
+            Authorization: "Bearer test-token",
+            "Content-Type": "application/json",
+          }),
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -57,9 +57,9 @@ describe("ApiHubClient", () => {
       const mockResponse = { id: "new-portal", name: "New Portal" };
       const createData = {
         subdomain: "new-portal",
-        swaggerHubOrganizationId: "org-123"
+        swaggerHubOrganizationId: "org-123",
       };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       const result = await client.createPortal(createData);
@@ -68,8 +68,8 @@ describe("ApiHubClient", () => {
         "https://api.portal.swaggerhub.com/v1/portals",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify(createData)
-        })
+          body: JSON.stringify(createData),
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -82,7 +82,7 @@ describe("ApiHubClient", () => {
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
-        expect.objectContaining({ method: "GET" })
+        expect.objectContaining({ method: "GET" }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -94,14 +94,14 @@ describe("ApiHubClient", () => {
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
-        expect.objectContaining({ method: "DELETE" })
+        expect.objectContaining({ method: "DELETE" }),
       );
     });
 
     it("should delegate updatePortal to API instance", async () => {
       const mockResponse = { id: "portal-123", name: "Updated Portal" };
       const updateData = { name: "Updated Portal" };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       const result = await client.updatePortal("portal-123", updateData);
@@ -110,8 +110,8 @@ describe("ApiHubClient", () => {
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
         expect.objectContaining({
           method: "PATCH",
-          body: JSON.stringify(updateData)
-        })
+          body: JSON.stringify(updateData),
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -124,7 +124,7 @@ describe("ApiHubClient", () => {
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123/products",
-        expect.objectContaining({ method: "GET" })
+        expect.objectContaining({ method: "GET" }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -138,14 +138,14 @@ describe("ApiHubClient", () => {
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(TOOLS.length);
-      
+
       // Verify each tool was registered with correct structure
       TOOLS.forEach((tool, index) => {
         const registerCall = mockRegister.mock.calls[index];
         expect(registerCall[0]).toEqual({
           title: tool.title,
           summary: tool.summary,
-          parameters: tool.parameters
+          parameters: tool.parameters,
         });
         expect(typeof registerCall[1]).toBe("function");
       });
@@ -155,14 +155,14 @@ describe("ApiHubClient", () => {
       const mockRegister = vi.fn();
       const mockGetInput = vi.fn();
       const mockResponse = { portals: [] };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       client.registerTools(mockRegister, mockGetInput);
 
       // Find the getPortals tool handler
-      const getPortalsCall = mockRegister.mock.calls.find(call => 
-        call[0].title === "List Portals"
+      const getPortalsCall = mockRegister.mock.calls.find(
+        (call) => call[0].title === "List Portals",
       );
       expect(getPortalsCall).toBeDefined();
 
@@ -170,7 +170,7 @@ describe("ApiHubClient", () => {
       const result = await handler({}, {});
 
       expect(result).toEqual({
-        content: [{ type: "text", text: JSON.stringify(mockResponse) }]
+        content: [{ type: "text", text: JSON.stringify(mockResponse) }],
       });
     });
 
@@ -179,14 +179,14 @@ describe("ApiHubClient", () => {
       const mockGetInput = vi.fn();
       const mockResponse = { id: "new-portal" };
       const args = { subdomain: "test", swaggerHubOrganizationId: "org-123" };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       client.registerTools(mockRegister, mockGetInput);
 
       // Find the createPortal tool handler
-      const createPortalCall = mockRegister.mock.calls.find(call => 
-        call[0].title === "Create Portal"
+      const createPortalCall = mockRegister.mock.calls.find(
+        (call) => call[0].title === "Create Portal",
       );
       expect(createPortalCall).toBeDefined();
 
@@ -194,21 +194,21 @@ describe("ApiHubClient", () => {
       const result = await handler(args, {});
 
       expect(result).toEqual({
-        content: [{ type: "text", text: JSON.stringify(mockResponse) }]
+        content: [{ type: "text", text: JSON.stringify(mockResponse) }],
       });
     });
 
     it("should handle tool execution with formatResponse for delete operations", async () => {
       const mockRegister = vi.fn();
       const mockGetInput = vi.fn();
-      
+
       fetchMock.mockResponseOnce("", { status: 200 });
 
       client.registerTools(mockRegister, mockGetInput);
 
       // Find the deletePortal tool handler
-      const deletePortalCall = mockRegister.mock.calls.find(call => 
-        call[0].title === "Delete Portal"
+      const deletePortalCall = mockRegister.mock.calls.find(
+        (call) => call[0].title === "Delete Portal",
       );
       expect(deletePortalCall).toBeDefined();
 
@@ -216,14 +216,14 @@ describe("ApiHubClient", () => {
       const result = await handler({ portalId: "portal-123" }, {});
 
       expect(result).toEqual({
-        content: [{ type: "text", text: "Portal deleted successfully." }]
+        content: [{ type: "text", text: "Portal deleted successfully." }],
       });
     });
 
     it("should handle tool execution errors gracefully", async () => {
       const mockRegister = vi.fn();
       const mockGetInput = vi.fn();
-      
+
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       client.registerTools(mockRegister, mockGetInput);
@@ -234,7 +234,7 @@ describe("ApiHubClient", () => {
       const result = await handler({}, {});
 
       expect(result).toEqual({
-        content: [{ type: "text", text: "Error: Network error" }]
+        content: [{ type: "text", text: "Error: Network error" }],
       });
     });
 
@@ -242,19 +242,19 @@ describe("ApiHubClient", () => {
       const mockRegister = vi.fn();
       const mockGetInput = vi.fn();
       const mockResponse = { id: "portal-123", name: "Updated Portal" };
-      const args = { 
-        portalId: "portal-123", 
+      const args = {
+        portalId: "portal-123",
         name: "Updated Portal",
-        offline: true 
+        offline: true,
       };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       client.registerTools(mockRegister, mockGetInput);
 
       // Find the updatePortal tool handler
-      const updatePortalCall = mockRegister.mock.calls.find(call => 
-        call[0].title === "Update Portal"
+      const updatePortalCall = mockRegister.mock.calls.find(
+        (call) => call[0].title === "Update Portal",
       );
       expect(updatePortalCall).toBeDefined();
 
@@ -265,12 +265,12 @@ describe("ApiHubClient", () => {
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
         expect.objectContaining({
           method: "PATCH",
-          body: JSON.stringify({ name: "Updated Portal", offline: true })
-        })
+          body: JSON.stringify({ name: "Updated Portal", offline: true }),
+        }),
       );
-      
+
       expect(result).toEqual({
-        content: [{ type: "text", text: JSON.stringify(mockResponse) }]
+        content: [{ type: "text", text: JSON.stringify(mockResponse) }],
       });
     });
 
@@ -284,14 +284,14 @@ describe("ApiHubClient", () => {
         title: "Invalid Tool",
         summary: "Invalid tool for testing",
         parameters: [],
-        handler: "nonExistentMethod"
+        handler: "nonExistentMethod",
       } as any);
 
       client.registerTools(mockRegister, mockGetInput);
 
       // Find the invalid tool handler
-      const invalidToolCall = mockRegister.mock.calls.find(call => 
-        call[0].title === "Invalid Tool"
+      const invalidToolCall = mockRegister.mock.calls.find(
+        (call) => call[0].title === "Invalid Tool",
       );
       expect(invalidToolCall).toBeDefined();
 
@@ -299,7 +299,9 @@ describe("ApiHubClient", () => {
       const result = await handler({}, {});
 
       expect(result).toEqual({
-        content: [{ type: "text", text: "Error: Unknown handler: nonExistentMethod" }]
+        content: [
+          { type: "text", text: "Error: Unknown handler: nonExistentMethod" },
+        ],
       });
 
       // Restore original TOOLS

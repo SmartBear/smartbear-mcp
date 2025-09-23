@@ -13,7 +13,7 @@ describe("ApiHubAPI", () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
-    
+
     config = new ApiHubConfiguration({ token: "test-token" });
     api = new ApiHubAPI(config, "SmartBear-MCP/1.0.0");
   });
@@ -34,11 +34,11 @@ describe("ApiHubAPI", () => {
         {
           method: "GET",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
-          }
-        }
+            "User-Agent": "SmartBear-MCP/1.0.0",
+          },
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -50,9 +50,9 @@ describe("ApiHubAPI", () => {
       const createData = {
         name: "New Portal",
         subdomain: "new-portal",
-        swaggerHubOrganizationId: "org-123"
+        swaggerHubOrganizationId: "org-123",
       };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       const result = await api.createPortal(createData);
@@ -62,12 +62,12 @@ describe("ApiHubAPI", () => {
         {
           method: "POST",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
+            "User-Agent": "SmartBear-MCP/1.0.0",
           },
-          body: JSON.stringify(createData)
-        }
+          body: JSON.stringify(createData),
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -85,11 +85,11 @@ describe("ApiHubAPI", () => {
         {
           method: "GET",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
-          }
-        }
+            "User-Agent": "SmartBear-MCP/1.0.0",
+          },
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -106,11 +106,11 @@ describe("ApiHubAPI", () => {
         {
           method: "DELETE",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
-          }
-        }
+            "User-Agent": "SmartBear-MCP/1.0.0",
+          },
+        },
       );
     });
   });
@@ -119,7 +119,7 @@ describe("ApiHubAPI", () => {
     it("should update portal with patch data", async () => {
       const mockResponse = { id: "portal-123", name: "Updated Portal" };
       const updateData = { name: "Updated Portal", offline: true };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       const result = await api.updatePortal("portal-123", updateData);
@@ -129,12 +129,12 @@ describe("ApiHubAPI", () => {
         {
           method: "PATCH",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
+            "User-Agent": "SmartBear-MCP/1.0.0",
           },
-          body: JSON.stringify(updateData)
-        }
+          body: JSON.stringify(updateData),
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -152,11 +152,11 @@ describe("ApiHubAPI", () => {
         {
           method: "GET",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
-          }
-        }
+            "User-Agent": "SmartBear-MCP/1.0.0",
+          },
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -168,9 +168,9 @@ describe("ApiHubAPI", () => {
       const createData = {
         type: "new",
         name: "New Product",
-        slug: "new-product"
+        slug: "new-product",
       };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       const result = await api.createPortalProduct("portal-123", createData);
@@ -180,12 +180,12 @@ describe("ApiHubAPI", () => {
         {
           method: "POST",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
+            "User-Agent": "SmartBear-MCP/1.0.0",
           },
-          body: JSON.stringify(createData)
-        }
+          body: JSON.stringify(createData),
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -203,11 +203,11 @@ describe("ApiHubAPI", () => {
         {
           method: "GET",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
-          }
-        }
+            "User-Agent": "SmartBear-MCP/1.0.0",
+          },
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -224,11 +224,11 @@ describe("ApiHubAPI", () => {
         {
           method: "DELETE",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
-          }
-        }
+            "User-Agent": "SmartBear-MCP/1.0.0",
+          },
+        },
       );
     });
   });
@@ -237,7 +237,7 @@ describe("ApiHubAPI", () => {
     it("should update product with patch data", async () => {
       const mockResponse = { id: "prod-123", name: "Updated Product" };
       const updateData = { name: "Updated Product", public: true };
-      
+
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
       const result = await api.updatePortalProduct("prod-123", updateData);
@@ -247,12 +247,12 @@ describe("ApiHubAPI", () => {
         {
           method: "PATCH",
           headers: {
-            "Authorization": "Bearer test-token",
+            Authorization: "Bearer test-token",
             "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0"
+            "User-Agent": "SmartBear-MCP/1.0.0",
           },
-          body: JSON.stringify(updateData)
-        }
+          body: JSON.stringify(updateData),
+        },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -266,10 +266,9 @@ describe("ApiHubAPI", () => {
     });
 
     it("should handle non-200 responses", async () => {
-      fetchMock.mockResponseOnce(
-        JSON.stringify({ error: "Unauthorized" }), 
-        { status: 401 }
-      );
+      fetchMock.mockResponseOnce(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      });
 
       // The API doesn't handle HTTP errors explicitly, but we can test the response
       const result = await api.getPortals();
