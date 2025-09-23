@@ -11,26 +11,26 @@ import { ReflectClient } from "./reflect/client.js";
 // If you want to use your own BugSnag API key, set the MCP_SERVER_BUGSNAG_API_KEY environment variable
 const McpServerBugsnagAPIKey = process.env.MCP_SERVER_BUGSNAG_API_KEY;
 if (McpServerBugsnagAPIKey) {
-	Bugsnag.start(McpServerBugsnagAPIKey);
+  Bugsnag.start(McpServerBugsnagAPIKey);
 }
 
 async function main() {
-	const server = new SmartBearMcpServer();
+  const server = new SmartBearMcpServer();
 
-	const reflectToken = process.env.REFLECT_API_TOKEN;
-	const bugsnagToken = process.env.BUGSNAG_AUTH_TOKEN;
-	const apiHubToken = process.env.API_HUB_API_KEY;
-	const pactBrokerToken = process.env.PACT_BROKER_TOKEN;
-	const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
-	const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
-	const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
+  const reflectToken = process.env.REFLECT_API_TOKEN;
+  const bugsnagToken = process.env.BUGSNAG_AUTH_TOKEN;
+  const apiHubToken = process.env.API_HUB_API_KEY;
+  const pactBrokerToken = process.env.PACT_BROKER_TOKEN;
+  const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
+  const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
+  const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
 
-	let client_defined = false;
+  let client_defined = false;
 
-	if (reflectToken) {
-		server.addClient(new ReflectClient(reflectToken));
-		client_defined = true;
-	}
+  if (reflectToken) {
+    server.addClient(new ReflectClient(reflectToken));
+    client_defined = true;
+  }
 
   if (bugsnagToken) {
     const bugsnagClient = new BugsnagClient(
@@ -76,18 +76,18 @@ async function main() {
     }
   }
 
-	if (!client_defined) {
-		console.error(
-			"Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
-		);
-		process.exit(1);
-	}
+  if (!client_defined) {
+    console.error(
+      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
+    );
+    process.exit(1);
+  }
 
-	const transport = new StdioServerTransport();
-	await server.connect(transport);
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
 }
 
 main().catch((error) => {
-	console.error("Fatal error in main():", error);
-	process.exit(1);
+  console.error("Fatal error in main():", error);
+  process.exit(1);
 });
