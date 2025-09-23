@@ -1,4 +1,5 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { randomUUID } from "crypto";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type {
   Client,
@@ -27,7 +28,6 @@ import {
 } from "./client/prompt-utils.js";
 import { PROMPTS } from "./client/prompts.js";
 import { type ClientType, TOOLS } from "./client/tools.js";
-import { randomUUID } from "crypto";
 
 // Tool definitions for PactFlow AI API client
 export class PactflowClient implements Client {
