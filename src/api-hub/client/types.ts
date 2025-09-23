@@ -14,13 +14,13 @@ export interface CreatePortalArgs {
   subdomain: string;
   offline?: boolean;
   routing?: string;
-  credentialsEnabled?: string;
+  credentialsEnabled?: boolean;
   swaggerHubOrganizationId: string;
   openapiRenderer?: string;
   pageContentFormat?: string;
 }
 
-export interface UpdatePortalArgs {
+export interface UpdatePortalArgs extends PortalArgs {
   name?: string;
   subdomain?: string;
   customDomain?: boolean;
@@ -32,22 +32,22 @@ export interface UpdatePortalArgs {
   pageContentFormat?: string;
 }
 
-export interface CreateProductArgs {
+export interface CreateProductArgs extends PortalArgs {
   type: string;
   name: string;
   slug: string;
   description?: string;
   public?: boolean;
-  hidden?: string;
+  hidden?: boolean;
   role?: boolean;
 }
 
-export interface UpdateProductArgs {
+export interface UpdateProductArgs extends ProductArgs {
   name?: string;
   slug?: string;
   description?: string;
   public?: boolean;
-  hidden?: string;
+  hidden?: boolean;
 }
 
 // Zod schemas for validation
@@ -64,13 +64,13 @@ export const CreatePortalArgsSchema = z.object({
   subdomain: z.string(),
   offline: z.boolean().optional(),
   routing: z.string().optional(),
-  credentialsEnabled: z.string().optional(),
+  credentialsEnabled: z.boolean().optional(),
   swaggerHubOrganizationId: z.string(),
   openapiRenderer: z.string().optional(),
   pageContentFormat: z.string().optional(),
 });
 
-export const UpdatePortalArgsSchema = z.object({
+export const UpdatePortalArgsSchema = PortalArgsSchema.extend({
   name: z.string().optional(),
   subdomain: z.string().optional(),
   customDomain: z.boolean().optional(),
@@ -82,20 +82,20 @@ export const UpdatePortalArgsSchema = z.object({
   pageContentFormat: z.string().optional(),
 });
 
-export const CreateProductArgsSchema = z.object({
+export const CreateProductArgsSchema = PortalArgsSchema.extend({
   type: z.string(),
   name: z.string(),
   slug: z.string(),
   description: z.string().optional(),
   public: z.boolean().optional(),
-  hidden: z.string().optional(),
+  hidden: z.boolean().optional(),
   role: z.boolean().optional(),
 });
 
-export const UpdateProductArgsSchema = z.object({
+export const UpdateProductArgsSchema = ProductArgsSchema.extend({
   name: z.string().optional(),
   slug: z.string().optional(),
   description: z.string().optional(),
   public: z.boolean().optional(),
-  hidden: z.string().optional(),
+  hidden: z.boolean().optional(),
 });

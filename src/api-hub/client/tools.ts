@@ -53,7 +53,7 @@ export const TOOLS: ApiHubToolParams[] = [
       },
       {
         name: "credentialsEnabled",
-        type: z.string(),
+        type: z.boolean(),
         required: false,
         description: "Indicates if credentials are enabled for the portal.",
       },
@@ -232,7 +232,7 @@ export const TOOLS: ApiHubToolParams[] = [
       },
       {
         name: "hidden",
-        type: z.string(),
+        type: z.boolean(),
         description: "Indicates if the product is hidden.",
         required: false,
       },
@@ -309,7 +309,7 @@ export const TOOLS: ApiHubToolParams[] = [
       },
       {
         name: "hidden",
-        type: z.string(),
+        type: z.boolean(),
         description: "Indicates if the product is hidden.",
         required: false,
       },
