@@ -27,6 +27,7 @@ import {
 } from "./client/prompt-utils.js";
 import { PROMPTS } from "./client/prompts.js";
 import { type ClientType, TOOLS } from "./client/tools.js";
+import { randomUUID } from "crypto";
 
 // Tool definitions for PactFlow AI API client
 export class PactflowClient implements Client {
@@ -37,6 +38,7 @@ export class PactflowClient implements Client {
     Authorization: string;
     "Content-Type": string;
     "User-Agent": string;
+    "Chat-Session-ID": string;
   };
   private readonly aiBaseUrl: string;
   private readonly baseUrl: string;
@@ -63,6 +65,7 @@ export class PactflowClient implements Client {
         Authorization: `Bearer ${auth}`,
         "Content-Type": "application/json",
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "Chat-Session-ID": randomUUID(),
       };
     } else {
       const authString = `${auth.username}:${auth.password}`;
@@ -70,6 +73,7 @@ export class PactflowClient implements Client {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
         "Content-Type": "application/json",
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "Chat-Session-ID": randomUUID(),
       };
     }
     this.baseUrl = baseUrl;
