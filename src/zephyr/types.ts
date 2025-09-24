@@ -624,7 +624,7 @@ export interface CreateTestCycleRequest {
     customFields?: Record<string, any>;
 }
 
-export interface TestExecution extends BaseEntity {
+export interface TestExecution {
     /**
      * Test execution record linking test case to cycle with results.
      *
@@ -665,6 +665,7 @@ export interface TestExecution extends BaseEntity {
      * links : TestExecutionLinkList, optional
      *     Test execution links
      */
+    id: number;
     key?: string;
     project: ProjectLink;
     testCase: TestCaseVersionLink;
@@ -846,4 +847,25 @@ export interface TestScriptResultInput {
     statusName: string;
     actualEndDate?: string;
     actualResult?: string;
+}
+
+export interface CursorPagedTestCaseList {
+    /**
+     * Response structure from /testcases/nextgen endpoint with cursor pagination.
+     *
+     * Properties
+     * ----------
+     * values : TestCase[]
+     *     Array of test case objects in current page
+     * nextStartAtId : number | null
+     *     Cursor for next page, null if no more pages
+     * limit : number
+     *     Maximum items per page as requested
+     * next : string, optional
+     *     URL for next page (may be present in API response)
+     */
+    values: TestCase[];
+    nextStartAtId: number | null;
+    limit: number;
+    next?: string;
 }

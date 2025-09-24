@@ -14,6 +14,7 @@ import type {
     CreateTestScriptRequest,
     TestStep,
     CreateTestStepsRequest,
+    CursorPagedTestCaseList,
     ToolDefinition
 } from "../types.js";
 
@@ -481,6 +482,121 @@ export async function linkTestCaseToIssue(apiService: ApiService, testCaseKey: s
     }
 }
 
+export async function listTestCasesNextGen(apiService: ApiService, args: {
+    projectKey: string;
+    limit?: number;
+    cursor?: string;
+}): Promise<{
+    page1: CursorPagedTestCaseList;
+    page2?: CursorPagedTestCaseList;
+}> {
+    /**
+     * List test cases using cursor-based pagination with dual-page fetch.
+     *
+     * Fetches test cases from the /testcases/nextgen endpoint with automatic
+     * second page retrieval when nextStartAtId is present. Used for validating
+     * cursor-based pagination functionality.
+     *
+     * Parameters
+     * ----------
+     * apiService : ApiService
+     *     Configured API service for HTTP communication
+     * args.projectKey : string
+     *     Project key to list test cases for (e.g., "PROJ", "DEV").
+     *     Must match pattern [A-Z][A-Z0-9]+.
+     * args.limit : number, optional
+     *     Maximum number of test cases per page. Defaults to 10, range 1-1000.
+     * args.cursor : string, optional
+     *     If provided, fetches only the page for this cursor (advanced use).
+     *     When omitted, starts from beginning and fetches page 2 if available.
+     *
+     * Returns
+     * -------
+     * Promise<{page1: CursorPagedTestCaseList, page2?: CursorPagedTestCaseList}>
+     *     Combined result with page 1 always present, page 2 only if fetched.
+     *
+     * Raises
+     * ------
+     * Error
+     *     If API request fails, project not found, or invalid parameters.
+     */
+
+    if (!apiService) {
+        throw new Error("ApiService is required");
+    }
+
+    // Validate required parameters
+    if (!args.projectKey) {
+        throw new Error("projectKey is required");
+    }
+
+    if (args.projectKey && !/^[A-Z][A-Z0-9]*$/.test(args.projectKey)) {
+        throw new Error("projectKey must match pattern [A-Z][A-Z0-9]+");
+    }
+
+    const limit: number = args.limit || 10;
+    if (limit < 1 || limit > 1000) {
+        throw new Error("limit must be between 1 and 1000");
+    }
+
+    try {
+        let page1: CursorPagedTestCaseList;
+        let page2: CursorPagedTestCaseList | undefined;
+
+        if (args.cursor) {
+            // Advanced use: fetch only the specified cursor page
+            const queryParams: URLSearchParams = new URLSearchParams({
+                projectKey: args.projectKey,
+                limit: limit.toString(),
+                startAtId: args.cursor
+            });
+
+            page1 = await apiService.get<CursorPagedTestCaseList>(
+                `/testcases/nextgen?${queryParams.toString()}`
+            );
+
+            // No second page fetch when cursor is explicitly provided
+            return { page1 };
+        } else {
+            // Standard use: fetch page 1, then page 2 if nextStartAtId exists
+            const queryParams: URLSearchParams = new URLSearchParams({
+                projectKey: args.projectKey,
+                limit: limit.toString()
+            });
+
+            page1 = await apiService.get<CursorPagedTestCaseList>(
+                `/testcases/nextgen?${queryParams.toString()}`
+            );
+
+            // Check if page 2 is available
+            if (page1.nextStartAtId) {
+                const page2Params: URLSearchParams = new URLSearchParams({
+                    projectKey: args.projectKey,
+                    limit: limit.toString(),
+                    startAtId: page1.nextStartAtId.toString()
+                });
+
+                page2 = await apiService.get<CursorPagedTestCaseList>(
+                    `/testcases/nextgen?${page2Params.toString()}`
+                );
+            }
+
+            return { page1, page2 };
+        }
+    } catch (error: any) {
+        // Follow existing error handling patterns
+        if (error.response?.status === 404) {
+            throw new Error(`Project '${args.projectKey}' not found or no test cases available`);
+        } else if (error.response?.status === 401) {
+            throw new Error("Authentication failed - check ZEPHYR_ACCESS_TOKEN");
+        } else if (error.response?.status === 403) {
+            throw new Error(`Access denied to project '${args.projectKey}'`);
+        }
+
+        throw new Error(`Failed to list test cases: ${error.message}`);
+    }
+}
+
 export function createTestCaseTools(): ToolDefinition[] {
     /**
      * Create MCP tool definitions for test case operations.
@@ -673,6 +789,35 @@ export function createTestCaseTools(): ToolDefinition[] {
                     }
                 },
                 required: ["testCaseKey", "issueKey"],
+                additionalProperties: false
+            }
+        },
+        {
+            name: "zephyr_list_testcases",
+            description: "List Zephyr test cases for a project using cursor-based pagination (nextgen endpoint). Perform page-1 and page-2 fetches and return both pages plus basic assertions about pagination correctness.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    projectKey: {
+                        type: "string",
+                        description: "Jira project key, e.g. 'ZEP'",
+                        pattern: "^[A-Z][A-Z0-9]*$",
+                        examples: ["ZEP", "PROJ", "DEV", "QA"]
+                    },
+                    maxResults: {
+                        type: "number",
+                        description: "Page size to request from Zephyr (defaults to 2 for testing)",
+                        minimum: 1,
+                        maximum: 1000,
+                        examples: [2, 10, 25, 50]
+                    },
+                    cursor: {
+                        type: "string",
+                        description: "If provided, fetches only the page for this cursor (advanced use)",
+                        examples: ["123", "456", "789"]
+                    }
+                },
+                required: ["projectKey"],
                 additionalProperties: false
             }
         }

@@ -170,7 +170,7 @@ export async function updateTestExecution(apiService: ApiService, executionId: n
         }
 
         // Validate at least one field is being updated
-        const updateFields: Array<keyof UpdateTestExecutionRequest> = ["statusName", "comment", "environmentName", "actualEndDate", "executionTime", "executedById", "assignedToId"];
+        const updateFields: Array<keyof UpdateTestExecutionRequest> = ["statusName", "comment", "environmentName", "actualEndDate"];
         const hasUpdateFields: boolean = updateFields.some(field => updateData[field] !== undefined);
 
         if (!hasUpdateFields) {

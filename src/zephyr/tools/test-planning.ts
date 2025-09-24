@@ -70,26 +70,8 @@ export async function createTestPlan(apiService: ApiService, planData: CreateTes
             throw new Error("Project key must start with a capital letter and contain only capital letters, underscores, and numbers");
         }
 
-        // Validate date format if provided
-        if (planData.startDate && !isValidISODate(planData.startDate)) {
-            logger.warning(`Invalid start date format: ${planData.startDate}`);
-            throw new Error("Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)");
-        }
-
-        if (planData.endDate && !isValidISODate(planData.endDate)) {
-            logger.warning(`Invalid end date format: ${planData.endDate}`);
-            throw new Error("End date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)");
-        }
-
-        // Validate date range if both dates are provided
-        if (planData.startDate && planData.endDate) {
-            const startDate = new Date(planData.startDate);
-            const endDate = new Date(planData.endDate);
-            if (startDate >= endDate) {
-                logger.warning(`Invalid date range: start date ${planData.startDate} is not before end date ${planData.endDate}`);
-                throw new Error("Start date must be before end date");
-            }
-        }
+        // Note: CreateTestPlanRequest does not include startDate/endDate fields
+        // These would be managed through the test cycle scheduling instead
 
         logger.debug("Validation passed, creating test plan via API");
         const testPlan: TestPlan = await apiService.post<TestPlan>("/testplans", planData);

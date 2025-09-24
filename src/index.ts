@@ -79,7 +79,7 @@ async function main() {
   }
 
   if (zephyrAccessToken) {
-    server.addClient(new ZephyrClient());
+    server.addClient(new ZephyrClient(zephyrAccessToken));
     client_defined = true;
   }
 
