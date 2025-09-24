@@ -7,7 +7,7 @@ import type {
   RegisterToolsFunction,
 } from "../common/types.js";
 
-// Type definitions for tool arguments
+
 export interface createTestCycleArgs {
   id?: number;
   name: string;
@@ -31,20 +31,6 @@ export interface createTestCycleArgs {
   clientId?: number;
 }
 
-export interface createTestExecutionArgs {
-  projectKey: string;
-  testCaseKey: string;
-  testCycleKey: string;
-  statusName: string;
-  testScriptResults?: any[];
-  environmentName?: string;
-  actualEndDate?: string;
-  executionTime?: number;
-  executedById?: string;
-  assignedToId?: string;
-  comment?: string;
-  customFields?: Record<string, any>;
-}
 
 // Tool definitions for the API client
 export class TestManagementClient implements Client {
@@ -76,30 +62,9 @@ export class TestManagementClient implements Client {
       },
     );
 
-    if (!response.ok) {
-      throw new Error(`Failed to create test cycle: ${response.statusText}`);
-    }
-
     return response.json();
   }
 
-  // Method to create a new test execution
-  async createTestExecution(body: createTestExecutionArgs): Promise<any> {
-    const response = await fetch(
-      `http://localhost:8085/backend/rest/tests/2.0/testresult`,
-      {
-        method: "POST",
-        headers: this.headers,
-        body: JSON.stringify(body),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to create test execution: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
 
   registerTools(
     register: RegisterToolsFunction,
@@ -195,56 +160,5 @@ export class TestManagementClient implements Client {
       },
     );
 
-    register(
-      {
-        title: "Create Test Execution",
-        summary: "Create a new test execution within the test management system.",
-        parameters: [
-          { name: "projectKey", type: z.string(), description: "Project key for the test execution.", required: true },
-          { name: "testCaseKey", type: z.string(), description: "Test case key for the test execution.", required: true },
-          { name: "testCycleKey", type: z.string(), description: "Test cycle key for the test execution.", required: true },
-          { name: "statusName", type: z.string(), description: "Status name for the test execution.", required: true },
-          {
-            name: "testScriptResults", type: z.array(z.any()).optional(), description: "Test script results for the execution.",
-            required: false
-          },
-          {
-            name: "environmentName", type: z.string().optional(), description: "Environment name for the test execution.",
-            required: false
-          },
-          {
-            name: "actualEndDate", type: z.string().optional(), description: "Actual end date for the test execution.",
-            required: false
-          },
-          {
-            name: "executionTime", type: z.number().optional(), description: "Execution time for the test execution.",
-            required: false
-          },
-          {
-            name: "executedById", type: z.string().optional(), description: "ID of the person who executed the test.",
-            required: false
-          },
-          {
-            name: "assignedToId", type: z.string().optional(), description: "ID of the person assigned to the test execution.",
-            required: false
-          },
-          {
-            name: "comment", type: z.string().optional(), description: "Comment for the test execution.",
-            required: false
-          },
-          {
-            name: "customFields", type: z.record(z.any()).optional(), description: "Custom fields for the test execution.",
-            required: false
-          },
-        ],
-      },
-      async (args, _extra) => {
-        const createTestExecutionArgs = args as createTestExecutionArgs;
-        const response = await this.createTestExecution(createTestExecutionArgs);
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
   }
 }
