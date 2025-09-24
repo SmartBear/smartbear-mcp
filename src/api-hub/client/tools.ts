@@ -9,11 +9,11 @@
 import type { ToolParams } from "../../common/types.js";
 import {
   CreatePortalArgsSchema,
-  UpdatePortalArgsSchema,
-  PortalArgsSchema,
   CreateProductArgsSchema,
-  UpdateProductArgsSchema,
+  PortalArgsSchema,
   ProductArgsSchema,
+  UpdatePortalArgsSchema,
+  UpdateProductArgsSchema,
 } from "./types.js";
 
 export interface ApiHubToolParams extends ToolParams {
