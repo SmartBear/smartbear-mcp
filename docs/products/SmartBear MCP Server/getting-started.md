@@ -188,7 +188,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
     {
       "id": "qmetry_base_url",
       "type": "promptString",
-      "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed."
+      "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed.",
       "password": false
     },
   ]
@@ -408,7 +408,7 @@ To run the built server locally in VS Code, add the following configuration to 
       {
           "id": "qmetry_base_url",
           "type": "promptString",
-          "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed."
+          "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed.",
           "password": false
       },
   ]

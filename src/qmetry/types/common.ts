@@ -1,3 +1,38 @@
+// Interface for tool configuration
+export interface QMetryToolConfig {
+  title: string;
+  summary: string;
+  purpose?: string;
+  parameters: Array<{
+    name: string;
+    type: any;
+    description: string;
+    required: boolean;
+    examples?: string[];
+  }>;
+  useCases?: string[];
+  examples?: Array<{
+    description: string;
+    parameters: Record<string, any>;
+    expectedOutput: string;
+  }>;
+  hints?: string[];
+  outputFormat?: string;
+  readOnly?: boolean;
+  idempotent?: boolean;
+  openWorld?: boolean;
+}
+
+// Interface for the complete tools collection
+export interface QMetryToolsCollection {
+  SET_PROJECT_INFO: QMetryToolConfig;
+  FETCH_PROJECT_INFO: QMetryToolConfig;
+  FETCH_TEST_CASES: QMetryToolConfig;
+  FETCH_TEST_CASE_DETAILS: QMetryToolConfig;
+  FETCH_TEST_CASE_VERSION_DETAILS: QMetryToolConfig;
+  FETCH_TEST_CASE_STEPS: QMetryToolConfig;
+}
+
 export interface PaginationPayload {
   start?: number;
   page?: number;

@@ -1,0 +1,241 @@
+import { z } from "zod";
+import { ENTITY_KEYS } from "../config/constants.js";
+import { getParams } from "../parameters/utils.js";
+import { QMetryToolsCollection } from "../types/common.js";
+
+
+
+export const QMETRY_TOOLS: QMetryToolsCollection = {
+  SET_PROJECT_INFO: {
+    title: "Set QMetry Project Info",
+    summary: "Set current QMetry project for your account",
+    parameters: [
+      {
+        name: "projectKey",
+        type: z.string().optional(),
+        description: "Project key to use for the request header. Defaults to 'default'.",
+        required: true,
+        examples: ["default", "UT", "MAC"],
+      },
+    ],
+  },
+
+  FETCH_PROJECT_INFO: {
+    title: "Fetch QMetry Project Info",
+    summary: "Fetch QMetry project information including viewId and folderPath needed for other operations",
+    purpose: "Prerequisite tool that provides project configuration data required by other QMetry operations",
+    parameters: [
+      {
+        name: "projectKey",
+        type: z.string().optional(),
+        description: "The project key to fetch info for. Use 'default' if not specified. " +
+                    "Common project keys include 'UT', 'VT', 'MAC', etc. " +
+                    "If user doesn't specify a project key, this tool will use 'default' automatically.",
+        required: false,
+        examples: ["default", "UT", "VT", "MAC"],
+      },
+    ],
+    useCases: [
+      "Get project configuration before fetching test cases",
+      "Retrieve available viewIds for test case listing",
+      "Get folderPath information for project navigation",
+      "Validate project access and permissions"
+    ],
+    examples: [
+      {
+        description: "Get default project info",
+        parameters: {},
+        expectedOutput: "Project configuration with viewIds, folderPaths, and project details"
+      },
+      {
+        description: "Get specific project info",
+        parameters: { projectKey: "MAC" },
+        expectedOutput: "MAC project configuration with available views and folders"
+      }
+    ],
+    hints: [
+      "Always call this first when user doesn't provide viewId or folderPath",
+      "Use 'default' project key when user doesn't specify one",
+      "Extract viewId from latestViews.TC.viewId for test case operations",
+      "Use empty string '' as folderPath for root directory"
+    ],
+    outputFormat: "JSON object containing project details, viewIds, folderPaths, and project configuration",
+    readOnly: true,
+    idempotent: true
+  },
+
+  FETCH_TEST_CASES: {
+    title: "Fetch Test Cases",
+    summary: "Fetch QMetry test cases - automatically handles viewId resolution based on project",
+    purpose: "Get test cases from QMetry. System automatically gets correct viewId from project info if not provided.",
+    parameters: getParams(ENTITY_KEYS.TESTCASE, [
+      "projectKey",
+      "baseUrl",
+      "viewId",
+      "folderPath",
+      "limit",
+      "page",
+      "start",
+      "scope",
+      "showRootOnly",
+      "getSubEntities",
+      "hideEmptyFolders",
+      "folderSortColumn",
+      "folderSortOrder",
+      "restoreDefaultColumns",
+      "filter",
+      "udfFilter",
+      "folderID",
+    ]),
+    useCases: [
+      "List all test cases in a project",
+      "Search for specific test cases using filters",
+      "Browse test cases in specific folders",
+      "Get paginated test case results"
+    ],
+    examples: [
+      {
+        description: "Get all test cases from default project - system will auto-fetch viewId",
+        parameters: {},
+        expectedOutput: "List of test cases from default project with auto-resolved viewId"
+      },
+      {
+        description: "Get all test cases from UT project - system will auto-fetch UT project's viewId", 
+        parameters: { projectKey: "UT" },
+        expectedOutput: "List of test cases from UT project using UT's specific TC viewId"
+      },
+      {
+        description: "Get test cases with manual viewId (skip auto-resolution)",
+        parameters: { projectKey: "MAC", viewId: 167136, folderPath: "" },
+        expectedOutput: "Test cases using manually specified viewId 167136"
+      },
+      {
+        description: "List test cases from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
+        parameters: { projectKey: "use specific given project key", viewId: "fetch specific project given projectKey Test Case ViewId", folderPath: "" },
+        expectedOutput: "Test cases using manually specified viewId 167136 or projectKey"
+      },
+    ],
+    hints: [
+      "CRITICAL WORKFLOW: Always use the SAME projectKey for both project info and test case fetching",
+      "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
+      "Step 2: Get project info using that projectKey, extract latestViews.TC.viewId",  
+      "Step 3: Use the SAME projectKey and the extracted TC viewId for fetching test cases",
+      "Step 4: If user doesn't specify projectKey, use 'default' for both project info and test case fetching",
+      "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
+      "For search by test case key (like MAC-TC-1684), use filter: '[{\"type\":\"string\",\"value\":\"MAC-TC-1684\",\"field\":\"entityKeyId\"}]'"
+    ],
+    outputFormat: "JSON object with 'data' array containing test cases and pagination info",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false
+  },
+
+  FETCH_TEST_CASE_DETAILS: {
+    title: "Fetch Test Case Details",
+    summary: "Get detailed information for a specific QMetry test case by numeric ID",
+    purpose: "Retrieve comprehensive test case information including metadata, status, and basic properties",
+    parameters: getParams(ENTITY_KEYS.TESTCASE, [
+      "projectKey",
+      "baseUrl",
+      "tcID",
+      "start",
+      "page",
+      "limit",
+    ]),
+    useCases: [
+      "Get test case details by numeric ID",
+      "Retrieve test case metadata for reporting",
+      "Get test case summary and properties",
+      "Fetch test case details before accessing steps or version details"
+    ],
+    examples: [
+      {
+        description: "Get test case details by numeric ID",
+        parameters: { tcID: 4468020 },
+        expectedOutput: "Detailed test case information including summary, description, status"
+      }
+    ],
+    hints: [
+      "⚠️ This API requires a numeric tcID parameter",
+      "If user provides entityKey (e.g., MAC-TC-1684), first call FETCH_TEST_CASES with a filter on entityKeyId to resolve the tcID",
+      "After resolving entityKey → tcID, call this tool with the resolved numeric tcID",
+      "This tool provides metadata and properties; use FETCH_TEST_CASE_STEPS for step-level details"
+    ],
+    outputFormat: "JSON object with test case details including ID, key, summary, description, and metadata",
+    readOnly: true,
+    idempotent: true
+  },
+
+  FETCH_TEST_CASE_VERSION_DETAILS: {
+    title: "Fetch Test Case Version Details",
+    summary: "Get QMetry test case details for a specific version by numeric ID",
+    purpose: "Retrieve version-specific information for a test case including history and changes",
+    parameters: getParams(ENTITY_KEYS.TESTCASE, [
+      "projectKey",
+      "baseUrl",
+      "id",
+      "version",
+      "scope",
+    ]),
+    useCases: [
+      "Get specific version details of a test case",
+      "Compare different versions of a test case",
+      "Retrieve version history information",
+      "Audit changes made across test case versions"
+    ],
+    examples: [
+      {
+        description: "Get version 2 details for test case ID 123",
+        parameters: { id: 123, version: 2 },
+        expectedOutput: "Version 2 details for test case 123"
+      }
+    ],
+    hints: [
+      "⚠️ Requires numeric ID, not entityKey",
+      "If user provides entityKey (e.g., MAC-TC-1684), first resolve it to numeric ID using FETCH_TEST_CASES",
+      "Version defaults to 1 if not specified",
+      "Provides version-specific metadata and history"
+    ],
+    outputFormat: "JSON object with version-specific test case details",
+    readOnly: true,
+    idempotent: true
+  },
+
+  FETCH_TEST_CASE_STEPS: {
+    title: "Fetch Test Case Steps",
+    summary: "Get detailed test case steps for a specific test case by numeric ID",
+    purpose: "Retrieve step-by-step instructions and expected results for manual execution of a test case",
+    parameters: getParams(ENTITY_KEYS.TESTCASE, [
+      "projectKey",
+      "baseUrl",
+      "id",
+      "version",
+      "start",
+      "page",
+      "limit",
+    ]),
+    useCases: [
+      "Get step-by-step instructions with expected results",
+      "Retrieve test case execution procedure for manual runs",
+      "Export or display detailed test steps for documentation",
+      "Fetch steps before automation mapping"
+    ],
+    examples: [
+      {
+        description: "Get steps for test case ID 123",
+        parameters: { id: 123 },
+        expectedOutput: "Detailed steps with actions and expected results for test case 123"
+      }
+    ],
+    hints: [
+      "⚠️ Requires numeric ID, not entityKey",
+      "If user provides entityKey (e.g., MAC-TC-1684), resolve it first via FETCH_TEST_CASES to get the numeric ID",
+      "Version defaults to 1 if not specified",
+      "Use pagination for test cases with many steps"
+    ],
+    outputFormat: "JSON object with array of test steps including step description, expected result, and order",
+    readOnly: true,
+    idempotent: true
+  }
+
+};

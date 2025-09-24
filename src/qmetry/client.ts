@@ -1,12 +1,10 @@
-import { z } from "zod";
-
 import {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
 import { getProjectInfo } from "./client/project.js";
-import { ENTITY_KEYS, QMETRY_DEFAULTS } from "./config/constants.js";
+import { QMETRY_DEFAULTS } from "./config/constants.js";
 import {
   fetchTestCaseDetails,
   fetchTestCases,
@@ -14,6 +12,7 @@ import {
   fetchTestCaseVersionDetails,
 } from "./client/testcase.js";
 import { getParams } from "./parameters/utils.js";
+import { QMETRY_TOOLS } from "./client/tools.js";
 
 export class QmetryClient implements Client {
   name = "QMetry";
@@ -54,20 +53,7 @@ export class QmetryClient implements Client {
       
     // Set Project Info
     register(
-      {
-        title: "Set QMetry Project Info",
-        summary: "Set current QMetry project for your account",
-        parameters: [
-          {
-            name: "projectKey",
-            type: z.string().optional(),
-            description:
-              "Project key to use for the request header. Defaults to 'default'.",
-            required: true,
-            examples: ["default", "UT", "MAC"],
-          },
-        ],
-      },
+      QMETRY_TOOLS.SET_PROJECT_INFO,
       (args) =>
         handleAsync(async () => {
           const { projectKey } = resolveContext(args as Record<string, any>);
@@ -90,18 +76,7 @@ export class QmetryClient implements Client {
 
     // Fetch Project Info
     register(
-      {
-        title: "Fetch QMetry Project Info",
-        summary: "Fetch current QMetry project for your account",
-        parameters: [
-          {
-            name: "projectKey",
-            type: z.string().optional(),
-            description: "The project key. Defaults to 'default'.",
-            required: false,
-          },
-        ],
-      },
+      QMETRY_TOOLS.FETCH_PROJECT_INFO,      
       (args) =>
         handleAsync(async () => {
           const { projectKey } = resolveContext(args as Record<string, any>);
@@ -124,33 +99,35 @@ export class QmetryClient implements Client {
 
     // Fetch Test Cases List
     register(
-      {
-        title: "Fetch Test Cases",
-        summary: "List all QMetry Test Cases for your account",
-        parameters: getParams(ENTITY_KEYS.TESTCASE, [
-          "projectKey",
-          "baseUrl",
-          "viewId",
-          "folderPath",
-          "limit",
-          "page",
-          "start",
-          "scope",
-          "showRootOnly",
-          "getSubEntities",
-          "hideEmptyFolders",
-          "folderSortColumn",
-          "folderSortOrder",
-          "restoreDefaultColumns",
-          "filter",
-          "udfFilter",
-          "folderID",
-        ]),
-      },
+      QMETRY_TOOLS.FETCH_TEST_CASES,
       (args) =>
         handleAsync(async () => {
           const a = args as Record<string, any>;
-          const { baseUrl, projectKey } = resolveContext(a);
+          let { baseUrl, projectKey } = resolveContext(a);
+          
+          // Auto-resolve viewId and folderPath if not provided
+          let viewId = a.viewId;
+          let folderPath = a.folderPath;
+          
+          if (!viewId || folderPath === undefined) {
+            try {
+              const projectInfo = await getProjectInfo(this.token, baseUrl, projectKey) as any;
+              
+              if (!viewId && projectInfo?.latestViews?.TC?.viewId) {
+                viewId = projectInfo.latestViews.TC.viewId;
+              }
+              
+              if (folderPath === undefined) {
+                folderPath = "";
+              }
+            } catch (error) {
+              throw new Error(
+                `Failed to auto-resolve viewId for project ${projectKey}. ` +
+                `Please ensure project access is correct or provide viewId manually. ` +
+                `Error: ${error instanceof Error ? error.message : String(error)}`
+              );
+            }
+          }
 
           const payload = {
             start: a.start ?? 0,
@@ -162,8 +139,8 @@ export class QmetryClient implements Client {
             hideEmptyFolders: a.hideEmptyFolders ?? false,
             folderSortColumn: a.folderSortColumn ?? "name",
             folderSortOrder: a.folderSortOrder ?? "ASC",
-            viewId: a.viewId,
-            folderPath: a.folderPath,
+            viewId: viewId,
+            folderPath: folderPath,
             restoreDefaultColumns: a.restoreDefaultColumns ?? false,
             filter: a.filter ?? "[]",
             udfFilter: a.udfFilter ?? "[]",
@@ -176,12 +153,25 @@ export class QmetryClient implements Client {
             projectKey,
             payload
           );
+          
+          // Add helpful metadata to response
+          const enhancedResult = {
+            ...(typeof result === 'object' && result !== null ? result : { data: result }),
+            _autoResolution: {
+              projectKey: projectKey,
+              viewIdAutoResolved: !a.viewId,
+              folderPathAutoResolved: a.folderPath === undefined,
+              usedViewId: viewId,
+              usedFolderPath: folderPath
+            }
+          };
+          
           return {
             content: [
               {
                 success: true,
                 type: "text",
-                text: JSON.stringify(result, null, 2),
+                text: JSON.stringify(enhancedResult, null, 2),
               },
             ],
           };
@@ -190,20 +180,7 @@ export class QmetryClient implements Client {
 
     // Fetch Test Case Details
     register(
-      {
-        title: "Fetch Test Case Details",
-        summary:
-          "Get the QMetry Test Case details for a specific test case ID",
-        parameters: getParams(ENTITY_KEYS.TESTCASE, [
-          "projectKey",
-          "baseUrl",
-          "tcID",
-          "start",
-          "page",
-          "limit",
-          "filter",
-        ]),
-      },
+      QMETRY_TOOLS.FETCH_TEST_CASE_DETAILS,
       (args) =>
         handleAsync(async () => {
           const a = args as Record<string, any>;
@@ -237,19 +214,7 @@ export class QmetryClient implements Client {
 
     // Fetch Test Case Version Details
     register(
-      {
-        title: "Fetch Test Case Version Details",
-        summary:
-          "Get the QMetry Test Case detail for specific version of a test case",
-        parameters: getParams(ENTITY_KEYS.TESTCASE, [
-          "projectKey",
-          "baseUrl",
-          "id",
-          "version",
-          "scope",
-          "filter",
-        ]),
-      },
+      QMETRY_TOOLS.FETCH_TEST_CASE_VERSION_DETAILS,
       (args) =>
         handleAsync(async () => {
           const a = args as Record<string, any>;
@@ -282,19 +247,7 @@ export class QmetryClient implements Client {
 
     // Fetch Test Case Steps
     register(
-      {
-        title: "Fetch Test Case Steps",
-        summary: "Get the QMetry Test Case steps for a specific test case ID",
-        parameters: getParams(ENTITY_KEYS.TESTCASE, [
-          "projectKey",
-          "baseUrl",
-          "id",
-          "version",
-          "start",
-          "page",
-          "limit",
-        ]),
-      },
+      QMETRY_TOOLS.FETCH_TEST_CASE_STEPS,
       (args) =>
         handleAsync(async () => {
           const a = args as Record<string, any>;
