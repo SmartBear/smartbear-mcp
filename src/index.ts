@@ -6,6 +6,7 @@ import Bugsnag from "./common/bugsnag.js";
 import { SmartBearMcpServer } from "./common/server.js";
 import { PactflowClient } from "./pactflow/client.js";
 import { ReflectClient } from "./reflect/client.js";
+import { ZephyrClient } from "./zephyr/client.js";
 
 // This is used to report errors in the MCP server itself
 // If you want to use your own BugSnag API key, set the MCP_SERVER_BUGSNAG_API_KEY environment variable
@@ -24,6 +25,7 @@ async function main() {
   const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
   const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
   const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
+  const zephyrAccessToken = process.env.ZEPHYR_ACCESS_TOKEN;
 
   let client_defined = false;
 
@@ -76,9 +78,14 @@ async function main() {
     }
   }
 
+  if (zephyrAccessToken) {
+    server.addClient(new ZephyrClient());
+    client_defined = true;
+  }
+
   if (!client_defined) {
     console.error(
-      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
+      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY, PACT_BROKER_BASE_URL / (and relevant Pact auth), or ZEPHYR_ACCESS_TOKEN environment variables",
     );
     process.exit(1);
   }

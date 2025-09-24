@@ -1,0 +1,1148 @@
+
+> @smartbear/mcp@0.6.0 test:run
+> vitest run src/tests/unit/zephyr
+
+
+ RUN  v3.2.4 /workspace/project/smartbear-mcp
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should create test execution successfully
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Not Executed
+Validation passed, creating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should create test execution successfully
+Successfully created test execution: 1 for test case PROJ-T123 with status Not Executed
+Exit: createTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate required parameters
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate required parameters
+Error creating test execution: ApiService is required and cannot be null {
+  error: Error: ApiService is required and cannot be null
+      at createTestExecution [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-execution.ts:49:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:58:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate test case key format
+Entry: createTestExecution(testCaseKey=, testCycleKey=PROJ-R456)
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate test case key format
+Test case key validation failed: empty testCaseKey
+Error creating test execution: Test case key is required and cannot be empty {
+  error: Error: Test case key is required and cannot be empty
+      at createTestExecution [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-execution.ts:60:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:63:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate test cycle key format
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=)
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate test cycle key format
+Test cycle key validation failed: empty testCycleKey
+Error creating test execution: Test cycle key is required and cannot be empty {
+  error: Error: Test cycle key is required and cannot be empty
+      at createTestExecution [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-execution.ts:65:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:68:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate assignee ID format
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate assignee ID format
+Error creating test execution: Assigned to ID cannot be empty if provided {
+  error: Error: Assigned to ID cannot be empty if provided
+      at createTestExecution [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-execution.ts:81:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:73:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Not Executed
+Validation passed, creating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Successfully created test execution: 1 for test case PROJ-T123 with status Not Executed
+Exit: createTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Pass
+Validation passed, creating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Successfully created test execution: 1 for test case PROJ-T123 with status Pass
+Exit: createTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Fail
+Validation passed, creating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Successfully created test execution: 1 for test case PROJ-T123 with status Fail
+Exit: createTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Blocked
+Validation passed, creating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Successfully created test execution: 1 for test case PROJ-T123 with status Blocked
+Exit: createTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: In Progress
+Validation passed, creating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should validate status values
+Successfully created test execution: 1 for test case PROJ-T123 with status In Progress
+Exit: createTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should reject invalid status values
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should reject invalid status values
+Error creating test execution: Status name must be one of: Not Executed, Pass, Fail, Blocked, In Progress {
+  error: Error: Status name must be one of: Not Executed, Pass, Fail, Blocked, In Progress
+      at createTestExecution [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-execution.ts:76:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:88:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should handle API errors
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Not Executed
+Validation passed, creating test execution via API
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should handle API errors
+Error creating test execution: HTTP 400: Bad Request {
+  error: Error: HTTP 400: Bad Request
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:92:30
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should handle missing test case error
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Not Executed
+Validation passed, creating test execution via API
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should handle missing test case error
+Error creating test execution: HTTP 404: Test case not found {
+  error: Error: HTTP 404: Test case not found
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:99:27
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should handle missing test cycle error
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Not Executed
+Validation passed, creating test execution via API
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should handle missing test cycle error
+Error creating test execution: HTTP 404: Test cycle not found {
+  error: Error: HTTP 404: Test cycle not found
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:106:27
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should allow optional assignee
+Entry: createTestExecution(testCaseKey=PROJ-T123, testCycleKey=PROJ-R456)
+Using status name: Not Executed
+Validation passed, creating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > createTestExecution > should allow optional assignee
+Successfully created test execution: 1 for test case PROJ-T123 with status Not Executed
+Exit: createTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should update test execution successfully
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should update test execution successfully
+Successfully updated test execution: 1
+Status updated to: Pass
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate execution ID
+Entry: updateTestExecution(executionId=0)
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate execution ID
+Invalid execution ID: 0
+Error updating test execution: Execution ID must be a positive number {
+  error: Error: Execution ID must be a positive number
+      at updateTestExecution [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-execution.ts:169:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:152:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate execution ID
+Entry: updateTestExecution(executionId=-1)
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate execution ID
+Invalid execution ID: -1
+Error updating test execution: Execution ID must be a positive number {
+  error: Error: Execution ID must be a positive number
+      at updateTestExecution [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-execution.ts:169:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:153:26
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:20
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate status values
+Entry: updateTestExecution(executionId=1)
+Using status name: InvalidStatus
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate status values
+Successfully updated test execution: 1
+Status updated to: InvalidStatus
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+ ✓ src/tests/unit/zephyr/client.test.ts (11 tests) 6ms
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Successfully updated test execution: 1
+Status updated to: Pass
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Entry: updateTestExecution(executionId=1)
+Using status name: Fail
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Successfully updated test execution: 1
+Status updated to: Fail
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Entry: updateTestExecution(executionId=1)
+Using status name: Blocked
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Successfully updated test execution: 1
+Status updated to: Blocked
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Entry: updateTestExecution(executionId=1)
+Using status name: In Progress
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Successfully updated test execution: 1
+Status updated to: In Progress
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Entry: updateTestExecution(executionId=1)
+Using status name: Not Executed
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid status values
+Successfully updated test execution: 1
+Status updated to: Not Executed
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate timestamp format
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate timestamp format
+Date format may be invalid: invalid-date (expected ISO format but allowing flexibility)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate timestamp format
+Successfully updated test execution: 1
+Status updated to: Pass
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid ISO timestamps
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid ISO timestamps
+Successfully updated test execution: 1
+Status updated to: Pass
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid ISO timestamps
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid ISO timestamps
+Successfully updated test execution: 1
+Status updated to: Pass
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid ISO timestamps
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept valid ISO timestamps
+Successfully updated test execution: 1
+Status updated to: Pass
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should handle partial updates
+Entry: updateTestExecution(executionId=1)
+Using status name: Fail
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should handle partial updates
+Successfully updated test execution: 1
+Status updated to: Fail
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should handle long comments
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should handle long comments
+Successfully updated test execution: 1
+Status updated to: Pass
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should handle API errors
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should handle API errors
+Error updating test execution: HTTP 404: Execution not found {
+  error: Error: HTTP 404: Execution not found
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:210:27
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should handle permission errors
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should handle permission errors
+Error updating test execution: HTTP 403: Insufficient permissions {
+  error: Error: HTTP 403: Insufficient permissions
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:217:27
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate API service parameter
+Entry: updateTestExecution(executionId=1)
+
+stderr | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate API service parameter
+Error updating test execution: ApiService is required and cannot be null {
+  error: Error: ApiService is required and cannot be null
+      at updateTestExecution [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-execution.ts:158:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-execution.test.ts:224:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept execution results with attachments
+Entry: updateTestExecution(executionId=1)
+Using status name: Pass
+Validation passed, updating test execution via API
+
+stdout | src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should accept execution results with attachments
+Successfully updated test execution: 1
+Status updated to: Pass
+Exit: updateTestExecution() -> TestExecution(id=1)
+
+ ❯ src/tests/unit/zephyr/test-execution.test.ts (23 tests | 2 failed) 29ms
+   ✓ Test Execution Tools > createTestExecution > should create test execution successfully 2ms
+   ✓ Test Execution Tools > createTestExecution > should validate required parameters 6ms
+   ✓ Test Execution Tools > createTestExecution > should validate test case key format 1ms
+   ✓ Test Execution Tools > createTestExecution > should validate test cycle key format 0ms
+   ✓ Test Execution Tools > createTestExecution > should validate assignee ID format 1ms
+   ✓ Test Execution Tools > createTestExecution > should validate status values 1ms
+   ✓ Test Execution Tools > createTestExecution > should reject invalid status values 0ms
+   ✓ Test Execution Tools > createTestExecution > should handle API errors 0ms
+   ✓ Test Execution Tools > createTestExecution > should handle missing test case error 0ms
+   ✓ Test Execution Tools > createTestExecution > should handle missing test cycle error 0ms
+   ✓ Test Execution Tools > createTestExecution > should allow optional assignee 0ms
+   ✓ Test Execution Tools > updateTestExecution > should update test execution successfully 0ms
+   ✓ Test Execution Tools > updateTestExecution > should validate execution ID 1ms
+   × Test Execution Tools > updateTestExecution > should validate status values 9ms
+     → promise resolved "{ id: 1, …(4) }" instead of rejecting
+   ✓ Test Execution Tools > updateTestExecution > should accept valid status values 1ms
+   × Test Execution Tools > updateTestExecution > should validate timestamp format 1ms
+     → promise resolved "{ id: 1, …(4) }" instead of rejecting
+   ✓ Test Execution Tools > updateTestExecution > should accept valid ISO timestamps 1ms
+   ✓ Test Execution Tools > updateTestExecution > should handle partial updates 0ms
+   ✓ Test Execution Tools > updateTestExecution > should handle long comments 0ms
+   ✓ Test Execution Tools > updateTestExecution > should handle API errors 0ms
+   ✓ Test Execution Tools > updateTestExecution > should handle permission errors 0ms
+   ✓ Test Execution Tools > updateTestExecution > should validate API service parameter 0ms
+   ✓ Test Execution Tools > updateTestExecution > should accept execution results with attachments 0ms
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should create test plan successfully
+Entry: createTestPlan(name=Sprint 1 Test Plan, projectKey=PROJ)
+Validation passed, creating test plan via API
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should create test plan successfully
+Successfully created test plan: PROJ-P1 (ID: 1)
+Exit: createTestPlan() -> TestPlan(id=1)
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should validate required parameters
+Entry: createTestPlan(name=Sprint 1 Test Plan, projectKey=PROJ)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should validate required parameters
+Error creating test plan: ApiService is required and cannot be null {
+  error: Error: ApiService is required and cannot be null
+      at createTestPlan [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:49:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:63:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should validate plan name
+Entry: createTestPlan(name=, projectKey=PROJ)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should validate plan name
+Test plan name validation failed: empty name
+Error creating test plan: Test plan name is required and cannot be empty {
+  error: Error: Test plan name is required and cannot be empty
+      at createTestPlan [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:60:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:68:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should validate project key format
+Entry: createTestPlan(name=Sprint 1 Test Plan, projectKey=invalid-key)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should validate project key format
+Project key validation failed: invalid format 'invalid-key'
+Error creating test plan: Project key must start with a capital letter and contain only capital letters, underscores, and numbers {
+  error: Error: Project key must start with a capital letter and contain only capital letters, underscores, and numbers
+      at createTestPlan [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:70:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:73:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should handle API errors
+Entry: createTestPlan(name=Sprint 1 Test Plan, projectKey=PROJ)
+Validation passed, creating test plan via API
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should handle API errors
+Error creating test plan: HTTP 400: Bad Request {
+  error: Error: HTTP 400: Bad Request
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:77:30
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should accept optional description
+Entry: createTestPlan(name=Simple Plan, projectKey=PROJ)
+Validation passed, creating test plan via API
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should accept optional description
+Successfully created test plan: PROJ-P1 (ID: 1)
+Exit: createTestPlan() -> TestPlan(id=1)
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should handle long descriptions
+Entry: createTestPlan(name=Sprint 1 Test Plan, projectKey=PROJ)
+Validation passed, creating test plan via API
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestPlan > should handle long descriptions
+Successfully created test plan: PROJ-P1 (ID: 1)
+Exit: createTestPlan() -> TestPlan(id=1)
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should create test cycle successfully
+Entry: createTestCycle(name=Regression Cycle, projectKey=PROJ)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should create test cycle successfully
+Invalid start date format: 2024-01-01
+Error creating test cycle: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ) {
+  error: Error: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+      at createTestCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:167:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:131:34
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate parameters
+Entry: createTestCycle(name=Regression Cycle, projectKey=PROJ)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate parameters
+Error creating test cycle: ApiService is required and cannot be null {
+  error: Error: ApiService is required and cannot be null
+      at createTestCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:140:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:138:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate cycle name
+Entry: createTestCycle(name=, projectKey=PROJ)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate cycle name
+Test cycle name validation failed: empty name
+Error creating test cycle: Test cycle name is required and cannot be empty {
+  error: Error: Test cycle name is required and cannot be empty
+      at createTestCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:151:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:143:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate project key
+Entry: createTestCycle(name=Regression Cycle, projectKey=invalid)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate project key
+Project key validation failed: invalid format 'invalid'
+Error creating test cycle: Project key must start with a capital letter and contain only capital letters, underscores, and numbers {
+  error: Error: Project key must start with a capital letter and contain only capital letters, underscores, and numbers
+      at createTestCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:161:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:148:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate date formats
+Entry: createTestCycle(name=Regression Cycle, projectKey=PROJ)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate date formats
+Invalid start date format: invalid-date
+Error creating test cycle: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ) {
+  error: Error: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+      at createTestCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:167:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:157:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate date logic
+Entry: createTestCycle(name=Regression Cycle, projectKey=PROJ)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should validate date logic
+Invalid start date format: 2024-01-15
+Error creating test cycle: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ) {
+  error: Error: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+      at createTestCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:167:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:166:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should allow cycles without dates
+Entry: createTestCycle(name=Ad-hoc Cycle, projectKey=PROJ)
+Validation passed, creating test cycle via API
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should allow cycles without dates
+Successfully created test cycle: PROJ-R1 (ID: 1)
+Exit: createTestCycle() -> TestCycle(id=1)
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should handle HTTP errors
+Entry: createTestCycle(name=Regression Cycle, projectKey=PROJ)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should handle HTTP errors
+Invalid start date format: 2024-01-01
+Error creating test cycle: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ) {
+  error: Error: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+      at createTestCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:167:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:185:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should link test plan to cycle successfully
+Entry: linkTestPlanToCycle(testPlanId=1, testCycleId=2)
+Validation passed, creating test plan to cycle link via API
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should link test plan to cycle successfully
+Successfully linked test cycle 2 to test plan 1
+Exit: linkTestPlanToCycle() -> void
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate plan ID
+Entry: linkTestPlanToCycle(testPlanId=0, testCycleId=1)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate plan ID
+Invalid test plan ID: 0
+Error linking test plan to cycle: Test plan ID must be a positive number {
+  error: Error: Test plan ID must be a positive number
+      at linkTestPlanToCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:229:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:202:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate plan ID
+Entry: linkTestPlanToCycle(testPlanId=-1, testCycleId=1)
+
+ ✓ src/tests/unit/zephyr/issue-coverage.test.ts (20 tests) 6ms
+ ✓ src/tests/unit/zephyr/api.test.ts (8 tests) 6ms
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate plan ID
+Invalid test plan ID: -1
+Error linking test plan to cycle: Test plan ID must be a positive number {
+  error: Error: Test plan ID must be a positive number
+      at linkTestPlanToCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:229:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:203:26
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:20
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate cycle ID
+Entry: linkTestPlanToCycle(testPlanId=1, testCycleId=0)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate cycle ID
+Invalid test cycle ID: 0
+Error linking test plan to cycle: Test cycle ID must be a positive number {
+  error: Error: Test cycle ID must be a positive number
+      at linkTestPlanToCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:234:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:207:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate cycle ID
+Entry: linkTestPlanToCycle(testPlanId=1, testCycleId=-1)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate cycle ID
+Invalid test cycle ID: -1
+Error linking test plan to cycle: Test cycle ID must be a positive number {
+  error: Error: Test cycle ID must be a positive number
+      at linkTestPlanToCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:234:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:208:26
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:20
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate both IDs
+Entry: linkTestPlanToCycle(testPlanId=0, testCycleId=0)
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should validate both IDs
+Invalid test plan ID: 0
+Error linking test plan to cycle: Test plan ID must be a positive number {
+  error: Error: Test plan ID must be a positive number
+      at linkTestPlanToCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:229:19[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:212:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should handle API service validation
+Entry: linkTestPlanToCycle(testPlanId=1, testCycleId=2)
+Validation passed, creating test plan to cycle link via API
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should handle API service validation
+Error linking test plan to cycle: Cannot read properties of null (reading 'post') {
+  error: TypeError: Cannot read properties of null (reading 'post')
+      at linkTestPlanToCycle [90m(/workspace/project/smartbear-mcp/[39msrc/zephyr/tools/test-planning.ts:238:26[90m)[39m
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:216:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should handle linking errors
+Entry: linkTestPlanToCycle(testPlanId=1, testCycleId=2)
+Validation passed, creating test plan to cycle link via API
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should handle linking errors
+Error linking test plan to cycle: HTTP 404: Test plan or cycle not found {
+  error: Error: HTTP 404: Test plan or cycle not found
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:220:27
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should handle conflict errors
+Entry: linkTestPlanToCycle(testPlanId=1, testCycleId=2)
+Validation passed, creating test plan to cycle link via API
+
+stderr | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should handle conflict errors
+Error linking test plan to cycle: HTTP 409: Plans already linked {
+  error: Error: HTTP 409: Plans already linked
+      at [90m/workspace/project/smartbear-mcp/[39msrc/tests/unit/zephyr/test-planning.test.ts:227:27
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+      at [90mfile:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+      at new Promise (<anonymous>)
+      at runWithTimeout [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+      at runTest [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+      at runSuite [90m(file:///workspace/project/smartbear-mcp/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+}
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should accept valid positive IDs
+Entry: linkTestPlanToCycle(testPlanId=999, testCycleId=888)
+Validation passed, creating test plan to cycle link via API
+
+stdout | src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > linkTestPlanToCycle > should accept valid positive IDs
+Successfully linked test cycle 888 to test plan 999
+Exit: linkTestPlanToCycle() -> void
+
+ ❯ src/tests/unit/zephyr/test-planning.test.ts (23 tests | 1 failed) 25ms
+   ✓ Test Planning Tools > createTestPlan > should create test plan successfully 3ms
+   ✓ Test Planning Tools > createTestPlan > should validate required parameters 8ms
+   ✓ Test Planning Tools > createTestPlan > should validate plan name 1ms
+   ✓ Test Planning Tools > createTestPlan > should validate project key format 1ms
+   ✓ Test Planning Tools > createTestPlan > should handle API errors 0ms
+   ✓ Test Planning Tools > createTestPlan > should accept optional description 0ms
+   ✓ Test Planning Tools > createTestPlan > should handle long descriptions 0ms
+   × Test Planning Tools > createTestCycle > should create test cycle successfully 1ms
+     → Failed to create test cycle: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+   ✓ Test Planning Tools > createTestCycle > should validate parameters 1ms
+   ✓ Test Planning Tools > createTestCycle > should validate cycle name 1ms
+   ✓ Test Planning Tools > createTestCycle > should validate project key 1ms
+   ✓ Test Planning Tools > createTestCycle > should validate date formats 0ms
+   ✓ Test Planning Tools > createTestCycle > should validate date logic 0ms
+   ✓ Test Planning Tools > createTestCycle > should allow cycles without dates 0ms
+   ✓ Test Planning Tools > createTestCycle > should handle HTTP errors 0ms
+   ✓ Test Planning Tools > linkTestPlanToCycle > should link test plan to cycle successfully 0ms
+   ✓ Test Planning Tools > linkTestPlanToCycle > should validate plan ID 1ms
+   ✓ Test Planning Tools > linkTestPlanToCycle > should validate cycle ID 1ms
+   ✓ Test Planning Tools > linkTestPlanToCycle > should validate both IDs 0ms
+   ✓ Test Planning Tools > linkTestPlanToCycle > should handle API service validation 0ms
+   ✓ Test Planning Tools > linkTestPlanToCycle > should handle linking errors 0ms
+   ✓ Test Planning Tools > linkTestPlanToCycle > should handle conflict errors 0ms
+   ✓ Test Planning Tools > linkTestPlanToCycle > should accept valid positive IDs 0ms
+ ❯ src/tests/unit/zephyr/test-cases.test.ts (22 tests | 2 failed) 25ms
+   ✓ Test Case Tools > createTestCase > should create test case successfully 2ms
+   ✓ Test Case Tools > createTestCase > should validate required parameters 1ms
+   ✓ Test Case Tools > createTestCase > should handle API errors 0ms
+   ✓ Test Case Tools > createTestCase > should validate test case name 0ms
+   ✓ Test Case Tools > createTestCase > should validate project key format 0ms
+   ✓ Test Case Tools > updateTestCase > should update test case successfully 0ms
+   ✓ Test Case Tools > updateTestCase > should validate test case ID 0ms
+   ✓ Test Case Tools > updateTestCase > should handle partial updates 0ms
+   ✓ Test Case Tools > updateTestCase > should handle HTTP errors 0ms
+   ✓ Test Case Tools > addTestScript > should add test script successfully 0ms
+   ✓ Test Case Tools > addTestScript > should validate parameters 0ms
+   ✓ Test Case Tools > addTestScript > should validate script type 0ms
+   ✓ Test Case Tools > addTestScript > should handle different script types 0ms
+   × Test Case Tools > addTestSteps > should add test steps successfully 7ms
+     → At least one test step is required
+   ✓ Test Case Tools > addTestSteps > should validate parameters 0ms
+   ✓ Test Case Tools > addTestSteps > should validate steps array 0ms
+   ✓ Test Case Tools > addTestSteps > should validate step content 0ms
+   ✓ Test Case Tools > linkTestCaseToIssue > should link test case to issue successfully 0ms
+   ✓ Test Case Tools > linkTestCaseToIssue > should validate issue key format 0ms
+   ✓ Test Case Tools > linkTestCaseToIssue > should validate test case key format 0ms
+   ✓ Test Case Tools > linkTestCaseToIssue > should handle API errors 0ms
+   × Test Case Tools > linkTestCaseToIssue > should accept valid key formats 11ms
+     → promise rejected "Error: Invalid test case key format: A-T1…" instead of resolving
+ ❯ src/tests/unit/zephyr/metadata.test.ts (31 tests | 3 failed) 24ms
+   ✓ Metadata Tools > getStatuses > should retrieve statuses successfully 2ms
+   ✓ Metadata Tools > getStatuses > should handle global statuses request 0ms
+   ✓ Metadata Tools > getStatuses > should validate required parameters 1ms
+   ✓ Metadata Tools > getStatuses > should validate project key format when provided 0ms
+   × Metadata Tools > getStatuses > should accept valid project keys 14ms
+     → promise rejected "Error: Project key must start with a capi…" instead of resolving
+   ✓ Metadata Tools > getStatuses > should handle API errors 0ms
+   ✓ Metadata Tools > getStatuses > should handle empty status arrays 0ms
+   ✓ Metadata Tools > getStatuses > should handle permission errors 0ms
+   ✓ Metadata Tools > getStatuses > should handle project not found errors 0ms
+   ✓ Metadata Tools > getStatuses > should trim project key parameter 0ms
+   ✓ Metadata Tools > getPriorities > should retrieve priorities successfully 0ms
+   ✓ Metadata Tools > getPriorities > should handle global priorities request 0ms
+   ✓ Metadata Tools > getPriorities > should validate required parameters 0ms
+   × Metadata Tools > getPriorities > should validate project key format when provided 2ms
+     → promise resolved "[ { id: 1, name: 'Low', …(2) }, …(3) ]" instead of rejecting
+   ✓ Metadata Tools > getPriorities > should handle empty response 0ms
+   ✓ Metadata Tools > getPriorities > should handle API errors 0ms
+   ✓ Metadata Tools > getPriorities > should handle network timeouts 0ms
+   ✓ Metadata Tools > getPriorities > should validate response format 0ms
+   ✓ Metadata Tools > getEnvironments > should retrieve environments successfully 0ms
+   ✓ Metadata Tools > getEnvironments > should handle global environments request 0ms
+   ✓ Metadata Tools > getEnvironments > should validate required parameters 0ms
+   ✓ Metadata Tools > getEnvironments > should validate project key format when provided 0ms
+   ✓ Metadata Tools > getEnvironments > should handle network errors 0ms
+   ✓ Metadata Tools > getEnvironments > should validate response format 0ms
+   ✓ Metadata Tools > getEnvironments > should handle empty environments array 0ms
+   ✓ Metadata Tools > getEnvironments > should handle authentication errors 0ms
+   ✓ Metadata Tools > getEnvironments > should handle rate limiting 0ms
+   × Metadata Tools > getEnvironments > should accept various project key formats 0ms
+     → promise rejected "Error: Project key must start with a capi…" instead of resolving
+   ✓ Metadata Tools > caching behavior > should support caching for frequently accessed metadata 0ms
+   ✓ Metadata Tools > caching behavior > should handle cache invalidation scenarios 0ms
+   ✓ Metadata Tools > caching behavior > should cache metadata per project 0ms
+ ✓ src/tests/unit/zephyr/folders.test.ts (28 tests) 9ms
+ ✓ src/tests/unit/zephyr/auth.test.ts (11 tests) 3ms
+ ✓ src/tests/unit/zephyr/cache.test.ts (10 tests) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/tests/unit/zephyr/metadata.test.ts > Metadata Tools > getStatuses > should accept valid project keys
+AssertionError: promise rejected "Error: Project key must start with a capi…" instead of resolving
+ ❯ src/tests/unit/zephyr/metadata.test.ts:92:85
+     90| 
+     91|             for (const validKey of validKeys) {
+     92|                 await expect(getStatuses(mockApiService, mockCacheServ…
+       |                                                                                     ^
+     93|             }
+     94|         });
+
+Caused by: Error: Project key must start with a capital letter and contain only capital letters and numbers
+ ❯ getStatuses src/zephyr/tools/metadata.ts:45:15
+ ❯ src/tests/unit/zephyr/metadata.test.ts:92:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/tests/unit/zephyr/metadata.test.ts > Metadata Tools > getPriorities > should validate project key format when provided
+AssertionError: promise resolved "[ { id: 1, name: 'Low', …(2) }, …(3) ]" instead of rejecting
+
+[32m- Expected:[39m 
+Error {
+  "message": "rejected promise",
+}
+
+[31m+ Received:[39m 
+[
+  {
+    "color": "#28a745",
+    "description": "Low priority",
+    "id": 1,
+    "name": "Low",
+  },
+  {
+    "color": "#ffc107",
+    "description": "Medium priority",
+    "id": 2,
+    "name": "Medium",
+  },
+  {
+    "color": "#dc3545",
+    "description": "High priority",
+    "id": 3,
+    "name": "High",
+  },
+  {
+    "color": "#6f42c1",
+    "description": "Critical priority",
+    "id": 4,
+    "name": "Critical",
+  },
+]
+
+ ❯ src/tests/unit/zephyr/metadata.test.ts:168:89
+    166| 
+    167|             for (const invalidKey of invalidKeys) {
+    168|                 await expect(getPriorities(mockApiService, mockCacheSe…
+       |                                                                                         ^
+    169|             }
+    170|         });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/tests/unit/zephyr/metadata.test.ts > Metadata Tools > getEnvironments > should accept various project key formats
+AssertionError: promise rejected "Error: Project key must start with a capi…" instead of resolving
+ ❯ src/tests/unit/zephyr/metadata.test.ts:279:89
+    277| 
+    278|             for (const validKey of validKeys) {
+    279|                 await expect(getEnvironments(mockApiService, mockCache…
+       |                                                                                         ^
+    280|             }
+    281|         });
+
+Caused by: Error: Project key must start with a capital letter and contain only capital letters and numbers
+ ❯ getEnvironments src/zephyr/tools/metadata.ts:206:15
+ ❯ src/tests/unit/zephyr/metadata.test.ts:279:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/tests/unit/zephyr/test-cases.test.ts > Test Case Tools > addTestSteps > should add test steps successfully
+Error: At least one test step is required
+ ❯ addTestSteps src/zephyr/tools/test-cases.ts:356:15
+    354| 
+    355|     if (!stepsData.steps || !Array.isArray(stepsData.steps) || stepsDa…
+    356|         throw new Error("At least one test step is required");
+       |               ^
+    357|     }
+    358| 
+ ❯ src/tests/unit/zephyr/test-cases.test.ts:237:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/tests/unit/zephyr/test-cases.test.ts > Test Case Tools > linkTestCaseToIssue > should accept valid key formats
+AssertionError: promise rejected "Error: Invalid test case key format: A-T1…" instead of resolving
+ ❯ src/tests/unit/zephyr/test-cases.test.ts:299:106
+    297| 
+    298|             for (let i = 0; i < validTestCaseKeys.length; i++) {
+    299|                 await expect(linkTestCaseToIssue(mockApiService, valid…
+       |                                                                                                          ^
+    300|             }
+    301|         });
+
+Caused by: Error: Invalid test case key format: A-T1. Expected format: PROJECT-T123
+ ❯ linkTestCaseToIssue src/zephyr/tools/test-cases.ts:449:15
+ ❯ src/tests/unit/zephyr/test-cases.test.ts:299:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate status values
+AssertionError: promise resolved "{ id: 1, …(4) }" instead of rejecting
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- Error {[39m
+[32m-   "message": "rejected promise",[39m
+[31m+ {[39m
+[31m+   "actualEndDate": "2024-01-01T10:00:00Z",[39m
+[31m+   "comment": "Test passed successfully",[39m
+[31m+   "id": 1,[39m
+[31m+   "statusName": "Pass",[39m
+[31m+   "testCaseKey": "PROJ-T123",[39m
+[2m  }[22m
+
+ ❯ src/tests/unit/zephyr/test-execution.test.ts:158:79
+    156|         it('should validate status values', async () => {
+    157|             const invalidUpdate = { ...mockUpdateRequest, statusName: …
+    158|             await expect(updateTestExecution(mockApiService, 1, invali…
+       |                                                                               ^
+    159|         });
+    160| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/tests/unit/zephyr/test-execution.test.ts > Test Execution Tools > updateTestExecution > should validate timestamp format
+AssertionError: promise resolved "{ id: 1, …(4) }" instead of rejecting
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- Error {[39m
+[32m-   "message": "rejected promise",[39m
+[31m+ {[39m
+[31m+   "actualEndDate": "2024-01-01T10:00:00Z",[39m
+[31m+   "comment": "Test passed successfully",[39m
+[31m+   "id": 1,[39m
+[31m+   "statusName": "Pass",[39m
+[31m+   "testCaseKey": "PROJ-T123",[39m
+[2m  }[22m
+
+ ❯ src/tests/unit/zephyr/test-execution.test.ts:173:79
+    171|         it('should validate timestamp format', async () => {
+    172|             const invalidUpdate = { ...mockUpdateRequest, actualEndDat…
+    173|             await expect(updateTestExecution(mockApiService, 1, invali…
+       |                                                                               ^
+    174|         });
+    175| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/tests/unit/zephyr/test-planning.test.ts > Test Planning Tools > createTestCycle > should create test cycle successfully
+Error: Failed to create test cycle: Start date must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+ ❯ createTestCycle src/zephyr/tools/test-planning.ts:198:15
+    196|         }
+    197|         logger.error(`Error creating test cycle: ${error instanceof Er…
+    198|         throw new Error(`Failed to create test cycle: ${error instance…
+       |               ^
+    199|     }
+    200| }
+ ❯ src/tests/unit/zephyr/test-planning.test.ts:131:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  4 failed | 6 passed (10)
+      Tests  8 failed | 179 passed (187)
+   Start at  04:07:11
+   Duration  1.30s (transform 1.00s, setup 0ms, collect 2.67s, tests 137ms, environment 1ms, prepare 5.08s)
+
