@@ -17,18 +17,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org/'
-          scope: '@smartbear'
+      - name: Extract version from package.json
+        id: extract_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          
+      - name: Update server.json version
+        run: |
+          jq --arg v "${{ steps.extract_version.outputs.VERSION }}" \
+            '.version = $v | .packages[0].version = $v' \
+            server.json > server.json.tmp && mv server.json.tmp server.json
+      - name: Check server.json
+        run: cat server.json
