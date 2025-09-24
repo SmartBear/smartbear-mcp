@@ -3,8 +3,6 @@ import { ENTITY_KEYS } from "../config/constants.js";
 import { getParams } from "../parameters/utils.js";
 import { QMetryToolsCollection } from "../types/common.js";
 
-
-
 export const QMETRY_TOOLS: QMetryToolsCollection = {
   SET_PROJECT_INFO: {
     title: "Set QMetry Project Info",

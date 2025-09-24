@@ -1,4 +1,3 @@
-// Interface for tool configuration
 export interface QMetryToolConfig {
   title: string;
   summary: string;
@@ -22,8 +21,6 @@ export interface QMetryToolConfig {
   idempotent?: boolean;
   openWorld?: boolean;
 }
-
-// Interface for the complete tools collection
 export interface QMetryToolsCollection {
   SET_PROJECT_INFO: QMetryToolConfig;
   FETCH_PROJECT_INFO: QMetryToolConfig;
@@ -32,17 +29,14 @@ export interface QMetryToolsCollection {
   FETCH_TEST_CASE_VERSION_DETAILS: QMetryToolConfig;
   FETCH_TEST_CASE_STEPS: QMetryToolConfig;
 }
-
 export interface PaginationPayload {
   start?: number;
   page?: number;
   limit?: number;
 }
-
 export interface FilterPayload {
   filter?: string;
 }
-
 export interface FolderPayload {
   scope?: string;
   showRootOnly?: boolean;

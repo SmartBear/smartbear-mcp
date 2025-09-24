@@ -11,7 +11,6 @@ import {
   fetchTestCaseSteps,
   fetchTestCaseVersionDetails,
 } from "./client/testcase.js";
-import { getParams } from "./parameters/utils.js";
 import { QMETRY_TOOLS } from "./client/tools.js";
 
 export class QmetryClient implements Client {
@@ -26,7 +25,6 @@ export class QmetryClient implements Client {
     this.endpoint = endpoint || QMETRY_DEFAULTS.BASE_URL;
   }
 
-  
   getToken() {
     return this.token;
   }
@@ -154,7 +152,7 @@ export class QmetryClient implements Client {
             payload
           );
           
-          // Add helpful metadata to response
+          // Enhance result with auto-resolution info
           const enhancedResult = {
             ...(typeof result === 'object' && result !== null ? result : { data: result }),
             _autoResolution: {

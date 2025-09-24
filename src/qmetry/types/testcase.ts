@@ -15,22 +15,19 @@ export interface FetchTestCasesPayload
   folderPath: string; // required
   udfFilter?: string; // only this API uses udfFilter
 }
-
 export interface FetchTestCaseDetailsPayload
   extends PaginationPayload,
     FilterPayload {
   tcID: number; // required
 }
-
 export interface FetchTestCaseVersionDetailsPayload
   extends FilterPayload,
     Pick<FolderPayload, "scope"> {
   id: number; // required
   version: number; // required default 1
 }
-
 export interface FetchTestCaseStepsPayload extends PaginationPayload {
-  id: number; // ✅ required
+  id: number; // required
   version?: number; // optional, defaults to 1
 }
 
