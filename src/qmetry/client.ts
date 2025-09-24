@@ -21,10 +21,19 @@ export class QmetryClient implements Client {
   private token: string;
   private projectApiKey: string;
   private endpoint: string;
-  constructor(token: string, projectApiKey?: string, endpoint?: string) {
+  constructor(token: string, endpoint?: string) {
     this.token = token;
-    this.projectApiKey = projectApiKey || QMETRY_DEFAULTS.PROJECT_KEY;
+    this.projectApiKey =  QMETRY_DEFAULTS.PROJECT_KEY;
     this.endpoint = endpoint || QMETRY_DEFAULTS.BASE_URL;
+  }
+
+  
+  getToken() {
+    return this.token;
+  }
+
+  getBaseUrl() {
+    return this.endpoint;
   }
 
   registerTools(
@@ -42,12 +51,48 @@ export class QmetryClient implements Client {
           { success: false, type: "text", text: `Error: ${err.message}` },
         ],
       }));
+      
+    // Set Project Info
+    register(
+      {
+        title: "Set QMetry Project Info",
+        summary: "Set current QMetry project for your account",
+        parameters: [
+          {
+            name: "projectKey",
+            type: z.string().optional(),
+            description:
+              "Project key to use for the request header. Defaults to 'default'.",
+            required: true,
+            examples: ["default", "UT", "MAC"],
+          },
+        ],
+      },
+      (args) =>
+        handleAsync(async () => {
+          const { projectKey } = resolveContext(args as Record<string, any>);
+          const response = await getProjectInfo(
+            this.token,
+            this.endpoint,
+            projectKey
+          );
+          return {
+            content: [
+              {
+                success: true,
+                type: "text",
+                text: JSON.stringify(response, null, 2),
+              },
+            ],
+          };
+        })
+    );
 
     // Fetch Project Info
     register(
       {
         title: "Fetch QMetry Project Info",
-        summary: "Fetch details of a QMetry project",
+        summary: "Fetch current QMetry project for your account",
         parameters: [
           {
             name: "projectKey",
@@ -81,7 +126,7 @@ export class QmetryClient implements Client {
     register(
       {
         title: "Fetch Test Cases",
-        summary: "Fetch a list of all test cases (viewColumns) from QMetry.",
+        summary: "List all QMetry Test Cases for your account",
         parameters: getParams(ENTITY_KEYS.TESTCASE, [
           "projectKey",
           "baseUrl",
@@ -148,7 +193,7 @@ export class QmetryClient implements Client {
       {
         title: "Fetch Test Case Details",
         summary:
-          "Fetch detailed information for a specific test case from QMetry.",
+          "Get the QMetry Test Case details for a specific test case ID",
         parameters: getParams(ENTITY_KEYS.TESTCASE, [
           "projectKey",
           "baseUrl",
@@ -195,7 +240,7 @@ export class QmetryClient implements Client {
       {
         title: "Fetch Test Case Version Details",
         summary:
-          "Fetch detailed information for a specific version of a test case from QMetry.",
+          "Get the QMetry Test Case detail for specific version of a test case",
         parameters: getParams(ENTITY_KEYS.TESTCASE, [
           "projectKey",
           "baseUrl",
@@ -239,7 +284,7 @@ export class QmetryClient implements Client {
     register(
       {
         title: "Fetch Test Case Steps",
-        summary: "Fetch steps for a specific test case from QMetry.",
+        summary: "Get the QMetry Test Case steps for a specific test case ID",
         parameters: getParams(ENTITY_KEYS.TESTCASE, [
           "projectKey",
           "baseUrl",

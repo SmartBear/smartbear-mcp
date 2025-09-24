@@ -6,7 +6,7 @@ This guide is to help you get up and running with our MCP server.
 
 Before setting up and using the SmartBear MCP Server, ensure you have: 
 
--   An active account across our relevant hubs (e.g. [API Hub](https://try.platform.smartbear.com/?product=ApiHub), [Test Hub](https://app.reflect.run/registration), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
+-   An active account across our relevant hubs (e.g. [API Hub](https://try.platform.smartbear.com/?product=ApiHub), [Test Hub](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
 -   Node.js 20 or later installed on your development machine
 -   A compatible MCP client (Claude Desktop, Cursor, etc.)
 
@@ -54,6 +54,10 @@ The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its ow
 
   Generate a new Token from the BugSnag dashboard at [`app.bugsnag.com`](https://app.bugsnag.com/settings/smartbear-software/my-account/auth-tokens).
 
+- **QMetry**
+
+  Generate an API key from the QMetry at [`app.qmetry.com`](https://testmanagement.qmetry.com/#/integration/open-api).
+
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products - tokens for unused products can be omitted.
 
 ## Configure Environment Variables
@@ -84,6 +88,12 @@ export PACT_BROKER_PASSWORD=your-password
 # Optional: Enable error reporting for the MCP server itself
 export MCP_SERVER_BUGSNAG_API_KEY=your-monitoring-api-key
 
+# Required for QMetry tools
+export QMETRY_API_KEY=your-qmetry_api_key
+
+# Optional: Set your QMetry server URL if using a self-hosted instance or region-specific endpoint
+export QMETRY_BASE_URL=https://testmanagement.qmetry.com
+
 ```
 
 > ⚠️ The `MCP_SERVER_BUGSNAG_API_KEY` is used for monitoring the MCP server itself and should be different from your main application's API key.
@@ -113,6 +123,8 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "API_HUB_API_KEY": "${input:api_hub_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
+        "QMETRY_API_KEY": "${input:qmetry_api_key}",
+        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         // "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
         // "PACT_BROKER_PASSWORD": "${input:pact_broker_password}",
       }
@@ -166,7 +178,19 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "type": "promptString",
       "description": "Pact Broker Password (if using username/password auth)",
       "password": true
-    }
+    },
+    {
+      "id": "qmetry_api_key",
+      "type": "promptString",
+      "description": "QMetry Open API Key",
+      "password": true
+    },
+    {
+      "id": "qmetry_base_url",
+      "type": "promptString",
+      "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed."
+      "password": false
+    },
   ]
 }
 
@@ -192,6 +216,8 @@ Add to your `mcp.json` configuration:
         "API_HUB_API_KEY": "your-api-hub-api-key",
         "PACT_BROKER_BASE_URL": "https://your-tenant.pactflow.io",
         "PACT_BROKER_TOKEN": "your-pact-broker-token",
+        "QMETRY_API_KEY": "${input:qmetry_api_key}",
+        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         // If using the open source Pact broker, replace the token with:
         // "PACT_BROKER_USERNAME": "your-username",
         // "PACT_BROKER_PASSWORD": "your-password",
@@ -222,6 +248,8 @@ Edit your `claude_desktop_config.json` file:
         "API_HUB_API_KEY": "your-api-hub-api-key",
         "PACT_BROKER_BASE_URL": "https://your-tenant.pactflow.io",
         "PACT_BROKER_TOKEN": "your-pact-broker-token",
+        "QMETRY_API_KEY": "${input:qmetry_api_key}",
+        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         // If using the open source Pact broker, replace the token with:
         // "PACT_BROKER_USERNAME": "your-username",
         // "PACT_BROKER_PASSWORD": "your-password",
@@ -255,6 +283,8 @@ export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 export REFLECT_API_TOKEN=your-reflect-api-token
 export API_HUB_API_KEY=your-api-hub-api-key
+export QMETRY_API_KEY=your-qmetry_api_key
+export QMETRY_BASE_URL=https://testmanagement.qmetry.com
 
 export PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io
 export PACT_BROKER_TOKEN=your-pact-broker-token
@@ -312,6 +342,8 @@ To run the built server locally in VS Code, add the following configuration to 
         "API_HUB_API_KEY": "${input:api_hub_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
+        "QMETRY_API_KEY": "${input:qmetry_api_key}",
+        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         // If using the open source Pact broker, replace the token with:
         // "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
         // "PACT_BROKER_PASSWORD": "${input:pact_broker_password}",
@@ -366,7 +398,19 @@ To run the built server locally in VS Code, add the following configuration to 
          "type": "promptString",
          "description": "Pact Broker Password (if using username/password auth)",
          "password": true
-      }
+      },
+      {
+          "id": "qmetry_api_key",
+          "type": "promptString",
+          "description": "QMetry Open API Key",
+          "password": true
+      },
+      {
+          "id": "qmetry_base_url",
+          "type": "promptString",
+          "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed."
+          "password": false
+      },
   ]
 }
 
@@ -383,6 +427,8 @@ REFLECT_API_TOKEN=your_reflect_token \
 API_HUB_API_KEY=your_api_hub_key \
 PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io \
 PACT_BROKER_TOKEN=your_pactflow_token \
+QMETRY_API_KEY=your_qmetry_key \
+QMETRY_BASE_URL=https://testmanagement.qmetry.com \
 npx @modelcontextprotocol/inspector node dist/index.js
 
 ```
@@ -424,3 +470,12 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "List all the provider states for the current provider"
 -   "Generate Pact tests from this OpenAPI spec: [spec link]"
 -   "Review this Pact test and suggest improvements"
+
+### QMetry Test Management
+
+-   "Set current QMetry project for your account"
+-   "Fetch current QMetry project for your account"
+-   "List all QMetry Test Cases for your account"
+-   "Get the QMetry Test Case details"
+-   "Get the QMetry Test Case detail for specific version"
+-   "Get the QMetry Test Case steps"

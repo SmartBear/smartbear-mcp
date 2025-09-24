@@ -26,7 +26,6 @@ async function main() {
   const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
   const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
   const qmetryToken = process.env.QMETRY_API_KEY;
-  const qmetryProjectKey = process.env.QMETRY_PROJECT_KEY;
   const qmetryBaseUrl = process.env.QMETRY_BASE_URL;
 
   let client_defined = false;
@@ -81,7 +80,7 @@ async function main() {
   }
   
   if (qmetryToken) {
-    server.addClient(new QmetryClient(qmetryToken, qmetryProjectKey, qmetryBaseUrl));
+    server.addClient(new QmetryClient(qmetryToken, qmetryBaseUrl));
     client_defined = true;
   }
   

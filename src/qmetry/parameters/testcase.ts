@@ -7,7 +7,8 @@ export const TEST_CASE = {
       type: z.string().optional(),
       description:
         "Project key to use for the request. Defaults to configured project.",
-      required: false,
+      required: true,
+      examples: ["default", "UT", "MAC"],
     },
     {
       name: "baseUrl",
