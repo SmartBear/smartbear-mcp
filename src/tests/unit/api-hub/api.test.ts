@@ -120,7 +120,9 @@ describe("ApiHubAPI", () => {
       const mockResponse = { id: "portal-123", name: "Updated Portal" };
       const updateData = { name: "Updated Portal", offline: true };
 
-      fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), {
+        headers: { "content-type": "application/json" },
+      });
 
       const result = await api.updatePortal("portal-123", updateData);
 
@@ -238,7 +240,9 @@ describe("ApiHubAPI", () => {
       const mockResponse = { id: "prod-123", name: "Updated Product" };
       const updateData = { name: "Updated Product", public: true };
 
-      fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), {
+        headers: { "content-type": "application/json" },
+      });
 
       const result = await api.updatePortalProduct("prod-123", updateData);
 

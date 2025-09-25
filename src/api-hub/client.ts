@@ -9,6 +9,12 @@ import {
   ApiHubConfiguration,
   type CreatePortalArgs,
   type CreateProductArgs,
+  type FallbackResponse,
+  type Portal,
+  type PortalsListResponse,
+  type Product,
+  type ProductsListResponse,
+  type SuccessResponse,
   TOOLS,
   type UpdatePortalArgs,
   type UpdateProductArgs,
@@ -31,49 +37,62 @@ export class ApiHubClient implements Client {
   }
 
   // Delegate API methods to the ApiHubAPI instance
-  async getPortals(): Promise<any> {
+  async getPortals(): Promise<PortalsListResponse | FallbackResponse> {
     return this.api.getPortals();
   }
 
-  async createPortal(body: CreatePortalArgs): Promise<any> {
+  async createPortal(
+    body: CreatePortalArgs,
+  ): Promise<Portal | FallbackResponse> {
     return this.api.createPortal(body);
   }
 
-  async getPortal(portalId: string): Promise<any> {
-    return this.api.getPortal(portalId);
+  async getPortal(args: {
+    portalId: string;
+  }): Promise<Portal | FallbackResponse> {
+    return this.api.getPortal(args.portalId);
   }
 
-  async deletePortal(portalId: string): Promise<any> {
-    return this.api.deletePortal(portalId);
+  async deletePortal(args: { portalId: string }): Promise<void> {
+    return this.api.deletePortal(args.portalId);
   }
 
-  async updatePortal(portalId: string, body: UpdatePortalArgs): Promise<any> {
+  async updatePortal(
+    args: UpdatePortalArgs,
+  ): Promise<Portal | FallbackResponse> {
+    const { portalId, ...body } = args;
     return this.api.updatePortal(portalId, body);
   }
 
-  async getPortalProducts(portalId: string): Promise<any> {
-    return this.api.getPortalProducts(portalId);
+  async getPortalProducts(args: {
+    portalId: string;
+  }): Promise<ProductsListResponse | FallbackResponse> {
+    return this.api.getPortalProducts(args.portalId);
   }
 
   async createPortalProduct(
-    portalId: string,
-    body: CreateProductArgs,
-  ): Promise<any> {
+    args: CreateProductArgs,
+  ): Promise<Product | FallbackResponse> {
+    const { portalId, ...body } = args;
     return this.api.createPortalProduct(portalId, body);
   }
 
-  async getPortalProduct(productId: string): Promise<any> {
-    return this.api.getPortalProduct(productId);
+  async getPortalProduct(args: {
+    productId: string;
+  }): Promise<Product | FallbackResponse> {
+    return this.api.getPortalProduct(args.productId);
   }
 
-  async deletePortalProduct(productId: string): Promise<any> {
-    return this.api.deletePortalProduct(productId);
+  async deletePortalProduct(args: {
+    productId: string;
+  }): Promise<Record<string, never> | FallbackResponse> {
+    return this.api.deletePortalProduct(args.productId);
   }
 
   async updatePortalProduct(
-    productId: string,
-    body: UpdateProductArgs,
-  ): Promise<any> {
+    args: UpdateProductArgs,
+  ): Promise<Product | SuccessResponse | FallbackResponse> {
+    const { productId, ...body } = args;
     return this.api.updatePortalProduct(productId, body);
   }
 
@@ -82,98 +101,40 @@ export class ApiHubClient implements Client {
     _getInput: GetInputFunction,
   ): void {
     TOOLS.forEach((tool) => {
-      register(
-        {
-          title: tool.title,
-          summary: tool.summary,
-          parameters: tool.parameters,
-        },
-        async (args, _extra) => {
-          try {
-            let result: any;
-
-            // Handle different method signatures based on the handler name
-            switch (tool.handler) {
-              case "getPortals":
-                result = await this.getPortals();
-                break;
-              case "createPortal":
-                result = await this.createPortal(args as CreatePortalArgs);
-                break;
-              case "getPortal":
-                result = await this.getPortal((args as any).portalId);
-                break;
-              case "deletePortal":
-                result = await this.deletePortal((args as any).portalId);
-                break;
-              case "updatePortal": {
-                const { portalId: updatePortalId, ...updatePortalBody } =
-                  args as any;
-                result = await this.updatePortal(
-                  updatePortalId,
-                  updatePortalBody as UpdatePortalArgs,
-                );
-                break;
-              }
-              case "getPortalProducts":
-                result = await this.getPortalProducts((args as any).portalId);
-                break;
-              case "createPortalProduct": {
-                const {
-                  portalId: createProductPortalId,
-                  ...createProductBody
-                } = args as any;
-                result = await this.createPortalProduct(
-                  createProductPortalId,
-                  createProductBody as CreateProductArgs,
-                );
-                break;
-              }
-              case "getPortalProduct":
-                result = await this.getPortalProduct((args as any).productId);
-                break;
-              case "deletePortalProduct":
-                result = await this.deletePortalProduct(
-                  (args as any).productId,
-                );
-                break;
-              case "updatePortalProduct": {
-                const { productId: updateProductId, ...updateProductBody } =
-                  args as any;
-                result = await this.updatePortalProduct(
-                  updateProductId,
-                  updateProductBody as UpdateProductArgs,
-                );
-                break;
-              }
-              default:
-                throw new Error(`Unknown handler: ${tool.handler}`);
-            }
-
-            // Use custom formatter if available, otherwise return JSON
-            const formattedResult = tool.formatResponse
-              ? tool.formatResponse(result)
-              : result;
-            const responseText =
-              typeof formattedResult === "string"
-                ? formattedResult
-                : JSON.stringify(formattedResult);
-
-            return {
-              content: [{ type: "text", text: responseText }],
-            };
-          } catch (error) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-                },
-              ],
-            };
+      const { handler, formatResponse, ...toolParams } = tool;
+      register(toolParams, async (args, _extra) => {
+        try {
+          // Dynamic method invocation
+          const handlerFn = (this as any)[handler];
+          if (typeof handlerFn !== "function") {
+            throw new Error(`Handler '${handler}' not found on ApiHubClient`);
           }
-        },
-      );
+
+          const result = await handlerFn.call(this, args);
+
+          // Use custom formatter if available, otherwise return JSON
+          const formattedResult = formatResponse
+            ? formatResponse(result)
+            : result;
+          const responseText =
+            typeof formattedResult === "string"
+              ? formattedResult
+              : JSON.stringify(formattedResult);
+
+          return {
+            content: [{ type: "text", text: responseText }],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+          };
+        }
+      });
     });
   }
 }

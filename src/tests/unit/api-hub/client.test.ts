@@ -78,7 +78,7 @@ describe("ApiHubClient", () => {
       const mockResponse = { id: "portal-123", name: "Test Portal" };
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-      const result = await client.getPortal("portal-123");
+      const result = await client.getPortal({ portalId: "portal-123" });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
@@ -90,7 +90,7 @@ describe("ApiHubClient", () => {
     it("should delegate deletePortal to API instance", async () => {
       fetchMock.mockResponseOnce("", { status: 200 });
 
-      await client.deletePortal("portal-123");
+      await client.deletePortal({ portalId: "portal-123" });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
@@ -102,9 +102,14 @@ describe("ApiHubClient", () => {
       const mockResponse = { id: "portal-123", name: "Updated Portal" };
       const updateData = { name: "Updated Portal" };
 
-      fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), {
+        headers: { "content-type": "application/json" },
+      });
 
-      const result = await client.updatePortal("portal-123", updateData);
+      const result = await client.updatePortal({
+        portalId: "portal-123",
+        ...updateData,
+      });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
@@ -120,7 +125,7 @@ describe("ApiHubClient", () => {
       const mockResponse = { products: [] };
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-      const result = await client.getPortalProducts("portal-123");
+      const result = await client.getPortalProducts({ portalId: "portal-123" });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123/products",
@@ -142,11 +147,8 @@ describe("ApiHubClient", () => {
       // Verify each tool was registered with correct structure
       TOOLS.forEach((tool, index) => {
         const registerCall = mockRegister.mock.calls[index];
-        expect(registerCall[0]).toEqual({
-          title: tool.title,
-          summary: tool.summary,
-          parameters: tool.parameters,
-        });
+        const { handler: _, formatResponse: __, ...expectedToolParams } = tool;
+        expect(registerCall[0]).toEqual(expectedToolParams);
         expect(typeof registerCall[1]).toBe("function");
       });
     });
@@ -166,7 +168,7 @@ describe("ApiHubClient", () => {
       );
       expect(getPortalsCall).toBeDefined();
 
-      const handler = getPortalsCall![1];
+      const handler = getPortalsCall?.[1];
       const result = await handler({}, {});
 
       expect(result).toEqual({
@@ -190,7 +192,7 @@ describe("ApiHubClient", () => {
       );
       expect(createPortalCall).toBeDefined();
 
-      const handler = createPortalCall![1];
+      const handler = createPortalCall?.[1];
       const result = await handler(args, {});
 
       expect(result).toEqual({
@@ -212,7 +214,7 @@ describe("ApiHubClient", () => {
       );
       expect(deletePortalCall).toBeDefined();
 
-      const handler = deletePortalCall![1];
+      const handler = deletePortalCall?.[1];
       const result = await handler({ portalId: "portal-123" }, {});
 
       expect(result).toEqual({
@@ -248,7 +250,9 @@ describe("ApiHubClient", () => {
         offline: true,
       };
 
-      fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), {
+        headers: { "content-type": "application/json" },
+      });
 
       client.registerTools(mockRegister, mockGetInput);
 
@@ -258,7 +262,7 @@ describe("ApiHubClient", () => {
       );
       expect(updatePortalCall).toBeDefined();
 
-      const handler = updatePortalCall![1];
+      const handler = updatePortalCall?.[1];
       const result = await handler(args, {});
 
       expect(fetchMock).toHaveBeenCalledWith(
@@ -279,7 +283,6 @@ describe("ApiHubClient", () => {
       const mockGetInput = vi.fn();
 
       // Mock TOOLS with an invalid handler
-      const originalTools = [...TOOLS];
       TOOLS.push({
         title: "Invalid Tool",
         summary: "Invalid tool for testing",
@@ -295,12 +298,15 @@ describe("ApiHubClient", () => {
       );
       expect(invalidToolCall).toBeDefined();
 
-      const handler = invalidToolCall![1];
+      const handler = invalidToolCall?.[1];
       const result = await handler({}, {});
 
       expect(result).toEqual({
         content: [
-          { type: "text", text: "Error: Unknown handler: nonExistentMethod" },
+          {
+            type: "text",
+            text: "Error: Handler 'nonExistentMethod' not found on ApiHubClient",
+          },
         ],
       });
 
