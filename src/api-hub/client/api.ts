@@ -15,6 +15,42 @@ export class ApiHubAPI {
     this.headers = config.getHeaders(userAgent);
   }
 
+  /**
+   * Handles HTTP responses with smart JSON parsing and fallback handling.
+   * Supports 204 No Content, empty responses, and non-JSON content.
+   */
+  private async handleResponse(response: Response, defaultReturn: any = {}): Promise<any> {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    // Handle 204 No Content responses
+    if (response.status === 204) {
+      return defaultReturn;
+    }
+
+    // Check if response has content-length of 0 (empty body)
+    const contentLength = response.headers.get("content-length");
+    if (contentLength === "0") {
+      return defaultReturn;
+    }
+
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      try {
+        return await response.json();
+      } catch (error) {
+        console.warn("Failed to parse JSON response:", error);
+        return defaultReturn;
+      }
+    }
+
+    // Fallback for non-JSON responses
+    const text = await response.text();
+    return text ? { message: text } : defaultReturn;
+  }
+
   async getPortals(): Promise<any> {
     const response = await fetch(`${this.config.basePath}/portals`, {
       method: "GET",
@@ -54,16 +90,13 @@ export class ApiHubAPI {
   }
 
   async updatePortal(portalId: string, body: UpdatePortalBody): Promise<any> {
-    const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}`,
-      {
-        method: "PATCH",
-        headers: this.headers,
-        body: JSON.stringify(body),
-      },
-    );
+    const response = await fetch(`${this.config.basePath}/portals/${portalId}`, {
+      method: "PATCH",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
 
-    return response.json();
+    return this.handleResponse(response);
   }
 
   async getPortalProducts(portalId: string): Promise<any> {
@@ -107,10 +140,12 @@ export class ApiHubAPI {
   }
 
   async deletePortalProduct(productId: string): Promise<any> {
-    await fetch(`${this.config.basePath}/products/${productId}`, {
+    const response = await fetch(`${this.config.basePath}/products/${productId}`, {
       method: "DELETE",
       headers: this.headers,
     });
+
+    return this.handleResponse(response);
   }
 
   async updatePortalProduct(
@@ -126,6 +161,48 @@ export class ApiHubAPI {
       },
     );
 
-    return response.json();
+    // Custom error handling for updatePortalProduct
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      throw new Error(
+        `API Hub updatePortalProduct failed - status: ${response.status} ${response.statusText}${
+          errorText ? ` - ${errorText}` : ''
+        }`
+      );
+    }
+
+    // Use handleResponse but with custom default return value
+    return this.handleResponseWithoutErrorCheck(response, { success: true });
+  }
+
+  /**
+   * Helper method for handling responses when error checking is already done
+   */
+  private async handleResponseWithoutErrorCheck(response: Response, defaultReturn: any = {}): Promise<any> {
+    // Handle 204 No Content responses
+    if (response.status === 204) {
+      return defaultReturn;
+    }
+
+    // Check if response has content-length of 0 (empty body)
+    const contentLength = response.headers.get("content-length");
+    if (contentLength === "0") {
+      return defaultReturn;
+    }
+
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      try {
+        return await response.json();
+      } catch (error) {
+        console.warn("Failed to parse JSON response:", error);
+        return defaultReturn;
+      }
+    }
+
+    // Fallback for non-JSON responses
+    const text = await response.text();
+    return text ? { message: text } : defaultReturn;
   }
 }

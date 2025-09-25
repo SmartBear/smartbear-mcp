@@ -102,7 +102,9 @@ describe("ApiHubClient", () => {
       const mockResponse = { id: "portal-123", name: "Updated Portal" };
       const updateData = { name: "Updated Portal" };
 
-      fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), {
+        headers: { "content-type": "application/json" },
+      });
 
       const result = await client.updatePortal({ portalId: "portal-123", ...updateData });
 
@@ -245,7 +247,9 @@ describe("ApiHubClient", () => {
         offline: true,
       };
 
-      fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), {
+        headers: { "content-type": "application/json" },
+      });
 
       client.registerTools(mockRegister, mockGetInput);
 
