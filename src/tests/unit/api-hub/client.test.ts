@@ -106,7 +106,10 @@ describe("ApiHubClient", () => {
         headers: { "content-type": "application/json" },
       });
 
-      const result = await client.updatePortal({ portalId: "portal-123", ...updateData });
+      const result = await client.updatePortal({
+        portalId: "portal-123",
+        ...updateData,
+      });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
@@ -300,7 +303,10 @@ describe("ApiHubClient", () => {
 
       expect(result).toEqual({
         content: [
-          { type: "text", text: "Error: Handler 'nonExistentMethod' not found on ApiHubClient" },
+          {
+            type: "text",
+            text: "Error: Handler 'nonExistentMethod' not found on ApiHubClient",
+          },
         ],
       });
 

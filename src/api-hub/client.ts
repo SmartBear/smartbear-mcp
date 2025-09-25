@@ -82,12 +82,12 @@ export class ApiHubClient implements Client {
       const { handler, formatResponse, ...toolParams } = tool;
       register(toolParams, async (args, _extra) => {
         try {
-          // Dynamic method invocation 
+          // Dynamic method invocation
           const handlerFn = (this as any)[handler];
           if (typeof handlerFn !== "function") {
             throw new Error(`Handler '${handler}' not found on ApiHubClient`);
           }
-          
+
           const result = await handlerFn.call(this, args);
 
           // Use custom formatter if available, otherwise return JSON

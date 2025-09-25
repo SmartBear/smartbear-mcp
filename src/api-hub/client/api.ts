@@ -19,7 +19,10 @@ export class ApiHubAPI {
    * Handles HTTP responses with smart JSON parsing and fallback handling.
    * Supports 204 No Content, empty responses, and non-JSON content.
    */
-  private async handleResponse(response: Response, defaultReturn: any = {}): Promise<any> {
+  private async handleResponse(
+    response: Response,
+    defaultReturn: any = {},
+  ): Promise<any> {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -90,11 +93,14 @@ export class ApiHubAPI {
   }
 
   async updatePortal(portalId: string, body: UpdatePortalBody): Promise<any> {
-    const response = await fetch(`${this.config.basePath}/portals/${portalId}`, {
-      method: "PATCH",
-      headers: this.headers,
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(
+      `${this.config.basePath}/portals/${portalId}`,
+      {
+        method: "PATCH",
+        headers: this.headers,
+        body: JSON.stringify(body),
+      },
+    );
 
     return this.handleResponse(response);
   }
@@ -140,10 +146,13 @@ export class ApiHubAPI {
   }
 
   async deletePortalProduct(productId: string): Promise<any> {
-    const response = await fetch(`${this.config.basePath}/products/${productId}`, {
-      method: "DELETE",
-      headers: this.headers,
-    });
+    const response = await fetch(
+      `${this.config.basePath}/products/${productId}`,
+      {
+        method: "DELETE",
+        headers: this.headers,
+      },
+    );
 
     return this.handleResponse(response);
   }
@@ -163,11 +172,11 @@ export class ApiHubAPI {
 
     // Custom error handling for updatePortalProduct
     if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
+      const errorText = await response.text().catch(() => "");
       throw new Error(
         `API Hub updatePortalProduct failed - status: ${response.status} ${response.statusText}${
-          errorText ? ` - ${errorText}` : ''
-        }`
+          errorText ? ` - ${errorText}` : ""
+        }`,
       );
     }
 
@@ -178,7 +187,10 @@ export class ApiHubAPI {
   /**
    * Helper method for handling responses when error checking is already done
    */
-  private async handleResponseWithoutErrorCheck(response: Response, defaultReturn: any = {}): Promise<any> {
+  private async handleResponseWithoutErrorCheck(
+    response: Response,
+    defaultReturn: any = {},
+  ): Promise<any> {
     // Handle 204 No Content responses
     if (response.status === 204) {
       return defaultReturn;
