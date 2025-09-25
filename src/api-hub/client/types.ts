@@ -55,6 +55,35 @@ export type UpdatePortalBody = Omit<UpdatePortalArgs, "portalId">;
 export type CreateProductBody = Omit<CreateProductArgs, "portalId">;
 export type UpdateProductBody = Omit<UpdateProductArgs, "productId">;
 
+// Response types for better type safety
+export type FallbackResponse =
+  | {
+      message: string;
+    }
+  | Record<string, never>;
+
+export type SuccessResponse = {
+  success: boolean;
+};
+
+// Common API Hub response entities
+export interface Portal {
+  id: string;
+  name: string;
+  subdomain?: string;
+  [key: string]: unknown;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+// Response collection types
+export type PortalsListResponse = Portal[];
+export type ProductsListResponse = Product[];
+
 // Zod schemas for validation
 export const PortalArgsSchema = z.object({
   portalId: z

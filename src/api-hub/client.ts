@@ -9,6 +9,12 @@ import {
   ApiHubConfiguration,
   type CreatePortalArgs,
   type CreateProductArgs,
+  type FallbackResponse,
+  type Portal,
+  type PortalsListResponse,
+  type Product,
+  type ProductsListResponse,
+  type SuccessResponse,
   TOOLS,
   type UpdatePortalArgs,
   type UpdateProductArgs,
@@ -31,45 +37,61 @@ export class ApiHubClient implements Client {
   }
 
   // Delegate API methods to the ApiHubAPI instance
-  async getPortals(): Promise<any> {
+  async getPortals(): Promise<PortalsListResponse | FallbackResponse> {
     return this.api.getPortals();
   }
 
-  async createPortal(body: CreatePortalArgs): Promise<any> {
+  async createPortal(
+    body: CreatePortalArgs,
+  ): Promise<Portal | FallbackResponse> {
     return this.api.createPortal(body);
   }
 
-  async getPortal(args: { portalId: string }): Promise<any> {
+  async getPortal(args: {
+    portalId: string;
+  }): Promise<Portal | FallbackResponse> {
     return this.api.getPortal(args.portalId);
   }
 
-  async deletePortal(args: { portalId: string }): Promise<any> {
+  async deletePortal(args: { portalId: string }): Promise<void> {
     return this.api.deletePortal(args.portalId);
   }
 
-  async updatePortal(args: UpdatePortalArgs): Promise<any> {
+  async updatePortal(
+    args: UpdatePortalArgs,
+  ): Promise<Portal | FallbackResponse> {
     const { portalId, ...body } = args;
     return this.api.updatePortal(portalId, body);
   }
 
-  async getPortalProducts(args: { portalId: string }): Promise<any> {
+  async getPortalProducts(args: {
+    portalId: string;
+  }): Promise<ProductsListResponse | FallbackResponse> {
     return this.api.getPortalProducts(args.portalId);
   }
 
-  async createPortalProduct(args: CreateProductArgs): Promise<any> {
+  async createPortalProduct(
+    args: CreateProductArgs,
+  ): Promise<Product | FallbackResponse> {
     const { portalId, ...body } = args;
     return this.api.createPortalProduct(portalId, body);
   }
 
-  async getPortalProduct(args: { productId: string }): Promise<any> {
+  async getPortalProduct(args: {
+    productId: string;
+  }): Promise<Product | FallbackResponse> {
     return this.api.getPortalProduct(args.productId);
   }
 
-  async deletePortalProduct(args: { productId: string }): Promise<any> {
+  async deletePortalProduct(args: {
+    productId: string;
+  }): Promise<Record<string, never> | FallbackResponse> {
     return this.api.deletePortalProduct(args.productId);
   }
 
-  async updatePortalProduct(args: UpdateProductArgs): Promise<any> {
+  async updatePortalProduct(
+    args: UpdateProductArgs,
+  ): Promise<Product | SuccessResponse | FallbackResponse> {
     const { productId, ...body } = args;
     return this.api.updatePortalProduct(productId, body);
   }
