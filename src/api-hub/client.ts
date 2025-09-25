@@ -82,98 +82,88 @@ export class ApiHubClient implements Client {
     _getInput: GetInputFunction,
   ): void {
     TOOLS.forEach((tool) => {
-      register(
-        {
-          title: tool.title,
-          summary: tool.summary,
-          parameters: tool.parameters,
-        },
-        async (args, _extra) => {
-          try {
-            let result: any;
+      const { handler, formatResponse, ...toolParams } = tool;
+      register(toolParams, async (args, _extra) => {
+        try {
+          let result: any;
 
-            // Handle different method signatures based on the handler name
-            switch (tool.handler) {
-              case "getPortals":
-                result = await this.getPortals();
-                break;
-              case "createPortal":
-                result = await this.createPortal(args as CreatePortalArgs);
-                break;
-              case "getPortal":
-                result = await this.getPortal((args as any).portalId);
-                break;
-              case "deletePortal":
-                result = await this.deletePortal((args as any).portalId);
-                break;
-              case "updatePortal": {
-                const { portalId: updatePortalId, ...updatePortalBody } =
-                  args as any;
-                result = await this.updatePortal(
-                  updatePortalId,
-                  updatePortalBody as UpdatePortalArgs,
-                );
-                break;
-              }
-              case "getPortalProducts":
-                result = await this.getPortalProducts((args as any).portalId);
-                break;
-              case "createPortalProduct": {
-                const {
-                  portalId: createProductPortalId,
-                  ...createProductBody
-                } = args as any;
-                result = await this.createPortalProduct(
-                  createProductPortalId,
-                  createProductBody as CreateProductArgs,
-                );
-                break;
-              }
-              case "getPortalProduct":
-                result = await this.getPortalProduct((args as any).productId);
-                break;
-              case "deletePortalProduct":
-                result = await this.deletePortalProduct(
-                  (args as any).productId,
-                );
-                break;
-              case "updatePortalProduct": {
-                const { productId: updateProductId, ...updateProductBody } =
-                  args as any;
-                result = await this.updatePortalProduct(
-                  updateProductId,
-                  updateProductBody as UpdateProductArgs,
-                );
-                break;
-              }
-              default:
-                throw new Error(`Unknown handler: ${tool.handler}`);
+          // Handle different method signatures based on the handler name
+          switch (handler) {
+            case "getPortals":
+              result = await this.getPortals();
+              break;
+            case "createPortal":
+              result = await this.createPortal(args as CreatePortalArgs);
+              break;
+            case "getPortal":
+              result = await this.getPortal((args as any).portalId);
+              break;
+            case "deletePortal":
+              result = await this.deletePortal((args as any).portalId);
+              break;
+            case "updatePortal": {
+              const { portalId: updatePortalId, ...updatePortalBody } =
+                args as any;
+              result = await this.updatePortal(
+                updatePortalId,
+                updatePortalBody as UpdatePortalArgs,
+              );
+              break;
             }
-
-            // Use custom formatter if available, otherwise return JSON
-            const formattedResult = tool.formatResponse
-              ? tool.formatResponse(result)
-              : result;
-            const responseText =
-              typeof formattedResult === "string"
-                ? formattedResult
-                : JSON.stringify(formattedResult);
-
-            return {
-              content: [{ type: "text", text: responseText }],
-            };
-          } catch (error) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-                },
-              ],
-            };
+            case "getPortalProducts":
+              result = await this.getPortalProducts((args as any).portalId);
+              break;
+            case "createPortalProduct": {
+              const { portalId: createProductPortalId, ...createProductBody } =
+                args as any;
+              result = await this.createPortalProduct(
+                createProductPortalId,
+                createProductBody as CreateProductArgs,
+              );
+              break;
+            }
+            case "getPortalProduct":
+              result = await this.getPortalProduct((args as any).productId);
+              break;
+            case "deletePortalProduct":
+              result = await this.deletePortalProduct((args as any).productId);
+              break;
+            case "updatePortalProduct": {
+              const { productId: updateProductId, ...updateProductBody } =
+                args as any;
+              result = await this.updatePortalProduct(
+                updateProductId,
+                updateProductBody as UpdateProductArgs,
+              );
+              break;
+            }
+            default:
+              throw new Error(`Unknown handler: ${handler}`);
           }
-        },
-      );
+
+          // Use custom formatter if available, otherwise return JSON
+          const formattedResult = formatResponse
+            ? formatResponse(result)
+            : result;
+          const responseText =
+            typeof formattedResult === "string"
+              ? formattedResult
+              : JSON.stringify(formattedResult);
+
+          return {
+            content: [{ type: "text", text: responseText }],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+          };
+        }
+      });
     });
   }
 }
