@@ -12,7 +12,7 @@ Here's a quick example of the power we're bringing to your AI development experi
 
 [![MCP-Demo](https://img.youtube.com/vi/NbKnK3rbcFE/0.jpg)](https://www.youtube.com/watch?v=NbKnK3rbcFE)
 
-See our full capabilities [here](./mcp-server-capabilities.md).
+See our full capabilities [here](./mcp-server-capabilities).
 
 ## What is the Model Context Protocol?
 
