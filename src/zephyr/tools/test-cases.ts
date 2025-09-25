@@ -15,6 +15,8 @@ import type {
     TestStep,
     CreateTestStepsRequest,
     CursorPagedTestCaseList,
+    TestCaseLinkList,
+    TestCaseVersionLink,
     ToolDefinition
 } from "../types.js";
 
@@ -594,6 +596,446 @@ export async function listTestCasesNextGen(apiService: ApiService, args: {
         }
 
         throw new Error(`Failed to list test cases: ${error.message}`);
+    }
+}
+
+export async function getTestCaseLinks(apiService: ApiService, testCaseKey: string): Promise<TestCaseLinkList> {
+    /**
+     * Get all links for a test case.
+     *
+     * Retrieves all links (issue links, web links, etc.) associated with
+     * the specified test case, providing comprehensive link visibility.
+     *
+     * Parameters
+     * ----------
+     * apiService : ApiService
+     *     Configured API service for HTTP communication
+     * testCaseKey : string
+     *     Unique key of test case to get links for (e.g., "PROJECT-T123")
+     *
+     * Returns
+     * -------
+     * TestCaseLinkList
+     *     List of all links associated with the test case
+     *
+     * Raises
+     * ------
+     * Error
+     *     If test case key is invalid or API request fails
+     */
+    if (!apiService) {
+        throw new Error("ApiService is required");
+    }
+
+    if (!testCaseKey || testCaseKey.trim() === "") {
+        throw new Error("Test case key is required and cannot be empty");
+    }
+
+    const cleanTestCaseKey: string = testCaseKey.trim();
+
+    // Validate test case key format (PROJECT-T123, allowing underscores in project key)
+    const testCaseKeyPattern: RegExp = /^[A-Z][A-Z_0-9]+-T\d+$/;
+    if (!testCaseKeyPattern.test(cleanTestCaseKey)) {
+        throw new Error(`Invalid test case key format: ${cleanTestCaseKey}. Expected format: PROJECT-T123`);
+    }
+
+    try {
+        const response: TestCaseLinkList = await apiService.get<TestCaseLinkList>(`/testcases/${cleanTestCaseKey}/links`);
+
+        if (!response) {
+            throw new Error("Invalid API response: Empty response received");
+        }
+
+        return response;
+
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes("404")) {
+                throw new Error(`Test case not found: ${cleanTestCaseKey}. Verify the test case key exists and is accessible.`);
+            }
+            if (error.message.includes("403")) {
+                throw new Error(`Access denied: Cannot access links for test case ${cleanTestCaseKey}. Check permissions.`);
+            }
+        }
+        throw error;
+    }
+}
+
+export async function createTestCaseWebLink(apiService: ApiService, testCaseKey: string, webLinkData: { url: string; description?: string }): Promise<{ id: number }> {
+    /**
+     * Create a web link for a test case.
+     *
+     * Creates a link between a test case and a generic URL, enabling
+     * traceability to external resources and documentation.
+     *
+     * Parameters
+     * ----------
+     * apiService : ApiService
+     *     Configured API service for HTTP communication
+     * testCaseKey : string
+     *     Unique key of test case to add link to (e.g., "PROJECT-T123")
+     * webLinkData : object
+     *     Web link data with url and optional description
+     *
+     * Returns
+     * -------
+     * object
+     *     Created resource with ID of the new web link
+     *
+     * Raises
+     * ------
+     * Error
+     *     If test case key or URL is invalid or API request fails
+     */
+    if (!apiService) {
+        throw new Error("ApiService is required");
+    }
+
+    if (!testCaseKey || testCaseKey.trim() === "") {
+        throw new Error("Test case key is required and cannot be empty");
+    }
+
+    if (!webLinkData || !webLinkData.url || webLinkData.url.trim() === "") {
+        throw new Error("Web link URL is required and cannot be empty");
+    }
+
+    const cleanTestCaseKey: string = testCaseKey.trim();
+
+    // Validate test case key format
+    const testCaseKeyPattern: RegExp = /^[A-Z][A-Z_0-9]+-T\d+$/;
+    if (!testCaseKeyPattern.test(cleanTestCaseKey)) {
+        throw new Error(`Invalid test case key format: ${cleanTestCaseKey}. Expected format: PROJECT-T123`);
+    }
+
+    // Basic URL validation
+    const cleanUrl: string = webLinkData.url.trim();
+    if (!cleanUrl.match(/^https?:\/\/.+/)) {
+        throw new Error(`Invalid URL format: ${cleanUrl}. URL must start with http:// or https://`);
+    }
+
+    try {
+        const payload = {
+            url: cleanUrl,
+            description: webLinkData.description?.trim() || ""
+        };
+
+        const response: { id: number } = await apiService.post<{ id: number }>(`/testcases/${cleanTestCaseKey}/links/weblinks`, payload);
+
+        if (!response || !response.id) {
+            throw new Error("Invalid API response: Missing required fields in created web link");
+        }
+
+        return response;
+
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes("404")) {
+                throw new Error(`Test case not found: ${cleanTestCaseKey}. Verify the test case key exists and is accessible.`);
+            }
+            if (error.message.includes("403")) {
+                throw new Error(`Access denied: Cannot create web link for test case ${cleanTestCaseKey}. Check permissions.`);
+            }
+            if (error.message.includes("400")) {
+                throw new Error(`Invalid web link data for test case ${cleanTestCaseKey}: ${error.message}. Check URL format and description.`);
+            }
+        }
+        throw error;
+    }
+}
+
+export async function listTestCaseVersions(apiService: ApiService, testCaseKey: string, maxResults?: number): Promise<{ values: TestCaseVersionLink[]; maxResults: number; startAt: number; total: number }> {
+    /**
+     * List all versions of a test case.
+     *
+     * Returns all test case versions for the specified test case,
+     * ordered by most recent first with pagination support.
+     *
+     * Parameters
+     * ----------
+     * apiService : ApiService
+     *     Configured API service for HTTP communication
+     * testCaseKey : string
+     *     Unique key of test case to get versions for (e.g., "PROJECT-T123")
+     * maxResults : number, optional
+     *     Maximum number of results (default: 10, max: 1000)
+     *
+     * Returns
+     * -------
+     * object
+     *     Paginated list of test case versions with metadata
+     *
+     * Raises
+     * ------
+     * Error
+     *     If test case key is invalid or API request fails
+     */
+    if (!apiService) {
+        throw new Error("ApiService is required");
+    }
+
+    if (!testCaseKey || testCaseKey.trim() === "") {
+        throw new Error("Test case key is required and cannot be empty");
+    }
+
+    const cleanTestCaseKey: string = testCaseKey.trim();
+
+    // Validate test case key format
+    const testCaseKeyPattern: RegExp = /^[A-Z][A-Z_0-9]+-T\d+$/;
+    if (!testCaseKeyPattern.test(cleanTestCaseKey)) {
+        throw new Error(`Invalid test case key format: ${cleanTestCaseKey}. Expected format: PROJECT-T123`);
+    }
+
+    // Validate maxResults if provided
+    if (maxResults !== undefined) {
+        if (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 1000) {
+            throw new Error("maxResults must be an integer between 1 and 1000");
+        }
+    }
+
+    try {
+        const queryParams = new URLSearchParams();
+        if (maxResults !== undefined) {
+            queryParams.set('maxResults', maxResults.toString());
+        }
+
+        const endpoint = `/testcases/${cleanTestCaseKey}/versions${queryParams.toString() ? `?${queryParams}` : ''}`;
+        const response = await apiService.get<{ values: TestCaseVersionLink[]; maxResults: number; startAt: number; total: number }>(endpoint);
+
+        if (!response || !Array.isArray(response.values)) {
+            throw new Error("Invalid API response: Missing or invalid values array");
+        }
+
+        return response;
+
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes("404")) {
+                throw new Error(`Test case not found: ${cleanTestCaseKey}. Verify the test case key exists and is accessible.`);
+            }
+            if (error.message.includes("403")) {
+                throw new Error(`Access denied: Cannot access versions for test case ${cleanTestCaseKey}. Check permissions.`);
+            }
+        }
+        throw error;
+    }
+}
+
+export async function getTestCaseVersion(apiService: ApiService, testCaseKey: string, version: number): Promise<TestCase> {
+    /**
+     * Get a specific version of a test case.
+     *
+     * Retrieves a specific version of a test case, allowing access
+     * to historical test case data and changes over time.
+     *
+     * Parameters
+     * ----------
+     * apiService : ApiService
+     *     Configured API service for HTTP communication
+     * testCaseKey : string
+     *     Unique key of test case (e.g., "PROJECT-T123")
+     * version : number
+     *     Version number of the test case to retrieve
+     *
+     * Returns
+     * -------
+     * TestCase
+     *     Specific version of the test case with all fields
+     *
+     * Raises
+     * ------
+     * Error
+     *     If test case key or version is invalid or API request fails
+     */
+    if (!apiService) {
+        throw new Error("ApiService is required");
+    }
+
+    if (!testCaseKey || testCaseKey.trim() === "") {
+        throw new Error("Test case key is required and cannot be empty");
+    }
+
+    if (version === undefined || version === null || !Number.isInteger(version) || version < 1) {
+        throw new Error("Version must be a positive integer");
+    }
+
+    const cleanTestCaseKey: string = testCaseKey.trim();
+
+    // Validate test case key format
+    const testCaseKeyPattern: RegExp = /^[A-Z][A-Z_0-9]+-T\d+$/;
+    if (!testCaseKeyPattern.test(cleanTestCaseKey)) {
+        throw new Error(`Invalid test case key format: ${cleanTestCaseKey}. Expected format: PROJECT-T123`);
+    }
+
+    try {
+        const response: TestCase = await apiService.get<TestCase>(`/testcases/${cleanTestCaseKey}/versions/${version}`);
+
+        if (!response || !response.id || !response.key) {
+            throw new Error("Invalid API response: Missing required fields in test case version");
+        }
+
+        return response;
+
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes("404")) {
+                throw new Error(`Test case version not found: ${cleanTestCaseKey} version ${version}. Verify the test case and version exist.`);
+            }
+            if (error.message.includes("403")) {
+                throw new Error(`Access denied: Cannot access version ${version} of test case ${cleanTestCaseKey}. Check permissions.`);
+            }
+        }
+        throw error;
+    }
+}
+
+export async function getTestCaseTestScript(apiService: ApiService, testCaseKey: string): Promise<TestScript> {
+    /**
+     * Get the test script for a test case.
+     *
+     * Returns the test script content for the specified test case,
+     * providing detailed test execution instructions.
+     *
+     * Parameters
+     * ----------
+     * apiService : ApiService
+     *     Configured API service for HTTP communication
+     * testCaseKey : string
+     *     Unique key of test case to get script for (e.g., "PROJECT-T123")
+     *
+     * Returns
+     * -------
+     * TestScript
+     *     Test script with type and content information
+     *
+     * Raises
+     * ------
+     * Error
+     *     If test case key is invalid or API request fails
+     */
+    if (!apiService) {
+        throw new Error("ApiService is required");
+    }
+
+    if (!testCaseKey || testCaseKey.trim() === "") {
+        throw new Error("Test case key is required and cannot be empty");
+    }
+
+    const cleanTestCaseKey: string = testCaseKey.trim();
+
+    // Validate test case key format
+    const testCaseKeyPattern: RegExp = /^[A-Z][A-Z_0-9]+-T\d+$/;
+    if (!testCaseKeyPattern.test(cleanTestCaseKey)) {
+        throw new Error(`Invalid test case key format: ${cleanTestCaseKey}. Expected format: PROJECT-T123`);
+    }
+
+    try {
+        const response: TestScript = await apiService.get<TestScript>(`/testcases/${cleanTestCaseKey}/testscript`);
+
+        if (!response) {
+            throw new Error("Invalid API response: Empty test script response received");
+        }
+
+        return response;
+
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes("404")) {
+                throw new Error(`Test script not found for test case: ${cleanTestCaseKey}. The test case may not have a script or may not exist.`);
+            }
+            if (error.message.includes("403")) {
+                throw new Error(`Access denied: Cannot access test script for test case ${cleanTestCaseKey}. Check permissions.`);
+            }
+        }
+        throw error;
+    }
+}
+
+export async function getTestCaseTestSteps(apiService: ApiService, testCaseKey: string, maxResults?: number, startAt?: number): Promise<{ values: TestStep[]; maxResults: number; startAt: number; total: number }> {
+    /**
+     * Get test steps for a test case.
+     *
+     * Returns paginated test steps for the specified test case,
+     * providing step-by-step test execution instructions.
+     *
+     * Parameters
+     * ----------
+     * apiService : ApiService
+     *     Configured API service for HTTP communication
+     * testCaseKey : string
+     *     Unique key of test case to get steps for (e.g., "PROJECT-T123")
+     * maxResults : number, optional
+     *     Maximum number of results (default: 10, max: 1000)
+     * startAt : number, optional
+     *     Zero-indexed starting position (default: 0)
+     *
+     * Returns
+     * -------
+     * object
+     *     Paginated list of test steps with execution details
+     *
+     * Raises
+     * ------
+     * Error
+     *     If test case key is invalid or API request fails
+     */
+    if (!apiService) {
+        throw new Error("ApiService is required");
+    }
+
+    if (!testCaseKey || testCaseKey.trim() === "") {
+        throw new Error("Test case key is required and cannot be empty");
+    }
+
+    const cleanTestCaseKey: string = testCaseKey.trim();
+
+    // Validate test case key format
+    const testCaseKeyPattern: RegExp = /^[A-Z][A-Z_0-9]+-T\d+$/;
+    if (!testCaseKeyPattern.test(cleanTestCaseKey)) {
+        throw new Error(`Invalid test case key format: ${cleanTestCaseKey}. Expected format: PROJECT-T123`);
+    }
+
+    // Validate maxResults if provided
+    if (maxResults !== undefined) {
+        if (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 1000) {
+            throw new Error("maxResults must be an integer between 1 and 1000");
+        }
+    }
+
+    // Validate startAt if provided
+    if (startAt !== undefined) {
+        if (!Number.isInteger(startAt) || startAt < 0 || startAt > 1000000) {
+            throw new Error("startAt must be an integer between 0 and 1000000");
+        }
+    }
+
+    try {
+        const queryParams = new URLSearchParams();
+        if (maxResults !== undefined) {
+            queryParams.set('maxResults', maxResults.toString());
+        }
+        if (startAt !== undefined) {
+            queryParams.set('startAt', startAt.toString());
+        }
+
+        const endpoint = `/testcases/${cleanTestCaseKey}/teststeps${queryParams.toString() ? `?${queryParams}` : ''}`;
+        const response = await apiService.get<{ values: TestStep[]; maxResults: number; startAt: number; total: number }>(endpoint);
+
+        if (!response || !Array.isArray(response.values)) {
+            throw new Error("Invalid API response: Missing or invalid values array");
+        }
+
+        return response;
+
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes("404")) {
+                throw new Error(`Test steps not found for test case: ${cleanTestCaseKey}. The test case may not have steps or may not exist.`);
+            }
+            if (error.message.includes("403")) {
+                throw new Error(`Access denied: Cannot access test steps for test case ${cleanTestCaseKey}. Check permissions.`);
+            }
+        }
+        throw error;
     }
 }
 
