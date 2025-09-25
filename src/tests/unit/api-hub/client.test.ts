@@ -78,7 +78,7 @@ describe("ApiHubClient", () => {
       const mockResponse = { id: "portal-123", name: "Test Portal" };
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-      const result = await client.getPortal("portal-123");
+      const result = await client.getPortal({ portalId: "portal-123" });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
@@ -90,7 +90,7 @@ describe("ApiHubClient", () => {
     it("should delegate deletePortal to API instance", async () => {
       fetchMock.mockResponseOnce("", { status: 200 });
 
-      await client.deletePortal("portal-123");
+      await client.deletePortal({ portalId: "portal-123" });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
@@ -104,7 +104,7 @@ describe("ApiHubClient", () => {
 
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-      const result = await client.updatePortal("portal-123", updateData);
+      const result = await client.updatePortal({ portalId: "portal-123", ...updateData });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123",
@@ -120,7 +120,7 @@ describe("ApiHubClient", () => {
       const mockResponse = { products: [] };
       fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
 
-      const result = await client.getPortalProducts("portal-123");
+      const result = await client.getPortalProducts({ portalId: "portal-123" });
 
       expect(fetchMock).toHaveBeenCalledWith(
         "https://api.portal.swaggerhub.com/v1/portals/portal-123/products",
@@ -296,7 +296,7 @@ describe("ApiHubClient", () => {
 
       expect(result).toEqual({
         content: [
-          { type: "text", text: "Error: Unknown handler: nonExistentMethod" },
+          { type: "text", text: "Error: Handler 'nonExistentMethod' not found on ApiHubClient" },
         ],
       });
 

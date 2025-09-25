@@ -1,9 +1,9 @@
 import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,
-  CreateProductArgs,
-  UpdatePortalArgs,
-  UpdateProductArgs,
+  CreateProductBody,
+  UpdatePortalBody,
+  UpdateProductBody,
 } from "./types.js";
 
 export class ApiHubAPI {
@@ -53,7 +53,7 @@ export class ApiHubAPI {
     });
   }
 
-  async updatePortal(portalId: string, body: UpdatePortalArgs): Promise<any> {
+  async updatePortal(portalId: string, body: UpdatePortalBody): Promise<any> {
     const response = await fetch(
       `${this.config.basePath}/portals/${portalId}`,
       {
@@ -80,7 +80,7 @@ export class ApiHubAPI {
 
   async createPortalProduct(
     portalId: string,
-    body: CreateProductArgs,
+    body: CreateProductBody,
   ): Promise<any> {
     const response = await fetch(
       `${this.config.basePath}/portals/${portalId}/products`,
@@ -115,7 +115,7 @@ export class ApiHubAPI {
 
   async updatePortalProduct(
     productId: string,
-    body: UpdateProductArgs,
+    body: UpdateProductBody,
   ): Promise<any> {
     const response = await fetch(
       `${this.config.basePath}/products/${productId}`,

@@ -50,6 +50,11 @@ export interface UpdateProductArgs extends ProductArgs {
   hidden?: boolean;
 }
 
+// API body types (without IDs - IDs are passed in URL path)
+export type UpdatePortalBody = Omit<UpdatePortalArgs, 'portalId'>;
+export type CreateProductBody = Omit<CreateProductArgs, 'portalId'>;
+export type UpdateProductBody = Omit<UpdateProductArgs, 'productId'>;
+
 // Zod schemas for validation
 export const PortalArgsSchema = z.object({
   portalId: z
