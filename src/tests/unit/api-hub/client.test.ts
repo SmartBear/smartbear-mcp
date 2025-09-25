@@ -142,11 +142,8 @@ describe("ApiHubClient", () => {
       // Verify each tool was registered with correct structure
       TOOLS.forEach((tool, index) => {
         const registerCall = mockRegister.mock.calls[index];
-        expect(registerCall[0]).toEqual({
-          title: tool.title,
-          summary: tool.summary,
-          parameters: tool.parameters,
-        });
+        const { handler: _, formatResponse: __, ...expectedToolParams } = tool;
+        expect(registerCall[0]).toEqual(expectedToolParams);
         expect(typeof registerCall[1]).toBe("function");
       });
     });
@@ -166,7 +163,7 @@ describe("ApiHubClient", () => {
       );
       expect(getPortalsCall).toBeDefined();
 
-      const handler = getPortalsCall![1];
+      const handler = getPortalsCall?.[1];
       const result = await handler({}, {});
 
       expect(result).toEqual({
@@ -190,7 +187,7 @@ describe("ApiHubClient", () => {
       );
       expect(createPortalCall).toBeDefined();
 
-      const handler = createPortalCall![1];
+      const handler = createPortalCall?.[1];
       const result = await handler(args, {});
 
       expect(result).toEqual({
@@ -212,7 +209,7 @@ describe("ApiHubClient", () => {
       );
       expect(deletePortalCall).toBeDefined();
 
-      const handler = deletePortalCall![1];
+      const handler = deletePortalCall?.[1];
       const result = await handler({ portalId: "portal-123" }, {});
 
       expect(result).toEqual({
@@ -258,7 +255,7 @@ describe("ApiHubClient", () => {
       );
       expect(updatePortalCall).toBeDefined();
 
-      const handler = updatePortalCall![1];
+      const handler = updatePortalCall?.[1];
       const result = await handler(args, {});
 
       expect(fetchMock).toHaveBeenCalledWith(
@@ -279,7 +276,6 @@ describe("ApiHubClient", () => {
       const mockGetInput = vi.fn();
 
       // Mock TOOLS with an invalid handler
-      const originalTools = [...TOOLS];
       TOOLS.push({
         title: "Invalid Tool",
         summary: "Invalid tool for testing",
@@ -295,7 +291,7 @@ describe("ApiHubClient", () => {
       );
       expect(invalidToolCall).toBeDefined();
 
-      const handler = invalidToolCall![1];
+      const handler = invalidToolCall?.[1];
       const result = await handler({}, {});
 
       expect(result).toEqual({
