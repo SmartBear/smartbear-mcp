@@ -1,17 +1,12 @@
+import { TOOLS } from "./client/tools.js";
+import { QMETRY_HANDLER_MAP } from "./client/handlers.js";
 import {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
 import { getProjectInfo } from "./client/project.js";
-import { QMETRY_DEFAULTS } from "./config/constants.js";
-import {
-  fetchTestCaseDetails,
-  fetchTestCases,
-  fetchTestCaseSteps,
-  fetchTestCaseVersionDetails,
-} from "./client/testcase.js";
-import { QMETRY_TOOLS } from "./client/tools.js";
+import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants.js";
 
 export class QmetryClient implements Client {
   name = "QMetry";
@@ -42,239 +37,84 @@ export class QmetryClient implements Client {
       projectKey: args.projectKey ?? this.projectApiKey,
     });
 
-    const handleAsync = (fn: () => Promise<any>) =>
-      fn().catch((err) => ({
-        content: [
-          { success: false, type: "text", text: `Error: ${err.message}` },
-        ],
-      }));
-      
-    // Set Project Info
-    register(
-      QMETRY_TOOLS.SET_PROJECT_INFO,
-      (args) =>
-        handleAsync(async () => {
-          const { projectKey } = resolveContext(args as Record<string, any>);
-          const response = await getProjectInfo(
-            this.token,
-            this.endpoint,
-            projectKey
-          );
-          return {
-            content: [
-              {
-                success: true,
-                type: "text",
-                text: JSON.stringify(response, null, 2),
-              },
-            ],
-          };
-        })
-    );
+    const handleAsync = async (toolTitle: string, fn: () => Promise<any>) => {
+      try {
+        return await fn();
+      } catch (err) {
+        console.error(`[QMetry MCP] Tool "${toolTitle}" error:`, err);
+        return {
+          content: [
+            {
+              success: false,
+              type: "text",
+              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+        };
+      }
+    };
 
-    // Fetch Project Info
-    register(
-      QMETRY_TOOLS.FETCH_PROJECT_INFO,      
-      (args) =>
-        handleAsync(async () => {
-          const { projectKey } = resolveContext(args as Record<string, any>);
-          const response = await getProjectInfo(
-            this.token,
-            this.endpoint,
-            projectKey
-          );
-          return {
-            content: [
-              {
-                success: true,
-                type: "text",
-                text: JSON.stringify(response, null, 2),
-              },
-            ],
-          };
-        })
-    );
+    for (const tool of TOOLS) {
+      const handlerFn = QMETRY_HANDLER_MAP[tool.handler];
+      if (!handlerFn) {
+        console.error(`⚠️ No handler mapped for ${tool.title}`);
+        continue;
+      }
 
-    // Fetch Test Cases List
-    register(
-      QMETRY_TOOLS.FETCH_TEST_CASES,
-      (args) =>
-        handleAsync(async () => {
+      register(tool, (args) =>
+        handleAsync(tool.title, async () => {
           const a = args as Record<string, any>;
-          let { baseUrl, projectKey } = resolveContext(a);
-          
-          // Auto-resolve viewId and folderPath if not provided
-          let viewId = a.viewId;
-          let folderPath = a.folderPath;
-          
-          if (!viewId || folderPath === undefined) {
-            try {
-              const projectInfo = await getProjectInfo(this.token, baseUrl, projectKey) as any;
-              
+          const { baseUrl, projectKey } = resolveContext(a);
+
+          // handling for FETCH_TEST_CASES to auto-resolve viewId and folderPath
+          if (tool.handler === QMetryToolsHandlers.FETCH_TEST_CASES) {
+            let viewId = a.viewId;
+            let folderPath = a.folderPath;
+
+            if (!viewId || folderPath === undefined) {
+              let projectInfo;
+              try {
+                projectInfo = await getProjectInfo(this.token, baseUrl, projectKey) as any;
+              } catch (err) {
+                throw new Error(
+                    `Failed to auto-resolve viewId/folderPath for project ${projectKey}. 
+                    Please provide them manually or check project access. 
+                    Error: ${err instanceof Error ? err.message : String(err)}`
+                  );
+              } 
               if (!viewId && projectInfo?.latestViews?.TC?.viewId) {
                 viewId = projectInfo.latestViews.TC.viewId;
               }
-              
               if (folderPath === undefined) {
                 folderPath = "";
               }
-            } catch (error) {
-              throw new Error(
-                `Failed to auto-resolve viewId for project ${projectKey}. ` +
-                `Please ensure project access is correct or provide viewId manually. ` +
-                `Error: ${error instanceof Error ? error.message : String(error)}`
-              );
             }
+
+            a.viewId = viewId;
+            a.folderPath = folderPath;
           }
 
-          const payload = {
-            start: a.start ?? 0,
-            page: a.page ?? 1,
-            limit: a.limit ?? 100,
-            scope: a.scope ?? "project",
-            showRootOnly: a.showRootOnly ?? false,
-            getSubEntities: a.getSubEntities ?? true,
-            hideEmptyFolders: a.hideEmptyFolders ?? false,
-            folderSortColumn: a.folderSortColumn ?? "name",
-            folderSortOrder: a.folderSortOrder ?? "ASC",
-            viewId: viewId,
-            folderPath: folderPath,
-            restoreDefaultColumns: a.restoreDefaultColumns ?? false,
-            filter: a.filter ?? "[]",
-            udfFilter: a.udfFilter ?? "[]",
-            folderID: a.folderID ?? null,
-          };
+          const result = await handlerFn(this.token, baseUrl, projectKey, a);
 
-          const result = await fetchTestCases(
-            this.token,
-            baseUrl,
-            projectKey,
-            payload
-          );
-          
-          // Enhance result with auto-resolution info
-          const enhancedResult = {
-            ...(typeof result === 'object' && result !== null ? result : { data: result }),
-            _autoResolution: {
-              projectKey: projectKey,
-              viewIdAutoResolved: !a.viewId,
-              folderPathAutoResolved: a.folderPath === undefined,
-              usedViewId: viewId,
-              usedFolderPath: folderPath
-            }
-          };
-          
-          return {
-            content: [
-              {
-                success: true,
-                type: "text",
-                text: JSON.stringify(enhancedResult, null, 2),
-              },
-            ],
-          };
+          // Use custom formatter if available, otherwise return JSON
+          const formatted = tool.formatResponse
+              ? tool.formatResponse(result)
+              : result ?? {};
+
+            return {
+              content: [
+                {
+                  success: true,
+                  type: "text",
+                  text:
+                    typeof formatted === "string"
+                      ? formatted
+                      : JSON.stringify(formatted, null, 2),
+                },
+              ],
+            };
         })
-    );
-
-    // Fetch Test Case Details
-    register(
-      QMETRY_TOOLS.FETCH_TEST_CASE_DETAILS,
-      (args) =>
-        handleAsync(async () => {
-          const a = args as Record<string, any>;
-          const { baseUrl, projectKey } = resolveContext(a);
-
-          const payload = {
-            start: a.start ?? 0,
-            page: a.page ?? 1,
-            limit: a.limit ?? 50,
-            tcID: a.tcID,
-            filter: a.filter ?? "[]",
-          };
-
-          const result = await fetchTestCaseDetails(
-            this.token,
-            baseUrl,
-            projectKey,
-            payload
-          );
-          return {
-            content: [
-              {
-                success: true,
-                type: "text",
-                text: JSON.stringify(result, null, 2),
-              },
-            ],
-          };
-        })
-    );
-
-    // Fetch Test Case Version Details
-    register(
-      QMETRY_TOOLS.FETCH_TEST_CASE_VERSION_DETAILS,
-      (args) =>
-        handleAsync(async () => {
-          const a = args as Record<string, any>;
-          const { baseUrl, projectKey } = resolveContext(a);
-
-          const payload = {
-            scope: a.scope ?? "project",
-            id: a.id,
-            version: a.version ?? 1,
-            filter: a.filter ?? "[]",
-          };
-
-          const result = await fetchTestCaseVersionDetails(
-            this.token,
-            baseUrl,
-            projectKey,
-            payload
-          );
-          return {
-            content: [
-              {
-                success: true,
-                type: "text",
-                text: JSON.stringify(result, null, 2),
-              },
-            ],
-          };
-        })
-    );
-
-    // Fetch Test Case Steps
-    register(
-      QMETRY_TOOLS.FETCH_TEST_CASE_STEPS,
-      (args) =>
-        handleAsync(async () => {
-          const a = args as Record<string, any>;
-          const { baseUrl, projectKey } = resolveContext(a);
-
-          const payload = {
-            id: a.id,
-            version: a.version ?? 1,
-            start: a.start ?? 0,
-            page: a.page ?? 1,
-            limit: a.limit ?? 50,
-          };
-
-          const result = await fetchTestCaseSteps(
-            this.token,
-            baseUrl,
-            projectKey,
-            payload
-          );
-          return {
-            content: [
-              {
-                success: true,
-                type: "text",
-                text: JSON.stringify(result, null, 2),
-              },
-            ],
-          };
-        })
-    );
+      );
+    }
   }
 }

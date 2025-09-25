@@ -1,34 +1,4 @@
-export interface QMetryToolConfig {
-  title: string;
-  summary: string;
-  purpose?: string;
-  parameters: Array<{
-    name: string;
-    type: any;
-    description: string;
-    required: boolean;
-    examples?: string[];
-  }>;
-  useCases?: string[];
-  examples?: Array<{
-    description: string;
-    parameters: Record<string, any>;
-    expectedOutput: string;
-  }>;
-  hints?: string[];
-  outputFormat?: string;
-  readOnly?: boolean;
-  idempotent?: boolean;
-  openWorld?: boolean;
-}
-export interface QMetryToolsCollection {
-  SET_PROJECT_INFO: QMetryToolConfig;
-  FETCH_PROJECT_INFO: QMetryToolConfig;
-  FETCH_TEST_CASES: QMetryToolConfig;
-  FETCH_TEST_CASE_DETAILS: QMetryToolConfig;
-  FETCH_TEST_CASE_VERSION_DETAILS: QMetryToolConfig;
-  FETCH_TEST_CASE_STEPS: QMetryToolConfig;
-}
+import { z } from "zod";
 export interface PaginationPayload {
   start?: number;
   page?: number;
@@ -70,3 +40,167 @@ export const DEFAULT_FOLDER_OPTIONS: Required<
   restoreDefaultColumns: false,
   folderID: null,
 };
+
+
+// Reusable Zod schema components
+export const CommonFields = {
+  projectKey: z
+    .string()
+    .describe("Project key - unique identifier for the project"),
+  projectKeyOptional: z
+    .string()
+    .optional()
+    .describe("Project key - unique identifier for the project"),
+  baseUrl: z
+    .string()
+    .url()
+    .optional()
+    .describe("The base URL for the QMetry instance (must be a valid URL)"),
+  start: z
+    .number()
+    .optional()
+    .describe("Start index for pagination - defaults to 0"),
+  page: z
+    .number()
+    .optional()
+    .describe("Page number to return (starts from 1)"),
+  limit: z
+    .number()
+    .optional()
+    .describe("Number of records (default 10)."),
+  tcID: z
+    .number()
+    .describe(
+      "Test Case numeric ID (required for fetching specific test case details). " +
+      "This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. " +
+      "You can get this ID from test case search results or by using filters."
+    ),
+  id: z
+    .number()
+    .describe(
+      "Test Case numeric ID (required for fetching steps or version details). " +
+      "This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. " +
+      "You can get this ID from test case search results."
+    ),
+  version: z
+    .number()
+    .describe(
+      "Test Case version number (required for fetching specific test case version details). " +
+      "This is the internal numeric identifier for the version."
+    ),
+  versionOptional: z
+    .number()
+    .optional()
+    .describe(
+      "Test Case version number (optional, defaults to 1). " +
+      "This is the internal numeric identifier for the version."
+    ),
+  viewId: z
+    .number()
+    .optional()
+    .describe(
+      "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+      "Leave empty unless you have a specific viewId. " +
+      "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. " +
+      "Manual viewId only needed if you want to override the automatic resolution."
+    ),
+  folderPath: z
+    .string()
+    .optional()
+    .describe(
+      'Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. ' +
+      'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+      'Only specify if user wants specific folder like "Automation/Regression".'
+    ),
+  folderID: z
+    .number()
+    .optional()
+    .describe("Folder ID for test cases - unique identifier for the folder containing test cases"),
+  scope: z
+    .string()
+    .optional()
+    .describe("Scope of the test cases (default 'project')"),
+  filter: z
+    .string()
+    .optional()
+    .describe("Filter criteria as JSON string (default '[]')"),
+  udfFilter: z
+    .string()
+    .optional()
+    .describe("User-defined field filter as JSON string (default '[]')"),
+  showRootOnly: z
+    .boolean()
+    .optional()
+    .describe("Whether to show only root folders."),
+  getSubEntities: z
+    .boolean()
+    .optional()
+    .describe("Whether to include sub-entities."),
+  hideEmptyFolders: z
+    .boolean()
+    .optional()
+    .describe("Whether to hide empty folders."),
+  folderSortColumn: z
+    .string()
+    .optional()
+    .describe("Folder sort column (default 'name')"),
+  restoreDefaultColumns: z
+    .boolean()
+    .optional()
+    .describe("Whether to restore default columns (default 'name')"),
+  folderSortOrder: z
+    .string()
+    .optional()
+    .describe("Folder sort order (ASC or DESC)"),
+} as const;
+
+export const ProjectArgsSchema = z.object({
+  projectKey: CommonFields.projectKey,
+});
+
+export const TestCaseListArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  viewId: CommonFields.viewId,
+  folderPath: CommonFields.folderPath,
+  folderID: CommonFields.folderID,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  scope: CommonFields.scope,
+  showRootOnly: CommonFields.showRootOnly,
+  getSubEntities: CommonFields.getSubEntities,
+  hideEmptyFolders: CommonFields.hideEmptyFolders,
+  folderSortColumn: CommonFields.folderSortColumn,
+  restoreDefaultColumns: CommonFields.restoreDefaultColumns,
+  folderSortOrder: CommonFields.folderSortOrder,
+  filter: CommonFields.filter,
+  udfFilter: CommonFields.udfFilter,
+});
+
+export const TestCaseDetailsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  tcID: CommonFields.tcID,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+});
+
+export const TestCaseVersionDetailsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  id: CommonFields.id,
+  version: CommonFields.version,
+  scope: CommonFields.scope,
+});
+
+export const TestCaseStepsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  id: CommonFields.id,
+  version: CommonFields.versionOptional,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+});

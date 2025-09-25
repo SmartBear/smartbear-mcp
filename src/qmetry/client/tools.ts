@@ -1,12 +1,20 @@
 import { z } from "zod";
-import { ENTITY_KEYS } from "../config/constants.js";
+import { ENTITY_KEYS, QMetryToolsHandlers } from "../config/constants.js";
 import { getParams } from "../parameters/utils.js";
-import { QMetryToolsCollection } from "../types/common.js";
+import { ProjectArgsSchema, TestCaseDetailsArgsSchema, TestCaseListArgsSchema, TestCaseStepsArgsSchema, TestCaseVersionDetailsArgsSchema } from "../types/common.js";
+import { ToolParams } from "../../common/types.js";
 
-export const QMETRY_TOOLS: QMetryToolsCollection = {
-  SET_PROJECT_INFO: {
+export interface QMetryToolParams extends ToolParams {
+  handler: string;
+  formatResponse?: (result: any) => any;
+}
+
+export const TOOLS: QMetryToolParams[] = [ 
+  {
     title: "Set QMetry Project Info",
     summary: "Set current QMetry project for your account",
+    handler: QMetryToolsHandlers.SET_PROJECT_INFO,
+    zodSchema: ProjectArgsSchema,
     parameters: [
       {
         name: "projectKey",
@@ -17,10 +25,11 @@ export const QMETRY_TOOLS: QMetryToolsCollection = {
       },
     ],
   },
-
-  FETCH_PROJECT_INFO: {
+  {
     title: "Fetch QMetry Project Info",
     summary: "Fetch QMetry project information including viewId and folderPath needed for other operations",
+    handler: QMetryToolsHandlers.FETCH_PROJECT_INFO,
+    zodSchema: ProjectArgsSchema,
     purpose: "Prerequisite tool that provides project configuration data required by other QMetry operations",
     parameters: [
       {
@@ -61,10 +70,11 @@ export const QMETRY_TOOLS: QMetryToolsCollection = {
     readOnly: true,
     idempotent: true
   },
-
-  FETCH_TEST_CASES: {
+  {
     title: "Fetch Test Cases",
     summary: "Fetch QMetry test cases - automatically handles viewId resolution based on project",
+    handler: QMetryToolsHandlers.FETCH_TEST_CASES,
+    zodSchema: TestCaseListArgsSchema,
     purpose: "Get test cases from QMetry. System automatically gets correct viewId from project info if not provided.",
     parameters: getParams(ENTITY_KEYS.TESTCASE, [
       "projectKey",
@@ -127,10 +137,11 @@ export const QMETRY_TOOLS: QMetryToolsCollection = {
     idempotent: true,
     openWorld: false
   },
-
-  FETCH_TEST_CASE_DETAILS: {
+  {
     title: "Fetch Test Case Details",
     summary: "Get detailed information for a specific QMetry test case by numeric ID",
+    handler: QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS,
+    zodSchema: TestCaseDetailsArgsSchema,
     purpose: "Retrieve comprehensive test case information including metadata, status, and basic properties",
     parameters: getParams(ENTITY_KEYS.TESTCASE, [
       "projectKey",
@@ -163,10 +174,11 @@ export const QMETRY_TOOLS: QMetryToolsCollection = {
     readOnly: true,
     idempotent: true
   },
-
-  FETCH_TEST_CASE_VERSION_DETAILS: {
+  {
     title: "Fetch Test Case Version Details",
     summary: "Get QMetry test case details for a specific version by numeric ID",
+    handler: QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS,
+    zodSchema: TestCaseVersionDetailsArgsSchema,
     purpose: "Retrieve version-specific information for a test case including history and changes",
     parameters: getParams(ENTITY_KEYS.TESTCASE, [
       "projectKey",
@@ -198,10 +210,11 @@ export const QMETRY_TOOLS: QMetryToolsCollection = {
     readOnly: true,
     idempotent: true
   },
-
-  FETCH_TEST_CASE_STEPS: {
+  {
     title: "Fetch Test Case Steps",
     summary: "Get detailed test case steps for a specific test case by numeric ID",
+    handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS,
+     zodSchema: TestCaseStepsArgsSchema,
     purpose: "Retrieve step-by-step instructions and expected results for manual execution of a test case",
     parameters: getParams(ENTITY_KEYS.TESTCASE, [
       "projectKey",
@@ -235,5 +248,4 @@ export const QMETRY_TOOLS: QMetryToolsCollection = {
     readOnly: true,
     idempotent: true
   }
-
-};
+];
