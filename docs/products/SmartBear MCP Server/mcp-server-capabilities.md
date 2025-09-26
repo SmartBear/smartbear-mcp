@@ -1,4 +1,4 @@
-The SmartBear MCP Server provides access to multiple capabilities across our API Hub, Test Hub, BugSnag, and QMetry, all through dedicated tools and resources.
+The SmartBear MCP Server provides access to multiple capabilities across our API Hub, Test Hub, QMetry, and BugSnag, all through dedicated tools and resources.
 
 ![hubs.png](./images/embedded/hubs.png)
 
