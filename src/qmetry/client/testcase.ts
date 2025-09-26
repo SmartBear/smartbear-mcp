@@ -171,4 +171,4 @@ export async function fetchTestCaseSteps(
     baseUrl: resolvedBaseUrl,
     body,
   });
-};
+}

@@ -41,7 +41,6 @@ export class QmetryClient implements Client {
       try {
         return await fn();
       } catch (err) {
-        console.error(`[QMetry MCP] Tool "${toolTitle}" error:`, err);
         return {
           content: [
             {
@@ -77,10 +76,10 @@ export class QmetryClient implements Client {
                 projectInfo = await getProjectInfo(this.token, baseUrl, projectKey) as any;
               } catch (err) {
                 throw new Error(
-                    `Failed to auto-resolve viewId/folderPath for project ${projectKey}. 
-                    Please provide them manually or check project access. 
-                    Error: ${err instanceof Error ? err.message : String(err)}`
-                  );
+                  `Failed to auto-resolve viewId/folderPath for project ${projectKey}. ` +
+                  `Please provide them manually or check project access. ` +
+                  `Error: ${err instanceof Error ? err.message : String(err)}`
+                );
               } 
               if (!viewId && projectInfo?.latestViews?.TC?.viewId) {
                 viewId = projectInfo.latestViews.TC.viewId;
