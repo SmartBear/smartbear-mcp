@@ -23,15 +23,21 @@ jobs:
         with:
           role-to-assume: ${{ secrets.ECR_IAM_ROLE_ARN }}
           aws-region: us-east-1
-      - name: Login to ECR
-        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{secrets.ECR_PRIVATE_REGISTRY_URL}}
 
-      - name: Build, tag, and push docker image to Amazon ECR
+      - name: Login to Amazon ECR private
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076
+
+      - name: Build, tag, and push docker image to Amazon ECR Public    
         env:
+          ECR_PUBLIC_ALIAS: r2q3q1g5
+          REPOSITORY: smartbear-mcp
           IMAGE_TAG: 0.6.0
         run: |
-          IMAGE="${{secrets.ECR_PRIVATE_REGISTRY_URL}}/smartbear-software/smartbear-mcp:${IMAGE_TAG}"
+          PUBLIC_IMAGE="public.ecr.aws/${ECR_PUBLIC_ALIAS}/${REPOSITORY}:${IMAGE_TAG}"
+          PRIVATE_IMAGE=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}/${REPOSITORY}:${IMAGE_TAG}
           
-          docker build -t "$IMAGE" .
+          docker build -t "$PUBLIC_IMAGE" -t "$PRIVATE_IMAGE" .
           
-          docker push "$IMAGE"
+          docker push "$PUBLIC_IMAGE"
+          
+          docker push "$PRIVATE_IMAGE"
