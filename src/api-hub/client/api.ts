@@ -89,7 +89,7 @@ export class ApiHubAPI {
   }
 
   async getPortals(): Promise<PortalsListResponse> {
-    const response = await fetch(`${this.config.basePath}/portals`, {
+    const response = await fetch(`${this.config.portalBasePath}/portals`, {
       method: "GET",
       headers: this.headers,
     });
@@ -98,7 +98,7 @@ export class ApiHubAPI {
   }
 
   async createPortal(body: CreatePortalArgs): Promise<Portal> {
-    const response = await fetch(`${this.config.basePath}/portals`, {
+    const response = await fetch(`${this.config.portalBasePath}/portals`, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(body),
@@ -109,7 +109,7 @@ export class ApiHubAPI {
 
   async getPortal(portalId: string): Promise<Portal> {
     const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}`,
+      `${this.config.portalBasePath}/portals/${portalId}`,
       {
         method: "GET",
         headers: this.headers,
@@ -120,7 +120,7 @@ export class ApiHubAPI {
   }
 
   async deletePortal(portalId: string): Promise<void> {
-    await fetch(`${this.config.basePath}/portals/${portalId}`, {
+    await fetch(`${this.config.portalBasePath}/portals/${portalId}`, {
       method: "DELETE",
       headers: this.headers,
     });
@@ -131,7 +131,7 @@ export class ApiHubAPI {
     body: UpdatePortalBody,
   ): Promise<Portal | FallbackResponse> {
     const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}`,
+      `${this.config.portalBasePath}/portals/${portalId}`,
       {
         method: "PATCH",
         headers: this.headers,
@@ -144,7 +144,7 @@ export class ApiHubAPI {
 
   async getPortalProducts(portalId: string): Promise<ProductsListResponse> {
     const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}/products`,
+      `${this.config.portalBasePath}/portals/${portalId}/products`,
       {
         method: "GET",
         headers: this.headers,
@@ -159,7 +159,7 @@ export class ApiHubAPI {
     body: CreateProductBody,
   ): Promise<Product> {
     const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}/products`,
+      `${this.config.portalBasePath}/portals/${portalId}/products`,
       {
         method: "POST",
         headers: this.headers,
@@ -172,7 +172,7 @@ export class ApiHubAPI {
 
   async getPortalProduct(productId: string): Promise<Product> {
     const response = await fetch(
-      `${this.config.basePath}/products/${productId}`,
+      `${this.config.portalBasePath}/products/${productId}`,
       {
         method: "GET",
         headers: this.headers,
@@ -186,7 +186,7 @@ export class ApiHubAPI {
     productId: string,
   ): Promise<Record<string, never> | FallbackResponse> {
     const response = await fetch(
-      `${this.config.basePath}/products/${productId}`,
+      `${this.config.portalBasePath}/products/${productId}`,
       {
         method: "DELETE",
         headers: this.headers,
@@ -201,7 +201,7 @@ export class ApiHubAPI {
     body: UpdateProductBody,
   ): Promise<Product | SuccessResponse | FallbackResponse> {
     const response = await fetch(
-      `${this.config.basePath}/products/${productId}`,
+      `${this.config.portalBasePath}/products/${productId}`,
       {
         method: "PATCH",
         headers: this.headers,
