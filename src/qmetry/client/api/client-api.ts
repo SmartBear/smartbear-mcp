@@ -1,6 +1,6 @@
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
 import { QMETRY_DEFAULTS } from "../../config/constants.js";
-import { type RequestOptions } from "../../types/common.js";
+import type { RequestOptions } from "../../types/common.js";
 
 export async function qmetryRequest<T>({
   method = "GET",
