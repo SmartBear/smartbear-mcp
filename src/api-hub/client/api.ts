@@ -1,5 +1,9 @@
 import type { ApiHubConfiguration } from "./configuration.js";
 import type {
+  ApiDefinitionParams,
+  ApiSearchParams,
+  ApiSearchResponse,
+  ApisJsonResponse,
   CreatePortalArgs,
   CreateProductBody,
   FallbackResponse,
@@ -239,5 +243,115 @@ export class ApiHubAPI {
     defaultReturn: D = {} as D,
   ): Promise<T | D | FallbackResponse> {
     return this.parseResponse<T, D>(response, defaultReturn);
+  }
+
+  // Registry API methods for SwaggerHub Design functionality
+
+  /**
+   * Search APIs and Domains in SwaggerHub Registry using /specs endpoint
+   * @param params Search parameters
+   * @returns Array of processed API metadata
+   */
+  async searchApis(params: ApiSearchParams = {}): Promise<ApiSearchResponse> {
+    const searchParams = new URLSearchParams();
+
+    if (params.query) searchParams.append("query", params.query);
+    if (params.state) searchParams.append("state", params.state);
+    if (params.tag) searchParams.append("tag", params.tag);
+    if (params.offset !== undefined)
+      searchParams.append("offset", params.offset.toString());
+    if (params.limit !== undefined)
+      searchParams.append("limit", params.limit.toString());
+    if (params.sort) searchParams.append("sort", params.sort);
+    if (params.order) searchParams.append("order", params.order);
+    if (params.owner) searchParams.append("owner", params.owner);
+    if (params.specType) searchParams.append("specType", params.specType);
+
+    const url = `${this.config.registryBasePath}/specs${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `SwaggerHub Registry API searchApis failed - status: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const apisJsonResponse = (await response.json()) as ApisJsonResponse;
+
+    // Transform APIs.json response to our ApiMetadata format
+    return this.transformApisJsonToMetadata(apisJsonResponse.apis);
+  }
+
+  /**
+   * Transform APIs.json specifications to our ApiMetadata format
+   * @param specs Array of API specifications from APIs.json
+   * @returns Array of processed API metadata
+   */
+  private transformApisJsonToMetadata(specs: any[]): ApiSearchResponse {
+    return specs.map((spec) => {
+      // Extract useful properties from the properties array
+      const properties = spec.properties || [];
+      const getProperty = (type: string) =>
+        properties.find((p: any) => p.type === type)?.value ||
+        properties.find((p: any) => p.type === type)?.url;
+
+      // Extract owner and API name from the Swagger URL
+      const swaggerUrl = getProperty("Swagger") || "";
+      const urlMatch = swaggerUrl.match(/\/apis\/([^/]+)\/([^/]+)\/([^/]+)/);
+
+      return {
+        owner: urlMatch?.[1] || "",
+        name: spec.name || "",
+        description: spec.description || "",
+        summary: spec.summary || "",
+        version: getProperty("X-Version") || urlMatch?.[3] || "",
+        specification: getProperty("X-Specification") || "",
+        created: getProperty("X-Created"),
+        modified: getProperty("X-Modified"),
+        published: getProperty("X-Published"),
+        private: getProperty("X-Private"),
+        oasVersion: getProperty("X-OASVersion"),
+        url: swaggerUrl,
+      };
+    });
+  }
+
+  /**
+   * Get API definition from SwaggerHub Registry
+   * @param params Parameters including owner, api name, version, and options
+   * @returns API definition (OpenAPI/Swagger specification)
+   */
+  async getApiDefinition(params: ApiDefinitionParams): Promise<unknown> {
+    const searchParams = new URLSearchParams();
+
+    if (params.resolved !== undefined)
+      searchParams.append("resolved", params.resolved.toString());
+    if (params.flatten !== undefined)
+      searchParams.append("flatten", params.flatten.toString());
+
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(params.owner)}/${encodeURIComponent(params.api)}/${encodeURIComponent(params.version)}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `SwaggerHub Registry API getApiDefinition failed - status: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    // Return the raw API definition (could be JSON or YAML)
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      return response.json();
+    } else {
+      return response.text();
+    }
   }
 }
