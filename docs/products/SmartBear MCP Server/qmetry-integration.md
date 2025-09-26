@@ -1,4 +1,4 @@
-![test-hub.png](./images/embedded/qmetry.png)
+![qmetry.png](./images/embedded/qmetry.png)
 
 The QMetry client provides the following test management capabilities as listed below. Tools for QMetry require a `QMETRY_API_TOKEN`.
 

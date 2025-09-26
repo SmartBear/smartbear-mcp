@@ -123,10 +123,10 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "API_HUB_API_KEY": "${input:api_hub_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
-        "QMETRY_API_KEY": "${input:qmetry_api_key}",
-        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         // "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
         // "PACT_BROKER_PASSWORD": "${input:pact_broker_password}",
+        "QMETRY_API_KEY": "${input:qmetry_api_key}",
+        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
       }
     }
   },
@@ -216,11 +216,11 @@ Add to your `mcp.json` configuration:
         "API_HUB_API_KEY": "your-api-hub-api-key",
         "PACT_BROKER_BASE_URL": "https://your-tenant.pactflow.io",
         "PACT_BROKER_TOKEN": "your-pact-broker-token",
-        "QMETRY_API_KEY": "${input:qmetry_api_key}",
-        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         // If using the open source Pact broker, replace the token with:
         // "PACT_BROKER_USERNAME": "your-username",
         // "PACT_BROKER_PASSWORD": "your-password",
+        "QMETRY_API_KEY": "${input:qmetry_api_key}",
+        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
       }
     }
   }
@@ -248,11 +248,11 @@ Edit your `claude_desktop_config.json` file:
         "API_HUB_API_KEY": "your-api-hub-api-key",
         "PACT_BROKER_BASE_URL": "https://your-tenant.pactflow.io",
         "PACT_BROKER_TOKEN": "your-pact-broker-token",
-        "QMETRY_API_KEY": "${input:qmetry_api_key}",
-        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         // If using the open source Pact broker, replace the token with:
         // "PACT_BROKER_USERNAME": "your-username",
         // "PACT_BROKER_PASSWORD": "your-password",
+        "QMETRY_API_KEY": "${input:qmetry_api_key}",
+        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
       }
     }
   }
@@ -342,11 +342,11 @@ To run the built server locally in VS Code, add the following configuration to 
         "API_HUB_API_KEY": "${input:api_hub_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
-        "QMETRY_API_KEY": "${input:qmetry_api_key}",
-        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         // If using the open source Pact broker, replace the token with:
         // "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
         // "PACT_BROKER_PASSWORD": "${input:pact_broker_password}",
+        "QMETRY_API_KEY": "${input:qmetry_api_key}",
+        "QMETRY_BASE_URL": "${input:qmetry_base_url}",
       }
     }
   },
