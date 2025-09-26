@@ -1,4 +1,14 @@
 import { z } from "zod";
+import { QMETRY_DEFAULTS } from "../config/constants.js";
+
+export interface RequestOptions {
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  path: string;
+  token: string;
+  project?: string;
+  baseUrl: string;
+  body?: any;
+}
 export interface PaginationPayload {
   start?: number;
   page?: number;
@@ -46,28 +56,34 @@ export const DEFAULT_FOLDER_OPTIONS: Required<
 export const CommonFields = {
   projectKey: z
     .string()
-    .describe("Project key - unique identifier for the project"),
+    .describe("Project key - unique identifier for the project")
+    .default(QMETRY_DEFAULTS.PROJECT_KEY),
   projectKeyOptional: z
     .string()
     .optional()
-    .describe("Project key - unique identifier for the project"),
+    .describe("Project key - unique identifier for the project")
+    .default(QMETRY_DEFAULTS.PROJECT_KEY),
   baseUrl: z
     .string()
     .url()
     .optional()
-    .describe("The base URL for the QMetry instance (must be a valid URL)"),
+    .describe("The base URL for the QMetry instance (must be a valid URL)")
+    .default(QMETRY_DEFAULTS.BASE_URL),
   start: z
     .number()
     .optional()
-    .describe("Start index for pagination - defaults to 0"),
+    .describe("Start index for pagination - defaults to 0")
+    .default(0),
   page: z
     .number()
     .optional()
-    .describe("Page number to return (starts from 1)"),
+    .describe("Page number to return (starts from 1)")
+    .default(1),
   limit: z
     .number()
     .optional()
-    .describe("Number of records (default 10)."),
+    .describe("Number of records (default 10).")
+    .default(10),
   tcID: z
     .number()
     .describe(
@@ -97,7 +113,6 @@ export const CommonFields = {
     ),
   viewId: z
     .number()
-    .optional()
     .describe(
       "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
       "Leave empty unless you have a specific viewId. " +
@@ -111,7 +126,7 @@ export const CommonFields = {
       'Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. ' +
       'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
       'Only specify if user wants specific folder like "Automation/Regression".'
-    ),
+    ).default(""),
   folderID: z
     .number()
     .optional()
@@ -119,15 +134,18 @@ export const CommonFields = {
   scope: z
     .string()
     .optional()
-    .describe("Scope of the test cases (default 'project')"),
+    .describe("Scope of the test cases (default 'project')")
+    .default("project"),
   filter: z
     .string()
     .optional()
-    .describe("Filter criteria as JSON string (default '[]')"),
+    .describe("Filter criteria as JSON string (default '[]')")
+    .default("[]"),
   udfFilter: z
     .string()
     .optional()
-    .describe("User-defined field filter as JSON string (default '[]')"),
+    .describe("User-defined field filter as JSON string (default '[]')")
+    .default("[]"),
   showRootOnly: z
     .boolean()
     .optional()
@@ -147,7 +165,7 @@ export const CommonFields = {
   restoreDefaultColumns: z
     .boolean()
     .optional()
-    .describe("Whether to restore default columns (default 'name')"),
+    .describe("Whether to restore default columns (default 'false')"),
   folderSortOrder: z
     .string()
     .optional()

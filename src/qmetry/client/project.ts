@@ -29,4 +29,4 @@ export async function getProjectInfo(
     baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
   });
-}
+};

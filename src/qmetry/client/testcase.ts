@@ -6,10 +6,10 @@ import {
   DEFAULT_FETCH_TESTCASE_STEPS_PAYLOAD,
   DEFAULT_FETCH_TESTCASE_VERSION_DETAILS_PAYLOAD,
   DEFAULT_FETCH_TESTCASES_PAYLOAD,
-  FetchTestCaseDetailsPayload,
-  FetchTestCasesPayload,
-  FetchTestCaseStepsPayload,
-  FetchTestCaseVersionDetailsPayload,
+  type FetchTestCaseDetailsPayload,
+  type FetchTestCasesPayload,
+  type FetchTestCaseStepsPayload,
+  type FetchTestCaseVersionDetailsPayload,
 } from "../types/testcase.js";
 
 function resolveDefaults(baseUrl?: string, project?: string) {
@@ -171,4 +171,4 @@ export async function fetchTestCaseSteps(
     baseUrl: resolvedBaseUrl,
     body,
   });
-}
+};

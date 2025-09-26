@@ -2,9 +2,9 @@ import {
   DEFAULT_FILTER,
   DEFAULT_FOLDER_OPTIONS,
   DEFAULT_PAGINATION,
-  PaginationPayload,
-  FilterPayload,
-  FolderPayload,
+  type PaginationPayload,
+  type FilterPayload,
+  type FolderPayload,
 } from "./common.js";
 
 export interface FetchTestCasesPayload

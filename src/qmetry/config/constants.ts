@@ -10,10 +10,4 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_CASE_DETAILS: "getTestCaseDetails",
   FETCH_TEST_CASE_VERSION_DETAILS: "getTestCaseVersionDetails",
   FETCH_TEST_CASE_STEPS: "getTestCaseSteps"
-}
-
-export const ENTITY_KEYS = {
-  TESTCASE: "testcase",
-} as const;
-
-export type EntityKey = (typeof ENTITY_KEYS)[keyof typeof ENTITY_KEYS];
+};

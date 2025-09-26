@@ -43,6 +43,9 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle API errors gracefully", async () => {
+      // Mock console.error to suppress expected error logging during test
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      
       (project.getProjectInfo as any).mockRejectedValue(new Error("boom"));
 
       const handler = getHandler("Fetch QMetry Project Info");
@@ -57,6 +60,9 @@ describe("QmetryClient tools", () => {
           }
         ]
       });
+      
+      // Restore console.error
+      consoleSpy.mockRestore();
     });
   });
 
@@ -74,16 +80,23 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Cases");
       const result = await handler({});
 
-      // Auto-resolution is currently not working due to string literal comparison bug
-      // The getProjectInfo should not be called because the condition doesn't match
-      expect(project.getProjectInfo).not.toHaveBeenCalled();
+      // Auto-resolution is now working correctly - getProjectInfo should be called
+      // when viewId is not provided to auto-resolve it
+      expect(project.getProjectInfo).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default"
+      );
 
-      // fetchTestCases should be called directly with the args
+      // fetchTestCases should be called with auto-resolved viewId and folderPath
       expect(testcase.fetchTestCases).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
         "default",
-        {} // Empty object since no auto-resolution or default parameters are applied
+        expect.objectContaining({
+          viewId: 12345, // Auto-resolved from project info
+          folderPath: "" // Auto-set to empty string for root
+        })
       );
 
       expect(result.content[0].text).toContain("Test1");
@@ -116,16 +129,28 @@ describe("QmetryClient tools", () => {
     });
 
     it("should handle auto-resolution failure gracefully", async () => {
-      // Mock fetchTestCases to throw an error when required parameters are missing
-      (testcase.fetchTestCases as any).mockRejectedValue(new Error("[fetchTestCases] Missing or invalid required parameter: 'viewId'."));
+      // Mock console.error to suppress expected error logging during test
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      
+      // Mock getProjectInfo to fail during auto-resolution
+      (project.getProjectInfo as any).mockRejectedValue(new Error("Project not found"));
 
       const handler = getHandler("Fetch Test Cases");
       const result = await handler({});
 
-      // Since auto-resolution doesn't work due to the string literal bug,
-      // the error comes from fetchTestCases being called with missing parameters
+      // Auto-resolution should be attempted and fail gracefully
+      expect(project.getProjectInfo).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default"
+      );
+
       expect(result.content[0].success).toBe(false);
-      expect(result.content[0].text).toContain("Missing or invalid required parameter");
+      expect(result.content[0].text).toContain("Failed to auto-resolve viewId/folderPath");
+      expect(result.content[0].text).toContain("Project not found");
+      
+      // Restore console.error
+      consoleSpy.mockRestore();
     });
   });
 

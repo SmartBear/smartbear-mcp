@@ -56,13 +56,11 @@ describe("QmetryClient", () => {
       const toolCalls = mockRegister.mock.calls;
       expect(toolCalls.length).toBe(6);
       
-      toolCalls.forEach(([toolConfig, handler], index) => {
+      toolCalls.forEach(([toolConfig, handler], _index) => {
         expect(toolConfig).toHaveProperty('title');
         expect(toolConfig).toHaveProperty('summary');
-        expect(toolConfig).toHaveProperty('parameters');
         expect(typeof toolConfig.title).toBe('string');
         expect(typeof toolConfig.summary).toBe('string');
-        expect(Array.isArray(toolConfig.parameters)).toBe(true);
         expect(typeof handler).toBe('function');
       });
     });

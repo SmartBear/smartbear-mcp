@@ -6,10 +6,12 @@ import { QMetryToolsHandlers } from "../config/constants.js";
  * Mapping of QMetry tool handlers to their implementation functions
  * Used by the client to dynamically call the appropriate handler for each tool
  * 
- * Note: Using Function type for flexibility since handlers have different signatures.
+ * Note: Using explicit function type definition for better type safety.
  * All handlers are expected to return Promise<any> and take at least token, baseUrl, project.
  */
-export const QMETRY_HANDLER_MAP: Record<string, Function> = {
+type QMetryHandler = (token: string, baseUrl: string, project: string, payload?: any) => Promise<any>;
+
+export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.SET_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_TEST_CASES]: fetchTestCases,

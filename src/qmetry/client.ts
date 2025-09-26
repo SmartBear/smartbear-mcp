@@ -1,6 +1,6 @@
 import { TOOLS } from "./client/tools.js";
 import { QMETRY_HANDLER_MAP } from "./client/handlers.js";
-import {
+import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
@@ -72,7 +72,7 @@ export class QmetryClient implements Client {
             let folderPath = a.folderPath;
 
             if (!viewId || folderPath === undefined) {
-              let projectInfo;
+              let projectInfo: any;
               try {
                 projectInfo = await getProjectInfo(this.token, baseUrl, projectKey) as any;
               } catch (err) {

@@ -1,8 +1,6 @@
-import { z } from "zod";
-import { ENTITY_KEYS, QMetryToolsHandlers } from "../config/constants.js";
-import { getParams } from "../parameters/utils.js";
+import { QMetryToolsHandlers } from "../config/constants.js";
 import { ProjectArgsSchema, TestCaseDetailsArgsSchema, TestCaseListArgsSchema, TestCaseStepsArgsSchema, TestCaseVersionDetailsArgsSchema } from "../types/common.js";
-import { ToolParams } from "../../common/types.js";
+import type { ToolParams } from "../../common/types.js";
 
 export interface QMetryToolParams extends ToolParams {
   handler: string;
@@ -15,33 +13,52 @@ export const TOOLS: QMetryToolParams[] = [
     summary: "Set current QMetry project for your account",
     handler: QMetryToolsHandlers.SET_PROJECT_INFO,
     zodSchema: ProjectArgsSchema,
-    parameters: [
-      {
-        name: "projectKey",
-        type: z.string().optional(),
-        description: "Project key to use for the request header. Defaults to 'default'.",
-        required: true,
-        examples: ["default", "UT", "MAC"],
-      },
+    purpose: "Switch the active QMetry project context for the current session. " +
+              "This tool sets the default project that will be used for all subsequent QMetry operations. " +
+              "Essential for multi-project QMetry instances where you need to work with specific projects.",
+    useCases: [
+      "Switch to a specific project before performing test case operations",
+      "Set project context for batch operations on test cases",
+      "Configure the default project for the current session",
+      "Validate access to a specific project before proceeding with operations"
     ],
+    examples: [
+      {
+        description: "Set default project as active",
+        parameters: { projectKey: "default" },
+        expectedOutput: "Project context set to 'default' with confirmation of project details"
+      },
+      {
+        description: "Switch to UT project",
+        parameters: { projectKey: "UT" },
+        expectedOutput: "Project context switched to 'UT' project with available configurations"
+      },
+      {
+        description: "Set MAC project as active for test case operations",
+        parameters: { projectKey: "MAC" },
+        expectedOutput: "Project context set to 'MAC' with viewIds and folder structure"
+      }
+    ],
+    hints: [
+      "Always set the project context before performing test case operations in multi-project environments",
+      "Use the same project key that you'll use in subsequent test case operations",
+      "Common project keys include 'default', 'UT', 'MAC', 'VT' - check with your QMetry admin for available projects",
+      "This operation must be performed before fetching test cases if working with non-default projects",
+      "The project context persists for the current session until changed again"
+    ],
+    outputFormat: "JSON object containing project configuration details, confirmation of project switch, and available project metadata",
+    readOnly: false,
+    idempotent: true
   },
   {
     title: "Fetch QMetry Project Info",
     summary: "Fetch QMetry project information including viewId and folderPath needed for other operations",
     handler: QMetryToolsHandlers.FETCH_PROJECT_INFO,
     zodSchema: ProjectArgsSchema,
-    purpose: "Prerequisite tool that provides project configuration data required by other QMetry operations",
-    parameters: [
-      {
-        name: "projectKey",
-        type: z.string().optional(),
-        description: "The project key to fetch info for. Use 'default' if not specified. " +
-                    "Common project keys include 'UT', 'VT', 'MAC', etc. " +
-                    "If user doesn't specify a project key, this tool will use 'default' automatically.",
-        required: false,
-        examples: ["default", "UT", "VT", "MAC"],
-      },
-    ],
+    purpose: "Prerequisite tool that provides project configuration data required by other QMetry operations. " +
+              "The project key to fetch info for. Use 'default' if not specified. " +
+              "Common project keys include 'UT', 'VT', 'MAC', etc. " +
+              "If user doesn't specify a project key, this tool will use 'default' automatically.",
     useCases: [
       "Get project configuration before fetching test cases",
       "Retrieve available viewIds for test case listing",
@@ -76,25 +93,6 @@ export const TOOLS: QMetryToolParams[] = [
     handler: QMetryToolsHandlers.FETCH_TEST_CASES,
     zodSchema: TestCaseListArgsSchema,
     purpose: "Get test cases from QMetry. System automatically gets correct viewId from project info if not provided.",
-    parameters: getParams(ENTITY_KEYS.TESTCASE, [
-      "projectKey",
-      "baseUrl",
-      "viewId",
-      "folderPath",
-      "limit",
-      "page",
-      "start",
-      "scope",
-      "showRootOnly",
-      "getSubEntities",
-      "hideEmptyFolders",
-      "folderSortColumn",
-      "folderSortOrder",
-      "restoreDefaultColumns",
-      "filter",
-      "udfFilter",
-      "folderID",
-    ]),
     useCases: [
       "List all test cases in a project",
       "Search for specific test cases using filters",
@@ -143,14 +141,6 @@ export const TOOLS: QMetryToolParams[] = [
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS,
     zodSchema: TestCaseDetailsArgsSchema,
     purpose: "Retrieve comprehensive test case information including metadata, status, and basic properties",
-    parameters: getParams(ENTITY_KEYS.TESTCASE, [
-      "projectKey",
-      "baseUrl",
-      "tcID",
-      "start",
-      "page",
-      "limit",
-    ]),
     useCases: [
       "Get test case details by numeric ID",
       "Retrieve test case metadata for reporting",
@@ -180,13 +170,6 @@ export const TOOLS: QMetryToolParams[] = [
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS,
     zodSchema: TestCaseVersionDetailsArgsSchema,
     purpose: "Retrieve version-specific information for a test case including history and changes",
-    parameters: getParams(ENTITY_KEYS.TESTCASE, [
-      "projectKey",
-      "baseUrl",
-      "id",
-      "version",
-      "scope",
-    ]),
     useCases: [
       "Get specific version details of a test case",
       "Compare different versions of a test case",
@@ -214,17 +197,8 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Test Case Steps",
     summary: "Get detailed test case steps for a specific test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS,
-     zodSchema: TestCaseStepsArgsSchema,
+    zodSchema: TestCaseStepsArgsSchema,
     purpose: "Retrieve step-by-step instructions and expected results for manual execution of a test case",
-    parameters: getParams(ENTITY_KEYS.TESTCASE, [
-      "projectKey",
-      "baseUrl",
-      "id",
-      "version",
-      "start",
-      "page",
-      "limit",
-    ]),
     useCases: [
       "Get step-by-step instructions with expected results",
       "Retrieve test case execution procedure for manual runs",

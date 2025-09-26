@@ -1,14 +1,6 @@
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
 import { QMETRY_DEFAULTS } from "../../config/constants.js";
-
-interface RequestOptions {
-  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  path: string;
-  token: string;
-  project?: string;
-  baseUrl: string;
-  body?: any;
-}
+import { type RequestOptions } from "../../types/common.js";
 
 export async function qmetryRequest<T>({
   method = "GET",
@@ -18,7 +10,7 @@ export async function qmetryRequest<T>({
   baseUrl,
   body,
 }: RequestOptions): Promise<T> {
-  const url = `${baseUrl}${path}`;
+  const url: string = `${baseUrl}${path}`;
   const headers: Record<string, string> = {
     apikey: token,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
@@ -36,23 +28,23 @@ export async function qmetryRequest<T>({
     init.body = JSON.stringify(body);
   }
 
-  const res = await fetch(url, init);
+  const res: Response = await fetch(url, init);
 
   if (!res.ok) {
- let errorText: string;
- try {
-    const contentType = res.headers.get("content-type");
-    if (contentType?.includes("application/json")) {
-      const json = await res.json();
-      errorText = JSON.stringify(json);
-    } else {
-      errorText = await res.text();
+    let errorText: string;
+    try {
+      const contentType: string | null = res.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
+        const json: Record<string, any> = await res.json();
+        errorText = JSON.stringify(json);
+      } else {
+        errorText = await res.text();
+      }
+    } catch {
+      errorText = res.statusText;
     }
-  } catch {
-    errorText = res.statusText;
-  }
     throw new Error(`QMetry API request failed (${res.status}): ${errorText}`); 
   }
 
   return (await res.json()) as T;
-}
+};
