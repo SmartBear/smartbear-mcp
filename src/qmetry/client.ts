@@ -37,7 +37,7 @@ export class QmetryClient implements Client {
       projectKey: args.projectKey ?? this.projectApiKey,
     });
 
-    const handleAsync = async (toolTitle: string, fn: () => Promise<any>) => {
+    const handleAsync = async (fn: () => Promise<any>) => {
       try {
         return await fn();
       } catch (err) {
@@ -61,7 +61,7 @@ export class QmetryClient implements Client {
       }
 
       register(tool, (args) =>
-        handleAsync(tool.title, async () => {
+        handleAsync(async () => {
           const a = args as Record<string, any>;
           const { baseUrl, projectKey } = resolveContext(a);
 
