@@ -60,6 +60,14 @@
     },
     {
       "order": 6,
+      "parent": "mcp-server-capabilities",
+      "name": "QMetry Integration",
+      "slug": "qmetry-integration",
+      "type": "markdown",
+      "contentUrl": "qmetry-integration.md"
+    },
+    {
+      "order": 7,
       "parent": "",
       "name": "Getting Started",
       "slug": "getting-started",
@@ -67,7 +75,7 @@
       "contentUrl": "getting-started.md"
     },
     {
-      "order": 7,
+      "order": 8,
       "parent": "",
       "name": "Best Practices",
       "slug": "best-practices",
@@ -75,7 +83,7 @@
       "contentUrl": "best-practices.md"
     },
     {
-      "order": 8,
+      "order": 9,
       "parent": "",
       "name": "Troubleshooting",
       "slug": "troubleshooting",

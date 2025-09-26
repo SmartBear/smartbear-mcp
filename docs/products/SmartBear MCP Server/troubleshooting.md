@@ -7,6 +7,7 @@
     -   `BUGSNAG_AUTH_TOKEN` for BugSnag
     -   `REFLECT_API_TOKEN` for Reflect
     -   `API_HUB_API_KEY` for API Hub
+    -   `QMETRY_API_KEY` for QMetry
 -   Ensure you have the correct token type (Auth Token vs API Key) for each service.
 
 ### Build and Installation Problems
