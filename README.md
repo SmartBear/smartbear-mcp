@@ -130,16 +130,16 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
          "password": true
       },
       {
-        "id": "qmetry_api_key",
-        "type": "promptString",
-        "description": "QMetry Open API Key",
-        "password": true
+          "id": "qmetry_api_key",
+          "type": "promptString",
+          "description": "QMetry Open API Key",
+          "password": true
       },
       {
-        "id": "qmetry_base_url",
-        "type": "promptString",
-        "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed.",
-        "password": false
+          "id": "qmetry_base_url",
+          "type": "promptString",
+          "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed.",
+          "password": false
       },
   ]
 }
