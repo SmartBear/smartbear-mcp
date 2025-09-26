@@ -8,6 +8,8 @@
 
 import type { ToolParams } from "../../common/types.js";
 import {
+  ApiDefinitionParamsSchema,
+  ApiSearchParamsSchema,
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   PortalArgsSchema,
@@ -84,5 +86,20 @@ export const TOOLS: ApiHubToolParams[] = [
     summary: "Update a product's settings within a specific portal.",
     zodSchema: UpdateProductArgsSchema,
     handler: "updatePortalProduct",
+  },
+  // Registry API tools for SwaggerHub Design functionality
+  {
+    title: "Search APIs and Domains",
+    summary:
+      "Search for APIs and Domains in SwaggerHub Registry using the comprehensive /specs endpoint and retrieve metadata including owner, name, description, summary, version, and specification.",
+    zodSchema: ApiSearchParamsSchema,
+    handler: "searchApis",
+  },
+  {
+    title: "Get API Definition",
+    summary:
+      "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.",
+    zodSchema: ApiDefinitionParamsSchema,
+    handler: "getApiDefinition",
   },
 ];

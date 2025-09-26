@@ -281,3 +281,131 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
       "Change navigation visibility - true hides from portal landing page menus while keeping the product accessible via direct links",
     ),
 });
+
+// Registry API types for SwaggerHub Design functionality
+export interface ApiSearchParams {
+  query?: string;
+  state?: "ALL" | "PUBLISHED" | "UNPUBLISHED";
+  tag?: string;
+  offset?: number;
+  limit?: number;
+  sort?: "NAME" | "UPDATED" | "CREATED";
+  order?: "ASC" | "DESC";
+  owner?: string;
+  specType?: "API" | "DOMAIN";
+}
+
+// APIs.json format response types
+export interface ApiProperty {
+  type: string;
+  value?: string;
+  url?: string;
+}
+
+export interface ApiSpecification {
+  name: string;
+  description: string;
+  summary: string;
+  tags: string[];
+  properties: ApiProperty[];
+}
+
+export interface ApisJsonResponse {
+  name: string;
+  description: string;
+  url: string;
+  offset: number;
+  totalCount: number;
+  blocked: boolean;
+  apis: ApiSpecification[];
+}
+
+// Processed API metadata for easier consumption
+export interface ApiMetadata {
+  owner: string;
+  name: string;
+  description: string;
+  summary: string;
+  version: string;
+  specification: string;
+  created?: string;
+  modified?: string;
+  published?: string;
+  private?: string;
+  oasVersion?: string;
+  url?: string;
+}
+
+export interface ApiDefinitionParams {
+  owner: string;
+  api: string;
+  version: string;
+  resolved?: boolean;
+  flatten?: boolean;
+}
+
+export type ApiSearchResponse = ApiMetadata[];
+
+// Zod schemas for Registry API validation
+export const ApiSearchParamsSchema = z.object({
+  query: z
+    .string()
+    .optional()
+    .describe("Search query to filter APIs by name, description, or content"),
+  state: z
+    .enum(["ALL", "PUBLISHED", "UNPUBLISHED"])
+    .optional()
+    .describe(
+      "Filter APIs by publication state - ALL (default), PUBLISHED, or UNPUBLISHED",
+    ),
+  tag: z.string().optional().describe("Filter APIs by tag"),
+  offset: z
+    .number()
+    .min(0)
+    .optional()
+    .describe("Offset for pagination (0-based, default 0)"),
+  limit: z
+    .number()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe("Number of results per page (1-100, default 20)"),
+  sort: z
+    .enum(["NAME", "UPDATED", "CREATED"])
+    .optional()
+    .describe("Sort field - NAME, UPDATED, or CREATED (default NAME)"),
+  order: z
+    .enum(["ASC", "DESC"])
+    .optional()
+    .describe("Sort order - ASC or DESC (default ASC)"),
+  owner: z
+    .string()
+    .optional()
+    .describe("Filter APIs by owner (organization or user)"),
+  specType: z
+    .enum(["API", "DOMAIN"])
+    .optional()
+    .describe(
+      "Filter by specification type - API or DOMAIN (default all types)",
+    ),
+});
+
+export const ApiDefinitionParamsSchema = z.object({
+  owner: z
+    .string()
+    .describe("API owner (organization or user, case-sensitive)"),
+  api: z.string().describe("API name (case-sensitive)"),
+  version: z.string().describe("Version identifier"),
+  resolved: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set to true to get the resolved version with all external $refs included (default false)",
+    ),
+  flatten: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set to true to create models from inline schemas in OpenAPI definition (default false)",
+    ),
+});

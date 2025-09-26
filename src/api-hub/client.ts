@@ -5,8 +5,11 @@ import type {
   RegisterToolsFunction,
 } from "../common/types.js";
 import {
+  type ApiDefinitionParams,
   ApiHubAPI,
   ApiHubConfiguration,
+  type ApiSearchParams,
+  type ApiSearchResponse,
   type CreatePortalArgs,
   type CreateProductArgs,
   type FallbackResponse,
@@ -94,6 +97,20 @@ export class ApiHubClient implements Client {
   ): Promise<Product | SuccessResponse | FallbackResponse> {
     const { productId, ...body } = args;
     return this.api.updatePortalProduct(productId, body);
+  }
+
+  // Registry API methods for SwaggerHub Design functionality
+
+  async searchApis(
+    args: ApiSearchParams = {},
+  ): Promise<ApiSearchResponse | FallbackResponse> {
+    return this.api.searchApis(args);
+  }
+
+  async getApiDefinition(
+    args: ApiDefinitionParams,
+  ): Promise<unknown | FallbackResponse> {
+    return this.api.getApiDefinition(args);
   }
 
   registerTools(
