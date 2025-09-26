@@ -13,7 +13,8 @@ export class ApiHubConfiguration {
 
   constructor(param: ApiHubConfigurationParameters) {
     this.token = param.token;
-    this.portalBasePath = param.portalBasePath || "https://api.portal.swaggerhub.com/v1";
+    this.portalBasePath =
+      param.portalBasePath || "https://api.portal.swaggerhub.com/v1";
     this.registryBasePath =
       param.registryBasePath || "https://api.swaggerhub.com";
     this.headers = {
