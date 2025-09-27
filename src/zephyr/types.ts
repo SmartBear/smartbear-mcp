@@ -60,6 +60,21 @@ export interface BaseEntity {
     name: string;
 }
 
+export interface CreatedResource {
+    /**
+     * Response from create operations containing resource identifier and reference.
+     *
+     * Properties
+     * ----------
+     * id : number
+     *     Unique identifier of the created resource
+     * self : string
+     *     API URL reference to the created resource
+     */
+    id: number;
+    self: string;
+}
+
 export interface Priority {
     /**
      * Priority level for test cases.
@@ -196,13 +211,19 @@ export interface ResourceId {
 
 export interface ProjectLink extends ResourceId, Link {}
 
-export interface PriorityLink extends ResourceId, Link {}
+export interface PriorityLink extends ResourceId, Link {
+    name?: string;
+}
 
-export interface StatusLink extends ResourceId, Link {}
+export interface StatusLink extends ResourceId, Link {
+    name?: string;
+}
 
 export interface FolderLink extends ResourceId, Link {}
 
-export interface JiraUserLink extends ResourceId, Link {}
+export interface JiraUserLink extends ResourceId, Link {
+    accountId: string;
+}
 
 export interface JiraComponent extends ResourceId, Link {}
 

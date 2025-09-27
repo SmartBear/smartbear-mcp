@@ -14,6 +14,7 @@ import type {
     CreateTestScriptRequest,
     TestStep,
     CreateTestStepsRequest,
+    CreatedResource,
     CursorPagedTestCaseList,
     TestCaseLinkList,
     TestCaseVersionLink,
@@ -106,12 +107,103 @@ export async function createTestCase(apiService: ApiService, testCaseData: Creat
     }
 }
 
+/**
+ * Verify if test case update succeeded by comparing field values.
+ *
+ * Fetches the current test case state and compares it with the intended
+ * update data to determine if the update was actually applied.
+ *
+ * Parameters
+ * ----------
+ * apiService : ApiService
+ *     Configured API service for HTTP communication
+ * testCaseKey : string
+ *     Test case key that was updated
+ * updateData : UpdateTestCaseRequest
+ *     Original update data that was intended to be applied
+ *
+ * Returns
+ * -------
+ * object
+ *     Verification result with success status and details
+ */
+async function verifyTestCaseUpdate(
+    apiService: ApiService, 
+    testCaseKey: string, 
+    updateData: UpdateTestCaseRequest
+): Promise<{ success: boolean; currentState?: TestCase; errors?: string[] }> {
+    try {
+        // Use apiService.get directly instead of calling getTestCase function
+        const currentState = await apiService.get<TestCase>(`/testcases/${testCaseKey}`);
+        const errors: string[] = [];
+
+        // Check each updated field
+        if (updateData.name !== undefined && updateData.name.trim() !== currentState.name) {
+            errors.push(`Name mismatch: expected "${updateData.name.trim()}", got "${currentState.name}"`);
+        }
+
+        if (updateData.objective !== undefined && updateData.objective.trim() !== currentState.objective) {
+            errors.push(`Objective mismatch: expected "${updateData.objective.trim()}", got "${currentState.objective || ''}"`);
+        }
+
+        if (updateData.precondition !== undefined && updateData.precondition.trim() !== currentState.precondition) {
+            errors.push(`Precondition mismatch: expected "${updateData.precondition.trim()}", got "${currentState.precondition || ''}"`);
+        }
+
+        if (updateData.estimatedTime !== undefined && updateData.estimatedTime !== currentState.estimatedTime) {
+            errors.push(`EstimatedTime mismatch: expected ${updateData.estimatedTime}, got ${currentState.estimatedTime || 0}`);
+        }
+
+        if (updateData.componentId !== undefined && updateData.componentId !== currentState.component?.id) {
+            errors.push(`ComponentId mismatch: expected ${updateData.componentId}, got ${currentState.component?.id || 'null'}`);
+        }
+
+        if (updateData.priorityName !== undefined && updateData.priorityName.trim() !== currentState.priority?.name) {
+            errors.push(`PriorityName mismatch: expected "${updateData.priorityName.trim()}", got "${currentState.priority?.name || ''}"`);
+        }
+
+        if (updateData.statusName !== undefined && updateData.statusName.trim() !== currentState.status?.name) {
+            errors.push(`StatusName mismatch: expected "${updateData.statusName.trim()}", got "${currentState.status?.name || ''}"`);
+        }
+
+        if (updateData.folderId !== undefined && updateData.folderId !== currentState.folder?.id) {
+            errors.push(`FolderId mismatch: expected ${updateData.folderId}, got ${currentState.folder?.id || 'null'}`);
+        }
+
+        if (updateData.ownerId !== undefined && updateData.ownerId.trim() !== currentState.owner?.accountId) {
+            errors.push(`OwnerId mismatch: expected "${updateData.ownerId.trim()}", got "${currentState.owner?.accountId || ''}"`);
+        }
+
+        if (updateData.labels !== undefined) {
+            const expectedLabels = new Set(updateData.labels);
+            const currentLabels = new Set(currentState.labels || []);
+            if (expectedLabels.size !== currentLabels.size || 
+                ![...expectedLabels].every(label => currentLabels.has(label))) {
+                errors.push(`Labels mismatch: expected [${[...expectedLabels].join(', ')}], got [${[...currentLabels].join(', ')}]`);
+            }
+        }
+
+        return {
+            success: errors.length === 0,
+            currentState,
+            errors: errors.length > 0 ? errors : undefined
+        };
+
+    } catch (error) {
+        return {
+            success: false,
+            errors: [`Failed to verify update: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        };
+    }
+}
+
 export async function updateTestCase(apiService: ApiService, testCaseKey: string, updateData: UpdateTestCaseRequest): Promise<TestCase> {
     /**
-     * Update an existing test case.
+     * Update an existing test case with verification-based success detection.
      *
-     * Modifies test case properties such as name, description, priority,
-     * or folder assignment. Preserves existing data for unspecified fields.
+     * This function implements a robust update mechanism that handles Zephyr API's
+     * server-side bug where PUT requests succeed but return malformed JSON responses.
+     * Uses verification-based success detection to provide accurate results.
      *
      * Parameters
      * ----------
@@ -125,7 +217,7 @@ export async function updateTestCase(apiService: ApiService, testCaseKey: string
      * Returns
      * -------
      * TestCase
-     *     Updated test case with new field values
+     *     Updated test case with verification status
      *
      * Raises
      * ------
@@ -153,8 +245,20 @@ export async function updateTestCase(apiService: ApiService, testCaseKey: string
     }
 
     try {
-        const payload: UpdateTestCaseRequest = {};
+        // Step 1: Capture baseline state for verification
+        const existingTestCase: TestCase = await apiService.get<TestCase>(`/testcases/${cleanTestCaseKey}`);
 
+        if (!existingTestCase || !existingTestCase.id || !existingTestCase.key) {
+            throw new Error("Failed to fetch existing test case or invalid test case data received");
+        }
+
+        // Create the payload by merging existing data with updates
+        const payload: any = {
+            // Start with all existing fields to preserve required data
+            ...existingTestCase
+        };
+
+        // Apply updates, validating each field
         if (updateData.name !== undefined) {
             if (updateData.name.trim() === "") {
                 throw new Error("Test case name cannot be empty");
@@ -202,13 +306,43 @@ export async function updateTestCase(apiService: ApiService, testCaseKey: string
             payload.customFields = updateData.customFields;
         }
 
-        const response: TestCase = await apiService.put<TestCase>(`/testcases/${cleanTestCaseKey}`, payload);
+        // Step 2: Attempt update (may fail with JSON parsing error)
+        try {
+            const response: TestCase = await apiService.put<TestCase>(`/testcases/${cleanTestCaseKey}`, payload);
 
-        if (!response || !response.id || !response.key) {
-            throw new Error("Invalid API response: Missing required fields in updated test case");
+            if (!response || !response.id || !response.key) {
+                throw new Error("Invalid API response: Missing required fields in updated test case");
+            }
+
+            return response;
+
+        } catch (putError) {
+            // Step 3: Handle JSON parsing errors with verification
+            if (putError instanceof Error && putError.message.includes("Unexpected end of JSON input")) {
+                console.log(`[updateTestCase] JSON parsing error detected for ${cleanTestCaseKey}, performing verification...`);
+                
+                // Step 4: Verify if the update actually succeeded
+                const verification = await verifyTestCaseUpdate(apiService, cleanTestCaseKey, updateData);
+                
+                if (verification.success && verification.currentState) {
+                    console.log(`[updateTestCase] Update verified successful for ${cleanTestCaseKey} despite JSON error`);
+                    
+                    // Return the verified current state with success metadata
+                    const verifiedResult: TestCase = {
+                        ...verification.currentState
+                    };
+                    
+                    return verifiedResult;
+                } else {
+                    // Update actually failed
+                    const errors = verification.errors || ["Update verification failed"];
+                    throw new Error(`Update failed - verification errors: ${errors.join("; ")}`);
+                }
+            } else {
+                // Different error, re-throw
+                throw putError;
+            }
         }
-
-        return response;
 
     } catch (error) {
         if (error instanceof Error) {
@@ -317,7 +451,7 @@ export async function addTestScript(apiService: ApiService, testCaseKey: string,
     }
 }
 
-export async function addTestSteps(apiService: ApiService, testCaseKey: string, stepsData: CreateTestStepsRequest): Promise<TestStep[]> {
+export async function addTestSteps(apiService: ApiService, testCaseKey: string, stepsData: CreateTestStepsRequest): Promise<CreatedResource> {
     /**
      * Add test steps to an existing test case.
      *
@@ -335,8 +469,8 @@ export async function addTestSteps(apiService: ApiService, testCaseKey: string, 
      *
      * Returns
      * -------
-     * TestStep[]
-     *     Created test steps with assigned IDs and ordering
+     * CreatedResource
+     *     Response containing the ID and self-reference URL of the created test steps
      *
      * Raises
      * ------
@@ -378,19 +512,19 @@ export async function addTestSteps(apiService: ApiService, testCaseKey: string, 
     });
 
     try {
-        const payload: CreateTestStepsRequest = {
-            steps: stepsData.steps.map(step => ({
-                description: step.description.trim(),
-                expectedResult: step.expectedResult.trim(),
-                testData: step.testData?.trim()
+        // Transform the input to match Zephyr API schema
+        const payload = {
+            mode: "APPEND", // Default to APPEND mode as per API spec
+            items: stepsData.steps.map(step => ({
+                inline: {
+                    description: step.description.trim(),
+                    expectedResult: step.expectedResult.trim(),
+                    ...(step.testData && { testData: step.testData.trim() })
+                }
             }))
         };
 
-        const response: TestStep[] = await apiService.post<TestStep[]>(`/testcases/${cleanTestCaseKey}/teststeps`, payload);
-
-        if (!Array.isArray(response)) {
-            throw new Error("Invalid API response: Expected array of test steps");
-        }
+        const response: CreatedResource = await apiService.post<CreatedResource>(`/testcases/${cleanTestCaseKey}/teststeps`, payload);
 
         return response;
 
@@ -1156,9 +1290,10 @@ export function createTestCaseTools(): ToolDefinition[] {
                     },
                     type: {
                         type: "string",
-                        description: "Script type - defaults to PLAIN_TEXT",
-                        enum: ["PLAIN_TEXT", "AUTOMATION", "CUCUMBER", "SELENIUM"],
-                        examples: ["PLAIN_TEXT", "AUTOMATION"]
+                        description: "Script type - must be 'plain' or 'bdd'. Defaults to 'plain'.",
+                        enum: ["plain", "bdd"],
+                        default: "plain",
+                        examples: ["plain", "bdd"]
                     }
                 },
                 required: ["testCaseKey", "text"],

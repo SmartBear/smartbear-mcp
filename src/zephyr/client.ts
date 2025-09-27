@@ -355,7 +355,7 @@ export class ZephyrClient implements Client {
       );
       registeredCount++;
 
-      // Register add test script tool
+      // Register add test script tool - FIXED SCHEMA
       register(
         {
           title: "Add Test Script",
@@ -368,20 +368,27 @@ export class ZephyrClient implements Client {
               required: true,
             },
             {
-              name: "testScript",
-              type: z.object({
-                type: z.string().describe("Test script type (e.g., 'STEP_BY_STEP', 'PLAIN_TEXT')"),
-                text: z.string().describe("Test script content")
-              }),
-              description: "Test script data with type and content",
+              name: "text",
+              type: z.string(),
+              description: "Test script content",
               required: true,
+            },
+            {
+              name: "type",
+              type: z.enum(["plain", "bdd"]).default("plain"),
+              description: "Test script type - must be 'plain' or 'bdd'. Defaults to 'plain'.",
+              required: false,
             },
           ],
         },
         async (args, _extra) => {
           if (!args.testCaseKey) throw new Error("testCaseKey argument is required");
-          if (!args.testScript) throw new Error("testScript argument is required");
-          const response = await addTestScript(this.apiService, args.testCaseKey, args.testScript);
+          if (!args.text) throw new Error("text argument is required");
+          const testScript = {
+            type: args.type || "plain",
+            text: args.text
+          };
+          const response = await addTestScript(this.apiService, args.testCaseKey, testScript);
           return {
             content: [{ type: "text", text: JSON.stringify(response, null, 2) }],
           };
