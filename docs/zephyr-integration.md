@@ -2,453 +2,492 @@
 
 ## Overview
 
-The Zephyr Test Management integration provides AI assistants with comprehensive test management capabilities through the Model Context Protocol (MCP). This integration enables seamless interaction with Zephyr Cloud for test case creation, test planning, execution tracking, and issue coverage analysis directly through conversational AI interfaces.
+The Zephyr MCP integration provides AI assistants with comprehensive test management capabilities through the SmartBear MCP (Model Context Protocol) server. This integration enables seamless test case creation, test planning, execution tracking, and issue coverage analysis through conversational AI interfaces.
 
 ### Key Benefits
 
-- **AI-Assisted Test Management**: Leverage conversational AI for creating and managing test cases, plans, and executions
-- **Issue Traceability**: Analyze test coverage for JIRA issues and requirements
-- **Automated Workflows**: Streamline test planning and execution processes
-- **Comprehensive API Coverage**: Full access to Zephyr Cloud functionality through standardized MCP tools
+- **Automated Test Management**: Create and manage test cases, plans, and executions through natural language
+- **Issue Traceability**: Analyze test coverage for Jira issues and requirements
+- **Streamlined Workflows**: Execute complex test management tasks without manual UI navigation
+- **Comprehensive API Access**: Full access to Zephyr Cloud functionality through standardized MCP tools
 
 ## Setup
 
 ### Environment Variables
 
-The Zephyr integration requires the following environment variables:
+The following environment variables configure the Zephyr integration:
 
 #### Required
-- `ZEPHYR_ACCESS_TOKEN` (required): JWT access token for Zephyr Cloud API authentication
-  - Obtain from Zephyr Cloud account settings
-  - Format: Standard JWT token (e.g., `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`)
+
+- **`ZEPHYR_ACCESS_TOKEN`** (required): JWT access token for Zephyr Cloud API authentication
+  - Obtain from Zephyr Cloud: Account Settings → API Tokens
+  - Format: Standard JWT token (3 base64url-encoded parts separated by dots)
+  - Example: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
 
 #### Optional
-- `ZEPHYR_PROJECT_KEY` (optional): Default project scope for operations
-  - Format: Uppercase project key (e.g., `PROJ`, `DEV`, `TEST`)
-  - When specified, operations will default to this project unless overridden
 
-- `ZEPHYR_BASE_URL` (optional): Custom API endpoint for enterprise deployments
+- **`ZEPHYR_PROJECT_KEY`** (optional): Default project scope for operations
+  - Format: Uppercase project key (e.g., `TEST`, `PROJ`, `AGILE`)
+  - When set, tools will default to this project when no explicit project is specified
+  - Example: `ZEPHYR_PROJECT_KEY=MYPROJECT`
+
+- **`ZEPHYR_BASE_URL`** (optional): Custom API endpoint for self-hosted instances
   - Default: `https://api.zephyrscale.smartbear.com/v2`
-  - Format: Full URL including protocol and version
+  - Format: Full URL with protocol and version
+  - Example: `ZEPHYR_BASE_URL=https://custom.zephyr.com/v2`
 
 ### Configuration Examples
 
-#### Basic Configuration
+#### Basic Configuration (Cloud)
 ```bash
-# Minimum required setup
-export ZEPHYR_ACCESS_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-
-# Start the MCP server
-npx @smartbear/mcp-server
-```
-
-#### Project-Scoped Configuration
-```bash
-# Configuration with default project scope
 export ZEPHYR_ACCESS_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 export ZEPHYR_PROJECT_KEY="MYPROJECT"
-
-# Start the MCP server
-npx @smartbear/mcp-server
 ```
 
-#### Enterprise Configuration
+#### Self-Hosted Configuration
 ```bash
-# Configuration for enterprise/custom deployment
 export ZEPHYR_ACCESS_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-export ZEPHYR_PROJECT_KEY="CORP"
-export ZEPHYR_BASE_URL="https://zephyr.company.com/api/v2"
+export ZEPHYR_PROJECT_KEY="ENTERPRISE"
+export ZEPHYR_BASE_URL="https://zephyr.company.com/v2"
+```
 
-# Start the MCP server
-npx @smartbear/mcp-server
+#### Docker Environment
+```dockerfile
+ENV ZEPHYR_ACCESS_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ENV ZEPHYR_PROJECT_KEY=DOCKER_TESTS
 ```
 
 ### Validation Steps
 
-1. **Token Validation**: Verify your access token is valid and has appropriate permissions
-2. **Project Access**: Ensure the token has access to the specified project(s)
-3. **API Connectivity**: Test connection to the Zephyr Cloud API endpoint
+1. **Token Validation**: Verify JWT token format and validity
+   ```bash
+   # Token should have 3 parts separated by dots
+   echo $ZEPHYR_ACCESS_TOKEN | tr '.' '\n' | wc -l
+   # Should output: 3
+   ```
+
+2. **API Connectivity**: Test connection to Zephyr API
+   ```bash
+   curl -H "Authorization: Bearer $ZEPHYR_ACCESS_TOKEN" \
+        -H "Content-Type: application/json" \
+        https://api.zephyrscale.smartbear.com/v2/projects
+   ```
+
+3. **Project Access**: Verify project key access
+   ```bash
+   curl -H "Authorization: Bearer $ZEPHYR_ACCESS_TOKEN" \
+        https://api.zephyrscale.smartbear.com/v2/projects/$ZEPHYR_PROJECT_KEY
+   ```
 
 ## Available Tools
 
 ### Issue Coverage
 
-Tools for analyzing test coverage of JIRA issues and requirements.
+Analyze test coverage for Jira issues and requirements.
 
-#### Get Issue Test Coverage
-- **Purpose**: Retrieve test cases that provide coverage for specific issues
-- **Use Cases**:
-  - Check which test cases cover a specific user story or bug fix
-  - Identify gaps in test coverage for requirements
-  - Generate coverage reports for stakeholders
-- **Parameters**:
-  - `issueKey` (required): JIRA issue key in format PROJECT-123
-  - `projectKey` (optional): Project key to scope the search
-- **Example**:
-  ```json
-  {
-    "issueKey": "PROJ-123",
-    "projectKey": "PROJ"
-  }
-  ```
+#### `zephyr_get_issue_test_coverage`
+
+Retrieve test cases that cover a specific Jira issue.
+
+**Parameters:**
+- `issueKey` (required): Jira issue key (e.g., "PROJECT-123")
+- `projectKey` (optional): Project scope for search
+
+**Example:**
+```json
+{
+  "issueKey": "PROJ-456",
+  "projectKey": "PROJ"
+}
+```
+
+**Use Cases:**
+- Check which test cases cover a specific bug or feature
+- Identify gaps in test coverage for requirements
+- Generate coverage reports for stakeholders
 
 ### Test Case Management
 
-Comprehensive CRUD operations for test case lifecycle management.
+Complete CRUD operations for test case lifecycle management.
 
-#### Create Test Case
-- **Purpose**: Create new test cases with comprehensive metadata
-- **Parameters**:
+#### `zephyr_list_test_cases`
+
+List test cases for a project.
+
+**Parameters:**
+- `projectKey` (required): JIRA project key
+
+#### `zephyr_list_test_cases__nextgen_`
+
+List test cases using NextGen API with enhanced filtering.
+
+**Parameters:**
+- `projectKey` (required): JIRA project key
+- `folderId` (optional): Folder ID to filter by
+- `maxResults` (optional): Maximum number of results (default: 50, max: 100)
+
+#### `zephyr_get_test_case`
+
+Get details of a specific test case.
+
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format
+
+#### `zephyr_create_test_case`
+
+Create a new test case with comprehensive metadata.
+
+**Parameters:**
+- `testCaseData` (required): Object containing test case information
   - `name` (required): Test case name
-  - `projectKey` (required): Target project
-  - `folderId` (optional): Organization folder
-  - `priority` (optional): Priority level
-  - `status` (optional): Initial status
-- **Example**:
-  ```json
-  {
-    "name": "Test user login functionality",
+  - `projectKey` (required): JIRA project key
+  - `objective` (optional): Test case objective
+  - `precondition` (optional): Test precondition
+  - `estimatedTime` (optional): Estimated time in minutes
+  - `componentId` (optional): Component ID
+  - `priorityName` (optional): Priority name
+  - `statusName` (optional): Status name
+  - `folderId` (optional): Folder ID
+  - `ownerId` (optional): Owner ID
+  - `labels` (optional): Array of test case labels
+  - `customFields` (optional): Custom fields object
+
+**Example:**
+```json
+{
+  "testCaseData": {
+    "name": "User Login Validation",
     "projectKey": "PROJ",
+    "objective": "Verify user can login with valid credentials",
     "folderId": 123,
-    "priority": "High",
-    "status": "Approved"
+    "priorityName": "High"
   }
-  ```
+}
+```
 
-#### Update Test Case
-- **Purpose**: Modify existing test case properties
-- **Parameters**:
-  - `testCaseId` (required): ID of test case to update
-  - Updates can include name, description, priority, status, etc.
+#### `zephyr_update_test_case`
 
-#### Add Test Script
-- **Purpose**: Add executable test scripts to test cases
-- **Types**: STEP_BY_STEP, BDD, FREE_FORM
-- **Example**:
-  ```json
-  {
-    "testCaseId": 123,
-    "type": "STEP_BY_STEP",
-    "text": "1. Navigate to login page\n2. Enter credentials\n3. Click login"
-  }
-  ```
+Update existing test case properties.
 
-#### Add Test Steps
-- **Purpose**: Add structured test steps with expected results
-- **Example**:
-  ```json
-  {
-    "testCaseId": 123,
-    "steps": [
-      {
-        "description": "Enter username",
-        "expectedResult": "Username field populated"
-      },
-      {
-        "description": "Enter password",
-        "expectedResult": "Password field populated"
-      }
-    ]
-  }
-  ```
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+- `updateData` (required): Object containing fields to update
+  - `name` (optional): Updated test case name
+  - `objective` (optional): Updated test case objective
+  - `precondition` (optional): Updated test precondition
+  - `estimatedTime` (optional): Updated estimated time in minutes
+  - `componentId` (optional): Updated component ID
+  - `priorityName` (optional): Updated priority name
+  - `statusName` (optional): Updated status name
+  - `folderId` (optional): Updated folder ID
+  - `ownerId` (optional): Updated owner ID
+  - `labels` (optional): Updated test case labels
+  - `customFields` (optional): Updated custom fields
 
-#### Link Test Case to Issue
-- **Purpose**: Establish traceability between test cases and JIRA issues
-- **Parameters**:
-  - `testCaseId` (required): Test case ID
-  - `issueKey` (required): JIRA issue key
+#### `zephyr_add_test_script`
 
-### Test Planning & Execution
+Add executable script or detailed instructions to test case.
 
-Tools for organizing and executing comprehensive test campaigns.
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+- `text` (required): Test script content
+- `type` (optional): Test script type - must be 'plain' or 'bdd'. Defaults to 'plain'.
 
-#### Create Test Plan
-- **Purpose**: Organize test cases into executable plans
-- **Parameters**:
-  - `name` (required): Plan name
-  - `projectKey` (required): Target project
-  - `description` (optional): Plan description
-- **Example**:
-  ```json
-  {
-    "name": "Sprint 1 Regression Plan",
-    "projectKey": "PROJ",
-    "description": "Comprehensive regression testing for Sprint 1 features"
-  }
-  ```
+#### `zephyr_add_test_steps`
 
-#### Create Test Cycle
-- **Purpose**: Define execution timeframes and environments
-- **Parameters**:
-  - `name` (required): Cycle name
-  - `projectKey` (required): Target project
-  - `plannedStartDate` (optional): Execution start date
-  - `plannedEndDate` (optional): Execution end date
-  - `environment` (optional): Test environment
+Add structured test steps with expected results.
 
-#### Link Test Plan to Cycle
-- **Purpose**: Associate plans with execution cycles
-- **Parameters**:
-  - `testPlanId` (required): Test plan ID
-  - `testCycleId` (required): Test cycle ID
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+- `testSteps` (required): Array of test steps with descriptions and expected results
+  - `description` (required): Step description
+  - `expectedResult` (required): Expected result
+  - `testData` (optional): Test data for this step
 
-#### Create Test Execution
-- **Purpose**: Create individual test execution records
-- **Parameters**:
-  - `testCaseId` (required): Test case to execute
-  - `testCycleId` (required): Target cycle
-  - `assigneeId` (optional): Assigned tester
-  - `status` (optional): Initial execution status
+**Example:**
+```json
+{
+  "testCaseKey": "PROJ-T123",
+  "testSteps": [
+    {
+      "description": "Navigate to login page",
+      "expectedResult": "Login form is displayed",
+      "testData": "URL: /login"
+    },
+    {
+      "description": "Enter valid credentials",
+      "expectedResult": "User is authenticated",
+      "testData": "user: admin, pass: secure123"
+    }
+  ]
+}
+```
 
-#### Update Test Execution
-- **Purpose**: Record test execution results
-- **Parameters**:
-  - `executionId` (required): Execution record ID
-  - `status` (required): Result status (Pass, Fail, Blocked, etc.)
-  - `comment` (optional): Execution notes
-  - `executedOn` (optional): Execution timestamp
+#### `zephyr_link_test_case_to_issue`
 
-### Structure & Metadata
+Create traceability link between test case and Jira issue.
 
-Organizational tools and metadata retrieval for comprehensive test management.
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+- `issueKey` (required): JIRA issue key (e.g., PROJECT-123)
 
-#### Get Folders
-- **Purpose**: Retrieve organizational folder structure
-- **Parameters**:
-  - `projectKey` (required): Target project
-  - `folderType` (optional): Filter by folder type
+### Test Planning
 
-#### Create Folder
-- **Purpose**: Create organizational folders for test cases
-- **Parameters**:
-  - `name` (required): Folder name
-  - `projectKey` (required): Target project
-  - `type` (required): Folder type (TEST_CASE, etc.)
-  - `parentFolderId` (optional): Parent folder for nesting
+Organize test activities with test plans.
 
-#### Get Statuses
-- **Purpose**: Retrieve available test case statuses
-- **Parameters**:
-  - `projectKey` (optional): Project-specific statuses
+#### `zephyr_list_test_plans`
 
-#### Get Priorities
-- **Purpose**: Retrieve available priority levels
-- **Parameters**:
-  - `projectKey` (optional): Project-specific priorities
+List test plans for a project.
 
-#### Get Environments
-- **Purpose**: Retrieve available test environments
-- **Parameters**:
-  - `projectKey` (optional): Project-specific environments
+**Parameters:**
+- `projectKey` (required): JIRA project key
+
+### Test Case Links and Versions
+
+Manage test case relationships and versioning.
+
+#### `zephyr_get_test_case_links`
+
+Get all links for a test case.
+
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+
+#### `zephyr_create_test_case_web_link`
+
+Create a web link for a test case.
+
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+- `webLinkData` (required): Web link data with URL and optional description
+  - `url` (required): Web link URL (must start with http:// or https://)
+  - `description` (optional): Optional description for the web link
+
+#### `zephyr_list_test_case_versions`
+
+List all versions of a test case.
+
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+- `maxResults` (optional): Maximum number of results (default: 10, max: 1000)
+
+#### `zephyr_get_test_case_version`
+
+Get a specific version of a test case.
+
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+- `version` (required): Version number of the test case to retrieve
+
+### Test Scripts and Steps
+
+Retrieve test case implementation details.
+
+#### `zephyr_get_test_case_test_script`
+
+Get the test script for a test case.
+
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+
+#### `zephyr_get_test_case_test_steps`
+
+Get test steps for a test case.
+
+**Parameters:**
+- `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
+- `maxResults` (optional): Maximum number of results (default: 10, max: 1000)
+- `startAt` (optional): Zero-indexed starting position (default: 0)
+
 
 ## Common Workflows
 
 ### Creating Test Cases
 
-A typical workflow for creating comprehensive test cases:
+Complete workflow for creating comprehensive test cases:
 
-1. **Prepare Structure**:
-   ```json
-   {
-     "tool": "zephyr_get_folders",
-     "parameters": {"projectKey": "PROJ"}
-   }
-   ```
+```json
+// 1. Create the test case
+{
+  "tool": "zephyr_create_test_case",
+  "parameters": {
+    "testCaseData": {
+      "name": "User Registration Validation",
+      "objective": "Verify new user registration process",
+      "projectKey": "ECOM",
+      "folderId": 456,
+      "priorityName": "High"
+    }
+  }
+}
 
-2. **Create Test Case**:
-   ```json
-   {
-     "tool": "zephyr_create_test_case",
-     "parameters": {
-       "name": "Test user authentication",
-       "projectKey": "PROJ",
-       "folderId": 123,
-       "priority": "High"
-     }
-   }
-   ```
+// 2. Add detailed test steps
+{
+  "tool": "zephyr_add_test_steps",
+  "parameters": {
+    "testCaseKey": "ECOM-T789",
+    "testSteps": [
+      {
+        "description": "Navigate to registration page",
+        "expectedResult": "Registration form displays all required fields"
+      },
+      {
+        "description": "Fill form with valid data",
+        "expectedResult": "Form accepts input without validation errors",
+        "testData": "email: test@example.com, password: SecurePass123"
+      },
+      {
+        "description": "Submit registration",
+        "expectedResult": "User account created and confirmation email sent"
+      }
+    ]
+  }
+}
 
-3. **Add Test Steps**:
-   ```json
-   {
-     "tool": "zephyr_add_test_steps",
-     "parameters": {
-       "testCaseId": 456,
-       "steps": [
-         {"description": "Navigate to login", "expectedResult": "Login page displayed"},
-         {"description": "Enter credentials", "expectedResult": "Fields populated"},
-         {"description": "Submit form", "expectedResult": "User authenticated"}
-       ]
-     }
-   }
-   ```
+// 3. Link to requirement issue
+{
+  "tool": "zephyr_link_test_case_to_issue",
+  "parameters": {
+    "testCaseKey": "ECOM-T789",
+    "issueKey": "ECOM-REQ-123"
+  }
+}
+```
 
-4. **Link to Requirements**:
-   ```json
-   {
-     "tool": "zephyr_link_test_case_to_issue",
-     "parameters": {
-       "testCaseId": 456,
-       "issueKey": "PROJ-123"
-     }
-   }
-   ```
+### Test Planning
 
-### Planning Test Execution
+List and analyze test plans:
 
-Workflow for setting up test execution campaigns:
-
-1. **Create Test Plan**:
-   ```json
-   {
-     "tool": "zephyr_create_test_plan",
-     "parameters": {
-       "name": "Release 1.0 Testing",
-       "projectKey": "PROJ",
-       "description": "Comprehensive testing for major release"
-     }
-   }
-   ```
-
-2. **Create Test Cycle**:
-   ```json
-   {
-     "tool": "zephyr_create_test_cycle",
-     "parameters": {
-       "name": "Regression Cycle",
-       "projectKey": "PROJ",
-       "plannedStartDate": "2024-01-15",
-       "plannedEndDate": "2024-01-22",
-       "environment": "Staging"
-     }
-   }
-   ```
-
-3. **Link Plan to Cycle**:
-   ```json
-   {
-     "tool": "zephyr_link_test_plan_to_cycle",
-     "parameters": {
-       "testPlanId": 789,
-       "testCycleId": 101
-     }
-   }
-   ```
-
-4. **Create Executions**:
-   ```json
-   {
-     "tool": "zephyr_create_test_execution",
-     "parameters": {
-       "testCaseId": 456,
-       "testCycleId": 101,
-       "assigneeId": "user-123"
-     }
-   }
-   ```
+```json
+// List test plans for a project
+{
+  "tool": "zephyr_list_test_plans",
+  "parameters": {
+    "projectKey": "ECOM"
+  }
+}
+```
 
 ### Issue Traceability
 
-Workflow for analyzing and ensuring test coverage:
+Analyzing test coverage and ensuring comprehensive testing:
 
-1. **Analyze Coverage**:
-   ```json
-   {
-     "tool": "zephyr_get_issue_coverage",
-     "parameters": {
-       "issueKey": "PROJ-456",
-       "projectKey": "PROJ"
-     }
-   }
-   ```
+```json
+// 1. Analyze issue coverage
+{
+  "tool": "zephyr_get_issue_test_coverage",
+  "parameters": {
+    "issueKey": "ECOM-BUG-456",
+    "projectKey": "ECOM"
+  }
+}
 
-2. **Create Missing Test Cases** (if coverage gaps identified):
-   ```json
-   {
-     "tool": "zephyr_create_test_case",
-     "parameters": {
-       "name": "Test specific requirement scenario",
-       "projectKey": "PROJ",
-       "priority": "High"
-     }
-   }
-   ```
+// 2. Create additional test case if coverage is insufficient
+{
+  "tool": "zephyr_create_test_case",
+  "parameters": {
+    "testCaseData": {
+      "name": "Regression Test for Payment Bug",
+      "objective": "Verify payment processing bug is resolved",
+      "projectKey": "ECOM"
+    }
+  }
+}
 
-3. **Link to Issue**:
-   ```json
-   {
-     "tool": "zephyr_link_test_case_to_issue",
-     "parameters": {
-       "testCaseId": 789,
-       "issueKey": "PROJ-456"
-     }
-   }
-   ```
+// 3. Link new test case to bug issue
+{
+  "tool": "zephyr_link_test_case_to_issue",
+  "parameters": {
+    "testCaseKey": "ECOM-T790",
+    "issueKey": "ECOM-BUG-456"
+  }
+}
+```
 
 ## Error Handling
 
 ### Common Error Scenarios
 
 #### Authentication Errors
-- **Cause**: Invalid or expired access token
-- **Solution**: Refresh token in Zephyr Cloud account settings
-- **Example Error**: `HTTP 401: Unauthorized`
+```
+Error: Zephyr API error (GET /projects): Invalid authentication token [Status: 401]
+```
+**Resolution**: Verify `ZEPHYR_ACCESS_TOKEN` is valid and not expired
 
-#### Permission Errors
-- **Cause**: Token lacks necessary project permissions
-- **Solution**: Contact project administrator for appropriate access
-- **Example Error**: `HTTP 403: Access denied for project`
+#### Authorization Errors
+```
+Error: Zephyr API error (POST /testcases): Insufficient permissions [Status: 403]
+```
+**Resolution**: Ensure token has required permissions for project and operation
 
-#### Validation Errors
-- **Cause**: Invalid parameter formats or missing required fields
-- **Solution**: Verify parameter formats match API requirements
-- **Example Error**: `Invalid issue key format: expected PROJECT-123`
-
-#### Resource Not Found
-- **Cause**: Referenced resources (test cases, issues, projects) don't exist
-- **Solution**: Verify resource IDs and project access
-- **Example Error**: `Issue not found: PROJ-123`
+#### Invalid Project Key
+```
+Error: Project not found: NONEXISTENT
+```
+**Resolution**: Verify project key exists and user has access
 
 #### Rate Limiting
-- **Cause**: Too many API requests in short timeframe
-- **Solution**: Implement delays between requests
-- **Example Error**: `HTTP 429: Rate limit exceeded`
+```
+Error: API rate limit exceeded [Status: 429]
+```
+**Resolution**: Implement delays between requests or contact administrator for rate limit increase
+
+#### Network Connectivity
+```
+Error: Network request failed: ECONNREFUSED
+```
+**Resolution**: Check network connectivity and `ZEPHYR_BASE_URL` configuration
 
 ### Troubleshooting Guide
 
-1. **Token Issues**:
-   - Verify token format (should be JWT)
-   - Check token permissions in Zephyr Cloud
-   - Ensure token hasn't expired
+#### Token Issues
+1. **Expired Token**: Generate new token from Zephyr Cloud account settings
+2. **Invalid Format**: Ensure token is complete JWT with 3 parts separated by dots
+3. **Permissions**: Verify token has required project and API permissions
 
-2. **Project Access**:
-   - Confirm project key format (uppercase)
-   - Verify project exists and is accessible
-   - Check user permissions within project
+#### API Connection Issues
+1. **Custom URL**: Verify `ZEPHYR_BASE_URL` is correct for self-hosted instances
+2. **SSL/TLS**: Ensure proper certificate configuration for HTTPS endpoints
+3. **Firewall**: Check network firewall rules for API endpoint access
 
-3. **API Connectivity**:
-   - Test network connectivity to API endpoint
-   - Verify custom base URL if configured
-   - Check firewall/proxy settings
+#### Data Validation Errors
+1. **Required Fields**: Ensure all required parameters are provided
+2. **Format Validation**: Check parameter formats match API expectations
+3. **Reference Integrity**: Verify referenced entities (projects, folders, etc.) exist
 
-4. **Data Validation**:
-   - Ensure issue keys follow PROJECT-123 format
-   - Verify required parameters are provided
-   - Check parameter data types and formats
+#### Performance Considerations
+1. **Caching**: Enable caching for metadata operations to improve performance
+2. **Batch Operations**: Group related operations to minimize API calls
+3. **Error Retry**: Implement appropriate retry logic for transient failures
 
-### Best Practices
+### Support Resources
 
-- **Error Resilience**: Always handle API errors gracefully
-- **Rate Limiting**: Implement appropriate delays for bulk operations
-- **Data Validation**: Validate parameters before API calls
-- **Logging**: Enable detailed logging for troubleshooting
-- **Testing**: Use staging environment for initial testing and validation
+- **Zephyr Documentation**: [https://support.smartbear.com/zephyr-scale-cloud/](https://support.smartbear.com/zephyr-scale-cloud/)
+- **API Reference**: [https://support.smartbear.com/zephyr-scale-cloud/api-docs/](https://support.smartbear.com/zephyr-scale-cloud/api-docs/)
+- **SmartBear Community**: [https://community.smartbear.com/](https://community.smartbear.com/)
+- **MCP Protocol**: [https://modelcontextprotocol.io/](https://modelcontextprotocol.io/)
 
-## Integration Examples
+## Advanced Configuration
 
-### Claude/AI Assistant Integration
+### Custom Headers
+The integration automatically sets required headers:
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+- `Accept: application/json`
+- `User-Agent: SmartBear-MCP-Server/1.0.0`
 
-Example conversation flows demonstrating natural language interaction:
+### Caching Configuration
+Metadata operations (statuses, priorities, environments) are cached with 5-minute TTL for improved performance. Cache behavior is handled automatically.
 
-```
-User: "Check test coverage for PROJ-123"
+### Logging
+Integration provides comprehensive debug logging for troubleshooting. Logs include:
+- Entry/exit points for all operations
+- Parameter validation results
+- API request/response details
+- Error context and stack traces
+
+### Performance Optimization
+- Metadata caching reduces API calls for reference data
+- Concurrent request support for bulk operations
+- Efficient error handling with context preservation
+- Memory-efficient response processing
