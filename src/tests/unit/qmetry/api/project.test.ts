@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getProjectInfo } from "../../../../qmetry/client/project.js";
 
 describe("getProjectInfo", () => {

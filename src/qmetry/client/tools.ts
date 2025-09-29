@@ -1,3 +1,4 @@
+import type { ToolParams } from "../../common/types.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
 import {
   ProjectArgsSchema,
@@ -6,7 +7,6 @@ import {
   TestCaseStepsArgsSchema,
   TestCaseVersionDetailsArgsSchema,
 } from "../types/common.js";
-import type { ToolParams } from "../../common/types.js";
 
 export interface QMetryToolParams extends ToolParams {
   handler: string;

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { QmetryClient } from "../../../qmetry/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import { QmetryClient } from "../../../qmetry/client";
 
 const fetchMock = createFetchMock(vi);
 

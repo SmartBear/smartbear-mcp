@@ -1,6 +1,6 @@
-import { qmetryRequest } from "./api/client-api.js";
-import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import { QMETRY_DEFAULTS } from "../config/constants.js";
+import { QMETRY_PATHS } from "../config/rest-endpoints.js";
+import { qmetryRequest } from "./api/client-api.js";
 
 /**
  * Retrieves project information from QMetry
