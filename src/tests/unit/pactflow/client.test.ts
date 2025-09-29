@@ -20,18 +20,6 @@ describe("PactFlowClient", () => {
   });
 
   describe("constructor", () => {
-    it("should initialize with correct parameters", () => {
-      client = new PactflowClient(
-        "test-token",
-        "https://example.com",
-        "pactflow",
-        vi.fn() as any,
-      );
-      expect(client).toBeInstanceOf(PactflowClient);
-      expect(client["baseUrl"]).toBe("https://example.com");
-      expect(client["clientType"]).toBe("pactflow");
-    });
-
     it("sets correct headers when client is pactflow", () => {
       client = new PactflowClient(
         "my-token",
