@@ -229,7 +229,7 @@ Create traceability link between test case and Jira issue.
 
 **Parameters:**
 - `testCaseKey` (required): Test case key in Zephyr format (e.g., PROJECT-T123)
-- `issueKey` (required): JIRA issue key (e.g., PROJECT-123)
+- `issueId` (required): JIRA issue Id (e.g., 12345)
 
 ### Test Planning
 
