@@ -223,6 +223,10 @@ export class PactflowClient implements Client {
     };
   }
 
+  get requestHeaders() {
+    return this.headers;
+  }
+
   async getResult<T>(resultUrl: string): Promise<T> {
     const response = await fetch(resultUrl, {
       method: "GET",
