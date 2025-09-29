@@ -1,11 +1,11 @@
-import type {ApiHubConfiguration} from "./configuration.js";
+import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   ApiDefinitionParams,
   ApiProperty,
   ApiSearchParams,
   ApiSearchResponse,
-  ApisJsonResponse,
   ApiSpecification,
+  ApisJsonResponse,
   CreatePortalArgs,
   CreateProductBody,
   FallbackResponse,
