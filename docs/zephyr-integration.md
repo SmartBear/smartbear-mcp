@@ -349,7 +349,7 @@ Complete workflow for creating comprehensive test cases:
   "tool": "zephyr_link_test_case_to_issue",
   "parameters": {
     "testCaseKey": "ECOM-T789",
-    "issueKey": "ECOM-REQ-123"
+    "issueId": "123"
   }
 }
 ```
