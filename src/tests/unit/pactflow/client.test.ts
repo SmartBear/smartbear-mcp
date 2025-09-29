@@ -40,7 +40,7 @@ describe("PactFlowClient", () => {
         vi.fn() as any,
       );
 
-      expect(client["headers"]).toEqual(
+      expect(client.requestHeaders).toEqual(
         expect.objectContaining({
           Authorization: expect.stringContaining("Bearer my-token"),
           "Content-Type": expect.stringContaining("application/json"),
@@ -56,7 +56,7 @@ describe("PactFlowClient", () => {
         vi.fn() as any,
       );
 
-      expect(client["headers"]).toEqual(
+      expect(client.requestHeaders).toEqual(
         expect.objectContaining({
           Authorization: expect.stringContaining(
             `Basic ${Buffer.from("user:pass").toString("base64")}`,
@@ -160,7 +160,7 @@ describe("PactFlowClient", () => {
           "https://example.com/can-i-deploy?pacticipant=my-service&version=1.0.0&environment=production",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
         expect(result.summary.deployable).toBe(true);
@@ -207,7 +207,7 @@ describe("PactFlowClient", () => {
           "https://example.com/can-i-deploy?pacticipant=my-service%40special&version=1.0.0-beta%2Bbuild.123&environment=test%2Fstaging",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
@@ -248,7 +248,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/review",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(mockReviewInput),
           },
         );
@@ -285,7 +285,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/review",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(inputWithOpenAPI),
           },
         );
@@ -353,7 +353,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/review",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(inputWithCode),
           },
         );
@@ -375,7 +375,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/review",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(inputWithInstructions),
           },
         );
@@ -400,7 +400,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/review",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(inputWithTemplate),
           },
         );
@@ -477,7 +477,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?latestby=cvp&limit=100&q[]pacticipant=Example%20API&q[]version=1.0.0&q[]latest=true",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
         expect(result.summary.deployable).toBe(true);
@@ -509,7 +509,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?latestby=cvpv&q[]pacticipant=Consumer%20App&q[]branch=main&q[]latest=true&q[]pacticipant=Provider%20API&q[]environment=production&q[]tag=v1.0",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
@@ -538,7 +538,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?limit=50&q[]pacticipant=Full%20Service&q[]version=2.1.0&q[]branch=feature%2Fnew-api&q[]environment=staging&q[]latest=false&q[]tag=beta&q[]mainBranch=true",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
@@ -560,7 +560,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?q[]pacticipant=Simple%20Service",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
@@ -586,7 +586,7 @@ describe("PactFlowClient", () => {
           "https://example.com/matrix?q[]pacticipant=Service%40Company%2FAPI&q[]version=1.0.0-beta%2Bbuild.123&q[]branch=feature%2Ffix-bug%23123&q[]environment=test%2Fstaging&q[]tag=v1.0.0-rc.1",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
@@ -636,7 +636,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/entitlement",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
         expect(result.organizationEntitlements.name).toBe("test-org");
@@ -689,7 +689,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/generate",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(mockGenerationInput),
           },
         );
@@ -730,7 +730,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/generate",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(
               await GenerationInputSchema.parseAsync(inputWithOpenAPI),
             ),
@@ -806,7 +806,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/generate",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(
               await GenerationInputSchema.parseAsync(inputWithCode),
             ),
@@ -833,7 +833,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/generate",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(
               await GenerationInputSchema.parseAsync(inputWithInstructions),
             ),
@@ -863,7 +863,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/ai/generate",
           {
             method: "POST",
-            headers: client["headers"],
+            headers: client.requestHeaders,
             body: JSON.stringify(
               await GenerationInputSchema.parseAsync(inputWithTemplate),
             ),
@@ -967,7 +967,7 @@ describe("PactFlowClient", () => {
           "https://example.com/api/result/1",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
@@ -998,7 +998,7 @@ describe("PactFlowClient", () => {
           "https://example.com/status/ok",
           {
             method: "HEAD",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
@@ -1106,7 +1106,7 @@ describe("PactFlowClient", () => {
           "https://example.com/pacts/provider/UserService/provider-states",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
@@ -1121,7 +1121,7 @@ describe("PactFlowClient", () => {
           "https://example.com/pacts/provider/Service%40Company%2FAPI/provider-states",
           {
             method: "GET",
-            headers: client["headers"],
+            headers: client.requestHeaders,
           },
         );
       });
