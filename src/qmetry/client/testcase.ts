@@ -27,11 +27,11 @@ export async function fetchTestCases(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchTestCasesPayload
+  payload: FetchTestCasesPayload,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
-    project
+    project,
   );
 
   const body: FetchTestCasesPayload = {
@@ -41,12 +41,12 @@ export async function fetchTestCases(
 
   if (typeof body.viewId !== "number") {
     throw new Error(
-      "[fetchTestCases] Missing or invalid required parameter: 'viewId'."
+      "[fetchTestCases] Missing or invalid required parameter: 'viewId'.",
     );
   }
   if (typeof body.folderPath !== "string") {
     throw new Error(
-      "[fetchTestCases] Missing or invalid required parameter: 'folderPath'."
+      "[fetchTestCases] Missing or invalid required parameter: 'folderPath'.",
     );
   }
 
@@ -68,11 +68,11 @@ export async function fetchTestCaseDetails(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchTestCaseDetailsPayload
+  payload: FetchTestCaseDetailsPayload,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
-    project
+    project,
   );
 
   const body: FetchTestCaseDetailsPayload = {
@@ -82,7 +82,7 @@ export async function fetchTestCaseDetails(
 
   if (typeof body.tcID !== "number") {
     throw new Error(
-      "[fetchTestCaseDetails] Missing or invalid required parameter: 'tcID'."
+      "[fetchTestCaseDetails] Missing or invalid required parameter: 'tcID'.",
     );
   }
 
@@ -104,11 +104,11 @@ export async function fetchTestCaseVersionDetails(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchTestCaseVersionDetailsPayload
+  payload: FetchTestCaseVersionDetailsPayload,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
-    project
+    project,
   );
 
   const body: FetchTestCaseVersionDetailsPayload = {
@@ -118,12 +118,12 @@ export async function fetchTestCaseVersionDetails(
 
   if (!body.id) {
     throw new Error(
-      "[fetchTestCaseVersionDetails] Missing or invalid required parameter: 'id'."
+      "[fetchTestCaseVersionDetails] Missing or invalid required parameter: 'id'.",
     );
   }
   if (typeof body.version !== "number") {
     throw new Error(
-      "[fetchTestCaseVersionDetails] Missing or invalid required parameter: 'version'."
+      "[fetchTestCaseVersionDetails] Missing or invalid required parameter: 'version'.",
     );
   }
 
@@ -145,11 +145,11 @@ export async function fetchTestCaseSteps(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchTestCaseStepsPayload
+  payload: FetchTestCaseStepsPayload,
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
-    project
+    project,
   );
 
   const body: FetchTestCaseStepsPayload = {
@@ -159,7 +159,7 @@ export async function fetchTestCaseSteps(
 
   if (typeof body.id !== "number") {
     throw new Error(
-      "[fetchTestCaseSteps] Missing or invalid required parameter: 'id'."
+      "[fetchTestCaseSteps] Missing or invalid required parameter: 'id'.",
     );
   }
 

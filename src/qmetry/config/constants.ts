@@ -9,5 +9,5 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_CASES: "getTestCases",
   FETCH_TEST_CASE_DETAILS: "getTestCaseDetails",
   FETCH_TEST_CASE_VERSION_DETAILS: "getTestCaseVersionDetails",
-  FETCH_TEST_CASE_STEPS: "getTestCaseSteps"
+  FETCH_TEST_CASE_STEPS: "getTestCaseSteps",
 };

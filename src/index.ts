@@ -78,12 +78,12 @@ async function main() {
       );
     }
   }
-  
+
   if (qmetryToken) {
     server.addClient(new QmetryClient(qmetryToken, qmetryBaseUrl));
     client_defined = true;
   }
-  
+
   if (!client_defined) {
     console.error(
       "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY, QMETRY_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",

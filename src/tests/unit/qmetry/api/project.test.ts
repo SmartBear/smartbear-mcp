@@ -28,7 +28,7 @@ describe("getProjectInfo", () => {
           project: projectKey,
           "User-Agent": expect.stringContaining("SmartBear MCP Server"),
         }),
-      })
+      }),
     );
 
     expect(result).toEqual(mockResponse);
@@ -42,7 +42,7 @@ describe("getProjectInfo", () => {
     });
 
     await expect(getProjectInfo(token, baseUrl, projectKey)).rejects.toThrow(
-      /QMetry API request failed \(500\)/
+      /QMetry API request failed \(500\)/,
     );
   });
 
@@ -61,7 +61,7 @@ describe("getProjectInfo", () => {
         headers: expect.objectContaining({
           project: "default", // from QMETRY_DEFAULTS
         }),
-      })
+      }),
     );
   });
 });

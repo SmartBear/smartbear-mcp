@@ -51,7 +51,6 @@ export const DEFAULT_FOLDER_OPTIONS: Required<
   folderID: null,
 };
 
-
 // Reusable Zod schema components
 export const CommonFields = {
   projectKey: z
@@ -88,49 +87,52 @@ export const CommonFields = {
     .number()
     .describe(
       "Test Case numeric ID (required for fetching specific test case details). " +
-      "This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. " +
-      "You can get this ID from test case search results or by using filters."
+        "This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. " +
+        "You can get this ID from test case search results or by using filters.",
     ),
   id: z
     .number()
     .describe(
       "Test Case numeric ID (required for fetching steps or version details). " +
-      "This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. " +
-      "You can get this ID from test case search results."
+        "This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. " +
+        "You can get this ID from test case search results.",
     ),
   version: z
     .number()
     .describe(
       "Test Case version number (required for fetching specific test case version details). " +
-      "This is the internal numeric identifier for the version."
+        "This is the internal numeric identifier for the version.",
     ),
   versionOptional: z
     .number()
     .optional()
     .describe(
       "Test Case version number (optional, defaults to 1). " +
-      "This is the internal numeric identifier for the version."
+        "This is the internal numeric identifier for the version.",
     ),
   viewId: z
     .number()
     .describe(
       "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
-      "Leave empty unless you have a specific viewId. " +
-      "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. " +
-      "Manual viewId only needed if you want to override the automatic resolution."
+        "Leave empty unless you have a specific viewId. " +
+        "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. " +
+        "Manual viewId only needed if you want to override the automatic resolution.",
     ),
   folderPath: z
     .string()
     .optional()
     .describe(
-      'Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. ' +
-      'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
-      'Only specify if user wants specific folder like "Automation/Regression".'
-    ).default(""),
+      "Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
+        'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+        'Only specify if user wants specific folder like "Automation/Regression".',
+    )
+    .default(""),
   folderID: z
     .number()
     .optional()
-    .describe("Folder ID for test cases - unique identifier for the folder containing test cases"),
+    .describe(
+      "Folder ID for test cases - unique identifier for the folder containing test cases",
+    ),
   scope: z
     .string()
     .optional()

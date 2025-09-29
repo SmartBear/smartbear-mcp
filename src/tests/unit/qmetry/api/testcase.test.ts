@@ -29,8 +29,17 @@ describe("testcase API clients", () => {
   });
 
   it("fetchTestCases should POST with correct URL and headers", async () => {
-    const payload = { ...DEFAULT_FETCH_TESTCASES_PAYLOAD, viewId: 1, folderPath: "/" };
-    const mockResponse = { data: [{ id: 1, name: "Test1" }, { id: 2, name: "Test2" }] };
+    const payload = {
+      ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
+      viewId: 1,
+      folderPath: "/",
+    };
+    const mockResponse = {
+      data: [
+        { id: 1, name: "Test1" },
+        { id: 2, name: "Test2" },
+      ],
+    };
 
     global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
@@ -47,17 +56,20 @@ describe("testcase API clients", () => {
           "User-Agent": expect.stringContaining("SmartBear MCP Server"),
         }),
         body: JSON.stringify(payload),
-      })
+      }),
     );
     expect(result).toEqual(mockResponse);
   });
 
   it("fetchTestCases should throw on missing viewId", async () => {
-    const invalidPayload = { ...DEFAULT_FETCH_TESTCASES_PAYLOAD, folderPath: "/" };
+    const invalidPayload = {
+      ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
+      folderPath: "/",
+    };
     const payload = invalidPayload as any;
 
     await expect(
-      fetchTestCases(token, baseUrl, projectKey, payload)
+      fetchTestCases(token, baseUrl, projectKey, payload),
     ).rejects.toThrow(/Missing or invalid required parameter: 'viewId'/);
   });
 
@@ -66,7 +78,7 @@ describe("testcase API clients", () => {
     const payload = invalidPayload as any;
 
     await expect(
-      fetchTestCases(token, baseUrl, projectKey, payload)
+      fetchTestCases(token, baseUrl, projectKey, payload),
     ).rejects.toThrow(/Missing or invalid required parameter: 'folderPath'/);
   });
 
@@ -76,8 +88,13 @@ describe("testcase API clients", () => {
 
     global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
-    const result = await fetchTestCaseDetails(token, baseUrl, projectKey, payload);
-    
+    const result = await fetchTestCaseDetails(
+      token,
+      baseUrl,
+      projectKey,
+      payload,
+    );
+
     expect(global.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/testcases/getVersionDetail`,
       expect.objectContaining({
@@ -88,7 +105,7 @@ describe("testcase API clients", () => {
           project: projectKey,
         }),
         body: expect.stringContaining('"tcID":123'),
-      })
+      }),
     );
     expect(result).toEqual(mockResponse);
   });
@@ -99,8 +116,13 @@ describe("testcase API clients", () => {
 
     global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
-    const result = await fetchTestCaseVersionDetails(token, baseUrl, projectKey, payload);
-    
+    const result = await fetchTestCaseVersionDetails(
+      token,
+      baseUrl,
+      projectKey,
+      payload,
+    );
+
     expect(global.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/testcases/list`,
       expect.objectContaining({
@@ -111,7 +133,7 @@ describe("testcase API clients", () => {
           project: projectKey,
         }),
         body: expect.stringContaining('"id":123'),
-      })
+      }),
     );
     expect(result).toEqual(mockResponse);
   });
@@ -122,8 +144,13 @@ describe("testcase API clients", () => {
 
     global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
-    const result = await fetchTestCaseSteps(token, baseUrl, projectKey, payload);
-    
+    const result = await fetchTestCaseSteps(
+      token,
+      baseUrl,
+      projectKey,
+      payload,
+    );
+
     expect(global.fetch).toHaveBeenCalledWith(
       `${baseUrl}/rest/testcases/steps/list`,
       expect.objectContaining({
@@ -133,10 +160,10 @@ describe("testcase API clients", () => {
           apikey: token,
           project: projectKey,
         }),
-      })
+      }),
     );
-    
-    expect(result).toHaveProperty('steps');
+
+    expect(result).toHaveProperty("steps");
     expect((result as any).steps).toHaveLength(2);
   });
 
@@ -144,12 +171,12 @@ describe("testcase API clients", () => {
     global.fetch = vi.fn().mockResolvedValue(mockFail(400, "Invalid request"));
 
     await expect(
-      fetchTestCases(token, baseUrl, projectKey, { 
-        ...DEFAULT_FETCH_TESTCASES_PAYLOAD, 
-        viewId: 1, 
-        folderPath: "/", 
-        start: 0 
-      })
+      fetchTestCases(token, baseUrl, projectKey, {
+        ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
+        viewId: 1,
+        folderPath: "/",
+        start: 0,
+      }),
     ).rejects.toThrow(/QMetry API request failed \(400\): Invalid request/);
   });
 
@@ -163,11 +190,11 @@ describe("testcase API clients", () => {
     });
 
     await expect(
-      fetchTestCases(token, baseUrl, projectKey, { 
-        ...DEFAULT_FETCH_TESTCASES_PAYLOAD, 
-        viewId: 1, 
-        folderPath: "/" 
-      })
+      fetchTestCases(token, baseUrl, projectKey, {
+        ...DEFAULT_FETCH_TESTCASES_PAYLOAD,
+        viewId: 1,
+        folderPath: "/",
+      }),
     ).rejects.toThrow(/QMetry API request failed \(400\):/);
   });
 });

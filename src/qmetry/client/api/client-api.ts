@@ -43,8 +43,8 @@ export async function qmetryRequest<T>({
     } catch {
       errorText = res.statusText;
     }
-    throw new Error(`QMetry API request failed (${res.status}): ${errorText}`); 
+    throw new Error(`QMetry API request failed (${res.status}): ${errorText}`);
   }
 
   return (await res.json()) as T;
-};
+}

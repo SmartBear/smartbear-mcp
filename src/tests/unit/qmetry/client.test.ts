@@ -20,7 +20,10 @@ describe("QmetryClient", () => {
 
   describe("constructor", () => {
     it("should initialize with correct parameters", () => {
-      const testClient = new QmetryClient("fake-token", "https://qmetry.example");
+      const testClient = new QmetryClient(
+        "fake-token",
+        "https://qmetry.example",
+      );
       expect(testClient).toBeInstanceOf(QmetryClient);
       expect(testClient.getBaseUrl()).toBe("https://qmetry.example");
       expect(testClient.getToken()).toBe("fake-token");
@@ -30,7 +33,6 @@ describe("QmetryClient", () => {
       expect(client.getBaseUrl()).toBe("https://qmetry.example");
       expect(client.getToken()).toBe("fake-token");
     });
-
   });
 
   describe("registerTools", () => {
@@ -45,8 +47,12 @@ describe("QmetryClient", () => {
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(6);
-      expect(mockRegister.mock.calls[0][0].title).toBe("Set QMetry Project Info");
-      expect(mockRegister.mock.calls[0][0].summary).toBe("Set current QMetry project for your account");
+      expect(mockRegister.mock.calls[0][0].title).toBe(
+        "Set QMetry Project Info",
+      );
+      expect(mockRegister.mock.calls[0][0].summary).toBe(
+        "Set current QMetry project for your account",
+      );
     });
 
     it("registers tools with correct structure", () => {
@@ -55,13 +61,13 @@ describe("QmetryClient", () => {
       // Check that all registered tools have the expected structure
       const toolCalls = mockRegister.mock.calls;
       expect(toolCalls.length).toBe(6);
-      
+
       toolCalls.forEach(([toolConfig, handler], _index) => {
-        expect(toolConfig).toHaveProperty('title');
-        expect(toolConfig).toHaveProperty('summary');
-        expect(typeof toolConfig.title).toBe('string');
-        expect(typeof toolConfig.summary).toBe('string');
-        expect(typeof handler).toBe('function');
+        expect(toolConfig).toHaveProperty("title");
+        expect(toolConfig).toHaveProperty("summary");
+        expect(typeof toolConfig.title).toBe("string");
+        expect(typeof toolConfig.summary).toBe("string");
+        expect(typeof handler).toBe("function");
       });
     });
 

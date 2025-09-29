@@ -16,7 +16,7 @@ export class QmetryClient implements Client {
   private endpoint: string;
   constructor(token: string, endpoint?: string) {
     this.token = token;
-    this.projectApiKey =  QMETRY_DEFAULTS.PROJECT_KEY;
+    this.projectApiKey = QMETRY_DEFAULTS.PROJECT_KEY;
     this.endpoint = endpoint || QMETRY_DEFAULTS.BASE_URL;
   }
 
@@ -30,7 +30,7 @@ export class QmetryClient implements Client {
 
   registerTools(
     register: RegisterToolsFunction,
-    _getInput: GetInputFunction
+    _getInput: GetInputFunction,
   ): void {
     const resolveContext = (args: Record<string, any>) => ({
       baseUrl: args.baseUrl ?? this.endpoint,
@@ -73,14 +73,18 @@ export class QmetryClient implements Client {
             if (!viewId || folderPath === undefined) {
               let projectInfo: any;
               try {
-                projectInfo = await getProjectInfo(this.token, baseUrl, projectKey) as any;
+                projectInfo = (await getProjectInfo(
+                  this.token,
+                  baseUrl,
+                  projectKey,
+                )) as any;
               } catch (err) {
                 throw new Error(
                   `Failed to auto-resolve viewId/folderPath for project ${projectKey}. ` +
-                  `Please provide them manually or check project access. ` +
-                  `Error: ${err instanceof Error ? err.message : String(err)}`
+                    `Please provide them manually or check project access. ` +
+                    `Error: ${err instanceof Error ? err.message : String(err)}`,
                 );
-              } 
+              }
               if (!viewId && projectInfo?.latestViews?.TC?.viewId) {
                 viewId = projectInfo.latestViews.TC.viewId;
               }
@@ -97,22 +101,22 @@ export class QmetryClient implements Client {
 
           // Use custom formatter if available, otherwise return JSON
           const formatted = tool.formatResponse
-              ? tool.formatResponse(result)
-              : result ?? {};
+            ? tool.formatResponse(result)
+            : (result ?? {});
 
-            return {
-              content: [
-                {
-                  success: true,
-                  type: "text",
-                  text:
-                    typeof formatted === "string"
-                      ? formatted
-                      : JSON.stringify(formatted, null, 2),
-                },
-              ],
-            };
-        })
+          return {
+            content: [
+              {
+                success: true,
+                type: "text",
+                text:
+                  typeof formatted === "string"
+                    ? formatted
+                    : JSON.stringify(formatted, null, 2),
+              },
+            ],
+          };
+        }),
       );
     }
   }

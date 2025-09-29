@@ -27,7 +27,10 @@ describe("QmetryClient tools", () => {
 
   describe("Fetch QMetry Project Info", () => {
     it("should fetch project info with defaults", async () => {
-      (project.getProjectInfo as any).mockResolvedValue({ id: 1, name: "Proj" });
+      (project.getProjectInfo as any).mockResolvedValue({
+        id: 1,
+        name: "Proj",
+      });
 
       const handler = getHandler("Fetch QMetry Project Info");
       const result = await handler({});
@@ -36,7 +39,7 @@ describe("QmetryClient tools", () => {
         "fake-token",
         "https://qmetry.example",
         "default", // from QMETRY_DEFAULTS
-        {} // empty payload object
+        {}, // empty payload object
       );
 
       expect(result.content[0].text).toContain("Proj");
@@ -44,8 +47,10 @@ describe("QmetryClient tools", () => {
 
     it("should handle API errors gracefully", async () => {
       // Mock console.error to suppress expected error logging during test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       (project.getProjectInfo as any).mockRejectedValue(new Error("boom"));
 
       const handler = getHandler("Fetch QMetry Project Info");
@@ -56,25 +61,27 @@ describe("QmetryClient tools", () => {
           {
             success: false,
             type: "text",
-            text: "Error: boom"
-          }
-        ]
+            text: "Error: boom",
+          },
+        ],
       });
-      
+
       // Restore console.error
       consoleSpy.mockRestore();
     });
   });
 
-
   describe("Fetch Test Cases", () => {
     it("should auto-resolve viewId and call fetchTestCases with default pagination", async () => {
       // Mock project info response for auto-resolution
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TC: { viewId: 12345 } }
+        latestViews: { TC: { viewId: 12345 } },
       });
-      (testcase.fetchTestCases as any).mockResolvedValue({ 
-        data: [{ id: 1, name: "Test1" }, { id: 2, name: "Test2" }] 
+      (testcase.fetchTestCases as any).mockResolvedValue({
+        data: [
+          { id: 1, name: "Test1" },
+          { id: 2, name: "Test2" },
+        ],
       });
 
       const handler = getHandler("Fetch Test Cases");
@@ -85,7 +92,7 @@ describe("QmetryClient tools", () => {
       expect(project.getProjectInfo).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default"
+        "default",
       );
 
       // fetchTestCases should be called with auto-resolved viewId and folderPath
@@ -95,8 +102,8 @@ describe("QmetryClient tools", () => {
         "default",
         expect.objectContaining({
           viewId: 12345, // Auto-resolved from project info
-          folderPath: "" // Auto-set to empty string for root
-        })
+          folderPath: "", // Auto-set to empty string for root
+        }),
       );
 
       expect(result.content[0].text).toContain("Test1");
@@ -104,8 +111,8 @@ describe("QmetryClient tools", () => {
     });
 
     it("should skip auto-resolution when viewId is provided", async () => {
-      (testcase.fetchTestCases as any).mockResolvedValue({ 
-        data: [{ id: 4, name: "Test4" }] 
+      (testcase.fetchTestCases as any).mockResolvedValue({
+        data: [{ id: 4, name: "Test4" }],
       });
 
       const handler = getHandler("Fetch Test Cases");
@@ -121,8 +128,8 @@ describe("QmetryClient tools", () => {
         "default",
         expect.objectContaining({
           viewId: 99999,
-          folderPath: "test"
-        })
+          folderPath: "test",
+        }),
       );
 
       expect(result.content[0].text).toContain("Test4");
@@ -130,10 +137,14 @@ describe("QmetryClient tools", () => {
 
     it("should handle auto-resolution failure gracefully", async () => {
       // Mock console.error to suppress expected error logging during test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       // Mock getProjectInfo to fail during auto-resolution
-      (project.getProjectInfo as any).mockRejectedValue(new Error("Project not found"));
+      (project.getProjectInfo as any).mockRejectedValue(
+        new Error("Project not found"),
+      );
 
       const handler = getHandler("Fetch Test Cases");
       const result = await handler({});
@@ -142,13 +153,15 @@ describe("QmetryClient tools", () => {
       expect(project.getProjectInfo).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
-        "default"
+        "default",
       );
 
       expect(result.content[0].success).toBe(false);
-      expect(result.content[0].text).toContain("Failed to auto-resolve viewId/folderPath");
+      expect(result.content[0].text).toContain(
+        "Failed to auto-resolve viewId/folderPath",
+      );
       expect(result.content[0].text).toContain("Project not found");
-      
+
       // Restore console.error
       consoleSpy.mockRestore();
     });
@@ -165,7 +178,7 @@ describe("QmetryClient tools", () => {
         "fake-token",
         "https://qmetry.example",
         "default",
-        expect.objectContaining({ tcID: "TC-1" })
+        expect.objectContaining({ tcID: "TC-1" }),
       );
 
       expect(result.content[0].text).toContain("TC-1");
@@ -186,13 +199,12 @@ describe("QmetryClient tools", () => {
         "fake-token",
         "https://qmetry.example",
         "default",
-        expect.objectContaining({ id: "TC-2", version: 3 })
+        expect.objectContaining({ id: "TC-2", version: 3 }),
       );
 
       expect(result.content[0].text).toContain("version");
     });
   });
-
 
   describe("Fetch Test Case Steps", () => {
     it("should fetch steps with defaults", async () => {
@@ -207,7 +219,7 @@ describe("QmetryClient tools", () => {
         "fake-token",
         "https://qmetry.example",
         "default",
-        expect.objectContaining({ id: "TC-3" })
+        expect.objectContaining({ id: "TC-3" }),
       );
 
       expect(result.content[0].text).toContain("step1");
