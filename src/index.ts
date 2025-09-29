@@ -5,6 +5,7 @@ import { BugsnagClient } from "./bugsnag/client.js";
 import Bugsnag from "./common/bugsnag.js";
 import { SmartBearMcpServer } from "./common/server.js";
 import { PactflowClient } from "./pactflow/client.js";
+import { QmetryClient } from "./qmetry/client.js";
 import { ReflectClient } from "./reflect/client.js";
 
 // This is used to report errors in the MCP server itself
@@ -24,6 +25,8 @@ async function main() {
   const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
   const pactBrokerUsername = process.env.PACT_BROKER_USERNAME;
   const pactBrokerPassword = process.env.PACT_BROKER_PASSWORD;
+  const qmetryToken = process.env.QMETRY_API_KEY;
+  const qmetryBaseUrl = process.env.QMETRY_BASE_URL;
 
   let client_defined = false;
 
@@ -76,9 +79,14 @@ async function main() {
     }
   }
 
+  if (qmetryToken) {
+    server.addClient(new QmetryClient(qmetryToken, qmetryBaseUrl));
+    client_defined = true;
+  }
+
   if (!client_defined) {
     console.error(
-      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
+      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY, QMETRY_API_KEY or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
     );
     process.exit(1);
   }
