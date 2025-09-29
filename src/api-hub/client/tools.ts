@@ -10,6 +10,7 @@ import type { ToolParams } from "../../common/types.js";
 import {
   ApiDefinitionParamsSchema,
   ApiSearchParamsSchema,
+  CreateApiParamsSchema,
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   PortalArgsSchema,
@@ -101,5 +102,11 @@ export const TOOLS: ApiHubToolParams[] = [
       "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.",
     zodSchema: ApiDefinitionParamsSchema,
     handler: "getApiDefinition",
+  },
+  {
+    title: "Create API",
+    summary: "Create a new API in the API Hub.",
+    zodSchema: CreateApiParamsSchema,
+    handler: "createApi",
   },
 ];

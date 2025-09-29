@@ -6,6 +6,8 @@ import type {
   ApiSearchResponse,
   ApiSpecification,
   ApisJsonResponse,
+  CreateApiParams,
+  CreateApiResponse,
   CreatePortalArgs,
   CreateProductBody,
   FallbackResponse,
@@ -29,8 +31,8 @@ const SWAGGER_URL_REGEX =
   /\/(apis|domains|templates)\/([^/]+)\/([^/]+)\/([^/]+)/;
 
 export class ApiHubAPI {
-  private config: ApiHubConfiguration;
-  private headers: Record<string, string>;
+  private readonly config: ApiHubConfiguration;
+  private readonly headers: Record<string, string>;
 
   constructor(config: ApiHubConfiguration, userAgent: string) {
     this.config = config;
@@ -367,5 +369,69 @@ export class ApiHubAPI {
     } else {
       return response.text();
     }
+  }
+
+  /**
+   * Create/Save API definition in SwaggerHub Registry
+   * @param params API creation parameters including owner, name, version, specification type, and definition
+   * @returns Created API information with SwaggerHub URL
+   */
+  async createApi(params: CreateApiParams): Promise<CreateApiResponse> {
+    const searchParams = new URLSearchParams();
+
+    // Add query parameters based on the provided options
+    if (params.project) searchParams.append("project", params.project);
+    if (params.template) searchParams.append("template", params.template);
+    if (params.automock !== undefined) searchParams.append("automock", params.automock.toString());
+
+    // Always set visibility to private as per requirements
+    searchParams.append("private", "true");
+
+    // Add version as query parameter
+    searchParams.append("version", params.version);
+
+    // Correct endpoint structure: /apis/{owner}/{api} (without version in path)
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(params.owner)}/${encodeURIComponent(params.api)}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+    // Prepare the definition payload - handle both string and object inputs
+    let definitionPayload: string;
+    if (typeof params.definition === "string") {
+      definitionPayload = params.definition;
+    } else {
+      definitionPayload = JSON.stringify(params.definition);
+    }
+
+    // Determine content type based on specification type
+    const isYaml = definitionPayload.trim().startsWith("openapi:") || definitionPayload.trim().startsWith("swagger:");
+    const contentType = isYaml ? "application/yaml" : "application/json";
+
+    const response = await fetch(url, {
+      method: "POST", // Using POST as per SwaggerHub Registry API docs
+      headers: {
+        ...this.headers,
+        "Content-Type": contentType,
+      },
+      body: definitionPayload,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `SwaggerHub Registry API createApi failed - status: ${response.status} ${response.statusText}${
+          errorText ? ` - ${errorText}` : ""
+        }`,
+      );
+    }
+
+    // SwaggerHub saveDefinition typically returns 201 Created or success response
+    // Construct the response with the SwaggerHub URL
+    const swaggerHubUrl = `https://app.swaggerhub.com/apis/${params.owner}/${params.api}/${params.version}`;
+
+    return {
+      owner: params.owner,
+      name: params.api,
+      version: params.version,
+      url: swaggerHubUrl,
+    };
   }
 }
