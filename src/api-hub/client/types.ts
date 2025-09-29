@@ -346,26 +346,6 @@ export interface ApiDefinitionParams {
 
 export type ApiSearchResponse = ApiMetadata[];
 
-// API Creation types for SwaggerHub Design functionality
-export interface CreateApiParams {
-  owner: string;
-  api: string;
-  version: string;
-  specification: "OpenAPI 2.0" | "OpenAPI 3.0" | "OpenAPI 3.1" | "AsyncAPI 2.0" | "AsyncAPI 3.0";
-  visibility: "private";
-  project?: string;
-  template?: string;
-  automock?: boolean;
-  definition: string | object;
-}
-
-export interface CreateApiResponse {
-  owner: string;
-  name: string;
-  version: string;
-  url: string;
-}
-
 // Zod schemas for Registry API validation
 export const ApiSearchParamsSchema = z.object({
   query: z
@@ -428,39 +408,4 @@ export const ApiDefinitionParamsSchema = z.object({
     .describe(
       "Set to true to create models from inline schemas in OpenAPI definition (default false)",
     ),
-});
-
-export const CreateApiParamsSchema = z.object({
-  owner: z
-    .string()
-    .describe("Organization or username that will own the API - must be a valid SwaggerHub organization or user"),
-  api: z
-    .string()
-    .describe("API name - must be unique within the owner's namespace. Use alphanumeric characters, hyphens, underscores, or dots"),
-  version: z
-    .string()
-    .default("1.0.0")
-    .describe("Version identifier for the API - semantic versioning recommended (e.g., 1.0.0)"),
-  specification: z
-    .enum(["OpenAPI 2.0", "OpenAPI 3.0", "OpenAPI 3.1", "AsyncAPI 2.0", "AsyncAPI 3.0"])
-    .describe("API specification type and version - determines the schema format for validation"),
-  visibility: z
-    .literal("private")
-    .default("private")
-    .describe("API visibility setting - currently only 'private' is supported for new APIs"),
-  project: z
-    .string()
-    .optional()
-    .describe("Project to associate the API with - leave empty for no project association"),
-  template: z
-    .string()
-    .optional()
-    .describe("Template to use for API creation - leave empty to create from scratch"),
-  automock: z
-    .boolean()
-    .default(false)
-    .describe("Enable automatic mock server generation - creates a mock server based on the API definition"),
-  definition: z
-    .union([z.string(), z.record(z.unknown())])
-    .describe("API definition content - can be a JSON string, YAML string, or parsed JSON object containing the OpenAPI/AsyncAPI specification"),
 });

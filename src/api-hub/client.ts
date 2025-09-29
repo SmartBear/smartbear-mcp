@@ -10,8 +10,6 @@ import {
   ApiHubConfiguration,
   type ApiSearchParams,
   type ApiSearchResponse,
-  type CreateApiParams,
-  type CreateApiResponse,
   type CreatePortalArgs,
   type CreateProductArgs,
   type FallbackResponse,
@@ -113,12 +111,6 @@ export class ApiHubClient implements Client {
     args: ApiDefinitionParams,
   ): Promise<unknown | FallbackResponse> {
     return this.api.getApiDefinition(args);
-  }
-
-  async createApi(
-    body: CreateApiParams,
-  ): Promise<CreateApiResponse | FallbackResponse> {
-    return this.api.createApi(body);
   }
 
   registerTools(
