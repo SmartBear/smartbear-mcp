@@ -1,8 +1,10 @@
 import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   ApiDefinitionParams,
+  ApiProperty,
   ApiSearchParams,
   ApiSearchResponse,
+  ApiSpecification,
   ApisJsonResponse,
   CreatePortalArgs,
   CreateProductBody,
@@ -291,13 +293,14 @@ export class ApiHubAPI {
    * @param specs Array of API specifications from APIs.json
    * @returns Array of processed API metadata
    */
-  private transformApisJsonToMetadata(specs: any[]): ApiSearchResponse {
+  private transformApisJsonToMetadata(specs: ApiSpecification[]): ApiSearchResponse {
     return specs.map((spec) => {
       // Extract useful properties from the properties array
       const properties = spec.properties || [];
-      const getProperty = (type: string) =>
-        properties.find((p: any) => p.type === type)?.value ||
-        properties.find((p: any) => p.type === type)?.url;
+      const getProperty = (type: string) => {
+        const property = properties.find((p: ApiProperty) => p.type === type);
+        return property?.value || property?.url;
+      };
 
       // Extract owner and API name from the Swagger URL
       const swaggerUrl = getProperty("Swagger") || "";
