@@ -293,7 +293,9 @@ export class ApiHubAPI {
    * @param specs Array of API specifications from APIs.json
    * @returns Array of processed API metadata
    */
-  private transformApisJsonToMetadata(specs: ApiSpecification[]): ApiSearchResponse {
+  private transformApisJsonToMetadata(
+    specs: ApiSpecification[],
+  ): ApiSearchResponse {
     return specs.map((spec) => {
       // Extract useful properties from the properties array
       const properties = spec.properties || [];
