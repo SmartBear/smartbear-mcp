@@ -1,11 +1,11 @@
-import type { ApiHubConfiguration } from "./configuration.js";
+import type {ApiHubConfiguration} from "./configuration.js";
 import type {
   ApiDefinitionParams,
   ApiProperty,
   ApiSearchParams,
   ApiSearchResponse,
-  ApiSpecification,
   ApisJsonResponse,
+  ApiSpecification,
   CreatePortalArgs,
   CreateProductBody,
   FallbackResponse,
@@ -17,6 +17,16 @@ import type {
   UpdatePortalBody,
   UpdateProductBody,
 } from "./types.js";
+
+// Regex to extract owner, name, and version from SwaggerHub URLs.
+// Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
+// Example: /apis/acme/petstore/1.0.0
+//   - group 1: type (apis|domains|templates)
+//   - group 2: owner
+//   - group 3: name
+//   - group 4: version
+const SWAGGER_URL_REGEX =
+  /\/(apis|domains|templates)\/([^/]+)\/([^/]+)\/([^/]+)/;
 
 export class ApiHubAPI {
   private config: ApiHubConfiguration;
@@ -55,8 +65,7 @@ export class ApiHubAPI {
     const contentType = response.headers.get("content-type");
     if (contentType?.includes("application/json")) {
       try {
-        const jsonData = (await response.json()) as T;
-        return jsonData;
+        return (await response.json()) as T;
       } catch (error) {
         console.warn("Failed to parse JSON response:", error);
         return defaultReturn;
@@ -304,16 +313,16 @@ export class ApiHubAPI {
         return property?.value || property?.url;
       };
 
-      // Extract owner and API name from the Swagger URL
+      // Extract owner, name, and version from the Swagger URL using the regex constant
       const swaggerUrl = getProperty("Swagger") || "";
-      const urlMatch = swaggerUrl.match(/\/apis\/([^/]+)\/([^/]+)\/([^/]+)/);
+      const urlMatch = RegExp(SWAGGER_URL_REGEX).exec(swaggerUrl);
 
       return {
-        owner: urlMatch?.[1] || "",
+        owner: urlMatch?.[2] || "",
         name: spec.name || "",
         description: spec.description || "",
         summary: spec.summary || "",
-        version: getProperty("X-Version") || urlMatch?.[3] || "",
+        version: getProperty("X-Version") || urlMatch?.[4] || "",
         specification: getProperty("X-Specification") || "",
         created: getProperty("X-Created"),
         modified: getProperty("X-Modified"),
