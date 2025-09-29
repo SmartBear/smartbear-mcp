@@ -397,5 +397,5 @@ function isValidISODate(dateString: string): boolean {
  *     True if valid project key format, false otherwise
  */
 function isValidProjectKey(projectKey: string): boolean {
-    return /^[A-Z][A-Z0-9]*$/.test(projectKey.trim());
+    return /^[A-Z][A-Z0-9]+$/.test(projectKey.trim());
 }
