@@ -8,15 +8,17 @@
 
 import type { ToolParams } from "../../common/types.js";
 import {
-  ApiDefinitionParamsSchema,
-  ApiSearchParamsSchema,
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   PortalArgsSchema,
   ProductArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
-} from "./types.js";
+} from "./portal-types.js";
+import {
+  ApiDefinitionParamsSchema,
+  ApiSearchParamsSchema,
+} from "./registry-types.js";
 
 export interface ApiHubToolParams extends ToolParams {
   handler: string;

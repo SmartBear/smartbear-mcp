@@ -1,11 +1,5 @@
 import type { ApiHubConfiguration } from "./configuration.js";
 import type {
-  ApiDefinitionParams,
-  ApiProperty,
-  ApiSearchParams,
-  ApiSearchResponse,
-  ApiSpecification,
-  ApisJsonResponse,
   CreatePortalArgs,
   CreateProductBody,
   FallbackResponse,
@@ -16,7 +10,15 @@ import type {
   SuccessResponse,
   UpdatePortalBody,
   UpdateProductBody,
-} from "./types.js";
+} from "./portal-types.js";
+import type {
+  ApiDefinitionParams,
+  ApiProperty,
+  ApiSearchParams,
+  ApiSearchResponse,
+  ApiSpecification,
+  ApisJsonResponse,
+} from "./registry-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
