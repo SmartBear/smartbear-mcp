@@ -25,6 +25,8 @@ export default defineConfig({
         // Utility modules
         "src/common/bugsnag.ts",
         "src/common/types.ts",
+        "src/pactflow/client/prompts.ts",
+        "scripts/post-coverage-comment.js",
       ],
       // Coverage thresholds for business logic only
       thresholds: {
