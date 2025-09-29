@@ -1,89 +1,5 @@
 import { z } from "zod";
 
-// Type definitions for tool arguments
-export interface PortalArgs {
-  portalId: string;
-}
-
-export interface ProductArgs {
-  productId: string;
-}
-
-export interface CreatePortalArgs {
-  name?: string;
-  subdomain: string;
-  offline?: boolean;
-  routing?: string;
-  credentialsEnabled?: boolean;
-  swaggerHubOrganizationId: string;
-  openapiRenderer?: string;
-  pageContentFormat?: string;
-}
-
-export interface UpdatePortalArgs extends PortalArgs {
-  name?: string;
-  subdomain?: string;
-  customDomain?: boolean;
-  gtmKey?: string;
-  offline?: boolean;
-  routing?: string;
-  credentialsEnabled?: boolean;
-  openapiRenderer?: string;
-  pageContentFormat?: string;
-}
-
-export interface CreateProductArgs extends PortalArgs {
-  type: string;
-  name: string;
-  slug: string;
-  description?: string;
-  public?: boolean;
-  hidden?: boolean;
-  role?: boolean;
-}
-
-export interface UpdateProductArgs extends ProductArgs {
-  name?: string;
-  slug?: string;
-  description?: string;
-  public?: boolean;
-  hidden?: boolean;
-}
-
-// API body types (without IDs - IDs are passed in URL path)
-export type UpdatePortalBody = Omit<UpdatePortalArgs, "portalId">;
-export type CreateProductBody = Omit<CreateProductArgs, "portalId">;
-export type UpdateProductBody = Omit<UpdateProductArgs, "productId">;
-
-// Response types for better type safety
-export type FallbackResponse =
-  | {
-      message: string;
-    }
-  | Record<string, never>;
-
-export type SuccessResponse = {
-  success: boolean;
-};
-
-// Common API Hub response entities
-export interface Portal {
-  id: string;
-  name: string;
-  subdomain?: string;
-  [key: string]: unknown;
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  [key: string]: unknown;
-}
-
-// Response collection types
-export type PortalsListResponse = Portal[];
-export type ProductsListResponse = Product[];
-
 // Zod schemas for validation
 export const PortalArgsSchema = z.object({
   portalId: z
@@ -282,18 +198,51 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
     ),
 });
 
-// Registry API types for SwaggerHub Design functionality
-export interface ApiSearchParams {
-  query?: string;
-  state?: "ALL" | "PUBLISHED" | "UNPUBLISHED";
-  tag?: string;
-  offset?: number;
-  limit?: number;
-  sort?: "NAME" | "UPDATED" | "CREATED";
-  order?: "ASC" | "DESC";
-  owner?: string;
-  specType?: "API" | "DOMAIN";
+// Registry API types for SwaggerHub Design functionality - generated from Zod schemas
+export type ApiSearchParams = z.infer<typeof ApiSearchParamsSchema>;
+export type ApiDefinitionParams = z.infer<typeof ApiDefinitionParamsSchema>;
+
+// Type definitions for tool arguments - generated from Zod schemas
+export type PortalArgs = z.infer<typeof PortalArgsSchema>;
+export type ProductArgs = z.infer<typeof ProductArgsSchema>;
+export type CreatePortalArgs = z.infer<typeof CreatePortalArgsSchema>;
+export type UpdatePortalArgs = z.infer<typeof UpdatePortalArgsSchema>;
+export type CreateProductArgs = z.infer<typeof CreateProductArgsSchema>;
+export type UpdateProductArgs = z.infer<typeof UpdateProductArgsSchema>;
+
+// API body types (without IDs - IDs are passed in URL path)
+export type UpdatePortalBody = Omit<UpdatePortalArgs, "portalId">;
+export type CreateProductBody = Omit<CreateProductArgs, "portalId">;
+export type UpdateProductBody = Omit<UpdateProductArgs, "productId">;
+
+// Response types for better type safety
+export type FallbackResponse =
+  | {
+      message: string;
+    }
+  | Record<string, never>;
+
+export type SuccessResponse = {
+  success: boolean;
+};
+
+// Common API Hub response entities
+export interface Portal {
+  id: string;
+  name: string;
+  subdomain?: string;
+  [key: string]: unknown;
 }
+
+export interface Product {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+// Response collection types
+export type PortalsListResponse = Portal[];
+export type ProductsListResponse = Product[];
 
 // APIs.json format response types
 export interface ApiProperty {
@@ -336,13 +285,6 @@ export interface ApiMetadata {
   url?: string;
 }
 
-export interface ApiDefinitionParams {
-  owner: string;
-  api: string;
-  version: string;
-  resolved?: boolean;
-  flatten?: boolean;
-}
 
 export type ApiSearchResponse = ApiMetadata[];
 
