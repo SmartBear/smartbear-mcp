@@ -1,2 +1,2 @@
-export { CurrentUserAPI } from "./CurrentUser.ts";
-export { ErrorAPI } from "./Error.ts";
+export { CurrentUserAPI } from "./CurrentUser";
+export { ErrorAPI } from "./Error";

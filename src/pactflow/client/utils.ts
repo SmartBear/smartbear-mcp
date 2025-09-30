@@ -5,7 +5,7 @@ import {
   type OpenAPI,
   type RemoteOpenAPIDocument,
   RemoteOpenAPIDocumentSchema,
-} from "./ai.ts";
+} from "./ai";
 
 /**
  * Resolve the OpenAPI specification from the provided input.

@@ -1,4 +1,4 @@
-import type { ApiHubConfiguration } from "./configuration.ts";
+import type { ApiHubConfiguration } from "./configuration";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -10,7 +10,7 @@ import type {
   SuccessResponse,
   UpdatePortalBody,
   UpdateProductBody,
-} from "./types.ts";
+} from "./types";
 
 export class ApiHubAPI {
   private config: ApiHubConfiguration;

@@ -2,11 +2,11 @@ import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.ts";
-import { QMETRY_HANDLER_MAP } from "./client/handlers.ts";
-import { getProjectInfo } from "./client/project.ts";
-import { TOOLS } from "./client/tools.ts";
-import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants.ts";
+} from "../common/types";
+import { QMETRY_HANDLER_MAP } from "./client/handlers";
+import { getProjectInfo } from "./client/project";
+import { TOOLS } from "./client/tools";
+import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants";
 
 export class QmetryClient implements Client {
   name = "QMetry";

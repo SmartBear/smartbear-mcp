@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import type { OpenApiWithMatcher } from "../../../pactflow/client/ai.ts";
+import type { OpenApiWithMatcher } from "../../../pactflow/client/ai";
 import {
   addOpenAPISpecToSchema,
   getRemoteSpecContents,
   resolveOpenAPISpec,
-} from "../../../pactflow/client/utils.ts";
+} from "../../../pactflow/client/utils";
 
 describe("Utility tests", () => {
   const fetchMocker = createFetchMock(vi);

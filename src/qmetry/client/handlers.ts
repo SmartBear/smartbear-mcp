@@ -1,11 +1,11 @@
-import { QMetryToolsHandlers } from "../config/constants.ts";
-import { getProjectInfo } from "./project.ts";
+import { QMetryToolsHandlers } from "../config/constants";
+import { getProjectInfo } from "./project";
 import {
   fetchTestCaseDetails,
   fetchTestCaseSteps,
   fetchTestCases,
   fetchTestCaseVersionDetails,
-} from "./testcase.ts";
+} from "./testcase";
 
 /**
  * Mapping of QMetry tool handlers to their implementation functions

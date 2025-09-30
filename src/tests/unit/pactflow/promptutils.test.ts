@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
-} from "../../../pactflow/client/prompt-utils.ts";
+} from "../../../pactflow/client/prompt-utils";
 
 describe("Prompt Utils", () => {
   describe("getOADMatcherRecommendations tests", () => {

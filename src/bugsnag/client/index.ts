@@ -1,2 +1,2 @@
-export * from "./api/index.ts";
-export * from "./configuration.ts";
+export * from "./api/index";
+export * from "./configuration";

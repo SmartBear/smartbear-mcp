@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { addOpenAPISpecToSchema } from "./utils.ts";
+import { addOpenAPISpecToSchema } from "./utils";
 
 // Type definitions for PactFlow AI API
 export const GenerationLanguages = [

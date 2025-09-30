@@ -1,6 +1,6 @@
-import type { Configuration } from "../configuration.ts";
-import { type ApiResponse, BaseAPI } from "./base.ts";
-import { type FilterObject, toQueryString } from "./filters.ts";
+import type { Configuration } from "../configuration";
+import { type ApiResponse, BaseAPI } from "./base";
+import { type FilterObject, toQueryString } from "./filters";
 
 // --- Response Types ---
 

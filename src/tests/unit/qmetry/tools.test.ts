@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QmetryClient } from "../../../qmetry/client";
 // Mock API clients
-import * as project from "../../../qmetry/client/project.ts";
-import * as testcase from "../../../qmetry/client/testcase.ts";
-import { QmetryClient } from "../../../qmetry/client.ts";
+import * as project from "../../../qmetry/client/project";
+import * as testcase from "../../../qmetry/client/testcase";
 
 vi.mock("../../../qmetry/client/project.js");
 vi.mock("../../../qmetry/client/testcase.js");

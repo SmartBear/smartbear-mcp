@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { ZodObject, ZodTypeAny } from "zod";
-import { TOOLS } from "../../../pactflow/client/tools.ts";
+import { TOOLS } from "../../../pactflow/client/tools";
 
 describe("TOOLS definition for 'Generate Pact Tests'", () => {
   it("defines the generate pact tests tool with correct metadata", () => {

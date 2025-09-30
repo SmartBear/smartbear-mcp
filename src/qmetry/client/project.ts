@@ -1,6 +1,6 @@
-import { QMETRY_DEFAULTS } from "../config/constants.ts";
-import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
-import { qmetryRequest } from "./api/client-api.ts";
+import { QMETRY_DEFAULTS } from "../config/constants";
+import { QMETRY_PATHS } from "../config/rest-endpoints";
+import { qmetryRequest } from "./api/client-api";
 
 /**
  * Retrieves project information from QMetry

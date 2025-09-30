@@ -4,7 +4,7 @@ import {
   getNextUrlPathFromHeader,
   pickFields,
   pickFieldsFromArray,
-} from "../../../bugsnag/client/api/base.ts";
+} from "../../../bugsnag/client/api/base";
 
 describe("API Utilities", () => {
   describe("pickFields", () => {

@@ -1,9 +1,9 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.ts";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.ts";
+} from "../common/types";
 import {
   ApiHubAPI,
   ApiHubConfiguration,
@@ -18,7 +18,7 @@ import {
   TOOLS,
   type UpdatePortalArgs,
   type UpdateProductArgs,
-} from "./client/index.ts";
+} from "./client/index";
 
 // Tool definitions for API Hub API client
 export class ApiHubClient implements Client {

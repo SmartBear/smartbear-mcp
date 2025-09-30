@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { QMETRY_DEFAULTS } from "../config/constants.ts";
+import { QMETRY_DEFAULTS } from "../config/constants";
 
 export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

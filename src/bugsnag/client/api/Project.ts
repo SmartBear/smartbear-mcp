@@ -1,11 +1,11 @@
-import type { Configuration } from "../configuration.ts";
+import type { Configuration } from "../configuration";
 import {
   type ApiResponse,
   BaseAPI,
   pickFields,
   pickFieldsFromArray,
-} from "./base.ts";
-import type { Project as ProjectApiView } from "./CurrentUser.ts";
+} from "./base";
+import type { Project as ProjectApiView } from "./CurrentUser";
 
 // --- Response Types ---
 

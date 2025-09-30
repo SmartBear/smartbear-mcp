@@ -1,5 +1,5 @@
-import type { Configuration } from "../configuration.ts";
-import { type ApiResponse, BaseAPI, pickFieldsFromArray } from "./base.ts";
+import type { Configuration } from "../configuration";
+import { type ApiResponse, BaseAPI, pickFieldsFromArray } from "./base";
 
 // --- Response Types ---
 
