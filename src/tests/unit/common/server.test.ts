@@ -1,8 +1,8 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
-import Bugsnag from "../../../common/bugsnag.js";
-import { SmartBearMcpServer } from "../../../common/server.js";
+import Bugsnag from "../../../common/bugsnag.ts";
+import { SmartBearMcpServer } from "../../../common/server.ts";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({
@@ -48,7 +48,7 @@ describe("SmartBearMcpServer", () => {
         summary: "A test tool",
         zodSchema: zSchema,
       };
-      const description = server.getDescription(toolparams);
+      const description = server["getDescription"](toolparams);
       expect(description).toBe(`A test tool
 
 **Parameters:**

@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types.ts";
 
 // Type definitions for tool arguments
 export interface suiteArgs {

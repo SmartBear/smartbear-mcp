@@ -1,4 +1,4 @@
-import type { Configuration } from "../configuration.js";
+import type { Configuration } from "../configuration.ts";
 
 export type HttpMethod =
   | "GET"

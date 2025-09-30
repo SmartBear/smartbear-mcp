@@ -1,7 +1,7 @@
-export { ApiHubAPI } from "./api.js";
+export { ApiHubAPI } from "./api.ts";
 export {
   ApiHubConfiguration,
   type ApiHubConfigurationParameters,
-} from "./configuration.js";
-export { type ApiHubToolParams, TOOLS } from "./tools.js";
-export * from "./types.js";
+} from "./configuration.ts";
+export { type ApiHubToolParams, TOOLS } from "./tools.ts";
+export * from "./types.ts";

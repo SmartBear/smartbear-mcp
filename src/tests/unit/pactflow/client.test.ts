@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { PactflowClient } from "../../../pactflow/client";
-import { GenerationInputSchema } from "../../../pactflow/client/ai";
-import * as toolsModule from "../../../pactflow/client/tools";
+import { GenerationInputSchema } from "../../../pactflow/client/ai.ts";
+import * as toolsModule from "../../../pactflow/client/tools.ts";
+import { PactflowClient } from "../../../pactflow/client.ts";
 
 const fetchMock = createFetchMock(vi);
 

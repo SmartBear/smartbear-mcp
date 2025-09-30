@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { TOOLS } from "../../../api-hub/client/tools.js";
-import { ApiHubClient } from "../../../api-hub/client.js";
+import { ApiHubClient } from "../../../api-hub/client.ts";
+import { TOOLS } from "../../../api-hub/client/tools.ts";
 
 const fetchMock = createFetchMock(vi);
 

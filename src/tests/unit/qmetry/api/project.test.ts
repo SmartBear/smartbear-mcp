@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getProjectInfo } from "../../../../qmetry/client/project.js";
+import { getProjectInfo } from "../../../../qmetry/client/project.ts";
 
 describe("getProjectInfo", () => {
   const token = "fake-token";

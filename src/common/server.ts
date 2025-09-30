@@ -16,9 +16,9 @@ import {
   type ZodType,
   ZodUnion,
 } from "zod";
-import Bugsnag from "../common/bugsnag.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
-import type { Client, ToolParams } from "./types.js";
+import Bugsnag from "../common/bugsnag.ts";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.ts";
+import type { Client, ToolParams } from "./types.ts";
 
 export class SmartBearMcpServer extends McpServer {
   constructor() {

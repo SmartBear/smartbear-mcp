@@ -1,21 +1,21 @@
 import NodeCache from "node-cache";
 import { z } from "zod";
 
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterResourceFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
-import { getNextUrlPathFromHeader } from "./client/api/base.js";
-import type { Organization, Project } from "./client/api/CurrentUser.js";
-import type { ListProjectErrorsOptions } from "./client/api/Error.js";
+} from "../common/types.ts";
+import { getNextUrlPathFromHeader } from "./client/api/base.ts";
+import type { Organization, Project } from "./client/api/CurrentUser.ts";
+import type { ListProjectErrorsOptions } from "./client/api/Error.ts";
 import {
   type FilterObject,
   FilterObjectSchema,
   toQueryString,
-} from "./client/api/filters.js";
+} from "./client/api/filters.ts";
 import {
   type BuildResponse,
   type BuildResponseAny,
@@ -27,8 +27,8 @@ import {
   type ReleaseResponse,
   type ReleaseResponseAny,
   type StabilityData,
-} from "./client/api/Project.js";
-import { Configuration, CurrentUserAPI, ErrorAPI } from "./client/index.js";
+} from "./client/api/Project.ts";
+import { Configuration, CurrentUserAPI, ErrorAPI } from "./client/index.ts";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";

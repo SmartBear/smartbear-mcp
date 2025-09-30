@@ -1,5 +1,5 @@
-import { QMETRY_DEFAULTS } from "../config/constants.js";
-import { QMETRY_PATHS } from "../config/rest-endpoints.js";
+import { QMETRY_DEFAULTS } from "../config/constants.ts";
+import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import {
   DEFAULT_FETCH_TESTCASE_DETAILS_PAYLOAD,
   DEFAULT_FETCH_TESTCASE_STEPS_PAYLOAD,
@@ -9,8 +9,8 @@ import {
   type FetchTestCaseStepsPayload,
   type FetchTestCasesPayload,
   type FetchTestCaseVersionDetailsPayload,
-} from "../types/testcase.js";
-import { qmetryRequest } from "./api/client-api.js";
+} from "../types/testcase.ts";
+import { qmetryRequest } from "./api/client-api.ts";
 
 function resolveDefaults(baseUrl?: string, project?: string) {
   return {

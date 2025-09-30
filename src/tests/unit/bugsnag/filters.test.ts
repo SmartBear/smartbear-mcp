@@ -7,7 +7,7 @@ import {
   notEquals,
   relativeTime,
   toUrlSearchParams,
-} from "../../../bugsnag/client/api/filters.js";
+} from "../../../bugsnag/client/api/filters.ts";
 
 describe("Filter Utilities", () => {
   describe("equals", () => {

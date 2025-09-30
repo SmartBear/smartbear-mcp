@@ -4,8 +4,8 @@ import {
   fetchTestCaseSteps,
   fetchTestCases,
   fetchTestCaseVersionDetails,
-} from "../../../../qmetry/client/testcase.js";
-import { DEFAULT_FETCH_TESTCASES_PAYLOAD } from "../../../../qmetry/types/testcase.js";
+} from "../../../../qmetry/client/testcase.ts";
+import { DEFAULT_FETCH_TESTCASES_PAYLOAD } from "../../../../qmetry/types/testcase.ts";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";

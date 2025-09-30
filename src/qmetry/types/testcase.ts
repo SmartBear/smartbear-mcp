@@ -5,7 +5,7 @@ import {
   type FilterPayload,
   type FolderPayload,
   type PaginationPayload,
-} from "./common.js";
+} from "./common.ts";
 
 export interface FetchTestCasesPayload
   extends PaginationPayload,
