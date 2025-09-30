@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/types.js";
 import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,
@@ -75,7 +76,7 @@ export class ApiHubAPI {
     defaultReturn: T | Record<string, never> = {} as T,
   ): Promise<T | FallbackResponse> {
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      throw new ToolError(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     return this.parseResponse<T, T | Record<string, never>>(
@@ -208,7 +209,7 @@ export class ApiHubAPI {
     // Custom error handling for updatePortalProduct
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `API Hub updatePortalProduct failed - status: ${response.status} ${response.statusText}${
           errorText ? ` - ${errorText}` : ""
         }`,

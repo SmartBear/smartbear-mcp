@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag.js";
 import { SmartBearMcpServer } from "../../../common/server.js";
+import { ToolError } from "../../../common/types.js";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({
@@ -270,7 +271,7 @@ describe("SmartBearMcpServer", () => {
       });
     });
 
-    it("should handle errors when registering tools", async () => {
+    it("should handle tool errors when registering tools", async () => {
       server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test tool details
@@ -287,21 +288,57 @@ describe("SmartBearMcpServer", () => {
 
       // Make the callback throw an error to test error handling
       registerCbMock.mockImplementation(() => {
-        throw new Error("Test error from registerCbMock");
+        throw new ToolError("Tool error from registerCbMock");
+      });
+
+      // Get the wrapper function that will execute the tool and call it
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      expect(await registerToolParams[2]()).toEqual({
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: "Error executing Test Product: Test Tool: Tool error from registerCbMock",
+          },
+        ],
+      });
+
+      expect(registerCbMock).toHaveBeenCalledOnce();
+      expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
+    });
+
+    it("should handle unexpected errors when registering tools", async () => {
+      server.addClient(mockClient);
+
+      // Get the register function passed from the server and execute it with test tool details
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const registerCbMock = vi.fn();
+      registerFn(
+        {
+          title: "Test Tool",
+          summary: "A test tool",
+          parameters: [],
+        },
+        registerCbMock,
+      );
+
+      // Make the callback throw an error to test error handling
+      registerCbMock.mockImplementation(() => {
+        throw new Error("Unexpected error from registerCbMock");
       });
 
       // Get the wrapper function that will execute the tool and call it
       const registerToolParams = superRegisterToolMock.mock.calls[0];
 
       await expect(registerToolParams[2]()).rejects.toThrow(
-        "Test error from registerCbMock",
+        "Unexpected error from registerCbMock",
       );
 
       expect(registerCbMock).toHaveBeenCalledOnce();
       expect(vi.mocked(Bugsnag.notify)).toHaveBeenCalledExactlyOnceWith(
-        expect.objectContaining({
-          message: "Test error from registerCbMock",
-        }),
+        expect.any(Error),
+        expect.any(Function),
       );
     });
 
@@ -391,7 +428,7 @@ describe("SmartBearMcpServer", () => {
 
       // Make the callback throw an error to test error handling
       registerCbMock.mockImplementation(() => {
-        throw new Error("Test error from registerCbMock");
+        throw new ToolError("Test error from registerCbMock");
       });
 
       // Get the wrapper function that will execute the resource and call it
@@ -402,9 +439,8 @@ describe("SmartBearMcpServer", () => {
 
       expect(registerCbMock).toHaveBeenCalledOnce();
       expect(vi.mocked(Bugsnag.notify)).toHaveBeenCalledExactlyOnceWith(
-        expect.objectContaining({
-          message: "Test error from registerCbMock",
-        }),
+        expect.any(Error),
+        expect.any(Function),
       );
     });
   });

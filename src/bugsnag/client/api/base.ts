@@ -1,3 +1,4 @@
+import { ToolError } from "../../../common/types.js";
 import type { Configuration } from "../configuration.js";
 
 export type HttpMethod =
@@ -87,14 +88,11 @@ export class BaseAPI {
     let nextUrl: string | null = options.url;
     let apiResponse: ApiResponse<T>;
     do {
-      if (!this.configuration.basePath) {
-        throw new Error("Base path is not configured for API requests");
-      }
       nextUrl = ensureFullUrl(nextUrl, this.configuration.basePath);
       const response: Response = await fetch(nextUrl, fetchOptions);
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
+        throw new ToolError(
           `Request failed with status ${response.status}: ${errorText}`,
         );
       }

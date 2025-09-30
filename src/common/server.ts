@@ -18,7 +18,7 @@ import {
 } from "zod";
 import Bugsnag from "../common/bugsnag.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
-import type { Client, ToolParams } from "./types.js";
+import { type Client, ToolError, type ToolParams } from "./types.js";
 
 export class SmartBearMcpServer extends McpServer {
   constructor() {
@@ -57,7 +57,23 @@ export class SmartBearMcpServer extends McpServer {
             try {
               return await cb(args, extra);
             } catch (e) {
-              Bugsnag.notify(e as unknown as Error);
+              // ToolErrors should not be reported to BugSnag
+              if (e instanceof ToolError) {
+                return {
+                  isError: true,
+                  content: [
+                    {
+                      type: "text",
+                      text: `Error executing ${toolTitle}: ${e.message}`,
+                    },
+                  ],
+                };
+              } else {
+                Bugsnag.notify(e as unknown as Error, (event) => {
+                  event.addMetadata("app", { tool: toolName });
+                  event.unhandled = true;
+                });
+              }
               throw e;
             }
           },
@@ -70,9 +86,10 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       client.registerResources((name, path, cb) => {
+        const url = `${client.prefix}://${name}/${path}`;
         return super.registerResource(
           name,
-          new ResourceTemplate(`${client.prefix}://${name}/${path}`, {
+          new ResourceTemplate(url, {
             list: undefined,
           }),
           {},
@@ -80,7 +97,10 @@ export class SmartBearMcpServer extends McpServer {
             try {
               return await cb(url, variables, extra);
             } catch (e) {
-              Bugsnag.notify(e as unknown as Error);
+              Bugsnag.notify(e as unknown as Error, (event) => {
+                event.addMetadata("app", { resource: name, url: url });
+                event.unhandled = true;
+              });
               throw e;
             }
           },
