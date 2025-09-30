@@ -18,6 +18,8 @@ import type {
   ApiSearchResponse,
   ApiSpecification,
   ApisJsonResponse,
+  CreateApiParams,
+  CreateApiResponse,
 } from "./registry-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
@@ -368,6 +370,96 @@ export class ApiHubAPI {
       return response.json();
     } else {
       return response.text();
+    }
+  }
+
+  /**
+   * Create API in SwaggerHub Registry
+   * @param params Parameters for creating the API including owner, name, version, specification, and definition
+   * @returns Created API metadata with URL
+   */
+  async createApi(params: CreateApiParams): Promise<CreateApiResponse> {
+    // Determine the format of the definition
+    let contentType: string;
+    let requestBody: string;
+
+    // Auto-detect format if not specified
+    const format =
+      params.format || this.detectDefinitionFormat(params.definition);
+
+    if (format === "yaml") {
+      contentType = "application/yaml";
+      requestBody = params.definition; // Send YAML as-is
+    } else {
+      contentType = "application/json";
+      // For JSON, parse and stringify to ensure valid JSON
+      try {
+        const parsedDefinition =
+          typeof params.definition === "string"
+            ? JSON.parse(params.definition)
+            : params.definition;
+        requestBody = JSON.stringify(parsedDefinition);
+      } catch (error) {
+        throw new Error(
+          `Invalid JSON format in definition: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        );
+      }
+    }
+
+    // Construct the URL with query parameters
+    const searchParams = new URLSearchParams();
+    searchParams.append(
+      "isPrivate",
+      params.visibility === "private" ? "true" : "false",
+    );
+
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
+      params.owner,
+    )}/${encodeURIComponent(params.apiName)}?${searchParams.toString()}`;
+
+    // Use POST method with the appropriate content type
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        "Content-Type": contentType,
+      },
+      body: requestBody,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `SwaggerHub Registry API createApi failed - status: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    // Return formatted response with the required fields
+    return {
+      owner: params.owner,
+      apiName: params.apiName,
+      version: params.version,
+      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}/${params.version}`,
+    };
+  }
+
+  /**
+   * Auto-detect the format of an API definition string
+   * @param definition The API definition content
+   * @returns 'json' or 'yaml'
+   */
+  private detectDefinitionFormat(definition: string): "json" | "yaml" {
+    const trimmed = definition.trim();
+
+    // Try to parse as JSON first
+    try {
+      JSON.parse(trimmed);
+      return "json";
+    } catch {
+      // If JSON parsing fails, assume it's YAML
+      // Additional YAML detection could be added here (e.g., checking for YAML-specific patterns)
+      return "yaml";
     }
   }
 }
