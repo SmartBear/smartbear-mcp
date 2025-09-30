@@ -10,7 +10,25 @@ import type {
   SuccessResponse,
   UpdatePortalBody,
   UpdateProductBody,
-} from "./types.js";
+} from "./portal-types.js";
+import type {
+  ApiDefinitionParams,
+  ApiProperty,
+  ApiSearchParams,
+  ApiSearchResponse,
+  ApiSpecification,
+  ApisJsonResponse,
+} from "./registry-types.js";
+
+// Regex to extract owner, name, and version from SwaggerHub URLs.
+// Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
+// Example: /apis/acme/petstore/1.0.0
+//   - group 1: type (apis|domains|templates)
+//   - group 2: owner
+//   - group 3: name
+//   - group 4: version
+const SWAGGER_URL_REGEX =
+  /\/(apis|domains|templates)\/([^/]+)\/([^/]+)\/([^/]+)/;
 
 export class ApiHubAPI {
   private config: ApiHubConfiguration;
@@ -49,8 +67,7 @@ export class ApiHubAPI {
     const contentType = response.headers.get("content-type");
     if (contentType?.includes("application/json")) {
       try {
-        const jsonData = (await response.json()) as T;
-        return jsonData;
+        return (await response.json()) as T;
       } catch (error) {
         console.warn("Failed to parse JSON response:", error);
         return defaultReturn;
@@ -85,7 +102,7 @@ export class ApiHubAPI {
   }
 
   async getPortals(): Promise<PortalsListResponse> {
-    const response = await fetch(`${this.config.basePath}/portals`, {
+    const response = await fetch(`${this.config.portalBasePath}/portals`, {
       method: "GET",
       headers: this.headers,
     });
@@ -94,7 +111,7 @@ export class ApiHubAPI {
   }
 
   async createPortal(body: CreatePortalArgs): Promise<Portal> {
-    const response = await fetch(`${this.config.basePath}/portals`, {
+    const response = await fetch(`${this.config.portalBasePath}/portals`, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(body),
@@ -105,7 +122,7 @@ export class ApiHubAPI {
 
   async getPortal(portalId: string): Promise<Portal> {
     const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}`,
+      `${this.config.portalBasePath}/portals/${portalId}`,
       {
         method: "GET",
         headers: this.headers,
@@ -116,7 +133,7 @@ export class ApiHubAPI {
   }
 
   async deletePortal(portalId: string): Promise<void> {
-    await fetch(`${this.config.basePath}/portals/${portalId}`, {
+    await fetch(`${this.config.portalBasePath}/portals/${portalId}`, {
       method: "DELETE",
       headers: this.headers,
     });
@@ -127,7 +144,7 @@ export class ApiHubAPI {
     body: UpdatePortalBody,
   ): Promise<Portal | FallbackResponse> {
     const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}`,
+      `${this.config.portalBasePath}/portals/${portalId}`,
       {
         method: "PATCH",
         headers: this.headers,
@@ -140,7 +157,7 @@ export class ApiHubAPI {
 
   async getPortalProducts(portalId: string): Promise<ProductsListResponse> {
     const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}/products`,
+      `${this.config.portalBasePath}/portals/${portalId}/products`,
       {
         method: "GET",
         headers: this.headers,
@@ -155,7 +172,7 @@ export class ApiHubAPI {
     body: CreateProductBody,
   ): Promise<Product> {
     const response = await fetch(
-      `${this.config.basePath}/portals/${portalId}/products`,
+      `${this.config.portalBasePath}/portals/${portalId}/products`,
       {
         method: "POST",
         headers: this.headers,
@@ -168,7 +185,7 @@ export class ApiHubAPI {
 
   async getPortalProduct(productId: string): Promise<Product> {
     const response = await fetch(
-      `${this.config.basePath}/products/${productId}`,
+      `${this.config.portalBasePath}/products/${productId}`,
       {
         method: "GET",
         headers: this.headers,
@@ -182,7 +199,7 @@ export class ApiHubAPI {
     productId: string,
   ): Promise<Record<string, never> | FallbackResponse> {
     const response = await fetch(
-      `${this.config.basePath}/products/${productId}`,
+      `${this.config.portalBasePath}/products/${productId}`,
       {
         method: "DELETE",
         headers: this.headers,
@@ -197,7 +214,7 @@ export class ApiHubAPI {
     body: UpdateProductBody,
   ): Promise<Product | SuccessResponse | FallbackResponse> {
     const response = await fetch(
-      `${this.config.basePath}/products/${productId}`,
+      `${this.config.portalBasePath}/products/${productId}`,
       {
         method: "PATCH",
         headers: this.headers,
@@ -239,5 +256,118 @@ export class ApiHubAPI {
     defaultReturn: D = {} as D,
   ): Promise<T | D | FallbackResponse> {
     return this.parseResponse<T, D>(response, defaultReturn);
+  }
+
+  // Registry API methods for SwaggerHub Design functionality
+
+  /**
+   * Search APIs and Domains in SwaggerHub Registry using /specs endpoint
+   * @param params Search parameters
+   * @returns Array of processed API metadata
+   */
+  async searchApis(params: ApiSearchParams = {}): Promise<ApiSearchResponse> {
+    const searchParams = new URLSearchParams();
+
+    if (params.query) searchParams.append("query", params.query);
+    if (params.state) searchParams.append("state", params.state);
+    if (params.tag) searchParams.append("tag", params.tag);
+    if (params.offset !== undefined)
+      searchParams.append("offset", params.offset.toString());
+    if (params.limit !== undefined)
+      searchParams.append("limit", params.limit.toString());
+    if (params.sort) searchParams.append("sort", params.sort);
+    if (params.order) searchParams.append("order", params.order);
+    if (params.owner) searchParams.append("owner", params.owner);
+    if (params.specType) searchParams.append("specType", params.specType);
+
+    const url = `${this.config.registryBasePath}/specs${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `SwaggerHub Registry API searchApis failed - status: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const apisJsonResponse = (await response.json()) as ApisJsonResponse;
+
+    // Transform APIs.json response to our ApiMetadata format
+    return this.transformApisJsonToMetadata(apisJsonResponse.apis);
+  }
+
+  /**
+   * Transform APIs.json specifications to our ApiMetadata format
+   * @param specs Array of API specifications from APIs.json
+   * @returns Array of processed API metadata
+   */
+  private transformApisJsonToMetadata(
+    specs: ApiSpecification[],
+  ): ApiSearchResponse {
+    return specs.map((spec) => {
+      // Extract useful properties from the properties array
+      const properties = spec.properties || [];
+      const getProperty = (type: string) => {
+        const property = properties.find((p: ApiProperty) => p.type === type);
+        return property?.value || property?.url;
+      };
+
+      // Extract owner, name, and version from the Swagger URL using the regex constant
+      const swaggerUrl = getProperty("Swagger") || "";
+      const urlMatch = RegExp(SWAGGER_URL_REGEX).exec(swaggerUrl);
+
+      return {
+        owner: urlMatch?.[2] || "",
+        name: spec.name || "",
+        description: spec.description || "",
+        summary: spec.summary || "",
+        version: getProperty("X-Version") || urlMatch?.[4] || "",
+        specification: getProperty("X-Specification") || "",
+        created: getProperty("X-Created"),
+        modified: getProperty("X-Modified"),
+        published: getProperty("X-Published"),
+        private: getProperty("X-Private"),
+        oasVersion: getProperty("X-OASVersion"),
+        url: swaggerUrl,
+      };
+    });
+  }
+
+  /**
+   * Get API definition from SwaggerHub Registry
+   * @param params Parameters including owner, api name, version, and options
+   * @returns API definition (OpenAPI/Swagger specification)
+   */
+  async getApiDefinition(params: ApiDefinitionParams): Promise<unknown> {
+    const searchParams = new URLSearchParams();
+
+    if (params.resolved !== undefined)
+      searchParams.append("resolved", params.resolved.toString());
+    if (params.flatten !== undefined)
+      searchParams.append("flatten", params.flatten.toString());
+
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(params.owner)}/${encodeURIComponent(params.api)}/${encodeURIComponent(params.version)}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `SwaggerHub Registry API getApiDefinition failed - status: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    // Return the raw API definition (could be JSON or YAML)
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      return response.json();
+    } else {
+      return response.text();
+    }
   }
 }
