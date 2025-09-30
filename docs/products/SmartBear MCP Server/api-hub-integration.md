@@ -1,23 +1,25 @@
 ![api-hub.png](./images/embedded/api-hub.png)
 
-The API Hub client provides portal management capabilities as listed below. Tools for API Hub require an `API_HUB_API_KEY`.
+The API Hub client provides comprehensive API Hub Portal management and API Hub for Design capabilities. Tools for API Hub require and `API_HUB_API_KEY`.
 
 ## Available Tools
 
-### `list_portals`
+### Portal Management Tools
+
+#### `list_portals`
 
 -   Purpose: Search for available portals within API Hub. Only portals where you have at least a designer role, either at the product level or organization level, are returned.
 -   Returns: Paged list of portals with metadata including name, subdomain, status, and more.
 -   Use case: Discovery of available portals.
 
-### `get_portal`
+#### `get_portal`
 
 -   Purpose: Retrieve information about a specific portal.
 -   Parameters: Portal UUID or subdomain (`portalId`).
 -   Returns: Complete set of metadata properties for a specific portal.
 -   Use case: Get full details on a specific portal configuration.
 
-### `create_portal`
+#### `create_portal`
 
 -   Purpose: Create a new portal with API Hub.
 -   Returns: Complete set of metadata properties for a specific portal.
@@ -35,14 +37,14 @@ The API Hub client provides portal management capabilities as listed below. Tool
 | `openapiRenderer` | Portal level setting for the OpenAPI renderer.<br />-   `SWAGGER_UI` - Use the Swagger UI renderer<br />-   `ELEMENTS` - Use the Elements renderer<br />-   `TOGGLE` - Switch between the two renderers with elements set as the default<br />Default: `TOGGLE` | string | No |
 | `pageContentFormat` | Determines the format of the page content (`HTML` or `MARKDOWN` or `BOTH`)<br />Default: `HTML` | string | No |
 
-### `delete_portal`
+#### `delete_portal`
 
 -   Purpose: Delete a portal.
 -   Parameters: Portal UUID or subdomain (`portalId`).
 -   Returns: No content on success.
 -   Use case: Delete an existing portal from API Hub.
 
-### `update_portal`
+#### `update_portal`
 
 -   Purpose: Update a specific portal's configuration.
 -   Returns: Complete set of metadata properties for a specific portal.
@@ -62,21 +64,21 @@ The API Hub client provides portal management capabilities as listed below. Tool
 | `openapiRenderer` | Portal level setting for the OpenAPI renderer.<br />-   `SWAGGER_UI` - Use the Swagger UI renderer<br />-   `ELEMENTS` - Use the Elements renderer<br />-   `TOGGLE` - Switch between the two renderers with elements set as the default<br />Default: `TOGGLE` | string | No |
 | `pageContentFormat` | Determines the format of the page content (`HTML` or `MARKDOWN` or `BOTH`)<br />Default: `HTML` | string | No |
 
-### `list_portal_products`
+#### `list_portal_products`
 
 -   Purpose: Get products for a specific portal.
 -   Parameters: Portal UUID or subdomain (`portalId`).
 -   Returns: Paged list of products for a portal.
 -   Use case: Understanding the products that exist for a given portal.
 
-### `get_portal_product`
+#### `get_portal_product`
 
 -   Purpose: Retrieve information about a specific product resource.
 -   Parameters: Product UUID (`productId`).
 -   Returns: Complete set of properties for a specific product.
 -   Use case: Understanding the product information and status (both from a publishing and visibility perspective).
 
-### `create_portal_product`
+#### `create_portal_product`
 
 -   Purpose: Create a new product within a specific portal.
 -   Returns: Information about the newly created product.
@@ -93,7 +95,7 @@ The API Hub client provides portal management capabilities as listed below. Tool
 |                    | `public`      | Whether this product is available to non-members of the organization. | boolean | No |
 |                    | `hidden`      | If set to true, this product will not be displayed on the landing page. | boolean | No |
 
-### `update_portal_product`
+#### `update_portal_product`
 
 -   Purpose: Update an product within a specific portal.
 -   Returns: Information about the update product.
@@ -110,9 +112,55 @@ The API Hub client provides portal management capabilities as listed below. Tool
 |                    | `public`      | Whether this product is available to non-members of the organization. | boolean | No |
 |                    | `hidden`      | If set to true, this product will not be displayed on the landing page. | boolean | No |
 
-### `delete_portal_product`
+#### `delete_portal_product`
 
 -   Purpose: Delete a product from a specific portal.
 -   Parameters: Product UUID (`productId`).
 -   Returns: No content on success.
 -   Use case: Delete an existing product from an API Hub portal.
+
+### API Hub for Design API Tools
+
+#### `search_apis_and_domains`
+
+-   Purpose: Search for APIs and Domains in API Hub for Design using the comprehensive /specs endpoint and retrieve metadata including owner, name, description, summary, version, and specification.
+-   Returns: List of API and Domain specifications matching the search criteria.
+-   Use case: Discover existing APIs and domains for integration or reference.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `query` | Free text search - searches name and description | string | No |
+| `owner` | API/Domain owner (username or organization name) | string | No |
+| `sort` | Field used to sort the list.<br />Options: `NAME`, `UPATED`, `CREATED`, `OWNER`<br />Default: `NAME` | string | No |
+| `order` | Sort order.<br />Options: `ASC`, `DESC`<br />Default: `ASC` | string | No |
+| `page` | Page to return<br />Default: `0` | number | No |
+| `limit` | Number of results per page<br />Default: `10`, Max: `100` | number | No |
+| `specType` | Type of spec to search for.<br />Options: `API`, `DOMAIN`, `ANY`<br />Default: `ANY` | string | No |
+| `visibility` | Visibility of the spec.<br />Options: `PUBLIC`, `PRIVATE`, `ANY`<br />Default: `ANY` | string | No |
+| `state` | State of the spec.<br />Options: `PUBLISHED`, `UNPUBLISHED`, `ANY`<br />Default: `ANY` | string | No |
+
+#### `get_api_definition`
+
+-   Purpose: Fetch resolved API definition from API Hub for Design based on owner, API name, and version.
+-   Returns: Complete OpenAPI specification for the requested API.
+-   Use case: Retrieve specific API definitions for integration, testing, or documentation purposes.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `owner` | API owner (username or organization name) | string | Yes |
+| `api` | API name | string | Yes |
+| `version` | API version | string | Yes |
+
+## Configuration
+
+To use API Hub tools, you need to configure the `API_HUB_API_KEY` environment variable with your API Hub API token.
+
+## Common Use Cases
+
+1. **Portal Discovery**: Use `list_portals` to find available portals you have access to.
+2. **Portal Management**: Create, update, and delete portals using the respective tools.
+3. **Product Organization**: Manage products within portals for better API organization.
+4. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your API Hub for Design.
+5. **API Integration**: Retrieve specific API definitions with `get_api_definition` for development or testing purposes.
