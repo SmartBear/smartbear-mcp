@@ -1,10 +1,11 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type {
-  Client,
-  GetInputFunction,
-  RegisterPromptFunction,
-  RegisterToolsFunction,
+import {
+  type Client,
+  type GetInputFunction,
+  type RegisterPromptFunction,
+  type RegisterToolsFunction,
+  ToolError,
 } from "../common/types.js";
 import type {
   Entitlement,
@@ -116,7 +117,7 @@ export class PactflowClient implements Client {
     });
 
     if (!response.ok) {
-      throw new Error(
+      throw new ToolError(
         `HTTP error! status: ${response.status} - ${await response.text()}`,
       );
     }
@@ -164,7 +165,7 @@ export class PactflowClient implements Client {
     });
 
     if (!response.ok) {
-      throw new Error(
+      throw new ToolError(
         `HTTP error! status: ${response.status} - ${await response.text()}`,
       );
     }
@@ -196,7 +197,7 @@ export class PactflowClient implements Client {
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        throw new Error(
+        throw new ToolError(
           `PactFlow AI Entitlements Request Failed - status: ${response.status} ${response.statusText}${
             errorText ? ` - ${errorText}` : ""
           }`,
@@ -237,7 +238,7 @@ export class PactflowClient implements Client {
     });
     // Check if the response is OK (status 200)
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new ToolError(`HTTP error! status: ${response.status}`);
     }
 
     return response.json();
@@ -261,7 +262,7 @@ export class PactflowClient implements Client {
       }
 
       if (statusCheck.status !== 202) {
-        throw new Error(
+        throw new ToolError(
           `${operationName} failed with status: ${statusCheck.status}`,
         );
       }
@@ -270,7 +271,7 @@ export class PactflowClient implements Client {
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
 
-    throw new Error(
+    throw new ToolError(
       `${operationName} timed out after ${timeout / 1000} seconds`,
     );
   }
@@ -292,7 +293,7 @@ export class PactflowClient implements Client {
     );
 
     if (!response.ok) {
-      throw new Error(
+      throw new ToolError(
         `HTTP error! status: ${response.status} - ${await response.text()}`,
       );
     }
@@ -328,7 +329,7 @@ export class PactflowClient implements Client {
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        throw new Error(
+        throw new ToolError(
           `Can-I-Deploy Request Failed - status: ${response.status} ${response.statusText}${
             errorText ? ` - ${errorText}` : ""
           }`,
@@ -404,7 +405,7 @@ export class PactflowClient implements Client {
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        throw new Error(
+        throw new ToolError(
           `Matrix Request Failed - status: ${response.status} ${response.statusText}${
             errorText ? ` - ${errorText}` : ""
           }`,

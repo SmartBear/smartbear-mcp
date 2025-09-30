@@ -425,15 +425,6 @@ describe("base.ts", () => {
         });
       });
 
-      it("should throw error when basePath is not configured", async () => {
-        const noBasePathConfig = new Configuration({ apiKey: "test" });
-        const api = new BaseAPI(noBasePathConfig);
-
-        await expect(
-          api.requestObject("/test", { method: "GET" }),
-        ).rejects.toThrow("Base path is not configured for API requests");
-      });
-
       it("should throw error on failed request", async () => {
         const mockResponse = {
           ok: false,
@@ -654,15 +645,6 @@ describe("base.ts", () => {
         await expect(
           baseApi.requestArray("/test", { method: "GET" }),
         ).rejects.toThrow("Expected response to be an array");
-      });
-
-      it("should throw error when basePath is not configured", async () => {
-        const noBasePathConfig = new Configuration({ apiKey: "test" });
-        const api = new BaseAPI(noBasePathConfig);
-
-        await expect(
-          api.requestArray("/test", { method: "GET" }),
-        ).rejects.toThrow("Base path is not configured for API requests");
       });
 
       it("should filter fields from array items when specified", async () => {

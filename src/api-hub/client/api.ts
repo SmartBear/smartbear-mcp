@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/types.js";
 import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,
@@ -107,7 +108,7 @@ export class ApiHubAPI {
     defaultReturn: T | Record<string, never> = {} as T,
   ): Promise<T | FallbackResponse> {
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      throw new ToolError(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     return this.parseResponse<T, T | Record<string, never>>(
@@ -151,7 +152,7 @@ export class ApiHubAPI {
     );
     const result = await this.handleResponse<Portal>(response);
     if (!("id" in (result as any))) {
-      throw new Error("Portal not found or empty response");
+      throw new ToolError("Portal not found or empty response");
     }
     return result as Portal;
   }
@@ -166,7 +167,7 @@ export class ApiHubAPI {
     );
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `API Hub deletePortal failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
       );
     }
@@ -232,7 +233,7 @@ export class ApiHubAPI {
     );
     const result = await this.handleResponse<Product>(response);
     if (!("id" in (result as any))) {
-      throw new Error("Product not found or empty response");
+      throw new ToolError("Product not found or empty response");
     }
     return result as Product;
   }
@@ -307,7 +308,7 @@ export class ApiHubAPI {
     });
 
     if (!response.ok) {
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API searchApis failed - status: ${response.status} ${response.statusText}`,
       );
     }
@@ -376,7 +377,7 @@ export class ApiHubAPI {
     });
 
     if (!response.ok) {
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API getApiDefinition failed - status: ${response.status} ${response.statusText}`,
       );
     }
@@ -413,7 +414,7 @@ export class ApiHubAPI {
         const parsedDefinition = JSON.parse(params.definition);
         requestBody = JSON.stringify(parsedDefinition);
       } catch (error) {
-        throw new Error(
+        throw new ToolError(
           `Invalid JSON format in definition: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
@@ -442,7 +443,7 @@ export class ApiHubAPI {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API createOrUpdateApi failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
@@ -487,7 +488,7 @@ export class ApiHubAPI {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API createApiFromTemplate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
@@ -513,7 +514,7 @@ export class ApiHubAPI {
   private detectDefinitionFormat(definition: string): "json" | "yaml" {
     const trimmed = definition.trim();
     if (!trimmed) {
-      throw new Error("Empty definition content provided");
+      throw new ToolError("Empty definition content provided");
     }
 
     try {
