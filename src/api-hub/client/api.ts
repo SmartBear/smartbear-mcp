@@ -1,4 +1,4 @@
-import type { ApiHubConfiguration } from "./configuration.js";
+import type { ApiHubConfiguration } from "./configuration";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -10,7 +10,7 @@ import type {
   SuccessResponse,
   UpdatePortalBody,
   UpdateProductBody,
-} from "./types.js";
+} from "./types";
 
 export class ApiHubAPI {
   private config: ApiHubConfiguration;

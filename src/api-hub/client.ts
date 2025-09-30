@@ -1,9 +1,9 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 import {
   ApiHubAPI,
   ApiHubConfiguration,
@@ -18,7 +18,7 @@ import {
   TOOLS,
   type UpdatePortalArgs,
   type UpdateProductArgs,
-} from "./client/index.js";
+} from "./client/index";
 
 // Tool definitions for API Hub API client
 export class ApiHubClient implements Client {

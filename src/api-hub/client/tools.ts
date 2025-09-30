@@ -6,7 +6,7 @@
  * This follows the pattern established in the pactflow module.
  */
 
-import type { ToolParams } from "../../common/types.js";
+import type { ToolParams } from "../../common/types";
 import {
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
@@ -14,7 +14,7 @@ import {
   ProductArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
-} from "./types.js";
+} from "./types";
 
 export interface ApiHubToolParams extends ToolParams {
   handler: string;

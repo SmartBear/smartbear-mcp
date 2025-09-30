@@ -11,9 +11,9 @@
  */
 
 import { z } from "zod";
-import type { ToolParams } from "../../common/types.js";
-import { GenerationInputSchema, RefineInputSchema } from "./ai.js";
-import { CanIDeploySchema, MatrixSchema } from "./base.js";
+import type { ToolParams } from "../../common/types";
+import { GenerationInputSchema, RefineInputSchema } from "./ai";
+import { CanIDeploySchema, MatrixSchema } from "./base";
 
 export type ClientType = "pactflow" | "pact_broker";
 

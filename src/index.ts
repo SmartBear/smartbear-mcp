@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { ApiHubClient } from "./api-hub/client.js";
-import { BugsnagClient } from "./bugsnag/client.js";
-import Bugsnag from "./common/bugsnag.js";
-import { SmartBearMcpServer } from "./common/server.js";
-import { PactflowClient } from "./pactflow/client.js";
-import { QmetryClient } from "./qmetry/client.js";
-import { ReflectClient } from "./reflect/client.js";
+import { ApiHubClient } from "./api-hub/client";
+import { BugsnagClient } from "./bugsnag/client";
+import Bugsnag from "./common/bugsnag";
+import { SmartBearMcpServer } from "./common/server";
+import { PactflowClient } from "./pactflow/client";
+import { QmetryClient } from "./qmetry/client";
+import { ReflectClient } from "./reflect/client";
 
 // This is used to report errors in the MCP server itself
 // If you want to use your own BugSnag API key, set the MCP_SERVER_BUGSNAG_API_KEY environment variable

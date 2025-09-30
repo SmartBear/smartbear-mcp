@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { BaseAPI } from "../../../bugsnag/client/api/base.js";
-import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
-import type {
-  CurrentUserAPI,
-  ErrorAPI,
-} from "../../../bugsnag/client/index.js";
-import { BugsnagClient } from "../../../bugsnag/client.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
+import { BugsnagClient } from "../../../bugsnag/client";
+import type { BaseAPI } from "../../../bugsnag/client/api/base";
+import type { ProjectAPI } from "../../../bugsnag/client/api/Project";
+import type { CurrentUserAPI, ErrorAPI } from "../../../bugsnag/client/index";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info";
 
 // Mock the dependencies
 const mockCurrentUserAPI = {

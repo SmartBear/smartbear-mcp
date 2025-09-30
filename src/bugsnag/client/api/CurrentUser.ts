@@ -1,5 +1,5 @@
-import type { Configuration } from "../configuration.js";
-import { type ApiResponse, BaseAPI, pickFieldsFromArray } from "./base.js";
+import type { Configuration } from "../configuration";
+import { type ApiResponse, BaseAPI, pickFieldsFromArray } from "./base";
 
 // --- Response Types ---
 
