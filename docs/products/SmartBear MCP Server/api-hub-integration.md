@@ -8,7 +8,7 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 
 #### `list_portals`
 
--   Purpose: Returns only the portals for which you are an owner or designer, either at the product or organization level.
+-   Purpose: Search for available portals within API Hub. Returns only the portals for which you are an owner or designer, either at the product or organization level.
 -   Returns: Paginated list of portals, including metadata such as name, subdomain, status, and more.
 -   Use case: Discovery of available portals.
 
