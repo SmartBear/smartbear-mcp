@@ -1,6 +1,6 @@
 ![api-hub.png](./images/embedded/api-hub.png)
 
-The API Hub client provides comprehensive API Hub Portal management and API Hub for Design capabilities. Tools for API Hub require an `API_HUB_API_KEY`.
+The API Hub client provides comprehensive API Hub Portal and API Hub for Design management capabilities. Access to these features requires authentication with an `API_HUB_API_KEY`.
 
 ## Available Tools
 
@@ -8,8 +8,8 @@ The API Hub client provides comprehensive API Hub Portal management and API Hub 
 
 #### `list_portals`
 
--   Purpose: Search for available portals within API Hub. Only portals where you have at least a designer role, either at the product level or organization level, are returned.
--   Returns: Paged list of portals with metadata including name, subdomain, status, and more.
+-   Purpose: Returns only the portals for which you are an owner or designer, either at the product or organization level.
+-   Returns: Paginated list of portals, including metadata such as name, subdomain, status, and more.
 -   Use case: Discovery of available portals.
 
 #### `get_portal`
@@ -68,7 +68,7 @@ The API Hub client provides comprehensive API Hub Portal management and API Hub 
 
 -   Purpose: Get products for a specific portal.
 -   Parameters: Portal UUID or subdomain (`portalId`).
--   Returns: Paged list of products for a portal.
+-   Returns: Paginated list of products in a portal.
 -   Use case: Understanding the products that exist for a given portal.
 
 #### `get_portal_product`
@@ -142,9 +142,9 @@ The API Hub client provides comprehensive API Hub Portal management and API Hub 
 
 #### `get_api_definition`
 
--   Purpose: Fetch resolved API definition from API Hub for Design based on owner, API name, and version.
+-   Purpose: Fetch a resolved API definition from API Hub for Design based on its owner, API name, and version.
 -   Returns: Complete OpenAPI specification for the requested API.
--   Use case: Retrieve specific API definitions for integration, testing, or documentation purposes.
+-   Use case: Retrieve the specified API definitions for integration, testing, or documentation purposes.
 -   Parameters:
 
 | Parameter | Description | Type | Required |
