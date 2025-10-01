@@ -1,6 +1,6 @@
 ![api-hub.png](./images/embedded/api-hub.png)
 
-The API Hub client provides comprehensive API Hub Portal management and API Hub for Design capabilities. Tools for API Hub require and `API_HUB_API_KEY`.
+The API Hub client provides comprehensive API Hub Portal management and API Hub for Design capabilities. Tools for API Hub require an `API_HUB_API_KEY`.
 
 ## Available Tools
 
