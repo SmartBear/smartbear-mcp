@@ -132,7 +132,7 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 | --- | --- | --- | --- |
 | `query` | Free text search - searches name and description | string | No |
 | `owner` | API/Domain owner (username or organization name) | string | No |
-| `sort` | Field used to sort the list.<br />Options: `NAME`, `UPATED`, `CREATED`, `OWNER`<br />Default: `NAME` | string | No |
+| `sort` | Field used to sort the list.<br />Options: `NAME`, `UPDATED`, `CREATED`, `OWNER`<br />Default: `NAME` | string | No |
 | `order` | Sort order.<br />Options: `ASC`, `DESC`<br />Default: `ASC` | string | No |
 | `page` | Page to return<br />Default: `0` | number | No |
 | `limit` | Number of results per page<br />Default: `10`, Max: `100` | number | No |
