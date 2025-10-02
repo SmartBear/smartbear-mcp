@@ -25,6 +25,11 @@ describe("ApiClient", () => {
     expect(url).toBe("https://api.zephyrscale.smartbear.com/v2/projects");
   });
 
+  it("should handle fetch errors", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+    await expect(apiClient.get("/projects")).rejects.toThrow("Network error");
+  });
+
   it("should fetch and return JSON", async () => {
     const mockJson = { foo: "bar" };
     global.fetch = vi.fn().mockResolvedValue({ json: () => mockJson });
