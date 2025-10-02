@@ -25,10 +25,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org/'
           scope: '@smartbear'
       
-      # - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
-      #   with:
-      #     go-version: '1.25'
-      #     cache: true
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838 # v5.0.0
+        with:
+          role-to-assume: ${{ secrets.ECR_IAM_ROLE_ARN }}
+          aws-region: us-east-1
       
       - name: Login to Amazon ECR private
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
@@ -58,11 +59,19 @@ jobs:
       # - name: Install dependencies
       #   run: npm ci
 
-      # - name: Publish to npm
-      #   run: npm publish --access public
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Login to MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher login dns --domain smartbear.com --private-key "${{ secrets.GH_MCP_REGISTRY_KEY }}"
+      
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish
+        
       # - name: Build mcp-publisher
       #   run: |
       #     git clone https://github.com/modelcontextprotocol/registry
@@ -70,11 +79,4 @@ jobs:
       #     make publisher
       #     cp bin/mcp-publisher "$GITHUB_WORKSPACE"/mcp-publisher
 
-      # - name: Login to MCP Registry
-      #   run: |
-      #     ./mcp-publisher login github-oidc
-      #     ./mcp-publisher login dns --domain smartbear.com --private-key "${{ secrets.GH_MCP_REGISTRY_KEY }}"
-      
-      # - name: Publish to MCP Registry
-      #   run: ./mcp-publisher publish
         
