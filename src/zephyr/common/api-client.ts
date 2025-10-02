@@ -7,7 +7,7 @@ export class ApiClient {
   constructor(bearerToken: string,
               baseUrl: string) {
     this.baseUrl = baseUrl.trim().replace(/\/$/, "");
-    this.defaultHeaders = new AuthService(bearerToken).getAuthHeaders()
+    this.defaultHeaders = new AuthService(bearerToken).getAuthHeaders();
   }
 
   getUrl(endpoint: string, params?: Record<string, string | number | boolean | undefined>) :string {
