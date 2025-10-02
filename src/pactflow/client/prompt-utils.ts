@@ -1,13 +1,13 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import type { GetInputFunction } from "../../common/types.js";
 import {
-  EndpointMatcher,
+  type EndpointMatcher,
   EndpointMatcherSchema,
   MatcherRecommendationInputSchema,
-  MatcherRecommendations,
-  OpenAPI,
+  type MatcherRecommendations,
+  type OpenAPI,
 } from "./ai.js";
 import { OADMatcherPrompt } from "./prompts.js";
-import { GetInputFunction } from "../../common/types.js";
 
 /**
  * Get OpenAPI matcher recommendations using sampling.
@@ -19,7 +19,7 @@ import { GetInputFunction } from "../../common/types.js";
  */
 export async function getOADMatcherRecommendations(
   openAPI: OpenAPI,
-  server: Server
+  server: Pick<Server, "createMessage">,
 ): Promise<MatcherRecommendations> {
   const matcherResponse = await server.createMessage({
     messages: [
@@ -45,7 +45,7 @@ export async function getOADMatcherRecommendations(
     return matcherRecommendations;
   } else {
     throw new Error(
-      "Unable to parse recommendations please provide OpenAPI matchers manually."
+      "Unable to parse recommendations please provide OpenAPI matchers manually.",
     );
   }
 }
@@ -59,7 +59,7 @@ export async function getOADMatcherRecommendations(
  */
 export async function getUserMatcherSelection(
   recommendations: MatcherRecommendations,
-  getInput: GetInputFunction
+  getInput: GetInputFunction,
 ): Promise<EndpointMatcher> {
   const recommendationsMap: Map<string, string> = new Map();
   recommendations.forEach((rec, index) => {
@@ -70,7 +70,7 @@ export async function getUserMatcherSelection(
     message: `Select one of the generated matchers you would want to use \n\n ${recommendations
       .map(
         (rec, index) =>
-          `\n\nRecommendation ${index + 1}: \n\n\n ${JSON.stringify(rec)}`
+          `\n\nRecommendation ${index + 1}: \n\n\n ${JSON.stringify(rec)}`,
       )
       .join("\n\n")}`,
     requestedSchema: {
@@ -81,7 +81,7 @@ export async function getUserMatcherSelection(
           title: "Generated Matchers",
           description: "Use the matchers generated for the OpenAPI document",
           enum: recommendations.map(
-            (_, index) => `Recommendation ${index + 1}`
+            (_, index) => `Recommendation ${index + 1}`,
           ),
         },
       },
@@ -93,8 +93,8 @@ export async function getUserMatcherSelection(
     return EndpointMatcherSchema.parse(
       JSON.parse(
         recommendationsMap.get(result.content?.generatedMatchers as string) ||
-          ""
-      )
+          "",
+      ),
     );
   } else {
     const result = await getInput({
@@ -117,7 +117,7 @@ export async function getUserMatcherSelection(
 
     if (result.action === "accept") {
       return EndpointMatcherSchema.parse(
-        JSON.parse(result.content?.enteredMatchers as string)
+        JSON.parse(result.content?.enteredMatchers as string),
       );
     }
 

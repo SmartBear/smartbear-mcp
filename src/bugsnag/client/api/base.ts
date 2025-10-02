@@ -1,6 +1,13 @@
-import { Configuration } from '../configuration.js';
+import type { Configuration } from "../configuration.js";
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'HEAD';
+export type HttpMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "PATCH"
+  | "DELETE"
+  | "OPTIONS"
+  | "HEAD";
 
 export interface RequestOptions {
   method: HttpMethod;
@@ -28,11 +35,14 @@ export function pickFields<T>(obj: any, keys: (keyof T)[]): T {
 
 // Utility to pick only allowed fields from an array of objects
 export function pickFieldsFromArray<T>(arr: any[], keys: (keyof T)[]): T[] {
-  return arr.map(obj => pickFields<T>(obj, keys));
+  return arr.map((obj) => pickFields<T>(obj, keys));
 }
 
 // Utility to extract next URL path from Link header
-export function getNextUrlPathFromHeader(headers: Headers, basePath: string) {
+export function getNextUrlPathFromHeader(
+  headers: Headers,
+  basePath: string,
+): string | null {
   if (!headers) return null;
   const link = headers.get("link") || headers.get("Link");
   if (!link) return null;
@@ -45,7 +55,7 @@ export function getNextUrlPathFromHeader(headers: Headers, basePath: string) {
 // The MCP tools exposed use only the path for pagination
 // For making requests, we need to ensure the URL is absolute
 export function ensureFullUrl(url: string, basePath: string) {
-  return url.startsWith('http') ? url : `${basePath}${url}`;
+  return url.startsWith("http") ? url : `${basePath}${url}`;
 }
 
 export class BaseAPI {
@@ -59,14 +69,14 @@ export class BaseAPI {
 
   async request<T = any>(
     options: RequestOptions,
-    paginate: boolean = false
+    paginate: boolean = false,
   ): Promise<ApiResponse<T>> {
     const headers: Record<string, string> = {
       ...this.configuration.headers,
       ...options.headers,
     };
 
-    headers['Authorization'] = `token ${this.configuration.authToken}`;
+    headers.Authorization = `token ${this.configuration.authToken}`;
 
     const fetchOptions: RequestInit = {
       method: options.method,
@@ -75,24 +85,32 @@ export class BaseAPI {
     };
     let results: T[] = [];
     let nextUrl: string | null = options.url;
-    let apiResponse: ApiResponse<T>
+    let apiResponse: ApiResponse<T>;
     do {
-      nextUrl = ensureFullUrl(nextUrl!, this.configuration.basePath!);
-      const response: Response = await fetch(nextUrl!, fetchOptions);
+      if (!this.configuration.basePath) {
+        throw new Error("Base path is not configured for API requests");
+      }
+      nextUrl = ensureFullUrl(nextUrl, this.configuration.basePath);
+      const response: Response = await fetch(nextUrl, fetchOptions);
       if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+        const errorText = await response.text();
+        throw new Error(
+          `Request failed with status ${response.status}: ${errorText}`,
+        );
       }
 
       apiResponse = {
         status: response.status,
-        headers: response.headers
-      }
+        headers: response.headers,
+      };
 
       const data: T = await response.json();
       if (paginate) {
         results = results.concat(data);
-        nextUrl = getNextUrlPathFromHeader(response.headers, this.configuration.basePath!);
+        nextUrl = getNextUrlPathFromHeader(
+          response.headers,
+          this.configuration.basePath,
+        );
       } else {
         apiResponse.body = data;
       }

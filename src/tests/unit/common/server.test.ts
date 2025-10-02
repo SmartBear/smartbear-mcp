@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SmartBearMcpServer } from "../../../common/server.js";
-import z from "zod";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import z from "zod";
 import Bugsnag from "../../../common/bugsnag.js";
+import { SmartBearMcpServer } from "../../../common/server.js";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({
@@ -22,13 +22,13 @@ describe("SmartBearMcpServer", () => {
     superRegisterToolMock = vi
       .spyOn(
         Object.getPrototypeOf(Object.getPrototypeOf(server)),
-        "registerTool"
+        "registerTool",
       )
       .mockImplementation(vi.fn());
     superRegisterResourceMock = vi
       .spyOn(
         Object.getPrototypeOf(Object.getPrototypeOf(server)),
-        "registerResource"
+        "registerResource",
       )
       .mockImplementation(vi.fn());
     server.server.elicitInput = vi.fn().mockResolvedValue("mocked input");
@@ -48,7 +48,7 @@ describe("SmartBearMcpServer", () => {
         summary: "A test tool",
         zodSchema: zSchema,
       };
-      const description = server["getDescription"](toolparams);
+      const description = server.getDescription(toolparams);
       expect(description).toBe(`A test tool
 
 **Parameters:**
@@ -77,7 +77,7 @@ describe("SmartBearMcpServer", () => {
       // The server should call the client's registerTools function
       expect(mockClient.registerTools).toHaveBeenCalledWith(
         expect.any(Function),
-        expect.any(Function)
+        expect.any(Function),
       );
 
       // Get the register function passed from the server and execute it with test tool details
@@ -96,7 +96,7 @@ describe("SmartBearMcpServer", () => {
             },
           ],
         },
-        registerCbMock
+        registerCbMock,
       );
 
       expect(superRegisterToolMock).toHaveBeenCalledOnce();
@@ -104,16 +104,16 @@ describe("SmartBearMcpServer", () => {
       // Assert some of the details
       const registerToolParams = superRegisterToolMock.mock.calls[0];
       expect(registerToolParams[0]).toBe("test_product_test_tool");
-      expect(registerToolParams[1]["title"]).toBe("Test Product: Test Tool");
-      expect(registerToolParams[1]["description"]).toBe(
+      expect(registerToolParams[1].title).toBe("Test Product: Test Tool");
+      expect(registerToolParams[1].description).toBe(
         "A test tool\n\n" +
           "**Parameters:**\n" +
-          "- p1 (string) *required*: The input for the tool"
+          "- p1 (string) *required*: The input for the tool",
       );
-      expect(registerToolParams[1]["inputSchema"]["p1"].toString()).toBe(
-        z.string().describe("The input for the tool").toString()
+      expect(registerToolParams[1].inputSchema.p1.toString()).toBe(
+        z.string().describe("The input for the tool").toString(),
       );
-      expect(registerToolParams[1]["annotations"]).toEqual({
+      expect(registerToolParams[1].annotations).toEqual({
         title: "Test Product: Test Tool",
         readOnlyHint: true,
         destructiveHint: false,
@@ -217,14 +217,14 @@ describe("SmartBearMcpServer", () => {
           idempotent: true,
           openWorld: true,
         },
-        vi.fn()
+        vi.fn(),
       );
 
       // Assert some of the details
       const registerToolParams = superRegisterToolMock.mock.calls[0];
       expect(registerToolParams[0]).toBe("test_product_test_tool");
-      expect(registerToolParams[1]["title"]).toBe("Test Product: Test Tool");
-      expect(registerToolParams[1]["description"]).toBe(
+      expect(registerToolParams[1].title).toBe("Test Product: Test Tool");
+      expect(registerToolParams[1].description).toBe(
         "A test tool\n\n" +
           "**Parameters:**\n" +
           "- p1 (string) *required*: The input for the tool (e.g. example1, example2)\n" +
@@ -256,12 +256,12 @@ describe("SmartBearMcpServer", () => {
           '  "p2": 24\n' +
           "}\n" +
           "```\n\n" +
-          "**Hints:** 1. First hint 2. Second hint"
+          "**Hints:** 1. First hint 2. Second hint",
       );
-      expect(registerToolParams[1]["inputSchema"]["p1"].toString()).toBe(
-        z.string().describe("The input for the tool").toString()
+      expect(registerToolParams[1].inputSchema.p1.toString()).toBe(
+        z.string().describe("The input for the tool").toString(),
       );
-      expect(registerToolParams[1]["annotations"]).toEqual({
+      expect(registerToolParams[1].annotations).toEqual({
         title: "Test Product: Test Tool",
         readOnlyHint: true,
         destructiveHint: true,
@@ -282,7 +282,7 @@ describe("SmartBearMcpServer", () => {
           summary: "A test tool",
           parameters: [],
         },
-        registerCbMock
+        registerCbMock,
       );
 
       // Make the callback throw an error to test error handling
@@ -294,14 +294,14 @@ describe("SmartBearMcpServer", () => {
       const registerToolParams = superRegisterToolMock.mock.calls[0];
 
       await expect(registerToolParams[2]()).rejects.toThrow(
-        "Test error from registerCbMock"
+        "Test error from registerCbMock",
       );
 
       expect(registerCbMock).toHaveBeenCalledOnce();
       expect(vi.mocked(Bugsnag.notify)).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({
           message: "Test error from registerCbMock",
-        })
+        }),
       );
     });
 
@@ -311,7 +311,7 @@ describe("SmartBearMcpServer", () => {
       // The server should call the client's registerTools function
       expect(mockClient.registerTools).toHaveBeenCalledWith(
         expect.any(Function),
-        expect.any(Function)
+        expect.any(Function),
       );
 
       // Get the register function passed from the server and execute it with test tool details
@@ -322,7 +322,7 @@ describe("SmartBearMcpServer", () => {
 
       expect(server.server.elicitInput).toHaveBeenCalledExactlyOnceWith(
         params,
-        options
+        options,
       );
     });
 
@@ -338,7 +338,7 @@ describe("SmartBearMcpServer", () => {
 
       // The server should call the client's registerResources function
       expect(mockClient.registerResources).toHaveBeenCalledWith(
-        expect.any(Function)
+        expect.any(Function),
       );
 
       // Get the register function passed from the server and execute it with test resource details
@@ -350,14 +350,14 @@ describe("SmartBearMcpServer", () => {
         expect.any(String),
         expect.any(ResourceTemplate),
         expect.any(Object),
-        expect.any(Function)
+        expect.any(Function),
       );
 
       // Assert some of the details
       const registerResourceParams = superRegisterResourceMock.mock.calls[0];
       expect(registerResourceParams[0]).toBe("test_resource");
       expect(registerResourceParams[1].uriTemplate.template).toBe(
-        "test_product://test_resource/{identifier}"
+        "test_product://test_resource/{identifier}",
       );
 
       // Get the wrapper function that will execute the tool and call it
@@ -397,14 +397,14 @@ describe("SmartBearMcpServer", () => {
       // Get the wrapper function that will execute the resource and call it
       const registerResourceParams = superRegisterResourceMock.mock.calls[0];
       await expect(registerResourceParams[3]()).rejects.toThrow(
-        "Test error from registerCbMock"
+        "Test error from registerCbMock",
       );
 
       expect(registerCbMock).toHaveBeenCalledOnce();
       expect(vi.mocked(Bugsnag.notify)).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({
           message: "Test error from registerCbMock",
-        })
+        }),
       );
     });
   });

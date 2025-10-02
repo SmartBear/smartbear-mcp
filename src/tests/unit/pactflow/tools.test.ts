@@ -1,7 +1,8 @@
 // tools.test.ts
-import { ZodObject, ZodTypeAny } from "zod";
+
+import { describe, expect, it } from "vitest";
+import type { ZodObject, ZodTypeAny } from "zod";
 import { TOOLS } from "../../../pactflow/client/tools";
-import { describe, it, expect } from 'vitest';
 
 describe("TOOLS definition for 'Generate Pact Tests'", () => {
   it("defines the generate pact tests tool with correct metadata", () => {
@@ -15,10 +16,12 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
   it("rejects unsupported language values in the language field", () => {
     const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
     const schema = tool?.zodSchema as ZodObject<{ [key: string]: ZodTypeAny }>;
-    const languageSchema = schema.shape["language"];
+    const languageSchema = schema.shape.language;
     expect(languageSchema).toBeDefined();
 
     const invalidData = "ruby"; // not in enum
-    expect(() => languageSchema?.parse(invalidData)).toThrow(/Invalid enum value/);
+    expect(() => languageSchema?.parse(invalidData)).toThrow(
+      /Invalid enum value/,
+    );
   });
 });

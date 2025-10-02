@@ -132,7 +132,13 @@ npm run test:coverage
 
 ## Documentation
 
-Documentation lives in the `/docs` directory of this repo. Changes to the documentation will be automatically deployed to the docs site when merged to `main` and to an internal staging site when merged to `next`. For full information please see the [SwaggerHub Portal Management](https://github.com/frankkilcommins/SwaggerHub-Portal-Management) docs.
+Documentation lives in the `/docs` directory of this repo. Changes to the documentation will be automatically deployed to the docs site when merged to `main` and to a SmartBear-internal staging site when merged to `next`. For full information on the markdown syntax allowed in these docs, please see the [SwaggerHub Portal Management](https://github.com/frankkilcommins/SwaggerHub-Portal-Management) docs.
+
+### Previewing docs
+
+SmartBear team members wishing to preview docs changes before a change is merged to `next`, run the "Publish Portal Content" GitHub Action manually from the "Actions" tab in this repository, selecting your branch as the workflow input. Changes will be visible in the [preview site](https://smartbear-internal.portal.swaggerhub.com/smartbear-mcp) on completion.
+
+Please note – there is only one preview site, shared with `next` merges.
 
 ## Releases
 

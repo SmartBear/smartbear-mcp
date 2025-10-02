@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import createFetchMock from "vitest-fetch-mock";
+import type { OpenApiWithMatcher } from "../../../pactflow/client/ai";
 import {
-  resolveOpenAPISpec,
   addOpenAPISpecToSchema,
   getRemoteSpecContents,
+  resolveOpenAPISpec,
 } from "../../../pactflow/client/utils";
-import { OpenApiWithMatcher } from "../../../pactflow/client/ai";
-import createFetchMock from "vitest-fetch-mock";
 
 describe("Utility tests", () => {
   const fetchMocker = createFetchMock(vi);
@@ -94,8 +94,51 @@ describe("Utility tests", () => {
             Authorization: "Bearer token",
           },
           method: "GET",
-        }
+        },
       );
+    });
+
+    it("fetches the remote OpenAPI spec which is a yaml", async () => {
+      const url = "https://api.example.com/openapi.yaml";
+      const yamlSpec = `
+      openapi: "3.0.0"
+      info:
+        title: "Test API"
+        version: "1.0.0"
+      paths: {}
+      $$normalized: true
+        `;
+      const expectedSpec = {
+        openapi: "3.0.0",
+        info: {
+          title: "Test API",
+          version: "1.0.0",
+        },
+        paths: {},
+        $$normalized: true,
+      };
+
+      fetchMocker.mockOnce(yamlSpec);
+      const result = await getRemoteSpecContents({ url });
+      expect(result).toEqual(expectedSpec);
+      expect(fetch).toHaveBeenCalledWith(url, {
+        headers: {},
+        method: "GET",
+      });
+    });
+
+    it("Throws an error if remote spec cannot be parsed as JSON or YAML", async () => {
+      const url = "https://api.example.com/openapi.invalid";
+      const invalidContent = "not: valid: yaml: or: json";
+      fetchMocker.mockOnce(invalidContent, {
+        headers: { "Content-Type": "text/plain" },
+      });
+
+      await expect(getRemoteSpecContents({ url })).rejects.toThrowError();
+    });
+
+    it("Throws an error if remote spec file doesn't have a url", async () => {
+      expect(getRemoteSpecContents({})).rejects.toThrowError();
     });
   });
 
@@ -123,6 +166,56 @@ describe("Utility tests", () => {
         authToken: "Bearer token",
       });
       expect(result).toEqual(openApiSpec);
+    });
+
+    it("Throws an error if passed invalid remoteOpenAPI document", async () => {
+      expect(
+        resolveOpenAPISpec({ url: "www.example.com" }),
+      ).rejects.toThrowError();
+    });
+
+    it("Throws an error if resolved spec contains errors", async () => {
+      const mockResponse = {
+        openapi: "3.0.0",
+        info: {
+          title: "Example API",
+          version: "1.0.0",
+        },
+        paths: {
+          "/user": {
+            get: {
+              summary: "Get user",
+              responses: {
+                "200": {
+                  description: "Successful response",
+                  content: {
+                    "application/json": {
+                      schema: {
+                        $ref: "./schemas/user.json",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          parameters: {
+            UserId: {
+              $ref: "./schemas/parameters.json#/UserId",
+            },
+          },
+        },
+      };
+
+      fetchMocker.mockOnce(JSON.stringify(mockResponse));
+      expect(
+        resolveOpenAPISpec({
+          url: "https://api.example.com/openapi.json",
+          authToken: "Bearer token",
+        }),
+      ).rejects.toThrowError();
     });
   });
 });

@@ -1,14 +1,17 @@
-import {
+import type {
+  PromptCallback,
   ReadResourceTemplateCallback,
+  RegisteredPrompt,
   RegisteredResourceTemplate,
   RegisteredTool,
   ToolCallback,
-  RegisteredPrompt,
-  PromptCallback
 } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { ElicitRequest, ElicitResult } from "@modelcontextprotocol/sdk/types.js";
-import { ZodRawShape, ZodType, ZodTypeAny } from "zod";
-import { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ElicitRequest,
+  ElicitResult,
+} from "@modelcontextprotocol/sdk/types.js";
+import type { ZodRawShape, ZodType, ZodTypeAny } from "zod";
 
 export interface ToolParams {
   title: string;
@@ -41,26 +44,30 @@ export interface PromptParams {
 }
 
 export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
-    params: ToolParams,
-    cb: ToolCallback<InputArgs>
+  params: ToolParams,
+  cb: ToolCallback<InputArgs>,
 ) => RegisteredTool;
 
 export type RegisterResourceFunction = (
-    name: string,
-    path: string,
-    cb: ReadResourceTemplateCallback
+  name: string,
+  path: string,
+  cb: ReadResourceTemplateCallback,
 ) => RegisteredResourceTemplate;
 
-export type RegisterPromptFunction = <Args extends ZodRawShape>(name: string, config: {
-  title?: string;
-  description?: string;
-  argsSchema?: Args;
-}, cb: PromptCallback<Args>) => RegisteredPrompt;
+export type RegisterPromptFunction = <Args extends ZodRawShape>(
+  name: string,
+  config: {
+    title?: string;
+    description?: string;
+    argsSchema?: Args;
+  },
+  cb: PromptCallback<Args>,
+) => RegisteredPrompt;
 
 export type GetInputFunction = (
-    params: ElicitRequest["params"],
-    options?: RequestOptions
-) => Promise<ElicitResult>
+  params: ElicitRequest["params"],
+  options?: RequestOptions,
+) => Promise<ElicitResult>;
 
 export type Parameters = Array<{
   name: string;
@@ -72,9 +79,12 @@ export type Parameters = Array<{
 }>;
 
 export interface Client {
-    name: string;
-    prefix: string;
-    registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void;
-    registerResources?(register: RegisterResourceFunction): void;
-    registerPrompts?(register: RegisterPromptFunction): void;
+  name: string;
+  prefix: string;
+  registerTools(
+    register: RegisterToolsFunction,
+    getInput: GetInputFunction,
+  ): void;
+  registerResources?(register: RegisterResourceFunction): void;
+  registerPrompts?(register: RegisterPromptFunction): void;
 }

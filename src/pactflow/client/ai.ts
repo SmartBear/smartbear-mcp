@@ -66,7 +66,7 @@ export const FileInputSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Programming language (e.g., 'javascript', 'java', 'python') for better analysis"
+      "Programming language (e.g., 'javascript', 'java', 'python') for better analysis",
     ),
   body: z
     .string()
@@ -105,30 +105,30 @@ export const EndpointMatcherSchema = z
       .string()
       .optional()
       .describe(
-        "Path pattern to match specific endpoints (e.g., '/users/{id}', '/users/*', '/users/**'). Supports glob patterns: ? (single char), * (excluding /), ** (including /)"
+        "Path pattern to match specific endpoints (e.g., '/users/{id}', '/users/*', '/users/**'). Supports glob patterns: ? (single char), * (excluding /), ** (including /)",
       ),
     methods: z
       .array(z.enum(HttpMethods))
       .optional()
       .describe(
-        "HTTP methods to include (e.g., ['GET', 'POST']). If not specified, all methods are matched"
+        "HTTP methods to include (e.g., ['GET', 'POST']). If not specified, all methods are matched",
       ),
     statusCodes: z
       .array(z.union([z.number(), z.string()]))
       .optional()
       .describe(
-        "Response status codes to include (e.g., [200, '2XX', 404]). Use 'X' as wildcard (e.g., '2XX' for 200-299). Defaults to successful codes (2XX)"
+        "Response status codes to include (e.g., [200, '2XX', 404]). Use 'X' as wildcard (e.g., '2XX' for 200-299). Defaults to successful codes (2XX)",
       ),
     operationId: z
       .string()
       .optional()
       .describe(
-        "OpenAPI operation ID to match (e.g., 'getUserById', 'get*'). Supports glob patterns"
+        "OpenAPI operation ID to match (e.g., 'getUserById', 'get*'). Supports glob patterns",
       ),
   })
   .optional()
   .describe(
-    "REQUIRED: Matcher to specify which endpoints from the OpenAPI document to generate tests for. At least one matcher field must be provided"
+    "REQUIRED: Matcher to specify which endpoints from the OpenAPI document to generate tests for. At least one matcher field must be provided",
   );
 
 export const RemoteOpenAPIDocumentSchema = z
@@ -136,13 +136,13 @@ export const RemoteOpenAPIDocumentSchema = z
     authToken: z
       .string()
       .describe(
-        "Auth Bearer Token if the OpenAPI spec requires authentication."
+        "Auth Bearer Token if the OpenAPI spec requires authentication.",
       )
       .optional(),
     authScheme: z
       .string()
       .describe(
-        "Authentication scheme (e.g., 'Bearer', 'Basic'). Default scheme passed should be Bearer if authToken is specified and this field is not set."
+        "Authentication scheme (e.g., 'Bearer', 'Basic'). Default scheme passed should be Bearer if authToken is specified and this field is not set.",
       )
       .default("Bearer")
       .optional(),
@@ -157,38 +157,38 @@ export const RemoteOpenAPIDocumentSchema = z
 export const OpenAPIWithMatcherSchema = z
   .object({
     document: OpenAPISchema.describe(
-      "The OpenAPI document describing the API being tested. if document is not provided, don't add the field if remoteOpenAPIDocument is provided."
+      "The OpenAPI document describing the API being tested. if document is not provided, don't add the field if remoteOpenAPIDocument is provided.",
     ).optional(),
     matcher: EndpointMatcherSchema,
     remoteDocument: RemoteOpenAPIDocumentSchema.optional().describe(
-      "The remote OpenAPI document to use for the review/generation in case openapi document is not provided. If provided do not include the document field under openapi."
+      "The remote OpenAPI document to use for the review/generation in case openapi document is not provided. If provided do not include the document field under openapi.",
     ),
   })
   .describe(
-    "If provided, the OpenAPI document which describes the API being tested and is accompanied by a matcher which will be used to identify the interactions in the OpenAPI document which are relevant to the Pact refinement process."
+    "If provided, the OpenAPI document which describes the API being tested and is accompanied by a matcher which will be used to identify the interactions in the OpenAPI document which are relevant to the Pact refinement process.",
   )
   .transform(addOpenAPISpecToSchema);
 
 export const RefineInputSchema = z.object({
   pactTests: FileInputSchema.describe(
-    "Primary pact tests that needs to be refined."
+    "Primary pact tests that needs to be refined.",
   ),
   code: z
     .array(FileInputSchema)
     .describe(
-      "Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls"
+      "Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls",
     )
     .optional(),
   userInstructions: z
     .string()
     .describe(
-      "Optional free-form instructions that provide additional context or specify areas of focus during the refinement process of the Pact test."
+      "Optional free-form instructions that provide additional context or specify areas of focus during the refinement process of the Pact test.",
     )
     .optional(),
   errorMessages: z
     .array(z.string())
     .describe(
-      "Optional error output from failed contract test runs. These can be used to better understand the context or failures observed and guide the recommendations toward resolving specific issues."
+      "Optional error output from failed contract test runs. These can be used to better understand the context or failures observed and guide the recommendations toward resolving specific issues.",
     )
     .optional(),
   openapi: OpenAPIWithMatcherSchema.optional(),
@@ -200,7 +200,7 @@ export const RequestResponsePairSchema = z
     response: FileInputSchema,
   })
   .describe(
-    "Direct request/response pair for a specific interaction. Use this when you have concrete examples of API requests and responses"
+    "Direct request/response pair for a specific interaction. Use this when you have concrete examples of API requests and responses",
   );
 
 export const GenerationInputSchema = z.object({
@@ -208,66 +208,65 @@ export const GenerationInputSchema = z.object({
     .enum(GenerationLanguages)
     .optional()
     .describe(
-      "Target language for the generated Pact tests. If not provided, will be inferred from other inputs."
+      "Target language for the generated Pact tests. If not provided, will be inferred from other inputs.",
     ),
   requestResponse: RequestResponsePairSchema.optional(),
   code: z
     .array(FileInputSchema)
     .optional()
     .describe(
-      "Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls"
+      "Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls",
     ),
   openapi: OpenAPIWithMatcherSchema.optional(),
   additionalInstructions: z
     .string()
     .optional()
     .describe(
-      "Optional free-form instructions to guide the generation process (e.g., 'Focus on error scenarios', 'Include authentication headers', 'Use specific test framework patterns')"
+      "Optional free-form instructions to guide the generation process (e.g., 'Focus on error scenarios', 'Include authentication headers', 'Use specific test framework patterns')",
     ),
   testTemplate: FileInputSchema.optional().describe(
-    "Optional test template to use as a basis for generation. Helps ensure generated tests follow your specific patterns, frameworks, and coding standards"
+    "Optional test template to use as a basis for generation. Helps ensure generated tests follow your specific patterns, frameworks, and coding standards",
   ),
 });
 
 export const MatcherRecommendationInputSchema = z.array(EndpointMatcherSchema);
 
-export const AiCreditsSchema = z.object({
-  total: z
-    .number()
-    .describe("The total number of AI credits available."),
-  used: z
-    .number()
-    .describe("The number of AI credits used."),
-}).describe("AI credits information.");
+export const AiCreditsSchema = z
+  .object({
+    total: z.number().describe("The total number of AI credits available."),
+    used: z.number().describe("The number of AI credits used."),
+  })
+  .describe("AI credits information.");
 
+export const OrganizationEntitlementsSchema = z
+  .object({
+    name: z.string().describe("The name of the organization."),
+    planAiEnabled: z
+      .boolean()
+      .describe("Whether AI features are enabled at the plan level."),
+    preferencesAiEnabled: z
+      .boolean()
+      .describe("Whether AI features are enabled at the preferences level."),
+    aiCredits: AiCreditsSchema.describe("AI credits information."),
+  })
+  .describe("Organization entitlements information.");
 
-export const OrganizationEntitlementsSchema = z.object({
-  name: z
-    .string()
-    .describe("The name of the organization."),
-  planAiEnabled: z
-    .boolean()
-    .describe("Whether AI features are enabled at the plan level."),
-  preferencesAiEnabled: z
-    .boolean()
-    .describe("Whether AI features are enabled at the preferences level."),
-  aiCredits: AiCreditsSchema.describe("AI credits information."),
-}).describe("Organization entitlements information.");
+export const UserEntitlementsSchema = z
+  .object({
+    aiPermissions: z.array(z.string()).describe("List of AI permissions."),
+  })
+  .describe("User entitlements information.");
 
-export const UserEntitlementsSchema = z.object({
-  aiPermissions: z
-    .array(z.string())
-    .describe("List of AI permissions."),
-}).describe("User entitlements information.");
-
-export const EntitlementsSchema = z.object({
-  organizationEntitlements: OrganizationEntitlementsSchema.describe(
-    "Organization entitlements information."
-  ),
-  userEntitlements: UserEntitlementsSchema.describe(
-    "User entitlements information."
-  ),
-}).describe("Entitlements information.");
+export const EntitlementsSchema = z
+  .object({
+    organizationEntitlements: OrganizationEntitlementsSchema.describe(
+      "Organization entitlements information.",
+    ),
+    userEntitlements: UserEntitlementsSchema.describe(
+      "User entitlements information.",
+    ),
+  })
+  .describe("Entitlements information.");
 
 // types inferred from schemas
 export type RefineInput = z.infer<typeof RefineInputSchema>;
