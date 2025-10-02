@@ -2,6 +2,7 @@ name: Publish to npm
 
 permissions:
   contents: read
+  id-token: write
 
 on:
   workflow_dispatch:
@@ -33,7 +34,7 @@ jobs:
       - name: Login to Amazon ECR private
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
         with:
-          registries: "709825985650"
+          registries: "709825985650" 
 
       - name: Extract version from package.json
         id: extract_version
