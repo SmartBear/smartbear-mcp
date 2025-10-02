@@ -1,5 +1,5 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import type { GetInputFunction } from "../../common/types.js";
+import { type GetInputFunction, ToolError } from "../../common/types.js";
 import {
   type EndpointMatcher,
   EndpointMatcherSchema,
@@ -44,7 +44,7 @@ export async function getOADMatcherRecommendations(
       MatcherRecommendationInputSchema.parse(parsed);
     return matcherRecommendations;
   } else {
-    throw new Error(
+    throw new ToolError(
       "Unable to parse recommendations please provide OpenAPI matchers manually.",
     );
   }
