@@ -8,7 +8,8 @@
     "bugsnag",
     "reflect",
     "api-hub",
-    "pactflow"
+    "pactflow",
+    "zephyr"
   ],
   "homepage": "https://developer.smartbear.com/smartbear-mcp",
   "mcpName": "com.smartbear/smartbear-mcp",

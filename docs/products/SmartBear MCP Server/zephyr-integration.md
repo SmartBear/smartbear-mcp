@@ -15,3 +15,8 @@ The following environment variables configure the Zephyr integration:
   - Default: `https://api.zephyrscale.smartbear.com/v2`
 
 ## Available Tools
+
+### `list_projects`
+
+- **Purpose**: Retrieve projects available within your Zephyr account.
+- **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not.
