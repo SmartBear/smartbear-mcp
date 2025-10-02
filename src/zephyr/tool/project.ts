@@ -1,5 +1,5 @@
-import { ApiClient } from "../common/api-client.js";
-import {ZephyrProjectList} from "../common/types.js";
+import type { ApiClient } from "../common/api-client.js";
+import type { ZephyrProjectList } from "../common/types.js";
 
 export class ProjectTools {
   private readonly apiClient: ApiClient;

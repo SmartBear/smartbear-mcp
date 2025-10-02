@@ -1,7 +1,7 @@
-import { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
+import type { Client, GetInputFunction, RegisterToolsFunction } from "../common/types.js";
 import { ApiClient } from "./common/api-client.js";
 import z from "zod";
-import {ProjectTools} from "./tool/project.js";
+import { ProjectTools } from "./tool/project.js";
 
 export class ZephyrClient implements Client {
   private readonly projectTools: ProjectTools;
@@ -14,7 +14,7 @@ export class ZephyrClient implements Client {
     this.projectTools = new ProjectTools(apiClient);
   }
 
-  registerTools(register: RegisterToolsFunction, getInput: GetInputFunction): void {
+  registerTools(register: RegisterToolsFunction, _getInput: GetInputFunction): void {
     console.log('[ZephyrClient] Starting tool registration...');
 
     register(
