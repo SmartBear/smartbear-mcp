@@ -42,12 +42,6 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Update server.json version
-        run: |
-          jq --arg v "${{ steps.extract_version.outputs.VERSION }}" \
-            '.version = $v | .packages[0].version = $v' \
-            server.json > server.json.tmp && mv server.json.tmp server.json
-
       - name: Build, tag, and push docker image
         env:
           IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
