@@ -14,4 +14,10 @@ describe("ProjectTools", () => {
     });
     expect(result).toEqual({ foo: "bar" });
   });
+  it("should handle errors from apiClient.get", async () => {
+    const mockGet = vi.fn().mockRejectedValue(new Error("API error"));
+    const apiClient = { get: mockGet } as any;
+    const tools = new ProjectTools(apiClient);
+    await expect(tools.getProjects(5, 1)).rejects.toThrow("API error");
+  });
 });
