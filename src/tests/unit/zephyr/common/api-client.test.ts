@@ -25,6 +25,21 @@ describe("ApiClient", () => {
     expect(url).toBe("https://api.zephyrscale.smartbear.com/v2/projects");
   });
 
+  it("should build correct URL with boolean and number params", () => {
+    const url = apiClient.getUrl("/testexecutions", {
+      onlyLastExecutions: true,
+      limit: 2,
+    });
+    expect(url).toBe(
+      `${baseUrl}/testexecutions?onlyLastExecutions=true&limit=2`,
+    );
+  });
+
+  it("should build correct URL with no params", () => {
+    const url = apiClient.getUrl("/projects");
+    expect(url).toBe(`${baseUrl}/projects`);
+  });
+
   it("should handle fetch errors", async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
     await expect(apiClient.get("/projects")).rejects.toThrow("Network error");
@@ -35,5 +50,14 @@ describe("ApiClient", () => {
     global.fetch = vi.fn().mockResolvedValue({ json: () => mockJson });
     const result = await apiClient.get("/projects");
     expect(result).toEqual(mockJson);
+  });
+
+  it("should handle fetch returning non-JSON", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () => {
+        throw new Error("Invalid JSON");
+      },
+    });
+    await expect(apiClient.get("/projects")).rejects.toThrow("Invalid JSON");
   });
 });

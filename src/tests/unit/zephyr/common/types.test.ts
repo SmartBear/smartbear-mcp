@@ -34,15 +34,15 @@ describe("ZephyrProjectListSchema", () => {
     expect(() => ZephyrProjectListSchema.parse(valid)).not.toThrow();
   });
 
-  it("rejects a list containing invalid projects", () => {
+  it("rejects a list containing projects with invalid ID", () => {
     const invalid = {
       next: null,
       startAt: 0,
       maxResults: 10,
       total: 1,
       isLast: true,
-      values: [{ id: 1, jiraProjectId: 2, key: "ABC", enabled: true }],
+      values: [{ id: "x", jiraProjectId: 2, key: "ABC", enabled: true }],
     };
-    expect(() => ZephyrProjectListSchema.parse(invalid)).not.toThrow();
+    expect(() => ZephyrProjectListSchema.parse(invalid)).toThrow();
   });
 });
