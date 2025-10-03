@@ -16,7 +16,7 @@ The following environment variables configure the Zephyr integration:
 
 ## Available Tools
 
-### `list_projects`
+### Get Projects
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
 - **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not.
