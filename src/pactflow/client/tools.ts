@@ -90,19 +90,19 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow", "pact_broker"],
   },
   {
-    title: "PactFlow AI Status",
+    title: "Check PactFlow AI Entitlements",
     summary:
-      "Check PactFlow AI usage status, remaining credits, and eligibility",
+      "Check your PactFlow AI entitlements and credit balance if you encounter 401 Unauthorized errors or permission/credit issues when using PactFlow AI features.",
     purpose:
-      "Retrieve the AI feature status for the PactFlow account, including whether AI is enabled, the number of remaining and consumed AI credits, and entitlement or permission issues preventing usage.",
+      "Retrieve AI entitlement information when PactFlow AI operations fail with 401 unauthorized errors. Use this to diagnose permission issues, check remaining credits, and verify account eligibility for AI features.",
     useCases: [
-      "Verify if AI functionality is enabled for the account before attempting to use AI-powered features",
-      "Monitor remaining and consumed AI credits to manage usage and avoid unexpected disruptions",
-      "Detect entitlement or permission issues when a user tries to access AI features and guide corrective actions",
-      "Integrate into deployment pipelines to ensure the environment is correctly configured with necessary entitlements and sufficient credits before executing AI-driven tasks",
-      "Fetches usage and entitlement reports for auditing, budgeting, and compliance purposes",
+      "Diagnose 401 unauthorized errors when attempting to use PactFlow AI features",
+      "Check remaining AI credits when PactFlow AI operations are rejected due to insufficient credits",
+      "Verify account entitlements when users receive permission denied errors for PactFlow AI functionality",
+      "Troubleshoot PactFlow AI access issues by retrieving current entitlement status and credit balance",
+      "Provide detailed error context when PactFlow AI features are unavailable due to account limitations",
     ],
-    handler: "getAIStatus",
+    handler: "checkAIEntitlements",
     clients: ["pactflow"],
   },
 ];

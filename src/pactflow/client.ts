@@ -177,14 +177,15 @@ export class PactflowClient implements Client {
   }
 
   /**
-   * Retrieves AI status information for the current user
-   * and organization.
+   * Retrieve PactFlow AI entitlement information for the current user
+   * and organization when encountering 401 unauthorized errors.
+   * Use this to check AI entitlements and credits when AI operations fail.
    *
-   * @returns Entitlement containing AI status information, organization
+   * @returns Entitlement containing permissions, organization
    *   entitlements, and user entitlements.
    * @throws Error if the request fails or returns a non-OK response.
    */
-  async getAIStatus(): Promise<Entitlement> {
+  async checkAIEntitlements(): Promise<Entitlement> {
     const url = `${this.aiBaseUrl}/entitlement`;
 
     try {
