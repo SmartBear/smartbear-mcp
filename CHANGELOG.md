@@ -12,9 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [API Hub] Add `search_apis_and_domains` tool for discovering APIs and Domains in API Hub for Design [#154](https://github.com/SmartBear/smartbear-mcp/pull/154)
 - [API Hub] Add `get_api_definition` tool for fetching resolved API definitions from API Hub for Design [#154](https://github.com/SmartBear/smartbear-mcp/pull/154)
 
-### Changed
-- [API Hub] Rename "Create API" tool to "Create or Update API" to better reflect functionality. HTTP 201 indicates creation, HTTP 200 indicates update. Response now includes 'operation' field indicating whether it was a 'create' or 'update' operation
-
 ## [0.6.0] - 2025-09-15
 
 ### Added

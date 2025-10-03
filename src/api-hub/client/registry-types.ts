@@ -71,15 +71,6 @@ export const CreateApiParamsSchema = z.object({
     .string()
     .default("1.0.0")
     .describe("Version identifier (default: 1.0.0)"),
-  specification: z
-    .enum([
-      "OpenAPI 2.0",
-      "OpenAPI 3.0",
-      "OpenAPI 3.1",
-      "AsyncAPI 2.0",
-      "AsyncAPI 3.0",
-    ])
-    .describe("API specification type"),
   visibility: z
     .enum(["private"])
     .default("private")
@@ -88,10 +79,6 @@ export const CreateApiParamsSchema = z.object({
     .string()
     .optional()
     .describe("Project name (optional, default: none)"),
-  template: z
-    .string()
-    .optional()
-    .describe("Template to use (optional, default: none)"),
   automock: z
     .boolean()
     .default(false)
@@ -109,10 +96,31 @@ export const CreateApiParamsSchema = z.object({
     ),
 });
 
+export const CreateApiFromTemplateParamsSchema = z.object({
+  owner: z.string().describe("Organization name (owner of the API)"),
+  apiName: z.string().describe("API name"),
+  template: z
+    .string()
+    .describe("Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0')"),
+  visibility: z
+    .enum(["private", "public"])
+    .default("private")
+    .describe("API visibility (default: private)"),
+  project: z
+    .string()
+    .optional()
+    .describe("Project name (optional, default: none)"),
+  noReconcile: z
+    .boolean()
+    .default(false)
+    .describe("Skip reconciliation (default: false)"),
+});
+
 // Registry API types for SwaggerHub Design functionality - generated from Zod schemas
 export type ApiSearchParams = z.infer<typeof ApiSearchParamsSchema>;
 export type ApiDefinitionParams = z.infer<typeof ApiDefinitionParamsSchema>;
 export type CreateApiParams = z.infer<typeof CreateApiParamsSchema>;
+export type CreateApiFromTemplateParams = z.infer<typeof CreateApiFromTemplateParamsSchema>;
 
 // APIs.json format response types
 export interface ApiProperty {
@@ -162,6 +170,15 @@ export interface CreateApiResponse {
   owner: string;
   apiName: string;
   version: string;
+  url: string;
+  operation: 'create' | 'update';
+}
+
+// Response type for API created from template
+export interface CreateApiFromTemplateResponse {
+  owner: string;
+  apiName: string;
+  template: string;
   url: string;
   operation: 'create' | 'update';
 }

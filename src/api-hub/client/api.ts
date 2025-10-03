@@ -20,6 +20,8 @@ import type {
   ApisJsonResponse,
   CreateApiParams,
   CreateApiResponse,
+  CreateApiFromTemplateParams,
+  CreateApiFromTemplateResponse,
 } from "./registry-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
@@ -444,6 +446,60 @@ export class ApiHubAPI {
       apiName: params.apiName,
       version: params.version,
       url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}/${params.version}`,
+      operation,
+    };
+  }
+
+  /**
+   * Create API from Template in SwaggerHub Registry
+   * @param params Parameters for creating API from template including owner, api name, template, and visibility
+   * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
+   */
+  async createApiFromTemplate(params: CreateApiFromTemplateParams): Promise<CreateApiFromTemplateResponse> {
+    // Construct the URL with query parameters
+    const searchParams = new URLSearchParams();
+    searchParams.append(
+      "isPrivate",
+      params.visibility === "private" ? "true" : "false",
+    );
+    searchParams.append("template", params.template);
+    
+    if (params.project) {
+      searchParams.append("project", params.project);
+    }
+    
+    if (params.noReconcile) {
+      searchParams.append("noReconcile", params.noReconcile.toString());
+    }
+
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
+      params.owner,
+    )}/${encodeURIComponent(params.apiName)}/.template?${searchParams.toString()}`;
+
+    // Use POST method for template creation
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `SwaggerHub Registry API createApiFromTemplate failed - status: ${response.status} ${response.statusText}${
+          errorText ? ` - ${errorText}` : ""
+        }. URL: ${url}`,
+      );
+    }
+
+    // Determine operation type based on HTTP status code
+    const operation = response.status === 201 ? 'create' : 'update';
+
+    // Return formatted response with the required fields
+    return {
+      owner: params.owner,
+      apiName: params.apiName,
+      template: params.template,
+      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}`,
       operation,
     };
   }
