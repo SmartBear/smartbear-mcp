@@ -29,10 +29,10 @@ jobs:
           jq --arg v "${{ steps.extract_version.outputs.VERSION }}" \
             '.version = $v | .packages[0].version = $v' \
             server.json > server.json.tmp && mv server.json.tmp server.json
-            
+
       - name: prepare mcp-publisher
         run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.1.0/mcp-publisher_1.1.0_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.2.3/mcp-publisher_1.2.3_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
       
       - name: Login
         run: |
