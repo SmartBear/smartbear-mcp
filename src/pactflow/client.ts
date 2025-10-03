@@ -197,7 +197,7 @@ export class PactflowClient implements Client {
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
         throw new Error(
-          `PactFlow AI Status Request Failed - status: ${response.status} ${response.statusText}${
+          `PactFlow AI Entitlements Request Failed - status: ${response.status} ${response.statusText}${
             errorText ? ` - ${errorText}` : ""
           }`,
         );
@@ -205,7 +205,9 @@ export class PactflowClient implements Client {
 
       return (await response.json()) as Entitlement;
     } catch (error) {
-      process.stderr.write(`[GetAICredits] Unexpected error: ${error}\n`);
+      process.stderr.write(
+        `[CheckAIEntitlements] Unexpected error: ${error}\n`,
+      );
       throw error;
     }
   }
