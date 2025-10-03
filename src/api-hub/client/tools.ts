@@ -18,6 +18,7 @@ import {
 import {
   ApiDefinitionParamsSchema,
   ApiSearchParamsSchema,
+  CreateApiParamsSchema,
 } from "./registry-types.js";
 
 export interface ApiHubToolParams extends ToolParams {
@@ -103,5 +104,12 @@ export const TOOLS: ApiHubToolParams[] = [
       "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.",
     zodSchema: ApiDefinitionParamsSchema,
     handler: "getApiDefinition",
+  },
+  {
+    title: "Create API",
+    summary:
+      "Create a new API in SwaggerHub Registry for API Hub for Design. Supports OpenAPI 2.0, 3.0, 3.1, AsyncAPI 2.0, and 3.0 specifications. Creates private APIs by default with version 1.0.0 and automock disabled. Returns the API details including the SwaggerHub URL for easy access.",
+    zodSchema: CreateApiParamsSchema,
+    handler: "createApi",
   },
 ];
