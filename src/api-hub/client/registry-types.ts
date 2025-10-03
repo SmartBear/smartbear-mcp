@@ -86,13 +86,7 @@ export const CreateApiParamsSchema = z.object({
   definition: z
     .string()
     .describe(
-      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format)",
-    ),
-  format: z
-    .enum(["json", "yaml"])
-    .optional()
-    .describe(
-      "Format of the definition content - 'json' or 'yaml'. If not specified, will be auto-detected",
+      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected.",
     ),
 });
 
@@ -101,7 +95,9 @@ export const CreateApiFromTemplateParamsSchema = z.object({
   apiName: z.string().describe("API name"),
   template: z
     .string()
-    .describe("Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0')"),
+    .describe(
+      "Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0')",
+    ),
   visibility: z
     .enum(["private", "public"])
     .default("private")
@@ -120,7 +116,9 @@ export const CreateApiFromTemplateParamsSchema = z.object({
 export type ApiSearchParams = z.infer<typeof ApiSearchParamsSchema>;
 export type ApiDefinitionParams = z.infer<typeof ApiDefinitionParamsSchema>;
 export type CreateApiParams = z.infer<typeof CreateApiParamsSchema>;
-export type CreateApiFromTemplateParams = z.infer<typeof CreateApiFromTemplateParamsSchema>;
+export type CreateApiFromTemplateParams = z.infer<
+  typeof CreateApiFromTemplateParamsSchema
+>;
 
 // APIs.json format response types
 export interface ApiProperty {
@@ -171,7 +169,7 @@ export interface CreateApiResponse {
   apiName: string;
   version: string;
   url: string;
-  operation: 'create' | 'update';
+  operation: "create" | "update";
 }
 
 // Response type for API created from template
@@ -180,5 +178,5 @@ export interface CreateApiFromTemplateResponse {
   apiName: string;
   template: string;
   url: string;
-  operation: 'create' | 'update';
+  operation: "create" | "update";
 }

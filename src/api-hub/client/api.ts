@@ -18,10 +18,10 @@ import type {
   ApiSearchResponse,
   ApiSpecification,
   ApisJsonResponse,
-  CreateApiParams,
-  CreateApiResponse,
   CreateApiFromTemplateParams,
   CreateApiFromTemplateResponse,
+  CreateApiParams,
+  CreateApiResponse,
 } from "./registry-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
@@ -385,9 +385,8 @@ export class ApiHubAPI {
     let contentType: string;
     let requestBody: string;
 
-    // Auto-detect format if not specified
-    const format =
-      params.format || this.detectDefinitionFormat(params.definition);
+    // Auto-detect format from the definition content
+    const format = this.detectDefinitionFormat(params.definition);
 
     if (format === "yaml") {
       contentType = "application/yaml";
@@ -438,7 +437,7 @@ export class ApiHubAPI {
     }
 
     // Determine operation type based on HTTP status code
-    const operation = response.status === 201 ? 'create' : 'update';
+    const operation = response.status === 201 ? "create" : "update";
 
     // Return formatted response with the required fields
     return {
@@ -455,7 +454,9 @@ export class ApiHubAPI {
    * @param params Parameters for creating API from template including owner, api name, template, and visibility
    * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
    */
-  async createApiFromTemplate(params: CreateApiFromTemplateParams): Promise<CreateApiFromTemplateResponse> {
+  async createApiFromTemplate(
+    params: CreateApiFromTemplateParams,
+  ): Promise<CreateApiFromTemplateResponse> {
     // Construct the URL with query parameters
     const searchParams = new URLSearchParams();
     searchParams.append(
@@ -463,11 +464,11 @@ export class ApiHubAPI {
       params.visibility === "private" ? "true" : "false",
     );
     searchParams.append("template", params.template);
-    
+
     if (params.project) {
       searchParams.append("project", params.project);
     }
-    
+
     if (params.noReconcile) {
       searchParams.append("noReconcile", params.noReconcile.toString());
     }
@@ -492,7 +493,7 @@ export class ApiHubAPI {
     }
 
     // Determine operation type based on HTTP status code
-    const operation = response.status === 201 ? 'create' : 'update';
+    const operation = response.status === 201 ? "create" : "update";
 
     // Return formatted response with the required fields
     return {

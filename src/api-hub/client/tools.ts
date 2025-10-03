@@ -18,8 +18,8 @@ import {
 import {
   ApiDefinitionParamsSchema,
   ApiSearchParamsSchema,
-  CreateApiParamsSchema,
   CreateApiFromTemplateParamsSchema,
+  CreateApiParamsSchema,
 } from "./registry-types.js";
 
 export interface ApiHubToolParams extends ToolParams {
