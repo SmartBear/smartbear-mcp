@@ -9,9 +9,9 @@ export class AuthService {
 
   getAuthHeaders(): Record<string, string> {
     return {
-      "Authorization": `Bearer ${this.bearerToken}`,
+      Authorization: `Bearer ${this.bearerToken}`,
       "Content-Type": "application/json",
-      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`
+      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
   }
 }
