@@ -106,10 +106,10 @@ export const TOOLS: ApiHubToolParams[] = [
     handler: "getApiDefinition",
   },
   {
-    title: "Create API",
+    title: "Create or Update API",
     summary:
-      "Create a new API in SwaggerHub Registry for API Hub for Design. Supports OpenAPI 2.0, 3.0, 3.1, AsyncAPI 2.0, and 3.0 specifications. Creates private APIs by default with version 1.0.0 and automock disabled. Returns the API details including the SwaggerHub URL for easy access.",
+      "Create a new API or update an existing API in SwaggerHub Registry for API Hub for Design. Supports OpenAPI 2.0, 3.0, 3.1, AsyncAPI 2.0, and 3.0 specifications. Creates private APIs by default with version 1.0.0 and automock disabled. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
     zodSchema: CreateApiParamsSchema,
-    handler: "createApi",
+    handler: "createOrUpdateApi",
   },
 ];

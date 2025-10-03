@@ -157,10 +157,11 @@ export interface ApiMetadata {
 
 export type ApiSearchResponse = ApiMetadata[];
 
-// Response type for created API
+// Response type for created or updated API
 export interface CreateApiResponse {
   owner: string;
   apiName: string;
   version: string;
   url: string;
+  operation: 'create' | 'update';
 }

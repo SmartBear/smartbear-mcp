@@ -115,10 +115,10 @@ export class ApiHubClient implements Client {
     return this.api.getApiDefinition(args);
   }
 
-  async createApi(
+  async createOrUpdateApi(
     args: CreateApiParams,
   ): Promise<CreateApiResponse | FallbackResponse> {
-    return this.api.createApi(args);
+    return this.api.createOrUpdateApi(args);
   }
 
   registerTools(

@@ -374,11 +374,11 @@ export class ApiHubAPI {
   }
 
   /**
-   * Create API in SwaggerHub Registry
-   * @param params Parameters for creating the API including owner, name, version, specification, and definition
-   * @returns Created API metadata with URL
+   * Create or Update API in SwaggerHub Registry
+   * @param params Parameters for creating or updating the API including owner, name, version, specification, and definition
+   * @returns Created or updated API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
    */
-  async createApi(params: CreateApiParams): Promise<CreateApiResponse> {
+  async createOrUpdateApi(params: CreateApiParams): Promise<CreateApiResponse> {
     // Determine the format of the definition
     let contentType: string;
     let requestBody: string;
@@ -431,9 +431,12 @@ export class ApiHubAPI {
 
     if (!response.ok) {
       throw new Error(
-        `SwaggerHub Registry API createApi failed - status: ${response.status} ${response.statusText}`,
+        `SwaggerHub Registry API createOrUpdateApi failed - status: ${response.status} ${response.statusText}`,
       );
     }
+
+    // Determine operation type based on HTTP status code
+    const operation = response.status === 201 ? 'create' : 'update';
 
     // Return formatted response with the required fields
     return {
@@ -441,6 +444,7 @@ export class ApiHubAPI {
       apiName: params.apiName,
       version: params.version,
       url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}/${params.version}`,
+      operation,
     };
   }
 
