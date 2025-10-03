@@ -24,17 +24,17 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org/'
           scope: '@smartbear'
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838 # v5.0.0
         with:
           role-to-assume: ${{ secrets.ECR_IAM_ROLE_ARN }}
           aws-region: us-east-1
-      
+
       - name: Login to Amazon ECR private
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
         with:
-          registries: "709825985650" 
+          registries: "709825985650"
 
       - name: Extract version from package.json
         id: extract_version
@@ -55,7 +55,7 @@ jobs:
           DEST=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}:${IMAGE_TAG}
           docker build -t $DEST .
           docker push $DEST
-          
+
       - name: Install dependencies
         run: npm ci
 
@@ -67,11 +67,11 @@ jobs:
       - name: prepare mcp-publisher
         run: |
           curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.2.3/mcp-publisher_1.2.3_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
-      
+
       - name: Login
         run: |
           ./mcp-publisher login github-oidc
           ./mcp-publisher login dns --domain smartbear.com --private-key "${{ secrets.GH_MCP_REGISTRY_KEY }}"
-      
+
       - name: Publish to MCP Registry
         run: ./mcp-publisher publish
