@@ -30,3 +30,31 @@ export async function getProjectInfo(
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
   });
 }
+
+export async function getReleasesCycles(
+  token: string,
+  baseUrl: string,
+  project?: string,
+  payload: { showArchive?: boolean } = {},
+) {
+  let showArchiveValue: boolean;
+
+  if (payload.showArchive !== undefined) {
+    showArchiveValue = payload.showArchive;
+  } else {
+    showArchiveValue = false;
+  }
+
+  const body: { showArchive: boolean } = {
+    showArchive: showArchiveValue,
+  };
+
+  return qmetryRequest({
+    method: "POST",
+    path: QMETRY_PATHS.PROJECT.GET_RELEASES_CYCLES,
+    token,
+    baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
+    project: project || QMETRY_DEFAULTS.PROJECT_KEY,
+    body,
+  });
+}

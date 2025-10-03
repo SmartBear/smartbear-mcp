@@ -1,5 +1,5 @@
 import { QMetryToolsHandlers } from "../config/constants.js";
-import { getProjectInfo } from "./project.js";
+import { getProjectInfo, getReleasesCycles } from "./project.js";
 import {
   fetchTestCaseDetails,
   fetchTestCaseSteps,
@@ -24,6 +24,7 @@ type QMetryHandler = (
 export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.SET_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_PROJECT_INFO]: getProjectInfo,
+  [QMetryToolsHandlers.FETCH_RELEASES_CYCLES]: getReleasesCycles,
   [QMetryToolsHandlers.FETCH_TEST_CASES]: fetchTestCases,
   [QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS]: fetchTestCaseDetails,
   [QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS]:

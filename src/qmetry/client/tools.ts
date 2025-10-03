@@ -2,6 +2,7 @@ import type { ToolParams } from "../../common/types.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
 import {
   ProjectArgsSchema,
+  ReleasesCyclesArgsSchema,
   TestCaseDetailsArgsSchema,
   TestCaseListArgsSchema,
   TestCaseStepsArgsSchema,
@@ -102,6 +103,62 @@ export const TOOLS: QMetryToolParams[] = [
       "JSON object containing project details, viewIds, folderPaths, and project configuration",
     readOnly: true,
     idempotent: true,
+  },
+  {
+    title: "Fetch Releases and Cycles",
+    summary: "Fetch QMetry releases and cycles from the current project",
+    handler: QMetryToolsHandlers.FETCH_RELEASES_CYCLES,
+    zodSchema: ReleasesCyclesArgsSchema,
+    purpose:
+      "Retrieve release and cycle information from the current QMetry project. " +
+      "Releases represent major versions or milestones, while cycles represent test execution phases within releases. " +
+      "This tool provides the hierarchical structure of releases and their associated cycles.",
+    useCases: [
+      "Fetch associated releases and cycles of current project",
+      "Fetch available releases and cycles of current project",
+      "Get release and cycle information for test planning",
+      "List all releases and cycles in a project",
+      "Search for specific releases using release name or ID",
+      "Fetch cycle lists based on release ID",
+      "Search for specific cycles using cycle name or ID",
+      "Get project structure for test planning and execution",
+      "Retrieve release hierarchy for reporting purposes",
+    ],
+    examples: [
+      {
+        description: "Get active releases and cycles (default behavior)",
+        parameters: {},
+        expectedOutput:
+          "List of active releases and cycles excluding archived ones (showArchive: false sent in payload)",
+      },
+      {
+        description: "Get active/unarchived releases and cycles explicitly",
+        parameters: { showArchive: false },
+        expectedOutput:
+          "List of active releases and cycles excluding archived ones (showArchive: false sent in payload)",
+      },
+      {
+        description: "Get not active/archived releases and cycles",
+        parameters: { showArchive: true },
+        expectedOutput:
+          "List of all releases and cycles including archived ones (showArchive: true sent in payload)",
+      },
+    ],
+    hints: [
+      "Use 'default' project key when user doesn't specify one",
+      "PAYLOAD SCENARIOS:",
+      "- No showArchive parameter → payload: {showArchive: false} → Returns only active releases/cycles",
+      "- showArchive: false → payload: {showArchive: false} → Returns only active/non-archived releases/cycles",
+      "- showArchive: true → payload: {showArchive: true} → Returns all releases/cycles including archived ones",
+      "Default behavior always excludes archived items unless explicitly requested",
+      "Releases contain cycles - use this hierarchy for test execution planning",
+      "Each release can have multiple cycles representing different testing phases",
+    ],
+    outputFormat:
+      "JSON object with project hierarchy containing releases and their associated cycles",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
   },
   {
     title: "Fetch Test Cases",

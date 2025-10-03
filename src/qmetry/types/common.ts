@@ -172,10 +172,19 @@ export const CommonFields = {
     .string()
     .optional()
     .describe("Folder sort order (ASC or DESC)"),
+  showArchive: z
+    .boolean()
+    .optional()
+    .describe("Whether to show included/excluded archived test cases."),
 } as const;
 
 export const ProjectArgsSchema = z.object({
   projectKey: CommonFields.projectKey,
+});
+
+export const ReleasesCyclesArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  showArchive: CommonFields.showArchive,
 });
 
 export const TestCaseListArgsSchema = z.object({

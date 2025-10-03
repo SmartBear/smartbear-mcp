@@ -46,7 +46,7 @@ describe("QmetryClient", () => {
     it("registers all QMetry tools", () => {
       client.registerTools(mockRegister, mockGetInput);
 
-      expect(mockRegister).toHaveBeenCalledTimes(6);
+      expect(mockRegister).toHaveBeenCalledTimes(7);
       expect(mockRegister.mock.calls[0][0].title).toBe(
         "Set QMetry Project Info",
       );
@@ -60,7 +60,7 @@ describe("QmetryClient", () => {
 
       // Check that all registered tools have the expected structure
       const toolCalls = mockRegister.mock.calls;
-      expect(toolCalls.length).toBe(6);
+      expect(toolCalls.length).toBe(7);
 
       toolCalls.forEach(([toolConfig, handler], _index) => {
         expect(toolConfig).toHaveProperty("title");
