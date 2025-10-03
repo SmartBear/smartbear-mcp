@@ -1,11 +1,4 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ZodTypeAny, z } from "zod";
-import type { ToolParams } from "../../common/types.js";
-
-export interface ZephyrTool {
-  specification: ToolParams;
-  handle: ToolCallback;
-}
 
 export const MaxResultsSchema = z
   .number()
