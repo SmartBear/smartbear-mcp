@@ -1,10 +1,6 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ApiClient } from "../common/api-client.js";
-import {
-  MaxResultsSchema,
-  StartAtSchema,
-  ZephyrProjectListSchema,
-} from "../common/types.js";
+import { MaxResultsSchema, StartAtSchema } from "../common/types.js";
 import type { ZephyrTool } from "./zephyr-tool.js";
 
 export class GetProjects implements ZephyrTool {
@@ -17,7 +13,6 @@ export class GetProjects implements ZephyrTool {
   specification = {
     title: "Get Projects",
     summary: "Get details of projects in Zephyr",
-    outputFormat: ZephyrProjectListSchema.description,
     parameters: [
       {
         name: "maxResults",
