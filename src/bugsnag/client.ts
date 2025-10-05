@@ -8,23 +8,22 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
-import type { Organization } from "./client/api/CurrentUser.js";
-import type { ListProjectErrorsOptions } from "./client/api/Error.js";
+import {
+  type Build,
+  Configuration,
+  CurrentUserAPI,
+  ErrorAPI,
+  type EventField,
+  type Organization,
+  type Project,
+  ProjectAPI,
+  type Release,
+} from "./client/api/index.js";
 import {
   type FilterObject,
   FilterObjectSchema,
-  toQueryString,
-} from "./client/api/filters.js";
-import {
-  type BuildResponseAny,
-  type EventField,
-  type Project,
-  ProjectAPI,
-  type ReleaseResponseAny,
-  type ReleaseSummaryResponse,
-  type StabilityData,
-} from "./client/api/Project.js";
-import { Configuration, CurrentUserAPI, ErrorAPI } from "./client/index.js";
+  toUrlSearchParams,
+} from "./client/filters.js";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -51,18 +50,16 @@ const PERMITTED_UPDATE_OPERATIONS = [
   "undiscard",
 ] as const;
 
-// Type definitions for tool arguments
-export interface ProjectArgs {
-  projectId: string;
+interface StabilityData {
+  userStability: number;
+  sessionStability: number;
+  stabilityTargetType: string;
+  targetStability: number;
+  criticalStability: number;
+  meetsTargetStability: boolean;
+  meetsCriticalStability: boolean;
 }
 
-export interface OrgArgs {
-  orgId: string;
-}
-
-export interface ErrorArgs extends ProjectArgs {
-  errorId: string;
-}
 export class BugsnagClient implements Client {
   private currentUserApi: CurrentUserAPI;
   private errorsApi: ErrorAPI;
@@ -79,7 +76,7 @@ export class BugsnagClient implements Client {
     this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
     this.appEndpoint = this.getEndpoint("app", projectApiKey, endpoint);
     const config = new Configuration({
-      authToken: token,
+      apiKey: `token ${token}`,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
@@ -170,17 +167,17 @@ export class BugsnagClient implements Client {
   async getErrorUrl(
     project: Project,
     errorId: string,
-    queryString = "",
+    queryString?: string | null,
   ): Promise<string> {
     const dashboardUrl = await this.getDashboardUrl(project);
-    return `${dashboardUrl}/errors/${errorId}${queryString}`;
+    return `${dashboardUrl}/errors/${errorId}${queryString ? `?${queryString}` : ""}`;
   }
 
   async getOrganization(): Promise<Organization> {
     let org = this.cache.get<Organization>(cacheKeys.ORG);
     if (!org) {
       const response = await this.currentUserApi.listUserOrganizations();
-      const orgs = response.body || [];
+      const orgs = response.body;
       if (!orgs || orgs.length === 0) {
         throw new Error("No organizations found for the current user.");
       }
@@ -201,7 +198,7 @@ export class BugsnagClient implements Client {
       const response = await this.currentUserApi.getOrganizationProjects(
         org.id,
       );
-      projects = response.body || [];
+      projects = response.body;
       this.cache.set(cacheKeys.PROJECTS, projects);
     }
     return projects;
@@ -216,7 +213,8 @@ export class BugsnagClient implements Client {
     let project = this.cache.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
     if (!project && this.projectApiKey) {
       const projects = await this.getProjects();
-      project = projects.find((p) => p.api_key === this.projectApiKey) ?? null;
+      project =
+        projects.find((p: Project) => p.apiKey === this.projectApiKey) ?? null;
       if (!project) {
         throw new Error("Unable to find project with the configured API key.");
       }
@@ -239,7 +237,7 @@ export class BugsnagClient implements Client {
       throw new Error(`No event fields found for project ${project.name}.`);
     }
     filtersResponse = filtersResponse.filter(
-      (field) => !EXCLUDED_EVENT_FIELDS.has(field.display_id),
+      (field) => field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
     );
     return filtersResponse;
   }
@@ -254,24 +252,6 @@ export class BugsnagClient implements Client {
       ),
     );
     return projectEvents.find((event) => event && !!event.body)?.body || null;
-  }
-
-  async updateError(
-    projectId: string,
-    errorId: string,
-    operation: string,
-    options?: any,
-  ): Promise<boolean> {
-    const errorUpdateRequest = {
-      operation: operation,
-      ...options,
-    };
-    const response = await this.errorsApi.updateErrorOnProject(
-      projectId,
-      errorId,
-      errorUpdateRequest,
-    );
-    return response.status === 200 || response.status === 204;
   }
 
   private async getInputProject(
@@ -294,42 +274,46 @@ export class BugsnagClient implements Client {
     }
   }
 
-  private addStabilityData<T extends BuildResponseAny | ReleaseResponseAny>(
+  private addStabilityData<T extends Release | Build>(
     source: T,
     project: Project,
   ): T & StabilityData {
-    const user_stability =
-      source.accumulative_daily_users_seen === 0 // avoid division by zero
-        ? 0
-        : (source.accumulative_daily_users_seen -
-            source.accumulative_daily_users_with_unhandled) /
-          source.accumulative_daily_users_seen;
+    const accumulativeDailyUsersSeen = source.accumulativeDailyUsersSeen || 0;
+    const accumulativeDailyUsersWithUnhandled =
+      source.accumulativeDailyUsersWithUnhandled || 0;
 
-    const session_stability =
-      source.total_sessions_count === 0 // avoid division by zero
+    const userStability =
+      accumulativeDailyUsersSeen === 0 // avoid division by zero
         ? 0
-        : (source.total_sessions_count - source.unhandled_sessions_count) /
-          source.total_sessions_count;
+        : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
+          accumulativeDailyUsersSeen;
+
+    const totalSessionsCount = source.totalSessionsCount || 0;
+    const unhandledSessionsCount = source.unhandledSessionsCount || 0;
+
+    const sessionStability =
+      totalSessionsCount === 0 // avoid division by zero
+        ? 0
+        : (totalSessionsCount - unhandledSessionsCount) / totalSessionsCount;
 
     const stabilityMetric =
-      project.stability_target_type === "user"
-        ? user_stability
-        : session_stability;
+      project.stabilityTargetType === "user" ? userStability : sessionStability;
 
-    const meets_target_stability =
-      stabilityMetric >= project.target_stability.value;
-    const meets_critical_stability =
-      stabilityMetric >= project.critical_stability.value;
+    const targetStability = project.targetStability?.value || 0;
+    const criticalStability = project.criticalStability?.value || 0;
+
+    const meetsTargetStability = stabilityMetric >= targetStability;
+    const meetsCriticalStability = stabilityMetric >= criticalStability;
 
     return {
       ...source,
-      user_stability,
-      session_stability,
-      stability_target_type: project.stability_target_type,
-      target_stability: project.target_stability.value,
-      critical_stability: project.critical_stability.value,
-      meets_target_stability,
-      meets_critical_stability,
+      userStability,
+      sessionStability,
+      stabilityTargetType: project.stabilityTargetType || "user",
+      targetStability,
+      criticalStability,
+      meetsTargetStability,
+      meetsCriticalStability,
     };
   }
 
@@ -498,32 +482,28 @@ export class BugsnagClient implements Client {
           );
         }
 
-        // Build query parameters
-        const params = new URLSearchParams();
-
-        // Add sorting and pagination parameters to get the latest event
-        params.append("sort", "timestamp");
-        params.append("direction", "desc");
-        params.append("per_page", "1");
-        params.append("full_reports", "true");
-
         const filters: FilterObject = {
           error: [{ type: "eq", value: args.errorId }],
           ...args.filters,
         };
 
-        const filtersQueryString = toQueryString(filters);
-        const listEventsQueryString = `?${params}&${filtersQueryString}`;
-
         // Get the latest event for this error using the events endpoint with filters
         let latestEvent = null;
         try {
-          latestEvent = (
-            await this.errorsApi.getLatestEventOnProject(
+          const latestEvents = (
+            await this.errorsApi.listEventsOnProject(
               project.id,
-              listEventsQueryString,
+              null,
+              "timestamp",
+              "desc",
+              1,
+              filters,
+              true,
             )
           ).body;
+          if (latestEvents && latestEvents.length > 0) {
+            latestEvent = latestEvents[0];
+          }
         } catch (e) {
           console.warn("Failed to fetch latest event:", e);
           // Continue without latest event rather than failing the entire request
@@ -533,12 +513,18 @@ export class BugsnagClient implements Client {
           error_details: errorDetails,
           latest_event: latestEvent,
           pivots:
-            (await this.errorsApi.listErrorPivots(project.id, args.errorId))
-              .body || [],
+            (
+              await this.errorsApi.getPivotValuesOnAnError(
+                project.id,
+                args.errorId,
+                filters,
+                5,
+              )
+            ).body || [],
           url: await this.getErrorUrl(
             project,
             args.errorId,
-            `?${filtersQueryString}`,
+            toUrlSearchParams(filters).toString(),
           ),
         };
         return {
@@ -673,7 +659,7 @@ export class BugsnagClient implements Client {
           },
           {
             name: "nextUrl",
-            type: z.string().url(),
+            type: z.string(),
             description:
               "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available.",
             required: false,
@@ -755,7 +741,7 @@ export class BugsnagClient implements Client {
             this.cache.get<EventField[]>(
               cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
             ) || [];
-          const validKeys = new Set(eventFields.map((f) => f.display_id));
+          const validKeys = new Set(eventFields.map((f) => f.displayId));
           for (const key of Object.keys(args.filters)) {
             if (!validKeys.has(key)) {
               throw new Error(`Invalid filter key: ${key}`);
@@ -763,23 +749,20 @@ export class BugsnagClient implements Client {
           }
         }
 
-        const defaultFilters: FilterObject = {
+        const filters: FilterObject = {
           "event.since": [{ type: "eq", value: "30d" }],
           "error.status": [{ type: "eq", value: "open" }],
+          ...args.filters,
         };
-
-        const options: ListProjectErrorsOptions = {
-          filters: { ...defaultFilters, ...args.filters },
-        };
-
-        if (args.sort !== undefined) options.sort = args.sort;
-        if (args.direction !== undefined) options.direction = args.direction;
-        if (args.perPage !== undefined) options.per_page = args.perPage;
-        if (args.nextUrl !== undefined) options.next_url = args.nextUrl;
 
         const response = await this.errorsApi.listProjectErrors(
           project.id,
-          options,
+          null,
+          args.sort || "last_seen",
+          args.direction || "desc",
+          args.perPage || 30,
+          filters,
+          args.nextUrl,
         );
 
         const result = {
@@ -914,12 +897,22 @@ export class BugsnagClient implements Client {
           }
         }
 
-        const result = await this.updateError(project.id, errorId, operation, {
-          severity,
-        });
+        const result = await this.errorsApi.updateErrorOnProject(
+          project.id,
+          errorId,
+          {
+            operation: operation,
+            severity: severity,
+          },
+        );
         return {
           content: [
-            { type: "text", text: JSON.stringify({ success: result }) },
+            {
+              type: "text",
+              text: JSON.stringify({
+                success: result.status === 200 || result.status === 204,
+              }),
+            },
           ],
         };
       },
@@ -961,6 +954,13 @@ export class BugsnagClient implements Client {
               "Whether to only include releases that are marked as visible in the dashboard, defaults to false",
             required: false,
             examples: ["true", "false"],
+          },
+          {
+            name: "perPage",
+            type: z.number().min(1).max(100).default(30),
+            description: "How many results to return per page.",
+            required: false,
+            examples: ["30", "50", "100"],
           },
           {
             name: "nextUrl",
@@ -1010,13 +1010,16 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         const project = await this.getInputProject(args.projectId);
-        const response = await this.projectApi.listReleases(project.id, {
-          release_stage_name: args.releaseStage,
-          visible_only: args.visibleOnly,
-          next_url: args.nextUrl,
-        });
+        const response = await this.projectApi.listProjectReleaseGroups(
+          project.id,
+          args.releaseStage || "production",
+          false, // Not top-only
+          args.visibleOnly || false,
+          args.perPage || 30,
+          args.nextUrl,
+        );
 
-        let releases: (ReleaseSummaryResponse & StabilityData)[] = [];
+        let releases: (Release & StabilityData)[] = [];
         if (response.body) {
           releases = response.body.map((r) =>
             this.addStabilityData(r, project),
@@ -1089,13 +1092,13 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         if (!args.releaseId) throw new Error("releaseId argument is required");
         const project = await this.getInputProject(args.projectId);
-        const releaseResponse = await this.projectApi.getRelease(
+        const releaseResponse = await this.projectApi.getReleaseGroup(
           args.releaseId,
         );
         if (!releaseResponse.body)
           throw new Error(`No release for ${args.releaseId} found.`);
         const release = this.addStabilityData(releaseResponse.body, project);
-        let builds: (BuildResponseAny & StabilityData)[] = [];
+        let builds: (Build & StabilityData)[] = [];
         if (releaseResponse.body) {
           const buildsResponse = await this.projectApi.listBuildsInRelease(
             args.releaseId,
@@ -1169,7 +1172,7 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         if (!args.buildId) throw new Error("buildId argument is required");
         const project = await this.getInputProject(args.projectId);
-        const response = await this.projectApi.getBuild(
+        const response = await this.projectApi.getProjectReleaseById(
           project.id,
           args.buildId,
         );
