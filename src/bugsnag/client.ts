@@ -599,7 +599,7 @@ export class BugsnagClient implements Client {
           console.warn("Failed to fetch latest event:", e);
           // Continue without latest event rather than failing the entire request
         }
-
+        
         const content = {
           error_details: errorDetails,
           latest_event: latestEvent,
