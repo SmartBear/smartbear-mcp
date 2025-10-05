@@ -239,7 +239,6 @@ export interface StabilityTargetData {
 // --- API Class ---
 
 export class ProjectAPI extends BaseAPI {
-
   static projectFields: (keyof Project)[] = [
     "id",
     "name",
@@ -393,11 +392,12 @@ export class ProjectAPI extends BaseAPI {
         `release_stage_name=${opts.release_stage_name ?? "production"}&` +
         `visible_only=${opts.visible_only ?? false}&` +
         `top_only=${opts.top_only ?? false}`;
-    const response = await this.request<ReleaseSummaryResponse[]>({
+    const response = await this.request<ReleaseSummaryResponse[]>(
+      {
         method: "GET",
         url,
       },
-      true, // Paginate results
+      false, // Paginate results
     );
 
     return {
