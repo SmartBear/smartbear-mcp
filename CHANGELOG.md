@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [TBC] - TBC
+
+### Added
+- [Zephyr] Add Zephyr Test Management capabilities to MCP [#171](https://github.com/SmartBear/smartbear-mcp/pull/171)
+
 ## [0.7.0] - 2025-10-02
 
 ### Added
