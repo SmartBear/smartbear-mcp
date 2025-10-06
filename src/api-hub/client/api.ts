@@ -395,10 +395,7 @@ export class ApiHubAPI {
       contentType = "application/json";
       // For JSON, parse and stringify to ensure valid JSON
       try {
-        const parsedDefinition =
-          typeof params.definition === "string"
-            ? JSON.parse(params.definition)
-            : params.definition;
+        const parsedDefinition = JSON.parse(params.definition);
         requestBody = JSON.stringify(parsedDefinition);
       } catch (error) {
         throw new Error(
