@@ -124,7 +124,7 @@ export class ApiHubAPI {
       response,
       [] as unknown as PortalsListResponse,
     );
-    return result as PortalsListResponse; // handleResponse may return fallback {}, but portals endpoints should always return data
+    return result as PortalsListResponse;
   }
 
   async createPortal(body: CreatePortalArgs): Promise<Portal> {
@@ -156,10 +156,13 @@ export class ApiHubAPI {
   }
 
   async deletePortal(portalId: string): Promise<void> {
-    const response = await fetch(`${this.config.portalBasePath}/portals/${portalId}`, {
-      method: "DELETE",
-      headers: this.headers,
-    });
+    const response = await fetch(
+      `${this.config.portalBasePath}/portals/${portalId}`,
+      {
+        method: "DELETE",
+        headers: this.headers,
+      },
+    );
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new Error(
@@ -272,7 +275,6 @@ export class ApiHubAPI {
    * @param defaultReturn - Default value to return for empty responses
    * @returns Parsed response data or fallback value
    */
-  // Removed handleResponseWithoutErrorCheck - unified on handleResponse for consistency
 
   // Registry API methods for SwaggerHub Design functionality
 
@@ -513,13 +515,16 @@ export class ApiHubAPI {
       throw new Error("Empty definition content provided");
     }
 
-    const startsLikeJson = /^[{\[]/.test(trimmed);
-    if (startsLikeJson) {
+    // Fast path: JSON typically starts with '{' or '[' (objects/arrays)
+    // Using direct char comparison instead of a regex improves clarity and avoids lint suggestions.
+    const firstChar = trimmed[0];
+    const looksJsonStart = firstChar === "{" || firstChar === "[";
+    if (looksJsonStart) {
       try {
         JSON.parse(trimmed);
         return "json";
       } catch {
-        // fall through to YAML heuristics / final error
+        // Not valid JSON despite typical starting character; continue with YAML heuristics.
       }
     }
 
