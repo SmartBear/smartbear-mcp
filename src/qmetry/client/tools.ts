@@ -1,6 +1,8 @@
 import type { ToolParams } from "../../common/types.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
 import {
+  BuildArgsSchema,
+  PlatformArgsSchema,
   ProjectArgsSchema,
   ReleasesCyclesArgsSchema,
   TestCaseDetailsArgsSchema,
@@ -156,6 +158,154 @@ export const TOOLS: QMetryToolParams[] = [
     ],
     outputFormat:
       "JSON object with project hierarchy containing releases and their associated cycles",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
+  },
+  {
+    title: "Fetch Builds",
+    summary: "Fetch QMetry builds from the current project",
+    handler: QMetryToolsHandlers.FETCH_BUILDS,
+    zodSchema: BuildArgsSchema,
+    purpose:
+      "Retrieve builds information from the current QMetry project. " +
+      "Builds represent specific versions or iterations of software that can be associated with test executions. " +
+      "This tool provides a list of builds with their metadata for test planning and execution tracking.",
+    useCases: [
+      "Fetch all from the current project",
+      "Fetch all available builds for test execution planning",
+      "Get build metadata for test run assignments",
+      "List builds for reporting and analytics",
+      "Filter builds by name or archive status",
+      "Get paginated build results for large projects",
+      "Retrieve build information for CI/CD integration",
+      "Search for specific builds using filters",
+      "Get build details for test execution history",
+    ],
+    examples: [
+      {
+        description: "Get all builds (default behavior)",
+        parameters: {},
+        expectedOutput:
+          "List of all builds with default pagination (10 items per page)",
+      },
+      {
+        description: "Get builds with custom pagination",
+        parameters: { page: 1, limit: 10, start: 0 },
+        expectedOutput: "List of builds with custom pagination settings",
+      },
+      {
+        description: "Filter builds by name",
+        parameters: {
+          filter: '[{"value":"Build 1.0","type":"string","field":"name"}]',
+        },
+        expectedOutput: "Filtered list of builds matching the name criteria",
+      },
+      {
+        description: "Filter builds by archive status",
+        parameters: {
+          filter: '[{"value":[1,0],"type":"list","field":"isArchived"}]',
+        },
+        expectedOutput:
+          "List of builds filtered by archive status (archived and non-archived)",
+      },
+    ],
+    hints: [
+      "Use 'default' project key when user doesn't specify one",
+      "Default pagination: start=0, page=1, limit=10",
+      "Filter parameter should be a JSON string with filter criteria",
+      "Common filter fields: 'name' (string), 'isArchived' (list of 0,1)",
+      "Empty payload {} is sent when no parameters are provided",
+      "Builds are also known as 'drops' in QMetry terminology",
+      "Use builds for associating test executions with specific software versions",
+    ],
+    outputFormat: "JSON object with builds list and pagination metadata",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
+  },
+  {
+    title: "Fetch Platforms",
+    summary: "Fetch QMetry platforms from the current project",
+    handler: QMetryToolsHandlers.FETCH_PLATFORMS,
+    zodSchema: PlatformArgsSchema,
+    purpose:
+      "Retrieve platforms information from the current QMetry project. " +
+      "Platforms represent testing environments, operating systems, browsers, or devices " +
+      "that can be associated with test case execution and reporting. " +
+      "This tool provides a list of platforms with their metadata for test planning and execution tracking.",
+    useCases: [
+      "Fetch all platforms from the current project",
+      "Get platform metadata for test execution planning",
+      "List platforms for test environment selection",
+      "Filter platforms by name or properties",
+      "Get paginated platform results for large projects",
+      "Retrieve platform information for cross-platform testing",
+      "Search for specific platforms using filters",
+      "Get platform details for test execution assignment",
+    ],
+    examples: [
+      {
+        description: "Get all platforms (default behavior)",
+        parameters: {},
+        expectedOutput:
+          "List of all platforms with default pagination (10 items per page)",
+      },
+      {
+        description: "Get platforms with custom pagination",
+        parameters: { page: 1, limit: 10, start: 0 },
+        expectedOutput: "List of platforms with custom pagination settings",
+      },
+      {
+        description: "Filter platforms by name",
+        parameters: {
+          filter: '[{"value":"Chrome","type":"string","field":"name"}]',
+        },
+        expectedOutput: "Filtered list of platforms matching the name criteria",
+      },
+      {
+        description: "Filter platforms by archive status",
+        parameters: {
+          filter: '[{"value":[1,0],"type":"list","field":"isArchived"}]',
+        },
+        expectedOutput:
+          "List of platforms filtered by archive status (archived and non-archived)",
+      },
+      {
+        description: "Get only archived platforms",
+        parameters: {
+          filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
+        },
+        expectedOutput: "List of only archived platforms",
+      },
+      {
+        description: "Get only active/non-archived platforms",
+        parameters: {
+          filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
+        },
+        expectedOutput: "List of only active/non-archived platforms",
+      },
+      {
+        description: "Get platforms with custom sorting",
+        parameters: {
+          sort: '[{"property":"name","direction":"ASC"}]',
+        },
+        expectedOutput: "List of platforms sorted by name in ascending order",
+      },
+    ],
+    hints: [
+      "Use 'default' project key when user doesn't specify one",
+      "Default pagination: start=0, page=1, limit=10",
+      "Filter parameter should be a JSON string with filter criteria",
+      "Sort parameter should be a JSON string with sort criteria",
+      "Default sort: platformID descending",
+      "Common filter fields: 'name' (string), 'isArchived' (list of 0,1) for archive status",
+      "IMPORTANT: Always use 'isArchived' field for filtering by archive status, even though response shows 'isPlatformArchived'",
+      "Archive status values: 0 = active/non-archived, 1 = archived",
+      "Empty payload {} is sent when no parameters are provided",
+      "Use platforms for cross-platform testing and environment selection",
+    ],
+    outputFormat: "JSON object with platforms list and pagination metadata",
     readOnly: true,
     idempotent: true,
     openWorld: false,

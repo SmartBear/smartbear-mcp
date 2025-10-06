@@ -14,6 +14,10 @@ export interface PaginationPayload {
   page?: number;
   limit?: number;
 }
+
+export interface SortPayload {
+  sort?: string;
+}
 export interface FilterPayload {
   filter?: string;
 }
@@ -36,6 +40,10 @@ export const DEFAULT_PAGINATION: Required<PaginationPayload> = {
 
 export const DEFAULT_FILTER: Required<FilterPayload> = {
   filter: "[]",
+};
+
+export const DEFAULT_SORT: Required<SortPayload> = {
+  sort: '[{"property":"name","direction":"ASC"}]',
 };
 
 export const DEFAULT_FOLDER_OPTIONS: Required<
@@ -185,6 +193,31 @@ export const ProjectArgsSchema = z.object({
 export const ReleasesCyclesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   showArchive: CommonFields.showArchive,
+});
+
+export const BuildArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+});
+
+export const PlatformArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      'Sort criteria as JSON string (default \'[{"property":"platformID","direction":"DESC"}]\')',
+    )
+    .default('[{"property":"platformID","direction":"DESC"}]'),
+  filter: CommonFields.filter,
 });
 
 export const TestCaseListArgsSchema = z.object({

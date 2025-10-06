@@ -2,6 +2,8 @@ export const QMETRY_PATHS = {
   PROJECT: {
     GET_INFO: "/rest/admin/project/getinfo",
     GET_RELEASES_CYCLES: "/rest/admin/scope/tree",
+    GET_BUILD: "/rest/admin/drop/list",
+    GET_PLATFORMS: "/rest/admin/platform/list",
   },
   TESTCASE: {
     GET_TC_LIST: "/rest/testcases/list/viewColumns",

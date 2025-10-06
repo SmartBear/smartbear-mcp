@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getBuilds,
+  getPlatforms,
   getProjectInfo,
   getReleasesCycles,
 } from "../../../../qmetry/client/project.js";
@@ -389,5 +391,234 @@ describe("getReleasesCycles", () => {
     expect(result).toEqual(mockResponse);
     expect((result as any).children[0].children[0].children).toHaveLength(2);
     expect((result as any).children[0].children[0].type).toBe("release 1");
+  });
+});
+
+describe("getBuilds", () => {
+  const token = "fake-token";
+  const baseUrl = "https://qmetry.example";
+  const projectKey = "TEST_PROJECT";
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("should call fetch with correct URL and headers for default payload", async () => {
+    const mockResponse = {
+      data: [
+        {
+          buildID: 12345,
+          name: "Build 1.0",
+          isArchived: false,
+          createdDate: "01-01-2024 10:00:00",
+          createdBy: "developer",
+          projectID: 4811,
+        },
+      ],
+      total: 1,
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const result = await getBuilds(token, baseUrl, projectKey, {});
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/drop/list`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringMatching(/SmartBear MCP Server/),
+        }),
+        body: expect.stringContaining('"start":0'),
+      }),
+    );
+
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("should call fetch with custom pagination and filter payload", async () => {
+    const mockResponse = {
+      data: [
+        {
+          buildID: 12346,
+          name: "Build 2.0",
+          isArchived: true,
+          createdDate: "02-01-2024 10:00:00",
+          createdBy: "developer",
+          projectID: 4811,
+        },
+      ],
+      total: 1,
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const customPayload = {
+      start: 10,
+      limit: 20,
+      page: 2,
+      filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
+    };
+
+    const result = await getBuilds(token, baseUrl, projectKey, customPayload);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/drop/list`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringMatching(/SmartBear MCP Server/),
+        }),
+        body: expect.stringContaining('"start":10'),
+      }),
+    );
+
+    // Verify the body contains all the expected values
+    const fetchCall = (global.fetch as any).mock.calls[0];
+    const body = JSON.parse(fetchCall[1].body);
+    expect(body).toMatchObject({
+      start: 10,
+      limit: 20,
+      page: 2,
+      filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
+    });
+
+    expect(result).toEqual(mockResponse);
+  });
+});
+
+describe("getPlatforms", () => {
+  const token = "fake-token";
+  const baseUrl = "https://qmetry.example";
+  const projectKey = "TEST_PROJECT";
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("should call fetch with correct URL and headers for default payload", async () => {
+    const mockResponse = {
+      data: [
+        {
+          platformID: 18994,
+          name: "Android",
+          isPlatformArchived: false,
+          createdDate: "16-02-2021 12:45:26",
+          createdBy: "jatin",
+          projectID: 4811,
+          platformAttribute: " Language : CN, System Version : iOS 12",
+        },
+      ],
+      total: 1,
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const result = await getPlatforms(token, baseUrl, projectKey, {});
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/platform/list`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringMatching(/SmartBear MCP Server/),
+        }),
+        body: expect.stringContaining('"start":0'),
+      }),
+    );
+
+    // Verify the body contains the expected default values
+    const fetchCall = (global.fetch as any).mock.calls[0];
+    const body = JSON.parse(fetchCall[1].body);
+    expect(body).toMatchObject({
+      start: 0,
+      page: 1,
+      limit: 10,
+      filter: "[]",
+      sort: expect.stringContaining("name"),
+    });
+
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("should call fetch with custom sorting and archive filter payload", async () => {
+    const mockResponse = {
+      data: [
+        {
+          platformID: 15139,
+          name: "Mac Pro",
+          isPlatformArchived: true,
+          createdDate: "15-05-2020 00:29:40",
+          createdBy: "afzal.ansari",
+          projectID: 4811,
+        },
+      ],
+      total: 1,
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const customPayload = {
+      start: 0,
+      limit: 25,
+      page: 1,
+      sort: '[{"property":"platformID","direction":"DESC"}]',
+      filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
+    };
+
+    const result = await getPlatforms(
+      token,
+      baseUrl,
+      projectKey,
+      customPayload,
+    );
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/platform/list`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringMatching(/SmartBear MCP Server/),
+        }),
+        body: expect.stringContaining('"start":0'),
+      }),
+    );
+
+    // Verify the body contains all the expected values
+    const fetchCall = (global.fetch as any).mock.calls[0];
+    const body = JSON.parse(fetchCall[1].body);
+    expect(body).toMatchObject({
+      start: 0,
+      limit: 25,
+      page: 1,
+      sort: '[{"property":"platformID","direction":"DESC"}]',
+      filter: '[{"value":[1],"type":"list","field":"isArchived"}]',
+    });
+
+    expect(result).toEqual(mockResponse);
   });
 });

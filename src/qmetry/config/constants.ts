@@ -7,6 +7,8 @@ export const QMetryToolsHandlers = {
   SET_PROJECT_INFO: "setProjectInfo",
   FETCH_PROJECT_INFO: "getProjectInfo",
   FETCH_RELEASES_CYCLES: "getReleasesCycles",
+  FETCH_BUILDS: "getBuilds",
+  FETCH_PLATFORMS: "getPlatforms",
   FETCH_TEST_CASES: "getTestCases",
   FETCH_TEST_CASE_DETAILS: "getTestCaseDetails",
   FETCH_TEST_CASE_VERSION_DETAILS: "getTestCaseVersionDetails",
