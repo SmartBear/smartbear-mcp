@@ -22,7 +22,7 @@ describe("ApiClient", () => {
 
   it("should build correct URL with undefined params", () => {
     const url = apiClient.getUrl("/projects", { maxResults: undefined });
-    expect(url).toBe("https://api.zephyrscale.smartbear.com/v2/projects");
+    expect(url).toBe(`${baseUrl}/projects`);
   });
 
   it("should build correct URL with boolean and number params", () => {
