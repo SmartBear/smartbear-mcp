@@ -73,14 +73,24 @@ export class ApiHubAPI {
       try {
         return (await response.json()) as T;
       } catch (error) {
-        console.warn("Failed to parse JSON response:", error);
+        console.warn("Failed to parse JSON response (declared JSON):", error);
         return defaultReturn;
       }
     }
 
-    // Fallback for non-JSON responses
+    // Fallback: read text and attempt heuristic JSON parse
     const text = await response.text();
-    return text ? { message: text } : defaultReturn;
+    if (!text) return defaultReturn;
+    const trimmed = text.trim();
+    if (/^[{\[]/.test(trimmed)) {
+      try {
+        return JSON.parse(trimmed) as T;
+      } catch (error) {
+        console.warn("Heuristic JSON parse failed:", error);
+        return { message: text };
+      }
+    }
+    return { message: text };
   }
 
   /**
@@ -110,8 +120,11 @@ export class ApiHubAPI {
       method: "GET",
       headers: this.headers,
     });
-
-    return response.json() as Promise<PortalsListResponse>;
+    const result = await this.handleResponse<PortalsListResponse>(
+      response,
+      [] as unknown as PortalsListResponse,
+    );
+    return result as PortalsListResponse; // handleResponse may return fallback {}, but portals endpoints should always return data
   }
 
   async createPortal(body: CreatePortalArgs): Promise<Portal> {
@@ -120,8 +133,11 @@ export class ApiHubAPI {
       headers: this.headers,
       body: JSON.stringify(body),
     });
-
-    return response.json() as Promise<Portal>;
+    const result = await this.handleResponse<Portal>(response);
+    if (!("id" in (result as any))) {
+      throw new Error("Unexpected empty response creating portal");
+    }
+    return result as Portal;
   }
 
   async getPortal(portalId: string): Promise<Portal> {
@@ -132,15 +148,24 @@ export class ApiHubAPI {
         headers: this.headers,
       },
     );
-
-    return response.json() as Promise<Portal>;
+    const result = await this.handleResponse<Portal>(response);
+    if (!("id" in (result as any))) {
+      throw new Error("Portal not found or empty response");
+    }
+    return result as Portal;
   }
 
   async deletePortal(portalId: string): Promise<void> {
-    await fetch(`${this.config.portalBasePath}/portals/${portalId}`, {
+    const response = await fetch(`${this.config.portalBasePath}/portals/${portalId}`, {
       method: "DELETE",
       headers: this.headers,
     });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `API Hub deletePortal failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+      );
+    }
   }
 
   async updatePortal(
@@ -167,8 +192,11 @@ export class ApiHubAPI {
         headers: this.headers,
       },
     );
-
-    return response.json() as Promise<ProductsListResponse>;
+    const result = await this.handleResponse<ProductsListResponse>(
+      response,
+      [] as unknown as ProductsListResponse,
+    );
+    return result as ProductsListResponse;
   }
 
   async createPortalProduct(
@@ -183,8 +211,11 @@ export class ApiHubAPI {
         body: JSON.stringify(body),
       },
     );
-
-    return response.json() as Promise<Product>;
+    const result = await this.handleResponse<Product>(response);
+    if (!("id" in (result as any))) {
+      throw new Error("Unexpected empty response creating product");
+    }
+    return result as Product;
   }
 
   async getPortalProduct(productId: string): Promise<Product> {
@@ -195,8 +226,11 @@ export class ApiHubAPI {
         headers: this.headers,
       },
     );
-
-    return response.json() as Promise<Product>;
+    const result = await this.handleResponse<Product>(response);
+    if (!("id" in (result as any))) {
+      throw new Error("Product not found or empty response");
+    }
+    return result as Product;
   }
 
   async deletePortalProduct(
@@ -209,7 +243,6 @@ export class ApiHubAPI {
         headers: this.headers,
       },
     );
-
     return this.handleResponse(response);
   }
 
@@ -225,22 +258,9 @@ export class ApiHubAPI {
         body: JSON.stringify(body),
       },
     );
-
-    // Custom error handling for updatePortalProduct
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      throw new Error(
-        `API Hub updatePortalProduct failed - status: ${response.status} ${response.statusText}${
-          errorText ? ` - ${errorText}` : ""
-        }`,
-      );
-    }
-
-    // Use handleResponse but with custom default return value
-    return this.handleResponseWithoutErrorCheck<Product, SuccessResponse>(
-      response,
-      { success: true },
-    );
+    return this.handleResponse<Product | SuccessResponse>(response, {
+      success: true,
+    } as SuccessResponse);
   }
 
   /**
@@ -252,15 +272,7 @@ export class ApiHubAPI {
    * @param defaultReturn - Default value to return for empty responses
    * @returns Parsed response data or fallback value
    */
-  private async handleResponseWithoutErrorCheck<
-    T = unknown,
-    D = Record<string, never>,
-  >(
-    response: Response,
-    defaultReturn: D = {} as D,
-  ): Promise<T | D | FallbackResponse> {
-    return this.parseResponse<T, D>(response, defaultReturn);
-  }
+  // Removed handleResponseWithoutErrorCheck - unified on handleResponse for consistency
 
   // Registry API methods for SwaggerHub Design functionality
 
@@ -426,8 +438,9 @@ export class ApiHubAPI {
     });
 
     if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
       throw new Error(
-        `SwaggerHub Registry API createOrUpdateApi failed - status: ${response.status} ${response.statusText}`,
+        `SwaggerHub Registry API createOrUpdateApi failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
 
@@ -472,9 +485,7 @@ export class ApiHubAPI {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new Error(
-        `SwaggerHub Registry API createApiFromTemplate failed - status: ${response.status} ${response.statusText}${
-          errorText ? ` - ${errorText}` : ""
-        }. URL: ${url}`,
+        `SwaggerHub Registry API createApiFromTemplate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
 
@@ -498,15 +509,44 @@ export class ApiHubAPI {
    */
   private detectDefinitionFormat(definition: string): "json" | "yaml" {
     const trimmed = definition.trim();
+    if (!trimmed) {
+      throw new Error("Empty definition content provided");
+    }
 
-    // Try to parse as JSON first
+    const startsLikeJson = /^[{\[]/.test(trimmed);
+    if (startsLikeJson) {
+      try {
+        JSON.parse(trimmed);
+        return "json";
+      } catch {
+        // fall through to YAML heuristics / final error
+      }
+    }
+
+    // YAML heuristics
+    const yamlIndicators = [
+      /^---\s*$/m, // document separator
+      /(^|\n)\s*(openapi|swagger|asyncapi):\s*["']?\d+\.\d+(?:\.\d+)?["']?/i, // spec version keys
+      /(^|\n)\s*info:\s*$/i,
+      /(^|\n)\s*paths:\s*$/i,
+      /(^|\n)\s*components:\s*$/i,
+      /(^|\n)\s*channels:\s*$/i, // asyncapi
+      /(^|\n)\s*\w+\s*:\s+[^\n]+/, // generic key: value
+      /(^|\n)\s*-\s+\w+/, // list item
+    ];
+    const looksLikeYaml = yamlIndicators.some((re) => re.test(trimmed));
+    if (looksLikeYaml) {
+      return "yaml";
+    }
+
+    // Final attempt: JSON parse (in case it didn't start with { but is valid JSON)
     try {
       JSON.parse(trimmed);
       return "json";
     } catch {
-      // If JSON parsing fails, assume it's YAML
-      // Additional YAML detection could be added here (e.g., checking for YAML-specific patterns)
-      return "yaml";
+      throw new Error(
+        "Unable to detect definition format. Content appears to be neither valid JSON nor recognizable YAML.",
+      );
     }
   }
 }
