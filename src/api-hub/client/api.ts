@@ -82,7 +82,8 @@ export class ApiHubAPI {
     const text = await response.text();
     if (!text) return defaultReturn;
     const trimmed = text.trim();
-    if (/^[{\[]/.test(trimmed)) {
+    const firstChar = trimmed[0];
+    if (firstChar === "{" || firstChar === "[") {
       try {
         return JSON.parse(trimmed) as T;
       } catch (error) {
