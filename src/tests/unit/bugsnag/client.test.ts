@@ -1635,7 +1635,7 @@ describe("BugsnagClient", () => {
         };
         const mockError = { id: "error-1", message: "Test error" };
         const mockOrg = { id: "org-1", name: "Test Org", slug: "test-org" };
-        const mockEvents = [{ id: "event-1", timestamp: "2023-01-01" }];
+        const mockEvent = { id: "event-1", timestamp: "2023-01-01" };
         const mockPivots = [{ id: "pivot-1", name: "test-pivot" }];
 
         mockCache.get
@@ -1643,7 +1643,7 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(mockOrg);
         mockErrorAPI.viewErrorOnProject.mockResolvedValue({ body: mockError });
         mockErrorAPI.getLatestEventOnProject.mockResolvedValue({
-          body: mockEvents,
+          body: mockEvent,
         });
         mockErrorAPI.listErrorPivots.mockResolvedValue({ body: mockPivots });
 
@@ -1664,7 +1664,7 @@ describe("BugsnagClient", () => {
         expect(result.content[0].text).toBe(
           JSON.stringify({
             error_details: mockError,
-            latest_event: mockEvents[0],
+            latest_event: mockEvent,
             pivots: mockPivots,
             url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1${encodedQueryString}`,
           }),
@@ -1811,9 +1811,9 @@ describe("BugsnagClient", () => {
           per_page: 50,
         });
         const expectedResult = {
-          errors: mockErrors,
-          page_error_count: 1,
-          total_error_count: 1,
+          data: mockErrors,
+          data_count: 1,
+          total_count: 1,
         };
         expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
       });
@@ -1857,9 +1857,9 @@ describe("BugsnagClient", () => {
           per_page: 50,
         });
         const expectedResult = {
-          errors: mockErrors,
-          page_error_count: 1,
-          total_error_count: 3,
+          data: mockErrors,
+          data_count: 1,
+          total_count: 3,
         };
         expect(defaultFilterResult.content[0].text).toBe(
           JSON.stringify(expectedResult),
@@ -1996,7 +1996,7 @@ describe("BugsnagClient", () => {
           release_stage: "production",
         });
         expect(result.content[0].text).toBe(
-          JSON.stringify({ builds: enhancedBuilds }),
+          JSON.stringify({ data: enhancedBuilds, data_count: 1 }),
         );
       });
 
@@ -2059,7 +2059,7 @@ describe("BugsnagClient", () => {
           release_stage: "staging",
         });
         expect(result.content[0].text).toBe(
-          JSON.stringify({ builds: enhancedBuilds }),
+          JSON.stringify({ data: enhancedBuilds, data_count: 1 }),
         );
       });
 
@@ -2078,7 +2078,9 @@ describe("BugsnagClient", () => {
         const result = await toolHandler({});
 
         expect(mockProjectAPI.listBuilds).toHaveBeenCalledWith("proj-1", {});
-        expect(result.content[0].text).toBe(JSON.stringify({ builds: [] }));
+        expect(result.content[0].text).toBe(
+          JSON.stringify({ data: [], data_count: 0 }),
+        );
       });
 
       it("should throw error when no project ID available", async () => {
@@ -2334,7 +2336,7 @@ describe("BugsnagClient", () => {
           visible_only: true,
         });
         expect(result.content[0].text).toBe(
-          JSON.stringify({ releases: enhancedReleases }),
+          JSON.stringify({ data: enhancedReleases, data_count: 1 }),
         );
       });
 
@@ -2400,7 +2402,7 @@ describe("BugsnagClient", () => {
           visible_only: false,
         });
         expect(result.content[0].text).toBe(
-          JSON.stringify({ releases: enhancedReleases }),
+          JSON.stringify({ data: enhancedReleases, data_count: 1 }),
         );
       });
 
@@ -2425,7 +2427,9 @@ describe("BugsnagClient", () => {
           release_stage_name: "production",
           visible_only: true,
         });
-        expect(result.content[0].text).toBe(JSON.stringify({ releases: [] }));
+        expect(result.content[0].text).toBe(
+          JSON.stringify({ data: [], data_count: 0 }),
+        );
       });
 
       it("should throw error when no project ID available", async () => {

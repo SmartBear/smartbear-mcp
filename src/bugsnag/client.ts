@@ -589,14 +589,12 @@ export class BugsnagClient implements Client {
         // Get the latest event for this error using the events endpoint with filters
         let latestEvent = null;
         try {
-          const eventsResponse = await this.errorsApi.getLatestEventOnProject(
-            project.id,
-            listEventsQueryString,
-          );
-          latestEvent =
-            eventsResponse.body && eventsResponse.body.length > 0
-              ? eventsResponse.body[0]
-              : null;
+          latestEvent = (
+            await this.errorsApi.getLatestEventOnProject(
+              project.id,
+              listEventsQueryString,
+            )
+          ).body;
         } catch (e) {
           console.warn("Failed to fetch latest event:", e);
           // Continue without latest event rather than failing the entire request
@@ -855,13 +853,11 @@ export class BugsnagClient implements Client {
           options,
         );
 
-        const errors = response.body || [];
-
         const result = {
-          errors: errors,
-          next_url: response.nextUrl,
-          page_error_count: errors.length,
-          total_error_count: response.totalCount ?? undefined,
+          data: response.body,
+          next_url: response.nextUrl ?? undefined,
+          data_count: response.body?.length,
+          total_count: response.totalCount ?? undefined,
         };
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],
@@ -1083,9 +1079,10 @@ export class BugsnagClient implements Client {
             {
               type: "text",
               text: JSON.stringify({
-                builds: response.body,
-                next_url: response.nextUrl,
-                total_build_count: response.totalCount ?? undefined,
+                data: response.body,
+                next_url: response.nextUrl ?? undefined,
+                data_count: response.body?.length,
+                total_count: response.totalCount ?? undefined,
               }),
             },
           ],
@@ -1245,9 +1242,10 @@ export class BugsnagClient implements Client {
             {
               type: "text",
               text: JSON.stringify({
-                releases: response.body,
-                next_url: response.nextUrl,
-                total_release_count: response.totalCount,
+                data: response.body,
+                next_url: response.nextUrl ?? undefined,
+                data_count: response.body?.length,
+                total_count: response.totalCount ?? undefined,
               }),
             },
           ],

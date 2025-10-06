@@ -151,13 +151,13 @@ export class ErrorAPI extends BaseAPI {
   }
 
   /**
-   * List the Events on a Project
+   * Get the latest Event in a Project, with optional filters
    * GET /projects/{project_id}/events
    */
   async getLatestEventOnProject(
     projectId: string,
     queryString = "",
-  ): Promise<ApiResponse<Event[]>> {
+  ): Promise<ApiResponse<Event>> {
     const url = `/projects/${projectId}/events${queryString}`;
 
     const response = await this.request<Event[]>({
@@ -167,7 +167,10 @@ export class ErrorAPI extends BaseAPI {
 
     return {
       ...response,
-      body: response.body && response.body.length > 0 ? [response.body[0]] : [], // Return only the latest event
+      body:
+        response.body && response.body.length > 0
+          ? response.body[0]
+          : undefined, // Return only the latest event
     };
   }
 
