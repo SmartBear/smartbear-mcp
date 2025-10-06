@@ -9,7 +9,7 @@ import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
 export class ZephyrClient implements Client {
   private readonly apiClient: ApiClient;
-  name = "Zephyr Test Management for Jira";
+  name = "Zephyr";
   prefix = "zephyr";
 
   constructor(

@@ -5,7 +5,7 @@ import { ApiClient } from "../../../zephyr/common/api-client";
 describe("ZephyrClient", () => {
   it("should set name and prefix", () => {
     const client = new ZephyrClient("token");
-    expect(client.name).toBe("Zephyr Test Management for Jira");
+    expect(client.name).toBe("Zephyr");
     expect(client.prefix).toBe("zephyr");
   });
 
