@@ -410,11 +410,9 @@ export class ApiHubAPI {
     }
 
     // Construct the URL with query parameters
+    // Fixed values: visibility=private, automock=false, version=1.0.0
     const searchParams = new URLSearchParams();
-    searchParams.append(
-      "isPrivate",
-      params.visibility === "private" ? "true" : "false",
-    );
+    searchParams.append("isPrivate", "true");
 
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,
@@ -440,38 +438,29 @@ export class ApiHubAPI {
     const operation = response.status === 201 ? "create" : "update";
 
     // Return formatted response with the required fields
+    // Fixed version is always 1.0.0
     return {
       owner: params.owner,
       apiName: params.apiName,
-      version: params.version,
-      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}/${params.version}`,
+      version: "1.0.0",
+      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}/1.0.0`,
       operation,
     };
   }
 
   /**
    * Create API from Template in SwaggerHub Registry
-   * @param params Parameters for creating API from template including owner, api name, template, and visibility
+   * @param params Parameters for creating API from template including owner, api name, and template
    * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
    */
   async createApiFromTemplate(
     params: CreateApiFromTemplateParams,
   ): Promise<CreateApiFromTemplateResponse> {
     // Construct the URL with query parameters
+    // Fixed values: visibility=private, no project, noReconcile=false
     const searchParams = new URLSearchParams();
-    searchParams.append(
-      "isPrivate",
-      params.visibility === "private" ? "true" : "false",
-    );
+    searchParams.append("isPrivate", "true");
     searchParams.append("template", params.template);
-
-    if (params.project) {
-      searchParams.append("project", params.project);
-    }
-
-    if (params.noReconcile) {
-      searchParams.append("noReconcile", params.noReconcile.toString());
-    }
 
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,

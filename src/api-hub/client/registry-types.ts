@@ -67,26 +67,10 @@ export const ApiDefinitionParamsSchema = z.object({
 export const CreateApiParamsSchema = z.object({
   owner: z.string().describe("Organization name (owner of the API)"),
   apiName: z.string().describe("API name"),
-  version: z
-    .string()
-    .default("1.0.0")
-    .describe("Version identifier (default: 1.0.0)"),
-  visibility: z
-    .enum(["private"])
-    .default("private")
-    .describe("API visibility (default: private)"),
-  project: z
-    .string()
-    .optional()
-    .describe("Project name (optional, default: none)"),
-  automock: z
-    .boolean()
-    .default(false)
-    .describe("Enable automock (default: false)"),
   definition: z
     .string()
     .describe(
-      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected.",
+      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment.",
     ),
 });
 
@@ -96,20 +80,8 @@ export const CreateApiFromTemplateParamsSchema = z.object({
   template: z
     .string()
     .describe(
-      "Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0')",
+      "Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0'). API is created with fixed values: private visibility, no project assignment, and reconciliation enabled.",
     ),
-  visibility: z
-    .enum(["private", "public"])
-    .default("private")
-    .describe("API visibility (default: private)"),
-  project: z
-    .string()
-    .optional()
-    .describe("Project name (optional, default: none)"),
-  noReconcile: z
-    .boolean()
-    .default(false)
-    .describe("Skip reconciliation (default: false)"),
 });
 
 // Registry API types for SwaggerHub Design functionality - generated from Zod schemas
