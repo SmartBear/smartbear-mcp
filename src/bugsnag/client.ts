@@ -273,6 +273,7 @@ export class BugsnagClient implements Client {
       operation: operation,
       ...options,
     };
+    console.warn({ errorUpdateRequest });
     const response = await this.errorsApi.updateErrorOnProject(
       projectId,
       errorId,
@@ -755,9 +756,9 @@ export class BugsnagClient implements Client {
           },
           {
             name: "per_page",
-            type: z.number().min(1).max(100).default(30),
+            type: z.number().min(1).max(100),
             description: "How many results to return per page.",
-            required: false,
+            required: true,
             examples: ["30", "50", "100"],
           },
           {
@@ -960,6 +961,14 @@ export class BugsnagClient implements Client {
             required: true,
             examples: ["fix", "open", "ignore", "discard", "undiscard"],
           },
+          {
+            name: "severity",
+            type: z.enum(["info", "warning", "error"]).optional(),
+            description:
+              "The new severity level for the error (required if operation = override_severity)",
+            required: false, // leave optional; enforce logic in handler
+            examples: ["info", "warning", "error"],
+          },
         ],
         examples: [
           {
@@ -971,44 +980,41 @@ export class BugsnagClient implements Client {
             expectedOutput:
               "Success response indicating the error was marked as fixed",
           },
+          {
+            description: "Override severity to warning",
+            parameters: {
+              errorId: "6863e2af8c857c0a5023b411",
+              operation: "override_severity",
+              severity: "warning",
+            },
+            expectedOutput:
+              "Success response indicating the error severity was updated",
+          },
         ],
         hints: [
           "Only use valid operations - BugSnag may reject invalid values",
+          "If the operation is override_severity, you must provide a severity value",
         ],
         readOnly: false,
         idempotent: false,
       },
       async (args: any, _extra: any) => {
+        console.warn(args);
         const { errorId, operation } = args;
         const project = await this.getInputProject(args.projectId);
 
-        let severity: any;
-        if (operation === "override_severity") {
-          // illicit the severity from the user
-          const result = await getInput({
-            message:
-              "Please provide the new severity for the error (e.g. 'info', 'warning', 'error', 'critical')",
-            requestedSchema: {
-              type: "object",
-              properties: {
-                severity: {
-                  type: "string",
-                  enum: ["info", "warning", "error"],
-                  description: "The new severity level for the error",
-                },
-              },
-            },
-            required: ["severity"],
-          });
+        const options: any = {}
+        
 
-          if (result.action === "accept" && result.content?.severity) {
-            severity = result.content.severity;
+        if (operation === "override_severity") {
+
+          if (!args.severity) {
+            throw new Error("severity parameter is required when operation = override_severity");
           }
+          options.severity = args.severity;
         }
 
-        const result = await this.updateError(project.id, errorId, operation, {
-          severity,
-        });
+        const result = await this.updateError(project.id, errorId, operation, options);
         return {
           content: [
             { type: "text", text: JSON.stringify({ success: result }) },

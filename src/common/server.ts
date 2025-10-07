@@ -45,12 +45,16 @@ export class SmartBearMcpServer extends McpServer {
       (params, cb) => {
         const toolName = `${client.prefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
         const toolTitle = `${client.name}: ${params.title}`;
+        let schema = this.getInputSchema(params)
+        if (params.title === "Update Error") {
+          console.warn("Update Error SCHEMA", schema);
+        }
         return super.registerTool(
           toolName,
           {
             title: toolTitle,
             description: this.getDescription(params),
-            inputSchema: this.getInputSchema(params),
+            inputSchema: schema,
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
