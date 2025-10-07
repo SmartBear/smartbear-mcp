@@ -13,6 +13,8 @@ export class GetProjects implements ZephyrTool {
   specification = {
     title: "Get Projects",
     summary: "Get details of projects in Zephyr",
+    readOnly: true,
+    idempotent: true,
     parameters: [
       {
         name: "maxResults",
