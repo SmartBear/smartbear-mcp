@@ -118,7 +118,20 @@ export const CommonFields = {
       "Test Case version number (optional, defaults to 1). " +
         "This is the internal numeric identifier for the version.",
     ),
-  viewId: z
+  rqID: z
+    .number()
+    .describe(
+      "Requirement numeric ID (required for fetching specific requirement details). " +
+        "This is the internal numeric identifier, not the entity key like 'MAC-RQ-730'. " +
+        "You can get this ID from requirement search results or by using filters.",
+    ),
+  rqVersion: z
+    .number()
+    .describe(
+      "Requirement version number (required for fetching specific requirement version details). " +
+        "This is the internal numeric identifier for the version.",
+    ),
+  tcViewId: z
     .number()
     .describe(
       "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
@@ -126,7 +139,24 @@ export const CommonFields = {
         "System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. " +
         "Manual viewId only needed if you want to override the automatic resolution.",
     ),
-  folderPath: z
+  rqViewId: z
+    .number()
+    .describe(
+      "ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific viewId. " +
+        "System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically. " +
+        "Manual viewId only needed if you want to override the automatic resolution.",
+    ),
+  rqFolderPath: z
+    .string()
+    .optional()
+    .describe(
+      "Folder path for requirements - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
+        'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+        'Only specify if user wants specific folder like "Automation/Regression".',
+    )
+    .default(""),
+  tcFolderPath: z
     .string()
     .optional()
     .describe(
@@ -139,12 +169,18 @@ export const CommonFields = {
     .number()
     .optional()
     .describe(
-      "Folder ID for test cases - unique identifier for the folder containing test cases",
+      "Folder ID - unique numeric identifier for the specific folder. " +
+        "Use this to target a specific folder within the project hierarchy. " +
+        "Applies to any entity type (test cases, requirements, test suites, etc.).",
     ),
   scope: z
     .string()
     .optional()
-    .describe("Scope of the test cases (default 'project')")
+    .describe(
+      "Scope of the operation - defines the context for data retrieval. " +
+        "Common values: 'project' (default), 'folder', 'release', 'cycle'. " +
+        "Applies to any entity type being fetched or operated upon.",
+    )
     .default("project"),
   filter: z
     .string()
@@ -183,7 +219,12 @@ export const CommonFields = {
   showArchive: z
     .boolean()
     .optional()
-    .describe("Whether to show included/excluded archived test cases."),
+    .describe(
+      "Whether to include archived records in the results. " +
+        "When true, returns both active and archived items. " +
+        "When false, returns only active (non-archived) items. " +
+        "Applies to any entity type being fetched (test cases, requirements, releases, cycles, builds, platforms, etc.).",
+    ),
 } as const;
 
 export const ProjectArgsSchema = z.object({
@@ -223,8 +264,8 @@ export const PlatformArgsSchema = z.object({
 export const TestCaseListArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
-  viewId: CommonFields.viewId,
-  folderPath: CommonFields.folderPath,
+  viewId: CommonFields.tcViewId,
+  folderPath: CommonFields.tcFolderPath,
   folderID: CommonFields.folderID,
   start: CommonFields.start,
   page: CommonFields.page,
@@ -265,4 +306,107 @@ export const TestCaseStepsArgsSchema = z.object({
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
+});
+
+export const RequirementListArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  viewId: CommonFields.rqViewId,
+  folderPath: CommonFields.rqFolderPath,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  scope: CommonFields.scope,
+  getSubEntities: CommonFields.getSubEntities,
+  hideEmptyFolders: CommonFields.hideEmptyFolders,
+  folderSortColumn: CommonFields.folderSortColumn,
+  folderSortOrder: CommonFields.folderSortOrder,
+  isJiraFilter: z
+    .boolean()
+    .optional()
+    .describe("'false' if using qmetry filter")
+    .default(false),
+  filterType: z
+    .enum(["QMETRY", "JIRA"])
+    .optional()
+    .describe("Pass 'QMETRY' or 'JIRA'")
+    .default("QMETRY"),
+  filter: CommonFields.filter,
+  udfFilter: CommonFields.udfFilter,
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      "Sort Records - refer json schema, Possible property - name, entityKey, associatedVersion, priorityAlias, createdDate, createdByAlias, updatedDate, updatedByAlias, requirementStateAlias, linkedTcCount, linkedDfCount, attachmentCount, createdSystem, owner",
+    )
+    .default('[{"property":"name","direction":"ASC"}]'),
+});
+
+export const RequirementDetailsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  id: CommonFields.rqID,
+  version: CommonFields.rqVersion,
+});
+
+export const TestCasesLinkedToRequirementArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  rqID: CommonFields.rqID,
+  getLinked: z
+    .boolean()
+    .optional()
+    .describe(
+      "True to get only test cases that are linked with this requirement, " +
+        "false to get test cases which are not linked with this requirement. " +
+        "Defaults to true (get linked test cases).",
+    )
+    .default(true),
+  showEntityWithReleaseCycle: z
+    .boolean()
+    .optional()
+    .describe(
+      "True to list only test cases which have given release and cycle, " +
+        "false for all test cases regardless of release/cycle association. " +
+        "Defaults to false (show all).",
+    )
+    .default(false),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  tcFolderPath: z
+    .string()
+    .optional()
+    .describe(
+      "Folder path to get test cases under specific folder. " +
+        'Use empty string "" for root folder or specify path like "/Sample Template".',
+    )
+    .default(""),
+  releaseID: z
+    .string()
+    .optional()
+    .describe(
+      "Filter test cases by release ID. " +
+        "Use string representation of release ID (e.g., '7138'). " +
+        "Get release IDs from FETCH_RELEASES_AND_CYCLES tool.",
+    ),
+  cycleID: z
+    .string()
+    .optional()
+    .describe(
+      "Filter test cases by cycle ID. " +
+        "Use string representation of cycle ID (e.g., '13382'). " +
+        "Get cycle IDs from FETCH_RELEASES_AND_CYCLES tool.",
+    ),
+  filter: CommonFields.filter,
+  getSubEntities: z
+    .boolean()
+    .optional()
+    .describe("Allow filter of sub-entities for requirement.")
+    .default(true),
+  getColumns: z
+    .boolean()
+    .optional()
+    .describe("True to get column information in response.")
+    .default(true),
 });

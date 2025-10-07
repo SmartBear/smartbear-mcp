@@ -3,6 +3,10 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
+import {
+  autoResolveViewIdAndFolderPath,
+  findAutoResolveConfig,
+} from "./client/auto-resolve.js";
 import { QMETRY_HANDLER_MAP } from "./client/handlers.js";
 import { getProjectInfo } from "./client/project.js";
 import { TOOLS } from "./client/tools.js";
@@ -65,12 +69,11 @@ export class QmetryClient implements Client {
           const a = args as Record<string, any>;
           const { baseUrl, projectKey } = resolveContext(a);
 
-          // handling for FETCH_TEST_CASES to auto-resolve viewId and folderPath
-          if (tool.handler === QMetryToolsHandlers.FETCH_TEST_CASES) {
-            let viewId = a.viewId;
-            let folderPath = a.folderPath;
-
-            if (!viewId || folderPath === undefined) {
+          // Dynamic auto-resolve for modules that support viewId and folderPath
+          const autoResolveConfig = findAutoResolveConfig(tool.handler);
+          if (autoResolveConfig) {
+            // Check if we need to auto-resolve viewId or folderPath
+            if (!a.viewId || a.folderPath === undefined) {
               let projectInfo: any;
               try {
                 projectInfo = (await getProjectInfo(
@@ -80,21 +83,22 @@ export class QmetryClient implements Client {
                 )) as any;
               } catch (err) {
                 throw new Error(
-                  `Failed to auto-resolve viewId/folderPath for project ${projectKey}. ` +
+                  `Failed to auto-resolve viewId/folderPath for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
                     `Please provide them manually or check project access. ` +
                     `Error: ${err instanceof Error ? err.message : String(err)}`,
                 );
               }
-              if (!viewId && projectInfo?.latestViews?.TC?.viewId) {
-                viewId = projectInfo.latestViews.TC.viewId;
-              }
-              if (folderPath === undefined) {
-                folderPath = "";
-              }
-            }
 
-            a.viewId = viewId;
-            a.folderPath = folderPath;
+              // Apply auto-resolution using the dynamic configuration
+              Object.assign(
+                a,
+                autoResolveViewIdAndFolderPath(
+                  a,
+                  projectInfo,
+                  autoResolveConfig,
+                ),
+              );
+            }
           }
 
           const result = await handlerFn(this.token, baseUrl, projectKey, a);

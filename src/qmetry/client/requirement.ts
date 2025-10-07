@@ -1,0 +1,98 @@
+import { QMETRY_DEFAULTS } from "../config/constants.js";
+import { QMETRY_PATHS } from "../config/rest-endpoints.js";
+import {
+  DEFAULT_FETCH_REQUIREMENT_DETAILS_PAYLOAD,
+  DEFAULT_FETCH_REQUIREMENTS_PAYLOAD,
+  type FetchRequirementDetailsPayload,
+  type FetchRequirementsPayload,
+} from "../types/requirements.js";
+import { qmetryRequest } from "./api/client-api.js";
+
+function resolveDefaults(baseUrl?: string, project?: string) {
+  return {
+    resolvedBaseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
+    resolvedProject: project || QMETRY_DEFAULTS.PROJECT_KEY,
+  };
+}
+
+/**
+ * Fetches a list of requirements.
+ * @throws If `viewId` or `folderPath` are missing/invalid.
+ */
+export async function fetchRequirements(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchRequirementsPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: FetchRequirementsPayload = {
+    ...DEFAULT_FETCH_REQUIREMENTS_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.viewId !== "number") {
+    throw new Error(
+      "[fetchRequirements] Missing or invalid required parameter: 'viewId'.",
+    );
+  }
+  if (typeof body.folderPath !== "string") {
+    throw new Error(
+      "[fetchRequirements] Missing or invalid required parameter: 'folderPath'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.REQUIREMENT.GET_RQ_LIST,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Fetches requirement details by numeric ID.
+ * @throws If `id` or `version` are missing/invalid.
+ */
+export async function fetchRequirementDetails(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchRequirementDetailsPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: FetchRequirementDetailsPayload = {
+    ...DEFAULT_FETCH_REQUIREMENT_DETAILS_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.id !== "number") {
+    throw new Error(
+      "[fetchRequirementDetails] Missing or invalid required parameter: 'id'.",
+    );
+  }
+  if (typeof body.version !== "number") {
+    throw new Error(
+      "[fetchRequirementDetails] Missing or invalid required parameter: 'version'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.REQUIREMENT.GET_RQ_DETAILS,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}

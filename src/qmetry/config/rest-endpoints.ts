@@ -10,5 +10,10 @@ export const QMETRY_PATHS = {
     GET_TC_DETAILS: "/rest/testcases/getVersionDetail",
     GET_TC_DETAILS_BY_VERSION: "/rest/testcases/list",
     GET_TC_STEPS: "/rest/testcases/steps/list",
+    GET_TC_LINKED_TO_RQ: "/rest/testcases/list/forRQ",
+  },
+  REQUIREMENT: {
+    GET_RQ_LIST: "/rest/requirements/list/viewColumns",
+    GET_RQ_DETAILS: "/rest/requirements/detail/data",
   },
 };

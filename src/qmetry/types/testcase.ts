@@ -31,6 +31,19 @@ export interface FetchTestCaseStepsPayload extends PaginationPayload {
   version?: number; // optional, defaults to 1
 }
 
+export interface FetchTestCasesLinkedToRequirementPayload
+  extends PaginationPayload,
+    FilterPayload {
+  rqID: number; // required - numeric ID of requirement
+  getLinked?: boolean; // true to get linked TCs, false to get unlinked TCs
+  showEntityWithReleaseCycle?: boolean; // true to show only TCs with given release/cycle
+  tcFolderPath?: string; // folder path for test cases
+  releaseID?: string; // filter by release ID
+  cycleID?: string; // filter by cycle ID
+  getSubEntities?: boolean; // allow filter of sub-entities
+  getColumns?: boolean; // true to get column information
+}
+
 export const DEFAULT_FETCH_TESTCASES_PAYLOAD: Omit<
   FetchTestCasesPayload,
   "viewId" | "folderPath"
@@ -63,4 +76,17 @@ export const DEFAULT_FETCH_TESTCASE_STEPS_PAYLOAD: Omit<
 > = {
   ...DEFAULT_PAGINATION,
   version: 1,
+};
+
+export const DEFAULT_FETCH_TESTCASES_LINKED_TO_REQUIREMENT_PAYLOAD: Omit<
+  FetchTestCasesLinkedToRequirementPayload,
+  "rqID"
+> = {
+  ...DEFAULT_PAGINATION,
+  ...DEFAULT_FILTER,
+  getLinked: true,
+  showEntityWithReleaseCycle: false,
+  tcFolderPath: "",
+  getSubEntities: true,
+  getColumns: true,
 };

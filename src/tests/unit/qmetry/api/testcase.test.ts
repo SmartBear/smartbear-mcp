@@ -3,6 +3,7 @@ import {
   fetchTestCaseDetails,
   fetchTestCaseSteps,
   fetchTestCases,
+  fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
 } from "../../../../qmetry/client/testcase.js";
 import { DEFAULT_FETCH_TESTCASES_PAYLOAD } from "../../../../qmetry/types/testcase.js";
@@ -196,5 +197,130 @@ describe("testcase API clients", () => {
         folderPath: "/",
       }),
     ).rejects.toThrow(/QMetry API request failed \(400\):/);
+  });
+
+  describe("fetchTestCasesLinkedToRequirement", () => {
+    it("should POST with correct URL and headers for linked test cases", async () => {
+      const mockResponse = {
+        data: [
+          {
+            entityKey: "MAC-TC-1692",
+            summary: "Table Testing functionality",
+            testingTypeAlias: "Automated",
+          },
+          {
+            entityKey: "MAC-TC-1693",
+            summary: "Login validation",
+            testingTypeAlias: "Manual",
+          },
+        ],
+        total: 2,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      const payload = { rqID: 2499315, getLinked: true };
+      const result = await fetchTestCasesLinkedToRequirement(
+        token,
+        baseUrl,
+        projectKey,
+        payload,
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/list/forRQ`,
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            apikey: token,
+            project: projectKey,
+          }),
+          body: expect.stringContaining("2499315"),
+        }),
+      );
+
+      expect(result).toHaveProperty("data");
+      expect((result as any).data).toHaveLength(2);
+      expect((result as any).total).toBe(2);
+    });
+
+    it("should throw error when rqID is missing", async () => {
+      const payload = { getLinked: true };
+
+      await expect(
+        fetchTestCasesLinkedToRequirement(
+          token,
+          baseUrl,
+          projectKey,
+          payload as any,
+        ),
+      ).rejects.toThrow(
+        "[fetchTestCasesLinkedToRequirement] Missing or invalid required parameter: 'rqID'.",
+      );
+    });
+
+    it("should throw error when rqID is not a number", async () => {
+      const payload = { rqID: "invalid-id", getLinked: true };
+
+      await expect(
+        fetchTestCasesLinkedToRequirement(
+          token,
+          baseUrl,
+          projectKey,
+          payload as any,
+        ),
+      ).rejects.toThrow(
+        "[fetchTestCasesLinkedToRequirement] Missing or invalid required parameter: 'rqID'.",
+      );
+    });
+
+    it("should handle gap analysis with getLinked: false", async () => {
+      const mockResponse = {
+        data: [
+          {
+            entityKey: "MAC-TC-9999",
+            summary: "Unlinked test case",
+            testingTypeAlias: "Manual",
+          },
+        ],
+        total: 1,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      const payload = { rqID: 2499315, getLinked: false };
+      const result = await fetchTestCasesLinkedToRequirement(
+        token,
+        baseUrl,
+        projectKey,
+        payload,
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/list/forRQ`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"getLinked":false'),
+        }),
+      );
+
+      expect(result).toHaveProperty("data");
+      expect((result as any).data).toHaveLength(1);
+    });
+
+    it("should handle API errors gracefully", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValue(mockFail(404, "Requirement not found"));
+
+      const payload = { rqID: 99999, getLinked: true };
+
+      await expect(
+        fetchTestCasesLinkedToRequirement(token, baseUrl, projectKey, payload),
+      ).rejects.toThrow(
+        /QMetry API request failed \(404\): Requirement not found/,
+      );
+    });
   });
 });

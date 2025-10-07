@@ -5,10 +5,12 @@ import {
   getProjectInfo,
   getReleasesCycles,
 } from "./project.js";
+import { fetchRequirementDetails, fetchRequirements } from "./requirement.js";
 import {
   fetchTestCaseDetails,
   fetchTestCaseSteps,
   fetchTestCases,
+  fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
 } from "./testcase.js";
 
@@ -37,4 +39,8 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS]:
     fetchTestCaseVersionDetails,
   [QMetryToolsHandlers.FETCH_TEST_CASE_STEPS]: fetchTestCaseSteps,
+  [QMetryToolsHandlers.FETCH_REQUIREMENTS]: fetchRequirements,
+  [QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS]: fetchRequirementDetails,
+  [QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT]:
+    fetchTestCasesLinkedToRequirement,
 };
