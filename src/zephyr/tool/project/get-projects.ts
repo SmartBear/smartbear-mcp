@@ -4,7 +4,7 @@ import type { ApiClient } from "../../common/api-client.js";
 import { MaxResultsSchema, StartAtSchema } from "../../common/types.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
 
-const GetProjectsInputSchema = z.object({
+export const GetProjectsInputSchema = z.object({
   startAt: StartAtSchema.optional(),
   maxResults: MaxResultsSchema.optional(),
 });

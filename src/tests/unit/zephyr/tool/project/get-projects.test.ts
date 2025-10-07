@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { GetProjects } from "../../../../../zephyr/tool/project/get-projects";
+import {
+  GetProjects,
+  GetProjectsInputSchema,
+} from "../../../../../zephyr/tool/project/get-projects";
 
 describe("GetProjects", () => {
   const mockApiClient = { get: vi.fn() };
@@ -7,9 +10,7 @@ describe("GetProjects", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Projects");
-    expect(instance.specification.parameters.length).toBe(2);
-    expect(instance.specification.parameters[0].name).toBe("maxResults");
-    expect(instance.specification.parameters[1].name).toBe("startAt");
+    expect(instance.specification.zodSchema).toBe(GetProjectsInputSchema);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
