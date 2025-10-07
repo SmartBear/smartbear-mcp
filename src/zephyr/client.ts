@@ -23,16 +23,10 @@ export class ZephyrClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): void {
-    console.log("[ZephyrClient] Starting tool registration...");
     const tools: ZephyrTool[] = [new GetProjects(this.apiClient)];
 
     tools.forEach((tool) => {
-      console.log(
-        `[ZephyrClient] Registering tool: ${tool.specification.title}`,
-      );
       register(tool.specification, tool.handle);
     });
-
-    console.log("[ZephyrClient] Finished tool registration...");
   }
 }
