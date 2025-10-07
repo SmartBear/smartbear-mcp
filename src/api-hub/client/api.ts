@@ -516,43 +516,11 @@ export class ApiHubAPI {
       throw new Error("Empty definition content provided");
     }
 
-    // Fast path: JSON typically starts with '{' or '[' (objects/arrays)
-    // Using direct char comparison instead of a regex improves clarity and avoids lint suggestions.
-    const firstChar = trimmed[0];
-    const looksJsonStart = firstChar === "{" || firstChar === "[";
-    if (looksJsonStart) {
-      try {
-        JSON.parse(trimmed);
-        return "json";
-      } catch {
-        // Not valid JSON despite typical starting character; continue with YAML heuristics.
-      }
-    }
-
-    // YAML heuristics
-    const yamlIndicators = [
-      /^---\s*$/m, // document separator
-      /(^|\n)\s*(openapi|swagger|asyncapi):\s*["']?\d+\.\d+(?:\.\d+)?["']?/i, // spec version keys
-      /(^|\n)\s*info:\s*$/i,
-      /(^|\n)\s*paths:\s*$/i,
-      /(^|\n)\s*components:\s*$/i,
-      /(^|\n)\s*channels:\s*$/i, // asyncapi
-      /(^|\n)\s*\w+\s*:\s+[^\n]+/, // generic key: value
-      /(^|\n)\s*-\s+\w+/, // list item
-    ];
-    const looksLikeYaml = yamlIndicators.some((re) => re.test(trimmed));
-    if (looksLikeYaml) {
-      return "yaml";
-    }
-
-    // Final attempt: JSON parse (in case it didn't start with { but is valid JSON)
     try {
       JSON.parse(trimmed);
       return "json";
     } catch {
-      throw new Error(
-        "Unable to detect definition format. Content appears to be neither valid JSON nor recognizable YAML.",
-      );
+      return "yaml";
     }
   }
 }
