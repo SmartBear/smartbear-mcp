@@ -1,7 +1,7 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ApiClient } from "../common/api-client.js";
-import { MaxResultsSchema, StartAtSchema } from "../common/types.js";
-import type { ZephyrTool } from "./zephyr-tool.js";
+import type { ApiClient } from "../../common/api-client.js";
+import { MaxResultsSchema, StartAtSchema } from "../../common/types.js";
+import type { ZephyrTool } from "../zephyr-tool.js";
 
 export class GetProjects implements ZephyrTool {
   private readonly apiClient: ApiClient;

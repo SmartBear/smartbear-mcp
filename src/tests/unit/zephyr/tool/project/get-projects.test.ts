@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { GetProjects } from "../../../../zephyr/tool/get-projects";
+import { GetProjects } from "../../../../../zephyr/tool/project/get-projects";
 
 describe("GetProjects", () => {
   const mockApiClient = { get: vi.fn() };
