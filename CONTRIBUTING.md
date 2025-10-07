@@ -66,6 +66,7 @@ Please read the following guidance:
    ```bash
    npm run build
    npm run lint
+   npm run format:check
    npm run test:run
    ```
 
