@@ -354,7 +354,6 @@ export class ProjectAPI extends BaseAPI {
       },
       false, // Paginate results
     );
-
     return {
       ...response,
       body: pickFieldsFromArray<BuildSummaryResponse>(

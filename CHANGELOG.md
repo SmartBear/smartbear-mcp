@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [API Hub] Add `create_or_update_api` tool for creating or updating new API definitions in API Hub for Design
 - [API Hub] Add `create_api_from_template` tool for creating new API definitions from templates in API Hub for Design
 
+### Changed
+
+- [BugSnag] Consolidate release and build tools [#173](https://github.com/SmartBear/smartbear-mcp/pull/173)
+
 ## [0.7.0] - 2025-10-02
 
 ### Added
