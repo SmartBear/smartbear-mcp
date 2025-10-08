@@ -52,6 +52,7 @@ export class SmartBearMcpServer extends McpServer {
             title: toolTitle,
             description: this.getDescription(params),
             inputSchema: this.getInputSchema(params),
+            outputSchema: this.getOutputSchema(params),
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
@@ -134,6 +135,13 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     return args;
+  }
+
+  private getOutputSchema(params: ToolParams): ZodRawShape {
+    if (params.outputZodSchema && params.outputZodSchema instanceof ZodObject) {
+      return params.outputZodSchema.shape;
+    }
+    return {};
   }
 
   private getDescription(params: ToolParams): string {
