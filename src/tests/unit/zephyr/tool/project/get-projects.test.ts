@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ZephyrProjectListSchema } from "../../../../../zephyr/common/types";
 import {
   GetProjects,
   GetProjectsInputSchema,
@@ -10,7 +11,15 @@ describe("GetProjects", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Projects");
+    expect(instance.specification.summary).toBe(
+      "Get details of projects in Zephyr",
+    );
+    expect(instance.specification.readOnly).toBe(true);
+    expect(instance.specification.idempotent).toBe(true);
     expect(instance.specification.zodSchema).toBe(GetProjectsInputSchema);
+    expect(instance.specification.outputZodSchema).toBe(
+      ZephyrProjectListSchema,
+    );
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
