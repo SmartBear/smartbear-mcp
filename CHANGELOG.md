@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [API Hub] Add `create_or_update_api` tool for creating or updating new API definitions in API Hub for Design
 - [API Hub] Add `create_api_from_template` tool for creating new API definitions from templates in API Hub for Design
+- [Zephyr] Add Zephyr capabilities to MCP [#171](https://github.com/SmartBear/smartbear-mcp/pull/171)
 
 ### Changed
 
