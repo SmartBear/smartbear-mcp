@@ -64,6 +64,7 @@ export class GetProjects implements ZephyrTool {
       startAt,
     });
     return {
+      structuredContent: response,
       content: [{ type: "text", text: JSON.stringify(response) }],
     };
   };
