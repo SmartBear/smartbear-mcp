@@ -22,6 +22,8 @@ import type {
   CreateApiFromTemplateResponse,
   CreateApiParams,
   CreateApiResponse,
+  ScanStandardizationParams,
+  StandardizationResult,
 } from "./registry-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
@@ -522,5 +524,60 @@ export class ApiHubAPI {
     } catch {
       return "yaml";
     }
+  }
+
+  /**
+   * Run a standardization scan against an API definition
+   * @param params Parameters including organization name and API definition
+   * @returns Standardization result with validation errors
+   */
+  async scanStandardization(
+    params: ScanStandardizationParams,
+  ): Promise<StandardizationResult> {
+    // Auto-detect format from the definition content
+    const format = this.detectDefinitionFormat(params.definition);
+
+    let contentType: string;
+    let requestBody: string;
+
+    if (format === "yaml") {
+      contentType = "application/yaml";
+      requestBody = params.definition; // Send YAML as-is
+    } else {
+      contentType = "application/json";
+      // For JSON, parse and stringify to ensure valid JSON
+      try {
+        const parsedDefinition = JSON.parse(params.definition);
+        requestBody = JSON.stringify(parsedDefinition);
+      } catch (error) {
+        throw new Error(
+          `Invalid JSON format in definition: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        );
+      }
+    }
+
+    const url = `${this.config.registryBasePath}/standardization/${encodeURIComponent(
+      params.orgName,
+    )}/scan`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        "Content-Type": contentType,
+      },
+      body: requestBody,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `SwaggerHub Registry API scanStandardization failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    return await this.handleResponse<StandardizationResult>(response);
   }
 }
