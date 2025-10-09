@@ -15,6 +15,7 @@ import {
   type ZodRawShape,
   ZodString,
   type ZodType,
+  type ZodTypeAny,
   ZodUnion,
 } from "zod";
 import Bugsnag from "../common/bugsnag.js";
@@ -120,28 +121,29 @@ export class SmartBearMcpServer extends McpServer {
       }
     }
 
-    if (params.zodSchema && params.zodSchema instanceof ZodObject) {
-      for (const key of Object.keys(params.zodSchema.shape)) {
-        const field = params.zodSchema.shape[key];
-        args[key] = field;
+    return { args, ...this.schemaToRawShape(params.zodSchema) };
+  }
+
+  private schemaToRawShape(schema: ZodTypeAny | undefined): ZodRawShape {
+    const rawShape: ZodRawShape = {};
+    if (schema && schema instanceof ZodObject) {
+      for (const key of Object.keys(schema.shape)) {
+        const field = schema.shape[key];
+        rawShape[key] = field;
         if (field.description) {
-          args[key] = args[key].describe(field.description);
+          rawShape[key] = rawShape[key].describe(field.description);
         }
 
         if (field.isOptional()) {
-          args[key] = args[key].optional();
+          rawShape[key] = rawShape[key].optional();
         }
       }
     }
-
-    return args;
+    return rawShape;
   }
 
-  private getOutputSchema(params: ToolParams): ZodRawShape {
-    if (params.outputZodSchema && params.outputZodSchema instanceof ZodObject) {
-      return params.outputZodSchema.shape;
-    }
-    return {};
+  private getOutputSchema(params: ToolParams): any {
+    return this.schemaToRawShape(params.outputZodSchema);
   }
 
   private getDescription(params: ToolParams): string {
