@@ -56,8 +56,7 @@ export class ApiHubClient implements Client {
           description: "API Hub API key for authentication",
         },
       ],
-      description:
-        "API Hub requires an API key. Get your key from https://api-hub.smartbear.com/settings",
+      description: "API Hub requires an API key.",
     };
   }
 

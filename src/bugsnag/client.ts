@@ -124,8 +124,7 @@ export class BugsnagClient implements Client {
             "Optional custom BugSnag endpoint URL for on-premise installations",
         },
       ],
-      description:
-        "BugSnag requires a personal auth token. Get your token from https://app.bugsnag.com/settings/",
+      description: "BugSnag requires a personal auth token.",
     };
   }
 

@@ -39,7 +39,7 @@ export class ZephyrClient implements Client {
             "Zephyr Scale API base URL (default: https://api.zephyrscale.smartbear.com/v2)",
         },
       ],
-      description: "Zephyr Scale Cloud test management integration",
+      description: "Zephyr Scale requires an API token.",
     };
   }
 

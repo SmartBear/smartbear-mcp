@@ -39,8 +39,7 @@ export class QmetryClient implements Client {
             "Optional QMetry base URL for custom or region-specific endpoints",
         },
       ],
-      description:
-        "QMetry requires an API key. Get your key from your QMetry Test Management instance.",
+      description: "QMetry requires an API key.",
     };
   }
 

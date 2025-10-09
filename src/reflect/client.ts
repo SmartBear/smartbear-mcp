@@ -57,8 +57,7 @@ export class ReflectClient implements Client {
           description: "Reflect API authentication token",
         },
       ],
-      description:
-        "Reflect requires an API token for authentication. Get your token from https://reflect.run/settings/api",
+      description: "Reflect requires an API token for authentication.",
     };
   }
 
