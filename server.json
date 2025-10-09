@@ -76,7 +76,7 @@
           "name": "ZEPHYR_BASE_URL",
           "description": " The Zephyr Cloud API base url. Should be changed depending on the region of your Jira instance. Learn more: https://support.smartbear.com/zephyr-scale-cloud/api-docs/#section/Authentication/Accessing-the-API",
           "isRequired": false,
-          "isSecret": true
+          "isSecret": false
         }
       ]
     }
