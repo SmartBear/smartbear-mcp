@@ -1,11 +1,7 @@
-FROM node:22.12-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Must be entire project because `prepare` script is run during `npm install` and requires all files.
-COPY common /app/common
-COPY reflect /app/reflect
-COPY insight-hub /app/insight-hub
-COPY api-hub /app/api-hub
-COPY index.ts /app/
+COPY src/ /app/src/
 COPY package.json package-lock.json tsconfig.json /app/
 
 WORKDIR /app
