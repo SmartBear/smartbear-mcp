@@ -2,6 +2,7 @@ import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type {
   Client,
+  ClientAuthConfig,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
@@ -42,6 +43,49 @@ export class ReflectClient implements Client {
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
+  }
+
+  /**
+   * Get authentication configuration for Reflect
+   */
+  static getAuthConfig(): ClientAuthConfig {
+    return {
+      requirements: [
+        {
+          key: "REFLECT_API_TOKEN",
+          required: true,
+          description: "Reflect API authentication token",
+        },
+      ],
+      description:
+        "Reflect requires an API token for authentication. Get your token from https://reflect.run/settings/api",
+    };
+  }
+
+  /**
+   * Create ReflectClient from environment variables
+   * @returns ReflectClient instance or null if REFLECT_API_TOKEN is not set
+   */
+  static fromEnv(): ReflectClient | null {
+    const config = ReflectClient.getAuthConfig();
+
+    // Check all required auth values are present
+    for (const req of config.requirements) {
+      if (req.required) {
+        const value = process.env[req.key];
+        if (!value) {
+          return null;
+        }
+      }
+    }
+
+    // Get the token
+    const token = process.env.REFLECT_API_TOKEN;
+    if (!token) {
+      return null;
+    }
+
+    return new ReflectClient(token);
   }
 
   async listReflectSuites(): Promise<any> {

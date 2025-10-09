@@ -1,6 +1,7 @@
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type {
   Client,
+  ClientAuthConfig,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
@@ -41,6 +42,35 @@ export class ApiHubClient implements Client {
       this.config,
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
+  }
+
+  /**
+   * Get authentication configuration for API Hub
+   */
+  static getAuthConfig(): ClientAuthConfig {
+    return {
+      requirements: [
+        {
+          key: "API_HUB_API_KEY",
+          required: true,
+          description: "API Hub API key for authentication",
+        },
+      ],
+      description:
+        "API Hub requires an API key. Get your key from https://api-hub.smartbear.com/settings",
+    };
+  }
+
+  /**
+   * Create ApiHubClient from environment variables
+   * @returns ApiHubClient instance or null if API_HUB_API_KEY is not set
+   */
+  static fromEnv(): ApiHubClient | null {
+    const token = process.env.API_HUB_API_KEY;
+    if (!token) {
+      return null;
+    }
+    return new ApiHubClient(token);
   }
 
   // Delegate API methods to the ApiHubAPI instance

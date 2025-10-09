@@ -2,6 +2,7 @@ import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type {
   Client,
+  ClientAuthConfig,
   GetInputFunction,
   RegisterPromptFunction,
   RegisterToolsFunction,
@@ -76,6 +77,73 @@ export class PactflowClient implements Client {
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;
     this.clientType = clientType;
     this.server = server;
+  }
+
+  /**
+   * Get authentication configuration for PactFlow/Pact Broker
+   */
+  static getAuthConfig(): ClientAuthConfig {
+    return {
+      requirements: [
+        {
+          key: "PACT_BROKER_BASE_URL",
+          required: true,
+          description: "Pact Broker or PactFlow base URL",
+        },
+        {
+          key: "PACT_BROKER_TOKEN",
+          required: false,
+          description:
+            "Bearer token for PactFlow authentication (use this OR username/password)",
+        },
+        {
+          key: "PACT_BROKER_USERNAME",
+          required: false,
+          description:
+            "Username for Pact Broker basic authentication (use this with password)",
+        },
+        {
+          key: "PACT_BROKER_PASSWORD",
+          required: false,
+          description:
+            "Password for Pact Broker basic authentication (use this with username)",
+        },
+      ],
+      description:
+        "PactFlow/Pact Broker requires a base URL and either a bearer token (PactFlow) or username/password (Pact Broker)",
+    };
+  }
+
+  /**
+   * Create PactflowClient from environment variables
+   * @returns PactflowClient instance or null if required env vars are not set
+   */
+  static fromEnv(server: Server): PactflowClient | null {
+    const baseUrl = process.env.PACT_BROKER_BASE_URL;
+    if (!baseUrl) {
+      return null;
+    }
+
+    const token = process.env.PACT_BROKER_TOKEN;
+    const username = process.env.PACT_BROKER_USERNAME;
+    const password = process.env.PACT_BROKER_PASSWORD;
+
+    if (token) {
+      return new PactflowClient(token, baseUrl, "pactflow", server);
+    }
+    if (username && password) {
+      return new PactflowClient(
+        { username, password },
+        baseUrl,
+        "pact_broker",
+        server,
+      );
+    }
+
+    console.error(
+      "[PactFlow] Pact Broker URL provided but missing authentication (token or username/password)",
+    );
+    return null;
   }
 
   // PactFlow AI client methods

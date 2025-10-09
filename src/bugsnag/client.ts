@@ -4,6 +4,7 @@ import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type {
   Client,
+  ClientAuthConfig,
   GetInputFunction,
   RegisterResourceFunction,
   RegisterToolsFunction,
@@ -97,6 +98,53 @@ export class BugsnagClient implements Client {
     });
     this.projectApi = new ProjectAPI(config);
     this.projectApiKey = projectApiKey;
+  }
+
+  /**
+   * Get authentication configuration for BugSnag
+   */
+  static getAuthConfig(): ClientAuthConfig {
+    return {
+      requirements: [
+        {
+          key: "BUGSNAG_AUTH_TOKEN",
+          required: true,
+          description: "BugSnag personal authentication token",
+        },
+        {
+          key: "BUGSNAG_PROJECT_API_KEY",
+          required: false,
+          description:
+            "Optional project API key for single-project interactions",
+        },
+        {
+          key: "BUGSNAG_ENDPOINT",
+          required: false,
+          description:
+            "Optional custom BugSnag endpoint URL for on-premise installations",
+        },
+      ],
+      description:
+        "BugSnag requires a personal auth token. Get your token from https://app.bugsnag.com/settings/",
+    };
+  }
+
+  /**
+   * Create BugsnagClient from environment variables
+   * @returns BugsnagClient instance or null if BUGSNAG_AUTH_TOKEN is not set
+   */
+  static fromEnv(): BugsnagClient | null {
+    // Check required auth values
+    const token = process.env.BUGSNAG_AUTH_TOKEN;
+    if (!token) {
+      return null;
+    }
+
+    // Get optional values
+    const projectApiKey = process.env.BUGSNAG_PROJECT_API_KEY;
+    const endpoint = process.env.BUGSNAG_ENDPOINT;
+
+    return new BugsnagClient(token, projectApiKey, endpoint);
   }
 
   async initialize(): Promise<void> {

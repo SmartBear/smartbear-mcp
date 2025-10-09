@@ -78,6 +78,28 @@ export type Parameters = Array<{
   constraints?: string[];
 }>;
 
+/**
+ * Authentication requirement for a client
+ */
+export interface AuthRequirement {
+  /** Environment variable name (e.g., 'BUGSNAG_AUTH_TOKEN') */
+  key: string;
+  /** Whether this auth value is required */
+  required: boolean;
+  /** Description of this auth value */
+  description: string;
+}
+
+/**
+ * Authentication configuration for a client
+ */
+export interface ClientAuthConfig {
+  /** List of authentication requirements */
+  requirements: AuthRequirement[];
+  /** Description of how authentication works for this client */
+  description?: string;
+}
+
 export interface Client {
   name: string;
   prefix: string;

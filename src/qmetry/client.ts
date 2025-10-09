@@ -1,5 +1,6 @@
 import type {
   Client,
+  ClientAuthConfig,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
@@ -18,6 +19,42 @@ export class QmetryClient implements Client {
     this.token = token;
     this.projectApiKey = QMETRY_DEFAULTS.PROJECT_KEY;
     this.endpoint = endpoint || QMETRY_DEFAULTS.BASE_URL;
+  }
+
+  /**
+   * Get authentication configuration for QMetry
+   */
+  static getAuthConfig(): ClientAuthConfig {
+    return {
+      requirements: [
+        {
+          key: "QMETRY_API_KEY",
+          required: true,
+          description: "QMetry API key for authentication",
+        },
+        {
+          key: "QMETRY_BASE_URL",
+          required: false,
+          description:
+            "Optional QMetry base URL for custom or region-specific endpoints",
+        },
+      ],
+      description:
+        "QMetry requires an API key. Get your key from your QMetry Test Management instance.",
+    };
+  }
+
+  /**
+   * Create QmetryClient from environment variables
+   * @returns QmetryClient instance or null if QMETRY_API_KEY is not set
+   */
+  static fromEnv(): QmetryClient | null {
+    const token = process.env.QMETRY_API_KEY;
+    if (!token) {
+      return null;
+    }
+    const baseUrl = process.env.QMETRY_BASE_URL;
+    return new QmetryClient(token, baseUrl);
   }
 
   getToken() {

@@ -1,5 +1,6 @@
 import type {
   Client,
+  ClientAuthConfig,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
@@ -17,6 +18,42 @@ export class ZephyrClient implements Client {
     baseUrl: string = "https://api.zephyrscale.smartbear.com/v2",
   ) {
     this.apiClient = new ApiClient(bearerToken, baseUrl);
+  }
+
+  /**
+   * Get authentication configuration for Zephyr client
+   * Defines required and optional authentication fields
+   */
+  static getAuthConfig(): ClientAuthConfig {
+    return {
+      requirements: [
+        {
+          key: "ZEPHYR_API_TOKEN",
+          required: true,
+          description: "Zephyr Scale API token for authentication",
+        },
+        {
+          key: "ZEPHYR_BASE_URL",
+          required: false,
+          description:
+            "Zephyr Scale API base URL (default: https://api.zephyrscale.smartbear.com/v2)",
+        },
+      ],
+      description: "Zephyr Scale Cloud test management integration",
+    };
+  }
+
+  /**
+   * Create ZephyrClient from environment variables
+   * @returns ZephyrClient instance or null if ZEPHYR_API_TOKEN is not set
+   */
+  static fromEnv(): ZephyrClient | null {
+    const token = process.env.ZEPHYR_API_TOKEN;
+    if (!token) {
+      return null;
+    }
+    const baseUrl = process.env.ZEPHYR_BASE_URL;
+    return new ZephyrClient(token, baseUrl);
   }
 
   registerTools(
