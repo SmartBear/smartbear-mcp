@@ -8,7 +8,6 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
-import type { ApiResponse } from "./client/api/base.js";
 import type { Organization } from "./client/api/CurrentUser.js";
 import type { ListProjectErrorsOptions } from "./client/api/Error.js";
 import {
@@ -19,11 +18,10 @@ import {
 import {
   type BuildResponseAny,
   type EventField,
-  type ListBuildsOptions,
-  type ListReleasesOptions,
   type Project,
   ProjectAPI,
   type ReleaseResponseAny,
+  type ReleaseSummaryResponse,
   type StabilityData,
 } from "./client/api/Project.js";
 import { Configuration, CurrentUserAPI, ErrorAPI } from "./client/index.js";
@@ -294,82 +292,6 @@ export class BugsnagClient implements Client {
       }
       return currentProject;
     }
-  }
-
-  async listBuilds(
-    projectId: string,
-    opts: ListBuildsOptions,
-  ): Promise<ApiResponse<(BuildResponseAny & StabilityData)[]>> {
-    const response = await this.projectApi.listBuilds(projectId, opts);
-    if (!response.body || response.body.length === 0) {
-      return { ...response, body: [] };
-    }
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-    return {
-      ...response,
-      body: response.body.map((b) => this.addStabilityData(b, project)),
-    };
-  }
-
-  async getBuild(
-    projectId: string,
-    buildId: string,
-  ): Promise<ApiResponse<BuildResponseAny & StabilityData>> {
-    const response = await this.projectApi.getBuild(projectId, buildId);
-    if (!response.body) throw new Error(`No build for ${buildId} found.`);
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-    return { ...response, body: this.addStabilityData(response.body, project) };
-  }
-
-  async listReleases(
-    projectId: string,
-    opts: ListReleasesOptions,
-  ): Promise<ApiResponse<(ReleaseResponseAny & StabilityData)[]>> {
-    const response = await this.projectApi.listReleases(projectId, opts);
-    if (!response.body || response.body.length === 0) {
-      return { ...response, body: [] };
-    }
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-    return {
-      ...response,
-      body: response.body.map((r) => this.addStabilityData(r, project)),
-    };
-  }
-
-  async getRelease(
-    projectId: string,
-    releaseId: string,
-  ): Promise<ApiResponse<ReleaseResponseAny & StabilityData>> {
-    const response = await this.projectApi.getRelease(releaseId);
-    if (!response.body) throw new Error(`No release for ${releaseId} found.`);
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-    return { ...response, body: this.addStabilityData(response.body, project) };
-  }
-
-  async listBuildsInRelease(
-    projectId: string,
-    releaseId: string,
-  ): Promise<ApiResponse<(BuildResponseAny & StabilityData)[]>> {
-    const response = await this.projectApi.listBuildsInRelease(releaseId);
-    if (!response.body || response.body.length === 0) {
-      return { ...response, body: [] };
-    }
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-
-    return {
-      ...response,
-      body: response.body.map((b) => this.addStabilityData(b, project)),
-    };
   }
 
   private addStabilityData<T extends BuildResponseAny | ReleaseResponseAny>(
@@ -1087,23 +1009,28 @@ export class BugsnagClient implements Client {
           "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
       },
       async (args, _extra) => {
-        const response = await this.listReleases(
-          (await this.getInputProject(args.projectId)).id,
-          {
-            release_stage_name: args.releaseStage,
-            visible_only: args.visibleOnly,
-            next_url: args.nextUrl,
-          },
-        );
+        const project = await this.getInputProject(args.projectId);
+        const response = await this.projectApi.listReleases(project.id, {
+          release_stage_name: args.releaseStage,
+          visible_only: args.visibleOnly,
+          next_url: args.nextUrl,
+        });
+
+        let releases: (ReleaseSummaryResponse & StabilityData)[] = [];
+        if (response.body) {
+          releases = response.body.map((r) =>
+            this.addStabilityData(r, project),
+          );
+        }
 
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
-                data: response.body,
+                data: releases,
                 next_url: response.nextUrl ?? undefined,
-                data_count: response.body?.length,
+                data_count: releases.length,
                 total_count: response.totalCount ?? undefined,
               }),
             },
@@ -1162,21 +1089,30 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         if (!args.releaseId) throw new Error("releaseId argument is required");
         const project = await this.getInputProject(args.projectId);
-        const releaseResponse = await this.getRelease(
-          project.id,
+        const releaseResponse = await this.projectApi.getRelease(
           args.releaseId,
         );
-        const buildsResponse = await this.listBuildsInRelease(
-          project.id,
-          args.releaseId,
-        );
+        if (!releaseResponse.body)
+          throw new Error(`No release for ${args.releaseId} found.`);
+        const release = this.addStabilityData(releaseResponse.body, project);
+        let builds: (BuildResponseAny & StabilityData)[] = [];
+        if (releaseResponse.body) {
+          const buildsResponse = await this.projectApi.listBuildsInRelease(
+            args.releaseId,
+          );
+          if (buildsResponse.body) {
+            builds = buildsResponse.body.map((b) =>
+              this.addStabilityData(b, project),
+            );
+          }
+        }
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
-                release: releaseResponse.body,
-                builds: buildsResponse.body,
+                release: release,
+                builds: builds,
               }),
             },
           ],
@@ -1232,12 +1168,17 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         if (!args.buildId) throw new Error("buildId argument is required");
-        const response = await this.getBuild(
-          (await this.getInputProject(args.projectId)).id,
+        const project = await this.getInputProject(args.projectId);
+        const response = await this.projectApi.getBuild(
+          project.id,
           args.buildId,
         );
+
+        if (!response.body)
+          throw new Error(`No build for ${args.buildId} found.`);
+        const build = this.addStabilityData(response.body, project);
         return {
-          content: [{ type: "text", text: JSON.stringify(response.body) }],
+          content: [{ type: "text", text: JSON.stringify(build) }],
         };
       },
     );
