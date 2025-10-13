@@ -604,7 +604,7 @@ describe("PactFlowClient", () => {
       });
     });
 
-    describe("checkAIEntitlements", () => {
+    describe("getAICredits", () => {
       const mockEntitlement = {
         organizationEntitlements: {
           name: "test-org",
@@ -619,7 +619,7 @@ describe("PactFlowClient", () => {
 
       it("should successfully retrieve AI status and entitlements", async () => {
         fetchMock.mockResponseOnce(JSON.stringify(mockEntitlement));
-        const result = await client.checkAIEntitlements();
+        const result = await client.getAIStatus();
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/api/ai/entitlement",
           {
@@ -638,8 +638,8 @@ describe("PactFlowClient", () => {
           status: 401,
           statusText: "Unauthorized",
         });
-        await expect(client.checkAIEntitlements()).rejects.toThrow(
-          "PactFlow AI Entitlements Request Failed - status: 401 Unauthorized - Unauthorized",
+        await expect(client.getAIStatus()).rejects.toThrow(
+          "PactFlow AI Status Request Failed - status: 401 Unauthorized - Unauthorized",
         );
       });
     });
