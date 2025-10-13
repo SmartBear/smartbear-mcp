@@ -27,7 +27,7 @@ export class GetProjects implements ZephyrTool {
       {
         description: "Get the first 10 projects",
         parameters: {
-          maxResult: 10,
+          maxResults: 10,
           startAt: 0,
         },
         expectedOutput: "The first 10 projects with their details",
@@ -35,7 +35,7 @@ export class GetProjects implements ZephyrTool {
       {
         description: "Get any project",
         parameters: {
-          maxResult: 1,
+          maxResults: 1,
         },
         expectedOutput: "One project with its details",
       },
@@ -43,7 +43,7 @@ export class GetProjects implements ZephyrTool {
         description:
           "Get five projects starting from the 7th project of the list",
         parameters: {
-          maxResult: 5,
+          maxResults: 5,
           startAt: 6,
         },
         expectedOutput: "The 7th to the 11th projects with their details",
