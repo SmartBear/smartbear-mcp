@@ -20,8 +20,6 @@ export interface ApiResponse<T> {
   status: number;
   headers: Headers;
   body?: T;
-  nextUrl?: string | null;
-  totalCount?: number | null;
 }
 
 // Utility to pick only allowed fields from an object
@@ -53,15 +51,6 @@ export function getNextUrlPathFromHeader(
   return match.replace(basePath, "");
 }
 
-// Utility to extract total count from headers
-export function getTotalCountFromHeader(headers: Headers): number | null {
-  if (!headers) return null;
-  const totalCount = headers.get("X-Total-Count");
-  if (!totalCount) return null;
-  const parsed = parseInt(totalCount, 10);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
 // Ensure URL is absolute
 // The MCP tools exposed use only the path for pagination
 // For making requests, we need to ensure the URL is absolute
@@ -80,7 +69,7 @@ export class BaseAPI {
 
   async request<T = any>(
     options: RequestOptions,
-    fetchAll: boolean = true,
+    paginate: boolean = false,
   ): Promise<ApiResponse<T>> {
     const headers: Record<string, string> = {
       ...this.configuration.headers,
@@ -116,21 +105,19 @@ export class BaseAPI {
       };
 
       const data: T = await response.json();
-      nextUrl = getNextUrlPathFromHeader(
-        response.headers,
-        this.configuration.basePath,
-      );
-      if (Array.isArray(data)) {
+      if (paginate) {
         results = results.concat(data);
-        apiResponse.nextUrl = nextUrl;
+        nextUrl = getNextUrlPathFromHeader(
+          response.headers,
+          this.configuration.basePath,
+        );
       } else {
         apiResponse.body = data;
       }
-    } while (fetchAll && nextUrl);
+    } while (paginate && nextUrl);
 
-    if (results.length > 0) {
+    if (paginate) {
       apiResponse.body = results as T;
-      apiResponse.totalCount = getTotalCountFromHeader(apiResponse.headers);
     }
 
     if (Array.isArray(apiResponse.body)) {

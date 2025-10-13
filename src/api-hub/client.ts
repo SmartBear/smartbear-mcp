@@ -10,10 +10,6 @@ import {
   ApiHubConfiguration,
   type ApiSearchParams,
   type ApiSearchResponse,
-  type CreateApiFromTemplateParams,
-  type CreateApiFromTemplateResponse,
-  type CreateApiParams,
-  type CreateApiResponse,
   type CreatePortalArgs,
   type CreateProductArgs,
   type FallbackResponse,
@@ -115,18 +111,6 @@ export class ApiHubClient implements Client {
     args: ApiDefinitionParams,
   ): Promise<unknown | FallbackResponse> {
     return this.api.getApiDefinition(args);
-  }
-
-  async createOrUpdateApi(
-    args: CreateApiParams,
-  ): Promise<CreateApiResponse | FallbackResponse> {
-    return this.api.createOrUpdateApi(args);
-  }
-
-  async createApiFromTemplate(
-    args: CreateApiFromTemplateParams,
-  ): Promise<CreateApiFromTemplateResponse | FallbackResponse> {
-    return this.api.createApiFromTemplate(args);
   }
 
   registerTools(

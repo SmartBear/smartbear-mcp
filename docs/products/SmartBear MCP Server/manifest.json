@@ -68,14 +68,6 @@
     },
     {
       "order": 7,
-      "parent": "mcp-server-capabilities",
-      "name": "Zephyr Integration",
-      "slug": "zephyr-integration",
-      "type": "markdown",
-      "contentUrl": "zephyr-integration.md"
-    },
-    {
-      "order": 8,
       "parent": "",
       "name": "Getting Started",
       "slug": "getting-started",
@@ -83,7 +75,7 @@
       "contentUrl": "getting-started.md"
     },
     {
-      "order": 9,
+      "order": 8,
       "parent": "",
       "name": "Best Practices",
       "slug": "best-practices",
@@ -91,7 +83,7 @@
       "contentUrl": "best-practices.md"
     },
     {
-      "order": 10,
+      "order": 9,
       "parent": "",
       "name": "Troubleshooting",
       "slug": "troubleshooting",

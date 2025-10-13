@@ -1,6 +1,5 @@
 import type { Configuration } from "../configuration.js";
 import { type ApiResponse, BaseAPI, pickFieldsFromArray } from "./base.js";
-import { type Project, ProjectAPI } from "./Project.js";
 
 // --- Response Types ---
 
@@ -12,6 +11,13 @@ export interface Organization {
 
 export type ListUserOrganizationsResponse = Organization[];
 
+export interface Project {
+  id: string;
+  name: string;
+  slug: string;
+  api_key: string;
+}
+
 // --- API Class ---
 
 export class CurrentUserAPI extends BaseAPI {
@@ -21,6 +27,7 @@ export class CurrentUserAPI extends BaseAPI {
     "upgrade_url",
   ];
   static organizationFields: (keyof Organization)[] = ["id", "name", "slug"];
+  static projectFields: (keyof Project)[] = ["id", "name", "slug", "api_key"];
 
   constructor(configuration: Configuration) {
     super(configuration, CurrentUserAPI.filterFields);
@@ -33,7 +40,7 @@ export class CurrentUserAPI extends BaseAPI {
   async listUserOrganizations(
     options: ListUserOrganizationsOptions = {},
   ): Promise<ApiResponse<ListUserOrganizationsResponse>> {
-    const { admin, ...queryOptions } = options;
+    const { admin, paginate = false, ...queryOptions } = options;
     const params = new URLSearchParams();
     if (admin !== undefined) params.append("admin", String(admin));
     for (const [key, value] of Object.entries(queryOptions)) {
@@ -42,10 +49,13 @@ export class CurrentUserAPI extends BaseAPI {
     const url = params.toString()
       ? `/user/organizations?${params}`
       : "/user/organizations";
-    const data = await this.request<ListUserOrganizationsResponse>({
-      method: "GET",
-      url,
-    });
+    const data = await this.request<ListUserOrganizationsResponse>(
+      {
+        method: "GET",
+        url,
+      },
+      paginate,
+    );
     // Only return allowed fields
     return {
       ...data,
@@ -75,15 +85,18 @@ export class CurrentUserAPI extends BaseAPI {
     const url = params.toString()
       ? `/organizations/${organizationId}/projects?${params}`
       : `/organizations/${organizationId}/projects`;
-    const data = await this.request<Project[]>({
-      method: "GET",
-      url,
-    });
+    const data = await this.request<Project[]>(
+      {
+        method: "GET",
+        url,
+      },
+      true,
+    ); // Always paginate for projects
     return {
       ...data,
       body: pickFieldsFromArray<Project>(
         data.body || [],
-        ProjectAPI.projectFields,
+        CurrentUserAPI.projectFields,
       ),
     };
   }
@@ -91,6 +104,7 @@ export class CurrentUserAPI extends BaseAPI {
 
 export interface ListUserOrganizationsOptions {
   admin?: boolean;
+  paginate?: boolean;
   [key: string]: any;
 }
 

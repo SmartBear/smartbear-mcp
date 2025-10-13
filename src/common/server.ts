@@ -11,7 +11,6 @@ import {
   ZodLiteral,
   ZodNumber,
   ZodObject,
-  ZodOptional,
   type ZodRawShape,
   ZodString,
   type ZodType,
@@ -211,9 +210,6 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   private getReadableTypeName(zodType: ZodType): string {
-    if (zodType instanceof ZodOptional) {
-      zodType = zodType._def.innerType;
-    }
     if (zodType instanceof ZodString) return "string";
     if (zodType instanceof ZodNumber) return "number";
     if (zodType instanceof ZodBoolean) return "boolean";

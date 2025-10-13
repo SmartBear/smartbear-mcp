@@ -1,16 +1,13 @@
 import type { Configuration } from "../configuration.js";
-import { type ApiResponse, BaseAPI, pickFieldsFromArray } from "./base.js";
+import {
+  type ApiResponse,
+  BaseAPI,
+  pickFields,
+  pickFieldsFromArray,
+} from "./base.js";
+import type { Project as ProjectApiView } from "./CurrentUser.js";
 
 // --- Response Types ---
-export interface Project {
-  id: string;
-  name: string;
-  slug: string;
-  api_key: string;
-  stability_target_type: StabilityTargetType;
-  target_stability: StabilityTargetData;
-  critical_stability: StabilityTargetData;
-}
 
 export interface EventFieldFilterOptions {
   name: string;
@@ -168,9 +165,8 @@ export type BuildResponseAny = BuildResponse | BuildSummaryResponse;
 
 // Releases
 export interface ListReleasesOptions {
-  release_stage_name?: string;
-  visible_only?: boolean;
-  top_only?: boolean;
+  release_stage_name: string;
+  visible_only: boolean;
   next_url?: string;
 }
 
@@ -239,15 +235,6 @@ export interface StabilityTargetData {
 // --- API Class ---
 
 export class ProjectAPI extends BaseAPI {
-  static projectFields: (keyof Project)[] = [
-    "id",
-    "name",
-    "slug",
-    "api_key",
-    "stability_target_type",
-    "target_stability",
-    "critical_stability",
-  ];
   static filterFields: string[] = [
     "errors_url",
     "events_url",
@@ -285,6 +272,11 @@ export class ProjectAPI extends BaseAPI {
     "sessions_count_in_last_24h",
     "accumulative_daily_users_seen",
     "accumulative_daily_users_with_unhandled",
+  ];
+  static stabilityFields: (keyof ProjectStabilityTargets)[] = [
+    "critical_stability",
+    "target_stability",
+    "stability_target_type",
   ];
 
   constructor(configuration: Configuration) {
@@ -327,13 +319,32 @@ export class ProjectAPI extends BaseAPI {
   async createProject(
     organizationId: string,
     data: ProjectCreateRequest,
-  ): Promise<ApiResponse<Project>> {
+  ): Promise<ApiResponse<ProjectApiView>> {
     const url = `/organizations/${organizationId}/projects`;
-    return await this.request<Project>({
+    return await this.request<ProjectApiView>({
       method: "POST",
       url,
       body: data,
     });
+  }
+
+  /**
+   * Retrieves the stability targets for a specific project.
+   * GET /projects/{project_id} (with internal header)
+   * @param projectId The ID of the project.
+   * @returns A promise that resolves to the project's stability targets.
+   */
+  async getProjectStabilityTargets(projectId: string) {
+    const url = `/projects/${projectId}`;
+    const response = await this.request<unknown>({
+      method: "GET",
+      url,
+    });
+
+    return pickFields<ProjectStabilityTargets>(
+      response.body || {},
+      ProjectAPI.stabilityFields,
+    );
   }
 
   /**
@@ -347,13 +358,11 @@ export class ProjectAPI extends BaseAPI {
     const url =
       opts.next_url ??
       `/projects/${projectId}/releases${opts.release_stage ? `?release_stage=${opts.release_stage}` : ""}`;
-    const response = await this.request<BuildSummaryResponse[]>(
-      {
-        method: "GET",
-        url,
-      },
-      false, // Paginate results
-    );
+    const response = await this.request<BuildSummaryResponse[]>({
+      method: "GET",
+      url,
+    });
+
     return {
       ...response,
       body: pickFieldsFromArray<BuildSummaryResponse>(
@@ -388,17 +397,11 @@ export class ProjectAPI extends BaseAPI {
   async listReleases(projectId: string, opts: ListReleasesOptions) {
     const url =
       opts.next_url ??
-      `/projects/${projectId}/release_groups?` +
-        `release_stage_name=${opts.release_stage_name ?? "production"}&` +
-        `visible_only=${opts.visible_only ?? false}&` +
-        `top_only=${opts.top_only ?? false}`;
-    const response = await this.request<ReleaseSummaryResponse[]>(
-      {
-        method: "GET",
-        url,
-      },
-      false, // Paginate results
-    );
+      `/projects/${projectId}/release_groups?release_stage_name=${opts.release_stage_name}&visible_only=${opts.visible_only}&top_only=true`;
+    const response = await this.request<ReleaseSummaryResponse[]>({
+      method: "GET",
+      url,
+    });
 
     return {
       ...response,
