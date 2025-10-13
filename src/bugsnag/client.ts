@@ -8,8 +8,8 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
-import { getNextUrlPathFromHeader } from "./client/api/base.js";
-import type { Organization, Project } from "./client/api/CurrentUser.js";
+import type { ApiResponse } from "./client/api/base.js";
+import type { Organization } from "./client/api/CurrentUser.js";
 import type { ListProjectErrorsOptions } from "./client/api/Error.js";
 import {
   type FilterObject,
@@ -17,14 +17,12 @@ import {
   toQueryString,
 } from "./client/api/filters.js";
 import {
-  type BuildResponse,
   type BuildResponseAny,
   type EventField,
   type ListBuildsOptions,
   type ListReleasesOptions,
+  type Project,
   ProjectAPI,
-  type ProjectStabilityTargets,
-  type ReleaseResponse,
   type ReleaseResponseAny,
   type StabilityData,
 } from "./client/api/Project.js";
@@ -39,9 +37,6 @@ const cacheKeys = {
   PROJECTS: "bugsnag_projects",
   CURRENT_PROJECT: "bugsnag_current_project",
   CURRENT_PROJECT_EVENT_FILTERS: "bugsnag_current_project_event_filters",
-  BUILD: "bugsnag_build", // + buildId
-  RELEASE: "bugsnag_release", // + releaseId
-  BUILDS_IN_RELEASE: "bugsnag_builds_in_release", // + releaseId
 };
 
 // Exclude certain event fields from the project event filters to improve agent usage
@@ -301,95 +296,86 @@ export class BugsnagClient implements Client {
     }
   }
 
-  async listBuilds(projectId: string, opts: ListBuildsOptions) {
+  async listBuilds(
+    projectId: string,
+    opts: ListBuildsOptions,
+  ): Promise<ApiResponse<(BuildResponseAny & StabilityData)[]>> {
     const response = await this.projectApi.listBuilds(projectId, opts);
-    const fetchedBuilds = response.body || [];
-    const nextUrl = getNextUrlPathFromHeader(
-      response.headers,
-      this.apiEndpoint,
-    );
+    if (!response.body || response.body.length === 0) {
+      return { ...response, body: [] };
+    }
 
-    const stabilityTargets = await this.getProjectStabilityTargets(projectId);
-    const formattedBuilds = fetchedBuilds.map((b) =>
-      this.addStabilityData(b, stabilityTargets),
-    );
-
-    return { builds: formattedBuilds, nextUrl };
+    const project = await this.getProject(projectId);
+    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
+    return {
+      ...response,
+      body: response.body.map((b) => this.addStabilityData(b, project)),
+    };
   }
 
-  async getBuild(projectId: string, buildId: string) {
-    const cacheKey = `${cacheKeys.BUILD}_${buildId}`;
-    const build = this.cache.get<BuildResponse & StabilityData>(cacheKey);
-    if (build) return build;
+  async getBuild(
+    projectId: string,
+    buildId: string,
+  ): Promise<ApiResponse<BuildResponseAny & StabilityData>> {
+    const response = await this.projectApi.getBuild(projectId, buildId);
+    if (!response.body) throw new Error(`No build for ${buildId} found.`);
 
-    const fetchedBuild = (await this.projectApi.getBuild(projectId, buildId))
-      .body;
-    if (!fetchedBuild) throw new Error(`No build for ${buildId} found.`);
-
-    const stabilityTargets = await this.getProjectStabilityTargets(projectId);
-    const formattedBuild = this.addStabilityData(
-      fetchedBuild,
-      stabilityTargets,
-    );
-    this.cache.set(cacheKey, formattedBuild, 5 * 60);
-    return formattedBuild;
+    const project = await this.getProject(projectId);
+    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
+    return { ...response, body: this.addStabilityData(response.body, project) };
   }
 
-  async listReleases(projectId: string, opts: ListReleasesOptions) {
+  async listReleases(
+    projectId: string,
+    opts: ListReleasesOptions,
+  ): Promise<ApiResponse<(ReleaseResponseAny & StabilityData)[]>> {
     const response = await this.projectApi.listReleases(projectId, opts);
-    const fetchedReleases = response.body || [];
-    const nextUrl = getNextUrlPathFromHeader(
-      response.headers,
-      this.apiEndpoint,
-    );
+    if (!response.body || response.body.length === 0) {
+      return { ...response, body: [] };
+    }
 
-    const stabilityTargets = await this.getProjectStabilityTargets(projectId);
-    const formattedReleases = fetchedReleases.map((r) =>
-      this.addStabilityData(r, stabilityTargets),
-    );
-
-    return { releases: formattedReleases, nextUrl };
+    const project = await this.getProject(projectId);
+    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
+    return {
+      ...response,
+      body: response.body.map((r) => this.addStabilityData(r, project)),
+    };
   }
 
-  async getRelease(projectId: string, releaseId: string) {
-    const cacheKey = `${cacheKeys.RELEASE}_${releaseId}`;
-    const release = this.cache.get<ReleaseResponse & StabilityData>(cacheKey);
-    if (release) return release;
+  async getRelease(
+    projectId: string,
+    releaseId: string,
+  ): Promise<ApiResponse<ReleaseResponseAny & StabilityData>> {
+    const response = await this.projectApi.getRelease(releaseId);
+    if (!response.body) throw new Error(`No release for ${releaseId} found.`);
 
-    const fetchedRelease = (await this.projectApi.getRelease(releaseId)).body;
-    if (!fetchedRelease) throw new Error(`No release for ${releaseId} found.`);
-
-    const stabilityTargets = await this.getProjectStabilityTargets(projectId);
-    const formattedRelease = this.addStabilityData(
-      fetchedRelease,
-      stabilityTargets,
-    );
-    this.cache.set(cacheKey, formattedRelease, 5 * 60);
-    return formattedRelease;
+    const project = await this.getProject(projectId);
+    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
+    return { ...response, body: this.addStabilityData(response.body, project) };
   }
 
-  async listBuildsInRelease(releaseId: string) {
-    const cacheKey = `${cacheKeys.BUILDS_IN_RELEASE}_${releaseId}`;
-    const builds = this.cache.get<BuildResponse[]>(cacheKey);
-    if (builds) return builds;
+  async listBuildsInRelease(
+    projectId: string,
+    releaseId: string,
+  ): Promise<ApiResponse<(BuildResponseAny & StabilityData)[]>> {
+    const response = await this.projectApi.listBuildsInRelease(releaseId);
+    if (!response.body || response.body.length === 0) {
+      return { ...response, body: [] };
+    }
 
-    const fetchedBuilds =
-      (await this.projectApi.listBuildsInRelease(releaseId)).body || [];
-    this.cache.set(cacheKey, fetchedBuilds, 5 * 60);
-    return fetchedBuilds;
-  }
+    const project = await this.getProject(projectId);
+    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
 
-  private async getProjectStabilityTargets(projectId: string) {
-    return await this.projectApi.getProjectStabilityTargets(projectId);
+    return {
+      ...response,
+      body: response.body.map((b) => this.addStabilityData(b, project)),
+    };
   }
 
   private addStabilityData<T extends BuildResponseAny | ReleaseResponseAny>(
     source: T,
-    stabilityTargets: ProjectStabilityTargets,
+    project: Project,
   ): T & StabilityData {
-    const { stability_target_type, target_stability, critical_stability } =
-      stabilityTargets;
-
     const user_stability =
       source.accumulative_daily_users_seen === 0 // avoid division by zero
         ? 0
@@ -404,19 +390,22 @@ export class BugsnagClient implements Client {
           source.total_sessions_count;
 
     const stabilityMetric =
-      stability_target_type === "user" ? user_stability : session_stability;
+      project.stability_target_type === "user"
+        ? user_stability
+        : session_stability;
 
-    const meets_target_stability = stabilityMetric >= target_stability.value;
+    const meets_target_stability =
+      stabilityMetric >= project.target_stability.value;
     const meets_critical_stability =
-      stabilityMetric >= critical_stability.value;
+      stabilityMetric >= project.critical_stability.value;
 
     return {
       ...source,
       user_stability,
       session_stability,
-      stability_target_type,
-      target_stability: target_stability.value,
-      critical_stability: critical_stability.value,
+      stability_target_type: project.stability_target_type,
+      target_stability: project.target_stability.value,
+      critical_stability: project.critical_stability.value,
       meets_target_stability,
       meets_critical_stability,
     };
@@ -441,7 +430,7 @@ export class BugsnagClient implements Client {
           ],
           parameters: [
             {
-              name: "page_size",
+              name: "pageSize",
               type: z.number(),
               description:
                 "Number of projects to return per page for pagination",
@@ -460,7 +449,7 @@ export class BugsnagClient implements Client {
             {
               description: "Get first 10 projects",
               parameters: {
-                page_size: 10,
+                pageSize: 10,
                 page: 1,
               },
               expectedOutput:
@@ -484,8 +473,8 @@ export class BugsnagClient implements Client {
               content: [{ type: "text", text: "No projects found." }],
             };
           }
-          if (args.page_size || args.page) {
-            const pageSize = args.page_size || 10;
+          if (args.pageSize || args.page) {
+            const pageSize = args.pageSize || 10;
             const page = args.page || 1;
             projects = projects.slice((page - 1) * pageSize, page * pageSize);
           }
@@ -607,12 +596,12 @@ export class BugsnagClient implements Client {
         // Get the latest event for this error using the events endpoint with filters
         let latestEvent = null;
         try {
-          const eventsResponse = await this.errorsApi.listEventsOnProject(
-            project.id,
-            listEventsQueryString,
-          );
-          const events = eventsResponse.body || [];
-          latestEvent = events[0] || null;
+          latestEvent = (
+            await this.errorsApi.getLatestEventOnProject(
+              project.id,
+              listEventsQueryString,
+            )
+          ).body;
         } catch (e) {
           console.warn("Failed to fetch latest event:", e);
           // Continue without latest event rather than failing the entire request
@@ -754,14 +743,14 @@ export class BugsnagClient implements Client {
             examples: ["desc"],
           },
           {
-            name: "per_page",
+            name: "perPage",
             type: z.number().min(1).max(100).default(30),
             description: "How many results to return per page.",
             required: false,
             examples: ["30", "50", "100"],
           },
           {
-            name: "next",
+            name: "nextUrl",
             type: z.string().url(),
             description:
               "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available.",
@@ -807,7 +796,7 @@ export class BugsnagClient implements Client {
               },
               sort: "users",
               direction: "desc",
-              per_page: 10,
+              perPage: 10,
             },
             expectedOutput:
               "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field",
@@ -815,11 +804,12 @@ export class BugsnagClient implements Client {
           {
             description: "Get the next 50 results",
             parameters: {
-              next: "https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?base=2025-08-29T13%3A11%3A37Z&direction=desc&filters%5Berror.status%5D%5B%5D%5Btype%5D=eq&filters%5Berror.status%5D%5B%5D%5Bvalue%5D=open&offset=10&per_page=10&sort=users",
-              per_page: 50,
+              nextUrl:
+                "https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?base=2025-08-29T13%3A11%3A37Z&direction=desc&filters%5Berror.status%5D%5B%5D%5Btype%5D=eq&filters%5Berror.status%5D%5B%5D%5Bvalue%5D=open&offset=10&per_page=10&sort=users",
+              perPage: 50,
             },
             expectedOutput:
-              "JSON object with a list of errors in the 'data' field, a count of the current page of results in the 'count' field, and a total count of all results in the 'total' field",
+              "JSON object with a list of errors, with a URL to the next page if more results are available and a total count of all errors matched",
           },
         ],
         hints: [
@@ -829,8 +819,8 @@ export class BugsnagClient implements Client {
           "Common time filters: event.since (from this time), event.before (until this time)",
           "The 'event.since' filter and 'error.status' filters are always applied and if not specified are set to '30d' and 'open' respectively",
           "There may not be any errors matching the filters - this is not a problem with the tool, in fact it might be a good thing that the user's application had no errors",
-          "This tool returns paged results. The 'count' field indicates the number of results returned in the current page, and the 'total' field indicates the total number of results across all pages.",
-          "If the output contains a 'next' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page.",
+          "This tool returns paged results. The 'page_error_count' field indicates the number of results returned in the current page, and the 'total_error_count' field indicates the total number of results across all pages.",
+          "If the output contains a 'next_url' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page.",
           "Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size.",
         ],
       },
@@ -862,23 +852,19 @@ export class BugsnagClient implements Client {
 
         if (args.sort !== undefined) options.sort = args.sort;
         if (args.direction !== undefined) options.direction = args.direction;
-        if (args.per_page !== undefined) options.per_page = args.per_page;
-        if (args.next !== undefined) options.next = args.next;
+        if (args.perPage !== undefined) options.per_page = args.perPage;
+        if (args.nextUrl !== undefined) options.next_url = args.nextUrl;
 
         const response = await this.errorsApi.listProjectErrors(
           project.id,
           options,
         );
 
-        const errors = response.body || [];
-        const totalCount = response.headers.get("X-Total-Count");
-        const linkHeader = response.headers.get("Link");
-
         const result = {
-          data: errors,
-          count: errors.length,
-          total: totalCount ? parseInt(totalCount, 10) : undefined,
-          next: linkHeader?.match(/<([^>]+)>/)?.[1],
+          data: response.body,
+          next_url: response.nextUrl ?? undefined,
+          data_count: response.body?.length,
+          total_count: response.totalCount ?? undefined,
         };
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],
@@ -1019,14 +1005,13 @@ export class BugsnagClient implements Client {
 
     register(
       {
-        title: "List Builds",
-        summary:
-          "List builds for a project with optional filtering by release stage",
+        title: "List Releases",
+        summary: "List releases for a project",
         purpose:
-          "Retrieve a list of build summaries to analyze deployment history and associated errors",
+          "Retrieve a list of release summaries to analyze deployment history and associated errors",
         useCases: [
-          "View recent builds to correlate with error spikes",
-          "Filter builds by stage (e.g. production, staging) for targeted analysis",
+          "View recent releases to correlate with error spikes",
+          "Filter releases by stage (e.g. production, staging) for targeted analysis",
         ],
         parameters: [
           ...(this.projectApiKey
@@ -1035,17 +1020,25 @@ export class BugsnagClient implements Client {
                 {
                   name: "projectId",
                   type: z.string(),
-                  description: "ID of the project to list builds for",
+                  description: "ID of the project to list releases for",
                   required: true,
                 },
               ]),
           {
             name: "releaseStage",
-            type: z.string(),
+            type: z.string().default("production"),
             description:
-              "Filter builds by this stage (e.g. production, staging)",
+              "Filter releases by this stage (e.g. production, staging), defaults to 'production'",
             required: false,
             examples: ["production", "staging"],
+          },
+          {
+            name: "visibleOnly",
+            type: z.boolean().default(false),
+            description:
+              "Whether to only include releases that are marked as visible in the dashboard, defaults to false",
+            required: false,
+            examples: ["true", "false"],
           },
           {
             name: "nextUrl",
@@ -1054,53 +1047,136 @@ export class BugsnagClient implements Client {
               "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. If provided, other parameters are ignored.",
             required: false,
             examples: [
-              "/projects/515fb9337c1074f6fd000003/builds?offset=30&per_page=30",
+              "/projects/515fb9337c1074f6fd000003/releases?offset=30&per_page=30",
             ],
           },
         ],
         examples: [
           {
-            description: "List all builds for a project",
+            description: "List production releases for a project",
             parameters: {},
-            expectedOutput: "JSON array of build objects with metadata",
+            expectedOutput:
+              "JSON array of release objects in the production stage",
           },
           {
-            description: "List production builds for a project",
+            description: "List staging releases for a project",
             parameters: {
-              releaseStage: "production",
+              releaseStage: "staging",
             },
             expectedOutput:
-              "JSON array of build objects in the production stage",
+              "JSON array of release objects in the staging stage",
           },
           {
             description: "Get the next page of results",
             parameters: {
               nextUrl:
-                "/projects/515fb9337c1074f6fd000003/builds?offset=30&per_page=30",
+                "/projects/515fb9337c1074f6fd000003/releases?offset=30&per_page=30",
             },
             expectedOutput:
-              "JSON array of build objects with metadata from the next page",
+              "JSON array of release objects with metadata from the next page",
           },
         ],
-        hints: ["For more detailed results use the Get Build tool"],
+        hints: [
+          "Use the Get Release tool to get more details on a specific release, including the builds it contains",
+          "The release stage defaults to 'production' if not specified",
+          "Use visibleOnly to filter out releases that have been marked as hidden in the dashboard",
+        ],
         readOnly: true,
         idempotent: true,
-        outputFormat: "JSON array of build summary objects with metadata",
+        outputFormat:
+          "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
       },
       async (args, _extra) => {
-        const project = await this.getInputProject(args.projectId);
-        const { builds, nextUrl } = await this.listBuilds(project.id, {
-          release_stage: args.releaseStage,
-          next_url: args.nextUrl,
-        });
+        const response = await this.listReleases(
+          (await this.getInputProject(args.projectId)).id,
+          {
+            release_stage_name: args.releaseStage,
+            visible_only: args.visibleOnly,
+            next_url: args.nextUrl,
+          },
+        );
 
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
-                builds,
-                next: nextUrl,
+                data: response.body,
+                next_url: response.nextUrl ?? undefined,
+                data_count: response.body?.length,
+                total_count: response.totalCount ?? undefined,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    register(
+      {
+        title: "Get Release",
+        summary:
+          "Get more details for a specific release by its ID, including source control information and associated builds",
+        purpose:
+          "Retrieve detailed information about a release for analysis and debugging",
+        useCases: [
+          "View release metadata such as version, source control info, and error counts",
+          "Analyze the stability data and targets for a release",
+          "See the builds that make up the release",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project containing the release",
+                  required: true,
+                },
+              ]),
+          {
+            name: "releaseId",
+            type: z.string(),
+            description: "ID of the release to retrieve",
+            required: true,
+            examples: ["5f8d0d55c9e77c0017a1b2c3"],
+          },
+        ],
+        examples: [
+          {
+            description: "Get details for a specific release",
+            parameters: {
+              releaseId: "5f8d0d55c9e77c0017a1b2c3",
+            },
+            expectedOutput:
+              "JSON object with release details including version, source control info, error counts and stability data.",
+          },
+        ],
+        hints: ["Release IDs can be found using the List releases tool"],
+        readOnly: true,
+        idempotent: true,
+        outputFormat:
+          "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
+      },
+      async (args, _extra) => {
+        if (!args.releaseId) throw new Error("releaseId argument is required");
+        const project = await this.getInputProject(args.projectId);
+        const releaseResponse = await this.getRelease(
+          project.id,
+          args.releaseId,
+        );
+        const buildsResponse = await this.listBuildsInRelease(
+          project.id,
+          args.releaseId,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                release: releaseResponse.body,
+                builds: buildsResponse.body,
               }),
             },
           ],
@@ -1156,224 +1232,12 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         if (!args.buildId) throw new Error("buildId argument is required");
-        const build = await this.getBuild(
+        const response = await this.getBuild(
           (await this.getInputProject(args.projectId)).id,
           args.buildId,
         );
         return {
-          content: [{ type: "text", text: JSON.stringify(build) }],
-        };
-      },
-    );
-
-    register(
-      {
-        title: "List Releases",
-        summary:
-          "List releases for a project with optional filtering by release stage",
-        purpose:
-          "Retrieve a list of release summaries to analyze deployment history and associated errors",
-        useCases: [
-          "View recent releases to correlate with error spikes",
-          "Filter releases by stage (e.g. production, staging) for targeted analysis",
-        ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project to list releases for",
-                  required: true,
-                },
-              ]),
-          {
-            name: "releaseStage",
-            type: z.string(),
-            description:
-              "Filter releases by this stage (e.g. production, staging)",
-            required: false,
-            examples: ["production", "staging"],
-          },
-          {
-            name: "visibleOnly",
-            type: z.boolean().default(true),
-            description:
-              "Whether to only include releases that are marked as visible (default: true)",
-            required: true,
-            examples: ["true", "false"],
-          },
-          {
-            name: "nextUrl",
-            type: z.string(),
-            description:
-              "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. If provided, other parameters are ignored.",
-            required: false,
-            examples: [
-              "/projects/515fb9337c1074f6fd000003/releases?offset=30&per_page=30",
-            ],
-          },
-        ],
-        examples: [
-          {
-            description: "List all releases for a project",
-            parameters: {},
-            expectedOutput: "JSON array of release objects with metadata",
-          },
-          {
-            description: "List production releases for a project",
-            parameters: {
-              releaseStage: "production",
-            },
-            expectedOutput:
-              "JSON array of release objects in the production stage",
-          },
-          {
-            description: "Get the next page of results",
-            parameters: {
-              nextUrl:
-                "/projects/515fb9337c1074f6fd000003/releases?offset=30&per_page=30",
-            },
-            expectedOutput:
-              "JSON array of release objects with metadata from the next page",
-          },
-        ],
-        hints: ["For more detailed results use the Get Release tool"],
-        readOnly: true,
-        idempotent: true,
-        outputFormat: "JSON array of release summary objects with metadata",
-      },
-      async (args, _extra) => {
-        const { releases, nextUrl } = await this.listReleases(
-          (await this.getInputProject(args.projectId)).id,
-          {
-            release_stage_name: args.releaseStage ?? "production",
-            visible_only: args.visibleOnly,
-            next_url: args.nextUrl ?? null,
-          },
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                releases,
-                next: nextUrl ?? null,
-              }),
-            },
-          ],
-        };
-      },
-    );
-
-    register(
-      {
-        title: "Get Release",
-        summary: "Get more details for a specific release by its ID",
-        purpose:
-          "Retrieve detailed information about a release for analysis and debugging",
-        useCases: [
-          "View release metadata such as version, source control info, and error counts",
-          "Analyze a specific release to correlate with error spikes or deployments",
-          "See the stability targets for a project and if the release meets them",
-        ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project containing the release",
-                  required: true,
-                },
-              ]),
-          {
-            name: "releaseId",
-            type: z.string(),
-            description: "ID of the release to retrieve",
-            required: true,
-            examples: ["5f8d0d55c9e77c0017a1b2c3"],
-          },
-        ],
-        examples: [
-          {
-            description: "Get details for a specific release",
-            parameters: {
-              releaseId: "5f8d0d55c9e77c0017a1b2c3",
-            },
-            expectedOutput:
-              "JSON object with release details including version, source control info, error counts and stability data.",
-          },
-        ],
-        hints: ["Release IDs can be found using the List releases tool"],
-        readOnly: true,
-        idempotent: true,
-        outputFormat:
-          "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
-      },
-      async (args, _extra) => {
-        if (!args.releaseId) throw new Error("releaseId argument is required");
-        const release = await this.getRelease(
-          (await this.getInputProject(args.projectId)).id,
-          args.releaseId,
-        );
-        return {
-          content: [{ type: "text", text: JSON.stringify(release) }],
-        };
-      },
-    );
-
-    register(
-      {
-        title: "List Builds in Release",
-        summary: "List builds associated with a specific release",
-        purpose:
-          "Retrieve a list of builds for a given release to analyze deployment history and associated errors",
-        useCases: [
-          "View builds within a release to correlate with error spikes",
-          "Analyze the composition of a release by examining its builds",
-        ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project containing the release",
-                  required: true,
-                },
-              ]),
-          {
-            name: "releaseId",
-            type: z.string(),
-            description: "ID of the release to list builds for",
-            required: true,
-            examples: ["5f8d0d55c9e77c0017a1b2c3"],
-          },
-        ],
-        examples: [
-          {
-            description: "List all builds in a specific release",
-            parameters: {
-              releaseId: "5f8d0d55c9e77c0017a1b2c3",
-            },
-            expectedOutput: "JSON array of build objects with metadata",
-          },
-        ],
-        hints: ["Release IDs can be found using the List releases tool"],
-        readOnly: true,
-        idempotent: true,
-        outputFormat: "JSON array of build summary objects with metadata",
-      },
-      async (args, _extra) => {
-        if (!args.releaseId) throw new Error("releaseId argument is required");
-        const builds = await this.listBuildsInRelease(args.releaseId);
-        return {
-          content: [{ type: "text", text: JSON.stringify(builds) }],
+          content: [{ type: "text", text: JSON.stringify(response.body) }],
         };
       },
     );

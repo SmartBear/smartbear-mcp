@@ -51,7 +51,7 @@ export interface ListProjectErrorsOptions {
   direction?: "asc" | "desc";
   per_page?: number;
   filters?: FilterObject; // Filters object as defined in the API spec
-  next?: string;
+  next_url?: string;
 }
 
 // Pivot-related interfaces based on the Data Access API
@@ -151,40 +151,27 @@ export class ErrorAPI extends BaseAPI {
   }
 
   /**
-   * View the latest Event on an Error
-   * GET /errors/{error_id}/latest_event
-   */
-  async viewLatestEventOnError(
-    errorId: string,
-    options: ViewLatestEventOnErrorOptions = {},
-  ): Promise<ApiResponse<ViewLatestEventOnErrorResponse>> {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(options)) {
-      if (value !== undefined) params.append(key, String(value));
-    }
-    const url = params.toString()
-      ? `/errors/${errorId}/latest_event?${params}`
-      : `/errors/${errorId}/latest_event`;
-    return (await this.request<ViewLatestEventOnErrorResponse>({
-      method: "GET",
-      url,
-    })) as ApiResponse<ViewLatestEventOnErrorResponse>;
-  }
-
-  /**
-   * List the Events on a Project
+   * Get the latest Event in a Project, with optional filters
    * GET /projects/{project_id}/events
    */
-  async listEventsOnProject(
+  async getLatestEventOnProject(
     projectId: string,
     queryString = "",
-  ): Promise<ApiResponse<Event[]>> {
+  ): Promise<ApiResponse<Event>> {
     const url = `/projects/${projectId}/events${queryString}`;
 
-    return await this.request<Event[]>({
+    const response = await this.request<Event[]>({
       method: "GET",
       url,
     });
+
+    return {
+      ...response,
+      body:
+        response.body && response.body.length > 0
+          ? response.body[0]
+          : undefined, // Return only the latest event
+    };
   }
 
   /**
@@ -220,8 +207,8 @@ export class ErrorAPI extends BaseAPI {
     let url = `/projects/${projectId}/errors`;
 
     // Next links need to be used as-is to ensure results are consistent, so only the page size can be modified
-    if (options.next !== undefined) {
-      const nextUrl = new URL(options.next);
+    if (options.next_url !== undefined) {
+      const nextUrl = new URL(options.next_url);
 
       if (options.per_page !== undefined) {
         nextUrl.searchParams.set("per_page", options.per_page.toString());
@@ -263,10 +250,13 @@ export class ErrorAPI extends BaseAPI {
       }
     }
 
-    return (await this.request<ErrorApiView[]>({
-      method: "GET",
-      url,
-    })) as ApiResponse<ErrorApiView[]>;
+    return (await this.request<ErrorApiView[]>(
+      {
+        method: "GET",
+        url,
+      },
+      false, // Paginate results
+    )) as ApiResponse<ErrorApiView[]>;
   }
 
   /**

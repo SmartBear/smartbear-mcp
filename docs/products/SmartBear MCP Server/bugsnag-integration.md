@@ -42,26 +42,18 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 
 ### List Releases
 
--   List the releases for a project.
--   Provides additional filtering by release stage.
+-   List the releases for a given release stage (defaults to "production").
+-   Optional filtering of hidden releases.
+-   Each release contains the stability score and target information.
 
 ### Get Release
 
--   Get detailed information about a specific release, including stability score.
-
-### List Builds
-
--   List all the builds in all releases for a project.
--   Provides additional filtering by release stage.
-
-### List Builds in Release
-
--   List the builds that make up a release.
--   Provides additional filtering by release stage.
+-   Get detailed information about a specific release, including source control information and metadata.
+-   The tool also returns a summary of the builds that make up the release.
 
 ### Get Build
 
--   Get detailed information about a specific build, including stability score.
+-   Get detailed information about a specific build, including source control information and metadata.
 
 ## Available Resources
 

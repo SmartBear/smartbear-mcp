@@ -269,14 +269,13 @@ describe("ApiHubAPI", () => {
       await expect(api.getPortals()).rejects.toThrow("Network error");
     });
 
-    it("should handle non-200 responses", async () => {
+    it("should throw on non-200 responses", async () => {
       fetchMock.mockResponseOnce(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
+        statusText: "Unauthorized",
       });
 
-      // The API doesn't handle HTTP errors explicitly, but we can test the response
-      const result = await api.getPortals();
-      expect(result).toEqual({ error: "Unauthorized" });
+      await expect(api.getPortals()).rejects.toThrow("HTTP 401");
     });
   });
 });
