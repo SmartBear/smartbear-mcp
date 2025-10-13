@@ -177,14 +177,15 @@ export class PactflowClient implements Client {
   }
 
   /**
-   * Retrieves AI status information for the current user
-   * and organization.
+   * Retrieve PactFlow AI entitlement information for the current user
+   * and organization when encountering 401 unauthorized errors.
+   * Use this to check AI entitlements and credits when AI operations fail.
    *
-   * @returns Entitlement containing AI status information, organization
+   * @returns Entitlement containing permissions, organization
    *   entitlements, and user entitlements.
    * @throws Error if the request fails or returns a non-OK response.
    */
-  async getAIStatus(): Promise<Entitlement> {
+  async checkAIEntitlements(): Promise<Entitlement> {
     const url = `${this.aiBaseUrl}/entitlement`;
 
     try {
@@ -196,7 +197,7 @@ export class PactflowClient implements Client {
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
         throw new Error(
-          `PactFlow AI Status Request Failed - status: ${response.status} ${response.statusText}${
+          `PactFlow AI Entitlements Request Failed - status: ${response.status} ${response.statusText}${
             errorText ? ` - ${errorText}` : ""
           }`,
         );
@@ -204,7 +205,9 @@ export class PactflowClient implements Client {
 
       return (await response.json()) as Entitlement;
     } catch (error) {
-      process.stderr.write(`[GetAICredits] Unexpected error: ${error}\n`);
+      process.stderr.write(
+        `[CheckAIEntitlements] Unexpected error: ${error}\n`,
+      );
       throw error;
     }
   }

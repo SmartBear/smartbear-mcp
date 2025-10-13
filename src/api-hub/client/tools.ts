@@ -18,6 +18,8 @@ import {
 import {
   ApiDefinitionParamsSchema,
   ApiSearchParamsSchema,
+  CreateApiFromTemplateParamsSchema,
+  CreateApiParamsSchema,
 } from "./registry-types.js";
 
 export interface ApiHubToolParams extends ToolParams {
@@ -103,5 +105,19 @@ export const TOOLS: ApiHubToolParams[] = [
       "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.",
     zodSchema: ApiDefinitionParamsSchema,
     handler: "getApiDefinition",
+  },
+  {
+    title: "Create or Update API",
+    summary:
+      "Create a new API or update an existing API in SwaggerHub Registry for API Hub for Design. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. APIs are always created with fixed values: version 1.0.0, private visibility, and automock disabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
+    zodSchema: CreateApiParamsSchema,
+    handler: "createOrUpdateApi",
+  },
+  {
+    title: "Create API from Template",
+    summary:
+      "Create a new API in SwaggerHub Registry using a predefined template. This endpoint creates APIs based on existing templates without requiring manual definition content. APIs are always created with fixed values: private visibility, no project assignment, and reconciliation enabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field and API details with SwaggerHub URL.",
+    zodSchema: CreateApiFromTemplateParamsSchema,
+    handler: "createApiFromTemplate",
   },
 ];

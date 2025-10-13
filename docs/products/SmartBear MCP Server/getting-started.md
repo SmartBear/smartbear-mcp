@@ -429,6 +429,8 @@ PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io \
 PACT_BROKER_TOKEN=your_pactflow_token \
 QMETRY_API_KEY=your_qmetry_key \
 QMETRY_BASE_URL=https://testmanagement.qmetry.com \
+ZEPHYR_API_TOKEN=your_zephyr_token \
+ZEPHYR_BASE_URL=https://api.zephyrscale.smartbear.com/v2 \
 npx @modelcontextprotocol/inspector node dist/index.js
 
 ```
@@ -479,3 +481,7 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "Get the QMetry Test Case details"
 -   "Get the QMetry Test Case detail for specific version"
 -   "Get the QMetry Test Case steps"
+
+### Zephyr Test Management
+
+-   "List all projects where Zephyr is enabled"
