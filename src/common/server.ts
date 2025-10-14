@@ -98,15 +98,17 @@ export class SmartBearMcpServer extends McpServer {
     }
   }
 
-  private getAnnotations(toolTitle: string, params: ToolParams): any {
-    const annotations: ToolAnnotations = {
+  private getAnnotations(
+    toolTitle: string,
+    params: ToolParams,
+  ): ToolAnnotations {
+    return {
       title: toolTitle,
       readOnlyHint: params.readOnly ?? true,
       destructiveHint: params.destructive ?? false,
       idempotentHint: params.idempotent ?? true,
       openWorldHint: params.openWorld ?? false,
     };
-    return annotations;
   }
 
   private getInputSchema(params: ToolParams): any {
@@ -121,7 +123,7 @@ export class SmartBearMcpServer extends McpServer {
       }
     }
 
-    return { args, ...this.schemaToRawShape(params.inputSchema) };
+    return { ...args, ...this.schemaToRawShape(params.inputSchema) };
   }
 
   private schemaToRawShape(schema: ZodTypeAny | undefined): ZodRawShape {
@@ -159,7 +161,7 @@ export class SmartBearMcpServer extends McpServer {
 
     let description = summary;
 
-    // Parameters if available otherwise use zodSchema
+    // Parameters if available otherwise use inputSchema
     if ((parameters ?? []).length > 0) {
       description += `\n\n**Parameters:**\n${parameters
         ?.map(

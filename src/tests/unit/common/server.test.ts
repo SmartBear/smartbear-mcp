@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag.js";
 import { SmartBearMcpServer } from "../../../common/server.js";
+import type { ToolParams } from "../../../common/types";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({
@@ -43,12 +44,12 @@ describe("SmartBearMcpServer", () => {
         examples: z.enum(["test_1", "test_2"]),
         constraints: z.enum(["test_1", "test_2"]),
       });
-      const toolparams = {
+      const toolParams: ToolParams = {
         title: "Test Tool",
         summary: "A test tool",
-        zodSchema: zSchema,
+        inputSchema: zSchema,
       };
-      const description = server.getDescription(toolparams);
+      const description = server.getDescription(toolParams);
       expect(description).toBe(`A test tool
 
 **Parameters:**

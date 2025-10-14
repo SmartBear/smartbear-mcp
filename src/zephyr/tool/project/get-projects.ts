@@ -1,5 +1,6 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ZodRawShape, z } from "zod";
+import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
   MaxResultsSchema,
@@ -22,13 +23,13 @@ export class GetProjects implements ZephyrTool {
     this.apiClient = apiClient;
   }
 
-  specification = {
+  specification: ToolParams = {
     title: "Get Projects",
     summary: "Get details of projects in Zephyr",
     readOnly: true,
     idempotent: true,
-    zodSchema: GetProjectsInputSchema,
-    outputZodSchema: ZephyrProjectListSchema,
+    inputSchema: GetProjectsInputSchema,
+    outputSchema: ZephyrProjectListSchema,
     examples: [
       {
         description: "Get the first 10 projects",

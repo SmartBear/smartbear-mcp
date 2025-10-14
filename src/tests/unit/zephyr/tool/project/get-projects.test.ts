@@ -16,10 +16,8 @@ describe("GetProjects", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.zodSchema).toBe(GetProjectsInputSchema);
-    expect(instance.specification.outputZodSchema).toBe(
-      ZephyrProjectListSchema,
-    );
+    expect(instance.specification.inputSchema).toBe(GetProjectsInputSchema);
+    expect(instance.specification.outputSchema).toBe(ZephyrProjectListSchema);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
