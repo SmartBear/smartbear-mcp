@@ -102,13 +102,14 @@ export class SmartBearMcpServer extends McpServer {
     toolTitle: string,
     params: ToolParams,
   ): ToolAnnotations {
-    return {
+    const annotations = {
       title: toolTitle,
       readOnlyHint: params.readOnly ?? true,
       destructiveHint: params.destructive ?? false,
       idempotentHint: params.idempotent ?? true,
       openWorldHint: params.openWorld ?? false,
     };
+    return annotations;
   }
 
   private getInputSchema(params: ToolParams): any {
