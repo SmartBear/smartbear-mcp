@@ -6,12 +6,12 @@ permissions:
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
 
 jobs:
   publish:
-    name: Publish package
+    name: Publish SmartBear MCP
     runs-on: ubuntu-24.04
     environment: Production
     steps:
@@ -59,10 +59,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # - name: Publish to npm
+      #   run: npm publish --access public
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: prepare mcp-publisher
         run: |
