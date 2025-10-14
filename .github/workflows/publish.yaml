@@ -6,8 +6,6 @@ permissions:
 
 on:
   workflow_dispatch:
-  # release:
-  #   types: [published]
 
 jobs:
   publish:
@@ -48,21 +46,21 @@ jobs:
             '.version = $v | .packages[0].version = $v' \
             server.json > server.json.tmp && mv server.json.tmp server.json
 
-      # - name: Build, tag, and push docker image
-      #   env:
-      #     IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
-      #   run: |
-      #     DEST=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}:${IMAGE_TAG}
-      #     docker build -t $DEST .
-      #     docker push $DEST
+      - name: Build, tag, and push docker image
+        env:
+          IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
+        run: |
+          DEST=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}:${IMAGE_TAG}
+          docker build -t $DEST .
+          docker push $DEST
 
-      # - name: Install dependencies
-      #   run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      # - name: Publish to npm
-      #   run: npm publish --access public
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: prepare mcp-publisher
         run: |
