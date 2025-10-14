@@ -16,9 +16,9 @@ import type { ZodRawShape, ZodType, ZodTypeAny } from "zod";
 export interface ToolParams {
   title: string;
   summary: string;
-  parameters?: Parameters; // either parameters or a zodSchema should be present
-  zodSchema?: ZodTypeAny;
-  outputZodSchema?: ZodTypeAny;
+  parameters?: Parameters; // either 'parameters' or an 'inputSchema' should be present
+  inputSchema?: ZodTypeAny;
+  outputSchema?: ZodTypeAny;
   purpose?: string;
   useCases?: string[];
   examples?: Array<{

@@ -18,7 +18,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Set QMetry Project Info",
     summary: "Set current QMetry project for your account",
     handler: QMetryToolsHandlers.SET_PROJECT_INFO,
-    zodSchema: ProjectArgsSchema,
+    inputSchema: ProjectArgsSchema,
     purpose:
       "Switch the active QMetry project context for the current session. " +
       "This tool sets the default project that will be used for all subsequent QMetry operations. " +
@@ -66,7 +66,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Fetch QMetry project information including viewId and folderPath needed for other operations",
     handler: QMetryToolsHandlers.FETCH_PROJECT_INFO,
-    zodSchema: ProjectArgsSchema,
+    inputSchema: ProjectArgsSchema,
     purpose:
       "Prerequisite tool that provides project configuration data required by other QMetry operations. " +
       "The project key to fetch info for. Use 'default' if not specified. " +
@@ -108,7 +108,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Fetch QMetry test cases - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_TEST_CASES,
-    zodSchema: TestCaseListArgsSchema,
+    inputSchema: TestCaseListArgsSchema,
     purpose:
       "Get test cases from QMetry. System automatically gets correct viewId from project info if not provided.",
     useCases: [
@@ -169,7 +169,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get detailed information for a specific QMetry test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS,
-    zodSchema: TestCaseDetailsArgsSchema,
+    inputSchema: TestCaseDetailsArgsSchema,
     purpose:
       "Retrieve comprehensive test case information including metadata, status, and basic properties",
     useCases: [
@@ -202,7 +202,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get QMetry test case details for a specific version by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS,
-    zodSchema: TestCaseVersionDetailsArgsSchema,
+    inputSchema: TestCaseVersionDetailsArgsSchema,
     purpose:
       "Retrieve version-specific information for a test case including history and changes",
     useCases: [
@@ -233,7 +233,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get detailed test case steps for a specific test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS,
-    zodSchema: TestCaseStepsArgsSchema,
+    inputSchema: TestCaseStepsArgsSchema,
     purpose:
       "Retrieve step-by-step instructions and expected results for manual execution of a test case",
     useCases: [

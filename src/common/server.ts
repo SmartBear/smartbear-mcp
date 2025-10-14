@@ -121,7 +121,7 @@ export class SmartBearMcpServer extends McpServer {
       }
     }
 
-    return { args, ...this.schemaToRawShape(params.zodSchema) };
+    return { args, ...this.schemaToRawShape(params.inputSchema) };
   }
 
   private schemaToRawShape(schema: ZodTypeAny | undefined): ZodRawShape {
@@ -143,7 +143,7 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   private getOutputSchema(params: ToolParams): any {
-    return this.schemaToRawShape(params.outputZodSchema);
+    return this.schemaToRawShape(params.outputSchema);
   }
 
   private getDescription(params: ToolParams): string {
@@ -152,7 +152,7 @@ export class SmartBearMcpServer extends McpServer {
       useCases,
       examples,
       parameters,
-      zodSchema,
+      inputSchema,
       hints,
       outputFormat,
     } = params;
@@ -172,11 +172,11 @@ export class SmartBearMcpServer extends McpServer {
         .join("\n")}`;
     }
 
-    if (zodSchema && zodSchema instanceof ZodObject) {
+    if (inputSchema && inputSchema instanceof ZodObject) {
       description += "\n\n**Parameters:**\n";
-      description += Object.keys(zodSchema.shape)
+      description += Object.keys(inputSchema.shape)
         .map((key) =>
-          this.formatParameterDescription(key, zodSchema.shape[key]),
+          this.formatParameterDescription(key, inputSchema.shape[key]),
         )
         .join("\n");
     }
