@@ -1,25 +1,9 @@
-import type { Configuration } from "../configuration.js";
-
-export type HttpMethod =
-  | "GET"
-  | "POST"
-  | "PUT"
-  | "PATCH"
-  | "DELETE"
-  | "OPTIONS"
-  | "HEAD";
-
-export interface RequestOptions {
-  method: HttpMethod;
-  url: string;
-  headers?: Record<string, string>;
-  body?: any;
-}
+import type { Configuration } from "./configuration.js";
 
 export interface ApiResponse<T> {
   status: number;
   headers: Headers;
-  body?: T;
+  body: T;
   nextUrl?: string | null;
   totalCount?: number | null;
 }
@@ -27,6 +11,7 @@ export interface ApiResponse<T> {
 // Utility to pick only allowed fields from an object
 export function pickFields<T>(obj: any, keys: (keyof T)[]): T {
   const result = {} as T;
+  if (!obj) return result;
   for (const key of keys) {
     if (key in obj) {
       result[key] = obj[key];
@@ -54,7 +39,7 @@ export function getNextUrlPathFromHeader(
 }
 
 // Utility to extract total count from headers
-export function getTotalCountFromHeader(headers: Headers): number | null {
+function getTotalCountFromHeader(headers: Headers): number | null {
   if (!headers) return null;
   const totalCount = headers.get("X-Total-Count");
   if (!totalCount) return null;
@@ -62,11 +47,56 @@ export function getTotalCountFromHeader(headers: Headers): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+// Utility to recursively convert object keys from snake_case to camelCase
+function convertKeysToCamelCase(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(convertKeysToCamelCase);
+  }
+
+  if (typeof obj === "object" && obj.constructor === Object) {
+    const converted: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
+        letter.toUpperCase(),
+      );
+      converted[camelKey] = convertKeysToCamelCase(value);
+    }
+    return converted;
+  }
+
+  return obj;
+}
+
 // Ensure URL is absolute
 // The MCP tools exposed use only the path for pagination
 // For making requests, we need to ensure the URL is absolute
 export function ensureFullUrl(url: string, basePath: string) {
   return url.startsWith("http") ? url : `${basePath}${url}`;
+}
+
+// Merge nextUrl query parameters with options query parameters (usually filters)
+export function getQueryParams(
+  nextUrl?: string | null,
+  options?: Record<string, any>,
+): Record<string, any> {
+  const nextOptions = { query: {} as Record<string, any> };
+  if (nextUrl) {
+    nextOptions.query = {};
+    if (!nextUrl.includes("?")) {
+      throw new Error("nextUrl must contains query parameters");
+    }
+    new URLSearchParams(nextUrl.split("?")[1]).forEach((value, key) => {
+      nextOptions.query[key] = value;
+    });
+  }
+  if (options) {
+    nextOptions.query = { ...nextOptions.query, ...options.query };
+  }
+  return nextOptions;
 }
 
 export class BaseAPI {
@@ -78,31 +108,75 @@ export class BaseAPI {
     this.filterFields = filterFields || [];
   }
 
-  async request<T = any>(
-    options: RequestOptions,
-    fetchAll: boolean = true,
+  async requestObject<T extends Record<string, any>>(
+    url: string,
+    options: Record<string, any> = {},
+    fields?: (keyof T)[],
   ): Promise<ApiResponse<T>> {
-    const headers: Record<string, string> = {
-      ...this.configuration.headers,
-      ...options.headers,
+    if (!this.configuration.basePath) {
+      throw new Error("Base path is not configured for API requests");
+    }
+    if (this.configuration.headers) {
+      options.headers = {
+        ...this.configuration.headers,
+        ...options.headers,
+      };
+    }
+    const response: Response = await fetch(
+      ensureFullUrl(url, this.configuration.basePath),
+      {
+        ...options,
+        headers: {
+          ...options.headers,
+          ...this.configuration.headers,
+        },
+      },
+    );
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Request failed with status ${response.status}: ${errorText}`,
+      );
+    }
+
+    const apiResponse = {
+      status: response.status,
+      headers: response.headers,
+      body: convertKeysToCamelCase(await response.json()),
     };
 
-    headers.Authorization = `token ${this.configuration.authToken}`;
+    if (fields) {
+      apiResponse.body = pickFields<T>(apiResponse.body, fields);
+    }
 
-    const fetchOptions: RequestInit = {
-      method: options.method,
-      headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    };
+    if (this.filterFields) {
+      this.sanitizeResponse(apiResponse.body);
+    }
+
+    return apiResponse;
+  }
+
+  async requestArray<T extends Record<string, any>>(
+    url: string,
+    options: Record<string, any> = {},
+    fetchAll: boolean = true,
+    fields?: (keyof T)[],
+  ): Promise<ApiResponse<T[]>> {
     let results: T[] = [];
-    let nextUrl: string | null = options.url;
-    let apiResponse: ApiResponse<T>;
+    let nextUrl: string | null = url;
+    let apiResponse: ApiResponse<T[]>;
     do {
       if (!this.configuration.basePath) {
         throw new Error("Base path is not configured for API requests");
       }
       nextUrl = ensureFullUrl(nextUrl, this.configuration.basePath);
-      const response: Response = await fetch(nextUrl, fetchOptions);
+      const response: Response = await fetch(nextUrl, {
+        ...options,
+        headers: {
+          ...options.headers,
+          ...this.configuration.headers,
+        },
+      });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
@@ -110,34 +184,35 @@ export class BaseAPI {
         );
       }
 
-      apiResponse = {
-        status: response.status,
-        headers: response.headers,
-      };
-
-      const data: T = await response.json();
+      const data: T = convertKeysToCamelCase(await response.json());
       nextUrl = getNextUrlPathFromHeader(
         response.headers,
         this.configuration.basePath,
       );
-      if (Array.isArray(data)) {
-        results = results.concat(data);
-        apiResponse.nextUrl = nextUrl;
-      } else {
-        apiResponse.body = data;
+      if (!Array.isArray(data)) {
+        throw new Error("Expected response to be an array");
       }
+      results = results.concat(data);
+
+      apiResponse = {
+        status: response.status,
+        headers: response.headers,
+        nextUrl: nextUrl,
+        totalCount: getTotalCountFromHeader(response.headers),
+        body: results,
+      };
     } while (fetchAll && nextUrl);
 
-    if (results.length > 0) {
-      apiResponse.body = results as T;
-      apiResponse.totalCount = getTotalCountFromHeader(apiResponse.headers);
+    if (fields) {
+      apiResponse.body = pickFieldsFromArray<T>(apiResponse.body, fields);
     }
 
-    if (Array.isArray(apiResponse.body)) {
-      apiResponse.body.forEach(this.sanitizeResponse.bind(this));
-    } else {
-      this.sanitizeResponse(apiResponse.body ?? {});
+    if (this.filterFields) {
+      apiResponse.body.forEach((item) => {
+        this.sanitizeResponse(item);
+      });
     }
+
     return apiResponse;
   }
 
