@@ -18,6 +18,10 @@ import type {
   ApiSearchResponse,
   ApiSpecification,
   ApisJsonResponse,
+  CreateApiFromTemplateParams,
+  CreateApiFromTemplateResponse,
+  CreateApiParams,
+  CreateApiResponse,
 } from "./registry-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
@@ -69,14 +73,25 @@ export class ApiHubAPI {
       try {
         return (await response.json()) as T;
       } catch (error) {
-        console.warn("Failed to parse JSON response:", error);
+        console.warn("Failed to parse JSON response (declared JSON):", error);
         return defaultReturn;
       }
     }
 
-    // Fallback for non-JSON responses
+    // Fallback: read text and attempt heuristic JSON parse
     const text = await response.text();
-    return text ? { message: text } : defaultReturn;
+    if (!text) return defaultReturn;
+    const trimmed = text.trim();
+    const firstChar = trimmed[0];
+    if (firstChar === "{" || firstChar === "[") {
+      try {
+        return JSON.parse(trimmed) as T;
+      } catch (error) {
+        console.warn("Heuristic JSON parse failed:", error);
+        return { message: text };
+      }
+    }
+    return { message: text };
   }
 
   /**
@@ -106,8 +121,11 @@ export class ApiHubAPI {
       method: "GET",
       headers: this.headers,
     });
-
-    return response.json() as Promise<PortalsListResponse>;
+    const result = await this.handleResponse<PortalsListResponse>(
+      response,
+      [] as unknown as PortalsListResponse,
+    );
+    return result as PortalsListResponse;
   }
 
   async createPortal(body: CreatePortalArgs): Promise<Portal> {
@@ -116,8 +134,11 @@ export class ApiHubAPI {
       headers: this.headers,
       body: JSON.stringify(body),
     });
-
-    return response.json() as Promise<Portal>;
+    const result = await this.handleResponse<Portal>(response);
+    if (!("id" in (result as any))) {
+      throw new Error("Unexpected empty response creating portal");
+    }
+    return result as Portal;
   }
 
   async getPortal(portalId: string): Promise<Portal> {
@@ -128,15 +149,27 @@ export class ApiHubAPI {
         headers: this.headers,
       },
     );
-
-    return response.json() as Promise<Portal>;
+    const result = await this.handleResponse<Portal>(response);
+    if (!("id" in (result as any))) {
+      throw new Error("Portal not found or empty response");
+    }
+    return result as Portal;
   }
 
   async deletePortal(portalId: string): Promise<void> {
-    await fetch(`${this.config.portalBasePath}/portals/${portalId}`, {
-      method: "DELETE",
-      headers: this.headers,
-    });
+    const response = await fetch(
+      `${this.config.portalBasePath}/portals/${portalId}`,
+      {
+        method: "DELETE",
+        headers: this.headers,
+      },
+    );
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `API Hub deletePortal failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+      );
+    }
   }
 
   async updatePortal(
@@ -163,8 +196,11 @@ export class ApiHubAPI {
         headers: this.headers,
       },
     );
-
-    return response.json() as Promise<ProductsListResponse>;
+    const result = await this.handleResponse<ProductsListResponse>(
+      response,
+      [] as unknown as ProductsListResponse,
+    );
+    return result as ProductsListResponse;
   }
 
   async createPortalProduct(
@@ -179,8 +215,11 @@ export class ApiHubAPI {
         body: JSON.stringify(body),
       },
     );
-
-    return response.json() as Promise<Product>;
+    const result = await this.handleResponse<Product>(response);
+    if (!("id" in (result as any))) {
+      throw new Error("Unexpected empty response creating product");
+    }
+    return result as Product;
   }
 
   async getPortalProduct(productId: string): Promise<Product> {
@@ -191,8 +230,11 @@ export class ApiHubAPI {
         headers: this.headers,
       },
     );
-
-    return response.json() as Promise<Product>;
+    const result = await this.handleResponse<Product>(response);
+    if (!("id" in (result as any))) {
+      throw new Error("Product not found or empty response");
+    }
+    return result as Product;
   }
 
   async deletePortalProduct(
@@ -205,7 +247,6 @@ export class ApiHubAPI {
         headers: this.headers,
       },
     );
-
     return this.handleResponse(response);
   }
 
@@ -221,22 +262,9 @@ export class ApiHubAPI {
         body: JSON.stringify(body),
       },
     );
-
-    // Custom error handling for updatePortalProduct
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      throw new Error(
-        `API Hub updatePortalProduct failed - status: ${response.status} ${response.statusText}${
-          errorText ? ` - ${errorText}` : ""
-        }`,
-      );
-    }
-
-    // Use handleResponse but with custom default return value
-    return this.handleResponseWithoutErrorCheck<Product, SuccessResponse>(
-      response,
-      { success: true },
-    );
+    return this.handleResponse<Product | SuccessResponse>(response, {
+      success: true,
+    } as SuccessResponse);
   }
 
   /**
@@ -248,15 +276,6 @@ export class ApiHubAPI {
    * @param defaultReturn - Default value to return for empty responses
    * @returns Parsed response data or fallback value
    */
-  private async handleResponseWithoutErrorCheck<
-    T = unknown,
-    D = Record<string, never>,
-  >(
-    response: Response,
-    defaultReturn: D = {} as D,
-  ): Promise<T | D | FallbackResponse> {
-    return this.parseResponse<T, D>(response, defaultReturn);
-  }
 
   // Registry API methods for SwaggerHub Design functionality
 
@@ -368,6 +387,140 @@ export class ApiHubAPI {
       return response.json();
     } else {
       return response.text();
+    }
+  }
+
+  /**
+   * Create or Update API in SwaggerHub Registry
+   * @param params Parameters for creating or updating the API including owner, name, version, specification, and definition
+   * @returns Created or updated API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
+   */
+  async createOrUpdateApi(params: CreateApiParams): Promise<CreateApiResponse> {
+    // Determine the format of the definition
+    let contentType: string;
+    let requestBody: string;
+
+    // Auto-detect format from the definition content
+    const format = this.detectDefinitionFormat(params.definition);
+
+    if (format === "yaml") {
+      contentType = "application/yaml";
+      requestBody = params.definition; // Send YAML as-is
+    } else {
+      contentType = "application/json";
+      // For JSON, parse and stringify to ensure valid JSON
+      try {
+        const parsedDefinition = JSON.parse(params.definition);
+        requestBody = JSON.stringify(parsedDefinition);
+      } catch (error) {
+        throw new Error(
+          `Invalid JSON format in definition: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        );
+      }
+    }
+
+    // Construct the URL with query parameters
+    // Fixed values: visibility=private, automock=false, version=1.0.0
+    const searchParams = new URLSearchParams();
+    searchParams.append("isPrivate", "true");
+
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
+      params.owner,
+    )}/${encodeURIComponent(params.apiName)}?${searchParams.toString()}`;
+
+    // Use POST method with the appropriate content type
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        "Content-Type": contentType,
+      },
+      body: requestBody,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `SwaggerHub Registry API createOrUpdateApi failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    // Determine operation type based on HTTP status code
+    const operation = response.status === 201 ? "create" : "update";
+
+    // Return formatted response with the required fields
+    // Fixed version is always 1.0.0
+    return {
+      owner: params.owner,
+      apiName: params.apiName,
+      version: "1.0.0",
+      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}/1.0.0`,
+      operation,
+    };
+  }
+
+  /**
+   * Create API from Template in SwaggerHub Registry
+   * @param params Parameters for creating API from template including owner, api name, and template
+   * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
+   */
+  async createApiFromTemplate(
+    params: CreateApiFromTemplateParams,
+  ): Promise<CreateApiFromTemplateResponse> {
+    // Construct the URL with query parameters
+    // Fixed values: visibility=private, no project, noReconcile=false
+    const searchParams = new URLSearchParams();
+    searchParams.append("isPrivate", "true");
+    searchParams.append("template", params.template);
+
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
+      params.owner,
+    )}/${encodeURIComponent(params.apiName)}/.template?${searchParams.toString()}`;
+
+    // Use POST method for template creation
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `SwaggerHub Registry API createApiFromTemplate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    // Determine operation type based on HTTP status code
+    const operation = response.status === 201 ? "create" : "update";
+
+    // Return formatted response with the required fields
+    return {
+      owner: params.owner,
+      apiName: params.apiName,
+      template: params.template,
+      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}`,
+      operation,
+    };
+  }
+
+  /**
+   * Auto-detect the format of an API definition string
+   * @param definition The API definition content
+   * @returns 'json' or 'yaml'
+   */
+  private detectDefinitionFormat(definition: string): "json" | "yaml" {
+    const trimmed = definition.trim();
+    if (!trimmed) {
+      throw new Error("Empty definition content provided");
+    }
+
+    try {
+      JSON.parse(trimmed);
+      return "json";
+    } catch {
+      return "yaml";
     }
   }
 }

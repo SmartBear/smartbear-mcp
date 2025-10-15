@@ -343,7 +343,10 @@ export class ProjectAPI extends BaseAPI {
    * @param opts Options for listing releases, including filtering by release stage.
    * @returns A promise that resolves to an array of `ListReleasesResponse` objects.
    */
-  async listBuilds(projectId: string, opts: ListBuildsOptions) {
+  async listBuilds(
+    projectId: string,
+    opts: ListBuildsOptions,
+  ): Promise<ApiResponse<BuildSummaryResponse[]>> {
     const url =
       opts.next_url ??
       `/projects/${projectId}/releases${opts.release_stage ? `?release_stage=${opts.release_stage}` : ""}`;
@@ -354,7 +357,6 @@ export class ProjectAPI extends BaseAPI {
       },
       false, // Paginate results
     );
-
     return {
       ...response,
       body: pickFieldsFromArray<BuildSummaryResponse>(
@@ -371,7 +373,10 @@ export class ProjectAPI extends BaseAPI {
    * @param buildId The ID of the release to retrieve.
    * @returns A promise that resolves to the release data.
    */
-  async getBuild(projectId: string, buildId: string) {
+  async getBuild(
+    projectId: string,
+    buildId: string,
+  ): Promise<ApiResponse<BuildResponse>> {
     const url = `/projects/${projectId}/releases/${buildId}`;
     return await this.request<BuildResponse>({
       method: "GET",
@@ -386,7 +391,10 @@ export class ProjectAPI extends BaseAPI {
    * @param opts Options for listing releases, including filtering by release stage and visibility.
    * @returns A promise that resolves to an array of `ReleaseSummaryResponse` objects.
    */
-  async listReleases(projectId: string, opts: ListReleasesOptions) {
+  async listReleases(
+    projectId: string,
+    opts: ListReleasesOptions,
+  ): Promise<ApiResponse<ReleaseSummaryResponse[]>> {
     const url =
       opts.next_url ??
       `/projects/${projectId}/release_groups?` +
@@ -416,7 +424,7 @@ export class ProjectAPI extends BaseAPI {
    * @param releaseId The ID of the release to retrieve.
    * @returns A promise that resolves to the release data.
    */
-  async getRelease(releaseId: string) {
+  async getRelease(releaseId: string): Promise<ApiResponse<ReleaseResponse>> {
     const url = `/release_groups/${releaseId}`;
     return await this.request<ReleaseResponse>({
       method: "GET",
@@ -430,7 +438,9 @@ export class ProjectAPI extends BaseAPI {
    * @param releaseId The ID of the release group.
    * @return A promise that resolves to an array of `BuildResponse` objects.
    */
-  async listBuildsInRelease(releaseId: string) {
+  async listBuildsInRelease(
+    releaseId: string,
+  ): Promise<ApiResponse<BuildResponse[]>> {
     const url = `/release_groups/${releaseId}/releases`;
     return await this.request<BuildResponse[]>(
       {

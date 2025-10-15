@@ -1,4 +1,4 @@
-The SmartBear MCP Server provides access to multiple capabilities across our API Hub, Test Hub, QMetry, and BugSnag, all through dedicated tools and resources.
+The SmartBear MCP Server provides access to multiple capabilities across our API Hub, Test Hub, QMetry, Zephyr, and BugSnag, all through dedicated tools and resources.
 
 ![hubs.png](./images/embedded/hubs.png)
 
@@ -9,3 +9,4 @@ The SmartBear MCP Server provides access to multiple capabilities across our API
 -   [Test Hub](https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration) - provides test management and execution capabilities
 -   [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - provides error monitoring and debugging capabilities
 -   [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - provides QMetry Test Management capabilities
+-   [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
