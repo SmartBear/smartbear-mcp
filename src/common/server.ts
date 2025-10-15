@@ -18,6 +18,7 @@ import {
   type ZodTypeAny,
   ZodUnion,
 } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import Bugsnag from "../common/bugsnag.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
 import type { Client, ToolParams } from "./types.js";
@@ -149,6 +150,22 @@ export class SmartBearMcpServer extends McpServer {
     return this.schemaToRawShape(params.outputSchema);
   }
 
+  private getOutputDescription(
+    outputFormat: string | undefined,
+    outputSchema: ZodTypeAny | undefined,
+  ): string {
+    if (outputSchema && outputSchema instanceof ZodObject) {
+      const outputJsonSchema = JSON.stringify(zodToJsonSchema(outputSchema));
+      return (
+        "\n\n**Output JSON Schema:**\n ```json\n" + outputJsonSchema + "\n```"
+      );
+    }
+    if (outputFormat) {
+      return `\n\n**Output Format:** ${outputFormat}`;
+    }
+    return "";
+  }
+
   private getDescription(params: ToolParams): string {
     const {
       summary,
@@ -158,6 +175,7 @@ export class SmartBearMcpServer extends McpServer {
       inputSchema,
       hints,
       outputFormat,
+      outputSchema,
     } = params;
 
     let description = summary;
@@ -184,8 +202,8 @@ export class SmartBearMcpServer extends McpServer {
         .join("\n");
     }
 
-    if (outputFormat) {
-      description += `\n\n**Output Format:** ${outputFormat}`;
+    if (outputFormat || outputSchema) {
+      description += this.getOutputDescription(outputFormat, outputSchema);
     }
 
     // Use Cases
