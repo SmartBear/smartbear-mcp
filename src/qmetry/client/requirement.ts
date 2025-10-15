@@ -2,8 +2,10 @@ import { QMETRY_DEFAULTS } from "../config/constants.js";
 import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import {
   DEFAULT_FETCH_REQUIREMENT_DETAILS_PAYLOAD,
+  DEFAULT_FETCH_REQUIREMENTS_LINKED_TO_TESTCASE_PAYLOAD,
   DEFAULT_FETCH_REQUIREMENTS_PAYLOAD,
   type FetchRequirementDetailsPayload,
+  type FetchRequirementsLinkedToTestCasePayload,
   type FetchRequirementsPayload,
 } from "../types/requirements.js";
 import { qmetryRequest } from "./api/client-api.js";
@@ -90,6 +92,42 @@ export async function fetchRequirementDetails(
   return qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.REQUIREMENT.GET_RQ_DETAILS,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Fetches requirements linked to a specific test case.
+ * @throws If `tcID` is missing/invalid.
+ */
+export async function fetchRequirementsLinkedToTestCase(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchRequirementsLinkedToTestCasePayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: FetchRequirementsLinkedToTestCasePayload = {
+    ...DEFAULT_FETCH_REQUIREMENTS_LINKED_TO_TESTCASE_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.tcID !== "number") {
+    throw new Error(
+      "[fetchRequirementsLinkedToTestCase] Missing or invalid required parameter: 'tcID'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.REQUIREMENT.GET_RQ_LINKED_TO_TC,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

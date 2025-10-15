@@ -44,6 +44,14 @@ export interface FetchTestCasesLinkedToRequirementPayload
   getColumns?: boolean; // true to get column information
 }
 
+export interface FetchTestCaseExecutionsPayload
+  extends PaginationPayload,
+    FilterPayload,
+    Pick<FolderPayload, "scope"> {
+  tcid: number; // required - numeric ID of test case
+  tcversion?: number; // optional - version number of test case
+}
+
 export const DEFAULT_FETCH_TESTCASES_PAYLOAD: Omit<
   FetchTestCasesPayload,
   "viewId" | "folderPath"
@@ -89,4 +97,13 @@ export const DEFAULT_FETCH_TESTCASES_LINKED_TO_REQUIREMENT_PAYLOAD: Omit<
   tcFolderPath: "",
   getSubEntities: true,
   getColumns: true,
+};
+
+export const DEFAULT_FETCH_TESTCASE_EXECUTIONS_PAYLOAD: Omit<
+  FetchTestCaseExecutionsPayload,
+  "tcid"
+> = {
+  ...DEFAULT_PAGINATION,
+  ...DEFAULT_FILTER,
+  scope: DEFAULT_FOLDER_OPTIONS.scope,
 };

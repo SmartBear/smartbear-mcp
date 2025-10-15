@@ -206,7 +206,7 @@ describe("requirement API clients", () => {
       await expect(
         fetchRequirementDetails(token, baseUrl, projectKey, payload),
       ).rejects.toThrow(
-        /QMetry API request failed \(404\): Requirement not found/,
+        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
       );
     });
 

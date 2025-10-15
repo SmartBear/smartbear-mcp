@@ -2,11 +2,13 @@ import { QMETRY_DEFAULTS } from "../config/constants.js";
 import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import {
   DEFAULT_FETCH_TESTCASE_DETAILS_PAYLOAD,
+  DEFAULT_FETCH_TESTCASE_EXECUTIONS_PAYLOAD,
   DEFAULT_FETCH_TESTCASE_STEPS_PAYLOAD,
   DEFAULT_FETCH_TESTCASE_VERSION_DETAILS_PAYLOAD,
   DEFAULT_FETCH_TESTCASES_LINKED_TO_REQUIREMENT_PAYLOAD,
   DEFAULT_FETCH_TESTCASES_PAYLOAD,
   type FetchTestCaseDetailsPayload,
+  type FetchTestCaseExecutionsPayload,
   type FetchTestCaseStepsPayload,
   type FetchTestCasesLinkedToRequirementPayload,
   type FetchTestCasesPayload,
@@ -204,6 +206,42 @@ export async function fetchTestCasesLinkedToRequirement(
   return qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.TESTCASE.GET_TC_LINKED_TO_RQ,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Fetches executions for a specific test case.
+ * @throws If `tcid` is missing/invalid.
+ */
+export async function fetchTestCaseExecutions(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchTestCaseExecutionsPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: FetchTestCaseExecutionsPayload = {
+    ...DEFAULT_FETCH_TESTCASE_EXECUTIONS_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.tcid !== "number") {
+    throw new Error(
+      "[fetchTestCaseExecutions] Missing or invalid required parameter: 'tcid'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTCASE.GET_TC_EXECUTIONS,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

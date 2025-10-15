@@ -2,16 +2,20 @@ import type { ToolParams } from "../../common/types.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
 import {
   BuildArgsSchema,
+  IssuesLinkedToTestCaseArgsSchema,
   PlatformArgsSchema,
   ProjectArgsSchema,
   ReleasesCyclesArgsSchema,
   RequirementDetailsArgsSchema,
   RequirementListArgsSchema,
+  RequirementsLinkedToTestCaseArgsSchema,
   TestCaseDetailsArgsSchema,
+  TestCaseExecutionsArgsSchema,
   TestCaseListArgsSchema,
   TestCaseStepsArgsSchema,
   TestCasesLinkedToRequirementArgsSchema,
   TestCaseVersionDetailsArgsSchema,
+  TestSuitesForTestCaseArgsSchema,
 } from "../types/common.js";
 
 export interface QMetryToolParams extends ToolParams {
@@ -528,6 +532,108 @@ export const TOOLS: QMetryToolParams[] = [
     idempotent: true,
   },
   {
+    title: "Fetch Test Case Executions",
+    summary: "Get execution records for a specific test case by numeric ID",
+    handler: QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
+    zodSchema: TestCaseExecutionsArgsSchema,
+    purpose:
+      "Retrieve execution history and results for a specific test case. " +
+      "This tool provides detailed execution information including test suite names, platforms, " +
+      "execution status, executed by, project, release, cycle, execution date, and test case versions.",
+    useCases: [
+      "Get execution history for a specific test case",
+      "Retrieve test case execution results for reporting",
+      "Filter executions by test suite, platform, or execution status",
+      "Get execution data for test case analysis",
+      "Monitor test case execution trends over time",
+      "Filter executions by release, cycle, or execution date",
+      "Get execution details for specific test case versions",
+      "Audit test execution history for compliance",
+      "Analyze test case execution performance across different environments",
+      "Track test execution by specific users or teams",
+    ],
+    examples: [
+      {
+        description: "Get all executions for test case ID 1223922",
+        parameters: { tcid: 1223922 },
+        expectedOutput:
+          "List of execution records for test case with execution details, status, and metadata",
+      },
+      {
+        description: "Get executions for specific test case version",
+        parameters: { tcid: 1223922, tcversion: 2 },
+        expectedOutput: "Execution records for version 2 of the test case",
+      },
+      {
+        description: "Filter executions by test suite and platform",
+        parameters: {
+          tcid: 1223922,
+          filter:
+            '[{"value":"Sample Test Suite","type":"string","field":"testSuiteName"},{"value":[12345],"type":"list","field":"platformID"}]',
+        },
+        expectedOutput:
+          "Filtered execution records matching test suite and platform criteria",
+      },
+      {
+        description: "Filter executions by execution status",
+        parameters: {
+          tcid: 1223922,
+          filter:
+            '[{"value":["PASS"],"type":"list","field":"executionStatus"}]',
+        },
+        expectedOutput: "Execution records with PASS status only",
+      },
+      {
+        description: "Filter executions by release and cycle",
+        parameters: {
+          tcid: 1223922,
+          filter:
+            '[{"value":[55178],"type":"list","field":"release"},{"value":[111577],"type":"list","field":"cycle"}]',
+        },
+        expectedOutput:
+          "Execution records filtered by specific release and cycle",
+      },
+      {
+        description: "Filter executions by date range",
+        parameters: {
+          tcid: 1223922,
+          filter:
+            '[{"value":"2024-01-01","type":"date","field":"executedDate","comparison":"gt"},{"value":"2024-12-31","type":"date","field":"executedDate","comparison":"lt"}]',
+        },
+        expectedOutput: "Execution records within the specified date range",
+      },
+      {
+        description: "Filter executions by user",
+        parameters: {
+          tcid: 1223922,
+          filter: '[{"value":["john.doe"],"type":"list","field":"executedBy"}]',
+        },
+        expectedOutput: "Execution records executed by specific user",
+      },
+    ],
+    hints: [
+      "This API requires a numeric tcid parameter, not entity key",
+      "If user provides entityKey (e.g., MAC-TC-1684), first call FETCH_TEST_CASES with filter on entityKeyId to resolve the tcid",
+      "After resolving entityKey → tcid, call this tool with the resolved numeric tcid",
+      "tcversion parameter is optional - omit to get executions for all versions",
+      "FILTER CAPABILITIES: Support extensive filtering by test suite, platform, status, user, release, cycle, dates, and archive status",
+      "FILTER FIELDS: testSuiteName (string), platformID (list), executionStatus (list), executedBy (list), project (list), release (list), cycle (list), executedDate (date with comparison), isPlatformArchived (list), isTestSuiteArchived (list), executedVersion (numeric)",
+      "DATE FILTERING: Use 'gt' (greater than) and 'lt' (less than) comparisons for executedDate field",
+      "EXECUTION STATUS: Common values include 'PASS', 'FAIL', 'BLOCKED', 'NOT_EXECUTED', 'WIP' (verify with your QMetry instance)",
+      "PLATFORM/SUITE ARCHIVE: Use [1,0] for both archived and non-archived, [1] for archived only, [0] for active only",
+      "Multiple filter conditions are combined with AND logic",
+      "Use pagination for large execution result sets (start, page, limit parameters)",
+      "Get platform IDs from FETCH_PLATFORMS tool and release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool",
+      "This tool is essential for test execution reporting, trend analysis, and compliance auditing",
+      "Execution data includes timestamps, user information, environment details, and test results",
+      "Use scope parameter to define retrieval context (project, folder, release, cycle)",
+    ],
+    outputFormat:
+      "JSON object with executions array containing execution records, status, timestamps, and metadata",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
     title: "Fetch Requirements",
     summary:
       "Fetch QMetry requirements - automatically handles viewId resolution based on project",
@@ -937,6 +1043,350 @@ export const TOOLS: QMetryToolParams[] = [
     ],
     outputFormat:
       "JSON object with test cases array, traceability information, and pagination metadata",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Requirements Linked to Test Case",
+    summary:
+      "Get requirements that are linked (or not linked) to a specific test case in QMetry",
+    handler: QMetryToolsHandlers.FETCH_REQUIREMENTS_LINKED_TO_TESTCASE,
+    zodSchema: RequirementsLinkedToTestCaseArgsSchema,
+    purpose:
+      "Retrieve requirements that have traceability links to a specific test case. " +
+      "This tool is essential for test case traceability analysis, coverage verification, " +
+      "and impact analysis when test cases change. You can get linked or unlinked requirements, " +
+      "filter by various criteria for comprehensive traceability reporting.",
+    useCases: [
+      "Get all requirements linked to a specific test case for traceability analysis",
+      "Find requirements that are NOT linked to a test case (gap analysis)",
+      "Verify test case coverage by checking linked requirements",
+      "Impact analysis - see which requirements are affected when a test case changes",
+      "Generate traceability matrix between test cases and requirements",
+      "Filter linked requirements by various criteria",
+      "Audit test case-requirement relationships for compliance",
+      "Identify orphaned requirements or test cases without proper links",
+      "Plan requirement validation based on test case-requirement associations",
+      "Quality assurance - ensure all test cases have proper requirement coverage",
+    ],
+    examples: [
+      {
+        description: "Get all requirements linked to test case ID 594294",
+        parameters: { tcID: 594294 },
+        expectedOutput:
+          "List of requirements that are linked to test case MAC-TC-1684",
+      },
+      {
+        description: "Get requirements NOT linked to test case (gap analysis)",
+        parameters: { tcID: 594294, getLinked: false },
+        expectedOutput:
+          "List of requirements that are NOT linked to test case MAC-TC-1684",
+      },
+      {
+        description: "Get linked requirements from specific folder",
+        parameters: {
+          tcID: 594294,
+          rqFolderPath: "/CodeSnippets",
+        },
+        expectedOutput:
+          "Linked requirements located in the '/CodeSnippets' folder",
+      },
+      {
+        description: "Search linked requirements by entity key",
+        parameters: {
+          tcID: 594294,
+          filter:
+            '[{"type":"string","value":"MAC-RQ-730,MAC-RQ-731","field":"entityKeyId"}]',
+        },
+        expectedOutput: "Linked requirements matching specific entity keys",
+      },
+      {
+        description: "Filter linked requirements by status",
+        parameters: {
+          tcID: 594294,
+          filter:
+            '[{"type":"list","value":[1,2],"field":"requirementStateAlias"}]',
+        },
+        expectedOutput: "Linked requirements with Open or Approved status",
+      },
+      {
+        description: "Filter linked requirements by priority",
+        parameters: {
+          tcID: 594294,
+          filter: '[{"type":"list","value":[1],"field":"priorityAlias"}]',
+        },
+        expectedOutput: "Linked requirements with High priority",
+      },
+      {
+        description: "Filter linked requirements by archive status",
+        parameters: {
+          tcID: 594294,
+          filter: '[{"type":"list","value":[0],"field":"isArchived"}]',
+        },
+        expectedOutput: "Active (non-archived) linked requirements",
+      },
+      {
+        description: "Search linked requirements by name content",
+        parameters: {
+          tcID: 594294,
+          filter: '[{"type":"string","value":"authentication","field":"name"}]',
+        },
+        expectedOutput:
+          "Linked requirements with 'authentication' in their name",
+      },
+      {
+        description: "Filter linked requirements by test case version",
+        parameters: {
+          tcID: 594294,
+          filter: '[{"type":"string","value":"1","field":"tcVersion"}]',
+        },
+        expectedOutput: "Requirements linked to version 1 of the test case",
+      },
+      {
+        description: "Filter linked requirements by release and cycle",
+        parameters: {
+          tcID: 594294,
+          filter:
+            '[{"type":"list","value":[55178],"field":"release"},{"type":"list","value":[111577],"field":"cycle"}]',
+        },
+        expectedOutput: "Linked requirements in Release 8.12 and Cycle 8.12.1",
+      },
+    ],
+    hints: [
+      "This API requires a numeric tcID parameter, not entity key",
+      "If user provides entityKey (e.g., MAC-TC-1684), first call FETCH_TEST_CASES with filter on entityKeyId to resolve the numeric tcID",
+      "After resolving entityKey → tcID, call this tool with the resolved numeric tcID",
+      "TRACEABILITY WORKFLOW: Use this tool to establish test case-requirement traceability matrix",
+      "getLinked=true (default): Returns requirements that ARE linked to the test case",
+      "getLinked=false: Returns requirements that are NOT linked to the test case (useful for gap analysis)",
+      "rqFolderPath: Use empty string '' for root folder or specific path like '/CodeSnippets'",
+      "FILTER CAPABILITIES: Support same filters as regular requirement listing",
+      "FILTER FIELDS: name, entityKeyId, requirementStateAlias, priorityAlias, createdByAlias, tcVersion, release, cycle, isArchived, componentAlias",
+      "Multiple filter conditions are combined with AND logic",
+      "For entity key search, use comma-separated values: 'MAC-RQ-1,MAC-RQ-2,MAC-RQ-3'",
+      "This tool is crucial for compliance, traceability audits, and impact analysis",
+      "Pagination supported for large result sets (start, page, limit parameters)",
+      "Use this tool to verify that test cases properly cover requirements",
+      "Essential for requirement validation and test case completeness analysis",
+    ],
+    outputFormat:
+      "JSON object with requirements array, traceability information, and pagination metadata",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Test Suites for Test Case",
+    summary: "Get test suites that can be linked to test cases in QMetry",
+    handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
+    zodSchema: TestSuitesForTestCaseArgsSchema,
+    purpose:
+      "Retrieve test suites available for linking with test cases. " +
+      "This tool helps organize test cases into test suites for better test management, " +
+      "execution planning, and reporting. You can filter test suites by various criteria " +
+      "to find the most appropriate suites for test case organization. " +
+      "The tsFolderID parameter is required and represents the Test Suite folder ID.",
+    useCases: [
+      "Get test suites available for linking with test cases",
+      "Find appropriate test suites for test case organization",
+      "Browse test suites in specific folders for better management",
+      "Filter test suites by release, cycle, or archive status",
+      "Organize test execution by grouping test cases into test suites",
+      "Plan test suite structure for comprehensive test coverage",
+      "Manage test case categorization for reporting purposes",
+      "Search for existing test suites before creating new ones",
+      "Get root test suite folder contents using project info",
+    ],
+    examples: [
+      {
+        description: "Get test suites from root folder using project info",
+        parameters: { tsFolderID: 113557 },
+        expectedOutput:
+          "List of test suites available in the root test suite folder (MAC project example with ID 113557)",
+      },
+      {
+        description: "Get test suites with custom pagination",
+        parameters: { tsFolderID: 113557, page: 1, limit: 20 },
+        expectedOutput: "Paginated list of test suites with 20 items per page",
+      },
+      {
+        description: "Filter test suites by release",
+        parameters: {
+          tsFolderID: 113557,
+          filter: '[{"type":"list","value":[55178],"field":"release"}]',
+        },
+        expectedOutput: "Test suites associated with Release 8.12 (ID: 55178)",
+      },
+      {
+        description: "Filter test suites by cycle",
+        parameters: {
+          tsFolderID: 113557,
+          filter: '[{"type":"list","value":[111577],"field":"cycle"}]',
+        },
+        expectedOutput: "Test suites associated with Cycle 8.12.1 (ID: 111577)",
+      },
+      {
+        description: "Get only active (non-archived) test suites",
+        parameters: {
+          tsFolderID: 113557,
+          filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
+        },
+        expectedOutput: "List of active test suites (not archived)",
+      },
+      {
+        description: "Filter test suites by release and cycle",
+        parameters: {
+          tsFolderID: 113557,
+          filter:
+            '[{"type":"list","value":[55178],"field":"release"},{"type":"list","value":[111577],"field":"cycle"}]',
+        },
+        expectedOutput:
+          "Test suites associated with both Release 8.12 (ID: 55178) and Cycle 8.12.1 (ID: 111577)",
+      },
+      {
+        description: "Get test suites with column information",
+        parameters: { tsFolderID: 113557, getColumns: true },
+        expectedOutput:
+          "Test suites list with detailed column metadata for better interpretation",
+      },
+      {
+        description: "Search test suites from specific sub-folder",
+        parameters: { tsFolderID: 42 },
+        expectedOutput:
+          "Test suites available in specific folder ID 42 for test case linking",
+      },
+    ],
+    hints: [
+      "CRITICAL: tsFolderID is REQUIRED - this is the Test Suite folder ID",
+      "HOW TO GET tsFolderID:",
+      "1. Call FETCH_PROJECT_INFO tool first to get project configuration",
+      "2. From the response, use rootFolders.TS.id for the root test suite folder",
+      "3. Example: rootFolders.TS.id = 113557 (MAC project root TS folder)",
+      "4. If user doesn't specify tsFolderID, automatically use rootFolders.TS.id from project info",
+      "WORKFLOW: Always fetch project info first if tsFolderID is not provided",
+      "PROJECT INFO STRUCTURE: clientData.rootFolders.TS.id contains the root test suite folder ID",
+      "For sub-folders: Use specific folder IDs if you know them, or call folder listing APIs",
+      "FILTER CAPABILITIES: Same as other QMetry list operations",
+      "FILTER FIELDS: release, cycle, isArchived, name, status, priority",
+      "RELEASE/CYCLE FILTERING: Use numeric IDs in list format (get from FETCH_RELEASES_AND_CYCLES)",
+      "ARCHIVE FILTERING: 0=Active, 1=Archived",
+      "getColumns=true provides additional metadata for result interpretation",
+      "Multiple filter conditions are combined with AND logic",
+      "Pagination supported for large result sets (start, page, limit parameters)",
+      "This tool helps organize test cases into logical test suites",
+      "Essential for test execution planning and test case management",
+      "Use this before creating new test suites to check existing ones",
+    ],
+    outputFormat: "JSON object with test suites array and pagination metadata",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Issues Linked to Test Case",
+    summary: "Get issues that are linked to a specific test case in QMetry",
+    handler: QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE,
+    zodSchema: IssuesLinkedToTestCaseArgsSchema,
+    purpose:
+      "Retrieve issues/defects that are linked to a specific test case. " +
+      "This tool provides traceability between test cases and issues, helping with " +
+      "defect tracking, impact analysis, and test case validation.",
+    useCases: [
+      "Get all issues linked to a specific test case for defect tracking",
+      "Generate traceability reports between test cases and issues",
+      "Filter issues by type, priority, status, or owner",
+      "Monitor issue resolution progress for specific test cases",
+      "Audit issue-test case relationships for compliance",
+      "Filter issues by summary content or execution version",
+      "Get issue details for test execution planning",
+      "Track linkage level (Test Case vs Test Step level)",
+      "Quality assurance - ensure proper issue tracking",
+    ],
+    examples: [
+      {
+        description: "Get all issues linked to test case ID 3878816",
+        parameters: {
+          linkedAsset: { type: "TC", id: 3878816 },
+        },
+        expectedOutput:
+          "List of issues linked to the test case with issue details, status, and metadata",
+      },
+      {
+        description: "Get issues linked to test case with pagination",
+        parameters: {
+          linkedAsset: { type: "TC", id: 3878816 },
+          limit: 25,
+          page: 1,
+        },
+        expectedOutput: "Paginated list of issues linked to the test case",
+      },
+      {
+        description: "Filter linked issues by summary content",
+        parameters: {
+          linkedAsset: { type: "TC", id: 3878816 },
+          filter: '[{"value":"login","type":"string","field":"summary"}]',
+        },
+        expectedOutput:
+          "Issues linked to test case that contain 'login' in their summary",
+      },
+      {
+        description: "Filter linked issues by status and priority",
+        parameters: {
+          linkedAsset: { type: "TC", id: 3878816 },
+          filter:
+            '[{"value":[1,2],"type":"list","field":"issueState"},{"value":[1],"type":"list","field":"issuePriority"}]',
+        },
+        expectedOutput: "High priority issues in Open or In Progress status",
+      },
+      {
+        description: "Filter issues by linkage level",
+        parameters: {
+          linkedAsset: { type: "TC", id: 3878816 },
+          filter:
+            '[{"value":"Test Case","type":"string","field":"linkageLevel"}]',
+        },
+        expectedOutput:
+          "Issues linked at test case level (not test step level)",
+      },
+      {
+        description: "Filter issues by execution version",
+        parameters: {
+          linkedAsset: { type: "TC", id: 3878816 },
+          filter: '[{"value":"2","type":"string","field":"executedVersion"}]',
+        },
+        expectedOutput: "Issues linked to version 2 of the test case execution",
+      },
+      {
+        description: "Filter issues by owner",
+        parameters: {
+          linkedAsset: { type: "TC", id: 3878816 },
+          filter: '[{"value":[123],"type":"list","field":"owner"}]',
+        },
+        expectedOutput: "Issues linked to test case and owned by specific user",
+      },
+    ],
+    hints: [
+      "CRITICAL: linkedAsset parameter is REQUIRED with type and id",
+      "linkedAsset.type: Must be 'TC' for Test Case only",
+      "linkedAsset.id: Must be numeric ID, not entity key",
+      "HOW TO GET linkedAsset.id for Test Cases:",
+      "1. Call FETCH_TEST_CASES with filter on entityKeyId to resolve test case key to numeric ID",
+      "2. From response, use data[index].tcID field",
+      "3. Example: MAC-TC-1684 → tcID: 3878816",
+      "FILTER CAPABILITIES: Extensive filtering by issue properties",
+      "FILTER FIELDS: summary (string), executedVersion (string), linkageLevel (string), issueType (list), issuePriority (list), issueState (list), owner (list)",
+      "LINKAGE LEVEL: 'Test Case' for test case level links, 'Test Step' for step level links",
+      "ISSUE TYPE IDs: Typically 1=Bug, 2=Enhancement, 3=Task (verify with your QMetry instance)",
+      "ISSUE PRIORITY IDs: Typically 1=High, 2=Medium, 3=Low (verify with your QMetry instance)",
+      "ISSUE STATUS IDs: Typically 1=Open, 2=In Progress, 3=Resolved, 4=Closed (verify with your QMetry instance)",
+      "OWNER IDs: Use numeric user IDs from QMetry user management",
+      "Multiple filter conditions are combined with AND logic",
+      "Use pagination for large issue result sets (start, page, limit parameters)",
+      "This tool is essential for defect tracking and traceability audits",
+      "Helps establish relationships between test failures and reported issues",
+      "Critical for impact analysis when test cases change",
+      "Use for compliance reporting and quality metrics",
+    ],
+    outputFormat:
+      "JSON object with issues array containing issue details, priorities, status, and linkage information",
     readOnly: true,
     idempotent: true,
   },

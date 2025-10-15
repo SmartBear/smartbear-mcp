@@ -13,7 +13,11 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_CASE_DETAILS: "getTestCaseDetails",
   FETCH_TEST_CASE_VERSION_DETAILS: "getTestCaseVersionDetails",
   FETCH_TEST_CASE_STEPS: "getTestCaseSteps",
+  FETCH_TEST_CASE_EXECUTIONS: "getTestCaseExecutions",
   FETCH_REQUIREMENTS: "getRequirements",
   FETCH_REQUIREMENT_DETAILS: "getRequirementDetails",
   FETCH_TESTCASES_LINKED_TO_REQUIREMENT: "getTestCasesLinkedToRequirement",
+  FETCH_REQUIREMENTS_LINKED_TO_TESTCASE: "getRequirementsLinkedToTestCase",
+  FETCH_TESTSUITES_FOR_TESTCASE: "getTestSuitesForTestCase",
+  FETCH_ISSUES_LINKED_TO_TESTCASE: "getIssuesLinkedToTestCase",
 };

@@ -85,6 +85,27 @@ const ERROR_TEMPLATES = {
     `• Whitelist the QMetry API endpoints\n` +
     `Target URL: ${baseUrl}\n` +
     `Technical details: ${errorText}`,
+
+  INVALID_URL_ERROR: (baseUrl: string, path: string, errorText: string) =>
+    `QMetry API Invalid URL Error: The API endpoint appears to be incorrect.\n\n` +
+    `Request details:\n` +
+    `• Base URL: ${baseUrl}\n` +
+    `• API Path: ${path}\n` +
+    `• Full URL: ${baseUrl}${path}\n\n` +
+    `Common URL issues:\n` +
+    `1. Wrong API endpoint path (check QMetry API documentation)\n` +
+    `2. Typo in the URL path (missing '/', wrong spelling)\n` +
+    `3. API version mismatch (v1, v2, etc.)\n` +
+    `4. Incorrect base URL (should end with QMetry instance domain)\n` +
+    `5. Body stream errors (often caused by malformed URLs or wrong HTTP method)\n\n` +
+    `Troubleshooting steps:\n` +
+    `1. Verify the API endpoint in QMetry documentation\n` +
+    `2. Check the QMetry instance URL is correct\n` +
+    `3. Test the endpoint manually using a REST client\n` +
+    `4. Ensure the API path matches the expected format\n` +
+    `5. If you see 'Body is unusable' errors, check for URL typos or wrong endpoints\n\n` +
+    `Expected URL format: https://your-qmetry-instance.com/rest/...\n` +
+    `Server response: ${errorText}`,
 };
 
 /**
@@ -184,6 +205,60 @@ function isSslCertificateError(context: QMetryErrorContext): boolean {
 }
 
 /**
+ * Checks if the error is related to invalid/wrong API URL
+ */
+function isInvalidUrlError(context: QMetryErrorContext): boolean {
+  const { status, errorText, errorData } = context;
+  const lowercaseErrorText = errorText.toLowerCase();
+
+  // HTTP 404 is the most common indicator of wrong URL/endpoint
+  if (status === 404) {
+    return true;
+  }
+
+  // Check for specific error messages that indicate wrong URL
+  const urlErrorIndicators = [
+    "not found",
+    "resource not found",
+    "endpoint not found",
+    "path not found",
+    "url not found",
+    "route not found",
+    "invalid endpoint",
+    "unknown endpoint",
+    "method not allowed",
+    "no handler found",
+    "404",
+    // Body stream errors that often indicate wrong URL/malformed requests
+    "body is unusable",
+    "body has already been read",
+    "request body already read",
+    "body stream already consumed",
+    "invalid request body",
+    "malformed request",
+  ];
+
+  // Check error text for URL-related keywords
+  if (
+    urlErrorIndicators.some((indicator) =>
+      lowercaseErrorText.includes(indicator),
+    )
+  ) {
+    return true;
+  }
+
+  // Check if error data indicates invalid endpoint
+  if (
+    errorData?.error?.toLowerCase().includes("not found") ||
+    errorData?.message?.toLowerCase().includes("not found")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Creates an appropriate error message based on the error context
  */
 export function createQMetryError(context: QMetryErrorContext): Error {
@@ -204,6 +279,14 @@ export function createQMetryError(context: QMetryErrorContext): Error {
 
   if (isProjectAccessError(context) && project) {
     return new Error(ERROR_TEMPLATES.PROJECT_ACCESS_ERROR(project, errorText));
+  }
+
+  // Check for invalid URL/endpoint errors (404, wrong paths, etc.)
+  if (isInvalidUrlError(context)) {
+    const path = context.path || "";
+    return new Error(
+      ERROR_TEMPLATES.INVALID_URL_ERROR(baseUrl, path, errorText),
+    );
   }
 
   return new Error(
@@ -301,6 +384,7 @@ export function handleQMetryFetchError(
     path,
   };
   const isSSLError = isSslCertificateError(tempContext);
+  const isURLError = isInvalidUrlError(tempContext);
 
   const context: QMetryErrorContext = {
     status: 0, // Status 0 typically indicates network/CORS/SSL issues
@@ -308,8 +392,8 @@ export function handleQMetryFetchError(
     baseUrl,
     project,
     path,
-    // Only assume CORS if it's not an SSL error
-    isCorsError: !isSSLError,
+    // Only assume CORS if it's not an SSL or URL error
+    isCorsError: !isSSLError && !isURLError,
   };
 
   throw createQMetryError(context);

@@ -26,6 +26,14 @@ export interface FetchRequirementDetailsPayload {
   version: number; // required - version number of requirement
 }
 
+export interface FetchRequirementsLinkedToTestCasePayload
+  extends PaginationPayload,
+    FilterPayload {
+  tcID: number; // required - Test Case numeric ID
+  getLinked?: boolean; // true to get linked requirements, false to get unlinked
+  rqFolderPath?: string; // folder path for requirements
+}
+
 export const DEFAULT_FETCH_REQUIREMENTS_PAYLOAD: Omit<
   FetchRequirementsPayload,
   "viewId" | "folderPath"
@@ -44,4 +52,14 @@ export const DEFAULT_FETCH_REQUIREMENT_DETAILS_PAYLOAD: Omit<
   "id" | "version"
 > = {
   // No defaults needed for this simple payload
+};
+
+export const DEFAULT_FETCH_REQUIREMENTS_LINKED_TO_TESTCASE_PAYLOAD: Omit<
+  FetchRequirementsLinkedToTestCasePayload,
+  "tcID"
+> = {
+  ...DEFAULT_PAGINATION,
+  ...DEFAULT_FILTER,
+  getLinked: true,
+  rqFolderPath: "",
 };
