@@ -8,9 +8,13 @@ export interface ModuleAutoResolveConfig {
   /** The handler that requires auto-resolution */
   handler: string;
   /** Path in project info to extract viewId (e.g., 'latestViews.TC.viewId') */
-  viewIdPath: string;
+  viewIdPath?: string;
+  /** Path in project info to extract folder ID (e.g., 'rootFolders.TS.id') */
+  folderIdPath?: string;
   /** Module name for error messages */
   moduleName: string;
+  /** Field name for the folder ID (e.g., 'tsFolderID') */
+  folderIdField?: string;
 }
 
 /**
@@ -28,6 +32,12 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     viewIdPath: "latestViews.RQ.viewId",
     moduleName: "Requirements",
   },
+  {
+    handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
+    folderIdPath: "rootFolders.TS.id",
+    folderIdField: "tsFolderID",
+    moduleName: "Test Suites",
+  },
 ];
 
 /**
@@ -41,11 +51,11 @@ export function getNestedProperty(obj: any, path: string): any {
 }
 
 /**
- * Generic auto-resolve function for viewId and folderPath
- * @param args - Tool arguments that may contain viewId/folderPath
+ * Generic auto-resolve function for viewId, folderPath, and folderID
+ * @param args - Tool arguments that may contain viewId/folderPath/folderID
  * @param projectInfo - Project information from QMetry API
  * @param config - Module configuration for this specific handler
- * @returns Updated args with resolved viewId and folderPath
+ * @returns Updated args with resolved values
  */
 export function autoResolveViewIdAndFolderPath(
   args: Record<string, any>,
@@ -56,8 +66,8 @@ export function autoResolveViewIdAndFolderPath(
   let viewId = updatedArgs.viewId;
   const folderPath = updatedArgs.folderPath;
 
-  // Auto-resolve viewId if not provided
-  if (!viewId) {
+  // Auto-resolve viewId if not provided and config has viewIdPath
+  if (!viewId && config.viewIdPath) {
     viewId = getNestedProperty(projectInfo, config.viewIdPath);
     if (viewId) {
       updatedArgs.viewId = viewId;
@@ -67,6 +77,18 @@ export function autoResolveViewIdAndFolderPath(
   // Auto-resolve folderPath if not provided (defaults to root)
   if (folderPath === undefined) {
     updatedArgs.folderPath = "";
+  }
+
+  // Auto-resolve folder ID if not provided and config has folderIdPath
+  if (
+    config.folderIdPath &&
+    config.folderIdField &&
+    !updatedArgs[config.folderIdField]
+  ) {
+    const folderId = getNestedProperty(projectInfo, config.folderIdPath);
+    if (folderId) {
+      updatedArgs[config.folderIdField] = folderId;
+    }
   }
 
   return updatedArgs;

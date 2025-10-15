@@ -1,17 +1,10 @@
-import { QMETRY_DEFAULTS } from "../config/constants.js";
 import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import {
   DEFAULT_FETCH_ISSUES_LINKED_TO_TESTCASE_PAYLOAD,
   type FetchIssuesLinkedToTestCasePayload,
 } from "../types/issues.js";
 import { qmetryRequest } from "./api/client-api.js";
-
-function resolveDefaults(baseUrl?: string, project?: string) {
-  return {
-    resolvedBaseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
-    resolvedProject: project || QMETRY_DEFAULTS.PROJECT_KEY,
-  };
-}
+import { resolveDefaults } from "./utils.js";
 
 /**
  * Fetches issues linked to a specific test case.

@@ -39,6 +39,19 @@ const ERROR_TEMPLATES = {
     `Note: API keys may expire or be revoked. Always use the latest key from your QMetry instance.\n` +
     `Original error: ${errorText}`,
 
+  AUTHORIZATION_ERROR: (errorText: string) =>
+    `QMetry Authorization Error: Insufficient permissions.\n\n` +
+    `Your API key is valid but lacks the necessary permissions for this operation.\n\n` +
+    `Possible causes:\n` +
+    `1. Your user role doesn't have access to this resource\n` +
+    `2. The project permissions are restricted\n` +
+    `3. The specific operation requires higher privileges\n\n` +
+    `To resolve:\n` +
+    `1. Contact your QMetry administrator to review your permissions\n` +
+    `2. Verify you have the correct project access\n` +
+    `3. Check if your user role includes the required privileges\n\n` +
+    `Original error: ${errorText}`,
+
   PROJECT_ACCESS_ERROR: (project: string, errorText: string) =>
     `QMetry Project Access Error: Cannot access project '${project}'.\n\n` +
     `Possible causes:\n` +
@@ -109,17 +122,24 @@ const ERROR_TEMPLATES = {
 };
 
 /**
- * Checks if the error is related to authentication/authorization
+ * Checks if the error is related to authentication (invalid/expired API key)
  */
 function isAuthenticationError(context: QMetryErrorContext): boolean {
   const { status, errorData } = context;
 
   return (
     status === 401 ||
-    status === 403 ||
     errorData?.code === "CO.INVALID_API_KEY" ||
     errorData?.message?.toLowerCase().includes("invalid api key")
   );
+}
+
+/**
+ * Checks if the error is related to authorization (insufficient permissions)
+ */
+function isAuthorizationError(context: QMetryErrorContext): boolean {
+  const { status } = context;
+  return status === 403;
 }
 
 /**
@@ -275,6 +295,10 @@ export function createQMetryError(context: QMetryErrorContext): Error {
 
   if (isAuthenticationError(context)) {
     return new Error(ERROR_TEMPLATES.AUTHENTICATION_FAILED(baseUrl, errorText));
+  }
+
+  if (isAuthorizationError(context)) {
+    return new Error(ERROR_TEMPLATES.AUTHORIZATION_ERROR(errorText));
   }
 
   if (isProjectAccessError(context) && project) {

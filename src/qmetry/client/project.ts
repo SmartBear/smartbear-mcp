@@ -71,7 +71,7 @@ export async function getReleasesCycles(
 export async function getBuilds(
   token: string,
   baseUrl: string,
-  project: string,
+  project: string | undefined,
   payload: FetchBuildsPayload,
 ) {
   const body: FetchBuildsPayload = {
@@ -96,7 +96,7 @@ export async function getBuilds(
 export async function getPlatforms(
   token: string,
   baseUrl: string,
-  project: string,
+  project: string | undefined,
   payload: FetchPlatformsPayload,
 ) {
   const body: FetchPlatformsPayload = {

@@ -69,11 +69,22 @@ export class QmetryClient implements Client {
           const a = args as Record<string, any>;
           const { baseUrl, projectKey } = resolveContext(a);
 
-          // Dynamic auto-resolve for modules that support viewId and folderPath
+          // Dynamic auto-resolve for modules that support viewId, folderPath, and folderID
           const autoResolveConfig = findAutoResolveConfig(tool.handler);
           if (autoResolveConfig) {
-            // Check if we need to auto-resolve viewId or folderPath
-            if (!a.viewId || a.folderPath === undefined) {
+            // Check if we need to auto-resolve viewId, folderPath, or folderID
+            const needsViewIdResolve =
+              !a.viewId && autoResolveConfig.viewIdPath;
+            const needsFolderPathResolve = a.folderPath === undefined;
+            const needsFolderIdResolve =
+              autoResolveConfig.folderIdField &&
+              !a[autoResolveConfig.folderIdField];
+
+            if (
+              needsViewIdResolve ||
+              needsFolderPathResolve ||
+              needsFolderIdResolve
+            ) {
               let projectInfo: any;
               try {
                 projectInfo = (await getProjectInfo(
@@ -83,7 +94,7 @@ export class QmetryClient implements Client {
                 )) as any;
               } catch (err) {
                 throw new Error(
-                  `Failed to auto-resolve viewId/folderPath for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
+                  `Failed to auto-resolve viewId/folderPath/folderID for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
                     `Please provide them manually or check project access. ` +
                     `Error: ${err instanceof Error ? err.message : String(err)}`,
                 );

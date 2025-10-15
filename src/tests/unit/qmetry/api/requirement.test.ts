@@ -121,9 +121,7 @@ describe("requirement API clients", () => {
 
       await expect(
         fetchRequirements(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(
-        /QMetry API Authentication Failed: Invalid or expired API key/,
-      );
+      ).rejects.toThrow(/QMetry Authorization Error: Insufficient permissions/);
     });
   });
 

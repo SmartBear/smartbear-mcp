@@ -283,7 +283,7 @@ describe("QmetryClient tools", () => {
           {
             success: false,
             type: "text",
-            text: "Error: Failed to auto-resolve viewId/folderPath for Requirements in project default. Please provide them manually or check project access. Error: API failure",
+            text: "Error: Failed to auto-resolve viewId/folderPath/folderID for Requirements in project default. Please provide them manually or check project access. Error: API failure",
           },
         ],
       });

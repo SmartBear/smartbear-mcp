@@ -1,4 +1,3 @@
-import { QMETRY_DEFAULTS } from "../config/constants.js";
 import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import {
   DEFAULT_FETCH_REQUIREMENT_DETAILS_PAYLOAD,
@@ -9,13 +8,7 @@ import {
   type FetchRequirementsPayload,
 } from "../types/requirements.js";
 import { qmetryRequest } from "./api/client-api.js";
-
-function resolveDefaults(baseUrl?: string, project?: string) {
-  return {
-    resolvedBaseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
-    resolvedProject: project || QMETRY_DEFAULTS.PROJECT_KEY,
-  };
-}
+import { resolveDefaults } from "./utils.js";
 
 /**
  * Fetches a list of requirements.
