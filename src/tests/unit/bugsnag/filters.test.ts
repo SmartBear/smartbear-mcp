@@ -1,71 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  empty,
-  equals,
   type FilterObject,
-  isoTime,
-  notEquals,
-  relativeTime,
   toUrlSearchParams,
-} from "../../../bugsnag/client/api/filters.js";
+} from "../../../bugsnag/client/filters.js";
 
 describe("Filter Utilities", () => {
-  describe("equals", () => {
-    it("should create eq filter for string value", () => {
-      const result = equals("test-value");
-      expect(result).toEqual({ type: "eq", value: "test-value" });
-    });
-
-    it("should create eq filter for number value", () => {
-      const result = equals(42);
-      expect(result).toEqual({ type: "eq", value: 42 });
-    });
-  });
-
-  describe("notEquals", () => {
-    it("should create ne filter for string value", () => {
-      const result = notEquals("test-value");
-      expect(result).toEqual({ type: "ne", value: "test-value" });
-    });
-
-    it("should create ne filter for number value", () => {
-      const result = notEquals(42);
-      expect(result).toEqual({ type: "ne", value: 42 });
-    });
-  });
-
-  describe("empty", () => {
-    it("should create empty filter for true", () => {
-      const result = empty(true);
-      expect(result).toEqual({ type: "empty", value: "true" });
-    });
-
-    it("should create empty filter for false", () => {
-      const result = empty(false);
-      expect(result).toEqual({ type: "empty", value: "false" });
-    });
-  });
-
-  describe("relativeTime", () => {
-    it("should create relative time filter with hours", () => {
-      const result = relativeTime(24, "h");
-      expect(result).toEqual({ type: "eq", value: "24h" });
-    });
-
-    it("should create relative time filter with days", () => {
-      const result = relativeTime(7, "d");
-      expect(result).toEqual({ type: "eq", value: "7d" });
-    });
-  });
-
-  describe("isoTime", () => {
-    it("should create ISO time filter from date", () => {
-      const date = new Date("2023-01-01T12:00:00.000Z");
-      const result = isoTime(date);
-      expect(result).toEqual({ type: "eq", value: "2023-01-01T12:00:00.000Z" });
-    });
-  });
-
   describe("toUrlSearchParams", () => {
     it("should convert simple filter object to URL params", () => {
       const filters: FilterObject = {

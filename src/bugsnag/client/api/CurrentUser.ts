@@ -1,59 +1,40 @@
-import type { Configuration } from "../configuration.js";
-import { type ApiResponse, BaseAPI, pickFieldsFromArray } from "./base.js";
-import { type Project, ProjectAPI } from "./Project.js";
+import {
+  CurrentUserApiFetchParamCreator,
+  type OrganizationApiView,
+} from "./api.js";
+import { type ApiResponse, BaseAPI } from "./base.js";
+import type { Project } from "./index.js";
+import { ProjectAPI } from "./Project.js";
 
-// --- Response Types ---
-
-export interface Organization {
-  id: string;
-  name: string;
-  slug: string;
+export interface Organization extends OrganizationApiView {
+  id: string; // ID is always present
 }
 
-export type ListUserOrganizationsResponse = Organization[];
-
-// --- API Class ---
-
 export class CurrentUserAPI extends BaseAPI {
-  static filterFields: string[] = [
-    "collaborators_url",
-    "projects_url",
-    "upgrade_url",
+  static organizationFields: (keyof OrganizationApiView)[] = [
+    "id",
+    "name",
+    "slug",
   ];
-  static organizationFields: (keyof Organization)[] = ["id", "name", "slug"];
-
-  constructor(configuration: Configuration) {
-    super(configuration, CurrentUserAPI.filterFields);
-  }
 
   /**
    * List the current user's organizations
    * GET /user/organizations
    */
   async listUserOrganizations(
-    options: ListUserOrganizationsOptions = {},
-  ): Promise<ApiResponse<ListUserOrganizationsResponse>> {
-    const { admin, ...queryOptions } = options;
-    const params = new URLSearchParams();
-    if (admin !== undefined) params.append("admin", String(admin));
-    for (const [key, value] of Object.entries(queryOptions)) {
-      if (value !== undefined) params.append(key, String(value));
-    }
-    const url = params.toString()
-      ? `/user/organizations?${params}`
-      : "/user/organizations";
-    const data = await this.request<ListUserOrganizationsResponse>({
-      method: "GET",
-      url,
-    });
-    // Only return allowed fields
-    return {
-      ...data,
-      body: pickFieldsFromArray<Organization>(
-        data.body || [],
-        CurrentUserAPI.organizationFields,
-      ),
-    };
+    admin?: boolean,
+    perPage?: number,
+    options: any = {},
+  ): Promise<ApiResponse<Organization[]>> {
+    const localVarFetchArgs = CurrentUserApiFetchParamCreator(
+      this.configuration,
+    ).listUserOrganizations(admin, perPage, options);
+    return await this.requestArray<Organization>(
+      localVarFetchArgs.url,
+      localVarFetchArgs.options,
+      true,
+      CurrentUserAPI.organizationFields,
+    );
   }
 
   /**
@@ -65,35 +46,27 @@ export class CurrentUserAPI extends BaseAPI {
    */
   async getOrganizationProjects(
     organizationId: string,
-    options: GetOrganizationProjectsOptions = {},
+    q?: string,
+    sort?: string,
+    direction?: string,
+    perPage?: number,
+    options?: any,
   ): Promise<ApiResponse<Project[]>> {
-    const { ...queryOptions } = options;
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(queryOptions)) {
-      if (value !== undefined) params.append(key, String(value));
-    }
-    const url = params.toString()
-      ? `/organizations/${organizationId}/projects?${params}`
-      : `/organizations/${organizationId}/projects`;
-    const data = await this.request<Project[]>({
-      method: "GET",
-      url,
-    });
-    return {
-      ...data,
-      body: pickFieldsFromArray<Project>(
-        data.body || [],
-        ProjectAPI.projectFields,
-      ),
-    };
+    const localVarFetchArgs = CurrentUserApiFetchParamCreator(
+      this.configuration,
+    ).getOrganizationProjects(
+      organizationId,
+      q,
+      sort,
+      direction,
+      perPage,
+      options,
+    );
+    return await this.requestArray<Project>(
+      localVarFetchArgs.url,
+      localVarFetchArgs.options,
+      true,
+      ProjectAPI.projectFields,
+    );
   }
-}
-
-export interface ListUserOrganizationsOptions {
-  admin?: boolean;
-  [key: string]: any;
-}
-
-export interface GetOrganizationProjectsOptions {
-  [key: string]: any;
 }
