@@ -1,6 +1,7 @@
 import yaml from "js-yaml";
 // @ts-expect-error missing type declarations
 import Swagger from "swagger-client";
+import { ToolError } from "../../common/types.js";
 import {
   type OpenAPI,
   type RemoteOpenAPIDocument,
@@ -21,7 +22,7 @@ export async function resolveOpenAPISpec(
     remoteOpenAPIDocument,
   );
   if (openAPISchema.error || !remoteOpenAPIDocument) {
-    throw new Error(
+    throw new ToolError(
       `Invalid RemoteOpenAPIDocument: ${JSON.stringify(
         openAPISchema.error?.issues,
       )}`,
@@ -32,7 +33,7 @@ export async function resolveOpenAPISpec(
   const resolvedSpec = await Swagger.resolve({ spec: unresolvedSpec });
 
   if (resolvedSpec.errors?.length) {
-    throw new Error(
+    throw new ToolError(
       `Failed to resolve OpenAPI document: ${resolvedSpec.errors?.join(", ")}`,
     );
   }
@@ -51,7 +52,7 @@ export async function getRemoteSpecContents(
   openAPISchema: RemoteOpenAPIDocument,
 ): Promise<any> {
   if (!openAPISchema.url) {
-    throw new Error("'url' must be provided.");
+    throw new ToolError("'url' must be provided.");
   }
 
   let headers = {};
@@ -76,7 +77,7 @@ export async function getRemoteSpecContents(
     try {
       return yaml.load(specRawBody);
     } catch (yamlError) {
-      throw new Error(
+      throw new ToolError(
         `Unsupported Content-Type: ${remoteSpec.headers.get(
           "Content-Type",
         )} for remote OpenAPI document. Found following parse errors:-\nJSON parse error: ${jsonError}\nYAML parse error: ${yamlError}`,

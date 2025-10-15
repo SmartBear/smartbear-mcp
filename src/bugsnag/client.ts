@@ -2,11 +2,12 @@ import NodeCache from "node-cache";
 import { z } from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type {
-  Client,
-  GetInputFunction,
-  RegisterResourceFunction,
-  RegisterToolsFunction,
+import {
+  type Client,
+  type GetInputFunction,
+  type RegisterResourceFunction,
+  type RegisterToolsFunction,
+  ToolError,
 } from "../common/types.js";
 import {
   type Build,
@@ -216,7 +217,9 @@ export class BugsnagClient implements Client {
       project =
         projects.find((p: Project) => p.apiKey === this.projectApiKey) ?? null;
       if (!project) {
-        throw new Error("Unable to find project with the configured API key.");
+        throw new ToolError(
+          "Unable to find project with the configured API key.",
+        );
       }
       this.cache.set(cacheKeys.CURRENT_PROJECT, project);
       if (project) {
@@ -234,7 +237,7 @@ export class BugsnagClient implements Client {
       await this.projectApi.listProjectEventFields(project.id)
     ).body;
     if (!filtersResponse || filtersResponse.length === 0) {
-      throw new Error(`No event fields found for project ${project.name}.`);
+      throw new ToolError(`No event fields found for project ${project.name}.`);
     }
     filtersResponse = filtersResponse.filter(
       (field) => field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
@@ -260,13 +263,13 @@ export class BugsnagClient implements Client {
     if (typeof projectId === "string") {
       const maybeProject = await this.getProject(projectId);
       if (!maybeProject) {
-        throw new Error(`Project with ID ${projectId} not found.`);
+        throw new ToolError(`Project with ID ${projectId} not found.`);
       }
       return maybeProject;
     } else {
       const currentProject = await this.getCurrentProject();
       if (!currentProject) {
-        throw new Error(
+        throw new ToolError(
           "No current project found. Please provide a projectId or configure a project API key.",
         );
       }
@@ -472,12 +475,14 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const project = await this.getInputProject(args.projectId);
         if (!args.errorId)
-          throw new Error("Both projectId and errorId arguments are required");
+          throw new ToolError(
+            "Both projectId and errorId arguments are required",
+          );
         const errorDetails = (
           await this.errorsApi.viewErrorOnProject(project.id, args.errorId)
         ).body;
         if (!errorDetails) {
-          throw new Error(
+          throw new ToolError(
             `Error with ID ${args.errorId} not found in project ${project.id}.`,
           );
         }
@@ -576,12 +581,12 @@ export class BugsnagClient implements Client {
         ],
       },
       async (args: any, _extra: any) => {
-        if (!args.link) throw new Error("link argument is required");
+        if (!args.link) throw new ToolError("link argument is required");
         const url = new URL(args.link);
         const eventId = url.searchParams.get("event_id");
         const projectSlug = url.pathname.split("/")[2];
         if (!projectSlug || !eventId)
-          throw new Error(
+          throw new ToolError(
             "Both projectSlug and eventId must be present in the link",
           );
 
@@ -589,7 +594,7 @@ export class BugsnagClient implements Client {
         const projects = await this.getProjects();
         const projectId = projects.find((p: any) => p.slug === projectSlug)?.id;
         if (!projectId) {
-          throw new Error("Project with the specified slug not found.");
+          throw new ToolError("Project with the specified slug not found.");
         }
 
         const response = await this.getEvent(eventId, projectId);
@@ -744,7 +749,7 @@ export class BugsnagClient implements Client {
           const validKeys = new Set(eventFields.map((f) => f.displayId));
           for (const key of Object.keys(args.filters)) {
             if (!validKeys.has(key)) {
-              throw new Error(`Invalid filter key: ${key}`);
+              throw new ToolError(`Invalid filter key: ${key}`);
             }
           }
         }
@@ -806,7 +811,8 @@ export class BugsnagClient implements Client {
         const projectFields = this.cache.get<EventField[]>(
           cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
         );
-        if (!projectFields) throw new Error("No event filters found in cache.");
+        if (!projectFields)
+          throw new ToolError("No event filters found in cache.");
 
         return {
           content: [{ type: "text", text: JSON.stringify(projectFields) }],
@@ -1090,13 +1096,14 @@ export class BugsnagClient implements Client {
           "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {
-        if (!args.releaseId) throw new Error("releaseId argument is required");
+        if (!args.releaseId)
+          throw new ToolError("releaseId argument is required");
         const project = await this.getInputProject(args.projectId);
         const releaseResponse = await this.projectApi.getReleaseGroup(
           args.releaseId,
         );
         if (!releaseResponse.body)
-          throw new Error(`No release for ${args.releaseId} found.`);
+          throw new ToolError(`No release for ${args.releaseId} found.`);
         const release = this.addStabilityData(releaseResponse.body, project);
         let builds: (Build & StabilityData)[] = [];
         if (releaseResponse.body) {
@@ -1170,7 +1177,7 @@ export class BugsnagClient implements Client {
           "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {
-        if (!args.buildId) throw new Error("buildId argument is required");
+        if (!args.buildId) throw new ToolError("buildId argument is required");
         const project = await this.getInputProject(args.projectId);
         const response = await this.projectApi.getProjectReleaseById(
           project.id,
@@ -1178,7 +1185,7 @@ export class BugsnagClient implements Client {
         );
 
         if (!response.body)
-          throw new Error(`No build for ${args.buildId} found.`);
+          throw new ToolError(`No build for ${args.buildId} found.`);
         const build = this.addStabilityData(response.body, project);
         return {
           content: [{ type: "text", text: JSON.stringify(build) }],
