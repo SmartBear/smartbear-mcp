@@ -1,7 +1,21 @@
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
 import { QMETRY_DEFAULTS } from "../../config/constants.js";
 import type { RequestOptions } from "../../types/common.js";
+import {
+  handleQMetryApiError,
+  handleQMetryFetchError,
+} from "./error-handler.js";
 
+/**
+ * QMetry API request function with centralized error handling.
+ *
+ * Handles authentication, project access, CORS, and generic API errors with
+ * user-friendly messages and troubleshooting guidance.
+ *
+ * @param options Request configuration including authentication token
+ * @returns Parsed JSON response from QMetry API
+ * @throws User-friendly errors with detailed troubleshooting steps for various scenarios
+ */
 export async function qmetryRequest<T>({
   method = "GET",
   path,
@@ -28,22 +42,23 @@ export async function qmetryRequest<T>({
     init.body = JSON.stringify(body);
   }
 
-  const res: Response = await fetch(url, init);
+  let res: Response;
+
+  try {
+    res = await fetch(url, init);
+  } catch (error) {
+    // Handle fetch errors (CORS, network issues, SSL certificate issues, etc.)
+    handleQMetryFetchError(
+      error instanceof Error ? error : new Error(String(error)),
+      baseUrl,
+      project,
+      path,
+    );
+  }
 
   if (!res.ok) {
-    let errorText: string;
-    try {
-      const contentType: string | null = res.headers.get("content-type");
-      if (contentType?.includes("application/json")) {
-        const json: Record<string, any> = await res.json();
-        errorText = JSON.stringify(json);
-      } else {
-        errorText = await res.text();
-      }
-    } catch {
-      errorText = res.statusText;
-    }
-    throw new Error(`QMetry API request failed (${res.status}): ${errorText}`);
+    // Use centralized error handling
+    await handleQMetryApiError(res, baseUrl, project, path);
   }
 
   return (await res.json()) as T;

@@ -476,11 +476,21 @@ Once configured, you can interact with SmartBear tools through natural language 
 ### QMetry Test Management
 
 -   "Set current QMetry project for your account"
--   "Fetch current QMetry project for your account"
--   "List all QMetry Test Cases for your account"
--   "Get the QMetry Test Case details"
--   "Get the QMetry Test Case detail for specific version"
--   "Get the QMetry Test Case steps"
+-   "Get current QMetry project for your account"
+-   "Get QMetry releases and cycles from your account."
+-   "Get QMetry builds from the current project."
+-   "Get QMetry platforms from the current project."
+-   "List all QMetry requirements for your account."
+-   "Get the QMetry requirement details."
+-   "List all QMetry Test Cases for your account."
+-   "Get the QMetry Test Case details."
+-   "Get the QMetry Test Case detail for specific version."
+-   "Get the QMetry Test Case steps."
+-   "Get test cases that are linked to a specific requirement."
+-   "Get requirements that are linked to a specific test case."
+-   "Get execution records for a specific test case by ID."
+-   "Get test suites that can be linked to test cases in QMetry."
+-   "Get executions for a given test suite in QMetry."
 
 ### Zephyr Test Management
 

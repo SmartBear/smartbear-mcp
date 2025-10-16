@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchTestCaseDetails,
+  fetchTestCaseExecutions,
   fetchTestCaseSteps,
   fetchTestCases,
+  fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
 } from "../../../../qmetry/client/testcase.js";
 import { DEFAULT_FETCH_TESTCASES_PAYLOAD } from "../../../../qmetry/types/testcase.js";
@@ -196,5 +198,268 @@ describe("testcase API clients", () => {
         folderPath: "/",
       }),
     ).rejects.toThrow(/QMetry API request failed \(400\):/);
+  });
+
+  describe("fetchTestCasesLinkedToRequirement", () => {
+    it("should POST with correct URL and headers for linked test cases", async () => {
+      const mockResponse = {
+        data: [
+          {
+            entityKey: "MAC-TC-1692",
+            summary: "Table Testing functionality",
+            testingTypeAlias: "Automated",
+          },
+          {
+            entityKey: "MAC-TC-1693",
+            summary: "Login validation",
+            testingTypeAlias: "Manual",
+          },
+        ],
+        total: 2,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      const payload = { rqID: 2499315, getLinked: true };
+      const result = await fetchTestCasesLinkedToRequirement(
+        token,
+        baseUrl,
+        projectKey,
+        payload,
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/list/forRQ`,
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            apikey: token,
+            project: projectKey,
+          }),
+          body: expect.stringContaining("2499315"),
+        }),
+      );
+
+      expect(result).toHaveProperty("data");
+      expect((result as any).data).toHaveLength(2);
+      expect((result as any).total).toBe(2);
+    });
+
+    it("should throw error when rqID is missing", async () => {
+      const payload = { getLinked: true };
+
+      await expect(
+        fetchTestCasesLinkedToRequirement(
+          token,
+          baseUrl,
+          projectKey,
+          payload as any,
+        ),
+      ).rejects.toThrow(
+        "[fetchTestCasesLinkedToRequirement] Missing or invalid required parameter: 'rqID'.",
+      );
+    });
+
+    it("should throw error when rqID is not a number", async () => {
+      const payload = { rqID: "invalid-id", getLinked: true };
+
+      await expect(
+        fetchTestCasesLinkedToRequirement(
+          token,
+          baseUrl,
+          projectKey,
+          payload as any,
+        ),
+      ).rejects.toThrow(
+        "[fetchTestCasesLinkedToRequirement] Missing or invalid required parameter: 'rqID'.",
+      );
+    });
+
+    it("should handle gap analysis with getLinked: false", async () => {
+      const mockResponse = {
+        data: [
+          {
+            entityKey: "MAC-TC-9999",
+            summary: "Unlinked test case",
+            testingTypeAlias: "Manual",
+          },
+        ],
+        total: 1,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      const payload = { rqID: 2499315, getLinked: false };
+      const result = await fetchTestCasesLinkedToRequirement(
+        token,
+        baseUrl,
+        projectKey,
+        payload,
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/list/forRQ`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"getLinked":false'),
+        }),
+      );
+
+      expect(result).toHaveProperty("data");
+      expect((result as any).data).toHaveLength(1);
+    });
+
+    it("should handle API errors gracefully", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValue(mockFail(404, "Requirement not found"));
+
+      const payload = { rqID: 99999, getLinked: true };
+
+      await expect(
+        fetchTestCasesLinkedToRequirement(token, baseUrl, projectKey, payload),
+      ).rejects.toThrow(
+        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
+      );
+    });
+  });
+
+  describe("fetchTestCaseExecutions", () => {
+    it("should POST with correct URL and required parameters", async () => {
+      const payload = { tcid: 1223922 };
+      const mockResponse = {
+        data: [
+          {
+            id: 1,
+            executionStatus: "PASS",
+            testSuiteName: "Regression Suite",
+            platformID: 12345,
+            executedBy: "john.doe",
+            executedDate: "2024-10-15T10:30:00Z",
+            executedVersion: 1,
+          },
+          {
+            id: 2,
+            executionStatus: "FAIL",
+            testSuiteName: "Smoke Suite",
+            platformID: 67890,
+            executedBy: "jane.smith",
+            executedDate: "2024-10-14T14:20:00Z",
+            executedVersion: 2,
+          },
+        ],
+        totalCount: 2,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      const result = await fetchTestCaseExecutions(
+        token,
+        baseUrl,
+        projectKey,
+        payload,
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/execution`,
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+            apikey: token,
+            project: projectKey,
+          }),
+          body: expect.stringContaining('"tcid":1223922'),
+        }),
+      );
+
+      expect(result).toHaveProperty("data");
+      expect((result as any).data).toHaveLength(2);
+      expect((result as any).data[0]).toHaveProperty("executionStatus", "PASS");
+      expect((result as any).data[1]).toHaveProperty("executionStatus", "FAIL");
+    });
+
+    it("should include optional parameters in the request", async () => {
+      const payload = {
+        tcid: 1223922,
+        tcversion: 3,
+        filter: '[{"value":["PASS"],"type":"list","field":"executionStatus"}]',
+        limit: 5,
+        page: 2,
+        scope: "release",
+      };
+      const mockResponse = {
+        data: [
+          {
+            id: 3,
+            executionStatus: "PASS",
+            testSuiteName: "API Test Suite",
+            platformID: 11111,
+            executedBy: "automation.user",
+            executedDate: "2024-10-15T16:45:00Z",
+            executedVersion: 3,
+          },
+        ],
+        totalCount: 1,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+
+      const result = await fetchTestCaseExecutions(
+        token,
+        baseUrl,
+        projectKey,
+        payload,
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/execution`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"tcversion":3'),
+        }),
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/execution`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"scope":"release"'),
+        }),
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/testcases/execution`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"limit":5'),
+        }),
+      );
+
+      expect(result).toHaveProperty("data");
+      expect((result as any).data).toHaveLength(1);
+      expect((result as any).data[0]).toHaveProperty("executionStatus", "PASS");
+    });
+
+    it("should handle API errors gracefully", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValue(mockFail(404, "Test case not found"));
+
+      const payload = { tcid: 99999 };
+
+      await expect(
+        fetchTestCaseExecutions(token, baseUrl, projectKey, payload),
+      ).rejects.toThrow(
+        /QMetry API Invalid URL Error: The API endpoint appears to be incorrect/,
+      );
+    });
+
+    it("should throw error when tcid is missing", async () => {
+      const payload = {} as any; // Missing required tcid
+
+      await expect(
+        fetchTestCaseExecutions(token, baseUrl, projectKey, payload),
+      ).rejects.toThrow(/Missing or invalid required parameter: 'tcid'/);
+    });
   });
 });
