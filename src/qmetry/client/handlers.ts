@@ -19,7 +19,13 @@ import {
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
 } from "./testcase.js";
-import { fetchTestSuitesForTestCase } from "./testsuite.js";
+import {
+  fetchExecutionsByTestSuite,
+  fetchLinkedIssuesByTestCaseRun,
+  fetchTestCaseRunsByTestSuiteRun,
+  fetchTestCasesByTestSuite,
+  fetchTestSuitesForTestCase,
+} from "./testsuite.js";
 
 /**
  * Mapping of QMetry tool handlers to their implementation functions
@@ -55,6 +61,13 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
     fetchRequirementsLinkedToTestCase,
   [QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE]:
     fetchTestSuitesForTestCase,
+  [QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE]: fetchTestCasesByTestSuite,
+  [QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE]:
+    fetchExecutionsByTestSuite,
+  [QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN]:
+    fetchTestCaseRunsByTestSuiteRun,
+  [QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN]:
+    fetchLinkedIssuesByTestCaseRun,
   [QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE]:
     fetchIssuesLinkedToTestCase,
 };

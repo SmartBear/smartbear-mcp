@@ -191,6 +191,70 @@ export const CommonFields = {
         "Use FETCH_PROJECT_INFO tool first to get this ID if not provided by user. " +
         "For root folder: use rootFolders.TS.id, for sub-folders: use specific folder IDs.",
     ),
+  tsID: z
+    .number()
+    .describe(
+      "Test Suite numeric ID (required for fetching test cases linked to test suite). " +
+        "This is the internal numeric identifier, not the entity key. " +
+        "NOTE: To get the tsID - Call API 'Testsuite/Fetch Testsuite' " +
+        "From the response, get value of following attribute -> data[<index>].id",
+    ),
+  gridName: z
+    .string()
+    .optional()
+    .describe("Grid Name to be displayed (default 'TESTEXECUTIONLIST')"),
+  teViewId: z
+    .number()
+    .optional()
+    .describe(
+      "ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific viewId. " +
+        "System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically. " +
+        "Manual viewId only needed if you want to override the automatic resolution.",
+    ),
+  tsfeViewId: z
+    .number()
+    .describe(
+      "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific viewId. " +
+        "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically. " +
+        "Manual viewId only needed if you want to override the automatic resolution.",
+    ),
+  tsrunID: z
+    .string()
+    .describe(
+      "Test Suite Run ID (required for fetching test case runs). " +
+        "This is the string identifier for the test suite run execution. " +
+        "NOTE: To get the tsrunID - Call API 'Execution/Fetch Executions' " +
+        "From the response, get value of following attribute -> data[<index>].tsRunID",
+    ),
+  showTcWithDefects: z
+    .boolean()
+    .optional()
+    .describe("Show test case runs with linked defects")
+    .default(false),
+  entityId: z
+    .number()
+    .describe(
+      "Id of Test case run (required for fetching linked issues). " +
+        "This is the internal numeric identifier for the test case run execution. " +
+        "NOTE: To get the entityId - Call API 'Execution/Fetch Testcase Run ID' " +
+        "From the response, get value of following attribute -> data[<index>].tcRunID",
+    ),
+  getLinked: z
+    .boolean()
+    .optional()
+    .describe(
+      "True to get only those issues that are linked with this Test case Run, " +
+        "False to get those issues which are not linked with this Test case Run. " +
+        "Default value true (get linked issues).",
+    )
+    .default(true),
+  istcrFlag: z
+    .boolean()
+    .optional()
+    .describe("Set True for test case run operations")
+    .default(true),
   scope: z
     .string()
     .optional()
@@ -470,6 +534,7 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
   tsFolderID: CommonFields.tsFolderID,
+  viewId: CommonFields.tsfeViewId.optional(),
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -477,21 +542,9 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
   filter: CommonFields.filter,
 });
 
-/**
- * MCP Tool Schema for fetching issues linked to test cases.
- *
- * IMPORTANT FOR LLMs: projectKey and baseUrl are tool-level parameters that appear
- * in this schema for the MCP interface but are NOT sent in the API request body.
- * These parameters are:
- * - Extracted by the client before API calls
- * - Used for authentication headers and URL construction
- * - Never included in the JSON request body to prevent API errors
- *
- * The API payload only contains: linkedAsset, pagination, and filter parameters.
- */
 export const IssuesLinkedToTestCaseArgsSchema = z.object({
-  projectKey: CommonFields.projectKeyOptional, // MCP tool param - NOT sent in API body
-  baseUrl: CommonFields.baseUrl, // MCP tool param - NOT sent in API body
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
   linkedAsset: z
     .object({
       type: z
@@ -506,8 +559,64 @@ export const IssuesLinkedToTestCaseArgsSchema = z.object({
     .describe(
       "Test case information specifying the ID of the test case to find issues for",
     ),
-  start: CommonFields.start, // API payload param - sent in request body
-  page: CommonFields.page, // API payload param - sent in request body
-  limit: CommonFields.limit, // API payload param - sent in request body
-  filter: CommonFields.filter, // API payload param - sent in request body
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+});
+
+export const TestCasesByTestSuiteArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  tsID: CommonFields.tsID,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+});
+
+export const ExecutionsByTestSuiteArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  tsID: CommonFields.tsID, // API payload param - sent in request body (REQUIRED)
+  tsFolderID: CommonFields.tsFolderID.optional(),
+  gridName: CommonFields.gridName,
+  viewId: CommonFields.teViewId,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+});
+
+export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  tsrunID: CommonFields.tsrunID, // API payload param - sent in request body (REQUIRED)
+  viewId: CommonFields.teViewId.pipe(z.number()), // API payload param - sent in request body (REQUIRED)
+  showTcWithDefects: CommonFields.showTcWithDefects,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+  udfFilter: CommonFields.udfFilter,
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      "Sort Records - refer json schema, Possible property - entityKey, summary, executedVersion, stepCount, runStatus, testerAlias, attachmentCount, comment, executedAt",
+    )
+    .default('[{"property":"entityKey","direction":"ASC"}]'), // API payload param - sent in request body
+});
+
+export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  entityId: CommonFields.entityId, // API payload param - sent in request body (REQUIRED)
+  getLinked: CommonFields.getLinked,
+  getColumns: CommonFields.getColumns,
+  istcrFlag: CommonFields.istcrFlag,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
 });

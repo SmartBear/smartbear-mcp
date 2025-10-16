@@ -2,7 +2,9 @@ import type { ToolParams } from "../../common/types.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
 import {
   BuildArgsSchema,
+  ExecutionsByTestSuiteArgsSchema,
   IssuesLinkedToTestCaseArgsSchema,
+  LinkedIssuesByTestCaseRunArgsSchema,
   PlatformArgsSchema,
   ProjectArgsSchema,
   ReleasesCyclesArgsSchema,
@@ -12,7 +14,9 @@ import {
   TestCaseDetailsArgsSchema,
   TestCaseExecutionsArgsSchema,
   TestCaseListArgsSchema,
+  TestCaseRunsByTestSuiteRunArgsSchema,
   TestCaseStepsArgsSchema,
+  TestCasesByTestSuiteArgsSchema,
   TestCasesLinkedToRequirementArgsSchema,
   TestCaseVersionDetailsArgsSchema,
   TestSuitesForTestCaseArgsSchema,
@@ -616,6 +620,27 @@ export const TOOLS: QMetryToolParams[] = [
       "If user provides entityKey (e.g., MAC-TC-1684), first call FETCH_TEST_CASES with filter on entityKeyId to resolve the tcid",
       "After resolving entityKey → tcid, call this tool with the resolved numeric tcid",
       "tcversion parameter is optional - omit to get executions for all versions",
+      "",
+      "CRITICAL WORKFLOW FOR LINKED ISSUES: When user asks 'fetch linked issues of test case [ID]' or 'linked issues of execution':",
+      "YOU MUST FIRST get the execution data using this tool to extract tcRunID before fetching issues!",
+      "",
+      "COMPLETE WORKFLOW FOR TEST CASE → LINKED ISSUES:",
+      "STEP 1: Resolve Test Case ID (if needed) - Use FETCH_TEST_CASES if user provides entity key",
+      "STEP 2: Fetch Test Case Executions (THIS TOOL) - Input: tcid, Extract: data[].tcRunID values",
+      "STEP 3: Fetch Linked Issues - Tool: FETCH_LINKED_ISSUES_BY_TESTCASE_RUN, Input: entityId = tcRunID",
+      "",
+      "ID MAPPING CRITICAL UNDERSTANDING:",
+      "- tcid/tcID = Test Case ID (for getting execution data with this tool)",
+      "- tcRunID = Test Case Run/Execution ID (THIS is entityId for linked issues API)",
+      "- entityId = tcRunID (what the linked issues API actually needs)",
+      "",
+      "NEVER USE tcid DIRECTLY as entityId for linked issues!",
+      "ALWAYS get tcRunID from executions and use THAT as entityId!",
+      "",
+      "EXAMPLE RESPONSE STRUCTURE FROM THIS TOOL:",
+      '{ "data": [{ "tcRunID": 58312120, "testSuiteName": "Suite 1", "executionStatus": "PASS" }] }',
+      "→ Use tcRunID (58312120) as entityId for linked issues API",
+      "",
       "FILTER CAPABILITIES: Support extensive filtering by test suite, platform, status, user, release, cycle, dates, and archive status",
       "FILTER FIELDS: testSuiteName (string), platformID (list), executionStatus (list), executedBy (list), project (list), release (list), cycle (list), executedDate (date with comparison), isPlatformArchived (list), isTestSuiteArchived (list), executedVersion (numeric)",
       "DATE FILTERING: Use 'gt' (greater than) and 'lt' (less than) comparisons for executedDate field",
@@ -1176,7 +1201,8 @@ export const TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Suites for Test Case",
-    summary: "Get test suites that can be linked to test cases in QMetry",
+    summary:
+      "Get test suites that can be linked to test cases in QMetry with automatic viewId resolution",
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
     zodSchema: TestSuitesForTestCaseArgsSchema,
     purpose:
@@ -1184,7 +1210,9 @@ export const TOOLS: QMetryToolParams[] = [
       "This tool helps organize test cases into test suites for better test management, " +
       "execution planning, and reporting. You can filter test suites by various criteria " +
       "to find the most appropriate suites for test case organization. " +
-      "The tsFolderID parameter is required and represents the Test Suite folder ID.",
+      "The tsFolderID parameter is required and represents the Test Suite folder ID. " +
+      "The viewId parameter is automatically resolved from project info (latestViews.TSFS.viewId) " +
+      "if not provided, making the tool easier to use.",
     useCases: [
       "Get test suites available for linking with test cases",
       "Find appropriate test suites for test case organization",
@@ -1198,18 +1226,20 @@ export const TOOLS: QMetryToolParams[] = [
     ],
     examples: [
       {
-        description: "Get test suites from root folder using project info",
+        description:
+          "Get test suites from root folder using auto-resolved viewId",
         parameters: { tsFolderID: 113557 },
         expectedOutput:
-          "List of test suites available in the root test suite folder (MAC project example with ID 113557)",
+          "List of test suites available in the root test suite folder with auto-resolved viewId",
       },
       {
-        description: "Get test suites with custom pagination",
+        description:
+          "Get test suites with custom pagination and auto-resolved viewId",
         parameters: { tsFolderID: 113557, page: 1, limit: 20 },
         expectedOutput: "Paginated list of test suites with 20 items per page",
       },
       {
-        description: "Filter test suites by release",
+        description: "Filter test suites by release with auto-resolved viewId",
         parameters: {
           tsFolderID: 113557,
           filter: '[{"type":"list","value":[55178],"field":"release"}]',
@@ -1217,7 +1247,7 @@ export const TOOLS: QMetryToolParams[] = [
         expectedOutput: "Test suites associated with Release 8.12 (ID: 55178)",
       },
       {
-        description: "Filter test suites by cycle",
+        description: "Filter test suites by cycle with auto-resolved viewId",
         parameters: {
           tsFolderID: 113557,
           filter: '[{"type":"list","value":[111577],"field":"cycle"}]',
@@ -1249,21 +1279,29 @@ export const TOOLS: QMetryToolParams[] = [
           "Test suites list with detailed column metadata for better interpretation",
       },
       {
-        description: "Search test suites from specific sub-folder",
-        parameters: { tsFolderID: 42 },
+        description:
+          "Search test suites from specific sub-folder with manual viewId",
+        parameters: { tsFolderID: 42, viewId: 104316 },
         expectedOutput:
           "Test suites available in specific folder ID 42 for test case linking",
       },
     ],
     hints: [
-      "CRITICAL: tsFolderID is REQUIRED - this is the Test Suite folder ID",
+      "CRITICAL: tsFolderID is REQUIRED - Test Suite folder ID will be auto-resolved if not provided",
+      "viewId will be AUTOMATICALLY RESOLVED from project info if not provided",
       "HOW TO GET tsFolderID:",
       "1. Call FETCH_PROJECT_INFO tool first to get project configuration",
       "2. From the response, use rootFolders.TS.id for the root test suite folder",
       "3. Example: rootFolders.TS.id = 113557 (MAC project root TS folder)",
       "4. If user doesn't specify tsFolderID, automatically use rootFolders.TS.id from project info",
-      "WORKFLOW: Always fetch project info first if tsFolderID is not provided",
+      "VIEWID AUTO-RESOLUTION:",
+      "1. System automatically fetches project info using the projectKey",
+      "2. Extracts latestViews.TSFS.viewId automatically",
+      "3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view)",
+      "4. Manual viewId only needed if you want to override the automatic resolution",
+      "WORKFLOW: System automatically handles project info if tsFolderID or viewId is not provided",
       "PROJECT INFO STRUCTURE: clientData.rootFolders.TS.id contains the root test suite folder ID",
+      "PROJECT INFO STRUCTURE: latestViews.TSFS.viewId contains the test suite folder view ID",
       "For sub-folders: Use specific folder IDs if you know them, or call folder listing APIs",
       "FILTER CAPABILITIES: Same as other QMetry list operations",
       "FILTER FIELDS: release, cycle, isArchived, name, status, priority",
@@ -1387,6 +1425,464 @@ export const TOOLS: QMetryToolParams[] = [
     ],
     outputFormat:
       "JSON object with issues array containing issue details, priorities, status, and linkage information",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Test Cases Linked to Test Suite",
+    summary:
+      "Get test cases that are linked to a specific test suite in QMetry",
+    handler: QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE,
+    zodSchema: TestCasesByTestSuiteArgsSchema,
+    purpose:
+      "Retrieve test cases that are linked to a specific test suite. " +
+      "This tool provides the ability to see which test cases belong to a test suite, " +
+      "helping with test execution planning, suite management, and coverage analysis. " +
+      "The tsID parameter represents the Test Suite ID obtained from test suite listings.",
+    useCases: [
+      "Get all test cases linked to a specific test suite for execution planning",
+      "Analyze test suite composition and coverage",
+      "Filter linked test cases by various criteria",
+      "Plan test execution based on test suite structure",
+      "Generate test suite reports and documentation",
+      "Validate test suite contents before execution",
+      "Manage test case organization within test suites",
+      "Export test suite details for external reporting",
+      "Verify test case assignments in test suites",
+    ],
+    examples: [
+      {
+        description: "Get all test cases linked to test suite ID 92091",
+        parameters: { tsID: 92091 },
+        expectedOutput:
+          "List of test cases linked to the test suite with test case details and metadata",
+      },
+      {
+        description: "Get test cases with custom pagination",
+        parameters: { tsID: 92091, page: 1, limit: 50 },
+        expectedOutput: "Paginated list of test cases with 50 items per page",
+      },
+      {
+        description: "Filter test cases to show only unshared ones",
+        parameters: {
+          tsID: 92091,
+          filter: '[{"value":[0],"type":"list","field":"isShared"}]',
+        },
+        expectedOutput: "Test cases that are not shared across multiple suites",
+      },
+      {
+        description: "Filter test cases by priority",
+        parameters: {
+          tsID: 92091,
+          filter: '[{"value":[1,2],"type":"list","field":"priorityAlias"}]',
+        },
+        expectedOutput: "High and medium priority test cases from the suite",
+      },
+      {
+        description: "Filter test cases by status",
+        parameters: {
+          tsID: 92091,
+          filter: '[{"value":[1],"type":"list","field":"testCaseStateAlias"}]',
+        },
+        expectedOutput: "Active test cases from the test suite",
+      },
+      {
+        description: "Filter test cases by testing type (automation)",
+        parameters: {
+          tsID: 92091,
+          filter: '[{"value":[2],"type":"list","field":"testingTypeAlias"}]',
+        },
+        expectedOutput: "Automated test cases from the test suite",
+      },
+    ],
+    hints: [
+      "CRITICAL: tsID parameter is REQUIRED - this is the Test Suite numeric ID",
+      "HOW TO GET tsID:",
+      "1. Call API 'Testsuite/Fetch Testsuite' to get available test suites",
+      "2. From the response, get value of following attribute -> data[<index>].id",
+      "3. Example: Test Suite 'Regression Suite' might have ID 92091",
+      "tsID is NOT the same as tsFolderID - tsID refers to a specific test suite, not a folder",
+      "FILTER CAPABILITIES: Support filtering by test case properties",
+      "FILTER FIELDS: isShared (list), priorityAlias (list), testCaseStateAlias (list), testingTypeAlias (list), testCaseTypeAlias (list), componentAlias (list), owner (list)",
+      "SHARED STATUS: 0=Not shared (unique to this suite), 1=Shared across multiple suites",
+      "PRIORITY IDs: Typically 1=High, 2=Medium, 3=Low (verify with your QMetry instance)",
+      "STATUS IDs: Typically 1=Active, 2=Review, 3=Deprecated (verify with your QMetry instance)",
+      "TESTING TYPE IDs: Typically 1=Manual, 2=Automated (verify with your QMetry instance)",
+      "TYPE IDs: Typically 1=Functional, 2=Integration, 3=System (verify with your QMetry instance)",
+      "Multiple filter conditions are combined with AND logic",
+      "Use pagination for large result sets (start, page, limit parameters)",
+      "This tool is essential for test suite management and execution planning",
+      "Helps verify test suite composition before test runs",
+      "Critical for understanding test coverage within specific suites",
+      "Use for test suite analysis and optimization",
+    ],
+    outputFormat:
+      "JSON object with test cases array containing test case details, properties, and suite linkage information",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Executions by Test Suite",
+    summary: "Get executions for a given test suite in QMetry",
+    handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
+    zodSchema: ExecutionsByTestSuiteArgsSchema,
+    purpose:
+      "Retrieve test executions that belong to a specific test suite. " +
+      "This tool provides comprehensive execution data including test results, " +
+      "execution status, platforms, releases, cycles, and other execution metadata. " +
+      "Essential for test execution reporting, trend analysis, and test suite performance monitoring.",
+    useCases: [
+      "Get all executions for a specific test suite for reporting purposes",
+      "Analyze test execution results and trends within a test suite",
+      "Filter executions by release, cycle, platform, or automation status",
+      "Monitor test suite execution performance across different environments",
+      "Generate execution reports for specific test suites",
+      "Track execution history and patterns for test suite optimization",
+      "Validate test suite execution coverage across releases and cycles",
+      "Audit test execution data for compliance and quality assurance",
+      "Export execution data for external reporting and analytics",
+    ],
+    examples: [
+      {
+        description: "Get all executions for test suite ID 194955",
+        parameters: { tsID: 194955 },
+        expectedOutput:
+          "List of executions for the test suite with execution details, status, and metadata",
+      },
+      {
+        description: "Get executions with test suite folder and view ID",
+        parameters: {
+          tsID: 194955,
+          tsFolderID: 126554,
+          viewId: 41799,
+        },
+        expectedOutput:
+          "Executions filtered by test suite folder and specific view configuration",
+      },
+      {
+        description: "Filter executions by release and cycle",
+        parameters: {
+          tsID: 194955,
+          filter:
+            '[{"type":"list","value":[55178],"field":"releaseID"},{"type":"list","value":[111577],"field":"cycleID"}]',
+        },
+        expectedOutput:
+          "Executions filtered by specific release (55178) and cycle (111577)",
+      },
+      {
+        description: "Filter executions by platform and automation status",
+        parameters: {
+          tsID: 194955,
+          filter:
+            '[{"type":"list","value":[12345],"field":"platformID"},{"type":"boolean","value":true,"field":"isAutomatedFlag"}]',
+        },
+        expectedOutput:
+          "Automated executions filtered by specific platform (12345)",
+      },
+      {
+        description: "Get only active (non-archived) executions",
+        parameters: {
+          tsID: 194955,
+          filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
+        },
+        expectedOutput: "Active executions that are not archived",
+      },
+      {
+        description: "Get executions with custom pagination and grid name",
+        parameters: {
+          tsID: 194955,
+          gridName: "TESTEXECUTIONLIST",
+          page: 1,
+          limit: 25,
+        },
+        expectedOutput:
+          "Paginated list of executions with 25 items per page using specific grid configuration",
+      },
+    ],
+    hints: [
+      "CRITICAL: tsID parameter is REQUIRED - this is the Test Suite numeric ID",
+      "HOW TO GET tsID:",
+      "1. Call API 'Testsuite/Fetch Testsuite' to get available test suites",
+      "2. From the response, get value of following attribute -> data[<index>].id",
+      "3. Example: Test Suite 'Regression Suite' might have ID 194955",
+      "HOW TO GET tsFolderID (optional):",
+      "1. Call API 'Testsuite/List of folders' to get test suite folders",
+      "2. From the response, get value of following attribute -> data[<index>].id",
+      "3. Example: Test Suite folder might have ID 126554",
+      "FILTER CAPABILITIES: Extensive filtering by execution properties",
+      "FILTER FIELDS: releaseID (list), cycleID (list), platformID (list), isAutomatedFlag (boolean), isArchived (list)",
+      "RELEASE/CYCLE FILTERING: Use numeric IDs in list format (get from FETCH_RELEASES_AND_CYCLES)",
+      "PLATFORM FILTERING: Use numeric platform IDs (get from FETCH_PLATFORMS)",
+      "AUTOMATION STATUS: Use boolean true/false for isAutomatedFlag field",
+      "ARCHIVE STATUS: 0=Active executions, 1=Archived executions",
+      "GRID NAME: Default is 'TESTEXECUTIONLIST' - used for execution list display configuration",
+      "VIEW ID: Optional numeric identifier for specific execution view configurations",
+      "Multiple filter conditions are combined with AND logic",
+      "Use pagination for large execution result sets (start, page, limit parameters)",
+      "This tool is essential for test execution analysis and reporting",
+      "Critical for monitoring test suite performance and execution trends",
+      "Use for compliance reporting and execution audit trails",
+      "Essential for test execution planning and resource optimization",
+    ],
+    outputFormat:
+      "JSON object with executions array containing execution details, status, platforms, releases, and execution metadata",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Test Case Runs by Test Suite Run",
+    summary:
+      "Get test case runs under a specific test suite run execution in QMetry",
+    handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
+    zodSchema: TestCaseRunsByTestSuiteRunArgsSchema,
+    purpose:
+      "Retrieve detailed test case run information for a specific test suite run execution. " +
+      "This tool provides comprehensive test case run data including execution status, " +
+      "test results, tester information, execution dates, linked defects, and other run metadata. " +
+      "Essential for detailed execution analysis, test run reporting, and execution audit trails.",
+    useCases: [
+      "Get all test case runs under a specific test suite run execution",
+      "Analyze individual test case execution results and status",
+      "Filter test case runs by priority, status, tester, or execution dates",
+      "Monitor test case run performance and execution trends",
+      "Generate detailed test execution reports for specific runs",
+      "Track test case run history and execution patterns",
+      "Validate test case run coverage and execution completeness",
+      "Audit test case run data for compliance and quality assurance",
+      "Export detailed test case run data for external reporting",
+    ],
+    examples: [
+      {
+        description: "Get all test case runs for test suite run ID '107021'",
+        parameters: { tsrunID: "107021", viewId: 6887 },
+        expectedOutput:
+          "List of test case runs with execution details, status, and metadata",
+      },
+      {
+        description: "Get test case runs with linked defects",
+        parameters: {
+          tsrunID: "107021",
+          viewId: 6887,
+          showTcWithDefects: true,
+        },
+        expectedOutput:
+          "Test case runs that have linked defects/issues with defect information",
+      },
+      {
+        description: "Filter test case runs by priority and status",
+        parameters: {
+          tsrunID: "107021",
+          viewId: 6887,
+          filter:
+            '[{"type":"list","value":[1,2],"field":"priorityAlias"},{"type":"list","value":[1],"field":"runStatusID"}]',
+        },
+        expectedOutput: "High/medium priority test case runs with PASS status",
+      },
+      {
+        description: "Filter test case runs by tester and execution date range",
+        parameters: {
+          tsrunID: "107021",
+          viewId: 6887,
+          filter:
+            '[{"type":"list","value":[123],"field":"testerID"},{"type":"date","value":"2024-01-01","field":"executedAt","comparison":"gt"},{"type":"date","value":"2024-01-31","field":"executedAt","comparison":"lt"}]',
+        },
+        expectedOutput:
+          "Test case runs executed by specific tester within date range",
+      },
+      {
+        description: "Get test case runs with custom sorting by execution date",
+        parameters: {
+          tsrunID: "107021",
+          viewId: 6887,
+          sort: '[{"property":"executedAt","direction":"DESC"}]',
+        },
+        expectedOutput:
+          "Test case runs sorted by execution date (newest first)",
+      },
+      {
+        description: "Search test case runs by entity key and summary",
+        parameters: {
+          tsrunID: "107021",
+          viewId: 6887,
+          filter:
+            '[{"type":"string","field":"entityKeyId","value":"MAC-TC-1684,MAC-TC-1685"},{"type":"string","field":"summary","value":"login"}]',
+        },
+        expectedOutput: "Specific test case runs containing 'login' in summary",
+      },
+    ],
+    hints: [
+      "CRITICAL: tsrunID and viewId parameters are REQUIRED",
+      "tsrunID is a STRING identifier for the test suite run execution",
+      "viewId is a NUMERIC identifier for the test execution view",
+      "HOW TO GET tsrunID:",
+      "1. Call API 'Execution/Fetch Executions' to get available executions",
+      "2. From the response, get value of following attribute -> data[<index>].tsRunID",
+      "3. Example: Test Suite Run might have ID '107021'",
+      "HOW TO GET viewId:",
+      "1. Call API 'Admin/Get info Service' to get project info",
+      "2. From the response, get value of following attribute -> latestViews.TE.viewId",
+      "3. Example: Test Execution view might have ID 6887",
+      "FILTER CAPABILITIES: Extensive filtering by test case run properties",
+      "FILTER FIELDS: priorityAlias (list), createdByAlias (list), createdDate (date), entityKeyId (string), updatedDate (date), updatedByAlias (list), executionMinutes (numeric), testCaseStateAlias (list), testingTypeAlias (list), testCaseTypeAlias (list), componentAlias (list), attachmentCount (numeric), linkedRqCount (numeric), linkedTsCount (numeric), executedAt (date), summary (string), linkedDfCount (numeric), executedVersion (numeric), stepCount (numeric), runStatusID (list), testerID (list), owner (list)",
+      "SORT FIELDS: entityKey, summary, executedVersion, stepCount, runStatus, testerAlias, attachmentCount, comment, executedAt",
+      "DATE FILTERING: Use 'gt' (greater than) and 'lt' (less than) comparisons for date fields",
+      "ENTITY KEY SEARCH: Use comma-separated values for multiple test case keys",
+      "RUN STATUS IDs: Typically 1=Pass, 2=Fail, 3=Blocked, 4=Not Executed (verify with your QMetry instance)",
+      "PRIORITY IDs: Typically 1=High, 2=Medium, 3=Low (verify with your QMetry instance)",
+      "TESTING TYPE IDs: Typically 1=Manual, 2=Automated (verify with your QMetry instance)",
+      "showTcWithDefects=true shows only test case runs that have linked defects/issues",
+      "udfFilter supports user-defined field filtering with custom field criteria",
+      "Multiple filter conditions are combined with AND logic",
+      "Use pagination for large result sets (start, page, limit parameters)",
+      "This tool is essential for detailed test execution analysis and reporting",
+      "Critical for monitoring individual test case execution performance",
+      "Use for compliance reporting and execution audit trails",
+      "Essential for test execution quality assurance and trend analysis",
+    ],
+    outputFormat:
+      "JSON object with test case runs array containing detailed execution information, status, tester details, and run metadata",
+    readOnly: true,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Linked Issues of Test Case Run",
+    summary:
+      "Get issues that are linked (or not linked) to a specific test case run in QMetry",
+    handler: QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN,
+    zodSchema: LinkedIssuesByTestCaseRunArgsSchema,
+    purpose:
+      "CRITICAL: This tool requires entityId which is the Test Case Run ID (tcRunID), NOT any other ID! " +
+      "When user asks for 'linked issues of test execution' or 'linked issues of test suite' or 'linked issues of test run', " +
+      "you MUST first fetch the test run data to get the proper tcRunID values, then use those as entityId. " +
+      "NEVER use user-provided IDs directly as entityId without validation! " +
+      "This tool retrieves issues linked to specific test case runs for defect tracking and traceability analysis.",
+    useCases: [
+      "Get all issues linked to a specific test case run for defect tracking",
+      "Find issues that are NOT linked to a test case run (gap analysis)",
+      "Generate defect reports and traceability matrix for test case runs",
+      "Monitor issue resolution progress for specific test case executions",
+      "Analyze test execution quality by examining linked defects",
+      "Filter issues by type, priority, status, or owner for test case runs",
+      "Audit issue-test case run relationships for compliance",
+      "Track defect lifecycle in relation to test execution results",
+      "Quality assurance - ensure proper issue tracking for failed test runs",
+      "Impact analysis - see which issues affect specific test executions",
+    ],
+    examples: [
+      {
+        description: "Get all issues linked to test case run ID 1121218",
+        parameters: {
+          entityId: 1121218,
+          getColumns: true,
+          getLinked: true,
+        },
+        expectedOutput:
+          "List of issues linked to the test case run with issue details, status, and metadata",
+      },
+      {
+        description: "Get issues NOT linked to test case run (gap analysis)",
+        parameters: {
+          entityId: 1121218,
+          getColumns: true,
+          getLinked: false,
+        },
+        expectedOutput:
+          "List of issues that are NOT linked to test case run for gap analysis",
+      },
+      {
+        description: "Filter linked issues by issue type and status",
+        parameters: {
+          entityId: 1121218,
+          getColumns: true,
+          getLinked: true,
+          filter:
+            '[{"type":"list","value":[1],"field":"typeAlias"},{"type":"list","value":[1,2],"field":"stateAlias"}]',
+        },
+        expectedOutput: "Bug type issues in Open or In Progress status",
+      },
+      {
+        description: "Search linked issues by name and priority",
+        parameters: {
+          entityId: 1121218,
+          getColumns: true,
+          getLinked: true,
+          filter:
+            '[{"type":"string","value":"login","field":"name"},{"type":"list","value":[1],"field":"priorityAlias"}]',
+        },
+        expectedOutput: "High priority issues containing 'login' in their name",
+      },
+      {
+        description: "Filter issues by date range and entity key",
+        parameters: {
+          entityId: 1121218,
+          getColumns: true,
+          getLinked: true,
+          filter:
+            '[{"value":"2024-01-01","type":"date","field":"createdDate","comparison":"gt"},{"value":"2024-12-31","type":"date","field":"createdDate","comparison":"lt"},{"type":"string","value":"BUG-001,BUG-002","field":"entityKeyId"}]',
+        },
+        expectedOutput: "Specific issues created within date range",
+      },
+      {
+        description: "Filter issues by owner and created system",
+        parameters: {
+          entityId: 1121218,
+          getColumns: true,
+          getLinked: true,
+          filter:
+            '[{"type":"list","value":[123],"field":"dfOwner"},{"type":"list","value":["QMetry"],"field":"createdSystem"}]',
+        },
+        expectedOutput: "Issues owned by specific user and created in QMetry",
+      },
+    ],
+    hints: [
+      "WORKFLOW CRITICAL: NEVER use user-provided IDs directly as entityId!",
+      "ALWAYS fetch execution data first to get proper tcRunID values!",
+      "",
+      "WHEN USER ASKS: 'fetch linked issues of test suite [ID]' OR 'linked issues of test run [ID]':",
+      "STEP 1: Identify what type of ID the user provided",
+      "STEP 2A: If Test Suite ID → fetch executions by test suite → get tsRunID → fetch test runs → get tcRunID",
+      "STEP 2B: If Test Run ID → fetch test case runs by test suite run → get tcRunID",
+      "STEP 2C: If Test Case ID → fetch test case executions → get tcRunID",
+      "STEP 3: Use tcRunID as entityId for this tool",
+      "",
+      "ID HIERARCHY: Test Suite → Test Suite Runs → Test Case Runs (tcRunID = entityId)",
+      "ID HIERARCHY: Test Case → Test Case Executions (tcRunID = entityId)",
+      "",
+      "CRITICAL: entityId parameter is REQUIRED - this is the Test Case Run numeric ID (tcRunID)",
+      "HOW TO GET entityId:",
+      "1. Call appropriate execution APIs to get test case runs",
+      "2. From the response, extract data[<index>].tcRunID",
+      "3. Use tcRunID as entityId for this tool",
+      "4. Example: tcRunID 1121218 becomes entityId: 1121218",
+      "",
+      "getLinked=true (default): Returns issues that ARE linked to the test case run",
+      "getLinked=false: Returns issues that are NOT linked to the test case run (useful for gap analysis)",
+      "istcrFlag=true (default): Set to true for test case run operations",
+      "getColumns=true (default): Include column metadata in response",
+      "",
+      "FILTER CAPABILITIES: Support extensive filtering by issue properties",
+      "FILTER FIELDS: name (string), typeAlias (list), stateAlias (list), entityKeyId (string), createdDate (date with comparison), createdByAlias (list), updatedDate (date with comparison), createdSystem (list), updatedByAlias (list), dfOwner (list), priorityAlias (list), linkedTcrCount (numeric), linkedRqCount (numeric), attachmentCount (numeric), componentAlias (list), environmentText (string), affectedRelease (list)",
+      "ISSUE TYPE IDs: Typically 1=Bug, 2=Enhancement, 3=Task (verify with your QMetry instance)",
+      "ISSUE STATE IDs: Typically 1=Open, 2=In Progress, 3=Resolved, 4=Closed (verify with your QMetry instance)",
+      "ISSUE PRIORITY IDs: Typically 1=High, 2=Medium, 3=Low (verify with your QMetry instance)",
+      "DATE FILTERING: Use 'gt' (greater than) and 'lt' (less than) comparisons for date fields",
+      "ENTITY KEY SEARCH: Use comma-separated values for multiple issue keys",
+      "CREATED SYSTEM: Use 'QMetry' or 'JIRA' to filter by creation system",
+      "OWNER IDs: Use numeric user IDs from QMetry user management",
+      "COMPONENT/LABEL IDs: Use numeric IDs for component/label filtering",
+      "ENVIRONMENT TEXT: Filter by environment description text",
+      "AFFECTED RELEASE: Use release IDs for filtering by affected releases",
+      "LINKED COUNT FILTERS: Use numeric values for linkedTcrCount, linkedRqCount, attachmentCount",
+      "Multiple filter conditions are combined with AND logic",
+      "Use pagination for large result sets (start, page, limit parameters)",
+      "This tool is essential for defect tracking and traceability audits",
+      "Critical for understanding test execution quality and issue relationships",
+      "Use for compliance reporting and issue lifecycle management",
+      "Helps establish relationships between test failures and reported issues",
+      "Essential for impact analysis when test case runs change or fail",
+    ],
+    outputFormat:
+      "JSON object with issues array containing issue details, priorities, status, owner information, and linkage metadata",
     readOnly: true,
     idempotent: true,
   },

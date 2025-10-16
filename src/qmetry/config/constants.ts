@@ -19,5 +19,9 @@ export const QMetryToolsHandlers = {
   FETCH_TESTCASES_LINKED_TO_REQUIREMENT: "getTestCasesLinkedToRequirement",
   FETCH_REQUIREMENTS_LINKED_TO_TESTCASE: "getRequirementsLinkedToTestCase",
   FETCH_TESTSUITES_FOR_TESTCASE: "getTestSuitesForTestCase",
+  FETCH_TESTCASES_BY_TESTSUITE: "getTestCasesByTestSuite",
+  FETCH_EXECUTIONS_BY_TESTSUITE: "getExecutionsByTestSuite",
+  FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN: "getTestCaseRunsByTestSuiteRun",
+  FETCH_LINKED_ISSUES_BY_TESTCASE_RUN: "getLinkedIssuesByTestCaseRun",
   FETCH_ISSUES_LINKED_TO_TESTCASE: "getIssuesLinkedToTestCase",
 };

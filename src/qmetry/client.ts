@@ -112,7 +112,15 @@ export class QmetryClient implements Client {
             }
           }
 
-          const result = await handlerFn(this.token, baseUrl, projectKey, a);
+          // Extract projectKey and baseUrl from arguments to prevent them from being sent in request body
+          const { projectKey: _, baseUrl: __, ...cleanArgs } = a;
+
+          const result = await handlerFn(
+            this.token,
+            baseUrl,
+            projectKey,
+            cleanArgs,
+          );
 
           // Use custom formatter if available, otherwise return JSON
           const formatted = tool.formatResponse

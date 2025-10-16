@@ -34,6 +34,7 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
   },
   {
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
+    viewIdPath: "latestViews.TSFS.viewId",
     folderIdPath: "rootFolders.TS.id",
     folderIdField: "tsFolderID",
     moduleName: "Test Suites",

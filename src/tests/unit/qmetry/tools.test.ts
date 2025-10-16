@@ -5,11 +5,13 @@ import * as issues from "../../../qmetry/client/issues.js";
 import * as project from "../../../qmetry/client/project.js";
 import * as requirement from "../../../qmetry/client/requirement.js";
 import * as testcase from "../../../qmetry/client/testcase.js";
+import * as testsuite from "../../../qmetry/client/testsuite.js";
 
 vi.mock("../../../qmetry/client/project.js");
 vi.mock("../../../qmetry/client/testcase.js");
 vi.mock("../../../qmetry/client/requirement.js");
 vi.mock("../../../qmetry/client/issues.js");
+vi.mock("../../../qmetry/client/testsuite.js");
 
 describe("QmetryClient tools", () => {
   let client: QmetryClient;
@@ -744,6 +746,462 @@ describe("QmetryClient tools", () => {
       });
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe("Fetch Test Cases Linked to Test Suite", () => {
+    it("should fetch test cases linked to test suite with defaults", async () => {
+      (testsuite.fetchTestCasesByTestSuite as any).mockResolvedValue({
+        data: [
+          {
+            tcID: 123456,
+            entityKey: "MAC-TC-1684",
+            name: "User Login Test",
+            priorityAlias: "High",
+            testCaseStateAlias: "Active",
+            testingTypeAlias: "Manual",
+            owner: "test.user",
+          },
+          {
+            tcID: 123457,
+            entityKey: "MAC-TC-1685",
+            name: "Password Reset Test",
+            priorityAlias: "Medium",
+            testCaseStateAlias: "Active",
+            testingTypeAlias: "Automated",
+            owner: "test.user",
+          },
+        ],
+        totalCount: 2,
+        page: 1,
+        limit: 10,
+      });
+
+      const handler = getHandler("Fetch Test Cases Linked to Test Suite");
+      const result = await handler({ tsID: 92091 });
+
+      expect(testsuite.fetchTestCasesByTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsID: 92091,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("User Login Test");
+      expect(result.content[0].text).toContain("MAC-TC-1684");
+      expect(result.content[0].text).toContain("Password Reset Test");
+      expect(result.content[0].text).toContain("MAC-TC-1685");
+    });
+
+    it("should fetch test cases with custom filters and pagination", async () => {
+      (testsuite.fetchTestCasesByTestSuite as any).mockResolvedValue({
+        data: [
+          {
+            tcID: 123456,
+            entityKey: "MAC-TC-1684",
+            name: "Automated Login Test",
+            priorityAlias: "High",
+            testCaseStateAlias: "Active",
+            testingTypeAlias: "Automated",
+            isShared: 0,
+            owner: "automation.user",
+          },
+        ],
+        totalCount: 1,
+        page: 1,
+        limit: 25,
+      });
+
+      const handler = getHandler("Fetch Test Cases Linked to Test Suite");
+      const result = await handler({
+        tsID: 92091,
+        filter:
+          '[{"value":[2],"type":"list","field":"testingTypeAlias"},{"value":[1],"type":"list","field":"priorityAlias"}]',
+        limit: 25,
+        page: 1,
+      });
+
+      expect(testsuite.fetchTestCasesByTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsID: 92091,
+          filter:
+            '[{"value":[2],"type":"list","field":"testingTypeAlias"},{"value":[1],"type":"list","field":"priorityAlias"}]',
+          limit: 25,
+          page: 1,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Automated Login Test");
+      expect(result.content[0].text).toContain("Automated");
+      expect(result.content[0].text).toContain("High");
+    });
+  });
+
+  describe("Fetch Executions by Test Suite", () => {
+    it("should fetch executions by test suite with required tsID", async () => {
+      (testsuite.fetchExecutionsByTestSuite as any).mockResolvedValue({
+        data: [
+          {
+            executionID: 789123,
+            testCaseName: "User Login Test",
+            executionStatus: "PASS",
+            executedBy: "test.user",
+            executedDate: "2024-01-15T10:30:00Z",
+            platformName: "Chrome",
+            releaseName: "Release 8.12",
+            cycleName: "Cycle 8.12.1",
+            isAutomated: false,
+          },
+          {
+            executionID: 789124,
+            testCaseName: "Password Reset Test",
+            executionStatus: "FAIL",
+            executedBy: "automation.user",
+            executedDate: "2024-01-15T11:00:00Z",
+            platformName: "Firefox",
+            releaseName: "Release 8.12",
+            cycleName: "Cycle 8.12.1",
+            isAutomated: true,
+          },
+        ],
+        totalCount: 2,
+        page: 1,
+        limit: 10,
+      });
+
+      const handler = getHandler("Fetch Executions by Test Suite");
+      const result = await handler({ tsID: 194955 });
+
+      expect(testsuite.fetchExecutionsByTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsID: 194955,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("User Login Test");
+      expect(result.content[0].text).toContain("PASS");
+      expect(result.content[0].text).toContain("Password Reset Test");
+      expect(result.content[0].text).toContain("FAIL");
+      expect(result.content[0].text).toContain("Chrome");
+      expect(result.content[0].text).toContain("Firefox");
+    });
+
+    it("should fetch executions with filters and optional parameters", async () => {
+      (testsuite.fetchExecutionsByTestSuite as any).mockResolvedValue({
+        data: [
+          {
+            executionID: 789125,
+            testCaseName: "Automated API Test",
+            executionStatus: "PASS",
+            executedBy: "automation.user",
+            executedDate: "2024-01-15T12:00:00Z",
+            platformName: "API Platform",
+            releaseName: "Release 8.12",
+            cycleName: "Cycle 8.12.1",
+            isAutomated: true,
+            isArchived: false,
+          },
+        ],
+        totalCount: 1,
+        page: 1,
+        limit: 25,
+      });
+
+      const handler = getHandler("Fetch Executions by Test Suite");
+      const result = await handler({
+        tsID: 194955,
+        tsFolderID: 126554,
+        viewId: 41799,
+        gridName: "TESTEXECUTIONLIST",
+        filter:
+          '[{"type":"boolean","value":true,"field":"isAutomatedFlag"},{"value":[0],"type":"list","field":"isArchived"}]',
+        limit: 25,
+        page: 1,
+      });
+
+      expect(testsuite.fetchExecutionsByTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsID: 194955,
+          tsFolderID: 126554,
+          viewId: 41799,
+          gridName: "TESTEXECUTIONLIST",
+          filter:
+            '[{"type":"boolean","value":true,"field":"isAutomatedFlag"},{"value":[0],"type":"list","field":"isArchived"}]',
+          limit: 25,
+          page: 1,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Automated API Test");
+      expect(result.content[0].text).toContain("PASS");
+      expect(result.content[0].text).toContain("automation.user");
+    });
+  });
+
+  describe("Fetch Test Case Runs by Test Suite Run", () => {
+    it("should fetch test case runs by test suite run with required parameters", async () => {
+      (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
+        data: [
+          {
+            id: 123456,
+            entityKey: "MAC-TC-1001",
+            name: "Login Authentication Test",
+            executionStatus: "PASS",
+            executedBy: "test.user",
+            executedDate: "2024-01-15T10:30:00Z",
+            platform: "Chrome Browser",
+            version: 1,
+            defectCount: 0,
+          },
+          {
+            id: 123457,
+            entityKey: "MAC-TC-1002",
+            name: "Password Reset Test",
+            executionStatus: "FAIL",
+            executedBy: "test.user",
+            executedDate: "2024-01-15T10:45:00Z",
+            platform: "Chrome Browser",
+            version: 1,
+            defectCount: 2,
+          },
+        ],
+        pagination: {
+          total: 2,
+          page: 1,
+          limit: 10,
+        },
+      });
+
+      const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
+      const result = await handler({
+        tsrunID: 78901,
+        viewId: 12345,
+        projectKey: "MAC",
+        start: 0,
+        page: 1,
+        limit: 10,
+      });
+
+      expect(testsuite.fetchTestCaseRunsByTestSuiteRun).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "MAC",
+        expect.objectContaining({
+          tsrunID: 78901,
+          viewId: 12345,
+          start: 0,
+          page: 1,
+          limit: 10,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Login Authentication Test");
+      expect(result.content[0].text).toContain("PASS");
+      expect(result.content[0].text).toContain("Password Reset Test");
+      expect(result.content[0].text).toContain("FAIL");
+    });
+
+    it("should fetch test case runs with filter and showTcWithDefects", async () => {
+      (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
+        data: [
+          {
+            id: 123458,
+            entityKey: "MAC-TC-1003",
+            name: "Data Validation Test",
+            executionStatus: "BLOCKED",
+            executedBy: "qa.user",
+            executedDate: "2024-01-15T11:00:00Z",
+            platform: "Firefox Browser",
+            version: 2,
+            defectCount: 1,
+            defects: [
+              {
+                id: "BUG-001",
+                summary: "Data validation error",
+                status: "Open",
+              },
+            ],
+          },
+        ],
+        pagination: {
+          total: 1,
+          page: 1,
+          limit: 25,
+        },
+      });
+
+      const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
+      const result = await handler({
+        tsrunID: 78901,
+        viewId: 12345,
+        projectKey: "MAC",
+        showTcWithDefects: true,
+        filter:
+          '[{"type":"string","value":"BLOCKED","field":"executionStatus"}]',
+        limit: 25,
+        page: 1,
+      });
+
+      expect(testsuite.fetchTestCaseRunsByTestSuiteRun).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "MAC",
+        expect.objectContaining({
+          tsrunID: 78901,
+          viewId: 12345,
+          showTcWithDefects: true,
+          filter:
+            '[{"type":"string","value":"BLOCKED","field":"executionStatus"}]',
+          limit: 25,
+          page: 1,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Data Validation Test");
+      expect(result.content[0].text).toContain("BLOCKED");
+      expect(result.content[0].text).toContain("BUG-001");
+      expect(result.content[0].text).toContain("Data validation error");
+    });
+  });
+
+  describe("Fetch Linked Issues of Test Case Run", () => {
+    it("should fetch linked issues by test case run with required parameters", async () => {
+      (testsuite.fetchLinkedIssuesByTestCaseRun as any).mockResolvedValue({
+        data: [
+          {
+            id: 456789,
+            entityKey: "BUG-001",
+            name: "Login functionality failure",
+            type: "Bug",
+            state: "Open",
+            priority: "High",
+            owner: "dev.user",
+            createdDate: "2024-01-15T09:00:00Z",
+            updatedDate: "2024-01-15T14:30:00Z",
+            linkedTcrCount: 3,
+            linkedRqCount: 1,
+            attachmentCount: 2,
+          },
+          {
+            id: 456790,
+            entityKey: "BUG-002",
+            name: "Data validation error",
+            type: "Bug",
+            state: "In Progress",
+            priority: "Medium",
+            owner: "qa.user",
+            createdDate: "2024-01-15T10:15:00Z",
+            updatedDate: "2024-01-15T15:45:00Z",
+            linkedTcrCount: 1,
+            linkedRqCount: 2,
+            attachmentCount: 0,
+          },
+        ],
+        pagination: {
+          total: 2,
+          page: 1,
+          limit: 10,
+        },
+      });
+
+      const handler = getHandler("Fetch Linked Issues of Test Case Run");
+      const result = await handler({
+        entityId: 1121218,
+        projectKey: "MAC",
+        start: 0,
+        page: 1,
+        limit: 10,
+      });
+
+      expect(testsuite.fetchLinkedIssuesByTestCaseRun).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "MAC",
+        expect.objectContaining({
+          entityId: 1121218,
+          start: 0,
+          page: 1,
+          limit: 10,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Login functionality failure");
+      expect(result.content[0].text).toContain("BUG-001");
+      expect(result.content[0].text).toContain("Data validation error");
+      expect(result.content[0].text).toContain("BUG-002");
+    });
+
+    it("should fetch issues with getLinked false and filter", async () => {
+      (testsuite.fetchLinkedIssuesByTestCaseRun as any).mockResolvedValue({
+        data: [
+          {
+            id: 456791,
+            entityKey: "ENH-001",
+            name: "Performance improvement request",
+            type: "Enhancement",
+            state: "New",
+            priority: "Low",
+            owner: "product.manager",
+            createdDate: "2024-01-10T08:00:00Z",
+            updatedDate: "2024-01-12T16:20:00Z",
+            linkedTcrCount: 0,
+            linkedRqCount: 3,
+            attachmentCount: 1,
+            environmentText: "Production",
+            affectedRelease: "Release 8.12",
+          },
+        ],
+        pagination: {
+          total: 1,
+          page: 1,
+          limit: 25,
+        },
+      });
+
+      const handler = getHandler("Fetch Linked Issues of Test Case Run");
+      const result = await handler({
+        entityId: 1121218,
+        projectKey: "MAC",
+        getLinked: false,
+        istcrFlag: true,
+        filter:
+          '[{"type":"list","value":[2],"field":"typeAlias"},{"type":"string","value":"Performance","field":"name"}]',
+        limit: 25,
+        page: 1,
+      });
+
+      expect(testsuite.fetchLinkedIssuesByTestCaseRun).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "MAC",
+        expect.objectContaining({
+          entityId: 1121218,
+          getLinked: false,
+          istcrFlag: true,
+          filter:
+            '[{"type":"list","value":[2],"field":"typeAlias"},{"type":"string","value":"Performance","field":"name"}]',
+          limit: 25,
+          page: 1,
+        }),
+      );
+
+      expect(result.content[0].text).toContain(
+        "Performance improvement request",
+      );
+      expect(result.content[0].text).toContain("ENH-001");
+      expect(result.content[0].text).toContain("Enhancement");
+      expect(result.content[0].text).toContain("Production");
     });
   });
 });

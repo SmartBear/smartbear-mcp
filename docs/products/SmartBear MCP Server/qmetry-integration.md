@@ -90,13 +90,6 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of requirements linked to a test case.
 -   Use case: Retrieve available requirements linked to a test case.
 
-### `qmetry_testsuites_for_testcase`
-
--   Purpose: Get test suites that can be linked to test cases in QMetry.
--   Parameters: Test Suite folder ID identifier (`tsFolderID`).
--   Returns: Complete list of test suites for the given test case.
--   Use case: Retrieve available test suites that can be linked to a test case.
-
 ### `qmetry_testcase_executions`
 
 -   Purpose: Get execution records for a specific test case by ID.
@@ -104,9 +97,16 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of test case executions.
 -   Use case: Retrieve available test case execution records.
 
-### `qmetry_issues_linked_to_testcase`
+### `qmetry_testsuites_for_testcase`
 
--   Purpose: Get issues that are linked to a specific test case in QMetry.
--   Parameters: Linked asset specification (`linkedAsset` with type and ID).
--   Returns: Complete list of issues linked to a test case.
--   Use case: Retrieve available issues linked to a test case for defect tracking.
+-   Purpose: Get test suites that can be linked to test cases in QMetry.
+-   Parameters: Test Suite folder ID identifier (`tsFolderID`).
+-   Returns: Complete list of test suites for the given test case.
+-   Use case: Retrieve available test suites that can be linked to a test case.
+
+### `qmetry_executions_by_testsuite`
+
+-   Purpose: Get executions for a given test suite in QMetry.
+-   Parameters: Test Suite identifier (`tsID`), Test Suite folder ID (`tsFolderID`).
+-   Returns: Complete list of executions for the test suite with execution details.
+-   Use case: Retrieve test suite execution data.
