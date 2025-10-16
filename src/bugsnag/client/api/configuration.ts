@@ -1,6 +1,6 @@
 interface ConfigurationParameters {
   apiKey?: string | ((name: string) => string);
-  basePath?: string;
+  basePath: string;
   headers?: Record<string, string>; // Additional headers for API requests
 }
 
@@ -17,7 +17,7 @@ export class Configuration {
    * @type {string}
    * @memberof Configuration
    */
-  basePath?: string;
+  basePath: string;
   /**
    * Additional headers for API requests
    * @type {Record<string, string>}
@@ -25,7 +25,7 @@ export class Configuration {
    */
   headers?: Record<string, string>;
 
-  constructor(param: ConfigurationParameters = {}) {
+  constructor(param: ConfigurationParameters) {
     this.apiKey = param.apiKey;
     this.basePath = param.basePath;
     this.headers = param.headers;
