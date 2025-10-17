@@ -16,6 +16,7 @@ describe("AuthService", () => {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      "zscale-source": "smartbear-mcp",
     });
   });
 });
