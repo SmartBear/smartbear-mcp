@@ -121,7 +121,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Releases and Cycles",
     summary: "Fetch QMetry releases and cycles from the current project",
     handler: QMetryToolsHandlers.FETCH_RELEASES_CYCLES,
-    zodSchema: ReleasesCyclesArgsSchema,
+    inputSchema: ReleasesCyclesArgsSchema,
     purpose:
       "Retrieve release and cycle information from the current QMetry project. " +
       "Releases represent major versions or milestones, while cycles represent test execution phases within releases. " +
@@ -177,7 +177,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Builds",
     summary: "Fetch QMetry builds from the current project",
     handler: QMetryToolsHandlers.FETCH_BUILDS,
-    zodSchema: BuildArgsSchema,
+    inputSchema: BuildArgsSchema,
     purpose:
       "Retrieve builds information from the current QMetry project. " +
       "Builds represent specific versions or iterations of software that can be associated with test executions. " +
@@ -239,7 +239,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Platforms",
     summary: "Fetch QMetry platforms from the current project",
     handler: QMetryToolsHandlers.FETCH_PLATFORMS,
-    zodSchema: PlatformArgsSchema,
+    inputSchema: PlatformArgsSchema,
     purpose:
       "Retrieve platforms information from the current QMetry project. " +
       "Platforms represent testing environments, operating systems, browsers, or devices " +
@@ -539,7 +539,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Test Case Executions",
     summary: "Get execution records for a specific test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
-    zodSchema: TestCaseExecutionsArgsSchema,
+    inputSchema: TestCaseExecutionsArgsSchema,
     purpose:
       "Retrieve execution history and results for a specific test case. " +
       "This tool provides detailed execution information including test suite names, platforms, " +
@@ -663,7 +663,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Fetch QMetry requirements - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS,
-    zodSchema: RequirementListArgsSchema,
+    inputSchema: RequirementListArgsSchema,
     purpose:
       "Get requirements from QMetry. System automatically gets correct requirement viewId from project info if not provided.",
     useCases: [
@@ -860,7 +860,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get detailed information for a specific QMetry requirement by numeric ID",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS,
-    zodSchema: RequirementDetailsArgsSchema,
+    inputSchema: RequirementDetailsArgsSchema,
     purpose:
       "Retrieve comprehensive requirement information including metadata, status, and all fields for a specific requirement",
     useCases: [
@@ -897,7 +897,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get test cases that are linked (or not linked) to a specific requirement in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT,
-    zodSchema: TestCasesLinkedToRequirementArgsSchema,
+    inputSchema: TestCasesLinkedToRequirementArgsSchema,
     purpose:
       "Retrieve test cases that have traceability links to a specific requirement. " +
       "This tool is essential for requirement traceability analysis, coverage verification, " +
@@ -1076,7 +1076,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get requirements that are linked (or not linked) to a specific test case in QMetry",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS_LINKED_TO_TESTCASE,
-    zodSchema: RequirementsLinkedToTestCaseArgsSchema,
+    inputSchema: RequirementsLinkedToTestCaseArgsSchema,
     purpose:
       "Retrieve requirements that have traceability links to a specific test case. " +
       "This tool is essential for test case traceability analysis, coverage verification, " +
@@ -1204,7 +1204,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get test suites that can be linked to test cases in QMetry with automatic viewId resolution",
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
-    zodSchema: TestSuitesForTestCaseArgsSchema,
+    inputSchema: TestSuitesForTestCaseArgsSchema,
     purpose:
       "Retrieve test suites available for linking with test cases. " +
       "This tool helps organize test cases into test suites for better test management, " +
@@ -1323,7 +1323,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get issues that are linked (or not linked) to a specific test case in QMetry",
     handler: QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE,
-    zodSchema: IssuesLinkedToTestCaseArgsSchema,
+    inputSchema: IssuesLinkedToTestCaseArgsSchema,
     purpose:
       "Retrieve issues/defects that are linked to a specific test case. " +
       "This tool provides traceability between test cases and issues, helping with " +
@@ -1429,7 +1429,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get test cases that are linked (or not linked) to a specific test suite in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE,
-    zodSchema: TestCasesByTestSuiteArgsSchema,
+    inputSchema: TestCasesByTestSuiteArgsSchema,
     purpose:
       "Retrieve test cases that are linked to a specific test suite. " +
       "This tool provides the ability to see which test cases belong to a test suite, " +
@@ -1528,7 +1528,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Executions by Test Suite",
     summary: "Get executions for a given test suite in QMetry",
     handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
-    zodSchema: ExecutionsByTestSuiteArgsSchema,
+    inputSchema: ExecutionsByTestSuiteArgsSchema,
     purpose:
       "Retrieve test executions that belong to a specific test suite. " +
       "This tool provides comprehensive execution data including test results, " +
@@ -1637,7 +1637,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get test case runs under a specific test suite run execution in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
-    zodSchema: TestCaseRunsByTestSuiteRunArgsSchema,
+    inputSchema: TestCaseRunsByTestSuiteRunArgsSchema,
     purpose:
       "Retrieve detailed test case run information for a specific test suite run execution. " +
       "This tool provides comprehensive test case run data including execution status, " +
@@ -1720,7 +1720,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get issues that are linked (or not linked) to a specific test case run in QMetry",
     handler: QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN,
-    zodSchema: LinkedIssuesByTestCaseRunArgsSchema,
+    inputSchema: LinkedIssuesByTestCaseRunArgsSchema,
     purpose:
       "CRITICAL: This tool requires entityId which is the Test Case Run ID (tcRunID), NOT any other ID! " +
       "When user asks for 'linked issues of test execution' or 'linked issues of test suite' or 'linked issues of test run', " +

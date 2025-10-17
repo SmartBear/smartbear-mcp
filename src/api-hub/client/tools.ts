@@ -125,7 +125,7 @@ export const TOOLS: ApiHubToolParams[] = [
     title: "Scan API Standardization",
     summary:
       "Run a standardization scan against an API definition using the organization's standardization configuration. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of standardization errors and validation issues.",
-    zodSchema: ScanStandardizationParamsSchema,
+    inputSchema: ScanStandardizationParamsSchema,
     handler: "scanStandardization",
   },
 ];
