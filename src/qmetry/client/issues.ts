@@ -8,7 +8,7 @@ import { resolveDefaults } from "./utils.js";
 
 /**
  * Fetches issues linked to a specific test case.
- * @throws If `linkedAsset` is missing/invalid.
+ * @throws If `tcID` is missing/invalid.
  */
 export async function fetchIssuesLinkedToTestCase(
   token: string,
@@ -26,21 +26,9 @@ export async function fetchIssuesLinkedToTestCase(
     ...payload,
   };
 
-  if (!body.linkedAsset || typeof body.linkedAsset !== "object") {
+  if (typeof body.tcID !== "number") {
     throw new Error(
-      "[fetchIssuesLinkedToTestCase] Missing or invalid required parameter: 'linkedAsset'.",
-    );
-  }
-
-  if (!body.linkedAsset.type || body.linkedAsset.type !== "TC") {
-    throw new Error(
-      "[fetchIssuesLinkedToTestCase] Invalid linkedAsset.type. Must be 'TC'.",
-    );
-  }
-
-  if (typeof body.linkedAsset.id !== "number") {
-    throw new Error(
-      "[fetchIssuesLinkedToTestCase] Missing or invalid linkedAsset.id. Must be a number.",
+      "[fetchIssuesLinkedToTestCase] Missing or invalid required parameter: 'tcID'.",
     );
   }
 

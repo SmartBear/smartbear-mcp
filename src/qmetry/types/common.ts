@@ -545,20 +545,8 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
 export const IssuesLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
-  linkedAsset: z
-    .object({
-      type: z
-        .literal("TC")
-        .describe("Type of linked asset: 'TC' for Test Case only"),
-      id: z
-        .number()
-        .describe(
-          "Numeric ID of the test case. Get this from test case search results (tcID field).",
-        ),
-    })
-    .describe(
-      "Test case information specifying the ID of the test case to find issues for",
-    ),
+  tcID: CommonFields.tcID,
+  getLinked: CommonFields.getLinked.optional().default(true),
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -569,6 +557,7 @@ export const TestCasesByTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
   tsID: CommonFields.tsID,
+  getLinked: CommonFields.getLinked.optional().default(true),
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -593,19 +582,9 @@ export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
   baseUrl: CommonFields.baseUrl,
   tsrunID: CommonFields.tsrunID, // API payload param - sent in request body (REQUIRED)
   viewId: CommonFields.teViewId.pipe(z.number()), // API payload param - sent in request body (REQUIRED)
-  showTcWithDefects: CommonFields.showTcWithDefects,
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
-  filter: CommonFields.filter,
-  udfFilter: CommonFields.udfFilter,
-  sort: z
-    .string()
-    .optional()
-    .describe(
-      "Sort Records - refer json schema, Possible property - entityKey, summary, executedVersion, stepCount, runStatus, testerAlias, attachmentCount, comment, executedAt",
-    )
-    .default('[{"property":"entityKey","direction":"ASC"}]'), // API payload param - sent in request body
 });
 
 export const LinkedIssuesByTestCaseRunArgsSchema = z.object({

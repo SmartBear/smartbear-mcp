@@ -23,9 +23,9 @@ describe("issues API clients", () => {
   });
 
   describe("fetchIssuesLinkedToTestCase", () => {
-    it("should POST with correct URL and required linkedAsset parameter", async () => {
+    it("should POST with correct URL and required tcID parameter", async () => {
       const payload = {
-        linkedAsset: { type: "TC" as const, id: 3878816 },
+        tcID: 3878816,
       };
       const mockResponse = {
         data: [
@@ -63,7 +63,7 @@ describe("issues API clients", () => {
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `${baseUrl}/rest/issues/getIssuesForTestCase`,
+        `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
@@ -71,9 +71,7 @@ describe("issues API clients", () => {
             apikey: token,
             project: projectKey,
           }),
-          body: expect.stringContaining(
-            '"linkedAsset":{"type":"TC","id":3878816}',
-          ),
+          body: expect.stringContaining('"tcID":3878816'),
         }),
       );
 
@@ -91,12 +89,13 @@ describe("issues API clients", () => {
 
     it("should include optional parameters in the request", async () => {
       const payload = {
-        linkedAsset: { type: "TC" as const, id: 3878816 },
+        tcID: 3878816,
         filter:
           '[{"value":"authentication","type":"string","field":"summary"}]',
         limit: 20,
         page: 2,
         start: 20,
+        getLinked: false,
       };
       const mockResponse = {
         data: [
@@ -124,7 +123,7 @@ describe("issues API clients", () => {
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `${baseUrl}/rest/issues/getIssuesForTestCase`,
+        `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining(
@@ -133,17 +132,24 @@ describe("issues API clients", () => {
         }),
       );
       expect(global.fetch).toHaveBeenCalledWith(
-        `${baseUrl}/rest/issues/getIssuesForTestCase`,
+        `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining('"limit":20'),
         }),
       );
       expect(global.fetch).toHaveBeenCalledWith(
-        `${baseUrl}/rest/issues/getIssuesForTestCase`,
+        `${baseUrl}/rest/issues/list/ForTC`,
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining('"page":2'),
+        }),
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        `${baseUrl}/rest/issues/list/ForTC`,
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"getLinked":false'),
         }),
       );
 
@@ -161,7 +167,7 @@ describe("issues API clients", () => {
         .mockResolvedValue(mockFail(404, "Test case not found"));
 
       const payload = {
-        linkedAsset: { type: "TC" as const, id: 99999 },
+        tcID: 99999,
       };
 
       await expect(
@@ -171,32 +177,32 @@ describe("issues API clients", () => {
       );
     });
 
-    it("should throw error when linkedAsset is missing", async () => {
-      const payload = {} as any; // Missing required linkedAsset
+    it("should throw error when tcID is missing", async () => {
+      const payload = {} as any; // Missing required tcID
 
       await expect(
         fetchIssuesLinkedToTestCase(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(/Missing or invalid required parameter: 'linkedAsset'/);
+      ).rejects.toThrow(/Missing or invalid required parameter: 'tcID'/);
     });
 
-    it("should throw error when linkedAsset.type is invalid", async () => {
+    it("should throw error when tcID is invalid", async () => {
       const payload = {
-        linkedAsset: { type: "INVALID" as any, id: 3878816 },
+        tcID: "invalid" as any,
       };
 
       await expect(
         fetchIssuesLinkedToTestCase(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(/Invalid linkedAsset.type. Must be 'TC'/);
+      ).rejects.toThrow(/Missing or invalid required parameter: 'tcID'/);
     });
 
-    it("should throw error when linkedAsset.id is missing", async () => {
+    it("should throw error when tcID is not a number", async () => {
       const payload = {
-        linkedAsset: { type: "TC" as const },
-      } as any; // Missing id
+        tcID: null as any,
+      };
 
       await expect(
         fetchIssuesLinkedToTestCase(token, baseUrl, projectKey, payload),
-      ).rejects.toThrow(/Missing or invalid linkedAsset.id. Must be a number/);
+      ).rejects.toThrow(/Missing or invalid required parameter: 'tcID'/);
     });
   });
 });
