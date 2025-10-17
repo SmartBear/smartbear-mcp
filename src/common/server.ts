@@ -62,8 +62,10 @@ export class SmartBearMcpServer extends McpServer {
           async (args: any, extra: any) => {
             try {
               const result = await cb(args, extra);
-              this.validateCallbackResult(result, params);
-              this.addStructuredContentAsText(result);
+              if (result) {
+                this.validateCallbackResult(result, params);
+                this.addStructuredContentAsText(result);
+              }
               return result;
             } catch (e) {
               // ToolErrors should not be reported to BugSnag
