@@ -132,7 +132,7 @@ export class SmartBearMcpServer extends McpServer {
     }
     if (params.outputSchema && !result.structuredContent) {
       throw new Error(
-        `The result of the tool ${params.title} must include 'structuredContent'`,
+        `The result of the tool '${params.title}' must include 'structuredContent'`,
       );
     }
   }

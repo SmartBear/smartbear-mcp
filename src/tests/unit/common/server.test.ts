@@ -443,6 +443,167 @@ describe("SmartBearMcpServer", () => {
         expect.any(Function),
       );
     });
+
+    it("should register tool with inputSchema and outputSchema, and handle structuredContent", async () => {
+      server.addClient(mockClient);
+      const registerCbMock = vi.fn().mockResolvedValue({
+        isError: false,
+        structuredContent: {
+          values: [
+            { id: "1", name: "Alpha" },
+            { id: "2", name: "Beta" },
+          ],
+        },
+      });
+
+      const inputSchema = z.object({
+        query: z.string().describe("Search query"),
+        limit: z.number().optional().describe("Max results"),
+      });
+      const outputSchema = z.object({
+        values: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          )
+          .describe("List of values"),
+      });
+
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      registerFn(
+        {
+          title: "Search values",
+          summary: "Tool using input and output schemas",
+          inputSchema,
+          outputSchema,
+        },
+        registerCbMock,
+      );
+
+      expect(superRegisterToolMock).toHaveBeenCalledOnce();
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      expect(registerToolParams[0]).toBe("test_product_search_values");
+      expect(registerToolParams[1].title).toBe("Test Product: Search values");
+
+      // Description should list parameters derived from inputSchema
+      expect(registerToolParams[1].description).toBe(
+        "Tool using input and output schemas\n\n" +
+          "**Parameters:**\n" +
+          "- query (string) *required*: Search query\n" +
+          "- limit (number): Max results",
+      );
+
+      // Input schema should reflect raw shape merging (only inputSchema here)
+      expect(registerToolParams[1].inputSchema.query.toString()).toBe(
+        z.string().describe("Search query").toString(),
+      );
+      expect(registerToolParams[1].inputSchema.limit.toString()).toBe(
+        z.number().describe("Max results").optional().toString(),
+      );
+
+      // Output schema should be raw shape of outputSchema
+      expect(registerToolParams[1].outputSchema.values.toString()).toBe(
+        z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          )
+          .describe("List of values")
+          .toString(),
+      );
+
+      // Execute wrapper function to validate structuredContent -> content conversion
+      const result = await registerToolParams[2]({ query: "alpha" }, {});
+      expect(registerCbMock).toHaveBeenCalledOnce();
+      expect(result.isError).toBe(false);
+      expect(result.structuredContent?.values.length).toBe(2);
+      expect(result.content?.[0].text).toBe(
+        JSON.stringify(result.structuredContent),
+      );
+      expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
+    });
+
+    it("should register tool with outputSchema and throw error if structuredContent is missing", async () => {
+      server.addClient(mockClient);
+      const registerCbMock = vi.fn().mockResolvedValue({
+        isError: false,
+      });
+
+      const outputSchema = z.object({
+        values: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          )
+          .describe("List of values"),
+      });
+
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      registerFn(
+        {
+          title: "Get values",
+          summary: "Tool using output schema",
+          outputSchema,
+        },
+        registerCbMock,
+      );
+
+      expect(superRegisterToolMock).toHaveBeenCalledOnce();
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      // Execute wrapper function to validate error on missing structuredContent
+      await expect(registerToolParams[2]({}, {})).rejects.toThrow(
+        "The result of the tool 'Get values' must include 'structuredContent'",
+      );
+
+      expect(registerCbMock).toHaveBeenCalledOnce();
+      expect(vi.mocked(Bugsnag.notify)).toHaveBeenCalled();
+    });
+
+    it("should register tool with outputSchema and not throw error if structuredContent is missing but isError", async () => {
+      server.addClient(mockClient);
+      const registerCbMock = vi.fn().mockResolvedValue({
+        isError: true,
+      });
+
+      const outputSchema = z.object({
+        values: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          )
+          .describe("List of values"),
+      });
+
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      registerFn(
+        {
+          title: "Get values",
+          summary: "Tool using output schema",
+          outputSchema,
+        },
+        registerCbMock,
+      );
+
+      expect(superRegisterToolMock).toHaveBeenCalledOnce();
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      // Execute wrapper function to validate no error on missing structuredContent when isError is true
+      const result = await registerToolParams[2]({}, {});
+      expect(result.isError).toBe(true);
+
+      expect(registerCbMock).toHaveBeenCalledOnce();
+      expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
+    });
   });
 
   describe("schemaToRawShape", () => {
