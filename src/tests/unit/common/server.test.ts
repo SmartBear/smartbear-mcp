@@ -444,4 +444,25 @@ describe("SmartBearMcpServer", () => {
       );
     });
   });
+
+  describe("schemaToRawShape", () => {
+    it("should convert Zod schema to raw shape", () => {
+      const schema = z.object({
+        name: z.string().describe("The name of the person"),
+        age: z.number().min(0).describe("The age of the person"),
+        isActive: z.boolean().describe("Is the person active?"),
+      });
+      const result = server.schemaToRawShape(schema);
+      expect(result).toEqual(schema.shape);
+    });
+    it("returns an empty object if it's not a ZodObject", () => {
+      const schema = z.array(z.string());
+      const rawShape = server.schemaToRawShape(schema);
+      expect(rawShape).toEqual({});
+    });
+    it("returns an empty object if the schema is undefined", () => {
+      const rawShape = server.schemaToRawShape(undefined);
+      expect(rawShape).toEqual({});
+    });
+  });
 });

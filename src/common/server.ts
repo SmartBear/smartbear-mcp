@@ -178,21 +178,10 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   private schemaToRawShape(schema: ZodTypeAny | undefined): ZodRawShape {
-    const rawShape: ZodRawShape = {};
     if (schema && schema instanceof ZodObject) {
-      for (const key of Object.keys(schema.shape)) {
-        const field = schema.shape[key];
-        rawShape[key] = field;
-        if (field.description) {
-          rawShape[key] = rawShape[key].describe(field.description);
-        }
-
-        if (field.isOptional()) {
-          rawShape[key] = rawShape[key].optional();
-        }
-      }
+      return schema.shape;
     }
-    return rawShape;
+    return {};
   }
 
   private getOutputSchema(params: ToolParams): any {
