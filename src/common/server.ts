@@ -2,7 +2,10 @@ import {
   McpServer,
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  CallToolResult,
+  ToolAnnotations,
+} from "@modelcontextprotocol/sdk/types.js";
 import {
   ZodAny,
   ZodArray,
@@ -59,7 +62,10 @@ export class SmartBearMcpServer extends McpServer {
           },
           async (args: any, extra: any) => {
             try {
-              return await cb(args, extra);
+              const result = await cb(args, extra);
+              this.validateCallbackResult(result, params);
+              this.addStructuredContentAsText(result);
+              return result;
             } catch (e) {
               Bugsnag.notify(e as unknown as Error);
               throw e;
@@ -96,6 +102,28 @@ export class SmartBearMcpServer extends McpServer {
       client.registerPrompts((name, config, cb) => {
         return super.registerPrompt(name, config, cb);
       });
+    }
+  }
+
+  private validateCallbackResult(result: CallToolResult, params: ToolParams) {
+    if (result.isError) {
+      return;
+    }
+    if (params.outputSchema && !result.structuredContent) {
+      throw new Error(
+        `The result of the tool ${params.title} must include 'structuredContent'`,
+      );
+    }
+  }
+
+  private addStructuredContentAsText(result: CallToolResult) {
+    if (result.structuredContent && !result.content) {
+      result.content = [
+        {
+          type: "text",
+          text: JSON.stringify(result.structuredContent),
+        },
+      ];
     }
   }
 
