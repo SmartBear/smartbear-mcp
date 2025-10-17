@@ -97,12 +97,26 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of test case executions.
 -   Use case: Retrieve available test case execution records.
 
-### `qmetry_testsuites_for_testcase`
+### `get_issues_linked_to_tc`
+
+-   Purpose: Get issues that are linked to a specific test case in QMetry.
+-   Parameters: Test Case identifier (`tcID`).
+-   Returns: Complete list of issues linked to the test case with issue details, priorities, and status information.
+-   Use case: Retrieve defects and issues associated with a specific test case for traceability and defect tracking.
+
+### `get_testsuites_by_testcase`
 
 -   Purpose: Get test suites that can be linked to test cases in QMetry.
 -   Parameters: Test Suite folder ID identifier (`tsFolderID`).
 -   Returns: Complete list of test suites for the given test case.
 -   Use case: Retrieve available test suites that can be linked to a test case.
+
+### `get_testcases_by_testsuite`
+
+-   Purpose: Get test cases that are linked to a specific test suite in QMetry.
+-   Parameters: Test Suite identifier (`tsID`).
+-   Returns: Complete list of test cases linked to the test suite with test case details and metadata.
+-   Use case: Retrieve all test cases associated with a specific test suite for execution planning and management.
 
 ### `qmetry_executions_by_testsuite`
 
@@ -110,3 +124,17 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: Test Suite identifier (`tsID`), Test Suite folder ID (`tsFolderID`).
 -   Returns: Complete list of executions for the test suite with execution details.
 -   Use case: Retrieve test suite execution data.
+
+### `get_testcase_runs_by_testsuite_run`
+
+-   Purpose: Get test case runs under a specific test suite run execution in QMetry.
+-   Parameters: Test Suite Run identifier (`tsrunID`), Test Execution View identifier (`viewId`).
+-   Returns: Complete list of test case runs with detailed execution information, status, tester details, and run metadata.
+-   Use case: Retrieve individual test case execution results and status within a specific test suite run.
+
+### `get_linked_issues_by_testcase_run`
+
+-   Purpose: Get issues that are linked to a specific test case run in QMetry.
+-   Parameters: Test Case Run identifier (`entityId`).
+-   Returns: Complete list of issues linked to the test case run with issue details, priorities, status, owner information, and linkage metadata.
+-   Use case: Retrieve issues associated with specific test case executions for defect tracking, traceability analysis, and test execution quality monitoring.

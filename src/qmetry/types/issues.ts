@@ -5,11 +5,6 @@ import {
   type PaginationPayload,
 } from "./common.js";
 
-export interface LinkedAsset {
-  type: "TC"; // Test Case only
-  id: number; // numeric ID of the test case
-}
-
 /**
  * Payload for fetching issues linked to a test case.
  *
@@ -24,13 +19,15 @@ export interface LinkedAsset {
 export interface FetchIssuesLinkedToTestCasePayload
   extends PaginationPayload,
     FilterPayload {
-  linkedAsset: LinkedAsset; // required - asset information
+  tcID: number; // required - Test Case numeric ID
+  getLinked?: boolean; // optional - True to get linked issues, false for unlinked (default: true)
 }
 
 export const DEFAULT_FETCH_ISSUES_LINKED_TO_TESTCASE_PAYLOAD: Omit<
   FetchIssuesLinkedToTestCasePayload,
-  "linkedAsset"
+  "tcID"
 > = {
   ...DEFAULT_PAGINATION,
   ...DEFAULT_FILTER,
+  getLinked: true,
 };

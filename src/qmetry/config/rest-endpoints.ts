@@ -20,12 +20,12 @@ export const QMETRY_PATHS = {
   },
   TESTSUITE: {
     GET_TS_LIST_FOR_TC: "/rest/testsuites/list/forTC",
-    GET_TESTCASES_BY_TESTSUITE: "/rest/testsuites/testcase/list",
+    GET_TESTCASES_BY_TESTSUITE: "/rest/testcases/list/forTS",
     GET_EXECUTIONS_BY_TESTSUITE: "/rest/execution/list/platformHome",
     GET_TESTCASE_RUNS_BY_TESTSUITE_RUN: "/rest/execution/list/viewColumns",
     GET_LINKED_ISSUES_BY_TESTCASE_RUN: "/rest/execution/issue/list/forTCRun",
   },
   ISSUES: {
-    GET_ISSUES_LINKED_TO_TC: "/rest/issues/getIssuesForTestCase",
+    GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
   },
 };

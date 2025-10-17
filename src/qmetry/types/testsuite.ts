@@ -1,10 +1,8 @@
 import {
   DEFAULT_FILTER,
   DEFAULT_PAGINATION,
-  DEFAULT_SORT,
   type FilterPayload,
   type PaginationPayload,
-  type SortPayload,
 } from "./common.js";
 
 export interface FetchTestSuitesForTestCasePayload
@@ -28,6 +26,7 @@ export interface FetchTestCasesByTestSuitePayload
   extends PaginationPayload,
     FilterPayload {
   tsID: number; // required - Test Suite ID
+  getLinked?: boolean; // optional - True to get linked test cases, false for unlinked (default: true)
 }
 
 export const DEFAULT_FETCH_TESTCASES_BY_TESTSUITE_PAYLOAD: Omit<
@@ -36,6 +35,7 @@ export const DEFAULT_FETCH_TESTCASES_BY_TESTSUITE_PAYLOAD: Omit<
 > = {
   ...DEFAULT_PAGINATION,
   ...DEFAULT_FILTER,
+  getLinked: true,
 };
 
 export interface FetchExecutionsByTestSuitePayload
@@ -57,13 +57,9 @@ export const DEFAULT_FETCH_EXECUTIONS_BY_TESTSUITE_PAYLOAD: Omit<
 };
 
 export interface FetchTestCaseRunsByTestSuiteRunPayload
-  extends PaginationPayload,
-    FilterPayload,
-    SortPayload {
+  extends PaginationPayload {
   tsrunID: string; // required - Test Suite Run ID (STRING format - get from executions API)
   viewId: number; // required - View ID for test execution (get from project info latestViews.TE.viewId)
-  showTcWithDefects?: boolean; // optional - Show test case runs with linked defects
-  udfFilter?: string; // optional - User-defined field filter
 }
 
 export const DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD: Omit<
@@ -71,10 +67,6 @@ export const DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD: Omit<
   "tsrunID" | "viewId"
 > = {
   ...DEFAULT_PAGINATION,
-  ...DEFAULT_FILTER,
-  ...DEFAULT_SORT,
-  showTcWithDefects: false,
-  udfFilter: "[]",
 };
 
 export interface FetchLinkedIssuesByTestCaseRunPayload

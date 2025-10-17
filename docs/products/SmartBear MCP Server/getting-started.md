@@ -491,6 +491,8 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "Get execution records for a specific test case by ID."
 -   "Get test suites that can be linked to test cases in QMetry."
 -   "Get executions for a given test suite in QMetry."
+-   "Get test case runs under a specific test suite run execution in QMetry."
+-   "Get issues that are linked to a specific test case run in QMetry."
 
 ### Zephyr Test Management
 
