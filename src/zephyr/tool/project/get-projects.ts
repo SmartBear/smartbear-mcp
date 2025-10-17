@@ -64,6 +64,9 @@ export class GetProjects implements ZephyrTool {
       maxResults,
       startAt,
     });
-    return { structuredContent: response };
+    return {
+      structuredContent: response,
+      content: [],
+    };
   };
 }

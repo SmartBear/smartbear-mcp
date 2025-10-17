@@ -3,10 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag.js";
 import { SmartBearMcpServer } from "../../../common/server.js";
-import {
-  type ToolParams,
-  ToolError,
-} from "../../../common/types";
+import { ToolError, type ToolParams } from "../../../common/types.js";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({

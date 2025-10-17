@@ -136,7 +136,7 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   private addStructuredContentAsText(result: CallToolResult) {
-    if (result.structuredContent && !result.content) {
+    if (result.structuredContent && !result.content?.length) {
       result.content = [
         {
           type: "text",
