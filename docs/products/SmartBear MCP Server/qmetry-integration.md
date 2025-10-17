@@ -128,7 +128,7 @@ The QMetry client provides the following test management capabilities as listed 
 ### `get_testcase_runs_by_testsuite_run`
 
 -   Purpose: Get test case runs under a specific test suite run execution in QMetry.
--   Parameters: Test Suite Run identifier (`tsrunID`), Test Execution View identifier (`viewId`).
+-   Parameters: Test Suite Run identifier (`test suite run ID`), Test Execution View identifier (`viewId`).
 -   Returns: Complete list of test case runs with detailed execution information, status, tester details, and run metadata.
 -   Use case: Retrieve individual test case execution results and status within a specific test suite run.
 
