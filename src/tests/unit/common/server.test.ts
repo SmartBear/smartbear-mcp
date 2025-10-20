@@ -269,6 +269,7 @@ describe("SmartBearMcpServer", () => {
         idempotentHint: true,
         openWorldHint: true,
       });
+      expect(registerToolParams[1].outputSchema).toBeUndefined();
     });
 
     it("should handle tool errors when registering tools", async () => {
