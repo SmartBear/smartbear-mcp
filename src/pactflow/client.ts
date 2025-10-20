@@ -2,6 +2,7 @@ import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import {
   type Client,
+  type ClientAuthConfig,
   type GetInputFunction,
   type RegisterPromptFunction,
   type RegisterToolsFunction,

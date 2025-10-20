@@ -4,6 +4,7 @@ import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import {
   type Client,
+  type ClientAuthConfig,
   type GetInputFunction,
   type RegisterResourceFunction,
   type RegisterToolsFunction,
