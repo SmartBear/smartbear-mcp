@@ -84,12 +84,26 @@ export const CreateApiFromTemplateParamsSchema = z.object({
     ),
 });
 
+export const ScanStandardizationParamsSchema = z.object({
+  orgName: z
+    .string()
+    .describe("The organization name to use for standardization rules"),
+  definition: z
+    .string()
+    .describe(
+      "API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format) to scan for standardization errors",
+    ),
+});
+
 // Registry API types for SwaggerHub Design functionality - generated from Zod schemas
 export type ApiSearchParams = z.infer<typeof ApiSearchParamsSchema>;
 export type ApiDefinitionParams = z.infer<typeof ApiDefinitionParamsSchema>;
 export type CreateApiParams = z.infer<typeof CreateApiParamsSchema>;
 export type CreateApiFromTemplateParams = z.infer<
   typeof CreateApiFromTemplateParamsSchema
+>;
+export type ScanStandardizationParams = z.infer<
+  typeof ScanStandardizationParamsSchema
 >;
 
 // APIs.json format response types
@@ -151,4 +165,9 @@ export interface CreateApiFromTemplateResponse {
   template: string;
   url: string;
   operation: "create" | "update";
+}
+
+// Response type for standardization scan
+export interface StandardizationResult {
+  [key: string]: unknown; // The API returns standardization errors/results
 }

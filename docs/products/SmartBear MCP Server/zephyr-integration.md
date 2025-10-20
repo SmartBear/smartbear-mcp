@@ -1,4 +1,4 @@
-![zephyr.svg](images/embedded/zephyr.svg)
+![zephyr.svg](./images/embedded/zephyr.svg)
 
 The Zephyr client provides test management and execution capabilities within Zephyr as listed on [Available Tools](#Available-Tools).
 

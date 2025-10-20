@@ -1,11 +1,31 @@
 import { QMetryToolsHandlers } from "../config/constants.js";
-import { getProjectInfo } from "./project.js";
+import { fetchIssuesLinkedToTestCase } from "./issues.js";
+import {
+  getBuilds,
+  getPlatforms,
+  getProjectInfo,
+  getReleasesCycles,
+} from "./project.js";
+import {
+  fetchRequirementDetails,
+  fetchRequirements,
+  fetchRequirementsLinkedToTestCase,
+} from "./requirement.js";
 import {
   fetchTestCaseDetails,
+  fetchTestCaseExecutions,
   fetchTestCaseSteps,
   fetchTestCases,
+  fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
 } from "./testcase.js";
+import {
+  fetchExecutionsByTestSuite,
+  fetchLinkedIssuesByTestCaseRun,
+  fetchTestCaseRunsByTestSuiteRun,
+  fetchTestCasesByTestSuite,
+  fetchTestSuitesForTestCase,
+} from "./testsuite.js";
 
 /**
  * Mapping of QMetry tool handlers to their implementation functions
@@ -24,9 +44,30 @@ type QMetryHandler = (
 export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.SET_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_PROJECT_INFO]: getProjectInfo,
+  [QMetryToolsHandlers.FETCH_RELEASES_CYCLES]: getReleasesCycles,
+  [QMetryToolsHandlers.FETCH_BUILDS]: getBuilds,
+  [QMetryToolsHandlers.FETCH_PLATFORMS]: getPlatforms,
   [QMetryToolsHandlers.FETCH_TEST_CASES]: fetchTestCases,
   [QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS]: fetchTestCaseDetails,
   [QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS]:
     fetchTestCaseVersionDetails,
   [QMetryToolsHandlers.FETCH_TEST_CASE_STEPS]: fetchTestCaseSteps,
+  [QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS]: fetchTestCaseExecutions,
+  [QMetryToolsHandlers.FETCH_REQUIREMENTS]: fetchRequirements,
+  [QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS]: fetchRequirementDetails,
+  [QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT]:
+    fetchTestCasesLinkedToRequirement,
+  [QMetryToolsHandlers.FETCH_REQUIREMENTS_LINKED_TO_TESTCASE]:
+    fetchRequirementsLinkedToTestCase,
+  [QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE]:
+    fetchTestSuitesForTestCase,
+  [QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE]: fetchTestCasesByTestSuite,
+  [QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE]:
+    fetchExecutionsByTestSuite,
+  [QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN]:
+    fetchTestCaseRunsByTestSuiteRun,
+  [QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN]:
+    fetchLinkedIssuesByTestCaseRun,
+  [QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE]:
+    fetchIssuesLinkedToTestCase,
 };

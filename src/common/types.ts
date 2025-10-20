@@ -33,6 +33,12 @@ export interface ToolParams {
   openWorld?: boolean;
 }
 
+/**
+ * Error class for tool-specific errors – these result in a response to the LLM with `isError: true`
+ * and are not reported to BugSnag
+ */
+export class ToolError extends Error {}
+
 export interface PromptParams {
   name: string;
   callback: any;

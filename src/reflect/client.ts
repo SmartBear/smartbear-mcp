@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type {
-  Client,
-  ClientAuthConfig,
-  GetInputFunction,
-  RegisterToolsFunction,
+import {
+  type Client,
+  type GetInputFunction,
+  type RegisterToolsFunction,
+  ToolError,
 } from "../common/types.js";
 
 // Type definitions for tool arguments
@@ -217,7 +217,7 @@ export class ReflectClient implements Client {
         ],
       },
       async (args, _extra) => {
-        if (!args.suiteId) throw new Error("suiteId argument is required");
+        if (!args.suiteId) throw new ToolError("suiteId argument is required");
         const response = await this.listSuiteExecutions(args.suiteId);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
@@ -245,7 +245,7 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.suiteId || !args.executionId)
-          throw new Error(
+          throw new ToolError(
             "Both suiteId and executionId arguments are required",
           );
         const response = await this.getSuiteExecutionStatus(
@@ -271,7 +271,7 @@ export class ReflectClient implements Client {
         ],
       },
       async (args, _extra) => {
-        if (!args.suiteId) throw new Error("suiteId argument is required");
+        if (!args.suiteId) throw new ToolError("suiteId argument is required");
         const response = await this.executeSuite(args.suiteId);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
@@ -299,7 +299,7 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.suiteId || !args.executionId)
-          throw new Error(
+          throw new ToolError(
             "Both suiteId and executionId arguments are required",
           );
         const response = await this.cancelSuiteExecution(
@@ -338,7 +338,7 @@ export class ReflectClient implements Client {
         ],
       },
       async (args, _extra) => {
-        if (!args.testId) throw new Error("testId argument is required");
+        if (!args.testId) throw new ToolError("testId argument is required");
         const response = await this.runReflectTest(args.testId);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
@@ -366,7 +366,9 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.testId || !args.executionId)
-          throw new Error("Both testId and executionId arguments are required");
+          throw new ToolError(
+            "Both testId and executionId arguments are required",
+          );
         const response = await this.getReflectTestStatus(
           args.testId,
           args.executionId,
