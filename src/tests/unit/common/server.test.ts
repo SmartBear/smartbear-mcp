@@ -619,11 +619,11 @@ describe("SmartBearMcpServer", () => {
     it("returns an empty object if it's not a ZodObject", () => {
       const schema = z.array(z.string());
       const rawShape = server.schemaToRawShape(schema);
-      expect(rawShape).toEqual({});
+      expect(rawShape).toBeUndefined();
     });
     it("returns an empty object if the schema is undefined", () => {
       const rawShape = server.schemaToRawShape(undefined);
-      expect(rawShape).toEqual({});
+      expect(rawShape).toBeUndefined();
     });
   });
 });
