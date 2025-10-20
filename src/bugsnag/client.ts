@@ -4,6 +4,7 @@ import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import {
   type Client,
+  type ClientAuthConfig,
   type GetInputFunction,
   type RegisterResourceFunction,
   type RegisterToolsFunction,
@@ -137,6 +138,38 @@ export class BugsnagClient implements Client {
     // Get optional values
     const projectApiKey = process.env.BUGSNAG_PROJECT_API_KEY;
     const endpoint = process.env.BUGSNAG_ENDPOINT;
+
+    return new BugsnagClient(token, projectApiKey, endpoint);
+  }
+
+  /**
+   * Create BugsnagClient from HTTP headers
+   * Headers should match the environment variable names:
+   * - X-Bugsnag-Auth-Token (required)
+   * - X-Bugsnag-Project-Api-Key (optional)
+   * - X-Bugsnag-Endpoint (optional)
+   *
+   * @param headers HTTP headers object
+   * @returns BugsnagClient instance or null if X-Bugsnag-Auth-Token is not set
+   */
+  static fromHeaders(
+    headers: Record<string, string | string[] | undefined>,
+  ): BugsnagClient | null {
+    // Extract and normalize header values
+    const getHeader = (key: string): string | undefined => {
+      const value = headers[key.toLowerCase()];
+      return typeof value === "string" ? value : undefined;
+    };
+
+    // Check required auth values
+    const token = getHeader("x-bugsnag-auth-token");
+    if (!token) {
+      return null;
+    }
+
+    // Get optional values
+    const projectApiKey = getHeader("x-bugsnag-project-api-key");
+    const endpoint = getHeader("x-bugsnag-endpoint");
 
     return new BugsnagClient(token, projectApiKey, endpoint);
   }
