@@ -1,29 +1,25 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { setupClientsFromEnv } from "./client-factory.js";
+import type { ZodObject } from "zod";
+
 import { clientRegistry } from "./client-registry.js";
 import { SmartBearMcpServer } from "./server.js";
+import type { Client } from "./types.js";
 
 /**
  * Generate a dynamic error message listing all available clients and their required env vars
  */
-function getNoAuthErrorMessage(): string {
-  const entries = clientRegistry.getAll();
-  const requiredVars: string[] = [];
-
-  for (const entry of entries) {
-    if ("getAuthConfig" in entry.clientClass) {
-      const config = (entry.clientClass as any).getAuthConfig();
-      const required = config.requirements.filter((r: any) => r.required);
-      requiredVars.push(...required.map((r: any) => r.key));
+function getNoConfigErrorMessage(): string[] {
+  const messages: string[] = [];
+  for (const entry of clientRegistry.getAll()) {
+    for (const [configKey, requirement] of Object.entries<ZodObject<any>>(entry.config.shape)) {
+      const headerName = getEnvVarName(entry, configKey);
+      const requiredTag = requirement.isOptional() ? " (optional)" : " (required)";
+      messages.push(
+        `    - ${headerName}${requiredTag}: ${requirement.description}`,
+      );
     }
   }
-
-  if (requiredVars.length === 0) {
-    return "[MCP] No product authentication found. Please configure at least one product client.";
-  }
-
-  const varList = requiredVars.map((v) => `  - ${v}`).join("\n");
-  return `[MCP] No product authentication found. Please set at least one required environment variable:\n${varList}`;
+  return messages;
 }
 
 /**
@@ -33,13 +29,24 @@ export async function runStdioMode() {
   const server = new SmartBearMcpServer();
 
   // Setup clients from environment variables
-  const clientsSetup = await setupClientsFromEnv(server, server.server);
-
-  if (!clientsSetup) {
-    console.error(getNoAuthErrorMessage());
+  const configuredCount = await clientRegistry.configure(server, (client, key) => {
+    const envVarName = getEnvVarName(client, key);
+    return process.env[envVarName] || null;
+  });
+  if (configuredCount === 0) {
+    const errorMessage = getNoConfigErrorMessage();
+    console.error(
+      errorMessage.length > 0
+        ? `No clients configured. Please provide valid environment variables for at least one client:\n${errorMessage.join("\n")}`
+        : "No clients support environment variable configuration."
+    );
     process.exit(1);
   }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
+}
+
+function getEnvVarName(client: Client, key: string): string {
+  return `${client.name.toUpperCase()}_${key.toUpperCase()}`;
 }

@@ -1,19 +1,22 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
+
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { setupClientsFromHeaders } from "./client-factory.js";
+import type { ZodObject } from "zod";
+
 import { clientRegistry } from "./client-registry.js";
 import { SmartBearMcpServer } from "./server.js";
+import type { Client } from "./types.js";
 
 /**
  * Run server in HTTP mode with Streamable HTTP transport
  * Supports both SSE (legacy) and StreamableHTTP transports for backwards compatibility
  */
 export async function runHttpMode() {
-  const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 3000;
+  const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3000;
 
   // Store transports by session ID
   const transports = new Map<
@@ -25,7 +28,7 @@ export async function runHttpMode() {
   >();
 
   // Get dynamic list of allowed headers from registered clients
-  const allowedAuthHeaders = clientRegistry.getHttpAuthHeaders();
+  const allowedAuthHeaders = getHttpHeaders();
   const allowedHeaders = [
     "Content-Type",
     "Authorization",
@@ -83,14 +86,14 @@ export async function runHttpMode() {
       `[MCP HTTP Server] Legacy endpoint: http://localhost:${PORT}/sse (SSE)`,
     );
 
-    const headerHelp = clientRegistry.getHttpAuthHeadersHelp();
+    const headerHelp = getHttpHeadersHelp();
     if (headerHelp.length > 0) {
       console.log(
-        `[MCP HTTP Server] Send authentication headers:${headerHelp.join("")}`,
+        `[MCP HTTP Server] Send configuration headers:${headerHelp.join("")}`,
       );
     } else {
-      console.log(
-        `[MCP HTTP Server] No clients support HTTP header authentication`,
+      console.warn(
+        `[MCP HTTP Server] No clients support HTTP header configuration`,
       );
     }
   });
@@ -169,22 +172,8 @@ async function createNewTransport(
     }
   >,
 ): Promise<StreamableHTTPServerTransport | null> {
-  const server = new SmartBearMcpServer();
-
-  const clientsSetup = await setupClientsFromHeaders(
-    server,
-    server.server,
-    req.headers,
-  );
-  if (!clientsSetup) {
-    const headerHelp = clientRegistry.getHttpAuthHeadersHelp();
-    const errorMessage =
-      headerHelp.length > 0
-        ? `Authentication failed. Please provide valid authentication headers.${headerHelp.join("\n")}`
-        : "Authentication failed. No clients support HTTP header authentication.";
-
-    res.writeHead(401, { "Content-Type": "text/plain" });
-    res.end(errorMessage);
+  const server = await newServer(req, res);
+  if (!server) {
     return null;
   }
 
@@ -282,27 +271,11 @@ async function handleLegacySseRequest(
   >,
 ) {
   // Create a new server instance for this connection
-  const server = new SmartBearMcpServer();
-  const transport = new SSEServerTransport("/message", res);
-
-  // Setup clients from HTTP headers
-  const clientsSetup = await setupClientsFromHeaders(
-    server,
-    server.server,
-    req.headers,
-  );
-
-  if (!clientsSetup) {
-    const headerHelp = clientRegistry.getHttpAuthHeadersHelp();
-    const errorMessage =
-      headerHelp.length > 0
-        ? `Authentication failed. Please provide valid authentication headers.${headerHelp.join("\n")}`
-        : "Authentication failed. No clients support HTTP header authentication.";
-
-    res.writeHead(401, { "Content-Type": "text/plain" });
-    res.end(errorMessage);
+  const server = await newServer(req, res);
+  if (!server) {
     return;
   }
+  const transport = new SSEServerTransport("/message", res);
 
   // Store the session
   transports.set(transport.sessionId, { server, transport });
@@ -374,4 +347,76 @@ async function handleLegacyMessageRequest(
       res.end("Internal server error");
     }
   });
+}
+
+async function newServer(req: IncomingMessage, res: ServerResponse): Promise<SmartBearMcpServer | null> {
+  const server = new SmartBearMcpServer();
+  try {
+    await clientRegistry.configure(server, (client, key) => {
+      const headerName = getHeaderName(client, key);
+      const value = req.headers[headerName];
+      if (typeof value === "string") {
+        return value;
+      }
+      throw new Error(`Missing required config for ${client.name}: ${headerName}`);
+    });
+  } catch (error: any) {
+
+    const headerHelp = getHttpHeadersHelp();
+    const errorMessage =
+      headerHelp.length > 0
+        ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
+        : "No clients support HTTP header configuration.";
+
+    res.writeHead(401, { "Content-Type": "text/plain" });
+    res.end(errorMessage);
+    return null;
+  }
+  return server;
+}
+
+function getHeaderName(client: Client, key: string): string {
+  return `X-${client.name}-${key
+    .split("_")
+    .map(
+      (part: string) =>
+        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+    )
+    .join("-")}`;
+}
+
+/**
+ * Get all HTTP headers that clients support for authentication
+ * Returns a list of header names (in kebab-case) that should be allowed
+ */
+function getHttpHeaders(): string[] {
+  const headers = new Set<string>();
+
+  // Use getAll() to respect MCP_ENABLED_CLIENTS filtering
+  for (const entry of clientRegistry.getAll()) {
+    for (const configKey of Object.keys(entry.config.shape)) {
+      headers.add(getHeaderName(entry, configKey));
+    }
+  }
+
+  return Array.from(headers).sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Get human-readable list of HTTP headers for logging/error messages
+ * Organized by client
+ */
+function getHttpHeadersHelp(): string[] {
+  const messages: string[] = [];
+  for (const entry of clientRegistry.getAll()) {
+    for (const [configKey, requirement] of Object.entries<ZodObject<any>>(entry.config.shape)) {
+      const headerName = getHeaderName(entry, configKey);
+      const requiredTag = requirement.isOptional() ? " (optional)" : " (required)";
+      messages.push(
+        `    - ${headerName}${requiredTag}: ${requirement.description}`,
+      );
+    }
+  }
+
+  return messages;
 }

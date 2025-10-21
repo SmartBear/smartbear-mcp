@@ -1,6 +1,6 @@
+import z from "zod";
 import type {
   Client,
-  ClientAuthConfig,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
@@ -13,54 +13,30 @@ import { getProjectInfo } from "./client/project.js";
 import { TOOLS } from "./client/tools.js";
 import { QMETRY_DEFAULTS } from "./config/constants.js";
 
+const ConfigurationSchema = z.object({
+  api_key: z.string().describe("QMetry API key for authentication"),
+  base_url: z.string().optional().describe("Optional QMetry base URL for custom or region-specific endpoints"),
+});
+
 export class QmetryClient implements Client {
   name = "QMetry";
   prefix = "qmetry";
-  private token: string;
-  private projectApiKey: string;
-  private endpoint: string;
-  constructor(token: string, endpoint?: string) {
-    this.token = token;
-    this.projectApiKey = QMETRY_DEFAULTS.PROJECT_KEY;
-    this.endpoint = endpoint || QMETRY_DEFAULTS.BASE_URL;
-  }
+  config = ConfigurationSchema;
 
-  /**
-   * Get authentication configuration for QMetry
-   */
-  static getAuthConfig(): ClientAuthConfig {
-    return {
-      requirements: [
-        {
-          key: "QMETRY_API_KEY",
-          required: true,
-          description: "QMetry API key for authentication",
-        },
-        {
-          key: "QMETRY_BASE_URL",
-          required: false,
-          description:
-            "Optional QMetry base URL for custom or region-specific endpoints",
-        },
-      ],
-      description: "QMetry requires an API key.",
-    };
-  }
+  private token: string | undefined;
+  private projectApiKey: string = QMETRY_DEFAULTS.PROJECT_KEY;
+  private endpoint: string = QMETRY_DEFAULTS.BASE_URL;
 
-  /**
-   * Create QmetryClient from environment variables
-   * @returns QmetryClient instance or null if QMETRY_API_KEY is not set
-   */
-  static fromEnv(): QmetryClient | null {
-    const token = process.env.QMETRY_API_KEY;
-    if (!token) {
-      return null;
+  async configure(_server: any, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
+    this.token = config.api_key;
+    if (config.base_url) {
+      this.endpoint = config.base_url;
     }
-    const baseUrl = process.env.QMETRY_BASE_URL;
-    return new QmetryClient(token, baseUrl);
+    return true;
   }
 
   getToken() {
+    if (!this.token) throw new Error("Client not configured");
     return this.token;
   }
 
@@ -124,7 +100,7 @@ export class QmetryClient implements Client {
               let projectInfo: any;
               try {
                 projectInfo = (await getProjectInfo(
-                  this.token,
+                  this.getToken(),
                   baseUrl,
                   projectKey,
                 )) as any;
@@ -152,7 +128,7 @@ export class QmetryClient implements Client {
           const { projectKey: _, baseUrl: __, ...cleanArgs } = a;
 
           const result = await handlerFn(
-            this.token,
+            this.getToken(),
             baseUrl,
             projectKey,
             cleanArgs,

@@ -12,6 +12,8 @@ import type {
   ElicitResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodRawShape, ZodType, ZodTypeAny } from "zod";
+import type { SmartBearMcpServer } from "./server.js";
+import type { ZodObject } from "zod";
 
 export interface ToolParams {
   title: string;
@@ -84,31 +86,14 @@ export type Parameters = Array<{
   constraints?: string[];
 }>;
 
-/**
- * Authentication requirement for a client
- */
-export interface AuthRequirement {
-  /** Environment variable name (e.g., 'BUGSNAG_AUTH_TOKEN') */
-  key: string;
-  /** Whether this auth value is required */
-  required: boolean;
-  /** Description of this auth value */
-  description: string;
-}
-
-/**
- * Authentication configuration for a client
- */
-export interface ClientAuthConfig {
-  /** List of authentication requirements */
-  requirements: AuthRequirement[];
-  /** Description of how authentication works for this client */
-  description?: string;
-}
-
 export interface Client {
+  /** Human-readable name for the client - usually the product name - used to prefix tool names */
   name: string;
+  /** Prefix for tool IDs */
   prefix: string;
+  /** Zod schema defining configuration fields for this client */
+  config: ZodObject<any>;
+  configure: (server: SmartBearMcpServer, config: any) => Promise<boolean>;
   registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,

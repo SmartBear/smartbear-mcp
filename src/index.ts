@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import Bugsnag from "./common/bugsnag.js";
-import { clientRegistry } from "./common/client-registry.js";
 import "./common/register-clients.js"; // Register all available clients
 import { runHttpMode } from "./common/transport-http.js";
 import { runStdioMode } from "./common/transport-stdio.js";
@@ -13,10 +12,6 @@ if (McpServerBugsnagAPIKey) {
 }
 
 async function main() {
-  // Configure which clients are enabled based on MCP_ENABLED_CLIENTS env var
-  // If not set or empty, all clients are enabled
-  // If set, should be comma-separated list of client names
-  clientRegistry.configureEnabledClients();
 
   // Determine transport mode from environment variable
   // MCP_TRANSPORT can be "stdio" (default) or "http"

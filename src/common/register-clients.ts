@@ -17,21 +17,19 @@ import { ZephyrClient } from "../zephyr/client.js";
 import { clientRegistry } from "./client-registry.js";
 
 // Register Reflect client
-clientRegistry.register("Reflect", ReflectClient);
+clientRegistry.register(new ReflectClient());
 
-// Register Bugsnag client (needs async initialization)
-clientRegistry.register("BugSnag", BugsnagClient, { asyncInit: true });
+// Register Bugsnag client
+clientRegistry.register(new BugsnagClient());
 
 // Register API Hub client
-clientRegistry.register("API Hub", ApiHubClient);
+clientRegistry.register(new ApiHubClient());
 
-// Register PactFlow/Pact Broker client (needs MCP server instance)
-clientRegistry.register("PactFlow/Pact Broker", PactflowClient, {
-  needsMcpServer: true,
-});
+// Register PactFlow/Pact Broker client
+clientRegistry.register(new PactflowClient());
 
 // Register QMetry client
-clientRegistry.register("QMetry", QmetryClient);
+clientRegistry.register(new QmetryClient());
 
 // Register Zephyr client
-clientRegistry.register("Zephyr", ZephyrClient);
+clientRegistry.register(new ZephyrClient());

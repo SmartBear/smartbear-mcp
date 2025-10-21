@@ -1,8 +1,10 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import z from "zod";
+
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import type { SmartBearMcpServer } from "../common/server.js";
 import {
   type Client,
-  type ClientAuthConfig,
   type GetInputFunction,
   type RegisterPromptFunction,
   type RegisterToolsFunction,
@@ -30,121 +32,63 @@ import {
 import { PROMPTS } from "./client/prompts.js";
 import { type ClientType, TOOLS } from "./client/tools.js";
 
+const ConfigurationSchema = z.object({
+    base_url: z.string().describe("Pact Broker or PactFlow base URL"),
+    token: z.string().optional().describe("Bearer token for PactFlow authentication (use this OR username/password)"),
+    username: z.string().optional().describe("Username for Pact Broker"),
+    password: z.string().optional().describe("Password for Pact Broker"),
+  });
+
 // Tool definitions for PactFlow AI API client
 export class PactflowClient implements Client {
   name = "Contract Testing";
   prefix = "contract-testing";
+  config = ConfigurationSchema;
 
-  private readonly headers: {
+  private headers: {
     Authorization: string;
     "Content-Type": string;
     "User-Agent": string;
-  };
-  private readonly aiBaseUrl: string;
-  private readonly baseUrl: string;
-  private readonly clientType: ClientType;
-  private readonly server: Server;
+  } | undefined;
+  private aiBaseUrl: string | undefined;
+  private baseUrl: string | undefined;
+  private _clientType: ClientType | undefined;
+  private _server: Server | undefined;
 
-  /**
-   * Creates an instance of the PactflowClient.
-   *
-   * @param auth The authentication token or credentials.
-   * @param baseUrl The base URL for the API.
-   * @param clientType The type of client (e.g., PactFlow, Pact Broker).
-   * @param server The SmartBear MCP server instance.
-   */
-  constructor(
-    auth: string | { username: string; password: string },
-    baseUrl: string,
-    clientType: ClientType,
-    server: Server,
-  ) {
+  get server(): Server {
+    if (!this._server) throw new Error("Server not configured");
+    return this._server;
+  }
+
+  get clientType(): ClientType {
+    if (!this._clientType) throw new Error("Client not configured");
+    return this._clientType;
+  }
+
+  async configure(server: SmartBearMcpServer, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
     // Set headers based on the type of auth provided
-    if (typeof auth === "string") {
+    if (typeof config.token === "string") {
       this.headers = {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${config.token}`,
         "Content-Type": "application/json",
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
       };
-    } else {
-      const authString = `${auth.username}:${auth.password}`;
+      this._clientType = "pactflow";
+    } else if (typeof config.username === "string" && typeof config.password === "string") {
+      const authString = `${config.username}:${config.password}`;
       this.headers = {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
         "Content-Type": "application/json",
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
       };
+      this._clientType = "pact_broker";
+    } else {
+      return false;  // Don't configure the client if no auth is provided
     }
-    this.baseUrl = baseUrl;
+    this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;
-    this.clientType = clientType;
-    this.server = server;
-  }
-
-  /**
-   * Get authentication configuration for PactFlow/Pact Broker
-   */
-  static getAuthConfig(): ClientAuthConfig {
-    return {
-      requirements: [
-        {
-          key: "PACT_BROKER_BASE_URL",
-          required: true,
-          description: "Pact Broker or PactFlow base URL",
-        },
-        {
-          key: "PACT_BROKER_TOKEN",
-          required: false,
-          description:
-            "Bearer token for PactFlow authentication (use this OR username/password)",
-        },
-        {
-          key: "PACT_BROKER_USERNAME",
-          required: false,
-          description:
-            "Username for Pact Broker basic authentication (use this with password)",
-        },
-        {
-          key: "PACT_BROKER_PASSWORD",
-          required: false,
-          description:
-            "Password for Pact Broker basic authentication (use this with username)",
-        },
-      ],
-      description:
-        "PactFlow/Pact Broker requires a base URL and either a bearer token (PactFlow) or username/password (Pact Broker)",
-    };
-  }
-
-  /**
-   * Create PactflowClient from environment variables
-   * @returns PactflowClient instance or null if required env vars are not set
-   */
-  static fromEnv(server: Server): PactflowClient | null {
-    const baseUrl = process.env.PACT_BROKER_BASE_URL;
-    if (!baseUrl) {
-      return null;
-    }
-
-    const token = process.env.PACT_BROKER_TOKEN;
-    const username = process.env.PACT_BROKER_USERNAME;
-    const password = process.env.PACT_BROKER_PASSWORD;
-
-    if (token) {
-      return new PactflowClient(token, baseUrl, "pactflow", server);
-    }
-    if (username && password) {
-      return new PactflowClient(
-        { username, password },
-        baseUrl,
-        "pact_broker",
-        server,
-      );
-    }
-
-    console.error(
-      "[PactFlow] Pact Broker URL provided but missing authentication (token or username/password)",
-    );
-    return null;
+    this._server = server.server;
+    return true;
   }
 
   // PactFlow AI client methods

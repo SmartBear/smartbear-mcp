@@ -2,9 +2,9 @@ import NodeCache from "node-cache";
 import { z } from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import type { SmartBearMcpServer } from "../common/server.js";
 import {
   type Client,
-  type ClientAuthConfig,
   type GetInputFunction,
   type RegisterResourceFunction,
   type RegisterToolsFunction,
@@ -62,119 +62,67 @@ interface StabilityData {
   meetsCriticalStability: boolean;
 }
 
+const ConfigurationSchema = z.object({
+  auth_token: z.string().describe("BugSnag personal authentication token"),
+  project_api_key: z.string().describe("BugSnag project API key").optional(),
+  endpoint: z.string().describe("BugSnag endpoint URL").optional(),
+});
+
 export class BugsnagClient implements Client {
-  private currentUserApi: CurrentUserAPI;
-  private errorsApi: ErrorAPI;
   private cache: NodeCache;
-  private projectApi: ProjectAPI;
   private projectApiKey?: string;
-  private apiEndpoint: string;
-  private appEndpoint: string;
+  private _currentUserApi: CurrentUserAPI | undefined;
+  private _errorsApi: ErrorAPI | undefined;
+  private _projectApi: ProjectAPI | undefined;
+  private _appEndpoint: string | undefined;
+
+  get currentUserApi(): CurrentUserAPI {
+    if (!this._currentUserApi) throw new Error("Client not configured");
+    return this._currentUserApi;
+  }
+
+  get errorsApi(): ErrorAPI {
+    if (!this._errorsApi) throw new Error("Client not configured");
+    return this._errorsApi;
+  }
+
+  get projectApi(): ProjectAPI {
+    if (!this._projectApi) throw new Error("Client not configured");
+    return this._projectApi;
+  }
+
+  get appEndpoint(): string {
+    if (!this._appEndpoint) throw new Error("Client not configured");
+    return this._appEndpoint;
+  }
 
   name = "BugSnag";
   prefix = "bugsnag";
+  config = ConfigurationSchema;
 
-  constructor(token: string, projectApiKey?: string, endpoint?: string) {
-    this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
-    this.appEndpoint = this.getEndpoint("app", projectApiKey, endpoint);
-    const config = new Configuration({
-      apiKey: `token ${token}`,
+  constructor() {
+    this.cache = new NodeCache({
+      stdTTL: 24 * 60 * 60, // default cache TTL of 24 hours
+    });
+  }
+
+  async configure(_server: SmartBearMcpServer, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
+    this._appEndpoint = this.getEndpoint("app", config.project_api_key, config.endpoint);
+    const apiConfig = new Configuration({
+      apiKey: `token ${config.auth_token}`,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",
       },
-      basePath: this.apiEndpoint,
+      basePath: this.getEndpoint("api", config.project_api_key, config.endpoint),
     });
-    this.currentUserApi = new CurrentUserAPI(config);
-    this.errorsApi = new ErrorAPI(config);
-    this.cache = new NodeCache({
-      stdTTL: 24 * 60 * 60, // default cache TTL of 24 hours
-    });
-    this.projectApi = new ProjectAPI(config);
-    this.projectApiKey = projectApiKey;
-  }
+    this._currentUserApi = new CurrentUserAPI(apiConfig);
+    this._errorsApi = new ErrorAPI(apiConfig);
+    this._projectApi = new ProjectAPI(apiConfig);
+    this.projectApiKey = config.project_api_key;
 
-  /**
-   * Get authentication configuration for BugSnag
-   */
-  static getAuthConfig(): ClientAuthConfig {
-    return {
-      requirements: [
-        {
-          key: "BUGSNAG_AUTH_TOKEN",
-          required: true,
-          description: "BugSnag personal authentication token",
-        },
-        {
-          key: "BUGSNAG_PROJECT_API_KEY",
-          required: false,
-          description:
-            "Optional project API key for single-project interactions",
-        },
-        {
-          key: "BUGSNAG_ENDPOINT",
-          required: false,
-          description:
-            "Optional custom BugSnag endpoint URL for on-premise installations",
-        },
-      ],
-      description: "BugSnag requires a personal auth token.",
-    };
-  }
-
-  /**
-   * Create BugsnagClient from environment variables
-   * @returns BugsnagClient instance or null if BUGSNAG_AUTH_TOKEN is not set
-   */
-  static fromEnv(): BugsnagClient | null {
-    // Check required auth values
-    const token = process.env.BUGSNAG_AUTH_TOKEN;
-    if (!token) {
-      return null;
-    }
-
-    // Get optional values
-    const projectApiKey = process.env.BUGSNAG_PROJECT_API_KEY;
-    const endpoint = process.env.BUGSNAG_ENDPOINT;
-
-    return new BugsnagClient(token, projectApiKey, endpoint);
-  }
-
-  /**
-   * Create BugsnagClient from HTTP headers
-   * Headers should match the environment variable names:
-   * - X-Bugsnag-Auth-Token (required)
-   * - X-Bugsnag-Project-Api-Key (optional)
-   * - X-Bugsnag-Endpoint (optional)
-   *
-   * @param headers HTTP headers object
-   * @returns BugsnagClient instance or null if X-Bugsnag-Auth-Token is not set
-   */
-  static fromHeaders(
-    headers: Record<string, string | string[] | undefined>,
-  ): BugsnagClient | null {
-    // Extract and normalize header values
-    const getHeader = (key: string): string | undefined => {
-      const value = headers[key.toLowerCase()];
-      return typeof value === "string" ? value : undefined;
-    };
-
-    // Check required auth values
-    const token = getHeader("x-bugsnag-auth-token");
-    if (!token) {
-      return null;
-    }
-
-    // Get optional values
-    const projectApiKey = getHeader("x-bugsnag-project-api-key");
-    const endpoint = getHeader("x-bugsnag-endpoint");
-
-    return new BugsnagClient(token, projectApiKey, endpoint);
-  }
-
-  async initialize(): Promise<void> {
     // Trigger caching of org and projects
     try {
       await this.getProjects();
@@ -198,6 +146,7 @@ export class BugsnagClient implements Client {
         );
       }
     }
+    return true;
   }
 
   getHost(apiKey: string | undefined, subdomain: string): string {

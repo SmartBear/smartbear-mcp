@@ -1,8 +1,9 @@
 import { z } from "zod";
+
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import type { SmartBearMcpServer } from "../common/server.js";
 import {
   type Client,
-  type ClientAuthConfig,
   type GetInputFunction,
   type RegisterToolsFunction,
   ToolError,
@@ -27,65 +28,26 @@ export interface testExecutionArgs {
   executionId: string;
 }
 
+const ConfigurationSchema = z.object({
+    api_token: z.string().describe("Reflect API authentication token"),
+});
+
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
-  private headers: {
-    "X-API-KEY": string;
-    "Content-Type": string;
-    "User-Agent": string;
-  };
+  private headers = {};
 
   name = "Reflect";
   prefix = "reflect";
 
-  constructor(token: string) {
+  config = ConfigurationSchema;
+
+  async configure(_server: SmartBearMcpServer, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
     this.headers = {
-      "X-API-KEY": `${token}`,
+      "X-API-KEY": `${config.api_token}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
-  }
-
-  /**
-   * Get authentication configuration for Reflect
-   */
-  static getAuthConfig(): ClientAuthConfig {
-    return {
-      requirements: [
-        {
-          key: "REFLECT_API_TOKEN",
-          required: true,
-          description: "Reflect API authentication token",
-        },
-      ],
-      description: "Reflect requires an API token for authentication.",
-    };
-  }
-
-  /**
-   * Create ReflectClient from environment variables
-   * @returns ReflectClient instance or null if REFLECT_API_TOKEN is not set
-   */
-  static fromEnv(): ReflectClient | null {
-    const config = ReflectClient.getAuthConfig();
-
-    // Check all required auth values are present
-    for (const req of config.requirements) {
-      if (req.required) {
-        const value = process.env[req.key];
-        if (!value) {
-          return null;
-        }
-      }
-    }
-
-    // Get the token
-    const token = process.env.REFLECT_API_TOKEN;
-    if (!token) {
-      return null;
-    }
-
-    return new ReflectClient(token);
+    return true;
   }
 
   async listReflectSuites(): Promise<any> {
