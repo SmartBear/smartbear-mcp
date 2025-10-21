@@ -1,5 +1,4 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { ZodObject } from "zod";
 
 import { clientRegistry } from "./client-registry.js";
 import { SmartBearMcpServer } from "./server.js";
@@ -11,7 +10,7 @@ import type { Client } from "./types.js";
 function getNoConfigErrorMessage(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
-    for (const [configKey, requirement] of Object.entries<ZodObject<any>>(
+    for (const [configKey, requirement] of Object.entries(
       entry.config.shape,
     )) {
       const headerName = getEnvVarName(entry, configKey);

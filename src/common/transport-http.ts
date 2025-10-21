@@ -5,7 +5,6 @@ import { createServer } from "node:http";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import type { ZodObject } from "zod";
 
 import { clientRegistry } from "./client-registry.js";
 import { SmartBearMcpServer } from "./server.js";
@@ -413,7 +412,7 @@ function getHttpHeaders(): string[] {
 function getHttpHeadersHelp(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
-    for (const [configKey, requirement] of Object.entries<ZodObject<any>>(
+    for (const [configKey, requirement] of Object.entries(
       entry.config.shape,
     )) {
       const headerName = getHeaderName(entry, configKey);
