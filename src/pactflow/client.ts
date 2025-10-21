@@ -33,11 +33,16 @@ import { PROMPTS } from "./client/prompts.js";
 import { type ClientType, TOOLS } from "./client/tools.js";
 
 const ConfigurationSchema = z.object({
-    base_url: z.string().describe("Pact Broker or PactFlow base URL"),
-    token: z.string().optional().describe("Bearer token for PactFlow authentication (use this OR username/password)"),
-    username: z.string().optional().describe("Username for Pact Broker"),
-    password: z.string().optional().describe("Password for Pact Broker"),
-  });
+  base_url: z.string().url().describe("Pact Broker or PactFlow base URL"),
+  token: z
+    .string()
+    .optional()
+    .describe(
+      "Bearer token for PactFlow authentication (use this OR username/password)",
+    ),
+  username: z.string().optional().describe("Username for Pact Broker"),
+  password: z.string().optional().describe("Password for Pact Broker"),
+});
 
 // Tool definitions for PactFlow AI API client
 export class PactflowClient implements Client {
@@ -45,11 +50,13 @@ export class PactflowClient implements Client {
   prefix = "contract-testing";
   config = ConfigurationSchema;
 
-  private headers: {
-    Authorization: string;
-    "Content-Type": string;
-    "User-Agent": string;
-  } | undefined;
+  private headers:
+    | {
+        Authorization: string;
+        "Content-Type": string;
+        "User-Agent": string;
+      }
+    | undefined;
   private aiBaseUrl: string | undefined;
   private baseUrl: string | undefined;
   private _clientType: ClientType | undefined;
@@ -65,7 +72,10 @@ export class PactflowClient implements Client {
     return this._clientType;
   }
 
-  async configure(server: SmartBearMcpServer, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
+  async configure(
+    server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+  ): Promise<boolean> {
     // Set headers based on the type of auth provided
     if (typeof config.token === "string") {
       this.headers = {
@@ -74,7 +84,10 @@ export class PactflowClient implements Client {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
       };
       this._clientType = "pactflow";
-    } else if (typeof config.username === "string" && typeof config.password === "string") {
+    } else if (
+      typeof config.username === "string" &&
+      typeof config.password === "string"
+    ) {
       const authString = `${config.username}:${config.password}`;
       this.headers = {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
@@ -83,7 +96,7 @@ export class PactflowClient implements Client {
       };
       this._clientType = "pact_broker";
     } else {
-      return false;  // Don't configure the client if no auth is provided
+      return false; // Don't configure the client if no auth is provided
     }
     this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;

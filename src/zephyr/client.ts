@@ -12,19 +12,29 @@ const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
 
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("Zephyr Scale API token for authentication"),
-  base_url: z.string().optional().describe("Zephyr Scale API base URL").default(BASE_URL_DEFAULT),
+  base_url: z
+    .string()
+    .url()
+    .optional()
+    .describe("Zephyr Scale API base URL")
+    .default(BASE_URL_DEFAULT),
 });
 
 export class ZephyrClient implements Client {
-
   private apiClient: ApiClient | undefined;
 
   name = "Zephyr";
   prefix = "zephyr";
   config = ConfigurationSchema;
 
-  async configure(_server: any, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
-    this.apiClient = new ApiClient(config.api_token, config.base_url || BASE_URL_DEFAULT);
+  async configure(
+    _server: any,
+    config: z.infer<typeof ConfigurationSchema>,
+  ): Promise<boolean> {
+    this.apiClient = new ApiClient(
+      config.api_token,
+      config.base_url || BASE_URL_DEFAULT,
+    );
     return true;
   }
 
