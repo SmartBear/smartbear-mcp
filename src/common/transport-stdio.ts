@@ -11,9 +11,13 @@ import type { Client } from "./types.js";
 function getNoConfigErrorMessage(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
-    for (const [configKey, requirement] of Object.entries<ZodObject<any>>(entry.config.shape)) {
+    for (const [configKey, requirement] of Object.entries<ZodObject<any>>(
+      entry.config.shape,
+    )) {
       const headerName = getEnvVarName(entry, configKey);
-      const requiredTag = requirement.isOptional() ? " (optional)" : " (required)";
+      const requiredTag = requirement.isOptional()
+        ? " (optional)"
+        : " (required)";
       messages.push(
         `    - ${headerName}${requiredTag}: ${requirement.description}`,
       );
@@ -29,16 +33,19 @@ export async function runStdioMode() {
   const server = new SmartBearMcpServer();
 
   // Setup clients from environment variables
-  const configuredCount = await clientRegistry.configure(server, (client, key) => {
-    const envVarName = getEnvVarName(client, key);
-    return process.env[envVarName] || null;
-  });
+  const configuredCount = await clientRegistry.configure(
+    server,
+    (client, key) => {
+      const envVarName = getEnvVarName(client, key);
+      return process.env[envVarName] || null;
+    },
+  );
   if (configuredCount === 0) {
     const errorMessage = getNoConfigErrorMessage();
     console.error(
       errorMessage.length > 0
         ? `No clients configured. Please provide valid environment variables for at least one client:\n${errorMessage.join("\n")}`
-        : "No clients support environment variable configuration."
+        : "No clients support environment variable configuration.",
     );
     process.exit(1);
   }

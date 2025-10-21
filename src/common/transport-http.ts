@@ -349,7 +349,10 @@ async function handleLegacyMessageRequest(
   });
 }
 
-async function newServer(req: IncomingMessage, res: ServerResponse): Promise<SmartBearMcpServer | null> {
+async function newServer(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<SmartBearMcpServer | null> {
   const server = new SmartBearMcpServer();
   try {
     await clientRegistry.configure(server, (client, key) => {
@@ -358,10 +361,11 @@ async function newServer(req: IncomingMessage, res: ServerResponse): Promise<Sma
       if (typeof value === "string") {
         return value;
       }
-      throw new Error(`Missing required config for ${client.name}: ${headerName}`);
+      throw new Error(
+        `Missing required config for ${client.name}: ${headerName}`,
+      );
     });
   } catch (error: any) {
-
     const headerHelp = getHttpHeadersHelp();
     const errorMessage =
       headerHelp.length > 0
@@ -409,9 +413,13 @@ function getHttpHeaders(): string[] {
 function getHttpHeadersHelp(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
-    for (const [configKey, requirement] of Object.entries<ZodObject<any>>(entry.config.shape)) {
+    for (const [configKey, requirement] of Object.entries<ZodObject<any>>(
+      entry.config.shape,
+    )) {
       const headerName = getHeaderName(entry, configKey);
-      const requiredTag = requirement.isOptional() ? " (optional)" : " (required)";
+      const requiredTag = requirement.isOptional()
+        ? " (optional)"
+        : " (required)";
       messages.push(
         `    - ${headerName}${requiredTag}: ${requirement.description}`,
       );
