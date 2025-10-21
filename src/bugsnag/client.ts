@@ -100,8 +100,6 @@ export class BugsnagClient implements Client {
   prefix = "bugsnag";
   config = ConfigurationSchema;
 
-  constructor() { }
-
   async configure(
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
@@ -784,7 +782,7 @@ export class BugsnagClient implements Client {
               cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
             ) || [];
           const validKeys = new Set(
-            eventFields.map((f: EventField) => f.displayId),
+            eventFields.map(f => f.displayId),
           );
           for (const key of Object.keys(args.filters)) {
             if (!validKeys.has(key)) {
