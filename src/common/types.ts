@@ -34,7 +34,7 @@ export interface ToolParams {
     expectedOutput?: string;
   }>;
   hints?: string[];
-  outputFormat?: string;
+  outputDescription?: string;
   readOnly?: boolean;
   destructive?: boolean;
   idempotent?: boolean;

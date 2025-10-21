@@ -198,7 +198,7 @@ export class SmartBearMcpServer extends McpServer {
       parameters,
       inputSchema,
       hints,
-      outputFormat,
+      outputDescription,
     } = params;
 
     let description = summary;
@@ -225,8 +225,8 @@ export class SmartBearMcpServer extends McpServer {
         .join("\n");
     }
 
-    if (outputFormat) {
-      description += `\n\n**Output Format:** ${outputFormat}`;
+    if (outputDescription) {
+      description += `\n\n**Output Description:** ${outputDescription}`;
     }
 
     // Use Cases

@@ -212,7 +212,7 @@ describe("SmartBearMcpServer", () => {
             },
           ],
           hints: ["First hint", "Second hint"],
-          outputFormat: "The output format",
+          outputDescription: "The output description",
           readOnly: true,
           destructive: true,
           idempotent: true,
@@ -239,7 +239,7 @@ describe("SmartBearMcpServer", () => {
           "- p7 (literal) *required*\n" +
           "- p8 (union) *required*\n" +
           "- p9 (any) *required*\n\n" +
-          "**Output Format:** The output format\n\n" +
+          "**Output Description:** The output description\n\n" +
           "**Use Cases:** 1. Testing 2. Development\n\n" +
           "**Examples:**\n" +
           "1. Example 1\n" +
