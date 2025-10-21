@@ -11,9 +11,8 @@ import type {
   ElicitRequest,
   ElicitResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { ZodRawShape, ZodType, ZodTypeAny } from "zod";
+import type { ZodObject, ZodRawShape, ZodType, ZodTypeAny } from "zod";
 import type { SmartBearMcpServer } from "./server.js";
-import type { ZodObject } from "zod";
 
 export interface ToolParams {
   title: string;
@@ -92,7 +91,7 @@ export interface Client {
   /** Prefix for tool IDs */
   prefix: string;
   /** Zod schema defining configuration fields for this client */
-  config: ZodObject<any>;
+  config: ZodObject<ZodRawShape>;
   configure: (server: SmartBearMcpServer, config: any) => Promise<boolean>;
   registerTools(
     register: RegisterToolsFunction,

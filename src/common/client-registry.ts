@@ -1,3 +1,4 @@
+import { ZodOptional, ZodString, type ZodType } from "zod";
 import type { SmartBearMcpServer } from "./server.js";
 import type { Client } from "./types.js";
 
@@ -43,6 +44,28 @@ class ClientRegistry {
   }
 
   /**
+   * Validate if a config option is an Allowed Endpoint URL
+   */
+  private validateAllowedEndpoint(zodType: ZodType, value: string): void {
+    if (zodType instanceof ZodOptional) {
+      zodType = zodType._def.innerType;
+    }
+    if (zodType instanceof ZodString) {
+      if ((zodType as ZodString).isURL) {
+        const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
+        if (allowedEndpoints) {
+          for (const endpoint of allowedEndpoints) {
+            if (value === endpoint) {
+              return;
+            }
+          }
+          throw new Error(`URL ${value} is not allowed`);
+        }
+      }
+    }
+  }
+
+  /**
    * Register a client class
    * @param name Display name for the client (for logging)
    * @param clientClass The client class with fromAuthSource method
@@ -65,13 +88,18 @@ class ClientRegistry {
    * @param getConfigValue A function that obtains a configuration value for the given client and requirement name
    * @returns The number of clients successfully configured
    */
-  async configure(server: SmartBearMcpServer, getConfigValue: (client: Client, key: string) => string | null): Promise<number> {
+  async configure(
+    server: SmartBearMcpServer,
+    getConfigValue: (client: Client, key: string) => string | null,
+  ): Promise<number> {
     let configuredCount = 0;
     entryLoop: for (const entry of this.getAll()) {
       const config: Record<string, string> = {};
       for (const configKey of Object.keys(entry.config.shape)) {
         const value = getConfigValue(entry, configKey);
         if (value !== null) {
+          // validate if a config option is an Allowed Endpoint URL
+          this.validateAllowedEndpoint(entry.config.shape[configKey], value);
           config[configKey] = value;
         } else if (!entry.config.shape[configKey].isOptional()) {
           continue entryLoop; // Skip configuring this client - missing required config

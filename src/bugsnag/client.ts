@@ -65,7 +65,7 @@ interface StabilityData {
 const ConfigurationSchema = z.object({
   auth_token: z.string().describe("BugSnag personal authentication token"),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
-  endpoint: z.string().describe("BugSnag endpoint URL").optional(),
+  endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
 });
 
 export class BugsnagClient implements Client {
@@ -106,8 +106,15 @@ export class BugsnagClient implements Client {
     });
   }
 
-  async configure(_server: SmartBearMcpServer, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
-    this._appEndpoint = this.getEndpoint("app", config.project_api_key, config.endpoint);
+  async configure(
+    _server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+  ): Promise<boolean> {
+    this._appEndpoint = this.getEndpoint(
+      "app",
+      config.project_api_key,
+      config.endpoint,
+    );
     const apiConfig = new Configuration({
       apiKey: `token ${config.auth_token}`,
       headers: {
@@ -116,7 +123,11 @@ export class BugsnagClient implements Client {
         "X-Bugsnag-API": "true",
         "X-Version": "2",
       },
-      basePath: this.getEndpoint("api", config.project_api_key, config.endpoint),
+      basePath: this.getEndpoint(
+        "api",
+        config.project_api_key,
+        config.endpoint,
+      ),
     });
     this._currentUserApi = new CurrentUserAPI(apiConfig);
     this._errorsApi = new ErrorAPI(apiConfig);
