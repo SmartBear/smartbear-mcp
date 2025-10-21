@@ -30,6 +30,7 @@ export class ZephyrClient implements Client {
   async configure(
     _server: any,
     config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
   ): Promise<boolean> {
     this.apiClient = new ApiClient(
       config.api_token,

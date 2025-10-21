@@ -81,11 +81,15 @@ async function createConfiguredClient(
 ): Promise<BugsnagClient> {
   const client = new BugsnagClient();
   const mockServer = {} as any;
-  await client.configure(mockServer, {
-    auth_token: authToken,
-    project_api_key: projectApiKey,
-    endpoint,
-  });
+  await client.configure(
+    mockServer,
+    {
+      auth_token: authToken,
+      project_api_key: projectApiKey,
+      endpoint,
+    },
+    mockCache as any,
+  );
   return client;
 }
 
@@ -421,7 +425,7 @@ describe("BugsnagClient", () => {
   describe("static utility methods", () => {
     // Test static methods if they exist in the class
     it("should have proper class structure", async () => {
-      const client = new BugsnagClient("test-token");
+      const client = new BugsnagClient();
 
       // Verify the client has expected methods
       expect(typeof client.configure).toBe("function");
@@ -433,17 +437,17 @@ describe("BugsnagClient", () => {
   describe("error handling", () => {
     it("should handle invalid tokens gracefully during construction", async () => {
       expect(() => {
-        new BugsnagClient("");
+        new BugsnagClient();
       }).not.toThrow();
 
       expect(() => {
-        new BugsnagClient("   ");
+        new BugsnagClient();
       }).not.toThrow();
     });
 
     it("should handle special characters in project API key", async () => {
       expect(() => {
-        new BugsnagClient("test-token", "00000-special!@#$%^&*()");
+        new BugsnagClient();
       }).not.toThrow();
     });
   });
@@ -505,16 +509,36 @@ describe("BugsnagClient", () => {
       expect(MockedProjectAPI).toHaveBeenCalledOnce();
     });
 
-    it("should initialize NodeCache", async () => {
-      const NodeCacheModule = await import("node-cache");
-      const MockedNodeCache = vi.mocked(NodeCacheModule.default);
+    it("should accept cache via configure method", async () => {
+      const client = new BugsnagClient();
+      const mockServer = {} as any;
 
-      // Clear previous calls from beforeEach
-      MockedNodeCache.mockClear();
+      await client.configure(
+        mockServer,
+        { auth_token: "test-token" },
+        mockCache as any,
+      );
 
-      new BugsnagClient();
+      // Cache should be used in getProjects
+      mockCache.get.mockReturnValueOnce(null); // No cached org
+      mockCache.get.mockReturnValueOnce(null); // No cached projects
 
-      expect(MockedNodeCache).toHaveBeenCalledOnce();
+      const mockOrg = { id: "org-1", name: "Test Org" };
+      const mockProjects = [{ id: "proj-1", name: "Project 1" }];
+      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
+        body: [mockOrg],
+      });
+      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
+        body: mockProjects,
+      });
+
+      await client.getProjects();
+
+      expect(mockCache.set).toHaveBeenCalledWith("bugsnag_org", mockOrg);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        "bugsnag_projects",
+        mockProjects,
+      );
     });
   });
 
@@ -543,7 +567,11 @@ describe("BugsnagClient", () => {
         body: mockProjects,
       });
 
-      await testClient.configure({} as any, { auth_token: "test-token" });
+      await testClient.configure(
+        {} as any,
+        { auth_token: "test-token" },
+        mockCache as any,
+      );
 
       expect(mockCurrentUserAPI.listUserOrganizations).toHaveBeenCalledOnce();
       expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith(
@@ -558,10 +586,6 @@ describe("BugsnagClient", () => {
 
     it("should initialize with project API key and set up event filters", async () => {
       const clientWithApiKey = new BugsnagClient();
-      await clientWithApiKey.configure({} as any, {
-        auth_token: "test-token",
-        project_api_key: "project-api-key",
-      });
       const mockProjects: ProjectApiView[] = [
         { id: "proj-1", name: "Project 1", apiKey: "project-api-key" },
         { id: "proj-2", name: "Project 2", apiKey: "other-key" },
@@ -580,10 +604,14 @@ describe("BugsnagClient", () => {
         body: mockEventFields,
       });
 
-      await clientWithApiKey.configure({} as any, {
-        auth_token: "test-token",
-        project_api_key: "project-api-key",
-      });
+      await clientWithApiKey.configure(
+        {} as any,
+        {
+          auth_token: "test-token",
+          project_api_key: "project-api-key",
+        },
+        mockCache as any,
+      );
 
       expect(mockCache.set).toHaveBeenCalledWith(
         "bugsnag_current_project",
@@ -811,10 +839,14 @@ describe("BugsnagClient", () => {
         body: mockEventFields,
       });
 
-      await clientWithApiKey.configure({} as any, {
-        auth_token: "test-token",
-        project_api_key: "project-api-key",
-      });
+      await clientWithApiKey.configure(
+        {} as any,
+        {
+          auth_token: "test-token",
+          project_api_key: "project-api-key",
+        },
+        mockCache as any,
+      );
 
       clientWithApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
 

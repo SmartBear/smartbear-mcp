@@ -18,10 +18,13 @@ import {
   ZodUnion,
 } from "zod";
 import Bugsnag from "../common/bugsnag.js";
+import { CacheService } from "./cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
 import { type Client, ToolError, type ToolParams } from "./types.js";
 
 export class SmartBearMcpServer extends McpServer {
+  private cache: CacheService;
+
   constructor() {
     super(
       {
@@ -39,6 +42,11 @@ export class SmartBearMcpServer extends McpServer {
         },
       },
     );
+    this.cache = new CacheService();
+  }
+
+  getCache(): CacheService {
+    return this.cache;
   }
 
   addClient(client: Client): void {

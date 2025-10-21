@@ -36,6 +36,7 @@ export class QmetryClient implements Client {
   async configure(
     _server: any,
     config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
   ): Promise<boolean> {
     this.token = config.api_key;
     if (config.base_url) {
@@ -116,8 +117,8 @@ export class QmetryClient implements Client {
               } catch (err) {
                 throw new Error(
                   `Failed to auto-resolve viewId/folderPath/folderID for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
-                    `Please provide them manually or check project access. ` +
-                    `Error: ${err instanceof Error ? err.message : String(err)}`,
+                  `Please provide them manually or check project access. ` +
+                  `Error: ${err instanceof Error ? err.message : String(err)}`,
                 );
               }
 

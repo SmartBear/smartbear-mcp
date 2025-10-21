@@ -52,10 +52,10 @@ export class PactflowClient implements Client {
 
   private headers:
     | {
-        Authorization: string;
-        "Content-Type": string;
-        "User-Agent": string;
-      }
+      Authorization: string;
+      "Content-Type": string;
+      "User-Agent": string;
+    }
     | undefined;
   private aiBaseUrl: string | undefined;
   private baseUrl: string | undefined;
@@ -75,6 +75,7 @@ export class PactflowClient implements Client {
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
   ): Promise<boolean> {
     // Set headers based on the type of auth provided
     if (typeof config.token === "string") {
@@ -223,8 +224,7 @@ export class PactflowClient implements Client {
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
         throw new ToolError(
-          `PactFlow AI Entitlements Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
+          `PactFlow AI Entitlements Request Failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""
           }`,
         );
       }
@@ -355,8 +355,7 @@ export class PactflowClient implements Client {
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
         throw new ToolError(
-          `Can-I-Deploy Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
+          `Can-I-Deploy Request Failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""
           }`,
         );
       }
@@ -431,8 +430,7 @@ export class PactflowClient implements Client {
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
         throw new ToolError(
-          `Matrix Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
+          `Matrix Request Failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""
           }`,
         );
       }

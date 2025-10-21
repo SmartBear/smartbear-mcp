@@ -12,7 +12,6 @@ if (McpServerBugsnagAPIKey) {
 }
 
 async function main() {
-
   // Determine transport mode from environment variable
   // MCP_TRANSPORT can be "stdio" (default) or "http"
   const transportMode = process.env.MCP_TRANSPORT?.toLowerCase() || "stdio";

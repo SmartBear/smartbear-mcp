@@ -289,7 +289,7 @@ async function handleLegacySseRequest(
 }
 
 /**
- * Handle legacy SSE message POST requests
+ * Handle legacy POST message requests
  */
 async function handleLegacyMessageRequest(
   req: IncomingMessage,

@@ -105,7 +105,7 @@ class ClientRegistry {
           continue entryLoop; // Skip configuring this client - missing required config
         }
       }
-      if (await entry.configure(server, config)) {
+      if (await entry.configure(server, config, server.getCache())) {
         server.addClient(entry);
         configuredCount++;
       }

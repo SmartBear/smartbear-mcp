@@ -12,6 +12,7 @@ import type {
   ElicitResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodObject, ZodRawShape, ZodType, ZodTypeAny } from "zod";
+import type { CacheService } from "./cache.js";
 import type { SmartBearMcpServer } from "./server.js";
 
 export interface ToolParams {
@@ -38,7 +39,7 @@ export interface ToolParams {
  * Error class for tool-specific errors – these result in a response to the LLM with `isError: true`
  * and are not reported to BugSnag
  */
-export class ToolError extends Error {}
+export class ToolError extends Error { }
 
 export interface PromptParams {
   name: string;
@@ -92,7 +93,11 @@ export interface Client {
   prefix: string;
   /** Zod schema defining configuration fields for this client */
   config: ZodObject<ZodRawShape>;
-  configure: (server: SmartBearMcpServer, config: any) => Promise<boolean>;
+  configure: (
+    server: SmartBearMcpServer,
+    config: any,
+    cache?: CacheService,
+  ) => Promise<boolean>;
   registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
