@@ -4,23 +4,29 @@ import { ApiClient } from "../../../zephyr/common/api-client";
 
 describe("ZephyrClient", () => {
   it("should set name and prefix", () => {
-    const client = new ZephyrClient("token");
+    const client = new ZephyrClient();
     expect(client.name).toBe("Zephyr");
     expect(client.prefix).toBe("zephyr");
   });
 
-  it("should initialize ApiClient with default baseUrl", () => {
-    const client = new ZephyrClient("token");
-    expect(client.apiClient).toBeInstanceOf(ApiClient);
+  it("should initialize ApiClient with default baseUrl", async () => {
+    const client = new ZephyrClient();
+    await client.configure({} as any, { api_token: "token" });
+    expect(client.getApiClient()).toBeInstanceOf(ApiClient);
   });
 
-  it("should initialize ApiClient with custom baseUrl", () => {
-    const client = new ZephyrClient("token", "http://custom");
-    expect(client.apiClient).toBeInstanceOf(ApiClient);
+  it("should initialize ApiClient with custom baseUrl", async () => {
+    const client = new ZephyrClient();
+    await client.configure({} as any, {
+      api_token: "token",
+      base_url: "http://custom",
+    });
+    expect(client.getApiClient()).toBeInstanceOf(ApiClient);
   });
 
-  it("should register tools and call register", () => {
-    const client = new ZephyrClient("token");
+  it("should register tools and call register", async () => {
+    const client = new ZephyrClient();
+    await client.configure({} as any, { api_token: "token" });
     const register = vi.fn();
     const getInput = vi.fn();
     client.registerTools(register, getInput);
