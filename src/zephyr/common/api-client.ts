@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/types.js";
 import { AuthService } from "./auth-service.js";
 
 export class ApiClient {
@@ -32,6 +33,16 @@ export class ApiClient {
       method: "GET",
       headers: this.defaultHeaders,
     });
+    return await this.validateAndGetResponseBody(response);
+  }
+
+  private async validateAndGetResponseBody(response: Response) {
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ToolError(
+        `Request failed with status ${response.status}: ${errorText}`,
+      );
+    }
     return response.json();
   }
 }
