@@ -45,6 +45,8 @@ class ClientRegistry {
 
   /**
    * Validate if a config option is an Allowed Endpoint URL
+   * Supports both exact matches and regex patterns
+   * Patterns starting with / and ending with / are treated as regex
    */
   private validateAllowedEndpoint(zodType: ZodType, value: string): void {
     if (zodType instanceof ZodOptional) {
@@ -55,8 +57,29 @@ class ClientRegistry {
         const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
         if (allowedEndpoints) {
           for (const endpoint of allowedEndpoints) {
-            if (value === endpoint) {
-              return;
+            const trimmedEndpoint = endpoint.trim();
+
+            // Check if this is a regex pattern (wrapped in /)
+            if (
+              trimmedEndpoint.startsWith("/") &&
+              trimmedEndpoint.endsWith("/")
+            ) {
+              try {
+                const pattern = trimmedEndpoint.slice(1, -1); // Remove leading/trailing /
+                const regex = new RegExp(pattern);
+                if (regex.test(value)) {
+                  return;
+                }
+              } catch (error) {
+                console.warn(
+                  `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}`,
+                );
+              }
+            } else {
+              // Exact match
+              if (value === trimmedEndpoint) {
+                return;
+              }
             }
           }
           throw new Error(`URL ${value} is not allowed`);
