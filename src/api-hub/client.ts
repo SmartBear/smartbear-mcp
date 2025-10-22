@@ -17,14 +17,18 @@ import {
   type CreateApiResponse,
   type CreatePortalArgs,
   type CreateProductArgs,
+  type CreateTableOfContentsArgs,
   type FallbackResponse,
+  type GetProductSectionsArgs,
   type Portal,
   type PortalsListResponse,
   type Product,
   type ProductsListResponse,
   type ScanStandardizationParams,
   type StandardizationResult,
+  type SectionsListResponse,
   type SuccessResponse,
+  type TableOfContentsItem,
   TOOLS,
   type UpdatePortalArgs,
   type UpdateProductArgs,
@@ -104,6 +108,20 @@ export class ApiHubClient implements Client {
   ): Promise<Product | SuccessResponse | FallbackResponse> {
     const { productId, ...body } = args;
     return this.api.updatePortalProduct(productId, body);
+  }
+
+  async getPortalProductSections(
+    args: GetProductSectionsArgs,
+  ): Promise<SectionsListResponse | SuccessResponse | FallbackResponse> {
+    const { productId, ...params } = args;
+    return this.api.getPortalProductSections(productId, params);
+  }
+
+  async createTableOfContents(
+    args: CreateTableOfContentsArgs,
+  ): Promise<TableOfContentsItem | FallbackResponse> {
+    const { sectionId, ...body } = args;
+    return this.api.createTableOfContents(sectionId, body);
   }
 
   // Registry API methods for SwaggerHub Design functionality

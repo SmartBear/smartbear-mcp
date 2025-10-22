@@ -3,12 +3,18 @@ import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,
   CreateProductBody,
+  CreateTableOfContentsArgs,
+  CreateTableOfContentsBody,
   FallbackResponse,
+  GetProductSectionsArgs,
   Portal,
   PortalsListResponse,
   Product,
   ProductsListResponse,
+  Section,
+  SectionsListResponse,
   SuccessResponse,
+  TableOfContentsItem,
   UpdatePortalBody,
   UpdateProductBody,
 } from "./portal-types.js";
@@ -287,6 +293,73 @@ export class ApiHubAPI {
     return this.handleResponse<Product | SuccessResponse>(response, {
       success: true,
     } as SuccessResponse);
+  }
+
+  async getPortalProductSections(productId: string, params: Omit<GetProductSectionsArgs, 'productId'>):
+   Promise<SectionsListResponse> {
+    const queryParameters = new URLSearchParams();
+    
+    if (params.embed) {
+      params.embed.forEach(item => queryParameters.append("embed", item));
+    }
+    if (params.page !== undefined) {
+      queryParameters.append("page", params.page.toString());
+    }
+    if (params.size !== undefined) {
+      queryParameters.append("size", params.size.toString());
+    }
+
+    const url = `${this.config.portalBasePath}/products/${productId}/sections${queryParameters.toString() ? `?${queryParameters.toString()}` : ""}`;
+    
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+    
+    const result = await this.handleResponse<SectionsListResponse>(
+      response,
+      [] as unknown as SectionsListResponse,
+    );
+    return result as SectionsListResponse;
+  }
+
+  /**
+   * Create a new table of contents item in a portal product section
+   * @param sectionId - Section ID where the table of contents item will be created
+   * @param body - Table of contents creation parameters
+   * @returns Created table of contents item with metadata
+   */
+  async createTableOfContents(
+    sectionId: string,
+    body: CreateTableOfContentsBody,
+  ): Promise<TableOfContentsItem> {
+    console.log(`Creating table of contents in section ${sectionId} with data:`, JSON.stringify(body, null, 2));
+    
+    const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents`;
+    
+    console.log(`Making POST request to: ${url}`);
+    console.log(`Headers:`, JSON.stringify(this.headers, null, 2));
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
+    
+    console.log(`Response status: ${response.status} ${response.statusText}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log(`Error response body:`, errorText);
+      throw new Error(
+        `API Hub createTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    const result = await response.json();
+    console.log(`Successfully created table of contents:`, JSON.stringify(result, null, 2));
+    
+    return result as TableOfContentsItem;
   }
 
   /**
