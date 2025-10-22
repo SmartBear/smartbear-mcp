@@ -318,11 +318,53 @@ export type GetProductSectionsArgs = z.infer<typeof GetProductSectionsArgsSchema
 export type GetTableOfContentsArgs = z.infer<typeof GetTableOfContentsArgsSchema>;
 export type CreateTableOfContentsArgs = z.infer<typeof CreateTableOfContentsArgsSchema>;
 
+// Document management schemas
+export const GetDocumentArgsSchema = z.object({
+  documentId: z
+    .string()
+    .describe(
+      "Document UUID - unique identifier for the document",
+    ),
+});
+
+export const UpdateDocumentArgsSchema = z.object({
+  documentId: z
+    .string()
+    .describe(
+      "Document UUID - unique identifier for the document",
+    ),
+  content: z
+    .string()
+    .describe(
+      "The document content to update (HTML or Markdown based on document type)",
+    ),
+  type: z
+    .enum(["html", "markdown"])
+    .optional()
+    .describe(
+      "Content type - 'html' for HTML content or 'markdown' for Markdown content",
+    ),
+});
+
+export const DeleteDocumentArgsSchema = z.object({
+  documentId: z
+    .string()
+    .describe(
+      "Document UUID - unique identifier for the document to delete",
+    ),
+});
+
+// Infer types from document schemas
+export type GetDocumentArgs = z.infer<typeof GetDocumentArgsSchema>;
+export type UpdateDocumentArgs = z.infer<typeof UpdateDocumentArgsSchema>;
+export type DeleteDocumentArgs = z.infer<typeof DeleteDocumentArgsSchema>;
+
 // API body types (without IDs - IDs are passed in URL path)
 export type UpdatePortalBody = Omit<UpdatePortalArgs, "portalId">;
 export type CreateProductBody = Omit<CreateProductArgs, "portalId">;
 export type UpdateProductBody = Omit<UpdateProductArgs, "productId">;
 export type CreateTableOfContentsBody = Omit<CreateTableOfContentsArgs, "sectionId">;
+export type UpdateDocumentBody = Omit<UpdateDocumentArgs, "documentId">;
 
 // Response types for better type safety
 export type FallbackResponse =
@@ -376,6 +418,16 @@ export interface TableOfContentsItem {
 
   content: ContentReference | null;
 
+}
+
+export interface Document {
+  id: string;
+  type: "html" | "markdown";
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
 }
 
 // Content types for TableOfContentsItem

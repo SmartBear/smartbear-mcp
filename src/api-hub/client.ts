@@ -18,7 +18,10 @@ import {
   type CreatePortalArgs,
   type CreateProductArgs,
   type CreateTableOfContentsArgs,
+  type DeleteDocumentArgs,
+  type Document,
   type FallbackResponse,
+  type GetDocumentArgs,
   type GetProductSectionsArgs,
   type GetTableOfContentsArgs,
   type Portal,
@@ -32,6 +35,7 @@ import {
   type TableOfContentsItem,
   type TableOfContentsListResponse,
   TOOLS,
+  type UpdateDocumentArgs,
   type UpdatePortalArgs,
   type UpdateProductArgs,
 } from "./client/index.js";
@@ -130,6 +134,24 @@ export class ApiHubClient implements Client {
     args: GetTableOfContentsArgs,
   ): Promise<TableOfContentsListResponse | FallbackResponse> {
     return this.api.getTableOfContents(args);
+  }
+
+  async getDocument(
+    args: GetDocumentArgs,
+  ): Promise<Document | FallbackResponse> {
+    return this.api.getDocument(args);
+  }
+
+  async updateDocument(
+    args: UpdateDocumentArgs,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    return this.api.updateDocument(args);
+  }
+
+  async deleteDocument(
+    args: DeleteDocumentArgs,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    return this.api.deleteDocument(args);
   }
 
   // Registry API methods for SwaggerHub Design functionality

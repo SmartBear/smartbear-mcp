@@ -11,10 +11,13 @@ import {
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   CreateTableOfContentsArgsSchema,
+  DeleteDocumentArgsSchema,
+  GetDocumentArgsSchema,
   GetProductSectionsArgsSchema,
   GetTableOfContentsArgsSchema,
   PortalArgsSchema,
   ProductArgsSchema,
+  UpdateDocumentArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
 } from "./portal-types.js";
@@ -113,6 +116,27 @@ export const TOOLS: ApiHubToolParams[] = [
     zodSchema: GetTableOfContentsArgsSchema,
     handler: "getTableOfContents",
   },
+  
+  // Document management tools
+  {
+    title: "Get Document",
+    summary: "Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.",
+    zodSchema: GetDocumentArgsSchema,
+    handler: "getDocument",
+  },
+  {
+    title: "Update Document",
+    summary: "Update the content of an existing document. Supports both HTML and Markdown content types.",
+    zodSchema: UpdateDocumentArgsSchema,
+    handler: "updateDocument",
+  },
+  {
+    title: "Delete Document",
+    summary: "Delete a document by its ID. This will permanently remove the document content.",
+    zodSchema: DeleteDocumentArgsSchema,
+    handler: "deleteDocument",
+  },
+  
   // Registry API tools for SwaggerHub Design functionality
   {
     title: "Search APIs and Domains",
