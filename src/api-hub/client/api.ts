@@ -7,6 +7,7 @@ import type {
   CreateTableOfContentsBody,
   FallbackResponse,
   GetProductSectionsArgs,
+  GetTableOfContentsArgs,
   Portal,
   PortalsListResponse,
   Product,
@@ -15,6 +16,7 @@ import type {
   SectionsListResponse,
   SuccessResponse,
   TableOfContentsItem,
+  TableOfContentsListResponse,
   UpdatePortalBody,
   UpdateProductBody,
 } from "./portal-types.js";
@@ -360,6 +362,47 @@ export class ApiHubAPI {
     console.log(`Successfully created table of contents:`, JSON.stringify(result, null, 2));
     
     return result as TableOfContentsItem;
+  }
+
+  /**
+   * Get table of contents for a section
+   * @param args - Parameters for retrieving table of contents
+   * @returns List of table of contents items
+   */
+  async getTableOfContents(
+    args: GetTableOfContentsArgs,
+  ): Promise<TableOfContentsListResponse> {
+    const { sectionId, embed, page, size } = args;
+
+    const searchParams = new URLSearchParams();
+    if (embed) {
+      embed.forEach(item => searchParams.append('embed', item));
+    }
+    if (page !== undefined) {
+      searchParams.set('page', page.toString());
+    }
+    if (size !== undefined) {
+      searchParams.set('size', size.toString());
+    }
+
+    const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub getTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    const result = await response.json();
+    
+    // The API returns a paginated response, so we extract the items array
+    return result.items as TableOfContentsListResponse;
   }
 
   /**
