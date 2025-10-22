@@ -10,6 +10,9 @@ import type { ToolParams } from "../../common/types.js";
 import {
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
+  CreateTableOfContentsArgsSchema,
+  GetProductSectionsArgsSchema,
+  GetTableOfContentsArgsSchema,
   PortalArgsSchema,
   ProductArgsSchema,
   UpdatePortalArgsSchema,
@@ -63,7 +66,6 @@ export const TOOLS: ApiHubToolParams[] = [
   {
     title: "List Portal Products",
     summary: "Get products for a specific portal that match your criteria.",
-    zodSchema: PortalArgsSchema,
     handler: "getPortalProducts",
   },
   {
@@ -91,6 +93,24 @@ export const TOOLS: ApiHubToolParams[] = [
     zodSchema: UpdateProductArgsSchema,
     handler: "updatePortalProduct",
   },
+  {
+    title: "List Portal Product Sections",
+    summary: "Get sections for a specific product within a portal.",
+    zodSchema: GetProductSectionsArgsSchema,
+    handler: "getPortalProductSections",
+  },
+  {
+    title: "Create Table Of Contents",
+    summary: "Create a new table of contents item in a portal product section. Supports API references, HTML content, and Markdown content types.",
+    zodSchema: CreateTableOfContentsArgsSchema,
+    handler: "createTableOfContents",
+  },
+  // {
+  //   title: "List Table Of Contents",
+  //   summary: "Get table of contents for a section of a product within a portal.",
+  //   zodSchema: GetTableOfContentsArgsSchema,
+  //   handler: "getPortalProductTableOfContents",
+  // },
   // Registry API tools for SwaggerHub Design functionality
   {
     title: "Search APIs and Domains",

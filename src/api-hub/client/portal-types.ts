@@ -17,6 +17,115 @@ export const ProductArgsSchema = z.object({
     ),
 });
 
+export const GetProductSectionsArgsSchema = z.object({
+  productId: z
+    .string()
+    .describe(
+      "Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product",
+    ),
+  embed: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "List of related entities to embed in the response - e.g., ['tableOfContents', 'tableOfContents.swaggerhubApi'] to include table of contents and SwaggerHub API details",
+    ),
+  page: z
+    .number()
+    .optional()
+    .describe(
+      "Page number for paginated results - specifies which page of results to retrieve (default is 1)",
+    ),
+  size: z
+    .number()
+    .optional()
+    .describe(
+      "Number of items per page for pagination - controls how many results are returned per page (default is 20)",
+    ),
+});
+
+export const GetTableOfContentsArgsSchema = z.object({
+  sectionId: z
+    .string()
+    .describe(
+      "Section ID - unique identifier for the section within the product",
+    ),
+  embed: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "List of related entities to embed in the response - e.g., ['swaggerhubApi'] to include SwaggerHub API details",
+    ),
+  page: z
+    .number()
+    .optional()
+    .describe(
+      "Page number for paginated results - specifies which page of results to retrieve (default is 1)",
+    ),
+  size: z
+    .number()
+    .optional()
+    .describe(
+      "Number of items per page for pagination - controls how many results are returned per page (default is 20)",
+    ),
+});
+
+export const CreateTableOfContentsArgsSchema = z.object({
+  sectionId: z
+    .string()
+    .describe(
+      "Section ID - unique identifier for the section within the product",
+    ),
+  type: z
+    .enum(["new", "copy"])
+    .describe(
+      "Type of table of contents creation - 'new' to create from scratch or 'copy' to duplicate an existing one",
+    ),
+  title: z
+    .string()
+    .describe(
+      "Title of the table of contents item - will be displayed in navigation (3-40 characters)",
+    ),
+  slug: z
+    .string()
+    .describe(
+      "URL-friendly identifier for the table of contents item - must be unique within the section (3-22 characters, lowercase, alphanumeric with hyphens/underscores/dots)",
+    ),
+  order: z
+    .number()
+    .describe(
+      "Order position of the table of contents item within its parent section or item",
+    ),
+  parentId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Parent table of contents item ID - null for top-level items, or ID of parent item for nested structure",
+    ),
+  content: z
+    .object({
+      type: z
+        .enum(["apiUrl", "html", "markdown"])
+        .describe("Content type - 'apiUrl' for API references, 'html' for HTML content, or 'markdown' for Markdown content"),
+      url: z
+        .string()
+        .optional()
+        .describe("URL for API reference content (required when type is 'apiUrl')"),
+      apiSpec: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("API specification format for API URL content"),
+      documentId: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Document ID for HTML or Markdown content"),
+    })
+    .optional()
+    .describe("Content configuration for the table of contents item"),
+});
+
 export const CreatePortalArgsSchema = z.object({
   name: z
     .string()
@@ -205,11 +314,15 @@ export type CreatePortalArgs = z.infer<typeof CreatePortalArgsSchema>;
 export type UpdatePortalArgs = z.infer<typeof UpdatePortalArgsSchema>;
 export type CreateProductArgs = z.infer<typeof CreateProductArgsSchema>;
 export type UpdateProductArgs = z.infer<typeof UpdateProductArgsSchema>;
+export type GetProductSectionsArgs = z.infer<typeof GetProductSectionsArgsSchema>;
+export type GetTableOfContentsArgs = z.infer<typeof GetTableOfContentsArgsSchema>;
+export type CreateTableOfContentsArgs = z.infer<typeof CreateTableOfContentsArgsSchema>;
 
 // API body types (without IDs - IDs are passed in URL path)
 export type UpdatePortalBody = Omit<UpdatePortalArgs, "portalId">;
 export type CreateProductBody = Omit<CreateProductArgs, "portalId">;
 export type UpdateProductBody = Omit<UpdateProductArgs, "productId">;
+export type CreateTableOfContentsBody = Omit<CreateTableOfContentsArgs, "sectionId">;
 
 // Response types for better type safety
 export type FallbackResponse =
@@ -236,6 +349,59 @@ export interface Product {
   [key: string]: unknown;
 }
 
+export interface Section {
+  id: string;
+  productId: string;
+  title: string;
+  slug: string;
+  tableOfContents: TableOfContentsItem[];
+  order: number;
+}
+
+export interface TableOfContentsItem {
+  id: string;
+
+  slug: string;
+
+  title: string;
+
+  order: number;
+
+  parentId: string | null;
+
+  
+  children: TableOfContentsItem[];
+
+  swaggerhubApi: TableOfContentsItemSwaggerhubApi | null;
+
+  content: ContentReference | null;
+
+}
+
+// Content types for TableOfContentsItem
+export interface ApiUrlContent {
+  type: "apiUrl";
+  url: string;
+  apiSpec: string | null;
+}
+
+export interface HtmlContent {
+  type: "html";
+  documentId: string | null;
+}
+
+export interface MarkdownContent {
+  type: "markdown";
+  documentId: string | null;
+}
+
+export type ContentReference = ApiUrlContent | HtmlContent | MarkdownContent;
+
+export interface TableOfContentsItemSwaggerhubApi {
+  _private: boolean;
+}
+
 // Response collection types
 export type PortalsListResponse = Portal[];
 export type ProductsListResponse = Product[];
+export type SectionsListResponse = Section[];
