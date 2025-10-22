@@ -4,6 +4,7 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
+import { OrganizationsListResponse } from "./client/core-types.js";
 import {
   type ApiDefinitionParams,
   ApiHubAPI,
@@ -129,6 +130,11 @@ export class ApiHubClient implements Client {
     args: CreateApiFromTemplateParams,
   ): Promise<CreateApiFromTemplateResponse | FallbackResponse> {
     return this.api.createApiFromTemplate(args);
+  }
+
+  // Core API methods
+  async getOrganizations(): Promise<OrganizationsListResponse | FallbackResponse> {
+    return this.api.getOrganizations();
   }
 
   async scanStandardization(

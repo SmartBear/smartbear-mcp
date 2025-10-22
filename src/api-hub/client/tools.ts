@@ -121,6 +121,14 @@ export const TOOLS: ApiHubToolParams[] = [
     inputSchema: CreateApiFromTemplateParamsSchema,
     handler: "createApiFromTemplate",
   },
+  // Core API tools for apihub-core functionality
+  {
+    title: "List Organizations",
+    summary:
+      "Search for available organizations within API Hub. Only organizations to which you have access are returned.",
+    parameters: [],
+    handler: "getOrganizations",
+  },
   {
     title: "Scan API Standardization",
     summary:
