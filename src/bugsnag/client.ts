@@ -101,11 +101,10 @@ export class BugsnagClient implements Client {
   config = ConfigurationSchema;
 
   async configure(
-    _server: SmartBearMcpServer,
+    server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    cache?: CacheService,
   ): Promise<boolean> {
-    this.cache = cache;
+    this.cache = server.getCache();
     this._appEndpoint = this.getEndpoint(
       "app",
       config.project_api_key,
@@ -148,7 +147,7 @@ export class BugsnagClient implements Client {
         this.projectApiKey = undefined;
         console.error(
           "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
-          "Check your configured BugSnag project API key.",
+            "Check your configured BugSnag project API key.",
           error,
         );
       }
@@ -324,7 +323,7 @@ export class BugsnagClient implements Client {
       accumulativeDailyUsersSeen === 0 // avoid division by zero
         ? 0
         : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
-        accumulativeDailyUsersSeen;
+          accumulativeDailyUsersSeen;
 
     const totalSessionsCount = source.totalSessionsCount || 0;
     const unhandledSessionsCount = source.unhandledSessionsCount || 0;
@@ -458,13 +457,13 @@ export class BugsnagClient implements Client {
           ...(this.projectApiKey
             ? []
             : [
-              {
-                name: "projectId",
-                type: z.string(),
-                required: true,
-                description: "ID of the project containing the error",
-              },
-            ]),
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  required: true,
+                  description: "ID of the project containing the error",
+                },
+              ]),
           {
             name: "filters",
             type: FilterObjectSchema,
@@ -713,13 +712,13 @@ export class BugsnagClient implements Client {
           ...(this.projectApiKey
             ? []
             : [
-              {
-                name: "projectId",
-                type: z.string(),
-                description: "ID of the project to query for errors",
-                required: true,
-              },
-            ]),
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project to query for errors",
+                  required: true,
+                },
+              ]),
         ],
         examples: [
           {
@@ -781,9 +780,7 @@ export class BugsnagClient implements Client {
             this.cache?.get<EventField[]>(
               cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
             ) || [];
-          const validKeys = new Set(
-            eventFields.map(f => f.displayId),
-          );
+          const validKeys = new Set(eventFields.map((f) => f.displayId));
           for (const key of Object.keys(args.filters)) {
             if (!validKeys.has(key)) {
               throw new ToolError(`Invalid filter key: ${key}`);
@@ -872,14 +869,14 @@ export class BugsnagClient implements Client {
           ...(this.projectApiKey
             ? []
             : [
-              {
-                name: "projectId",
-                type: z.string(),
-                description:
-                  "ID of the project that contains the error to be updated",
-                required: true,
-              },
-            ]),
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description:
+                    "ID of the project that contains the error to be updated",
+                  required: true,
+                },
+              ]),
           {
             name: "errorId",
             type: z.string(),
@@ -975,13 +972,13 @@ export class BugsnagClient implements Client {
           ...(this.projectApiKey
             ? []
             : [
-              {
-                name: "projectId",
-                type: z.string(),
-                description: "ID of the project to list releases for",
-                required: true,
-              },
-            ]),
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project to list releases for",
+                  required: true,
+                },
+              ]),
           {
             name: "releaseStage",
             type: z.string().default("production"),
@@ -1101,13 +1098,13 @@ export class BugsnagClient implements Client {
           ...(this.projectApiKey
             ? []
             : [
-              {
-                name: "projectId",
-                type: z.string(),
-                description: "ID of the project containing the release",
-                required: true,
-              },
-            ]),
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project containing the release",
+                  required: true,
+                },
+              ]),
           {
             name: "releaseId",
             type: z.string(),
@@ -1182,13 +1179,13 @@ export class BugsnagClient implements Client {
           ...(this.projectApiKey
             ? []
             : [
-              {
-                name: "projectId",
-                type: z.string(),
-                description: "ID of the project containing the build",
-                required: true,
-              },
-            ]),
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project containing the build",
+                  required: true,
+                },
+              ]),
           {
             name: "buildId",
             type: z.string(),
