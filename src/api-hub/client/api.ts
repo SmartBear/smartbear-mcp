@@ -4,7 +4,10 @@ import type {
   CreateProductBody,
   CreateTableOfContentsArgs,
   CreateTableOfContentsBody,
+  DeleteDocumentArgs,
+  Document,
   FallbackResponse,
+  GetDocumentArgs,
   GetProductSectionsArgs,
   GetTableOfContentsArgs,
   Portal,
@@ -16,6 +19,8 @@ import type {
   SuccessResponse,
   TableOfContentsItem,
   TableOfContentsListResponse,
+  UpdateDocumentArgs,
+  UpdateDocumentBody,
   UpdatePortalBody,
   UpdateProductBody,
 } from "./portal-types.js";
@@ -400,6 +405,92 @@ export class ApiHubAPI {
     
     // The API returns a paginated response, so we extract the items array
     return result.items as TableOfContentsListResponse;
+  }
+
+  /**
+   * Get document content and metadata
+   * @param args - Parameters for retrieving document
+   * @returns Document with content and metadata
+   */
+  async getDocument(args: GetDocumentArgs): Promise<Document> {
+    const { documentId } = args;
+    console.log(`Getting document ${documentId}`);
+
+    const url = `${this.config.portalBasePath}/documents/${documentId}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub getDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    const result = await response.json();
+    console.log(`Successfully retrieved document:`, JSON.stringify(result, null, 2));
+    
+    return result as Document;
+  }
+
+  /**
+   * Update document content
+   * @param args - Parameters for updating document
+   * @returns Success response
+   */
+  async updateDocument(args: UpdateDocumentArgs): Promise<SuccessResponse> {
+    const { documentId, ...body } = args;
+    console.log(`Updating document ${documentId} with data:`, JSON.stringify(body, null, 2));
+
+    const url = `${this.config.portalBasePath}/documents/${documentId}`;
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub updateDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    console.log(`Successfully updated document ${documentId}`);
+    
+    return { success: true };
+  }
+
+  /**
+   * Delete document
+   * @param args - Parameters for deleting document
+   * @returns Success response
+   */
+  async deleteDocument(args: DeleteDocumentArgs): Promise<SuccessResponse> {
+    const { documentId } = args;
+    console.log(`Deleting document ${documentId}`);
+
+    const url = `${this.config.portalBasePath}/documents/${documentId}`;
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub deleteDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    console.log(`Successfully deleted document ${documentId}`);
+    
+    return { success: true };
   }
 
   /**
