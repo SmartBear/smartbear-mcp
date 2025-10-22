@@ -405,3 +405,4 @@ export interface TableOfContentsItemSwaggerhubApi {
 export type PortalsListResponse = Portal[];
 export type ProductsListResponse = Product[];
 export type SectionsListResponse = Section[];
+export type TableOfContentsListResponse = TableOfContentsItem[];

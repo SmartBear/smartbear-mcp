@@ -105,12 +105,12 @@ export const TOOLS: ApiHubToolParams[] = [
     zodSchema: CreateTableOfContentsArgsSchema,
     handler: "createTableOfContents",
   },
-  // {
-  //   title: "List Table Of Contents",
-  //   summary: "Get table of contents for a section of a product within a portal.",
-  //   zodSchema: GetTableOfContentsArgsSchema,
-  //   handler: "getPortalProductTableOfContents",
-  // },
+  {
+    title: "List Table Of Contents",
+    summary: "Get table of contents for a section of a product within a portal.",
+    zodSchema: GetTableOfContentsArgsSchema,
+    handler: "getTableOfContents",
+  },
   // Registry API tools for SwaggerHub Design functionality
   {
     title: "Search APIs and Domains",
