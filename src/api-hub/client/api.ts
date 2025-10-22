@@ -23,6 +23,10 @@ import type {
   CreateApiParams,
   CreateApiResponse,
 } from "./registry-types.js";
+import type {
+  Organization,
+  OrganizationsListResponse,
+} from "./core-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
@@ -126,6 +130,21 @@ export class ApiHubAPI {
       [] as unknown as PortalsListResponse,
     );
     return result as PortalsListResponse;
+  }
+
+  async getOrganizations(): Promise<OrganizationsListResponse> {
+    const response = await fetch(
+      `${this.config.coreBasePath}/organizations`,
+      {
+        method: "GET",
+        headers: this.headers,
+      },
+    );
+    const result = await this.handleResponse<OrganizationsListResponse>(
+      response,
+      [] as unknown as OrganizationsListResponse,
+    );
+    return result as OrganizationsListResponse;
   }
 
   async createPortal(body: CreatePortalArgs): Promise<Portal> {
