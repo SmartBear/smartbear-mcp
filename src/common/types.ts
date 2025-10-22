@@ -92,6 +92,9 @@ export interface Client {
   prefix: string;
   /** Zod schema defining configuration fields for this client */
   config: ZodObject<ZodRawShape>;
+  /**
+   * Configure the client with the given server and configuration
+   */
   configure: (server: SmartBearMcpServer, config: any) => Promise<boolean>;
   registerTools(
     register: RegisterToolsFunction,

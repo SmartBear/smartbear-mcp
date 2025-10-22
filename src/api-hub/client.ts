@@ -43,7 +43,11 @@ export class ApiHubClient implements Client {
   prefix = "api_hub";
   config = ConfigurationSchema;
 
-  async configure(_server: SmartBearMcpServer, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
+  async configure(
+    _server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
+  ): Promise<boolean> {
     this.api = new ApiHubAPI(
       new ApiHubConfiguration({ token: config.api_key }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,

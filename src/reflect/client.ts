@@ -29,7 +29,7 @@ export interface testExecutionArgs {
 }
 
 const ConfigurationSchema = z.object({
-    api_token: z.string().describe("Reflect API authentication token"),
+  api_token: z.string().describe("Reflect API authentication token"),
 });
 
 // ReflectClient class implementing the Client interface
@@ -41,7 +41,11 @@ export class ReflectClient implements Client {
 
   config = ConfigurationSchema;
 
-  async configure(_server: SmartBearMcpServer, config: z.infer<typeof ConfigurationSchema>): Promise<boolean> {
+  async configure(
+    _server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
+  ): Promise<boolean> {
     this.headers = {
       "X-API-KEY": `${config.api_token}`,
       "Content-Type": "application/json",
