@@ -2,31 +2,29 @@ import NodeCache from "node-cache";
 import { z } from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type {
-  Client,
-  GetInputFunction,
-  RegisterResourceFunction,
-  RegisterToolsFunction,
+import {
+  type Client,
+  type GetInputFunction,
+  type RegisterResourceFunction,
+  type RegisterToolsFunction,
+  ToolError,
 } from "../common/types.js";
-import type { ApiResponse } from "./client/api/base.js";
-import type { Organization } from "./client/api/CurrentUser.js";
-import type { ListProjectErrorsOptions } from "./client/api/Error.js";
+import {
+  type Build,
+  Configuration,
+  CurrentUserAPI,
+  ErrorAPI,
+  type EventField,
+  type Organization,
+  type Project,
+  ProjectAPI,
+  type Release,
+} from "./client/api/index.js";
 import {
   type FilterObject,
   FilterObjectSchema,
-  toQueryString,
-} from "./client/api/filters.js";
-import {
-  type BuildResponseAny,
-  type EventField,
-  type ListBuildsOptions,
-  type ListReleasesOptions,
-  type Project,
-  ProjectAPI,
-  type ReleaseResponseAny,
-  type StabilityData,
-} from "./client/api/Project.js";
-import { Configuration, CurrentUserAPI, ErrorAPI } from "./client/index.js";
+  toUrlSearchParams,
+} from "./client/filters.js";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -53,18 +51,16 @@ const PERMITTED_UPDATE_OPERATIONS = [
   "undiscard",
 ] as const;
 
-// Type definitions for tool arguments
-export interface ProjectArgs {
-  projectId: string;
+interface StabilityData {
+  userStability: number;
+  sessionStability: number;
+  stabilityTargetType: string;
+  targetStability: number;
+  criticalStability: number;
+  meetsTargetStability: boolean;
+  meetsCriticalStability: boolean;
 }
 
-export interface OrgArgs {
-  orgId: string;
-}
-
-export interface ErrorArgs extends ProjectArgs {
-  errorId: string;
-}
 export class BugsnagClient implements Client {
   private currentUserApi: CurrentUserAPI;
   private errorsApi: ErrorAPI;
@@ -81,7 +77,7 @@ export class BugsnagClient implements Client {
     this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
     this.appEndpoint = this.getEndpoint("app", projectApiKey, endpoint);
     const config = new Configuration({
-      authToken: token,
+      apiKey: `token ${token}`,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
@@ -172,17 +168,17 @@ export class BugsnagClient implements Client {
   async getErrorUrl(
     project: Project,
     errorId: string,
-    queryString = "",
+    queryString?: string | null,
   ): Promise<string> {
     const dashboardUrl = await this.getDashboardUrl(project);
-    return `${dashboardUrl}/errors/${errorId}${queryString}`;
+    return `${dashboardUrl}/errors/${errorId}${queryString ? `?${queryString}` : ""}`;
   }
 
   async getOrganization(): Promise<Organization> {
     let org = this.cache.get<Organization>(cacheKeys.ORG);
     if (!org) {
       const response = await this.currentUserApi.listUserOrganizations();
-      const orgs = response.body || [];
+      const orgs = response.body;
       if (!orgs || orgs.length === 0) {
         throw new Error("No organizations found for the current user.");
       }
@@ -203,7 +199,7 @@ export class BugsnagClient implements Client {
       const response = await this.currentUserApi.getOrganizationProjects(
         org.id,
       );
-      projects = response.body || [];
+      projects = response.body;
       this.cache.set(cacheKeys.PROJECTS, projects);
     }
     return projects;
@@ -218,9 +214,12 @@ export class BugsnagClient implements Client {
     let project = this.cache.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
     if (!project && this.projectApiKey) {
       const projects = await this.getProjects();
-      project = projects.find((p) => p.api_key === this.projectApiKey) ?? null;
+      project =
+        projects.find((p: Project) => p.apiKey === this.projectApiKey) ?? null;
       if (!project) {
-        throw new Error("Unable to find project with the configured API key.");
+        throw new ToolError(
+          "Unable to find project with the configured API key.",
+        );
       }
       this.cache.set(cacheKeys.CURRENT_PROJECT, project);
       if (project) {
@@ -238,10 +237,10 @@ export class BugsnagClient implements Client {
       await this.projectApi.listProjectEventFields(project.id)
     ).body;
     if (!filtersResponse || filtersResponse.length === 0) {
-      throw new Error(`No event fields found for project ${project.name}.`);
+      throw new ToolError(`No event fields found for project ${project.name}.`);
     }
     filtersResponse = filtersResponse.filter(
-      (field) => !EXCLUDED_EVENT_FIELDS.has(field.display_id),
+      (field) => field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
     );
     return filtersResponse;
   }
@@ -258,37 +257,19 @@ export class BugsnagClient implements Client {
     return projectEvents.find((event) => event && !!event.body)?.body || null;
   }
 
-  async updateError(
-    projectId: string,
-    errorId: string,
-    operation: string,
-    options?: any,
-  ): Promise<boolean> {
-    const errorUpdateRequest = {
-      operation: operation,
-      ...options,
-    };
-    const response = await this.errorsApi.updateErrorOnProject(
-      projectId,
-      errorId,
-      errorUpdateRequest,
-    );
-    return response.status === 200 || response.status === 204;
-  }
-
   private async getInputProject(
     projectId?: unknown | string,
   ): Promise<Project> {
     if (typeof projectId === "string") {
       const maybeProject = await this.getProject(projectId);
       if (!maybeProject) {
-        throw new Error(`Project with ID ${projectId} not found.`);
+        throw new ToolError(`Project with ID ${projectId} not found.`);
       }
       return maybeProject;
     } else {
       const currentProject = await this.getCurrentProject();
       if (!currentProject) {
-        throw new Error(
+        throw new ToolError(
           "No current project found. Please provide a projectId or configure a project API key.",
         );
       }
@@ -296,118 +277,46 @@ export class BugsnagClient implements Client {
     }
   }
 
-  async listBuilds(
-    projectId: string,
-    opts: ListBuildsOptions,
-  ): Promise<ApiResponse<(BuildResponseAny & StabilityData)[]>> {
-    const response = await this.projectApi.listBuilds(projectId, opts);
-    if (!response.body || response.body.length === 0) {
-      return { ...response, body: [] };
-    }
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-    return {
-      ...response,
-      body: response.body.map((b) => this.addStabilityData(b, project)),
-    };
-  }
-
-  async getBuild(
-    projectId: string,
-    buildId: string,
-  ): Promise<ApiResponse<BuildResponseAny & StabilityData>> {
-    const response = await this.projectApi.getBuild(projectId, buildId);
-    if (!response.body) throw new Error(`No build for ${buildId} found.`);
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-    return { ...response, body: this.addStabilityData(response.body, project) };
-  }
-
-  async listReleases(
-    projectId: string,
-    opts: ListReleasesOptions,
-  ): Promise<ApiResponse<(ReleaseResponseAny & StabilityData)[]>> {
-    const response = await this.projectApi.listReleases(projectId, opts);
-    if (!response.body || response.body.length === 0) {
-      return { ...response, body: [] };
-    }
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-    return {
-      ...response,
-      body: response.body.map((r) => this.addStabilityData(r, project)),
-    };
-  }
-
-  async getRelease(
-    projectId: string,
-    releaseId: string,
-  ): Promise<ApiResponse<ReleaseResponseAny & StabilityData>> {
-    const response = await this.projectApi.getRelease(releaseId);
-    if (!response.body) throw new Error(`No release for ${releaseId} found.`);
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-    return { ...response, body: this.addStabilityData(response.body, project) };
-  }
-
-  async listBuildsInRelease(
-    projectId: string,
-    releaseId: string,
-  ): Promise<ApiResponse<(BuildResponseAny & StabilityData)[]>> {
-    const response = await this.projectApi.listBuildsInRelease(releaseId);
-    if (!response.body || response.body.length === 0) {
-      return { ...response, body: [] };
-    }
-
-    const project = await this.getProject(projectId);
-    if (!project) throw new Error(`Project with ID ${projectId} not found.`);
-
-    return {
-      ...response,
-      body: response.body.map((b) => this.addStabilityData(b, project)),
-    };
-  }
-
-  private addStabilityData<T extends BuildResponseAny | ReleaseResponseAny>(
+  private addStabilityData<T extends Release | Build>(
     source: T,
     project: Project,
   ): T & StabilityData {
-    const user_stability =
-      source.accumulative_daily_users_seen === 0 // avoid division by zero
-        ? 0
-        : (source.accumulative_daily_users_seen -
-            source.accumulative_daily_users_with_unhandled) /
-          source.accumulative_daily_users_seen;
+    const accumulativeDailyUsersSeen = source.accumulativeDailyUsersSeen || 0;
+    const accumulativeDailyUsersWithUnhandled =
+      source.accumulativeDailyUsersWithUnhandled || 0;
 
-    const session_stability =
-      source.total_sessions_count === 0 // avoid division by zero
+    const userStability =
+      accumulativeDailyUsersSeen === 0 // avoid division by zero
         ? 0
-        : (source.total_sessions_count - source.unhandled_sessions_count) /
-          source.total_sessions_count;
+        : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
+          accumulativeDailyUsersSeen;
+
+    const totalSessionsCount = source.totalSessionsCount || 0;
+    const unhandledSessionsCount = source.unhandledSessionsCount || 0;
+
+    const sessionStability =
+      totalSessionsCount === 0 // avoid division by zero
+        ? 0
+        : (totalSessionsCount - unhandledSessionsCount) / totalSessionsCount;
 
     const stabilityMetric =
-      project.stability_target_type === "user"
-        ? user_stability
-        : session_stability;
+      project.stabilityTargetType === "user" ? userStability : sessionStability;
 
-    const meets_target_stability =
-      stabilityMetric >= project.target_stability.value;
-    const meets_critical_stability =
-      stabilityMetric >= project.critical_stability.value;
+    const targetStability = project.targetStability?.value || 0;
+    const criticalStability = project.criticalStability?.value || 0;
+
+    const meetsTargetStability = stabilityMetric >= targetStability;
+    const meetsCriticalStability = stabilityMetric >= criticalStability;
 
     return {
       ...source,
-      user_stability,
-      session_stability,
-      stability_target_type: project.stability_target_type,
-      target_stability: project.target_stability.value,
-      critical_stability: project.critical_stability.value,
-      meets_target_stability,
-      meets_critical_stability,
+      userStability,
+      sessionStability,
+      stabilityTargetType: project.stabilityTargetType || "user",
+      targetStability,
+      criticalStability,
+      meetsTargetStability,
+      meetsCriticalStability,
     };
   }
 
@@ -566,42 +475,40 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const project = await this.getInputProject(args.projectId);
         if (!args.errorId)
-          throw new Error("Both projectId and errorId arguments are required");
+          throw new ToolError(
+            "Both projectId and errorId arguments are required",
+          );
         const errorDetails = (
           await this.errorsApi.viewErrorOnProject(project.id, args.errorId)
         ).body;
         if (!errorDetails) {
-          throw new Error(
+          throw new ToolError(
             `Error with ID ${args.errorId} not found in project ${project.id}.`,
           );
         }
-
-        // Build query parameters
-        const params = new URLSearchParams();
-
-        // Add sorting and pagination parameters to get the latest event
-        params.append("sort", "timestamp");
-        params.append("direction", "desc");
-        params.append("per_page", "1");
-        params.append("full_reports", "true");
 
         const filters: FilterObject = {
           error: [{ type: "eq", value: args.errorId }],
           ...args.filters,
         };
 
-        const filtersQueryString = toQueryString(filters);
-        const listEventsQueryString = `?${params}&${filtersQueryString}`;
-
         // Get the latest event for this error using the events endpoint with filters
         let latestEvent = null;
         try {
-          latestEvent = (
-            await this.errorsApi.getLatestEventOnProject(
+          const latestEvents = (
+            await this.errorsApi.listEventsOnProject(
               project.id,
-              listEventsQueryString,
+              null,
+              "timestamp",
+              "desc",
+              1,
+              filters,
+              true,
             )
           ).body;
+          if (latestEvents && latestEvents.length > 0) {
+            latestEvent = latestEvents[0];
+          }
         } catch (e) {
           console.warn("Failed to fetch latest event:", e);
           // Continue without latest event rather than failing the entire request
@@ -611,12 +518,18 @@ export class BugsnagClient implements Client {
           error_details: errorDetails,
           latest_event: latestEvent,
           pivots:
-            (await this.errorsApi.listErrorPivots(project.id, args.errorId))
-              .body || [],
+            (
+              await this.errorsApi.getPivotValuesOnAnError(
+                project.id,
+                args.errorId,
+                filters,
+                5,
+              )
+            ).body || [],
           url: await this.getErrorUrl(
             project,
             args.errorId,
-            `?${filtersQueryString}`,
+            toUrlSearchParams(filters).toString(),
           ),
         };
         return {
@@ -668,12 +581,12 @@ export class BugsnagClient implements Client {
         ],
       },
       async (args: any, _extra: any) => {
-        if (!args.link) throw new Error("link argument is required");
+        if (!args.link) throw new ToolError("link argument is required");
         const url = new URL(args.link);
         const eventId = url.searchParams.get("event_id");
         const projectSlug = url.pathname.split("/")[2];
         if (!projectSlug || !eventId)
-          throw new Error(
+          throw new ToolError(
             "Both projectSlug and eventId must be present in the link",
           );
 
@@ -681,7 +594,7 @@ export class BugsnagClient implements Client {
         const projects = await this.getProjects();
         const projectId = projects.find((p: any) => p.slug === projectSlug)?.id;
         if (!projectId) {
-          throw new Error("Project with the specified slug not found.");
+          throw new ToolError("Project with the specified slug not found.");
         }
 
         const response = await this.getEvent(eventId, projectId);
@@ -751,7 +664,7 @@ export class BugsnagClient implements Client {
           },
           {
             name: "nextUrl",
-            type: z.string().url(),
+            type: z.string(),
             description:
               "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available.",
             required: false,
@@ -833,31 +746,28 @@ export class BugsnagClient implements Client {
             this.cache.get<EventField[]>(
               cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
             ) || [];
-          const validKeys = new Set(eventFields.map((f) => f.display_id));
+          const validKeys = new Set(eventFields.map((f) => f.displayId));
           for (const key of Object.keys(args.filters)) {
             if (!validKeys.has(key)) {
-              throw new Error(`Invalid filter key: ${key}`);
+              throw new ToolError(`Invalid filter key: ${key}`);
             }
           }
         }
 
-        const defaultFilters: FilterObject = {
+        const filters: FilterObject = {
           "event.since": [{ type: "eq", value: "30d" }],
           "error.status": [{ type: "eq", value: "open" }],
+          ...args.filters,
         };
-
-        const options: ListProjectErrorsOptions = {
-          filters: { ...defaultFilters, ...args.filters },
-        };
-
-        if (args.sort !== undefined) options.sort = args.sort;
-        if (args.direction !== undefined) options.direction = args.direction;
-        if (args.perPage !== undefined) options.per_page = args.perPage;
-        if (args.nextUrl !== undefined) options.next_url = args.nextUrl;
 
         const response = await this.errorsApi.listProjectErrors(
           project.id,
-          options,
+          null,
+          args.sort || "last_seen",
+          args.direction || "desc",
+          args.perPage || 30,
+          filters,
+          args.nextUrl,
         );
 
         const result = {
@@ -901,7 +811,8 @@ export class BugsnagClient implements Client {
         const projectFields = this.cache.get<EventField[]>(
           cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
         );
-        if (!projectFields) throw new Error("No event filters found in cache.");
+        if (!projectFields)
+          throw new ToolError("No event filters found in cache.");
 
         return {
           content: [{ type: "text", text: JSON.stringify(projectFields) }],
@@ -992,12 +903,22 @@ export class BugsnagClient implements Client {
           }
         }
 
-        const result = await this.updateError(project.id, errorId, operation, {
-          severity,
-        });
+        const result = await this.errorsApi.updateErrorOnProject(
+          project.id,
+          errorId,
+          {
+            operation: operation,
+            severity: severity,
+          },
+        );
         return {
           content: [
-            { type: "text", text: JSON.stringify({ success: result }) },
+            {
+              type: "text",
+              text: JSON.stringify({
+                success: result.status === 200 || result.status === 204,
+              }),
+            },
           ],
         };
       },
@@ -1039,6 +960,13 @@ export class BugsnagClient implements Client {
               "Whether to only include releases that are marked as visible in the dashboard, defaults to false",
             required: false,
             examples: ["true", "false"],
+          },
+          {
+            name: "perPage",
+            type: z.number().min(1).max(100).default(30),
+            description: "How many results to return per page.",
+            required: false,
+            examples: ["30", "50", "100"],
           },
           {
             name: "nextUrl",
@@ -1087,23 +1015,31 @@ export class BugsnagClient implements Client {
           "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
       },
       async (args, _extra) => {
-        const response = await this.listReleases(
-          (await this.getInputProject(args.projectId)).id,
-          {
-            release_stage_name: args.releaseStage,
-            visible_only: args.visibleOnly,
-            next_url: args.nextUrl,
-          },
+        const project = await this.getInputProject(args.projectId);
+        const response = await this.projectApi.listProjectReleaseGroups(
+          project.id,
+          args.releaseStage || "production",
+          false, // Not top-only
+          args.visibleOnly || false,
+          args.perPage || 30,
+          args.nextUrl,
         );
+
+        let releases: (Release & StabilityData)[] = [];
+        if (response.body) {
+          releases = response.body.map((r) =>
+            this.addStabilityData(r, project),
+          );
+        }
 
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
-                data: response.body,
+                data: releases,
                 next_url: response.nextUrl ?? undefined,
-                data_count: response.body?.length,
+                data_count: releases.length,
                 total_count: response.totalCount ?? undefined,
               }),
             },
@@ -1160,23 +1096,33 @@ export class BugsnagClient implements Client {
           "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {
-        if (!args.releaseId) throw new Error("releaseId argument is required");
+        if (!args.releaseId)
+          throw new ToolError("releaseId argument is required");
         const project = await this.getInputProject(args.projectId);
-        const releaseResponse = await this.getRelease(
-          project.id,
+        const releaseResponse = await this.projectApi.getReleaseGroup(
           args.releaseId,
         );
-        const buildsResponse = await this.listBuildsInRelease(
-          project.id,
-          args.releaseId,
-        );
+        if (!releaseResponse.body)
+          throw new ToolError(`No release for ${args.releaseId} found.`);
+        const release = this.addStabilityData(releaseResponse.body, project);
+        let builds: (Build & StabilityData)[] = [];
+        if (releaseResponse.body) {
+          const buildsResponse = await this.projectApi.listBuildsInRelease(
+            args.releaseId,
+          );
+          if (buildsResponse.body) {
+            builds = buildsResponse.body.map((b) =>
+              this.addStabilityData(b, project),
+            );
+          }
+        }
         return {
           content: [
             {
               type: "text",
               text: JSON.stringify({
-                release: releaseResponse.body,
-                builds: buildsResponse.body,
+                release: release,
+                builds: builds,
               }),
             },
           ],
@@ -1231,13 +1177,18 @@ export class BugsnagClient implements Client {
           "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {
-        if (!args.buildId) throw new Error("buildId argument is required");
-        const response = await this.getBuild(
-          (await this.getInputProject(args.projectId)).id,
+        if (!args.buildId) throw new ToolError("buildId argument is required");
+        const project = await this.getInputProject(args.projectId);
+        const response = await this.projectApi.getProjectReleaseById(
+          project.id,
           args.buildId,
         );
+
+        if (!response.body)
+          throw new ToolError(`No build for ${args.buildId} found.`);
+        const build = this.addStabilityData(response.body, project);
         return {
-          content: [{ type: "text", text: JSON.stringify(response.body) }],
+          content: [{ type: "text", text: JSON.stringify(build) }],
         };
       },
     );

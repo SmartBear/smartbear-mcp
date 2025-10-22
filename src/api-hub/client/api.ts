@@ -1,3 +1,4 @@
+import { ToolError } from "../../common/types.js";
 import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,
@@ -22,6 +23,8 @@ import type {
   CreateApiFromTemplateResponse,
   CreateApiParams,
   CreateApiResponse,
+  ScanStandardizationParams,
+  StandardizationResult,
 } from "./registry-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
@@ -107,7 +110,7 @@ export class ApiHubAPI {
     defaultReturn: T | Record<string, never> = {} as T,
   ): Promise<T | FallbackResponse> {
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      throw new ToolError(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     return this.parseResponse<T, T | Record<string, never>>(
@@ -151,7 +154,7 @@ export class ApiHubAPI {
     );
     const result = await this.handleResponse<Portal>(response);
     if (!("id" in (result as any))) {
-      throw new Error("Portal not found or empty response");
+      throw new ToolError("Portal not found or empty response");
     }
     return result as Portal;
   }
@@ -166,7 +169,7 @@ export class ApiHubAPI {
     );
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `API Hub deletePortal failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
       );
     }
@@ -232,7 +235,7 @@ export class ApiHubAPI {
     );
     const result = await this.handleResponse<Product>(response);
     if (!("id" in (result as any))) {
-      throw new Error("Product not found or empty response");
+      throw new ToolError("Product not found or empty response");
     }
     return result as Product;
   }
@@ -307,7 +310,7 @@ export class ApiHubAPI {
     });
 
     if (!response.ok) {
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API searchApis failed - status: ${response.status} ${response.statusText}`,
       );
     }
@@ -376,7 +379,7 @@ export class ApiHubAPI {
     });
 
     if (!response.ok) {
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API getApiDefinition failed - status: ${response.status} ${response.statusText}`,
       );
     }
@@ -413,7 +416,7 @@ export class ApiHubAPI {
         const parsedDefinition = JSON.parse(params.definition);
         requestBody = JSON.stringify(parsedDefinition);
       } catch (error) {
-        throw new Error(
+        throw new ToolError(
           `Invalid JSON format in definition: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
@@ -442,7 +445,7 @@ export class ApiHubAPI {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API createOrUpdateApi failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
@@ -487,7 +490,7 @@ export class ApiHubAPI {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API createApiFromTemplate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
@@ -513,7 +516,7 @@ export class ApiHubAPI {
   private detectDefinitionFormat(definition: string): "json" | "yaml" {
     const trimmed = definition.trim();
     if (!trimmed) {
-      throw new Error("Empty definition content provided");
+      throw new ToolError("Empty definition content provided");
     }
 
     try {
@@ -522,5 +525,60 @@ export class ApiHubAPI {
     } catch {
       return "yaml";
     }
+  }
+
+  /**
+   * Run a standardization scan against an API definition
+   * @param params Parameters including organization name and API definition
+   * @returns Standardization result with validation errors
+   */
+  async scanStandardization(
+    params: ScanStandardizationParams,
+  ): Promise<StandardizationResult> {
+    // Auto-detect format from the definition content
+    const format = this.detectDefinitionFormat(params.definition);
+
+    let contentType: string;
+    let requestBody: string;
+
+    if (format === "yaml") {
+      contentType = "application/yaml";
+      requestBody = params.definition; // Send YAML as-is
+    } else {
+      contentType = "application/json";
+      // For JSON, parse and stringify to ensure valid JSON
+      try {
+        const parsedDefinition = JSON.parse(params.definition);
+        requestBody = JSON.stringify(parsedDefinition);
+      } catch (error) {
+        throw new Error(
+          `Invalid JSON format in definition: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        );
+      }
+    }
+
+    const url = `${this.config.registryBasePath}/standardization/${encodeURIComponent(
+      params.orgName,
+    )}/scan`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        "Content-Type": contentType,
+      },
+      body: requestBody,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `SwaggerHub Registry API scanStandardization failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    return await this.handleResponse<StandardizationResult>(response);
   }
 }

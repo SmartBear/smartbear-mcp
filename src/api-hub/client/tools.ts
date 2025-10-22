@@ -20,6 +20,7 @@ import {
   ApiSearchParamsSchema,
   CreateApiFromTemplateParamsSchema,
   CreateApiParamsSchema,
+  ScanStandardizationParamsSchema,
 } from "./registry-types.js";
 
 export interface ApiHubToolParams extends ToolParams {
@@ -119,5 +120,12 @@ export const TOOLS: ApiHubToolParams[] = [
       "Create a new API in SwaggerHub Registry using a predefined template. This endpoint creates APIs based on existing templates without requiring manual definition content. APIs are always created with fixed values: private visibility, no project assignment, and reconciliation enabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field and API details with SwaggerHub URL.",
     zodSchema: CreateApiFromTemplateParamsSchema,
     handler: "createApiFromTemplate",
+  },
+  {
+    title: "Scan API Standardization",
+    summary:
+      "Run a standardization scan against an API definition using the organization's standardization configuration. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of standardization errors and validation issues.",
+    zodSchema: ScanStandardizationParamsSchema,
+    handler: "scanStandardization",
   },
 ];
