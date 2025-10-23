@@ -5,6 +5,7 @@ import type {
   CreateTableOfContentsArgs,
   CreateTableOfContentsBody,
   DeleteDocumentArgs,
+  DeleteTableOfContentsArgs,
   Document,
   FallbackResponse,
   GetDocumentArgs,
@@ -489,6 +490,39 @@ export class ApiHubAPI {
     }
 
     console.log(`Successfully deleted document ${documentId}`);
+    
+    return { success: true };
+  }
+
+  /**
+   * Delete table of contents entry
+   * @param args - Parameters for deleting table of contents entry
+   * @returns Success response
+   */
+  async deleteTableOfContents(args: DeleteTableOfContentsArgs): Promise<SuccessResponse> {
+    const { tableOfContentsId, recursive } = args;
+    console.log(`Deleting table of contents ${tableOfContentsId}${recursive ? ' recursively' : ''}`);
+
+    const searchParams = new URLSearchParams();
+    if (recursive !== undefined) {
+      searchParams.set('recursive', recursive.toString());
+    }
+
+    const url = `${this.config.portalBasePath}/table-of-contents/${tableOfContentsId}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub deleteTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    console.log(`Successfully deleted table of contents ${tableOfContentsId}`);
     
     return { success: true };
   }
