@@ -48,7 +48,7 @@ export class GetProject implements ZephyrTool {
   handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
     const { projectIdOrKey } = GetProjectInputSchema.parse(args);
     const response: ZephyrProject = await this.apiClient.get(
-      "/projects/" + projectIdOrKey,
+      `/projects/${projectIdOrKey}`,
     );
     return {
       structuredContent: response,
