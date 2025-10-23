@@ -45,6 +45,14 @@ jobs:
           registry-url: 'https://registry.npmjs.org/'
           scope: '@smartbear'
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.7.1
+        with:
+          install: true
+
       - name: Configure AWS credentials
         if: ${{ env.RUN_PUSH_ECR == 'true' }}
         uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838 # v5.0.0
@@ -69,6 +77,14 @@ jobs:
           jq --arg v "${{ steps.extract_version.outputs.VERSION }}" \
             '.version = $v | .packages[0].version = $v' \
             server.json > server.json.tmp && mv server.json.tmp server.json
+
+      - name: Run container tests on linux/amd64 and linux/arm64
+        run: |
+          docker buildx build \
+            --target tester \
+            --platform linux/amd64,linux/arm64 \
+            --progress plain \
+            .
 
       - name: Build, tag, and push docker image
         if: ${{ env.RUN_PUSH_ECR == 'true' }}
