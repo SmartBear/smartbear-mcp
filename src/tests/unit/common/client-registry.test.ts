@@ -246,6 +246,28 @@ describe("ClientRegistry", () => {
         expect(mockClient.configure).toHaveBeenCalled();
       });
 
+      it("should reject URL that doesn't match due to unescaped dots", async () => {
+        // Pattern without proper escaping would match any character instead of literal dot
+        process.env.MCP_ALLOWED_ENDPOINTS =
+          "/^https:\\/\\/api\\.example\\.com$/";
+
+        mockClient = createMockClient(
+          "test-client",
+          z.object({
+            endpoint: z.string().url(),
+          }),
+        );
+
+        clientRegistry.register(mockClient);
+
+        // This should NOT match because dots are properly escaped
+        await expect(
+          clientRegistry.configure(mockServer, () => "https://apiaexampleacom"),
+        ).rejects.toThrow("URL https://apiaexampleacom is not allowed");
+
+        expect(mockClient.configure).not.toHaveBeenCalled();
+      });
+
       it("should throw error when URL does not match regex pattern", async () => {
         process.env.MCP_ALLOWED_ENDPOINTS =
           "/^https:\\/\\/.*\\.bugsnag\\.com$/";
