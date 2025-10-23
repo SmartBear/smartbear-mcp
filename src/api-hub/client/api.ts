@@ -12,17 +12,14 @@ import type {
   GetProductSectionsArgs,
   GetTableOfContentsArgs,
   Portal,
-  PortalArgs,
   PortalsListResponse,
   Product,
   ProductsListResponse,
-  Section,
   SectionsListResponse,
   SuccessResponse,
   TableOfContentsItem,
   TableOfContentsListResponse,
   UpdateDocumentArgs,
-  UpdateDocumentBody,
   UpdatePortalBody,
   UpdateProductBody,
 } from "./portal-types.js";
@@ -297,6 +294,22 @@ export class ApiHubAPI {
       },
     );
     return this.handleResponse<Product | SuccessResponse>(response, {
+      success: true,
+    } as SuccessResponse);
+  }
+
+  async publishPortalProduct(
+    productId: string,
+    preview: boolean = false,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    const response = await fetch(
+      `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
+      {
+        method: "PUT",
+        headers: this.headers,
+      },
+    );
+    return this.handleResponse<SuccessResponse>(response, {
       success: true,
     } as SuccessResponse);
   }

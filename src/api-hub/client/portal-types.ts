@@ -123,7 +123,19 @@ export const CreateTableOfContentsArgsSchema = z.object({
         .describe("Document ID for HTML or Markdown content"),
     })
     .optional()
-    .describe("Content configuration for the table of contents item"),
+    .describe("Content configuration for the table of contents item")
+    .refine(
+      (content) => {
+        if (content?.type === "apiUrl") {
+          return content.url?.endsWith("/swagger.json") === true;
+        }
+        return true;
+      },
+      {
+        message: "URL must end with '/swagger.json' when content type is 'apiUrl'",
+        path: ["url"],
+      }
+    ),
 });
 
 export const CreatePortalArgsSchema = z.object({
@@ -307,6 +319,16 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
     ),
 });
 
+export const PublishProductArgsSchema = ProductArgsSchema.extend({
+  preview: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication)",
+    ),
+});
+
 // Type definitions for Portal API tool arguments - generated from Zod schemas
 export type PortalArgs = z.infer<typeof PortalArgsSchema>;
 export type ProductArgs = z.infer<typeof ProductArgsSchema>;
@@ -314,6 +336,7 @@ export type CreatePortalArgs = z.infer<typeof CreatePortalArgsSchema>;
 export type UpdatePortalArgs = z.infer<typeof UpdatePortalArgsSchema>;
 export type CreateProductArgs = z.infer<typeof CreateProductArgsSchema>;
 export type UpdateProductArgs = z.infer<typeof UpdateProductArgsSchema>;
+export type PublishProductArgs = z.infer<typeof PublishProductArgsSchema>;
 export type GetProductSectionsArgs = z.infer<typeof GetProductSectionsArgsSchema>;
 export type GetTableOfContentsArgs = z.infer<typeof GetTableOfContentsArgsSchema>;
 export type CreateTableOfContentsArgs = z.infer<typeof CreateTableOfContentsArgsSchema>;

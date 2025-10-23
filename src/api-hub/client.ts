@@ -29,6 +29,7 @@ import {
   type PortalsListResponse,
   type Product,
   type ProductsListResponse,
+  type PublishProductArgs,
   type SectionsListResponse,
   type SuccessResponse,
   type TableOfContentsItem,
@@ -111,6 +112,13 @@ export class ApiHubClient implements Client {
   ): Promise<Product | SuccessResponse | FallbackResponse> {
     const { productId, ...body } = args;
     return this.api.updatePortalProduct(productId, body);
+  }
+
+  async publishPortalProduct(
+    args: PublishProductArgs,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    const { productId, preview } = args;
+    return this.api.publishPortalProduct(productId, preview);
   }
 
   async getPortalProductSections(
