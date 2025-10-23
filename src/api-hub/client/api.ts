@@ -13,6 +13,7 @@ import type {
   GetProductSectionsArgs,
   GetTableOfContentsArgs,
   Portal,
+  PortalArgs,
   PortalsListResponse,
   Product,
   ProductsListResponse,

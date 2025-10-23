@@ -123,7 +123,7 @@ export const TOOLS: ApiHubToolParams[] = [
     zodSchema: DeleteTableOfContentsArgsSchema,
     handler: "deleteTableOfContents",
   },
-  
+
   // Document management tools
   {
     title: "Get Document",
@@ -143,7 +143,7 @@ export const TOOLS: ApiHubToolParams[] = [
     zodSchema: DeleteDocumentArgsSchema,
     handler: "deleteDocument",
   },
-  
+
   // Registry API tools for SwaggerHub Design functionality
   {
     title: "Search APIs and Domains",
