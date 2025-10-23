@@ -1,0 +1,10 @@
+# Configuration for Typos
+#
+# See <https://github.com/crate-ci/typos/blob/master/docs/reference.md>
+[default]
+extend-ignore-re = [
+  # Ignore spelling on a specific line
+  "(?Rm)^.*(#|//)\\s*spellchecker:disable-line$",
+  # Ignore spelling in a specific block
+  "(?s)(#|//)\\s*spellchecker:off.*?\\n\\s*(#|//)\\s*spellchecker:on",
+]
