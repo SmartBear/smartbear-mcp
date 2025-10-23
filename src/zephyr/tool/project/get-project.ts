@@ -1,13 +1,13 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ZodRawShape, z } from "zod";
+import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
   ProjectIdOrKeySchema,
-  ZephyrProject,
+  type ZephyrProject,
   ZephyrProjectSchema,
 } from "../../common/types.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
-import type { ToolParams } from "../../../common/types.js";
 
 export const GetProjectInputSchema = z.object({
   projectIdOrKey: ProjectIdOrKeySchema,
