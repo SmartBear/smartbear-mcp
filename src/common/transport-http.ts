@@ -54,6 +54,15 @@ export async function runHttpMode() {
 
       const url = new URL(req.url || "/", `http://${req.headers.host}`);
 
+      // HEALTH CHECK ENDPOINT
+      if (req.method === "GET" && url.pathname === "/health") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+        );
+        return;
+      }
+
       // STREAMABLE HTTP ENDPOINT (modern, preferred)
       if (url.pathname === "/mcp") {
         await handleStreamableHttpRequest(req, res, transports);
@@ -78,6 +87,9 @@ export async function runHttpMode() {
 
   httpServer.listen(PORT, () => {
     console.log(`[MCP HTTP Server] Listening on http://localhost:${PORT}`);
+    console.log(
+      `[MCP HTTP Server] Health check: http://localhost:${PORT}/health`,
+    );
     console.log(
       `[MCP HTTP Server] Modern endpoint: http://localhost:${PORT}/mcp (Streamable HTTP)`,
     );
