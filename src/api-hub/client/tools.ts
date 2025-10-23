@@ -70,6 +70,7 @@ export const TOOLS: ApiHubToolParams[] = [
   {
     title: "List Portal Products",
     summary: "Get products for a specific portal that match your criteria.",
+    zodSchema: PortalArgsSchema,
     handler: "getPortalProducts",
   },
   {

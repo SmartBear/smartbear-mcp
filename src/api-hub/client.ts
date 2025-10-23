@@ -83,9 +83,7 @@ export class ApiHubClient implements Client {
     return this.api.updatePortal(portalId, body);
   }
 
-  async getPortalProducts(args: {
-    portalId: string;
-  }): Promise<ProductsListResponse | FallbackResponse> {
+  async getPortalProducts(args: { portalId: string }): Promise<ProductsListResponse | FallbackResponse> {
     return this.api.getPortalProducts(args.portalId);
   }
 
