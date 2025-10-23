@@ -18,6 +18,7 @@ import {
   GetTableOfContentsArgsSchema,
   PortalArgsSchema,
   ProductArgsSchema,
+  PublishProductArgsSchema,
   UpdateDocumentArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
@@ -98,6 +99,12 @@ export const TOOLS: ApiHubToolParams[] = [
     summary: "Update a product's settings within a specific portal.",
     inputSchema: UpdateProductArgsSchema,
     handler: "updatePortalProduct",
+  },
+  {
+    title: "Publish Portal Product",
+    summary: "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.",
+    zodSchema: PublishProductArgsSchema,
+    handler: "publishPortalProduct",
   },
   {
     title: "List Portal Product Sections",
