@@ -8,12 +8,13 @@ const fetchMock = createFetchMock(vi);
 describe("ApiHubClient", () => {
   let client: ApiHubClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
 
-    client = new ApiHubClient("test-token");
+    client = new ApiHubClient();
+    await client.configure({} as any, { api_key: "test-token" });
   });
 
   afterEach(() => {

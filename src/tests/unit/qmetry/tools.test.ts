@@ -13,12 +13,25 @@ vi.mock("../../../qmetry/client/requirement.js");
 vi.mock("../../../qmetry/client/issues.js");
 vi.mock("../../../qmetry/client/testsuite.js");
 
+// Helper to create and configure a client
+async function createConfiguredClient(
+  apiKey = "fake-token",
+  baseUrl = "https://qmetry.example",
+): Promise<QmetryClient> {
+  const client = new QmetryClient();
+  await client.configure({} as any, {
+    api_key: apiKey,
+    base_url: baseUrl,
+  });
+  return client;
+}
+
 describe("QmetryClient tools", () => {
   let client: QmetryClient;
   let mockRegister: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
-    client = new QmetryClient("fake-token", "https://qmetry.example");
+  beforeEach(async () => {
+    client = await createConfiguredClient();
     mockRegister = vi.fn();
     vi.clearAllMocks();
   });

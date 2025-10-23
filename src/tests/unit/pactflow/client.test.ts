@@ -6,10 +6,29 @@ import * as toolsModule from "../../../pactflow/client/tools";
 
 const fetchMock = createFetchMock(vi);
 
+// Helper to create and configure a client
+async function createConfiguredClient(config: {
+  token?: string;
+  username?: string;
+  password?: string;
+  base_url?: string;
+}): Promise<PactflowClient> {
+  const client = new PactflowClient();
+  const mockServer = { server: vi.fn() } as any;
+  const defaultConfig = {
+    base_url: "https://example.com",
+    token: config.token,
+    username: config.username,
+    password: config.password,
+  };
+  await client.configure(mockServer, defaultConfig);
+  return client;
+}
+
 describe("PactFlowClient", () => {
   let client: PactflowClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
@@ -20,13 +39,8 @@ describe("PactFlowClient", () => {
   });
 
   describe("constructor", () => {
-    it("sets correct headers when client is pactflow", () => {
-      client = new PactflowClient(
-        "my-token",
-        "https://example.com",
-        "pactflow",
-        vi.fn() as any,
-      );
+    it("sets correct headers when client is pactflow", async () => {
+      client = await createConfiguredClient({ token: "my-token" });
 
       expect(client.requestHeaders).toEqual(
         expect.objectContaining({
@@ -36,13 +50,11 @@ describe("PactFlowClient", () => {
       );
     });
 
-    it("sets correct headers when client is pact_broker", () => {
-      client = new PactflowClient(
-        { username: "user", password: "pass" },
-        "https://example.com",
-        "pact_broker",
-        vi.fn() as any,
-      );
+    it("sets correct headers when client is pact_broker", async () => {
+      client = await createConfiguredClient({
+        username: "user",
+        password: "pass",
+      });
 
       expect(client.requestHeaders).toEqual(
         expect.objectContaining({
@@ -59,7 +71,7 @@ describe("PactFlowClient", () => {
     const mockRegister = vi.fn();
     const mockGetInput = vi.fn();
 
-    it("registers only tools matching the given clientType", () => {
+    it("registers only tools matching the given clientType", async () => {
       const fakeTools = [
         {
           title: "tool1",
@@ -80,12 +92,7 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = new PactflowClient(
-        "token",
-        "https://example.com",
-        "pactflow",
-        vi.fn() as any,
-      );
+      const client = await createConfiguredClient({ token: "token" });
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(1);
@@ -93,7 +100,7 @@ describe("PactFlowClient", () => {
       expect(mockRegister.mock.calls[0][0].summary).toBe("summary1");
     });
 
-    it("registers no tools if none match the clientType", () => {
+    it("registers no tools if none match the clientType", async () => {
       const fakeTools = [
         {
           title: "tool2",
@@ -106,12 +113,7 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = new PactflowClient(
-        "token",
-        "https://example.com",
-        "pactflow",
-        vi.fn() as any,
-      );
+      const client = await createConfiguredClient({ token: "token" });
       client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).not.toHaveBeenCalled();
@@ -119,13 +121,8 @@ describe("PactFlowClient", () => {
   });
 
   describe("API Methods", () => {
-    beforeEach(() => {
-      client = new PactflowClient(
-        "test-token",
-        "https://example.com",
-        "pactflow",
-        vi.fn() as any,
-      );
+    beforeEach(async () => {
+      client = await createConfiguredClient({ token: "test-token" });
     });
 
     describe("canIDeploy", () => {
@@ -221,7 +218,7 @@ describe("PactFlowClient", () => {
         refined: true,
       };
 
-      beforeEach(() => {
+      beforeEach(async () => {
         vi.spyOn(client, "pollForCompletion" as any).mockResolvedValue(
           mockReviewResponse,
         );
@@ -659,7 +656,7 @@ describe("PactFlowClient", () => {
         code: "const { PactV3 } = require('@pact-foundation/pact');",
       };
 
-      beforeEach(() => {
+      beforeEach(async () => {
         vi.spyOn(client, "pollForCompletion" as any).mockResolvedValue(
           mockGenerationResponse,
         );
@@ -935,13 +932,8 @@ describe("PactFlowClient", () => {
     });
 
     describe("getResult", () => {
-      beforeEach(() => {
-        client = new PactflowClient(
-          "test-token",
-          "https://example.com",
-          "pactflow",
-          vi.fn() as any,
-        );
+      beforeEach(async () => {
+        client = await createConfiguredClient({ token: "test-token" });
       });
 
       it("should return parsed JSON when response is OK", async () => {
@@ -969,13 +961,8 @@ describe("PactFlowClient", () => {
     });
 
     describe("getStatus", () => {
-      beforeEach(() => {
-        client = new PactflowClient(
-          "test-token",
-          "https://example.com",
-          "pactflow",
-          vi.fn() as any,
-        );
+      beforeEach(async () => {
+        client = await createConfiguredClient({ token: "test-token" });
       });
 
       it("should return isComplete true for status 200", async () => {
@@ -1009,13 +996,8 @@ describe("PactFlowClient", () => {
     });
 
     describe("pollForCompletion", () => {
-      beforeEach(() => {
-        client = new PactflowClient(
-          "test-token",
-          "https://example.com",
-          "pactflow",
-          vi.fn() as any,
-        );
+      beforeEach(async () => {
+        client = await createConfiguredClient({ token: "test-token" });
       });
 
       it("should resolve when status becomes 200", async () => {
@@ -1067,13 +1049,8 @@ describe("PactFlowClient", () => {
     });
 
     describe("getProviderStates", () => {
-      beforeEach(() => {
-        client = new PactflowClient(
-          "test-token",
-          "https://example.com",
-          "pactflow",
-          vi.fn() as any,
-        );
+      beforeEach(async () => {
+        client = await createConfiguredClient({ token: "test-token" });
       });
 
       it("should return provider states when response is OK", async () => {
@@ -1125,11 +1102,11 @@ describe("PactFlowClient", () => {
     describe("registerPrompts", () => {
       const mockRegisterPrompt = vi.fn();
 
-      beforeEach(() => {
+      beforeEach(async () => {
         mockRegisterPrompt.mockClear();
       });
 
-      it("should register all prompts from PROMPTS array", () => {
+      it("should register all prompts from PROMPTS array", async () => {
         client.registerPrompts(mockRegisterPrompt);
         expect(mockRegisterPrompt).toHaveBeenCalledTimes(1);
       });
