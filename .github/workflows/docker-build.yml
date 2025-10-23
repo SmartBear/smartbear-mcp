@@ -21,17 +21,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.6.0
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Run container tests (vitest) on amd64
+        run: |
+          docker buildx build \
+            --target tester \
+            --platform linux/amd64 \
+            --load \
+            --progress plain \
+            .
+
+      - name: Run container tests (vitest) on arm64
+        run: |
+          docker buildx build \
+            --target tester \
+            --platform linux/arm64 \
+            --progress plain \
+            --output=type=cacheonly \
+            .
 
       - name: Build Docker image
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: .
           push: false
+          platforms: linux/amd64,linux/arm64
           tags: mcp/smartbear:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          outputs: type=cacheonly
 
   dockerfile-lint:
     runs-on: ubuntu-latest
