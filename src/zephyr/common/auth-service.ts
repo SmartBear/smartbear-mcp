@@ -12,6 +12,7 @@ export class AuthService {
       Authorization: `Bearer ${this.bearerToken}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      "zscale-source": "smartbear-mcp",
     };
   }
 }
