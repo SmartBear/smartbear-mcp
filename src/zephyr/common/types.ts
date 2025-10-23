@@ -26,6 +26,11 @@ export const ZephyrProjectSchema = z.object({
   enabled: z.boolean(),
 });
 
+export const ProjectIdOrKeySchema = z.union([
+  z.string().describe("Project key as a string"),
+  z.number().describe("Project id as a number"),
+]);
+
 export type ZephyrProject = z.infer<typeof ZephyrProjectSchema>;
 
 export function createListSchema<T extends ZodTypeAny>(itemSchema: T) {
