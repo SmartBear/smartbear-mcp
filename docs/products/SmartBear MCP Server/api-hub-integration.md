@@ -153,6 +153,18 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 | `api` | API name | string | Yes |
 | `version` | API version | string | Yes |
 
+#### `scan_api_standardization`
+
+-   Purpose: Run a standardization scan against an API definition using the organization's standardization configuration. Validates OpenAPI/AsyncAPI definitions against configured governance rules and style guides.
+-   Returns: Standardization result with a list of validation errors and warnings. Each error includes severity level, rule name, and location information.
+-   Use case: Validate API definitions against organization standards before publishing, ensure compliance with API governance policies, and identify design inconsistencies early in the development process.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `orgName` | Organization name to use for standardization rules | string | Yes |
+| `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. | string | Yes |
+
 ## Configuration
 
 To use API Hub tools, you need to configure the `API_HUB_API_KEY` environment variable with your API Hub API token.
