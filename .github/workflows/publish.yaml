@@ -79,6 +79,7 @@ jobs:
             server.json > server.json.tmp && mv server.json.tmp server.json
 
       - name: Run container tests on linux/amd64 and linux/arm64
+        if: ${{ env.RUN_PUSH_ECR == 'true' }}
         run: |
           docker buildx build \
             --target tester \
@@ -92,8 +93,11 @@ jobs:
           IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
         run: |
           DEST=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}:${IMAGE_TAG}
-          docker build -t $DEST .
-          docker push $DEST
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --tag "$DEST" \
+            --push \
+            .
 
       - name: Install dependencies
         if: ${{ env.RUN_PUBLISH_NPM == 'true' }}
