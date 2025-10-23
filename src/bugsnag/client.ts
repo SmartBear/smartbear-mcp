@@ -449,7 +449,7 @@ export class BugsnagClient implements Client {
             ],
           },
         ],
-        outputFormat:
+        outputDescription:
           "JSON object containing: " +
           " - error_details: Aggregated data about the error, including first and last seen occurrence" +
           " - latest_event: Detailed information about the most recent occurrence of the error, including stacktrace, breadcrumbs, user and context" +
@@ -1011,7 +1011,7 @@ export class BugsnagClient implements Client {
         ],
         readOnly: true,
         idempotent: true,
-        outputFormat:
+        outputDescription:
           "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
       },
       async (args, _extra) => {
@@ -1092,7 +1092,7 @@ export class BugsnagClient implements Client {
         hints: ["Release IDs can be found using the List releases tool"],
         readOnly: true,
         idempotent: true,
-        outputFormat:
+        outputDescription:
           "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {
@@ -1173,7 +1173,7 @@ export class BugsnagClient implements Client {
         hints: ["Build IDs can be found using the List builds tool"],
         readOnly: true,
         idempotent: true,
-        outputFormat:
+        outputDescription:
           "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {

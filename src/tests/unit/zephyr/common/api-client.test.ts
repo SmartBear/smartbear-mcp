@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ToolError } from "../../../../common/types";
 import { ApiClient } from "../../../../zephyr/common/api-client";
 import { AuthService } from "../../../../zephyr/common/auth-service";
 
@@ -47,17 +48,22 @@ describe("ApiClient", () => {
 
   it("should fetch and return JSON", async () => {
     const mockJson = { foo: "bar" };
-    global.fetch = vi.fn().mockResolvedValue({ json: () => mockJson });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => mockJson,
+    });
     const result = await apiClient.get("/projects");
     expect(result).toEqual(mockJson);
   });
 
-  it("should handle fetch returning non-JSON", async () => {
+  it("should handle failing requests", async () => {
     global.fetch = vi.fn().mockResolvedValue({
-      json: () => {
-        throw new Error("Invalid JSON");
-      },
+      ok: false,
+      status: 401,
+      text: () => "Unauthorized",
     });
-    await expect(apiClient.get("/projects")).rejects.toThrow("Invalid JSON");
+    await expect(apiClient.get("/projects")).rejects.toThrow(
+      new ToolError("Request failed with status 401: Unauthorized"),
+    );
   });
 });
