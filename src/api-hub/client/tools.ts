@@ -12,6 +12,7 @@ import {
   CreateProductArgsSchema,
   CreateTableOfContentsArgsSchema,
   DeleteDocumentArgsSchema,
+  DeleteTableOfContentsArgsSchema,
   GetDocumentArgsSchema,
   GetProductSectionsArgsSchema,
   GetTableOfContentsArgsSchema,
@@ -115,6 +116,12 @@ export const TOOLS: ApiHubToolParams[] = [
     summary: "Get table of contents for a section of a product within a portal.",
     zodSchema: GetTableOfContentsArgsSchema,
     handler: "getTableOfContents",
+  },
+  {
+    title: "Delete Table Of Contents",
+    summary: "Delete table of contents entry. Performs a soft-delete of an entry from the table of contents. Supports recursive deletion of nested items.",
+    zodSchema: DeleteTableOfContentsArgsSchema,
+    handler: "deleteTableOfContents",
   },
   
   // Document management tools

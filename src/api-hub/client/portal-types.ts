@@ -354,10 +354,25 @@ export const DeleteDocumentArgsSchema = z.object({
     ),
 });
 
+export const DeleteTableOfContentsArgsSchema = z.object({
+  tableOfContentsId: z
+    .string()
+    .describe(
+      "The table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'",
+    ),
+  recursive: z
+    .boolean()
+    .optional()
+    .describe(
+      "Flag to include all the nested tables of contents (default: false)",
+    ),
+});
+
 // Infer types from document schemas
 export type GetDocumentArgs = z.infer<typeof GetDocumentArgsSchema>;
 export type UpdateDocumentArgs = z.infer<typeof UpdateDocumentArgsSchema>;
 export type DeleteDocumentArgs = z.infer<typeof DeleteDocumentArgsSchema>;
+export type DeleteTableOfContentsArgs = z.infer<typeof DeleteTableOfContentsArgsSchema>;
 
 // API body types (without IDs - IDs are passed in URL path)
 export type UpdatePortalBody = Omit<UpdatePortalArgs, "portalId">;

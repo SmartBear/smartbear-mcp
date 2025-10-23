@@ -19,6 +19,7 @@ import {
   type CreateProductArgs,
   type CreateTableOfContentsArgs,
   type DeleteDocumentArgs,
+  type DeleteTableOfContentsArgs,
   type Document,
   type FallbackResponse,
   type GetDocumentArgs,
@@ -152,6 +153,12 @@ export class ApiHubClient implements Client {
     args: DeleteDocumentArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
     return this.api.deleteDocument(args);
+  }
+
+  async deleteTableOfContents(
+    args: DeleteTableOfContentsArgs,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    return this.api.deleteTableOfContents(args);
   }
 
   // Registry API methods for SwaggerHub Design functionality
