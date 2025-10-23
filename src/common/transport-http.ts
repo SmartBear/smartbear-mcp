@@ -379,7 +379,7 @@ async function newServer(
 }
 
 function getHeaderName(client: Client, key: string): string {
-  return `X-${client.name}-${key
+  return `${client.name}-${key
     .split("_")
     .map(
       (part: string) =>
@@ -412,9 +412,7 @@ function getHttpHeaders(): string[] {
 function getHttpHeadersHelp(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
-    for (const [configKey, requirement] of Object.entries(
-      entry.config.shape,
-    )) {
+    for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
       const headerName = getHeaderName(entry, configKey);
       const requiredTag = requirement.isOptional()
         ? " (optional)"
