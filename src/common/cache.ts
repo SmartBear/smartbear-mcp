@@ -18,8 +18,8 @@ export class CacheService {
 
     this.cache = this.enabled
       ? new NodeCache({
-        stdTTL: ttl,
-      })
+          stdTTL: ttl,
+        })
       : null;
   }
 

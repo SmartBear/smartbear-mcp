@@ -117,8 +117,8 @@ export class QmetryClient implements Client {
               } catch (err) {
                 throw new Error(
                   `Failed to auto-resolve viewId/folderPath/folderID for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
-                  `Please provide them manually or check project access. ` +
-                  `Error: ${err instanceof Error ? err.message : String(err)}`,
+                    `Please provide them manually or check project access. ` +
+                    `Error: ${err instanceof Error ? err.message : String(err)}`,
                 );
               }
 
