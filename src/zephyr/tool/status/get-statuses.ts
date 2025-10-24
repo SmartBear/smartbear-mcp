@@ -51,7 +51,7 @@ export class GetStatuses implements ZephyrTool {
           statusType: "TEST_CASE",
         },
         expectedOutput:
-          "A list of statuses and related to test cases with their details",
+          "A list of statuses related to test cases with their details",
       },
       {
         description: "Get five statuses from the project PROJ",
