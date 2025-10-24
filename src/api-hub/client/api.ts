@@ -150,7 +150,7 @@ export class ApiHubAPI {
     });
     const result = await this.handleResponse<OrganizationsListResponse>(
       response,
-      [] as unknown as OrganizationsListResponse,
+      [],
     );
     return result as OrganizationsListResponse;
   }
