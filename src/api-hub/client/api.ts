@@ -337,7 +337,7 @@ export class ApiHubAPI {
 
     const result = await this.handleResponse<SectionsListResponse>(
       response,
-      [] as unknown as SectionsListResponse,
+      [] as SectionsListResponse,
     );
     return result as SectionsListResponse;
   }
