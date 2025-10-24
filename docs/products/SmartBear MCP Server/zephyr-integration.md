@@ -21,7 +21,7 @@ The following environment variables configure the Zephyr integration:
 - **Purpose**: Retrieve projects available within your Zephyr account.
 - **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not.
 
-### Get Test Runs
+### Get Test Cycles
 
-- **Purpose**: Retrieve Test Runs available within your Zephyr account.
-- **Returns**: A list of Test Runs along with their properties.
+- **Purpose**: Retrieve Test Cycles available within your Zephyr account.
+- **Returns**: A list of Test Cycles along with their properties.
