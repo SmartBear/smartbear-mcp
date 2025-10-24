@@ -20,3 +20,8 @@ The following environment variables configure the Zephyr integration:
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
 - **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not.
+
+### Get Statuses
+
+- **Purpose**: Retrieve statuses related to Test Cases, Cycles, Plans or Executions from your Zephyr account.
+- **Returns**: A list of statuses along with their properties, including name and color.
