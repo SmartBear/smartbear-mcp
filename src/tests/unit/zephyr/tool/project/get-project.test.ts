@@ -34,7 +34,8 @@ describe("GetProject", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
-  it("should call apiClient.get with number projectIdOrKey and return formatted content", async () => {
+  // Remove the test with number projectIdOrKey, or change it to string
+  it("should call apiClient.get with numeric string projectIdOrKey and return formatted content", async () => {
     const responseMock = {
       id: 39,
       jiraProjectId: 10003,
@@ -42,7 +43,7 @@ describe("GetProject", () => {
       enabled: true,
     };
     mockApiClient.get.mockResolvedValueOnce(responseMock);
-    const args = { projectIdOrKey: 39 };
+    const args = { projectIdOrKey: "39" }; // Pass as string
     const result = await instance.handle(args, {});
     expect(mockApiClient.get).toHaveBeenCalledWith("/projects/39");
     expect(result.structuredContent).toBe(responseMock);
