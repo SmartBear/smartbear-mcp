@@ -20,7 +20,7 @@ export class ApiHubConfiguration {
     this.registryBasePath =
       param.registryBasePath || "https://api.swaggerhub.com";
     this.coreBasePath =
-      param.coreBasePath || "https://sbpgateway.int.swaggerhub.com";
+      param.coreBasePath || "https://sbpgateway.swaggerhub.com";
     this.headers = {
       Authorization: `Bearer ${this.token}`,
       "Content-Type": "application/json",

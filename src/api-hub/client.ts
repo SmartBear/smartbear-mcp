@@ -4,7 +4,7 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
-import { OrganizationsListResponse } from "./client/core-types.js";
+import type { OrganizationsListResponse } from "./client/core-types.js";
 import {
   type ApiDefinitionParams,
   ApiHubAPI,
@@ -29,10 +29,10 @@ import {
   type PortalsListResponse,
   type Product,
   type ProductsListResponse,
-  type ScanStandardizationParams,
-  type StandardizationResult,
   type PublishProductArgs,
+  type ScanStandardizationParams,
   type SectionsListResponse,
+  type StandardizationResult,
   type SuccessResponse,
   type TableOfContentsItem,
   type TableOfContentsListResponse,
@@ -86,7 +86,9 @@ export class ApiHubClient implements Client {
     return this.api.updatePortal(portalId, body);
   }
 
-  async getPortalProducts(args: { portalId: string }): Promise<ProductsListResponse | FallbackResponse> {
+  async getPortalProducts(args: {
+    portalId: string;
+  }): Promise<ProductsListResponse | FallbackResponse> {
     return this.api.getPortalProducts(args.portalId);
   }
 
@@ -194,7 +196,9 @@ export class ApiHubClient implements Client {
   }
 
   // Core API methods
-  async getOrganizations(): Promise<OrganizationsListResponse | FallbackResponse> {
+  async getOrganizations(): Promise<
+    OrganizationsListResponse | FallbackResponse
+  > {
     return this.api.getOrganizations();
   }
 

@@ -102,7 +102,8 @@ export const TOOLS: ApiHubToolParams[] = [
   },
   {
     title: "Publish Portal Product",
-    summary: "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.",
+    summary:
+      "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.",
     inputSchema: PublishProductArgsSchema,
     handler: "publishPortalProduct",
   },
@@ -114,19 +115,22 @@ export const TOOLS: ApiHubToolParams[] = [
   },
   {
     title: "Create Table Of Contents",
-    summary: "Create a new table of contents item in a portal product section. Supports API references, HTML content, and Markdown content types.",
+    summary:
+      "Create a new table of contents item in a portal product section. Supports API references, HTML content, and Markdown content types.",
     inputSchema: CreateTableOfContentsArgsSchema,
     handler: "createTableOfContents",
   },
   {
     title: "List Table Of Contents",
-    summary: "Get table of contents for a section of a product within a portal.",
+    summary:
+      "Get table of contents for a section of a product within a portal.",
     inputSchema: GetTableOfContentsArgsSchema,
     handler: "getTableOfContents",
   },
   {
     title: "Delete Table Of Contents",
-    summary: "Delete table of contents entry. Performs a soft-delete of an entry from the table of contents. Supports recursive deletion of nested items.",
+    summary:
+      "Delete table of contents entry. Performs a soft-delete of an entry from the table of contents. Supports recursive deletion of nested items.",
     inputSchema: DeleteTableOfContentsArgsSchema,
     handler: "deleteTableOfContents",
   },
@@ -134,19 +138,22 @@ export const TOOLS: ApiHubToolParams[] = [
   // Document management tools
   {
     title: "Get Document",
-    summary: "Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.",
+    summary:
+      "Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.",
     inputSchema: GetDocumentArgsSchema,
     handler: "getDocument",
   },
   {
     title: "Update Document",
-    summary: "Update the content of an existing document. Supports both HTML and Markdown content types.",
+    summary:
+      "Update the content of an existing document. Supports both HTML and Markdown content types.",
     inputSchema: UpdateDocumentArgsSchema,
     handler: "updateDocument",
   },
   {
     title: "Delete Document",
-    summary: "Delete a document by its ID. This will permanently remove the document content.",
+    summary:
+      "Delete a document by its ID. This will permanently remove the document content.",
     inputSchema: DeleteDocumentArgsSchema,
     handler: "deleteDocument",
   },

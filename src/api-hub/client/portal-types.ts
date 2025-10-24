@@ -106,11 +106,15 @@ export const CreateTableOfContentsArgsSchema = z.object({
     .object({
       type: z
         .enum(["apiUrl", "html", "markdown"])
-        .describe("Content type - 'apiUrl' for API references, 'html' for HTML content, or 'markdown' for Markdown content"),
+        .describe(
+          "Content type - 'apiUrl' for API references, 'html' for HTML content, or 'markdown' for Markdown content",
+        ),
       url: z
         .string()
         .optional()
-        .describe("URL for API reference content (required when type is 'apiUrl')"),
+        .describe(
+          "URL for API reference content (required when type is 'apiUrl')",
+        ),
       apiSpec: z
         .string()
         .nullable()
@@ -132,9 +136,10 @@ export const CreateTableOfContentsArgsSchema = z.object({
         return true;
       },
       {
-        message: "URL must end with '/swagger.json' when content type is 'apiUrl'",
+        message:
+          "URL must end with '/swagger.json' when content type is 'apiUrl'",
         path: ["url"],
-      }
+      },
     ),
 });
 
@@ -337,25 +342,27 @@ export type UpdatePortalArgs = z.infer<typeof UpdatePortalArgsSchema>;
 export type CreateProductArgs = z.infer<typeof CreateProductArgsSchema>;
 export type UpdateProductArgs = z.infer<typeof UpdateProductArgsSchema>;
 export type PublishProductArgs = z.infer<typeof PublishProductArgsSchema>;
-export type GetProductSectionsArgs = z.infer<typeof GetProductSectionsArgsSchema>;
-export type GetTableOfContentsArgs = z.infer<typeof GetTableOfContentsArgsSchema>;
-export type CreateTableOfContentsArgs = z.infer<typeof CreateTableOfContentsArgsSchema>;
+export type GetProductSectionsArgs = z.infer<
+  typeof GetProductSectionsArgsSchema
+>;
+export type GetTableOfContentsArgs = z.infer<
+  typeof GetTableOfContentsArgsSchema
+>;
+export type CreateTableOfContentsArgs = z.infer<
+  typeof CreateTableOfContentsArgsSchema
+>;
 
 // Document management schemas
 export const GetDocumentArgsSchema = z.object({
   documentId: z
     .string()
-    .describe(
-      "Document UUID - unique identifier for the document",
-    ),
+    .describe("Document UUID - unique identifier for the document"),
 });
 
 export const UpdateDocumentArgsSchema = z.object({
   documentId: z
     .string()
-    .describe(
-      "Document UUID - unique identifier for the document",
-    ),
+    .describe("Document UUID - unique identifier for the document"),
   content: z
     .string()
     .describe(
@@ -372,9 +379,7 @@ export const UpdateDocumentArgsSchema = z.object({
 export const DeleteDocumentArgsSchema = z.object({
   documentId: z
     .string()
-    .describe(
-      "Document UUID - unique identifier for the document to delete",
-    ),
+    .describe("Document UUID - unique identifier for the document to delete"),
 });
 
 export const DeleteTableOfContentsArgsSchema = z.object({
@@ -395,13 +400,18 @@ export const DeleteTableOfContentsArgsSchema = z.object({
 export type GetDocumentArgs = z.infer<typeof GetDocumentArgsSchema>;
 export type UpdateDocumentArgs = z.infer<typeof UpdateDocumentArgsSchema>;
 export type DeleteDocumentArgs = z.infer<typeof DeleteDocumentArgsSchema>;
-export type DeleteTableOfContentsArgs = z.infer<typeof DeleteTableOfContentsArgsSchema>;
+export type DeleteTableOfContentsArgs = z.infer<
+  typeof DeleteTableOfContentsArgsSchema
+>;
 
 // API body types (without IDs - IDs are passed in URL path)
 export type UpdatePortalBody = Omit<UpdatePortalArgs, "portalId">;
 export type CreateProductBody = Omit<CreateProductArgs, "portalId">;
 export type UpdateProductBody = Omit<UpdateProductArgs, "productId">;
-export type CreateTableOfContentsBody = Omit<CreateTableOfContentsArgs, "sectionId">;
+export type CreateTableOfContentsBody = Omit<
+  CreateTableOfContentsArgs,
+  "sectionId"
+>;
 export type UpdateDocumentBody = Omit<UpdateDocumentArgs, "documentId">;
 
 // Response types for better type safety

@@ -1,5 +1,6 @@
 import { ToolError } from "../../common/types.js";
 import type { ApiHubConfiguration } from "./configuration.js";
+import type { OrganizationsListResponse } from "./core-types.js";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -37,9 +38,6 @@ import type {
   ScanStandardizationParams,
   StandardizationResult,
 } from "./registry-types.js";
-import type {
-  OrganizationsListResponse,
-} from "./core-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
@@ -146,13 +144,10 @@ export class ApiHubAPI {
   }
 
   async getOrganizations(): Promise<OrganizationsListResponse> {
-    const response = await fetch(
-      `${this.config.coreBasePath}/organizations`,
-      {
-        method: "GET",
-        headers: this.headers,
-      },
-    );
+    const response = await fetch(`${this.config.coreBasePath}/organizations`, {
+      method: "GET",
+      headers: this.headers,
+    });
     const result = await this.handleResponse<OrganizationsListResponse>(
       response,
       [] as unknown as OrganizationsListResponse,
@@ -315,12 +310,16 @@ export class ApiHubAPI {
     } as SuccessResponse);
   }
 
-  async getPortalProductSections(productId: string, params: Omit<GetProductSectionsArgs, 'productId'>):
-   Promise<SectionsListResponse> {
+  async getPortalProductSections(
+    productId: string,
+    params: Omit<GetProductSectionsArgs, "productId">,
+  ): Promise<SectionsListResponse> {
     const queryParameters = new URLSearchParams();
-    
+
     if (params.embed) {
-      params.embed.forEach(item => queryParameters.append("embed", item));
+      for (const item of params.embed) {
+        queryParameters.append("embed", item);
+      }
     }
     if (params.page !== undefined) {
       queryParameters.append("page", params.page.toString());
@@ -330,12 +329,12 @@ export class ApiHubAPI {
     }
 
     const url = `${this.config.portalBasePath}/products/${productId}/sections${queryParameters.toString() ? `?${queryParameters.toString()}` : ""}`;
-    
+
     const response = await fetch(url, {
       method: "GET",
       headers: this.headers,
     });
-    
+
     const result = await this.handleResponse<SectionsListResponse>(
       response,
       [] as unknown as SectionsListResponse,
@@ -353,15 +352,14 @@ export class ApiHubAPI {
     sectionId: string,
     body: CreateTableOfContentsBody,
   ): Promise<TableOfContentsItem> {
-    
     const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents`;
-    
+
     const response = await fetch(url, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(body),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
@@ -385,16 +383,18 @@ export class ApiHubAPI {
 
     const searchParams = new URLSearchParams();
     if (embed) {
-      embed.forEach(item => searchParams.append('embed', item));
+      for (const item of embed) {
+        searchParams.append("embed", item);
+      }
     }
     if (page !== undefined) {
-      searchParams.set('page', page.toString());
+      searchParams.set("page", page.toString());
     }
     if (size !== undefined) {
-      searchParams.set('size', size.toString());
+      searchParams.set("size", size.toString());
     }
 
-    const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -409,7 +409,7 @@ export class ApiHubAPI {
     }
 
     const result = await response.json();
-    
+
     // The API returns a paginated response, so we extract the items array
     return result.items as TableOfContentsListResponse;
   }
@@ -437,7 +437,7 @@ export class ApiHubAPI {
     }
 
     const result = await response.json();
-    
+
     return result as Document;
   }
 
@@ -463,7 +463,7 @@ export class ApiHubAPI {
         `API Hub updateDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
-    
+
     return { success: true };
   }
 
@@ -487,7 +487,7 @@ export class ApiHubAPI {
         `API Hub deleteDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
-    
+
     return { success: true };
   }
 
@@ -496,15 +496,17 @@ export class ApiHubAPI {
    * @param args - Parameters for deleting table of contents entry
    * @returns Success response
    */
-  async deleteTableOfContents(args: DeleteTableOfContentsArgs): Promise<SuccessResponse> {
+  async deleteTableOfContents(
+    args: DeleteTableOfContentsArgs,
+  ): Promise<SuccessResponse> {
     const { tableOfContentsId, recursive } = args;
 
     const searchParams = new URLSearchParams();
     if (recursive !== undefined) {
-      searchParams.set('recursive', recursive.toString());
+      searchParams.set("recursive", recursive.toString());
     }
 
-    const url = `${this.config.portalBasePath}/table-of-contents/${tableOfContentsId}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const url = `${this.config.portalBasePath}/table-of-contents/${tableOfContentsId}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
     const response = await fetch(url, {
       method: "DELETE",
@@ -517,7 +519,7 @@ export class ApiHubAPI {
         `API Hub deleteTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
-    
+
     return { success: true };
   }
 
