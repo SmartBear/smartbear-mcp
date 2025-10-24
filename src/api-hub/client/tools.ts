@@ -103,7 +103,7 @@ export const TOOLS: ApiHubToolParams[] = [
   {
     title: "Publish Portal Product",
     summary: "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.",
-    zodSchema: PublishProductArgsSchema,
+    inputSchema: PublishProductArgsSchema,
     handler: "publishPortalProduct",
   },
   {
@@ -121,13 +121,13 @@ export const TOOLS: ApiHubToolParams[] = [
   {
     title: "List Table Of Contents",
     summary: "Get table of contents for a section of a product within a portal.",
-    zodSchema: GetTableOfContentsArgsSchema,
+    inputSchema: GetTableOfContentsArgsSchema,
     handler: "getTableOfContents",
   },
   {
     title: "Delete Table Of Contents",
     summary: "Delete table of contents entry. Performs a soft-delete of an entry from the table of contents. Supports recursive deletion of nested items.",
-    zodSchema: DeleteTableOfContentsArgsSchema,
+    inputSchema: DeleteTableOfContentsArgsSchema,
     handler: "deleteTableOfContents",
   },
 
@@ -135,19 +135,19 @@ export const TOOLS: ApiHubToolParams[] = [
   {
     title: "Get Document",
     summary: "Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.",
-    zodSchema: GetDocumentArgsSchema,
+    inputSchema: GetDocumentArgsSchema,
     handler: "getDocument",
   },
   {
     title: "Update Document",
     summary: "Update the content of an existing document. Supports both HTML and Markdown content types.",
-    zodSchema: UpdateDocumentArgsSchema,
+    inputSchema: UpdateDocumentArgsSchema,
     handler: "updateDocument",
   },
   {
     title: "Delete Document",
     summary: "Delete a document by its ID. This will permanently remove the document content.",
-    zodSchema: DeleteDocumentArgsSchema,
+    inputSchema: DeleteDocumentArgsSchema,
     handler: "deleteDocument",
   },
 

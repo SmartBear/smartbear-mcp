@@ -3,7 +3,6 @@ import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,
   CreateProductBody,
-  CreateTableOfContentsArgs,
   CreateTableOfContentsBody,
   DeleteDocumentArgs,
   DeleteTableOfContentsArgs,
@@ -39,7 +38,6 @@ import type {
   StandardizationResult,
 } from "./registry-types.js";
 import type {
-  Organization,
   OrganizationsListResponse,
 } from "./core-types.js";
 
