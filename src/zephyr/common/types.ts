@@ -19,6 +19,13 @@ export const StartAtSchema = z
     Zero-indexed starting position used to paginate through results. Defaults to 0.
   `);
 
+export const ZephyrProjectKeySchema = z
+  .string()
+  .regex(/([A-Z][A-Z_0-9]+)/)
+  .describe("A Jira project key.");
+
+export const SingleLineTextSchema = z.string().min(1).max(255);
+
 export const ZephyrProjectSchema = z.object({
   id: z.number().describe("The ID of the project in Zephyr."),
   jiraProjectId: z.number().describe("The ID of the project in Jira."),
@@ -48,3 +55,44 @@ export function createListSchema<T extends ZodTypeAny>(itemSchema: T) {
 
 export const ZephyrProjectListSchema = createListSchema(ZephyrProjectSchema);
 export type ZephyrProjectList = z.infer<typeof ZephyrProjectListSchema>;
+
+export const StatusSchema = z.object({
+  id: z.number().describe("The ID of the status in Zephyr."),
+  project: z.object({
+    id: z.number().describe("The ID of the project in Zephyr."),
+    self: z
+      .string()
+      .describe(
+        "The URL to fetch more information about the project from Zephyr.",
+      ),
+  }),
+  name: SingleLineTextSchema,
+  description: SingleLineTextSchema.nullable(),
+  index: z
+    .number()
+    .min(0)
+    .describe(
+      "The order index of the status. Defines the position of the status in lists.",
+    ),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .describe("The color code of the status in hexadecimal format."),
+  archived: z
+    .boolean()
+    .describe(
+      "Indicates whether the status is archived. Archived statuses cannot be assigned to new test artifacts but remain associated with existing ones.",
+    ),
+  default: z
+    .boolean()
+    .describe(
+      "Indicates whether the status is the default status for its type within the project. Default statuses are pre-selected when creating new test artifacts of that type.",
+    ),
+});
+
+export const StatusListSchema = createListSchema(StatusSchema);
+export type StatusList = z.infer<typeof ZephyrProjectListSchema>;
+
+export const StatusTypeSchema = z
+  .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
+  .describe("The type of test artifact that the status applies to.");
