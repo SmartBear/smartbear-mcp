@@ -353,12 +353,8 @@ export class ApiHubAPI {
     sectionId: string,
     body: CreateTableOfContentsBody,
   ): Promise<TableOfContentsItem> {
-    console.log(`Creating table of contents in section ${sectionId} with data:`, JSON.stringify(body, null, 2));
     
     const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents`;
-    
-    console.log(`Making POST request to: ${url}`);
-    console.log(`Headers:`, JSON.stringify(this.headers, null, 2));
     
     const response = await fetch(url, {
       method: "POST",
@@ -366,19 +362,14 @@ export class ApiHubAPI {
       body: JSON.stringify(body),
     });
     
-    console.log(`Response status: ${response.status} ${response.statusText}`);
-    
     if (!response.ok) {
       const errorText = await response.text();
-      console.log(`Error response body:`, errorText);
       throw new Error(
         `API Hub createTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
 
     const result = await response.json();
-    console.log(`Successfully created table of contents:`, JSON.stringify(result, null, 2));
-    
     return result as TableOfContentsItem;
   }
 
@@ -430,7 +421,6 @@ export class ApiHubAPI {
    */
   async getDocument(args: GetDocumentArgs): Promise<Document> {
     const { documentId } = args;
-    console.log(`Getting document ${documentId}`);
 
     const url = `${this.config.portalBasePath}/documents/${documentId}`;
 
@@ -447,7 +437,6 @@ export class ApiHubAPI {
     }
 
     const result = await response.json();
-    console.log(`Successfully retrieved document:`, JSON.stringify(result, null, 2));
     
     return result as Document;
   }
@@ -459,7 +448,6 @@ export class ApiHubAPI {
    */
   async updateDocument(args: UpdateDocumentArgs): Promise<SuccessResponse> {
     const { documentId, ...body } = args;
-    console.log(`Updating document ${documentId} with data:`, JSON.stringify(body, null, 2));
 
     const url = `${this.config.portalBasePath}/documents/${documentId}`;
 
@@ -475,8 +463,6 @@ export class ApiHubAPI {
         `API Hub updateDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
-
-    console.log(`Successfully updated document ${documentId}`);
     
     return { success: true };
   }
@@ -488,8 +474,6 @@ export class ApiHubAPI {
    */
   async deleteDocument(args: DeleteDocumentArgs): Promise<SuccessResponse> {
     const { documentId } = args;
-    console.log(`Deleting document ${documentId}`);
-
     const url = `${this.config.portalBasePath}/documents/${documentId}`;
 
     const response = await fetch(url, {
@@ -503,8 +487,6 @@ export class ApiHubAPI {
         `API Hub deleteDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
-
-    console.log(`Successfully deleted document ${documentId}`);
     
     return { success: true };
   }
@@ -516,7 +498,6 @@ export class ApiHubAPI {
    */
   async deleteTableOfContents(args: DeleteTableOfContentsArgs): Promise<SuccessResponse> {
     const { tableOfContentsId, recursive } = args;
-    console.log(`Deleting table of contents ${tableOfContentsId}${recursive ? ' recursively' : ''}`);
 
     const searchParams = new URLSearchParams();
     if (recursive !== undefined) {
@@ -536,8 +517,6 @@ export class ApiHubAPI {
         `API Hub deleteTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
-
-    console.log(`Successfully deleted table of contents ${tableOfContentsId}`);
     
     return { success: true };
   }

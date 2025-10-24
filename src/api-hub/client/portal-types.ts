@@ -440,22 +440,13 @@ export interface Section {
 
 export interface TableOfContentsItem {
   id: string;
-
   slug: string;
-
   title: string;
-
   order: number;
-
   parentId: string | null;
-
-  
   children: TableOfContentsItem[];
-
   swaggerhubApi: TableOfContentsItemSwaggerhubApi | null;
-
   content: ContentReference | null;
-
 }
 
 export interface Document {
