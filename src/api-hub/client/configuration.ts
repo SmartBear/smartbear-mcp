@@ -16,9 +16,9 @@ export class ApiHubConfiguration {
   constructor(param: ApiHubConfigurationParameters) {
     this.token = param.token;
     this.portalBasePath =
-      param.portalBasePath || "https://api.dev.portal.swaggerhub.com/v1";
+      param.portalBasePath || "https://api.portal.swaggerhub.com/v1";
     this.registryBasePath =
-      param.registryBasePath || "https://api.int.swaggerhub.com";
+      param.registryBasePath || "https://api.swaggerhub.com";
     this.coreBasePath =
       param.coreBasePath || "https://sbpgateway.int.swaggerhub.com";
     this.headers = {
