@@ -72,7 +72,7 @@ export const StatusSchema = z.object({
     .number()
     .min(0)
     .describe(
-      "The order index of the status. Defines the position of the status in lists.",
+      "The order index of the status. Starts from 0 and defines the position of the status in lists.",
     ),
   color: z
     .string()
