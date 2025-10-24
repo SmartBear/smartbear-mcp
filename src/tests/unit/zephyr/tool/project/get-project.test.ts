@@ -34,7 +34,6 @@ describe("GetProject", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
-  // Remove the test with number projectIdOrKey, or change it to string
   it("should call apiClient.get with numeric string projectIdOrKey and return formatted content", async () => {
     const responseMock = {
       id: 39,
