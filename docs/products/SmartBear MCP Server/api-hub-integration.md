@@ -153,6 +153,32 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 | `api` | API name | string | Yes |
 | `version` | API version | string | Yes |
 
+#### `create_or_update_api`
+
+-   Purpose: Create a new API or update an existing API in SwaggerHub Registry for API Hub for Design. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content.
+-   Returns: API metadata including owner, name, version (always 1.0.0), SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
+-   Use case: Programmatically create new APIs from OpenAPI/AsyncAPI specifications, update existing API definitions, or migrate APIs into API Hub for Design.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `owner` | Organization name (owner of the API) | string | Yes |
+| `apiName` | API name | string | Yes |
+| `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment. | string | Yes |
+
+#### `create_api_from_template`
+
+-   Purpose: Create a new API in SwaggerHub Registry using a predefined template. This endpoint creates APIs based on existing templates without requiring manual definition content.
+-   Returns: API metadata including owner, name, template used, SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
+-   Use case: Quickly bootstrap new APIs from organization templates, ensure consistency across API projects, or start new API development with pre-configured standards.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `owner` | Organization name (owner of the API) | string | Yes |
+| `apiName` | API name | string | Yes |
+| `template` | Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0'). API is created with fixed values: private visibility, no project assignment, and reconciliation enabled.<br />**Note**: Available templates can be found in your organization's SwaggerHub template library or by checking the SwaggerHub public templates (e.g. via search_apis_and_domains). | string | Yes |
+
 #### `scan_api_standardization`
 
 -   Purpose: Run a standardization scan against an API definition using the organization's standardization configuration. Validates OpenAPI/AsyncAPI definitions against configured governance rules and style guides.
@@ -176,3 +202,5 @@ To use API Hub tools, you need to configure the `API_HUB_API_KEY` environment va
 3. **Product Organization**: Manage products within portals for better API organization.
 4. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your API Hub for Design.
 5. **API Integration**: Retrieve specific API definitions with `get_api_definition` for development or testing purposes.
+6. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions or `create_api_from_template` using organization templates.
+7. **API Governance**: Validate API definitions against organization standards using `scan_api_standardization` to ensure compliance with governance policies.
