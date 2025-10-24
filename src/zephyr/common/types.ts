@@ -91,7 +91,7 @@ export const StatusSchema = z.object({
 });
 
 export const StatusListSchema = createListSchema(StatusSchema);
-export type StatusList = z.infer<typeof ZephyrProjectListSchema>;
+export type StatusList = z.infer<typeof StatusListSchema>;
 
 export const StatusTypeSchema = z
   .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
