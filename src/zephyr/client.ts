@@ -29,8 +29,8 @@ export class ZephyrClient implements Client {
       new GetStatuses(this.apiClient),
     ];
 
-    tools.forEach((tool) => {
+    for (const tool of tools) {
       register(tool.specification, tool.handle);
-    });
+    }
   }
 }
