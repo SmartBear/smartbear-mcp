@@ -31,7 +31,7 @@ export class GetProject implements ZephyrTool {
       {
         description: "Get the project with id 1",
         parameters: {
-          projectIdOrKey: 1,
+          projectIdOrKey: "1",
         },
         expectedOutput: "The project with its details",
       },
