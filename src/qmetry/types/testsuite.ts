@@ -5,6 +5,30 @@ import {
   type PaginationPayload,
 } from "./common.js";
 
+export interface ReleaseCycleMapping {
+  releaseId: number;
+  buildID: number;
+}
+
+export interface CreateTestSuitePayload {
+  parentFolderId: string; // required - Test Case folder ID
+  name: string; // required - Test Case name
+  isAutomatedFlag?: boolean; // optional - Indicates if the test case is automated
+  testsuiteOwner?: number; // optional - OwnerId of Testcase
+  testSuiteState?: number; // optional - StatusId of Testcase
+  description?: string; // optional - Description of Testcase
+  associateRelCyc?: boolean; // optional - associate release cycle
+  releaseCycleMapping?: ReleaseCycleMapping[]; // optional - release cycle mapping
+}
+export interface UpdateTestSuitePayload {
+  id: number; // required - Test Suite ID
+  TsFolderID: number; // required - Test Suite folder ID
+  entityKey: string; // required - Test Case folder ID
+  name?: string; // required - Test Case name
+  testsuiteOwner?: number; // optional - OwnerId of Testcase
+  testSuiteState?: number; // optional - StatusId of Testcase
+  description?: string; // optional - Description of Testcase
+}
 export interface FetchTestSuitesForTestCasePayload
   extends PaginationPayload,
     FilterPayload {
@@ -62,6 +86,18 @@ export interface FetchTestCaseRunsByTestSuiteRunPayload
   viewId: number; // required - View ID for test execution (get from project info latestViews.TE.viewId)
 }
 
+export interface LinkedTestCasesToTestSuitePayload {
+  tsID: number; // required - Test Suite ID
+  tcvdIDs: number[]; // required - Array of Test Case Version IDs (used if fromReqs is false or undefined)
+  fromReqs?: boolean; // optional - Indicates whether to link from requirements
+}
+
+export interface ReqLinkedTestCasesToTestSuitePayload {
+  tsID: number; // required - Test Suite ID
+  tcvdIDs: number[]; // required - Array of Test Case Version IDs (used if fromReqs is true)
+  fromReqs?: boolean; // optional - Indicates whether to link from requirements
+}
+
 export const DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD: Omit<
   FetchTestCaseRunsByTestSuiteRunPayload,
   "tsrunID" | "viewId"
@@ -88,3 +124,29 @@ export const DEFAULT_FETCH_LINKED_ISSUES_BY_TESTCASE_RUN_PAYLOAD: Omit<
   getColumns: true,
   istcrFlag: true,
 };
+
+export const DEFAULT_LINKED_TESTCASE_TO_TESTSUITE_PAYLOAD: Omit<
+  LinkedTestCasesToTestSuitePayload,
+  "tsID" | "tcvdIDs"
+> = {
+  fromReqs: false,
+};
+
+export const DEFAULT_REQLINKED_TESTCASE_TO_TESTSUITE_PAYLOAD: Omit<
+  ReqLinkedTestCasesToTestSuitePayload,
+  "tsID" | "tcvdIDs"
+> = {
+  fromReqs: true,
+};
+
+export const DEFAULT_CREATE_TESTSUITE_PAYLOAD: Omit<
+  CreateTestSuitePayload,
+  "parentFolderId" | "name"
+> = {
+  isAutomatedFlag: false,
+};
+
+export const DEFAULT_UPDATE_TESTSUITE_PAYLOAD: Omit<
+  UpdateTestSuitePayload,
+  "entityKey" | "TsFolderID" | "id"
+> = {};

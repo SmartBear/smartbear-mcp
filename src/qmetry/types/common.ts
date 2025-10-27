@@ -120,6 +120,12 @@ export const CommonFields = {
       "Test Case version number. " +
         "This is the internal numeric identifier for the version.",
     ),
+  tcVersionID: z
+    .number()
+    .describe(
+      "Test Case version number. " +
+        "This is the internal numeric identifier for the version.",
+    ),
   versionOptional: z
     .number()
     .optional()
@@ -314,6 +320,26 @@ export const CommonFields = {
     ),
 } as const;
 
+export const ProjectListArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  params: z.object({
+    showArchive: z
+      .boolean()
+      .optional()
+      .describe(
+        "Whether to include archived records in the results. " +
+          "When true, returns both active and archived items. " +
+          "When false, returns only active (non-archived) items. ",
+      )
+      .default(false),
+  }),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+});
+
 export const ProjectArgsSchema = z.object({
   projectKey: CommonFields.projectKey,
 });
@@ -346,6 +372,75 @@ export const PlatformArgsSchema = z.object({
     )
     .default('[{"property":"platformID","direction":"DESC"}]'),
   filter: CommonFields.filter,
+});
+
+export const CreateTestCaseStepSchema = z.object({
+  orderId: z.number(),
+  description: z.string(),
+  inputData: z.string().optional(),
+  expectedOutcome: z.string().optional(),
+  UDF: z.record(z.string()).optional(),
+});
+
+export const UpdateTestCaseRemoveStepSchema = z.object({
+  tcID: z.number(),
+  projectID: z.number(),
+  tcStepID: z.number(),
+  tcVersionID: z.number(),
+  tcVersion: z.number(),
+  tcsAttCount: z.number(),
+  orderId: z.number(),
+  description: z.string(),
+  inputData: z.string().optional(),
+  expectedOutcome: z.string().optional(),
+  UDF: z.record(z.string()).optional(),
+  tcsIsShared: z.boolean(),
+  tcsIsParameterized: z.boolean(),
+});
+
+export const CreateTestCaseArgsSchema = z.object({
+  tcFolderID: z.string(),
+  steps: z.array(CreateTestCaseStepSchema).optional(),
+  name: z.string(),
+  priority: z.number().optional(),
+  component: z.array(z.number()).optional(),
+  testcaseOwner: z.number().optional(),
+  testCaseState: z.number().optional(),
+  testCaseType: z.number().optional(),
+  estimatedTime: z.number().optional(),
+  testingType: z.number().optional(),
+  description: z.string().optional(),
+  associateRelCyc: z.boolean().optional(),
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        release: z.number(),
+        cycle: z.array(z.number()),
+        version: z.number().optional(),
+      }),
+    )
+    .optional(),
+});
+export const UpdateTestCaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  tcID: CommonFields.tcID,
+  tcVersionID: CommonFields.tcVersionID,
+  withVersion: z.boolean().optional(),
+  notrunall: z.boolean().optional(),
+  isStepUpdated: z.boolean().optional(),
+  steps: z.array(CreateTestCaseStepSchema).optional(),
+  removeSteps: z.array(UpdateTestCaseRemoveStepSchema).optional(),
+  name: z.string().optional(),
+  priority: z.number().optional(),
+  component: z.array(z.number()).optional(),
+  owner: z.number().optional(),
+  testCaseState: z.number().optional(),
+  testCaseType: z.number().optional(),
+  executionMinutes: z.number().optional(),
+  testingType: z.number().optional(),
+  description: z.string().optional(),
+  updateOnlyMetadata: z.boolean().optional(),
 });
 
 export const TestCaseListArgsSchema = z.object({
@@ -468,6 +563,16 @@ export const RequirementsLinkedToTestCaseArgsSchema = z.object({
   filter: CommonFields.filter,
 });
 
+export const LinkRequirementToTestCaseArgsSchema = z.object({
+  tcID: z.string().describe("EntityKey of Testcase (e.g. 'COD-TC-29')"),
+  tcVersionId: CommonFields.tcVersionID,
+  rqVersionIds: z
+    .string()
+    .describe(
+      "Comma-separated values of versionId of the Requirement (e.g. '236124,236125')",
+    ),
+});
+
 export const TestCasesLinkedToRequirementArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
@@ -530,6 +635,38 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
     .default(true),
 });
 
+export const CreateTestSuiteArgsSchema = z.object({
+  parentFolderId: z.string(),
+  name: z.string(),
+  isAutomatedFlag: z.boolean().optional(),
+  description: z.string().optional(),
+  testsuiteOwner: z.number().optional(),
+  testSuiteState: z.number().optional(),
+  associateRelCyc: z.boolean().optional(),
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        buildID: z.number(),
+        releaseId: z.number(),
+      }),
+    )
+    .optional(),
+});
+
+export const UpdateTestSuiteArgsSchema = z.object({
+  id: z.number().describe("Id of Test Suite to be updated (required)"),
+  TsFolderID: z
+    .number()
+    .describe("Folder ID where Test Suite resides (required)"),
+  entityKey: z
+    .string()
+    .describe("Entity Key of Test Suite to be updated (required)"),
+  name: z.string().optional().describe("Name of the Test Suite"),
+  description: z.string().optional().describe("Description of the Test Suite"),
+  testsuiteOwner: z.number().optional().describe("Owner ID of the Test Suite"),
+  testSuiteState: z.number().optional().describe("State of the Test Suite"),
+});
+
 export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
@@ -541,6 +678,36 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
   getColumns: CommonFields.getColumns,
   filter: CommonFields.filter,
 });
+
+export const LinkTestCasesToTestSuiteArgsSchema = z
+  .object({
+    tsID: z.number().describe("Id of Test Suite (required)"),
+    tcvdIDs: z
+      .array(z.number())
+      .describe(
+        "Array of Test Case Version IDs (required if fromReqs is false)",
+      ),
+    fromReqs: z
+      .boolean()
+      .optional()
+      .describe("Link TestCases from Requirements (optional, default false)"),
+  })
+  .strip();
+
+export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
+  .object({
+    tsID: z.number().describe("Id of Test Suite (required)"),
+    tcvdIDs: z
+      .array(z.number())
+      .describe(
+        "Array of Test Case Version IDs (required if fromReqs is true)",
+      ),
+    fromReqs: z
+      .boolean()
+      .optional()
+      .describe("Link TestCases from Requirements (optional, default true)"),
+  })
+  .strip();
 
 export const IssuesLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,

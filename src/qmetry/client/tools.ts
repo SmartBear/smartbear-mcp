@@ -2,14 +2,20 @@ import type { ToolParams } from "../../common/types.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
 import {
   BuildArgsSchema,
+  CreateTestCaseArgsSchema,
+  CreateTestSuiteArgsSchema,
   ExecutionsByTestSuiteArgsSchema,
   IssuesLinkedToTestCaseArgsSchema,
   LinkedIssuesByTestCaseRunArgsSchema,
+  LinkRequirementToTestCaseArgsSchema,
+  LinkTestCasesToTestSuiteArgsSchema,
   PlatformArgsSchema,
   ProjectArgsSchema,
+  ProjectListArgsSchema,
   ReleasesCyclesArgsSchema,
   RequirementDetailsArgsSchema,
   RequirementListArgsSchema,
+  RequirementsLinkedTestCasesToTestSuiteArgsSchema,
   RequirementsLinkedToTestCaseArgsSchema,
   TestCaseDetailsArgsSchema,
   TestCaseExecutionsArgsSchema,
@@ -20,6 +26,8 @@ import {
   TestCasesLinkedToRequirementArgsSchema,
   TestCaseVersionDetailsArgsSchema,
   TestSuitesForTestCaseArgsSchema,
+  UpdateTestCaseArgsSchema,
+  UpdateTestSuiteArgsSchema,
 } from "../types/common.js";
 
 export interface QMetryToolParams extends ToolParams {
@@ -28,6 +36,83 @@ export interface QMetryToolParams extends ToolParams {
 }
 
 export const TOOLS: QMetryToolParams[] = [
+  {
+    title: "Fetch QMetry list Projects",
+    summary:
+      "Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
+    handler: QMetryToolsHandlers.FETCH_PROJECTS,
+    inputSchema: ProjectListArgsSchema,
+    purpose:
+      "Prerequisite tool that provides project list to user that associated to valid API Key. " +
+      "The project key to fetch info for. Use 'default' if not specified. " +
+      "Common project keys include 'UT', 'VT', 'MAC', etc. " +
+      "If user doesn't specify a project key, this tool will use 'default' automatically.",
+    useCases: [
+      "Get project list to check user how many project access to particular apikey",
+      "Retrieve available fields of each project list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
+      "Validate project access and permissions",
+    ],
+    examples: [
+      {
+        description: "Get list of project available to user",
+        parameters: {
+          params: {
+            showArchive: false,
+          },
+        },
+        expectedOutput:
+          "Project active/non archived list including some important fields like projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
+      },
+      {
+        description: "Get projects with custom pagination",
+        parameters: {
+          params: {
+            showArchive: false,
+          },
+          page: 1,
+          limit: 10,
+          start: 0,
+        },
+        expectedOutput: "List of projects with custom pagination settings",
+      },
+      {
+        description: "Get not active/archived projects",
+        parameters: {
+          params: {
+            showArchive: true,
+          },
+        },
+        expectedOutput:
+          "List of all projects including archived ones (showArchive: true sent in payload)",
+      },
+      {
+        description: "Filter projects by name",
+        parameters: {
+          filter: '[{"value":"MAC","type":"string","field":"name"}]',
+        },
+        expectedOutput: "Filtered list of projects matching the name criteria",
+      },
+      {
+        description: "Filter projects by project key",
+        parameters: {
+          filter: '[{"value":"MAC","type":"string","field":"projectKey"}]',
+        },
+        expectedOutput:
+          "List of projects filtered by project key (e.g. 'MAC', 'UT', etc.)",
+      },
+    ],
+    hints: [
+      "Fetch list of projects available to user",
+      "Use 'default' project key when user doesn't specify one",
+      "Use params.showArchive: true/false to get archived/non-archived projects, default is false when not provided",
+      "Pagination supported for large result sets (start, page, limit parameters)",
+      "Filter parameter should be a JSON string with filter criteria",
+      "Common filter fields: 'name' (string), 'projectKey' (string)",
+    ],
+    outputDescription: "JSON object containing list of projects details",
+    readOnly: true,
+    idempotent: true,
+  },
   {
     title: "Set QMetry Project Info",
     summary: "Set current QMetry project for your account",
@@ -321,6 +406,238 @@ export const TOOLS: QMetryToolParams[] = [
     readOnly: true,
     idempotent: true,
     openWorld: false,
+  },
+  {
+    title: "Create Test Case",
+    summary:
+      "Create a new test case in QMetry with steps, metadata, and release/cycle mapping.",
+    handler: QMetryToolsHandlers.CREATE_TEST_CASE,
+    inputSchema: CreateTestCaseArgsSchema,
+    purpose:
+      "Allows users to create a new test case in QMetry, including steps, custom fields, and release/cycle mapping. " +
+      "Supports all major test case fields and step-level UDFs. " +
+      "For fields like priority, owner, component, etc., fetch their valid values using the project info tool. " +
+      "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info.",
+
+    useCases: [
+      "Create a basic test case with just a name and folder",
+      "Add detailed steps with custom fields (UDFs) to a test case",
+      "Associate test case with specific release/cycle for planning",
+      "Set priority, owner, component, and other metadata using valid IDs from project info",
+      "Create test cases for automation or manual testing types",
+      "Add test case to a specific folder using tcFolderID",
+      "Include estimated execution time and description",
+      "Map test case to multiple cycles/releases",
+    ],
+    examples: [
+      {
+        description: "Create a test case in the root folder (auto-resolved)",
+        parameters: {
+          name: "Login Test Case",
+        },
+        expectedOutput:
+          "Test case created in the root test case folder with ID and summary details",
+      },
+      {
+        description: "Create a simple test case in folder 102653",
+        parameters: {
+          tcFolderID: "102653",
+          name: "Login Test Case",
+        },
+        expectedOutput: "Test case created with ID and summary details",
+      },
+      {
+        description: "Create a test case with steps and metadata",
+        parameters: {
+          tcFolderID: "102653",
+          name: "Test Case 1",
+          steps: [
+            {
+              orderId: 1,
+              description: "First Step",
+              inputData: "First Data",
+              expectedOutcome: "First Outcome",
+              UDF: {
+                customField1: "Custom Field Data A",
+                customField2: "Custom Field Data B",
+              },
+            },
+          ],
+          priority: 2025268,
+          component: [2025328],
+          testcaseOwner: 1467,
+          testCaseState: 2025271,
+          testCaseType: 2025282,
+          estimatedTime: 10,
+          description: "Description",
+          testingType: 2025275,
+          associateRelCyc: true,
+          releaseCycleMapping: [
+            {
+              release: 14239,
+              cycle: [21395],
+              version: 1,
+            },
+          ],
+        },
+        expectedOutput: "Test case created with steps and metadata",
+      },
+    ],
+    hints: [
+      "If tcFolderID is not provided, it will be auto-resolved to the root test case folder using project info (rootFolders.TC.id).",
+      "To get valid values for priority, owner, component, etc., call the project info tool and use the returned customListObjs IDs.",
+      "If the user provides a priority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.priority[index].name, and use its ID in the payload. If the name is not found, skip the priority field (it is not required) and show a user-friendly message: 'Test case created without priority, as given priority is not available in the current project.'",
+      "If the user provides a component name, fetch project info, find the matching component in customListObjs.component[index].name, and use its ID in the payload. If the name is not found, skip the component field (it is not required) and show a user-friendly message: 'Test case created without component, as given component is not available in the current project.'",
+      "If the user provides an owner name, fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testcaseOwner. If the name is not found, skip the testcaseOwner field (it is not required) and show a user-friendly message: 'Test case created without owner, as given owner is not available in the current project.'",
+      "If the user provides a test case state name, fetch project info, find the matching state in customListObjs.testCaseState[index].name, and use its ID in the payload as testCaseState. If the name is not found, skip the testCaseState field (it is not required) and show a user-friendly message: 'Test case created without test case state, as given state is not available in the current project.'",
+      "If the user provides a test case type name, fetch project info, find the matching type in customListObjs.testCaseType[index].name, and use its ID in the payload as testCaseType. If the name is not found, skip the testCaseType field (it is not required) and show a user-friendly message: 'Test case created without test case type, as given type is not available in the current project.'",
+      "If the user provides a testing type name, fetch project info, find the matching type in customListObjs.testingType[index].name, and use its ID in the payload as testingType. If the name is not found, skip the testingType field (it is not required) and show a user-friendly message: 'Test case created without testing type, as given testing type is not available in the current project.'",
+      "Example: If user says 'Create test case with title \"High priority test case\" and set priority to \"Blocker\"', first call project info, map 'Blocker' to its ID, and use that ID for the priority field in the create payload. If user says 'set priority to \"Urgent\"' and 'Urgent' is not found, skip the priority field and show: 'Test case created without priority, as given priority is not available in the current project.'",
+      "tcFolderID is required; use the root folder ID from project info or a specific folder.",
+      "Steps are optional but recommended for manual test cases.",
+      "If the user provides a prompt like 'create test case with steps as step 1 - Go to login page, step 2 - give credential, step 3 - go to test case page, step 4 - create test case', LLM should parse each step and convert it into the steps payload array, mapping each step to an object with orderId, description, and optionally inputData and expectedOutcome.",
+      "Example mapping: 'step 1 - Go to login page' → { orderId: 1, description: 'Go to login page' }.",
+      "LLM should increment orderId for each step, use the step text as description, and optionally infer inputData/expectedOutcome if provided in the prompt.",
+      "Demo steps payload: steps: [ { orderId: 1, description: 'First Step', inputData: 'First Data', expectedOutcome: 'First Outcome', UDF: { customField1: 'Custom Field Data A', customField2: 'Custom Field Data B' } }, ... ]",
+      "UDF fields in steps must match your QMetry custom field configuration.",
+      "Release/cycle mapping is optional but useful for planning.",
+      "If the user wants to link or associate a release and cycle to the test case, set associateRelCyc: true in the payload.",
+      "If the user provides a release ID, map it from projects.releases[index].releaseID in the project info response, and use that ID in releaseCycleMapping.",
+      "If the user provides both release and cycle IDs, validate both against the current project's releases and cycles; if valid, use them in releaseCycleMapping.",
+      "When adding releaseCycleMapping, always include the 'version' field (usually set to 1) in each mapping object. The correct format is: { release: <releaseID>, cycle: [<cycleID>], version: 1 }. If 'version' is missing, the request will fail.",
+      "If the user provides a release name, map it to its ID from project info; if a cycle name is provided, map it to its ID from the associated release's builds list.",
+      "Example payload: releaseCycleMapping: [ { release: <releaseID>, cycle: [<cycleID>], version: 1 } ]",
+      "LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Test case created without release/cycle association, as given release/cycle is not available in the current project.'",
+      "All IDs (priority, owner, etc.) must be valid for your QMetry instance.",
+      "If a custom field is mandatory, include it in the UDF object.",
+      "Estimated time is in minutes.",
+      "Description and testingType are optional but recommended for clarity.",
+    ],
+    outputDescription:
+      "JSON object containing the new test case ID, summary, and creation metadata.",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Update Test Case",
+    summary:
+      "Update an existing QMetry test case by tcID and tcVersionID, with auto-resolution from entityKey.",
+    handler: QMetryToolsHandlers.UPDATE_TEST_CASE,
+    inputSchema: UpdateTestCaseArgsSchema,
+    purpose:
+      "Update a QMetry test case's metadata, steps, or other fields. " +
+      "Requires tcID and tcVersionID, which can be auto-resolved from the test case entityKey using the test case list and version detail tools. " +
+      "Supports updating summary, priority, owner, component, state, type, description, steps, and more. Only fields provided will be updated.",
+    useCases: [
+      "Update test case summary (name)",
+      "Change priority, owner, or state of a test case",
+      "Edit, add, or remove test steps",
+      "Update only metadata (no steps)",
+      "Bulk update using entityKey auto-resolution",
+      "Modify test case description or estimated time",
+      "Change test case type or component",
+      "Update testing type or custom fields",
+      "Update, add and remove test case steps",
+    ],
+    examples: [
+      {
+        description: "Update test case summary (updated name)",
+        parameters: {
+          tcID: 4519260,
+          tcVersionID: 5448492,
+          name: "MAC Test11",
+        },
+        expectedOutput:
+          "Test case summary updated. tcID and tcVersionID auto-resolved from entityKey. Only 'name' field changed.",
+      },
+      {
+        description: "Update priority to High and owner to john.doe",
+        parameters: {
+          tcID: 4519260,
+          tcVersionID: 5448492,
+          priority: 505015,
+          testcaseOwner: 6963,
+        },
+        expectedOutput:
+          "Priority and owner updated. Field IDs auto-resolved from project info. tcID/tcVersionID resolved from entityKey.",
+      },
+      {
+        description: "Update steps (edit, add, remove)",
+        parameters: {
+          tcID: 4519260,
+          tcVersionID: 5448492,
+          steps: [
+            {
+              orderId: 1,
+              description: "Step 22",
+              inputData: "Input 22",
+              expectedOutcome: "Outcome 22",
+              tcStepID: 3014032,
+            },
+            {
+              orderId: 2,
+              description: "Step3",
+              inputData: "Input 3",
+              expectedOutcome: "Outcome 3",
+            },
+          ],
+          removeSteps: [
+            { tcStepID: 3014031, description: "Step 1", orderId: 1 },
+          ],
+          isStepUpdated: true,
+        },
+        expectedOutput:
+          "Steps updated: Step 22 edited, Step3 added, Step 1 removed. tcID/tcVersionID auto-resolved.",
+      },
+      {
+        description: "Update only metadata (no steps)",
+        parameters: {
+          tcID: 4519260,
+          tcVersionID: 5448492,
+          updateOnlyMetadata: true,
+          name: "New Name",
+        },
+        expectedOutput:
+          "Metadata updated only. Steps unchanged. tcID/tcVersionID auto-resolved.",
+      },
+    ],
+    hints: [
+      "If user provides entityKey (e.g., MAC-TC-1684), first call FETCH_TEST_CASES with a filter on entityKeyId to resolve the tcID and tcVersionID.",
+      "To get valid values for priority, owner, component, etc., call the project info tool and use the returned customListObjs IDs.",
+      "If the user provides a priority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.priority[index].name, and use its ID in the payload. If the name is not found, skip the priority field (it is not required) and show a user-friendly message: 'Test case updated without priority, as given priority is not available in the current project.'",
+      "If the user provides a component name, fetch project info, find the matching component in customListObjs.component[index].name, and use its ID in the payload. If the name is not found, skip the component field (it is not required) and show a user-friendly message: 'Test case updated without component, as given component is not available in the current project.'",
+      "If the user provides an owner name, fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testcaseOwner. If the name is not found, skip the testcaseOwner field (it is not required) and show a user-friendly message: 'Test case updated without owner, as given owner is not available in the current project.'",
+      "If the user provides a test case state name, fetch project info, find the matching state in customListObjs.testCaseState[index].name, and use its ID in the payload as testCaseState. If the name is not found, skip the testCaseState field (it is not required) and show a user-friendly message: 'Test case updated without test case state, as given state is not available in the current project.'",
+      "If the user provides a test case type name, fetch project info, find the matching type in customListObjs.testCaseType[index].name, and use its ID in the payload as testCaseType. If the name is not found, skip the testCaseType field (it is not required) and show a user-friendly message: 'Test case updated without test case type, as given type is not available in the current project.'",
+      "If the user provides a testing type name, fetch project info, find the matching type in customListObjs.testingType[index].name, and use its ID in the payload as testingType. If the name is not found, skip the testingType field (it is not required) and show a user-friendly message: 'Test case updated without testing type, as given testing type is not available in the current project.'",
+      "Example: If user says 'Update test case with title \"High priority test case\" and set priority to \"Blocker\"', first call project info, map 'Blocker' to its ID, and use that ID for the priority field in the update payload. If user says 'set priority to \"Urgent\"' and 'Urgent' is not found, skip the priority field and show: 'Test case updated without priority, as given priority is not available in the current project.'",
+      "To update test case steps, use the following rules:",
+      "- For steps to be added: omit tcStepID in the step object.",
+      "- For steps to be updated: include tcStepID (from the existing step) in the step object.",
+      "- For steps to be removed: add a full removeSteps object for each step to be deleted, matching the removeTestCaseStep interface.",
+      "- Always set isStepUpdated: true if steps are added, updated, or removed.",
+      "- Example: If user says 'Edit step 1 to say ...', find the tcStepID for step 1 and include it in the steps array with updated fields.",
+      "- Example: If user says 'Add a new step after step 2', add a new object to steps array with no tcStepID.",
+      "- Example: If user says 'Remove step 3', add the full step object to removeSteps array, including tcStepID and all required fields.",
+      "- The payload should look like: { steps: [...], removeSteps: [...], isStepUpdated: true }.",
+      "- If only metadata is updated (no steps), set updateOnlyMetadata: true and do not include steps/removeSteps.",
+      "- Always increment orderId for new steps and preserve order for updates.",
+      "- If user prompt is ambiguous, ask for clarification or show a user-friendly error.",
+      "Steps are optional but recommended for manual test cases.",
+      "If the user provides a prompt like 'update test case with steps as step 1 - Go to login page, step 2 - give credential, step 3 - go to test case page, step 4 - create test case', LLM should parse each step and convert it into the steps payload array, mapping each step to an object with orderId, description, and optionally inputData and expectedOutcome.",
+      "Example mapping: 'step 1 - Go to login page' → { orderId: 1, description: 'Go to login page' }.",
+      "LLM should increment orderId for each step, use the step text as description, and optionally infer inputData/expectedOutcome if provided in the prompt.",
+      "Demo steps payload: steps: [ { orderId: 1, description: 'First Step', inputData: 'First Data', expectedOutcome: 'First Outcome', UDF: { customField1: 'Custom Field Data A', customField2: 'Custom Field Data B' } }, ... ]",
+      "UDF fields in steps must match your QMetry custom field configuration.",
+      "All IDs (priority, owner, etc.) must be valid for your QMetry instance.",
+      "If a custom field is mandatory, include it in the UDF object.",
+      "executionMinutes time is in minutes.",
+      "Description and testingType are optional but recommended for clarity.",
+    ],
+    outputDescription:
+      "JSON object containing the new test case ID, summary, and creation metadata.",
+    readOnly: false,
+    idempotent: false,
   },
   {
     title: "Fetch Test Cases",
@@ -894,6 +1211,44 @@ export const TOOLS: QMetryToolParams[] = [
     idempotent: true,
   },
   {
+    title: "Link Requirements to Testcase",
+    summary:
+      "Link one or more requirements to a test case by entityKey and version IDs.",
+    handler: QMetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE,
+    inputSchema: LinkRequirementToTestCaseArgsSchema,
+    purpose:
+      "Link requirements to a test case using the test case entityKey, version ID, and requirement version IDs. " +
+      "This tool enables traceability and coverage mapping between requirements and test cases.",
+    useCases: [
+      "Link requirements to a test case for traceability",
+      "Bulk link multiple requirements to a single test case",
+      "Automate requirement coverage mapping",
+    ],
+    examples: [
+      {
+        description: "Link requirements to test case VT-TC-26",
+        parameters: {
+          tcID: "VT-TC-26",
+          tcVersionId: 5448515,
+          rqVersionIds: "5009939,5009937,4970699",
+        },
+        expectedOutput:
+          "Requirements linked to test case VT-TC-26 successfully.",
+      },
+    ],
+    hints: [
+      "To get the tcID, call the Testcase/Fetch List for Bulk Operation API and use data[<index>].entityKey.",
+      "To get the tcVersionId, call the Testcase/Fetch Versions API and use data[<index>].tcVersionID.",
+      "To get the rqVersionIds, call the requirement/List Versions API and use data[<index>].rqVersionID.",
+      "If user provides requirement entityKey (e.g., VT-RQ-18), first call requirements list with a filter on entityKeyId to resolve the rqVersionIds",
+      "If user provides testcase entityKey (e.g., VT-TC-26), first call testcase list with a filter on entityKeyId to resolve the tcVersionId and tcID.",
+      "rqVersionIds must be a comma-separated string of requirement version IDs.",
+    ],
+    outputDescription: "JSON object with success status and linkage details.",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
     title: "Fetch Test Cases Linked to Requirement",
     summary:
       "Get test cases that are linked (or not linked) to a specific requirement in QMetry",
@@ -1201,6 +1556,153 @@ export const TOOLS: QMetryToolParams[] = [
     idempotent: true,
   },
   {
+    title: "Create Test Suite",
+    summary:
+      "Create a new test suite in QMetry with metadata and release/cycle mapping.",
+    handler: QMetryToolsHandlers.CREATE_TEST_SUITE,
+    inputSchema: CreateTestSuiteArgsSchema,
+    purpose:
+      "Allows users to create a new test suite in QMetry, including metadata and release/cycle mapping. " +
+      "Supports all major test suite fields. " +
+      "For fields like testsuiteOwner, testSuiteState, etc., fetch their valid values using the project info tool. " +
+      "If parentFolderId is not provided, it will be auto-resolved to the root test suite folder using project info.",
+
+    useCases: [
+      "Create a basic test suite with just a name and folder",
+      "Add detailed like description to a test suite",
+      "Associate test suite with specific release/cycle for planning",
+      "Set testsuiteOwner, testSuiteState, and other metadata using valid IDs from project info",
+      "Create test suites for isAutomatedFlag true or false for automated or manual types, default is false",
+      "Add test suite to a specific folder using parentFolderId",
+      "Map test suite to multiple cycles/releases and build ID",
+    ],
+    examples: [
+      {
+        description: "Create a test suite in the root folder (auto-resolved)",
+        parameters: {
+          name: "Demo Test Suite",
+        },
+        expectedOutput:
+          "Test suite created in the root test suite folder with ID and summary details",
+      },
+      {
+        description: "Create a simple test suite in folder 102653",
+        parameters: {
+          parentFolderId: "102653",
+          name: "Login Test Suite",
+        },
+        expectedOutput: "Test suite created with ID and summary details",
+      },
+      {
+        description: "Create a test suite with some details and metadata",
+        parameters: {
+          parentFolderId: "541",
+          isAutomatedFlag: false,
+          name: "Testsuite Summary",
+          description: "desc",
+          testsuiteOwner: 3,
+          testSuiteState: 21746,
+          associateRelCyc: true,
+          releaseCycleMapping: [
+            {
+              buildID: 21395,
+              releaseId: 14239,
+            },
+          ],
+        },
+        expectedOutput: "Test suite created with details and metadata",
+      },
+    ],
+    hints: [
+      "If parentFolderId is not provided, it will be auto-resolved to the root test suite folder using project info (rootFolders.TS.id).",
+      "To get valid values for testsuiteOwner, testSuiteState, etc., call the project info tool and use the returned customListObjs IDs.",
+      "If the user provides an owner name (testsuiteOwner), fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testsuiteOwner. If the name is not found, skip the testsuiteOwner field (it is not required) and show a user-friendly message: 'Test suite created without owner, as given owner is not available in the current project.'",
+      "If the user provides a test suite state name(testSuiteState), fetch project info, find the matching state in customListObjs.testSuiteState[index].name, and use its ID in the payload as testSuiteState. If the name is not found, skip the testSuiteState field (it is not required) and show a user-friendly message: 'Test suite created without test suite state, as given state is not available in the current project.'",
+      "tcFolderID is required; use the root folder ID from project info or a specific folder.",
+      "Release/cycle mapping is optional but useful for planning.",
+      "If the user wants to link or associate a release and cycle to the test suite, set associateRelCyc: true in the payload.",
+      "If the user provides a release ID, map it from projects.releases[index].releaseID in the project info response, and use that ID in releaseCycleMapping.",
+      "If the user provides a build ID, map it from projects.releases.builds[index].buildID in the project info response, and use that ID in releaseCycleMapping.",
+      "If the user provides a release name, map it to its ID from project info; if a build name is provided, map it to its ID from the associated release's builds list.",
+      "Example payload: releaseCycleMapping: [ { releaseId: <releaseID>, buildID: <buildID> } ]",
+      "LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Test suite created without release/cycle association, as given release/cycle is not available in the current project.'",
+      "All IDs (testSuiteState, testsuiteOwner, releaseCycleMapping etc.) must be valid for your QMetry instance.",
+      "If a custom field is mandatory, include it in the UDF object.",
+    ],
+    outputDescription:
+      "JSON object containing the new test suite ID, summary, and creation metadata.",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Update Test Suite",
+    summary:
+      "Update an existing QMetry test suite by id(testsuite numeric id), with auto-resolution from entityKey.",
+    handler: QMetryToolsHandlers.UPDATE_TEST_SUITE,
+    inputSchema: UpdateTestSuiteArgsSchema,
+    purpose:
+      "Update a QMetry test suite's metadata, description, or other fields. " +
+      "Requires id(testsuite numeric id),  which can be auto-resolved from the test suite entityKey using the test suite list tools. " +
+      "Supports updating name, description, owner, state, and more. Only fields provided will be updated.",
+    useCases: [
+      "Update test suite summary (name)",
+      "Change owner, or state of a test suite",
+      "Bulk update using entityKey auto-resolution",
+      "Modify test suite description",
+    ],
+    examples: [
+      {
+        description: "Update test suite summary (updated name)",
+        parameters: {
+          id: 1505898,
+          entityKey: "VT-TS-7",
+          TsFolderID: 1644087,
+          name: "MAC Test11",
+        },
+        expectedOutput:
+          "Test suite summary updated. Only 'name' field changed. Field IDs auto-resolved from project info. id(test suite numeric id) resolved from entityKey. TsFolderID auto-resolved. from the project info. info on rootFolders.TS.id.",
+      },
+      {
+        description:
+          "Update state to Open and owner to john.doe of the test suite",
+        parameters: {
+          id: 1505898,
+          entityKey: "VT-TS-7",
+          TsFolderID: 1644087,
+          testSuiteState: 2231981,
+          testsuiteOwner: 6963,
+        },
+        expectedOutput:
+          "State and owner updated. Field IDs auto-resolved from project info. id(test suite numeric id) resolved from entityKey. TsFolderID auto-resolved. from the project info. info on rootFolders.TS.id.",
+      },
+      {
+        description: "Update only description of the test suite",
+        parameters: {
+          id: 1505898,
+          entityKey: "VT-TS-7",
+          TsFolderID: 1644087,
+          description: "Updated description for the test suite.",
+        },
+        expectedOutput:
+          "description updated only. Field IDs auto-resolved from project info. id(test suite numeric id) resolved from entityKey. TsFolderID auto-resolved. from the project info. info on rootFolders.TS.id.",
+      },
+    ],
+    hints: [
+      "If user provides entityKey (e.g., MAC-TC-1684), first call Fetch Test Suites for Test Suite with a filter on entityKeyId to resolve the id (test suite numeric id) and TsFolderID from rootFolders.TS.id.",
+      "To get valid values for owner, state, etc., call the project info tool and use the returned customListObjs IDs.",
+      "If the user provides an owner name, fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testsuiteOwner. If the name is not found, skip the testsuiteOwner field (it is not required) and show a user-friendly message: 'Test suite updated without owner, as given owner is not available in the current project.'",
+      "If the user provides a test suite state name, fetch project info, find the matching state in customListObjs.testSuiteState[index].name, and use its ID in the payload as testSuiteState. If the name is not found, skip the testSuiteState field (it is not required) and show a user-friendly message: 'Test suite updated without test suite state, as given state is not available in the current project.'",
+      "If either owner or state is not found in project info, the update for that field will be skipped and a user-friendly message will be shown to the user.",
+      "UDF fields in steps must match your QMetry custom field configuration.",
+      "All IDs (state, owner, etc.) must be valid for your QMetry instance.",
+      "If a custom field is mandatory, include it in the UDF object.",
+    ],
+    outputDescription:
+      "JSON object containing the new test suite ID, summary, and creation metadata.",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
     title: "Fetch Test Suites for Test Case",
     summary:
       "Get test suites that can be linked to test cases in QMetry with automatic viewId resolution",
@@ -1319,6 +1821,117 @@ export const TOOLS: QMetryToolParams[] = [
       "JSON object with test suites array and pagination metadata",
     readOnly: true,
     idempotent: true,
+  },
+  {
+    title: "Link Test Cases to Test Suite",
+    summary: "Link test cases to a test suite in QMetry.",
+    handler: QMetryToolsHandlers.LINK_TESTCASES_TO_TESTSUITE,
+    inputSchema: LinkTestCasesToTestSuiteArgsSchema,
+    purpose:
+      "Link one or more test cases to a test suite. " +
+      "Requires tcvdIDs, which can be auto-resolved from the test case entityKey using the test case list and version detail tools. " +
+      "Supports direct test case linkage.",
+    useCases: [
+      "Link test cases to a test suite by entity keys",
+      "Bulk link multiple test cases to a suite",
+      "Automate test suite composition from test cases",
+    ],
+    examples: [
+      {
+        description: "Link test cases to a test suite",
+        parameters: {
+          tsID: 8674,
+          tcvdIDs: [5448504, 5448503],
+          fromReqs: false,
+        },
+        expectedOutput:
+          "Test cases QTM-TC-32 and QTM-TC-35 linked to test suite 8674.",
+      },
+      {
+        description:
+          "Link test cases directly to test suites with test cases entityKeys VT-TC-9, VT-TC-10 to test suite id 1487397",
+        parameters: {
+          tsID: 1487397,
+          tcvdIDs: [5448504, 5448503],
+          fromReqs: false,
+        },
+        expectedOutput:
+          "Test cases VT-TC-9 and VT-TC-10 linked to test suite 1487397.",
+      },
+      {
+        description:
+          "Link test case VT-TC-4, VT-TC-1,VT-TC-101, VT-TC-22 to test suite VT-TS-3",
+        parameters: {
+          tsID: 1487397,
+          tcvdIDs: [5448504, 5448503, 5448505, 5448506],
+          fromReqs: false,
+        },
+        expectedOutput:
+          "Test cases VT-TC-4, VT-TC-1, VT-TC-101, and VT-TC-22 linked to test suite VT-TS-3.",
+      },
+    ],
+    hints: [
+      "To get the tsID, call the Fetch Test Suites for Test Case API with rootFolderId otherwise if given folderid so use that and from response get the id.",
+      "To get the tcvdIDs by testcase entityKey, call the Testcase/Fetch Versions API and use data[<index>].tcVersionID.",
+      "Set fromReqs to false to direct test case linkage.",
+    ],
+    outputDescription: "JSON object with linkage status and details.",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Requirements Linked Test Cases to Test Suite",
+    summary:
+      "Link test cases (including those linked to requirements) to a test suite in QMetry.",
+    handler: QMetryToolsHandlers.REQUIREMENTS_LINKED_TESTCASES_TO_TESTSUITE,
+    inputSchema: RequirementsLinkedTestCasesToTestSuiteArgsSchema,
+    purpose:
+      "Link one or more test cases to a test suite. " +
+      "Requires tcvdIDs, which can be auto-resolved from the Fetch Test Cases Linked to Requirement API by <requirementEntityKey> to fetch If user provides entityKey (e.g., MAC-RQ-1011), first call FETCH_REQUIREMENTS with filter on entityKeyId to resolve the numeric rqID and get the linked test cases version ids from the tools." +
+      "Supports requirement-based test case linkage.",
+    useCases: [
+      "Link requirements linked test cases to a test suite",
+      "Bulk link multiple requirements linked test cases to a suite",
+      "Automate test suite composition from requirements linked test cases",
+    ],
+    examples: [
+      {
+        description: "VT-RQ-18 Requirements Linked test cases to a test suite",
+        parameters: { tsID: 8674, tcvdIDs: [5448504, 5448503], fromReqs: true },
+        expectedOutput:
+          "Test cases QTM-TC-32 and QTM-TC-35 linked to test suite 8674.",
+      },
+      {
+        description:
+          "VT-RQ-19 Requirements Linked test cases to test suites id 1487397",
+        parameters: {
+          tsID: 1487397,
+          tcvdIDs: [5448504, 5448503],
+          fromReqs: true,
+        },
+        expectedOutput:
+          "Test cases VT-TC-9 and VT-TC-10 linked to test suite 1487397.",
+      },
+      {
+        description:
+          "VT-RQ-20 Requirements Linked test case to test suite VT-TS-3",
+        parameters: {
+          tsID: 1487397,
+          tcvdIDs: [5448504, 5448503, 5448505, 5448506],
+          fromReqs: true,
+        },
+        expectedOutput:
+          "Test cases VT-TC-4, VT-TC-1, VT-TC-101, and VT-TC-22 linked to test suite VT-TS-3.",
+      },
+    ],
+    hints: [
+      "To get the tsID, call the Fetch Test Suites for Test Case API with rootFolderId otherwise if given folderid so use that and from response get the id.",
+      "To get the requirement linked tcvdIDs by requirement entityKey, call the Fetch Test Cases Linked to Requirement API by <requirementEntityKey> to fetch If user provides entityKey (e.g., MAC-RQ-1011), first call FETCH_REQUIREMENTS with filter on entityKeyId to resolve the numeric rqID and get the linked test cases version ids.",
+      "Set fromReqs to true to link requirements linked test cases instead of direct test case linkage.",
+    ],
+    outputDescription: "JSON object with linkage status and details.",
+    readOnly: false,
+    idempotent: false,
   },
   {
     title: "Fetch Issues Linked to Test Case",

@@ -4,6 +4,7 @@ import {
   getBuilds,
   getPlatforms,
   getProjectInfo,
+  getProjects,
   getReleasesCycles,
 } from "./project.js";
 import {
@@ -12,19 +13,26 @@ import {
   fetchRequirementsLinkedToTestCase,
 } from "./requirement.js";
 import {
+  createTestCases,
   fetchTestCaseDetails,
   fetchTestCaseExecutions,
   fetchTestCaseSteps,
   fetchTestCases,
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
+  linkRequirementToTestCase,
+  updateTestCase,
 } from "./testcase.js";
 import {
+  createTestSuites,
   fetchExecutionsByTestSuite,
   fetchLinkedIssuesByTestCaseRun,
   fetchTestCaseRunsByTestSuiteRun,
   fetchTestCasesByTestSuite,
   fetchTestSuitesForTestCase,
+  linkTestCasesToTestSuite,
+  reqLinkedTestCasesToTestSuite,
+  updateTestSuite,
 } from "./testsuite.js";
 
 /**
@@ -42,25 +50,34 @@ type QMetryHandler = (
 ) => Promise<any>;
 
 export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
+  [QMetryToolsHandlers.FETCH_PROJECTS]: getProjects,
   [QMetryToolsHandlers.SET_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_PROJECT_INFO]: getProjectInfo,
   [QMetryToolsHandlers.FETCH_RELEASES_CYCLES]: getReleasesCycles,
   [QMetryToolsHandlers.FETCH_BUILDS]: getBuilds,
   [QMetryToolsHandlers.FETCH_PLATFORMS]: getPlatforms,
+  [QMetryToolsHandlers.CREATE_TEST_CASE]: createTestCases,
+  [QMetryToolsHandlers.UPDATE_TEST_CASE]: updateTestCase,
   [QMetryToolsHandlers.FETCH_TEST_CASES]: fetchTestCases,
   [QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS]: fetchTestCaseDetails,
   [QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS]:
     fetchTestCaseVersionDetails,
   [QMetryToolsHandlers.FETCH_TEST_CASE_STEPS]: fetchTestCaseSteps,
   [QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS]: fetchTestCaseExecutions,
+  [QMetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE]: linkRequirementToTestCase,
   [QMetryToolsHandlers.FETCH_REQUIREMENTS]: fetchRequirements,
   [QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS]: fetchRequirementDetails,
   [QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT]:
     fetchTestCasesLinkedToRequirement,
   [QMetryToolsHandlers.FETCH_REQUIREMENTS_LINKED_TO_TESTCASE]:
     fetchRequirementsLinkedToTestCase,
+  [QMetryToolsHandlers.CREATE_TEST_SUITE]: createTestSuites,
+  [QMetryToolsHandlers.UPDATE_TEST_SUITE]: updateTestSuite,
   [QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE]:
     fetchTestSuitesForTestCase,
+  [QMetryToolsHandlers.LINK_TESTCASES_TO_TESTSUITE]: linkTestCasesToTestSuite,
+  [QMetryToolsHandlers.REQUIREMENTS_LINKED_TESTCASES_TO_TESTSUITE]:
+    reqLinkedTestCasesToTestSuite,
   [QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE]: fetchTestCasesByTestSuite,
   [QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE]:
     fetchExecutionsByTestSuite,
