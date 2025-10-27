@@ -155,15 +155,15 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 
 #### `create_or_update_api`
 
--   Purpose: Create a new API or update an existing API in SwaggerHub Registry for API Hub for Design. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content.
+-   Purpose: Create a new API or update an existing API in SwaggerHub Registry for API Hub for Design. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. If an API with the same owner and name already exists, it will be updated; otherwise, a new API will be created.
 -   Returns: API metadata including owner, name, version (always 1.0.0), SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
--   Use case: Programmatically create new APIs from OpenAPI/AsyncAPI specifications, update existing API definitions, or migrate APIs into API Hub for Design.
+-   Use case: Programmatically create new APIs from OpenAPI/AsyncAPI specifications, update existing API definitions with new versions of the specification, or migrate APIs into API Hub for Design.
 -   Parameters:
 
 | Parameter | Description | Type | Required |
 | --- | --- | --- | --- |
 | `owner` | Organization name (owner of the API) | string | Yes |
-| `apiName` | API name | string | Yes |
+| `apiName` | API name. If an API with this name already exists under the specified owner, it will be updated. | string | Yes |
 | `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment. | string | Yes |
 
 #### `create_api_from_template`
