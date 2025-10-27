@@ -32,8 +32,8 @@ jobs:
           docker buildx build \
             --target tester \
             --platform linux/amd64 \
-            --load \
             --progress plain \
+            --output=type=cacheonly \
             .
 
       - name: Run container tests (vitest) on arm64
