@@ -170,7 +170,7 @@ export const TestExecutionSchema = z.object({
   links: LinksSchema.optional(),
 });
 
-export const GetTestExecutionResponseSchema = z.object({
+export const GetTestExecutionsResponseSchema = z.object({
   next: z
     .string()
     .nullable()

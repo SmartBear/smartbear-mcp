@@ -5,7 +5,7 @@ import type {
 } from "../common/types.js";
 import { ApiClient } from "./common/api-client.js";
 import { GetProjects } from "./tool/project/get-projects.js";
-import { GetTestExecutions } from "./tool/testexecution/get-testexecution.js";
+import { GetTestExecutions } from "./tool/testexecution/get-testexecutions.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
 export class ZephyrClient implements Client {

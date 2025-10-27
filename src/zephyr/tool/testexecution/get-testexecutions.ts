@@ -3,7 +3,7 @@ import type { ZodRawShape } from "zod";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
-  GetTestExecutionResponseSchema,
+  GetTestExecutionsResponseSchema,
   TestExecutionsQueryValuesSchema,
 } from "../../common/types.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
@@ -24,7 +24,7 @@ export class GetTestExecutions implements ZephyrTool {
     readOnly: true,
     idempotent: true,
     inputSchema: GetTestExecutionsInputSchema,
-    outputSchema: GetTestExecutionResponseSchema,
+    outputSchema: GetTestExecutionsResponseSchema,
     examples: [
       {
         description: "Get the first 10 test executions",
