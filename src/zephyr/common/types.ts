@@ -77,7 +77,8 @@ export const StatusSchema = z.object({
   color: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
-    .describe("The color code of the status in hexadecimal format."),
+    .describe("The color code of the status in hexadecimal format.")
+    .nullable(),
   archived: z
     .boolean()
     .describe(
