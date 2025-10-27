@@ -65,10 +65,10 @@ describe("GetTestCycles", () => {
             Tester: "fa2e582e-5e15-521e-92e3-47e6ca2e7256",
           },
           links: {
-            self: "string",
+            self: 'https://api.zephyrscale.smartbear.com/v2/testcycles/14/links",',
             issues: [
               {
-                self: "string",
+                self: 'https://api.zephyrscale.smartbear.com/v2/testcycles/14/links",',
                 issueId: 10100,
                 id: 1,
                 target: "https://jira.example.com/rest/api/2/issue/10000",
@@ -77,7 +77,7 @@ describe("GetTestCycles", () => {
             ],
             webLinks: [
               {
-                self: "string",
+                self: 'https://api.zephyrscale.smartbear.com/v2/testcycles/14/links",',
                 description: "A link to atlassian.com",
                 url: "https://atlassian.com",
                 id: 1,
@@ -149,10 +149,10 @@ describe("GetTestCycles", () => {
             Tester: "fa2e582e-5e15-521e-92e3-47e6ca2e7256",
           },
           links: {
-            self: "string",
+            self: 'https://api.zephyrscale.smartbear.com/v2/testcycles/14/links",',
             issues: [
               {
-                self: "string",
+                self: 'https://api.zephyrscale.smartbear.com/v2/testcycles/14/links",',
                 issueId: 10100,
                 id: 1,
                 target: "https://jira.example.com/rest/api/2/issue/10000",
@@ -161,7 +161,7 @@ describe("GetTestCycles", () => {
             ],
             webLinks: [
               {
-                self: "string",
+                self: 'https://api.zephyrscale.smartbear.com/v2/testcycles/14/links",',
                 description: "A link to atlassian.com",
                 url: "https://atlassian.com",
                 id: 1,

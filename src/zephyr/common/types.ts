@@ -68,27 +68,9 @@ export const JiraProjectVersionIdSchema = z
     `JiraProjectVersion ID. Must be an integer greater than or equal to 1.`,
   );
 
-export const TestCycleProjectSchema = z.object({
-  id: z.number().describe("The ID of the project."),
-  self: z.string().url().describe("API URL for the project resource."),
-});
-
-export const JiraProjectVersionSchema = z.object({
-  id: z.number().describe("The ID of the Jira project version."),
-  self: z
-    .string()
-    .url()
-    .describe("API URL for the Jira project version resource."),
-});
-
-export const StatusSchema = z.object({
-  id: z.number().describe("The ID of the status."),
-  self: z.string().url().describe("API URL for the status resource."),
-});
-
-export const FolderSchema = z.object({
-  id: z.number().describe("The ID of the folder."),
-  self: z.string().url().describe("API URL for the folder resource."),
+export const SelfReferenceSchema = z.object({
+  id: z.number().describe("The ID of the resource"),
+  self: z.string().url().describe("API URL for the resource"),
 });
 
 export const OwnerSchema = z.object({
@@ -96,29 +78,33 @@ export const OwnerSchema = z.object({
   accountId: z.string().describe("Account ID of the owner."),
 });
 
-export const IssueLinkSchema = z.object({
-  self: z.string().describe("API URL for the issue link resource."),
-  issueId: z.number().describe("ID of the linked issue."),
-  id: z.number().describe("ID of the issue link."),
-  target: z.string().url().describe("Target URL of the linked issue."),
-  type: z.string().describe("Type of the link (e.g., COVERAGE)."),
-});
+export const CustomFieldsSchema = z.record(
+  z.union([z.string(), z.number(), z.boolean(), z.array(z.string()), z.null()]),
+);
 
-export const WebLinkSchema = z.object({
-  self: z.string().describe("API URL for the web link resource."),
-  description: z.string().describe("Description of the web link."),
-  url: z.string().url().describe("URL of the web link."),
-  id: z.number().describe("ID of the web link."),
-  type: z.string().describe("Type of the web link."),
-});
+export const IssueLinkSchema = SelfReferenceSchema.merge(
+  z.object({
+    issueId: z.number().describe("ID of the linked issue."),
+    target: z.string().url().describe("Target URL of the linked issue."),
+    type: z.string().describe("Type of the link (e.g., COVERAGE)."),
+  }),
+);
 
-export const TestPlanLinkSchema = z.object({
-  id: z.number().describe("ID of the test plan link."),
-  self: z.string().url().describe("API URL for the test plan link resource."),
-  type: z.string().describe("Type of the test plan link."),
-  testPlanId: z.number().describe("ID of the test plan."),
-  target: z.string().url().describe("Target URL of the test plan."),
-});
+export const WebLinkSchema = SelfReferenceSchema.merge(
+  z.object({
+    description: z.string().describe("Description of the web link."),
+    url: z.string().url().describe("URL of the web link."),
+    type: z.string().describe("Type of the web link."),
+  }),
+);
+
+export const TestPlanLinkSchema = SelfReferenceSchema.merge(
+  z.object({
+    testPlanId: z.number().describe("ID of the test plan."),
+    target: z.string().url().describe("Target URL of the test plan."),
+    type: z.string().describe("Type of the test plan link."),
+  }),
+);
 
 export const LinksSchema = z.object({
   self: z.string().describe("API URL for the links resource."),
@@ -131,10 +117,10 @@ export const TestCycleSchema = z.object({
   id: z.number().describe("The ID of the test cycle."),
   key: z.string().describe("The key of the test cycle."),
   name: z.string().describe("The name of the test cycle."),
-  project: TestCycleProjectSchema,
-  jiraProjectVersion: JiraProjectVersionSchema.nullable().optional(),
-  status: StatusSchema.optional(),
-  folder: FolderSchema.nullable().optional(),
+  project: SelfReferenceSchema,
+  jiraProjectVersion: SelfReferenceSchema.nullable().optional(),
+  status: SelfReferenceSchema.optional(),
+  folder: SelfReferenceSchema.nullable().optional(),
   description: z
     .string()
     .nullable()
@@ -151,10 +137,9 @@ export const TestCycleSchema = z.object({
     .optional()
     .describe("Planned end date (ISO 8601)."),
   owner: OwnerSchema.optional(),
-  customFields: z
-    .record(z.any())
-    .optional()
-    .describe("Custom fields for the test cycle."),
+  customFields: CustomFieldsSchema.optional().describe(
+    "Custom fields for the test cycle.",
+  ),
   links: LinksSchema.optional(),
 });
 
