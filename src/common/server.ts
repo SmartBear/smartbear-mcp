@@ -2,7 +2,10 @@ import {
   McpServer,
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  CallToolResult,
+  ToolAnnotations,
+} from "@modelcontextprotocol/sdk/types.js";
 import {
   ZodAny,
   ZodArray,
@@ -15,6 +18,7 @@ import {
   type ZodRawShape,
   ZodString,
   type ZodType,
+  type ZodTypeAny,
   ZodUnion,
 } from "zod";
 import Bugsnag from "../common/bugsnag.js";
@@ -52,11 +56,17 @@ export class SmartBearMcpServer extends McpServer {
             title: toolTitle,
             description: this.getDescription(params),
             inputSchema: this.getInputSchema(params),
+            outputSchema: this.getOutputSchema(params),
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
             try {
-              return await cb(args, extra);
+              const result = await cb(args, extra);
+              if (result) {
+                this.validateCallbackResult(result, params);
+                this.addStructuredContentAsText(result);
+              }
+              return result;
             } catch (e) {
               // ToolErrors should not be reported to BugSnag
               if (e instanceof ToolError) {
@@ -116,8 +126,33 @@ export class SmartBearMcpServer extends McpServer {
     }
   }
 
-  private getAnnotations(toolTitle: string, params: ToolParams): any {
-    const annotations: ToolAnnotations = {
+  private validateCallbackResult(result: CallToolResult, params: ToolParams) {
+    if (result.isError) {
+      return;
+    }
+    if (params.outputSchema && !result.structuredContent) {
+      throw new Error(
+        `The result of the tool '${params.title}' must include 'structuredContent'`,
+      );
+    }
+  }
+
+  private addStructuredContentAsText(result: CallToolResult) {
+    if (result.structuredContent && !result.content?.length) {
+      result.content = [
+        {
+          type: "text",
+          text: JSON.stringify(result.structuredContent),
+        },
+      ];
+    }
+  }
+
+  private getAnnotations(
+    toolTitle: string,
+    params: ToolParams,
+  ): ToolAnnotations {
+    const annotations = {
       title: toolTitle,
       readOnlyHint: params.readOnly ?? true,
       destructiveHint: params.destructive ?? false,
@@ -139,21 +174,20 @@ export class SmartBearMcpServer extends McpServer {
       }
     }
 
-    if (params.zodSchema && params.zodSchema instanceof ZodObject) {
-      for (const key of Object.keys(params.zodSchema.shape)) {
-        const field = params.zodSchema.shape[key];
-        args[key] = field;
-        if (field.description) {
-          args[key] = args[key].describe(field.description);
-        }
+    return { ...args, ...this.schemaToRawShape(params.inputSchema) };
+  }
 
-        if (field.isOptional()) {
-          args[key] = args[key].optional();
-        }
-      }
+  private schemaToRawShape(
+    schema: ZodTypeAny | undefined,
+  ): ZodRawShape | undefined {
+    if (schema && schema instanceof ZodObject) {
+      return schema.shape;
     }
+    return undefined;
+  }
 
-    return args;
+  private getOutputSchema(params: ToolParams): any {
+    return this.schemaToRawShape(params.outputSchema);
   }
 
   private getDescription(params: ToolParams): string {
@@ -162,14 +196,14 @@ export class SmartBearMcpServer extends McpServer {
       useCases,
       examples,
       parameters,
-      zodSchema,
+      inputSchema,
       hints,
-      outputFormat,
+      outputDescription,
     } = params;
 
     let description = summary;
 
-    // Parameters if available otherwise use zodSchema
+    // Parameters if available otherwise use inputSchema
     if ((parameters ?? []).length > 0) {
       description += `\n\n**Parameters:**\n${parameters
         ?.map(
@@ -182,17 +216,17 @@ export class SmartBearMcpServer extends McpServer {
         .join("\n")}`;
     }
 
-    if (zodSchema && zodSchema instanceof ZodObject) {
+    if (inputSchema && inputSchema instanceof ZodObject) {
       description += "\n\n**Parameters:**\n";
-      description += Object.keys(zodSchema.shape)
+      description += Object.keys(inputSchema.shape)
         .map((key) =>
-          this.formatParameterDescription(key, zodSchema.shape[key]),
+          this.formatParameterDescription(key, inputSchema.shape[key]),
         )
         .join("\n");
     }
 
-    if (outputFormat) {
-      description += `\n\n**Output Format:** ${outputFormat}`;
+    if (outputDescription) {
+      description += `\n\n**Output Description:** ${outputDescription}`;
     }
 
     // Use Cases

@@ -20,8 +20,8 @@ export const StartAtSchema = z
   `);
 
 export const ZephyrProjectSchema = z.object({
-  id: z.number(),
-  jiraProjectId: z.number(),
+  id: z.number().describe("The ID of the project in Zephyr."),
+  jiraProjectId: z.number().describe("The ID of the project in Jira."),
   key: z.string(),
   enabled: z.boolean(),
 });
@@ -30,11 +30,18 @@ export type ZephyrProject = z.infer<typeof ZephyrProjectSchema>;
 
 export function createListSchema<T extends ZodTypeAny>(itemSchema: T) {
   return z.object({
-    next: z.string().nullable(),
+    next: z
+      .string()
+      .nullable()
+      .describe(
+        "Returns a URL to the next page of results, or null if there are no more results.",
+      ),
     startAt: StartAtSchema,
     maxResults: MaxResultsSchema,
-    total: z.number(),
-    isLast: z.boolean(),
+    total: z.number().describe("The total number of items available."),
+    isLast: z
+      .boolean()
+      .describe("Indicates if this is the last page of results."),
     values: z.array(itemSchema),
   });
 }
