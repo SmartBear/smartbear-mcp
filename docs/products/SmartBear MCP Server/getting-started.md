@@ -56,7 +56,7 @@ The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its ow
 
 - **QMetry**
 
-  Generate an API key from the QMetry at [`app.qmetry.com`](https://testmanagement.qmetry.com/#/integration/open-api).
+  Generate an API key from the QMetry at [`testmanagement.qmetry.com`](https://testmanagement.qmetry.com/#/integration/open-api).
 
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products - tokens for unused products can be omitted.
 
