@@ -33,6 +33,11 @@ export const ZephyrProjectSchema = z.object({
   enabled: z.boolean(),
 });
 
+export const ProjectIdOrKeySchema = z
+  .string()
+  .regex(/^(\d+)|([A-Z][A-Z_0-9]+)$/)
+  .describe("The Zephyr project ID or Jira project key.");
+
 export type ZephyrProject = z.infer<typeof ZephyrProjectSchema>;
 
 export function createListSchema<T extends ZodTypeAny>(itemSchema: T) {
