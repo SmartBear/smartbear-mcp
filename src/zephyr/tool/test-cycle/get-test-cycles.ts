@@ -8,7 +8,7 @@ import {
   MaxResultsSchema,
   ProjectKeySchema,
   StartAtSchema,
-  ZephyrTestCycleListSchema,
+  TestCycleListSchema,
 } from "../../common/types.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
 
@@ -35,7 +35,7 @@ export class GetTestCycles implements ZephyrTool {
     readOnly: true,
     idempotent: true,
     inputSchema: GetTestCyclesInputSchema,
-    outputSchema: ZephyrTestCycleListSchema,
+    outputSchema: TestCycleListSchema,
     examples: [
       {
         description: "Get the first 10 Test Cycles",
@@ -61,19 +61,35 @@ export class GetTestCycles implements ZephyrTool {
         },
         expectedOutput: "The 7th to the 11th Test Cycles with their details",
       },
+      {
+        description: "Get one Test Cycle from the project PROJ",
+        parameters: {
+          projectKey: "PROJ",
+          maxResults: 1,
+        },
+        expectedOutput: "One Test Cycle from project PROJ with its details",
+      },
+      {
+        description: "Get one Test Cycle from the folder 123",
+        parameters: {
+          folderId: 123,
+          maxResults: 1,
+        },
+        expectedOutput: "One Test Cycle from folder 123 with its details",
+      },
+      {
+        description: "Get one Test Cycle from the version 456",
+        parameters: {
+          jiraProjectVersionId: 456,
+          maxResults: 1,
+        },
+        expectedOutput: "One Test Cycle from version 456 with its details",
+      },
     ],
   };
 
   handle: ToolCallback<ZodRawShape> = async (args: GetTestCyclesInput) => {
-    const { projectKey, folderId, jiraProjectVersionId, maxResults, startAt } =
-      args;
-    const response = await this.apiClient.get("/testcycles", {
-      projectKey,
-      folderId,
-      jiraProjectVersionId,
-      maxResults,
-      startAt,
-    });
+    const response = await this.apiClient.get("/testcycles", args);
     return {
       structuredContent: response,
       content: [],

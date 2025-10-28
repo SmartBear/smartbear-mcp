@@ -31,4 +31,4 @@ The following environment variables configure the Zephyr integration:
   - optional max results to return (`maxResults`)
   - optional starting position for pagination (`startAt`)
 -  **Returns**: A list of Test Cycles along with their properties.
--  **Use case**: Retrieve the Test Cycles, it can be filtered though Project Key, Folder ID, Jira Project version ID.
+-  **Use case**: Retrieve the Test Cycles, it can be filtered by Project Key, Folder ID, Jira Project version ID.

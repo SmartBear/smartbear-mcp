@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ZephyrTestCycleListSchema } from "../../../../../zephyr/common/types.js";
+import { TestCycleListSchema } from "../../../../../zephyr/common/types.js";
 import {
   GetTestCycles,
   GetTestCyclesInputSchema,
@@ -17,7 +17,7 @@ describe("GetTestCycles", () => {
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
     expect(instance.specification.inputSchema).toBe(GetTestCyclesInputSchema);
-    expect(instance.specification.outputSchema).toBe(ZephyrTestCycleListSchema);
+    expect(instance.specification.outputSchema).toBe(TestCycleListSchema);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
