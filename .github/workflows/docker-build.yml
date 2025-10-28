@@ -5,9 +5,9 @@ name: Docker Build Test
 
 on:
   push:
-    branches: [ main, next ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, next ]
+    branches: [ main ]
   # Allow manual triggering
   workflow_dispatch:
 
