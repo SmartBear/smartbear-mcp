@@ -4,6 +4,7 @@ import type {
   RegisterToolsFunction,
 } from "../common/types.js";
 import { ApiClient } from "./common/api-client.js";
+import { GetProject } from "./tool/project/get-project.js";
 import { GetProjects } from "./tool/project/get-projects.js";
 import { GetTestCycle } from "./tool/test-cycle/get-testcycle.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
@@ -26,6 +27,7 @@ export class ZephyrClient implements Client {
   ): void {
     const tools: ZephyrTool[] = [
       new GetProjects(this.apiClient),
+      new GetProject(this.apiClient),
       new GetTestCycle(this.apiClient),
     ];
 
