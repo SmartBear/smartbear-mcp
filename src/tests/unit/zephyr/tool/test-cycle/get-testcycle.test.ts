@@ -3,7 +3,7 @@ import { TestCycleSchema } from "../../../../../zephyr/common/types.js";
 import {
   GetTestCycle,
   GetTestCycleInputSchema,
-} from "../../../../../zephyr/tool/testcycle/get-testcycle.js";
+} from "../../../../../zephyr/tool/test-cycle/get-testcycle.js";
 
 describe("GetTestCycle", () => {
   const mockApiClient = { get: vi.fn() };
