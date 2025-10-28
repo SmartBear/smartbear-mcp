@@ -106,8 +106,8 @@ export const TestCycleSchema = z.object({
   name: z.string().describe("The name of the test cycle."),
   project: ReferenceSchema,
   jiraProjectVersion: ReferenceSchema.nullable(),
-  status: ReferenceSchema,
-  folder: ReferenceSchema.nullable().optional(),
+  status: ReferenceSchema.nullable(),
+  folder: ReferenceSchema.nullable(),
   description: z.string().nullable().describe("Description of the test cycle."),
   plannedStartDate: z
     .string()
@@ -117,9 +117,9 @@ export const TestCycleSchema = z.object({
   plannedEndDate: z
     .string()
     .datetime()
-    .optional()
+    .nullable()
     .describe("Planned end date (ISO 8601)."),
-  owner: JiraUserSchema.optional().describe(
+  owner: JiraUserSchema.nullable().describe(
     "Details about the Test Cycle owner",
   ),
   customFields: z
