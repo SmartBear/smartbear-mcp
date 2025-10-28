@@ -26,12 +26,16 @@ export const ZephyrProjectKeySchema = z
 
 export const SingleLineTextSchema = z.string().min(1).max(255);
 
-export const ZephyrProjectSchema = z.object({
-  id: z.number().describe("The ID of the project in Zephyr."),
-  jiraProjectId: z.number().describe("The ID of the project in Jira."),
-  key: z.string(),
-  enabled: z.boolean(),
-});
+export const ZephyrProjectSchema = z
+  .object({
+    id: z.number().describe("The ID of the project in Zephyr."),
+    jiraProjectId: z.number().describe("The ID of the project in Jira."),
+    key: z.string(),
+    enabled: z.boolean(),
+  })
+  .describe(
+    "Details of a Zephyr project. Users can only view it if they have the 'Browse projects' permission for its associated Jira project.",
+  );
 
 export const ProjectIdOrKeySchema = z
   .string()
