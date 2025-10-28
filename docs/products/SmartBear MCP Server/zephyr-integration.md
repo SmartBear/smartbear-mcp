@@ -19,14 +19,18 @@ The following environment variables configure the Zephyr integration:
 ### Get Projects
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
-- **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+- **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not. Results are filtered based on the provided parameters.
+- **Use case**: Getting a list of projects and their properties.
 
 ### Get Project
 
 - **Purpose**: Retrieve a project available within your Zephyr account by either its key or id.
 - **Parameters:** Project key or ID
 - **Returns**: A project along with its properties, including information about if it has Zephyr enabled or not.
-- **Use case**: Getting a list of projects and their properties.
+- **Use case**: Getting a project with its properties.
 
 ### Get Statuses
 
