@@ -391,7 +391,7 @@ async function newServer(
 }
 
 function getHeaderName(client: Client, key: string): string {
-  return `${client.prefix}-${key
+  return `${client.configPrefix}-${key
     .split("_")
     .map(
       (part: string) =>

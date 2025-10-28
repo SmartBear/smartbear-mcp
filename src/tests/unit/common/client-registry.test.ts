@@ -38,7 +38,8 @@ describe("ClientRegistry", () => {
   ): Client {
     return {
       name,
-      prefix: name,
+      toolPrefix: name,
+      configPrefix: name,
       config: configSchema,
       configure: vi.fn().mockResolvedValue(true),
       registerTools: vi.fn(),

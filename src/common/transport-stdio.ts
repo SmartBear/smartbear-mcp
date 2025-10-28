@@ -53,5 +53,5 @@ export async function runStdioMode() {
 }
 
 function getEnvVarName(client: Client, key: string): string {
-  return `${client.prefix.toUpperCase()}_${key.toUpperCase()}`;
+  return `${client.configPrefix.toUpperCase().replace(/-/g, "_")}_${key.toUpperCase()}`;
 }

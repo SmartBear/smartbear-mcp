@@ -56,7 +56,7 @@ export class SmartBearMcpServer extends McpServer {
   addClient(client: Client): void {
     client.registerTools(
       (params, cb) => {
-        const toolName = `${client.prefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
+        const toolName = `${client.toolPrefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
         const toolTitle = `${client.name}: ${params.title}`;
         return super.registerTool(
           toolName,
@@ -105,7 +105,7 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       client.registerResources((name, path, cb) => {
-        const url = `${client.prefix}://${name}/${path}`;
+        const url = `${client.toolPrefix}://${name}/${path}`;
         return super.registerResource(
           name,
           new ResourceTemplate(url, {

@@ -25,7 +25,8 @@ export class ZephyrClient implements Client {
   private apiClient: ApiClient | undefined;
 
   name = "Zephyr";
-  prefix = "zephyr";
+  toolPrefix = "zephyr";
+  configPrefix = "zephyr";
   config = ConfigurationSchema;
 
   async configure(

@@ -40,7 +40,8 @@ export class ApiHubClient implements Client {
   private api: ApiHubAPI | undefined;
 
   name = "API Hub";
-  prefix = "api_hub";
+  toolPrefix = "api_hub";
+  configPrefix = "api-hub";
   config = ConfigurationSchema;
 
   async configure(

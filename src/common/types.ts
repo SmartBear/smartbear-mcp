@@ -97,7 +97,9 @@ export interface Client {
   /** Human-readable name for the client - usually the product name - used to prefix tool names */
   name: string;
   /** Prefix for tool IDs */
-  prefix: string;
+  toolPrefix: string;
+  /** Prefix for configuration (environment variables and http headers) */
+  configPrefix: string;
   /** Zod schema defining configuration fields for this client */
   config: ZodObject<ZodRawShape>;
   /**

@@ -47,7 +47,8 @@ const ConfigurationSchema = z.object({
 // Tool definitions for PactFlow AI API client
 export class PactflowClient implements Client {
   name = "Contract Testing";
-  prefix = "contract-testing";
+  toolPrefix = "contract-testing";
+  configPrefix = "pact-broker";
   config = ConfigurationSchema;
 
   private headers:

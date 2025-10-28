@@ -6,7 +6,8 @@ describe("ZephyrClient", () => {
   it("should set name and prefix", () => {
     const client = new ZephyrClient();
     expect(client.name).toBe("Zephyr");
-    expect(client.prefix).toBe("zephyr");
+    expect(client.toolPrefix).toBe("zephyr");
+    expect(client.configPrefix).toBe("zephyr");
   });
 
   it("should initialize ApiClient with default baseUrl", async () => {

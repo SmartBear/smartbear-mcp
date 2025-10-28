@@ -25,7 +25,8 @@ describe("ApiHubClient", () => {
     it("should initialize with correct parameters", () => {
       expect(client).toBeInstanceOf(ApiHubClient);
       expect(client.name).toBe("API Hub");
-      expect(client.prefix).toBe("api_hub");
+      expect(client.toolPrefix).toBe("api_hub");
+      expect(client.configPrefix).toBe("api-hub");
     });
 
     it("should create configuration and API instances", () => {

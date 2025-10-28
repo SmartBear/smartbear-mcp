@@ -37,7 +37,8 @@ export class ReflectClient implements Client {
   private headers = {};
 
   name = "Reflect";
-  prefix = "reflect";
+  toolPrefix = "reflect";
+  configPrefix = "reflect";
 
   config = ConfigurationSchema;
 
