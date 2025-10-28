@@ -104,10 +104,12 @@ export const TestCycleSchema = z.object({
   id: z.number().describe("The ID of the test cycle."),
   key: z.string().describe("The key of the test cycle."),
   name: z.string().describe("The name of the test cycle."),
-  project: ReferenceSchema,
-  jiraProjectVersion: ReferenceSchema.nullable(),
-  status: ReferenceSchema.nullable(),
-  folder: ReferenceSchema.nullable(),
+  project: ReferenceSchema.describe("The ID and link for the project."),
+  jiraProjectVersion: ReferenceSchema.nullable().describe(
+    "The ID and link for the Jira Project Version",
+  ),
+  status: ReferenceSchema.nullable().describe("The ID and link for the Status"),
+  folder: ReferenceSchema.nullable().describe("The ID and link for the Folder"),
   description: z.string().nullable().describe("Description of the test cycle."),
   plannedStartDate: z
     .string()
