@@ -61,16 +61,14 @@ export function createListSchema<T extends ZodTypeAny>(itemSchema: T) {
 export const ZephyrProjectListSchema = createListSchema(ZephyrProjectSchema);
 export type ZephyrProjectList = z.infer<typeof ZephyrProjectListSchema>;
 
+export const ReferenceSchema = z.object({
+  id: z.number().describe("The ID of the resource."),
+  self: z.string().url().describe("The API URL to get more resource details."),
+});
+
 export const StatusSchema = z.object({
   id: z.number().describe("The ID of the status in Zephyr."),
-  project: z.object({
-    id: z.number().describe("The ID of the project in Zephyr."),
-    self: z
-      .string()
-      .describe(
-        "The URL to fetch more information about the project from Zephyr.",
-      ),
-  }),
+  project: ReferenceSchema.describe("The ID and link for the project."),
   name: SingleLineTextSchema,
   description: SingleLineTextSchema.nullable(),
   index: z
