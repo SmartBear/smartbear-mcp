@@ -166,7 +166,7 @@ export const TestExecutionSchema = z.object({
   testCycle: TestCycleReferenceSchema.describe(
     "The test cycle associated with this test execution.",
   ).optional(),
-  customFields: CustomFieldsSchema.nullable().optional(),
+  customFields: CustomFieldsSchema.nullable(),
   links: LinksSchema.optional(),
 });
 
