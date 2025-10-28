@@ -12,6 +12,7 @@ Thank you for your contributing to SmartBear MCP!
     - [Test Requirements](#test-requirements)
     - [Running Tests](#running-tests)
   - [Documentation](#documentation)
+    - [Previewing docs](#previewing-docs)
   - [Releases](#releases)
   - [Additional Resources](#additional-resources)
 
@@ -29,16 +30,18 @@ Thank you for your contributing to SmartBear MCP!
 
 ### Branching Strategy
 
-Releases are automatically deployed on merge to `main` (see [below](#releases)), so in order to coordinate a release between the various products a `next` branch is used to accumulate changes and avoid unintentionally releasing part changes.
+The repository now uses `main` as the sole primary development and release branch.
 
-Please read the following guidance:
+Guidance:
 
-- Feature branches should be created from `next` and PRs made into `next`
-- If your change is noteworthy to our customers, update the [CHANGELOG.md](./CHANGELOG.md) in your PR with details of your changes
-  - You may need to create a new section if your change is the first since the last release
-- This is a public repo, so consider a squash-commit of your feature PRs to give a cleaner history
-- Create `integration/` branches from `next` if you want to keep a larger change away from the release during development
-- Don't forget to update the `docs/` directory with any noteworthy changes to functionality or configuration
+- Create feature branches from `main`; open PRs back into `main`.
+- Use `integration/<name>` branches (from `main`) for multi-stage or larger changes; merge when the whole change is releasable.
+- Treat every merge to `main` as potentially releasable by any product team.
+- Provide a meaningful CHANGELOG entry for any public-facing impact.
+- Consider squash merges for cleaner history.
+- Keep the `docs/` directory updated alongside functional changes.
+
+There is no longer a `next` accumulation branch.
 
 ## Development Setup
 
@@ -137,40 +140,49 @@ Documentation lives in the `/docs` directory of this repo. Changes to the docume
 
 ### Previewing docs
 
-SmartBear team members wishing to preview docs changes before a change is merged to `next`, run the "Publish Portal Content" GitHub Action manually from the "Actions" tab in this repository, selecting your branch as the workflow input. Changes will be visible in the [preview site](https://smartbear-internal.portal.swaggerhub.com/smartbear-mcp) on completion.
+Merging a PR into `main` automatically publishes the documentation to the preview site for review prior to a tagged release going live.
 
-Please note – there is only one preview site, shared with `next` merges.
+To manually trigger a preview (if needed before merging), you can still run the "Publish Portal Content" GitHub Action against your branch. The shared preview site:
+
+- https://smartbear-internal.portal.swaggerhub.com/smartbear-mcp
 
 ## Releases
 
-A release will be carried out by a member of the SmartBear team when a set of releasable changes is ready on the `next` branch. If there are commits from more than one product, the releasing engineer will coordinate with each product team to ensure the release is appropriate and sufficiently documented in the changelog/docs.
+Releases are created directly from `main`. Any merged change may be released once appropriately documented.
 
-Please follow these steps to create a new release:
+Steps:
 
-1. **Decide on a version number**
-    - Check the changes in `CHANGELOG.md` and using [semantic versioning](https://semver.org/), decide on a new version. i.e. `1.2.3`
+1. **Decide Version**
+   - Review `CHANGELOG.md` and select a semantic version (e.g. `1.2.3`).
 
-2. **Create Release Branch**
-    ```bash
-    git checkout next
-    git pull
-    git checkout -b release/v1.2.3
-    ```
+2. **Prepare CHANGELOG**
+   - Add a new version section with date and summary of changes.
 
-3. **Update the Version**
-    - Use `npm version patch|minor|major` to increment the version number
-    - Update the version number and release date in the `CHANGELOG.md` to match
-    - Push the changes to GitHub and create a Pull Request from your release branch into `main`
+3. **(Optional) Release Branch**
+   - If coordination is needed:
+     ```bash
+     git checkout main
+     git pull
+     git checkout -b release/v1.2.3
+     # finalize, open PR to main, merge
+     ```
 
-4. **Release**
-    - Create a new Github release with the version you decided on earlier
-    - Changes will be automatically deployed once the Github release is created
+4. **Tag the Release**
+   - After changes are on `main`:
+     ```bash
+     git checkout main
+     git pull
+     git tag -a v1.2.3 -m "Release v1.2.3"
+     git push origin v1.2.3
+     ```
+   - Create a GitHub Release for tag `v1.2.3` (the `v` prefix is required).
 
-5. **Post-Release**
-    - A PR should automatically be created to merge `main` back into `next`, this should be merged down soon after release
-    - Check https://developer.smartbear.com/smartbear-mcp/ to ensure the docs have been updated correctly
+5. **Automation**
+   - Tagging `main` triggers package publishing, live docs deployment, and updates in related MCP repositories.
 
-Please ensure you update internal ticketing systems accordingly.
+6. **Post-Release**
+   - Verify docs at https://developer.smartbear.com/smartbear-mcp/
+   - Confirm CHANGELOG accuracy.
 
 ## Additional Resources
 
