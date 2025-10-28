@@ -78,7 +78,7 @@ export const IssueLinkSchema = z.object({
 });
 
 export const WebLinkSchema = z.object({
-  self: z.string().describe("API URL for the web link resource."),
+  self: z.string().url().describe("API URL for the web link resource."),
   description: z.string().nullable().describe("Description of the web link."),
   url: z.string().url().describe("URL of the web link."),
   id: z.number().describe("ID of the web link."),
@@ -94,7 +94,7 @@ export const TestPlanLinkSchema = z.object({
 });
 
 export const TestCycleLinkSchema = z.object({
-  self: z.string().describe("API URL for the links resource."),
+  self: z.string().url().describe("API URL for the links resource."),
   issues: z.array(IssueLinkSchema).describe("List of issue links."),
   webLinks: z.array(WebLinkSchema).describe("List of web links."),
   testPlans: z.array(TestPlanLinkSchema).describe("List of test plan links."),
