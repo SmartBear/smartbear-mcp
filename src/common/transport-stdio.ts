@@ -11,12 +11,13 @@ function getNoConfigErrorMessage(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
-      const headerName = getEnvVarName(entry, configKey);
+      const envVarName = getEnvVarName(entry, configKey);
       const requiredTag = requirement.isOptional()
         ? " (optional)"
         : " (required)";
+      messages.push(` - ${entry.name}:`);
       messages.push(
-        `    - ${headerName}${requiredTag}: ${requirement.description}`,
+        `    - ${envVarName}${requiredTag}: ${requirement.description}`,
       );
     }
   }
@@ -52,5 +53,5 @@ export async function runStdioMode() {
 }
 
 function getEnvVarName(client: Client, key: string): string {
-  return `${client.name.toUpperCase()}_${key.toUpperCase()}`;
+  return `${client.prefix.toUpperCase()}_${key.toUpperCase()}`;
 }

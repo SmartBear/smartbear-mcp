@@ -391,7 +391,7 @@ async function newServer(
 }
 
 function getHeaderName(client: Client, key: string): string {
-  return `${client.name}-${key
+  return `${client.prefix}-${key
     .split("_")
     .map(
       (part: string) =>
@@ -429,6 +429,7 @@ function getHttpHeadersHelp(): string[] {
       const requiredTag = requirement.isOptional()
         ? " (optional)"
         : " (required)";
+      messages.push(` - ${entry.name}:`);
       messages.push(
         `    - ${headerName}${requiredTag}: ${requirement.description}`,
       );
