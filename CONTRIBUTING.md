@@ -38,10 +38,6 @@ Guidance:
 - Use `integration/<name>` branches (from `main`) for multi-stage or larger changes; merge when the whole change is releasable.
 - Treat every merge to `main` as potentially releasable by any product team.
 - Provide a meaningful CHANGELOG entry for any public-facing impact.
-- Consider squash merges for cleaner history.
-- Keep the `docs/` directory updated alongside functional changes.
-
-There is no longer a `next` accumulation branch.
 
 ## Development Setup
 
