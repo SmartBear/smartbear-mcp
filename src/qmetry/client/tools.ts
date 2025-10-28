@@ -32,7 +32,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Set QMetry Project Info",
     summary: "Set current QMetry project for your account",
     handler: QMetryToolsHandlers.SET_PROJECT_INFO,
-    zodSchema: ProjectArgsSchema,
+    inputSchema: ProjectArgsSchema,
     purpose:
       "Switch the active QMetry project context for the current session. " +
       "This tool sets the default project that will be used for all subsequent QMetry operations. " +
@@ -70,7 +70,7 @@ export const TOOLS: QMetryToolParams[] = [
       "This operation must be performed before fetching test cases if working with non-default projects",
       "The project context persists for the current session until changed again",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object containing project configuration details, confirmation of project switch, and available project metadata",
     readOnly: false,
     idempotent: true,
@@ -80,7 +80,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Fetch QMetry project information including viewId and folderPath needed for other operations",
     handler: QMetryToolsHandlers.FETCH_PROJECT_INFO,
-    zodSchema: ProjectArgsSchema,
+    inputSchema: ProjectArgsSchema,
     purpose:
       "Prerequisite tool that provides project configuration data required by other QMetry operations. " +
       "The project key to fetch info for. Use 'default' if not specified. " +
@@ -112,7 +112,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Extract viewId from latestViews.TC.viewId for test case operations",
       "Use empty string '' as folderPath for root directory",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object containing project details, viewIds, folderPaths, and project configuration",
     readOnly: true,
     idempotent: true,
@@ -121,7 +121,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Releases and Cycles",
     summary: "Fetch QMetry releases and cycles from the current project",
     handler: QMetryToolsHandlers.FETCH_RELEASES_CYCLES,
-    zodSchema: ReleasesCyclesArgsSchema,
+    inputSchema: ReleasesCyclesArgsSchema,
     purpose:
       "Retrieve release and cycle information from the current QMetry project. " +
       "Releases represent major versions or milestones, while cycles represent test execution phases within releases. " +
@@ -167,7 +167,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Releases contain cycles - use this hierarchy for test execution planning",
       "Each release can have multiple cycles representing different testing phases",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with project hierarchy containing releases and their associated cycles",
     readOnly: true,
     idempotent: true,
@@ -177,7 +177,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Builds",
     summary: "Fetch QMetry builds from the current project",
     handler: QMetryToolsHandlers.FETCH_BUILDS,
-    zodSchema: BuildArgsSchema,
+    inputSchema: BuildArgsSchema,
     purpose:
       "Retrieve builds information from the current QMetry project. " +
       "Builds represent specific versions or iterations of software that can be associated with test executions. " +
@@ -230,7 +230,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Builds are also known as 'drops' in QMetry terminology",
       "Use builds for associating test executions with specific software versions",
     ],
-    outputFormat: "JSON object with builds list and pagination metadata",
+    outputDescription: "JSON object with builds list and pagination metadata",
     readOnly: true,
     idempotent: true,
     openWorld: false,
@@ -239,7 +239,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Platforms",
     summary: "Fetch QMetry platforms from the current project",
     handler: QMetryToolsHandlers.FETCH_PLATFORMS,
-    zodSchema: PlatformArgsSchema,
+    inputSchema: PlatformArgsSchema,
     purpose:
       "Retrieve platforms information from the current QMetry project. " +
       "Platforms represent testing environments, operating systems, browsers, or devices " +
@@ -316,7 +316,8 @@ export const TOOLS: QMetryToolParams[] = [
       "Empty payload {} is sent when no parameters are provided",
       "Use platforms for cross-platform testing and environment selection",
     ],
-    outputFormat: "JSON object with platforms list and pagination metadata",
+    outputDescription:
+      "JSON object with platforms list and pagination metadata",
     readOnly: true,
     idempotent: true,
     openWorld: false,
@@ -326,7 +327,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Fetch QMetry test cases - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_TEST_CASES,
-    zodSchema: TestCaseListArgsSchema,
+    inputSchema: TestCaseListArgsSchema,
     purpose:
       "Get test cases from QMetry. System automatically gets correct viewId from project info if not provided.",
     useCases: [
@@ -432,7 +433,7 @@ export const TOOLS: QMetryToolParams[] = [
       "For multiple entity keys, use comma-separated values in filter",
       "Use empty string '' as folderPath for root directory",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with 'data' array containing test cases and pagination info",
     readOnly: true,
     idempotent: true,
@@ -443,7 +444,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get detailed information for a specific QMetry test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS,
-    zodSchema: TestCaseDetailsArgsSchema,
+    inputSchema: TestCaseDetailsArgsSchema,
     purpose:
       "Retrieve comprehensive test case information including metadata, status, and basic properties",
     useCases: [
@@ -466,7 +467,7 @@ export const TOOLS: QMetryToolParams[] = [
       "After resolving entityKey → tcID, call this tool with the resolved numeric tcID",
       "This tool provides metadata and properties; use FETCH_TEST_CASE_STEPS for step-level details",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with test case details including ID, key, summary, description, and metadata",
     readOnly: true,
     idempotent: true,
@@ -476,7 +477,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get QMetry test case details for a specific version by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS,
-    zodSchema: TestCaseVersionDetailsArgsSchema,
+    inputSchema: TestCaseVersionDetailsArgsSchema,
     purpose:
       "Retrieve version-specific information for a test case including history and changes",
     useCases: [
@@ -498,7 +499,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Version defaults to 1 if not specified",
       "Provides version-specific metadata and history",
     ],
-    outputFormat: "JSON object with version-specific test case details",
+    outputDescription: "JSON object with version-specific test case details",
     readOnly: true,
     idempotent: true,
   },
@@ -507,7 +508,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get detailed test case steps for a specific test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS,
-    zodSchema: TestCaseStepsArgsSchema,
+    inputSchema: TestCaseStepsArgsSchema,
     purpose:
       "Retrieve step-by-step instructions and expected results for manual execution of a test case",
     useCases: [
@@ -530,7 +531,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Version defaults to 1 if not specified",
       "Use pagination for test cases with many steps",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with array of test steps including step description, expected result, and order",
     readOnly: true,
     idempotent: true,
@@ -539,7 +540,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Test Case Executions",
     summary: "Get execution records for a specific test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
-    zodSchema: TestCaseExecutionsArgsSchema,
+    inputSchema: TestCaseExecutionsArgsSchema,
     purpose:
       "Retrieve execution history and results for a specific test case. " +
       "This tool provides detailed execution information including test suite names, platforms, " +
@@ -653,7 +654,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Execution data includes timestamps, user information, environment details, and test results",
       "Use scope parameter to define retrieval context (project, folder, release, cycle)",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with executions array containing execution records, status, timestamps, and metadata",
     readOnly: true,
     idempotent: true,
@@ -663,7 +664,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Fetch QMetry requirements - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS,
-    zodSchema: RequirementListArgsSchema,
+    inputSchema: RequirementListArgsSchema,
     purpose:
       "Get requirements from QMetry. System automatically gets correct requirement viewId from project info if not provided.",
     useCases: [
@@ -849,7 +850,7 @@ export const TOOLS: QMetryToolParams[] = [
       'For release AND cycle: \'[{"value":[releaseId],"type":"list","field":"release"},{"value":[cycleId],"type":"list","field":"cycle"}]\'',
       "Example: Release 8.12 (ID: 55178) + Cycle 8.12.1 (ID: 111577) = filter with both IDs",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with 'data' array containing requirements and pagination info",
     readOnly: true,
     idempotent: true,
@@ -860,7 +861,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get detailed information for a specific QMetry requirement by numeric ID",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS,
-    zodSchema: RequirementDetailsArgsSchema,
+    inputSchema: RequirementDetailsArgsSchema,
     purpose:
       "Retrieve comprehensive requirement information including metadata, status, and all fields for a specific requirement",
     useCases: [
@@ -887,7 +888,7 @@ export const TOOLS: QMetryToolParams[] = [
       "This tool provides complete requirement information including all custom fields",
       "Use this tool to get detailed requirement information that's not available in the list view",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with requirement details including ID, key, summary, description, status, and all metadata",
     readOnly: true,
     idempotent: true,
@@ -897,7 +898,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get test cases that are linked (or not linked) to a specific requirement in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT,
-    zodSchema: TestCasesLinkedToRequirementArgsSchema,
+    inputSchema: TestCasesLinkedToRequirementArgsSchema,
     purpose:
       "Retrieve test cases that have traceability links to a specific requirement. " +
       "This tool is essential for requirement traceability analysis, coverage verification, " +
@@ -1066,7 +1067,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Use getColumns=true to get column metadata for better result interpretation",
       "Pagination supported for large result sets (start, page, limit parameters)",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with test cases array, traceability information, and pagination metadata",
     readOnly: true,
     idempotent: true,
@@ -1076,7 +1077,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get requirements that are linked (or not linked) to a specific test case in QMetry",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS_LINKED_TO_TESTCASE,
-    zodSchema: RequirementsLinkedToTestCaseArgsSchema,
+    inputSchema: RequirementsLinkedToTestCaseArgsSchema,
     purpose:
       "Retrieve requirements that have traceability links to a specific test case. " +
       "This tool is essential for test case traceability analysis, coverage verification, " +
@@ -1194,7 +1195,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Use this tool to verify that test cases properly cover requirements",
       "Essential for requirement validation and test case completeness analysis",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with requirements array, traceability information, and pagination metadata",
     readOnly: true,
     idempotent: true,
@@ -1204,7 +1205,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get test suites that can be linked to test cases in QMetry with automatic viewId resolution",
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
-    zodSchema: TestSuitesForTestCaseArgsSchema,
+    inputSchema: TestSuitesForTestCaseArgsSchema,
     purpose:
       "Retrieve test suites available for linking with test cases. " +
       "This tool helps organize test cases into test suites for better test management, " +
@@ -1314,7 +1315,8 @@ export const TOOLS: QMetryToolParams[] = [
       "Essential for test execution planning and test case management",
       "Use this before creating new test suites to check existing ones",
     ],
-    outputFormat: "JSON object with test suites array and pagination metadata",
+    outputDescription:
+      "JSON object with test suites array and pagination metadata",
     readOnly: true,
     idempotent: true,
   },
@@ -1323,7 +1325,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get issues that are linked (or not linked) to a specific test case in QMetry",
     handler: QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE,
-    zodSchema: IssuesLinkedToTestCaseArgsSchema,
+    inputSchema: IssuesLinkedToTestCaseArgsSchema,
     purpose:
       "Retrieve issues/defects that are linked to a specific test case. " +
       "This tool provides traceability between test cases and issues, helping with " +
@@ -1419,7 +1421,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Critical for impact analysis when test cases change",
       "Use for compliance reporting and quality metrics",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with issues array containing issue details, priorities, status, and linkage information",
     readOnly: true,
     idempotent: true,
@@ -1429,7 +1431,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get test cases that are linked (or not linked) to a specific test suite in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE,
-    zodSchema: TestCasesByTestSuiteArgsSchema,
+    inputSchema: TestCasesByTestSuiteArgsSchema,
     purpose:
       "Retrieve test cases that are linked to a specific test suite. " +
       "This tool provides the ability to see which test cases belong to a test suite, " +
@@ -1519,7 +1521,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Critical for understanding test coverage within specific suites",
       "Use for test suite analysis and optimization",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with test cases array containing test case details, properties, and suite linkage information",
     readOnly: true,
     idempotent: true,
@@ -1528,7 +1530,7 @@ export const TOOLS: QMetryToolParams[] = [
     title: "Fetch Executions by Test Suite",
     summary: "Get executions for a given test suite in QMetry",
     handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
-    zodSchema: ExecutionsByTestSuiteArgsSchema,
+    inputSchema: ExecutionsByTestSuiteArgsSchema,
     purpose:
       "Retrieve test executions that belong to a specific test suite. " +
       "This tool provides comprehensive execution data including test results, " +
@@ -1627,7 +1629,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Use for compliance reporting and execution audit trails",
       "Essential for test execution planning and resource optimization",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with executions array containing execution details, status, platforms, releases, and execution metadata",
     readOnly: true,
     idempotent: true,
@@ -1637,7 +1639,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get test case runs under a specific test suite run execution in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
-    zodSchema: TestCaseRunsByTestSuiteRunArgsSchema,
+    inputSchema: TestCaseRunsByTestSuiteRunArgsSchema,
     purpose:
       "Retrieve detailed test case run information for a specific test suite run execution. " +
       "This tool provides comprehensive test case run data including execution status, " +
@@ -1710,7 +1712,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Use for compliance reporting and execution audit trails",
       "Essential for test execution quality assurance and trend analysis",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with test case runs array containing detailed execution information, status, tester details, and run metadata",
     readOnly: true,
     idempotent: true,
@@ -1720,7 +1722,7 @@ export const TOOLS: QMetryToolParams[] = [
     summary:
       "Get issues that are linked (or not linked) to a specific test case run in QMetry",
     handler: QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN,
-    zodSchema: LinkedIssuesByTestCaseRunArgsSchema,
+    inputSchema: LinkedIssuesByTestCaseRunArgsSchema,
     purpose:
       "CRITICAL: This tool requires entityId which is the Test Case Run ID (tcRunID), NOT any other ID! " +
       "When user asks for 'linked issues of test execution' or 'linked issues of test suite' or 'linked issues of test run', " +
@@ -1852,7 +1854,7 @@ export const TOOLS: QMetryToolParams[] = [
       "Helps establish relationships between test failures and reported issues",
       "Essential for impact analysis when test case runs change or fail",
     ],
-    outputFormat:
+    outputDescription:
       "JSON object with issues array containing issue details, priorities, status, owner information, and linkage metadata",
     readOnly: true,
     idempotent: true,

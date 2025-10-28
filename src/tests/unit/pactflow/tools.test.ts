@@ -15,7 +15,9 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
 
   it("rejects unsupported language values in the language field", () => {
     const tool = TOOLS.find((t) => t.title === "Generate Pact Tests");
-    const schema = tool?.zodSchema as ZodObject<{ [key: string]: ZodTypeAny }>;
+    const schema = tool?.inputSchema as ZodObject<{
+      [key: string]: ZodTypeAny;
+    }>;
     const languageSchema = schema.shape.language;
     expect(languageSchema).toBeDefined();
 
