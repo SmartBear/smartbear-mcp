@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  TestCaseKeySchema,
-  TestCaseSchema,
-} from "../../../../../zephyr/common/types.js";
+import { TestCaseSchema } from "../../../../../zephyr/common/types.js";
 import {
   GetTestCase,
   GetTestCaseInputSchema,

@@ -101,48 +101,48 @@ export const TestCaseLinksSchema = z.object({
 });
 
 export const TestCaseSchema = z.object({
-  id: z.number().describe("The ID of the test Case."),
-  key: z.string().describe("The key of the test Case."),
-  name: z.string().describe("The name of the test Case."),
+  id: z.number().describe("The ID of the test case."),
+  key: z.string().describe("The key of the test case."),
+  name: z.string().describe("The name of the test case."),
   project: ReferenceSchema,
   createdOn: z.string().datetime().describe("Created on date (ISO 8601)."),
-  objective: z.string().nullable().describe("Objective of the test Case."),
+  objective: z.string().nullable().describe("Objective of the test case."),
   precondition: z
     .string()
     .nullable()
-    .describe("Precondition of the test Case."),
+    .describe("Precondition of the test case."),
   estimatedTime: z
     .number()
     .nullable()
-    .describe("Estimated time to execute the test Case in seconds."),
+    .describe("Estimated time to execute the test case in seconds."),
   labels: z
     .array(TestCaseLabelsSchema)
     .nullable()
-    .describe("Labels associated with the test Case."),
-  component: ReferenceSchema.nullable().describe("Component of the test Case."),
-  priority: ReferenceSchema.describe("Priority of the test Case."),
+    .describe("Labels associated with the test case."),
+  component: ReferenceSchema.nullable().describe("Component of the test case."),
+  priority: ReferenceSchema.describe("Priority of the test case."),
   status: ReferenceSchema.nullable().describe(
-    "Current status of the test Case.",
+    "Current status of the test case.",
   ),
   folder: ReferenceSchema.nullable().describe(
-    "Folder containing the test Case.",
+    "Folder containing the test case.",
   ),
   owner: JiraUserSchema.nullable().describe(
-    "Details about the Test Case owner",
+    "Details about the test case owner",
   ),
   testScript: z
     .object({
       self: z
         .string()
         .url()
-        .describe("The API url for Test script or steps for the test Case."),
+        .describe("The API url for Test script or steps for the test case."),
     })
     .nullable()
-    .describe("Test script object for the test Case."),
+    .describe("Test script object for the test case."),
   customFields: CustomFieldsSchema.nullable().describe(
-    "Custom fields for the test Case.",
+    "Custom fields for the test case.",
   ),
   links: TestCaseLinksSchema.nullable().describe(
-    "Links associated with the test Case.",
+    "Links associated with the test case.",
   ),
 });
