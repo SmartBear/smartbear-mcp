@@ -24,12 +24,12 @@ spec:
               value: "bugsnag"
             - name: MCP_ALLOWED_ENDPOINTS
               valueFrom:
-                secretKeyRef:
+                configMapKeyRef:
                   name: mcp-production
                   key: allowed-endpoints
             - name: MCP_SERVER_BUGSNAG_API_KEY
               valueFrom:
-                secretKeyRef:
+                configMapKeyRef:
                   name: mcp-production
                   key: bugsnag-api-key
           ports:
