@@ -20,3 +20,10 @@ The following environment variables configure the Zephyr integration:
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
 - **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not.
+
+### Get Project
+
+- **Purpose**: Retrieve a project available within your Zephyr account by either its key or id.
+- **Parameters:** Project key or ID
+- **Returns**: A project along with its properties, including information about if it has Zephyr enabled or not.
+- **Use case**: Getting a list of projects and their properties.
