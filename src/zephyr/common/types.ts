@@ -49,14 +49,9 @@ export function createListSchema<T extends ZodTypeAny>(itemSchema: T) {
 export const ZephyrProjectListSchema = createListSchema(ZephyrProjectSchema);
 export type ZephyrProjectList = z.infer<typeof ZephyrProjectListSchema>;
 
-export const TestExecutionStatusSchema = z.object({
-  id: z
-    .number()
-    .describe("The unique identifier of the test execution status."),
-  self: z
-    .string()
-    .url()
-    .describe("API URL for this test execution status resource."),
+export const ReferenceSchema = z.object({
+  id: z.number().describe("The ID of the resource."),
+  self: z.string().url().describe("The API URL to get more resource details."),
 });
 
 export const IssueLinkSchema = z.object({
@@ -80,29 +75,6 @@ export const CustomFieldsSchema = z
     "Custom fields for the test execution, with dynamic keys and values.",
   );
 
-export const ProjectReferenceSchema = z.object({
-  id: z.number().describe("The unique identifier of the project."),
-  self: z.string().url().describe("API URL for the project resource."),
-});
-
-export const TestCaseReferenceSchema = z.object({
-  id: z.number().describe("The unique identifier of the test case."),
-  self: z.string().url().describe("API URL for the test case resource."),
-});
-
-export const EnvironmentReferenceSchema = z.object({
-  id: z.number().describe("The unique identifier of the environment."),
-  self: z.string().url().describe("API URL for the environment resource."),
-});
-
-export const JiraProjectVersionReferenceSchema = z.object({
-  id: z.number().describe("The unique identifier of the Jira project version."),
-  self: z
-    .string()
-    .url()
-    .describe("API URL for the Jira project version resource."),
-});
-
 export const TestCycleReferenceSchema = z.object({
   id: z.number().describe("The unique identifier of the test cycle."),
   self: z.string().url().describe("API URL for the test cycle resource."),
@@ -111,63 +83,52 @@ export const TestCycleReferenceSchema = z.object({
 export const TestExecutionSchema = z.object({
   id: z.number().describe("The unique identifier of the test execution."),
   key: z.string().describe("The key of the test execution."),
-  project: ProjectReferenceSchema.describe(
+  project: ReferenceSchema.describe(
     "The project associated with this test execution.",
   ),
-  testCase: TestCaseReferenceSchema.describe(
+  testCase: ReferenceSchema.describe(
     "The test case associated with this test execution.",
   ),
-  environment: EnvironmentReferenceSchema.describe(
+  environment: ReferenceSchema.nullable().describe(
     "The environment in which the test was executed.",
-  )
-    .nullable()
-    .optional(),
-  jiraProjectVersion: JiraProjectVersionReferenceSchema.describe(
+  ),
+  jiraProjectVersion: ReferenceSchema.nullable().describe(
     "The Jira project version associated with this test execution.",
-  )
-    .nullable()
-    .optional(),
-  testExecutionStatus: TestExecutionStatusSchema,
+  ),
+  testExecutionStatus: ReferenceSchema.describe(
+    "The status of the test execution.",
+  ),
   actualEndDate: z
     .string()
+    .nullable()
     .describe(
       "The actual end date and time of the test execution in ISO 8601 format.",
-    )
-    .optional(),
+    ),
   estimatedTime: z
     .number()
-    .describe("The estimated time for the test execution in milliseconds.")
     .nullable()
-    .optional(),
+    .describe("The estimated time for the test execution in milliseconds."),
   executionTime: z
     .number()
-    .describe("The actual execution time in milliseconds.")
     .nullable()
-    .optional(),
+    .describe("The actual execution time in milliseconds."),
   executedById: z
     .string()
-    .describe("The user ID of the person who executed the test.")
     .nullable()
-    .optional(),
+    .describe("The user ID of the person who executed the test."),
   assignedToId: z
     .string()
-    .describe("The user ID of the person assigned to the test execution.")
     .nullable()
-    .optional(),
-  comment: z
-    .string()
-    .describe("Comment about the test execution.")
-    .nullable()
-    .optional(),
+    .describe("The user ID of the person assigned to the test execution."),
+  comment: z.string().nullable().describe("Comment about the test execution."),
   automated: z
     .boolean()
-    .describe("Indicates if the test execution was automated.")
-    .optional(),
+    .describe("Indicates if the test execution was automated."),
   testCycle: TestCycleReferenceSchema.describe(
     "The test cycle associated with this test execution.",
-  ).optional(),
+  ),
   customFields: CustomFieldsSchema.nullable(),
-  links: LinksSchema.optional(),
+  links: LinksSchema,
 });
 
 export const GetTestExecutionsResponseSchema = z.object({
@@ -179,6 +140,7 @@ export const GetTestExecutionsResponseSchema = z.object({
     ),
   nextStartAtId: z
     .number()
+    .nullable()
     .describe("The starting ID for the next page of results."),
   limit: z
     .number()

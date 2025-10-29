@@ -1,5 +1,5 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
+import type { ZodRawShape, z } from "zod";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
@@ -9,7 +9,7 @@ import {
 import type { ZephyrTool } from "../zephyr-tool.js";
 
 export const GetTestExecutionsInputSchema = TestExecutionsQueryValuesSchema;
-type GetTestExecutionsInput = typeof GetTestExecutionsInputSchema._type;
+type GetTestExecutionsInput = z.infer<typeof GetTestExecutionsInputSchema>;
 
 export class GetTestExecutions implements ZephyrTool {
   private readonly apiClient: ApiClient;
