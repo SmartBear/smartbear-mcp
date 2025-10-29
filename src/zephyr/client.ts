@@ -5,6 +5,7 @@ import type {
 } from "../common/types.js";
 import { ApiClient } from "./common/api-client.js";
 import { GetProjects } from "./tool/project/get-projects.js";
+import { GetTestCase } from "./tool/test-case/get-test-case.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
 export class ZephyrClient implements Client {
@@ -23,7 +24,10 @@ export class ZephyrClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): void {
-    const tools: ZephyrTool[] = [new GetProjects(this.apiClient)];
+    const tools: ZephyrTool[] = [
+      new GetProjects(this.apiClient),
+      new GetTestCase(this.apiClient),
+    ];
 
     tools.forEach((tool) => {
       register(tool.specification, tool.handle);
