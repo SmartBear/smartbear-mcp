@@ -10,12 +10,12 @@ import type { Client } from "./types.js";
 function getNoConfigErrorMessage(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
+    messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
       const envVarName = getEnvVarName(entry, configKey);
       const requiredTag = requirement.isOptional()
         ? " (optional)"
         : " (required)";
-      messages.push(` - ${entry.name}:`);
       messages.push(
         `    - ${envVarName}${requiredTag}: ${requirement.description}`,
       );
