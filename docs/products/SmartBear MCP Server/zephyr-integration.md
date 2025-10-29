@@ -21,6 +21,13 @@ The following environment variables configure the Zephyr integration:
 - **Purpose**: Retrieve projects available within your Zephyr account.
 - **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not.
 
+### Get Project
+
+- **Purpose**: Retrieve a project available within your Zephyr account by either its key or id.
+- **Parameters:** Project key or ID
+- **Returns**: A project along with its properties, including information about if it has Zephyr enabled or not.
+- **Use case**: Getting a list of projects and their properties.
+
 ### Get Test Cycles
 
 -  **Purpose**: Retrieve Test Cycles available within your Zephyr account.
@@ -32,3 +39,4 @@ The following environment variables configure the Zephyr integration:
   - optional starting position for pagination (`startAt`)
 -  **Returns**: A list of Test Cycles along with their properties.
 -  **Use case**: Retrieve the Test Cycles, it can be filtered by Project Key, Folder ID, Jira Project version ID.
+
