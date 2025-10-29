@@ -32,4 +32,7 @@ export const QMetryToolsHandlers = {
   FETCH_ISSUES_LINKED_TO_TESTCASE: "getIssuesLinkedToTestCase",
   LINK_TESTCASES_TO_TESTSUITE: "linkTestCasesToTestSuite",
   REQUIREMENTS_LINKED_TESTCASES_TO_TESTSUITE: "reqLinkedTestCasesToTestSuite",
+  CREATE_ISSUE: "createIssue",
+  UPDATE_ISSUE: "updateIssue",
+  LINK_ISSUES_TO_TESTCASE_RUN: "linkIssuesToTestcaseRun",
 };

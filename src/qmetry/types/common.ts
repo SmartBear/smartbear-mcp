@@ -766,3 +766,83 @@ export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
   limit: CommonFields.limit,
   filter: CommonFields.filter,
 });
+
+export const CreateIssueArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  issueType: z.number().describe("Issue type ID (e.g. Bug, Enhancement, etc.)"),
+  issuePriority: z
+    .number()
+    .describe("Issue priority ID (e.g. High, Medium, Low, etc.)"),
+  summary: z.string().describe("Summary or title of the defect/issue"),
+  description: z
+    .string()
+    .optional()
+    .describe("Detailed description of the defect/issue"),
+  sync_with: z
+    .string()
+    .optional()
+    .describe("External system to sync with (e.g. JIRA, QMetry, etc.)"),
+  issueOwner: z.number().optional().describe("Owner/user ID for the issue"),
+  component: z
+    .array(z.number())
+    .optional()
+    .describe("Component IDs associated with the issue"),
+  affectedRelease: z
+    .array(z.number())
+    .optional()
+    .describe("Release IDs affected by this issue"),
+  affectedCycles: z
+    .array(z.number())
+    .optional()
+    .describe("Cycle IDs affected by this issue"),
+  tcRunID: z
+    .number()
+    .optional()
+    .describe(
+      "Test Case Run ID to link this defect/issue to a test execution (optional)",
+    ),
+});
+
+export const UpdateIssueArgsSchema = z.object({
+  DefectId: z.number().describe("ID of the defect/issue to be updated"),
+  entityKey: z
+    .string()
+    .optional()
+    .describe("Entity Key of the defect/issue to be updated"),
+  issueType: z
+    .number()
+    .optional()
+    .describe("Issue type ID (e.g. Bug, Enhancement, etc.)"),
+  issuePriority: z
+    .number()
+    .optional()
+    .describe("Issue priority ID (e.g. High, Medium, Low, etc.)"),
+  summary: z
+    .string()
+    .optional()
+    .describe("Summary or title of the defect/issue"),
+  description: z
+    .string()
+    .optional()
+    .describe("Detailed description of the defect/issue"),
+  issueOwner: z.number().optional().describe("Owner/user ID for the issue"),
+  affectedRelease: z
+    .number()
+    .optional()
+    .describe("Release IDs affected by this issue"),
+  affectedCycles: z
+    .number()
+    .optional()
+    .describe("Cycle IDs affected by this issue"),
+});
+
+// Export for Link Issues to Testcase Run tool
+export const LinkIssuesToTestcaseRunArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  issueIds: z
+    .array(z.union([z.string(), z.number()]))
+    .describe("ID of issues to be linked to Testcase Run"),
+  tcrId: z.number().describe("ID of Testcase Run to link issues with"),
+});

@@ -31,3 +31,51 @@ export const DEFAULT_FETCH_ISSUES_LINKED_TO_TESTCASE_PAYLOAD: Omit<
   ...DEFAULT_FILTER,
   getLinked: true,
 };
+
+export interface CreateIssuePayload {
+  issueType: number; // required - Numeric ID of issue type
+  issuePriority: number; // required - Numeric ID of issue priority
+  summary: string; // required - Summary/title of the issue
+  issueOwner?: number; // optional - Numeric ID of the issue owner
+  description?: string; // optional - Detailed description of the issue
+  sync_with?: number; // optional - Numeric ID of external system to sync with
+  component?: number[]; // optional - Array of component IDs
+  affectedRelease?: number[]; // optional - Numeric ID Release Id of Issue
+  affectedCycles?: number[]; // optional - Array of Cycle IDs affected by this issue
+  environment?: string; // optional - Environment details
+  tcRunID?: number; // optional - Test Case Run numeric ID to link the issue to
+}
+
+export const DEFAULT_CREATE_ISSUE_PAYLOAD: Omit<
+  CreateIssuePayload,
+  "issueType" | "issuePriority" | "summary"
+> = {};
+
+// Update Issue
+export interface UpdateIssuePayload {
+  DefectId: number; // required - ID of the issue to be updated
+  entityKey?: string; // optional - Entity key of the issue to be updated
+  summary?: string;
+  issuePriority?: number;
+  issueType?: number;
+  affectedRelease?: number;
+  affectedCycles?: number;
+  description?: string;
+  issueOwner?: number;
+}
+
+export const DEFAULT_UPDATE_ISSUE_PAYLOAD: Omit<
+  UpdateIssuePayload,
+  "DefectId"
+> = {};
+
+// Link Issues to Testcase Run
+export interface LinkIssuesToTestcaseRunPayload {
+  issueIds: (string | number)[]; // required - IDs of issues to link
+  tcrId: number; // required - Testcase Run ID
+}
+
+export const DEFAULT_LINK_ISSUES_TO_TESTCASE_RUN_PAYLOAD: Omit<
+  LinkIssuesToTestcaseRunPayload,
+  "issueIds" | "tcrId"
+> = {};

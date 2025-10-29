@@ -31,6 +31,8 @@ export const QMETRY_PATHS = {
     GET_LINKED_ISSUES_BY_TESTCASE_RUN: "/rest/execution/issue/list/forTCRun",
   },
   ISSUES: {
+    CREATE_UPDATE_ISSUE: "/rest/issues",
     GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
+    LINK_ISSUES_TO_TESTCASE_RUN: "/rest/execution/link/issue",
   },
 };

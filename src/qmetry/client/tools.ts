@@ -2,11 +2,13 @@ import type { ToolParams } from "../../common/types.js";
 import { QMetryToolsHandlers } from "../config/constants.js";
 import {
   BuildArgsSchema,
+  CreateIssueArgsSchema,
   CreateTestCaseArgsSchema,
   CreateTestSuiteArgsSchema,
   ExecutionsByTestSuiteArgsSchema,
   IssuesLinkedToTestCaseArgsSchema,
   LinkedIssuesByTestCaseRunArgsSchema,
+  LinkIssuesToTestcaseRunArgsSchema,
   LinkRequirementToTestCaseArgsSchema,
   LinkTestCasesToTestSuiteArgsSchema,
   PlatformArgsSchema,
@@ -26,6 +28,7 @@ import {
   TestCasesLinkedToRequirementArgsSchema,
   TestCaseVersionDetailsArgsSchema,
   TestSuitesForTestCaseArgsSchema,
+  UpdateIssueArgsSchema,
   UpdateTestCaseArgsSchema,
   UpdateTestSuiteArgsSchema,
 } from "../types/common.js";
@@ -2471,5 +2474,234 @@ export const TOOLS: QMetryToolParams[] = [
       "JSON object with issues array containing issue details, priorities, status, owner information, and linkage metadata",
     readOnly: true,
     idempotent: true,
+  },
+  {
+    title: "Create Defect or Issue",
+    summary:
+      "Create a new defect/issue internal for link it to a test execution in QMetry.",
+    handler: QMetryToolsHandlers.CREATE_ISSUE,
+    inputSchema: CreateIssueArgsSchema,
+    purpose:
+      "Allows users to create a new defect/issue in QMetry, including issueType, issuePriority, issueOwner and summary. " +
+      "Supports all major defect/issue fields. " +
+      "For fields like sync_with, issueType, issuePriority, issueOwner, component, affectedRelease etc., fetch their valid values using the project info tool. " +
+      "If tcRunID is not provided, it will be auto-resolved to the fetch test case run id but it's optional field.",
+
+    useCases: [
+      "Create a basic defect/issue with just a summary",
+      "Set issueType, issueOwner, component, and affectedRelease using valid IDs from project info",
+      "Create defects/issues for automation or manual testing types",
+      "Link defects/issues to specific test case runs using tcRunID",
+    ],
+    examples: [
+      {
+        description: "Create an issue with summary 'Login Issue'",
+        parameters: {
+          name: "Login Issue",
+          issuePriority: 2231988,
+          issueType: 2231983,
+        },
+        expectedOutput: "Issue created in summary details",
+      },
+      {
+        description:
+          "Create a an issue with Major priority and Bug type to Bug with summary 'Login Issue'",
+        parameters: {
+          name: "Login Issue",
+          issuePriority: 2231988,
+          issueType: 2231983,
+        },
+        expectedOutput:
+          "Issue created in summary details with priority and Bug type",
+      },
+      {
+        description:
+          "Create a an issue with summary 'Login Issue' and set issueOwner to 'John Doe'",
+        parameters: {
+          name: "Login Issue",
+          issueOwner: 15112,
+          issuePriority: 2231988,
+          issueType: 2231983,
+        },
+        expectedOutput:
+          "Issue created in summary details with owner, priority and Bug type",
+      },
+      {
+        description:
+          "Create a an issue with summary 'Login Issue' and link it to test case run ID 567890",
+        parameters: {
+          name: "Login Issue",
+          issueOwner: 15112,
+          issuePriority: 2231988,
+          issueType: 2231983,
+          tcRunID: 567890,
+        },
+        expectedOutput:
+          "Issue created in summary details and linked to test case run ID 567890",
+      },
+      {
+        description:
+          "Create a an issue with summary 'Login Issue' and set description to 'User is unable to login' and owner to 'John Doe' and link it to test case run ID 567890",
+        parameters: {
+          name: "Login Issue",
+          issueOwner: 15112,
+          issuePriority: 2231988,
+          issueType: 2231983,
+          tcRunID: 567890,
+          description: "User is unable to login",
+        },
+        expectedOutput:
+          "Issue created in summary details with description, owner, priority, Bug type and linked to test case run ID 567890",
+      },
+      {
+        description:
+          "Create a an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycles and owner to 'John Doe'",
+        parameters: {
+          name: "Login Issue",
+          issueOwner: 15112,
+          issuePriority: 2231988,
+          issueType: 2231983,
+          affectedRelease: [111840],
+          affectedCycles: [112345, 112346],
+        },
+        expectedOutput:
+          "Issue created in summary details with release and associated all cycles, owner",
+      },
+      {
+        description:
+          "Create a an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycle 'Cycle 1.0.1', 'Cycle 1.0.2'",
+        parameters: {
+          name: "Login Issue",
+          issuePriority: 2231988,
+          issueType: 2231983,
+          affectedRelease: [111840],
+          affectedCycles: [112345, 112346],
+        },
+        expectedOutput:
+          "Issue created in summary details with release and cycles",
+      },
+    ],
+    hints: [
+      "CRITICAL: name (summary), issueType, issuePriority are REQUIRED fields to create an issue",
+      "OPTIONAL: issueOwner, component, affectedRelease, description, tcRunID can also be provided",
+      "To get valid values for sync_with (igConfigurationID or internalTrackerId), issueType, issuePriority, issueOwner, component, affectedRelease, and tcRunID, call the 'project get info tools' use the following mappings:",
+      "- sync_with: customListObjs.component[<index>].igConfigurationID or internalTrackerId",
+      "- issueType: customListObjs.issueType[<index>].id",
+      "- issuePriority: customListObjs.issuePriority[<index>].id",
+      "- issueOwner: customListObjs.users[<index>].id",
+      "- affectedRelease: data[<index>].releaseID",
+      "- tcRunID: data[<index>].tcRunID (from 'Execution/Fetch Testcase Run ID')",
+      "If the user provides a issuePriority name (e.g. 'Blocker'), fetch project info, find the matching priority in customListObjs.issuePriority[index].name, and use its ID in the payload. If the name is not found, skip the issuePriority field and show a user-friendly message: 'Defect/issue created without issuePriority, as given issuePriority is not available in the current project.'",
+      "If the user provides an issueOwner name, fetch project info, find the matching issueOwner in customListObjs.users[index].name, and use its ID in the payload as issueOwner. If the name is not found, skip the issueOwner field and show a user-friendly message: 'Defect/issue created without issueOwner, as given issueOwner is not available in the current project.'",
+      "If the user provides an issue type name, fetch project info, find the matching type in customListObjs.issueType[index].name, and use its ID in the payload as issueType. If the name is not found, skip the issueType field and show a user-friendly message: 'Defect/issue created without issue type, as given type is not available in the current project.'",
+      "Release/cycle mapping is optional but useful for planning.",
+      "If the user wants to link or associate a release and cycle to the issue, follow these rules:",
+      "If the user provides a release ID, map it from projects.releases[index].releaseID in the project info response, and use that ID in affectedRelease as an array of numeric IDs.",
+      "If the user provides both release and cycle IDs, validate both against the current project's releases and cycles; if valid, use them in affectedCycles and affectedRelease as arrays of numeric IDs respectively.",
+      "If the user provides a release name, map it to its ID from project info; if a cycle name is provided, map it to its ID and use it in payload as value of field affectedRelease and affectedCycles.",
+      "LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Issue created without release/cycle association, as given release/cycle is not available in the current project.'",
+      "Ensure all IDs used are valid for the current QMetry project context",
+      "This tool is essential for defect management and test execution linkage",
+      "Helps maintain traceability between test executions and reported issues",
+      "Critical for quality assurance and defect lifecycle management",
+      "Use for creating issues directly from test execution contexts",
+    ],
+    outputDescription:
+      "JSON object containing the new create issue with id, dfid(defectID).",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Update Issue",
+    summary: "Update an existing QMetry issue by DefectId and/or entityKey.",
+    handler: QMetryToolsHandlers.UPDATE_ISSUE,
+    inputSchema: UpdateIssueArgsSchema,
+    purpose:
+      "Update an existing QMetry issue by DefectId and/or entityKey. " +
+      "Only fields provided will be updated. " +
+      "Refer to the Create Issue tool for field mapping and valid values.",
+    useCases: [
+      "Update issue summary (title)",
+      "Change issue priority, type, or owner",
+      "Update affected release or cycles",
+      "Update description or environment",
+      "Bulk update using DefectId and/or entityKey",
+    ],
+    examples: [
+      {
+        description: "Update issue summary",
+        parameters: {
+          DefectId: 118150,
+          summary:
+            "Money withdrawal is success even if insufficient amount_updated",
+        },
+        expectedOutput: "Issue summary updated successfully.",
+      },
+      {
+        description: "Update issue priority",
+        parameters: { DefectId: 118150, issuePriority: 189340 },
+        expectedOutput: "Issue priority updated successfully.",
+      },
+      {
+        description: "Update issue type",
+        parameters: { DefectId: 118150, issueType: 189337 },
+        expectedOutput: "Issue type updated successfully.",
+      },
+      {
+        description: "Update affected release",
+        parameters: { DefectId: 118150, affectedRelease: 3730 },
+        expectedOutput: "Affected release updated successfully.",
+      },
+    ],
+    hints: [
+      "To get the DefectId, call the Issue/Fetch issue tool and use data[<index>].id from the response.",
+      "if you have pass issue key (VT-IS-5, MAC-IS-10 etc.) then first fetch issue by issue key to get issue id.",
+      "Along with DefectId, pass only those fields which are to be updated.",
+      "Refer to the Create Issue tool for valid field mappings and values.",
+      "You can update summary, priority, type, affectedRelease, affectedCycles, description, sync_with, issueOwner, component, environment, tcRunID, etc.",
+      "If you provide entityKey, it will be used for additional validation but DefectId is required.",
+    ],
+    outputDescription: "JSON object with update status and details.",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Link Issues to Testcase Run",
+    summary: "Link one or more issues to a QMetry Testcase Run (execution).",
+    handler: QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN,
+    inputSchema: LinkIssuesToTestcaseRunArgsSchema,
+    purpose:
+      "Link existing QMetry issues to a specific Testcase Run (execution) by providing their IDs. " +
+      "This is used to associate defects with a test execution for traceability and reporting.",
+    useCases: [
+      "Link a single issue to a testcase run",
+      "Link multiple issues to a testcase run",
+      "Automate defect association during test execution",
+      "Maintain traceability between defects and test runs",
+    ],
+    examples: [
+      {
+        description: "Link one issue to a testcase run",
+        parameters: { issueIds: ["5054834"], tcrId: 567890 },
+        expectedOutput:
+          "Issue 5054834 linked to testcase run 567890 successfully.",
+      },
+      {
+        description: "Link multiple issues to a testcase run",
+        parameters: { issueIds: ["5054834", "5054835"], tcrId: 567890 },
+        expectedOutput:
+          "Issues 5054834, 5054835 linked to testcase run 567890 successfully.",
+      },
+    ],
+    hints: [
+      "if you have pass issue key (VT-IS-5, MAC-IS-10 etc.) then first fetch issue by issue key to get issue id.",
+      "To get the issueIds, call the Fetch issues linked with testcases tool and use data[<index>].defectID from the response.",
+      "To get the tcrId, call the Execution/Fetch Testcase Run ID tool and use data[<index>].tcRunID from the response.",
+      "Both issueIds and tcrId are required.",
+      "You can link multiple issues at once by providing an array of IDs.",
+    ],
+    outputDescription: "JSON object with linkage status and details.",
+    readOnly: false,
+    idempotent: false,
   },
 ];

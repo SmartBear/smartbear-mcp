@@ -1,5 +1,10 @@
 import { QMetryToolsHandlers } from "../config/constants.js";
-import { fetchIssuesLinkedToTestCase } from "./issues.js";
+import {
+  createIssue,
+  fetchIssuesLinkedToTestCase,
+  linkIssuesToTestcaseRun,
+  updateIssue,
+} from "./issues.js";
 import {
   getBuilds,
   getPlatforms,
@@ -87,4 +92,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
     fetchLinkedIssuesByTestCaseRun,
   [QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE]:
     fetchIssuesLinkedToTestCase,
+  [QMetryToolsHandlers.CREATE_ISSUE]: createIssue,
+  [QMetryToolsHandlers.UPDATE_ISSUE]: updateIssue,
+  [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
 };
