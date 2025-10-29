@@ -51,9 +51,6 @@ export function createListSchema<T extends ZodTypeAny>(itemSchema: T) {
   });
 }
 
-export const ZephyrProjectListSchema = createListSchema(ZephyrProjectSchema);
-export type ZephyrProjectList = z.infer<typeof ZephyrProjectListSchema>;
-
 export const ProjectKeySchema = z
   .string()
   .regex(/^[A-Z][A-Z_0-9]+$/)
