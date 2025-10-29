@@ -48,7 +48,7 @@ const ConfigurationSchema = z.object({
 export class PactflowClient implements Client {
   name = "Contract Testing";
   toolPrefix = "contract-testing";
-  configPrefix = "pact-broker";
+  configPrefix = "Pact-Broker";
   config = ConfigurationSchema;
 
   private headers:

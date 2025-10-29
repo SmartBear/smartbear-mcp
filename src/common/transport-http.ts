@@ -100,7 +100,7 @@ export async function runHttpMode() {
     const headerHelp = getHttpHeadersHelp();
     if (headerHelp.length > 0) {
       console.log(
-        `[MCP HTTP Server] Send configuration headers:${headerHelp.join("")}`,
+        `[MCP HTTP Server] Send configuration headers:\n${headerHelp.join("\n")}`,
       );
     } else {
       console.warn(

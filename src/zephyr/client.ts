@@ -26,7 +26,7 @@ export class ZephyrClient implements Client {
 
   name = "Zephyr";
   toolPrefix = "zephyr";
-  configPrefix = "zephyr";
+  configPrefix = "Zephyr";
   config = ConfigurationSchema;
 
   async configure(

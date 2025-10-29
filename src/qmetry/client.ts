@@ -27,7 +27,7 @@ const ConfigurationSchema = z.object({
 export class QmetryClient implements Client {
   name = "QMetry";
   toolPrefix = "qmetry";
-  configPrefix = "qmetry";
+  configPrefix = "Qmetry";
   config = ConfigurationSchema;
 
   private token: string | undefined;

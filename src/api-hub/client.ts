@@ -41,7 +41,7 @@ export class ApiHubClient implements Client {
 
   name = "API Hub";
   toolPrefix = "api_hub";
-  configPrefix = "api-hub";
+  configPrefix = "Api-Hub";
   config = ConfigurationSchema;
 
   async configure(

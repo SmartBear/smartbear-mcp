@@ -98,7 +98,7 @@ export class BugsnagClient implements Client {
 
   name = "BugSnag";
   toolPrefix = "bugsnag";
-  configPrefix = "bugsnag";
+  configPrefix = "Bugsnag";
   config = ConfigurationSchema;
 
   async configure(
