@@ -9,7 +9,7 @@
 
   <!-- Badges -->
   <div>
-    <a href="https://github.com/SmartBear/smartbear-mcp/actions/workflows/node-ci.yml"><img src="https://github.com/SmartBear/smartbear-mcp/actions/workflows/node-ci.yml/badge.svg?branch=next" alt="Test Status"></a>
+    <a href="https://github.com/SmartBear/smartbear-mcp/actions/workflows/test.yml?query=branch%3Amain"><img src="https://github.com/SmartBear/smartbear-mcp/actions/workflows/test.yml/badge.svg?branch=main" alt="Test Status"></a>
     <a href="https://smartbear.github.io/smartbear-mcp/"><img src="https://img.shields.io/badge/coverage-dynamic-brightgreen" alt="Coverage"></a>
     <a href="https://www.npmjs.com/package/@smartbear/mcp"><img src="https://img.shields.io/npm/v/@smartbear/mcp" alt="npm version"></a>
     <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-Compatible-blue" alt="MCP Compatible"></a>

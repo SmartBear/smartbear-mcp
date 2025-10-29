@@ -30,14 +30,15 @@ Thank you for your contributing to SmartBear MCP!
 
 ### Branching Strategy
 
-The repository now uses `main` as the sole primary development and release branch.
+The repository uses `main` as the sole primary development and release branch.
 
 Guidance:
 
 - Create feature branches from `main`; open PRs back into `main`.
 - Use `integration/<name>` branches (from `main`) for multi-stage or larger changes; merge when the whole change is releasable.
 - Treat every merge to `main` as potentially releasable by any product team.
-- Provide a meaningful CHANGELOG entry for any public-facing impact.
+- If your change is noteworthy to customers, update `CHANGELOG.md` in your PR with details (create a new version section if it is the first change since the last release).
+- Prefer squash commits for feature PRs to keep the public history clean.
 
 ## Development Setup
 
@@ -178,6 +179,7 @@ Steps:
 
 6. **Post-Release**
    - Verify docs at https://developer.smartbear.com/smartbear-mcp/
+   - Verify NPM package at https://www.npmjs.com/package/@smartbear/mcp
    - Confirm CHANGELOG accuracy.
 
 ## Additional Resources

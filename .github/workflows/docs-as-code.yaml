@@ -64,38 +64,38 @@ jobs:
             fi
           done
 
-  publish:
-    runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
-    needs: [spell-check, validate-manifests]
-    if: github.event.inputs.skip_api_linting == 'true' || (needs.spell-check.result == 'success' && needs['validate-manifests'].result == 'success')
+  # publish:
+  #   runs-on: ubuntu-latest
+  #   environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+  #   needs: [spell-check, validate-manifests]
+  #   if: github.event.inputs.skip_api_linting == 'true' || (needs.spell-check.result == 'success' && needs['validate-manifests'].result == 'success')
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Publish docs to Portal
-        shell: bash
-        run: |
-          for product in ./docs/products/*; do
-            echo "Product: $product"
-            if [[ -d "$product" ]]; then
-              echo "Product is a directory"
-              product_name=${product#./docs/products/}
-              echo "Product name: $product_name"
-              manifest="./docs/products/$product_name/manifest.json"
-              echo "Manifest: $manifest"
-              if [[ -f "$manifest" ]]; then
-                echo "Manifest is a file"
-                . ./docs/scripts/publish-portal-content.sh && portal_product_upsert "$manifest" "$product_name"
-                . ./docs/scripts/publish-portal-content.sh && load_and_process_product_manifest_content_metadata "$manifest" "$product_name"
-              else
-                echo "Manifest is not a file"
-              fi
-            else
-              echo "Product is not a directory"
-            fi
-          done
-        env:
-            SWAGGERHUB_PORTAL_SUBDOMAIN: ${{ vars.SWAGGERHUB_PORTAL_SUBDOMAIN }}
-            SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
+  #     - name: Publish docs to Portal
+  #       shell: bash
+  #       run: |
+  #         for product in ./docs/products/*; do
+  #           echo "Product: $product"
+  #           if [[ -d "$product" ]]; then
+  #             echo "Product is a directory"
+  #             product_name=${product#./docs/products/}
+  #             echo "Product name: $product_name"
+  #             manifest="./docs/products/$product_name/manifest.json"
+  #             echo "Manifest: $manifest"
+  #             if [[ -f "$manifest" ]]; then
+  #               echo "Manifest is a file"
+  #               . ./docs/scripts/publish-portal-content.sh && portal_product_upsert "$manifest" "$product_name"
+  #               . ./docs/scripts/publish-portal-content.sh && load_and_process_product_manifest_content_metadata "$manifest" "$product_name"
+  #             else
+  #               echo "Manifest is not a file"
+  #             fi
+  #           else
+  #             echo "Product is not a directory"
+  #           fi
+  #         done
+  #       env:
+  #           SWAGGERHUB_PORTAL_SUBDOMAIN: ${{ vars.SWAGGERHUB_PORTAL_SUBDOMAIN }}
+  #           SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
