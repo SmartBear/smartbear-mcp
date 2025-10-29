@@ -18,6 +18,7 @@ onsessioninitialized
 pactflow
 pacticipant
 pacticipants
+petstore
 qmetry
 Reactnative
 reindexing
