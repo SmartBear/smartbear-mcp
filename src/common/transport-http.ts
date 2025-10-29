@@ -424,12 +424,12 @@ function getHttpHeaders(): string[] {
 function getHttpHeadersHelp(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
+    messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
       const headerName = getHeaderName(entry, configKey);
       const requiredTag = requirement.isOptional()
         ? " (optional)"
         : " (required)";
-      messages.push(` - ${entry.name}:`);
       messages.push(
         `    - ${headerName}${requiredTag}: ${requirement.description}`,
       );
