@@ -2103,7 +2103,10 @@ export const listTestCyclesResponse = zod
                     ),
                 }),
               )
-              .nullish(),
+              .optional()
+              .describe(
+                "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+              ),
             status: zod
               .object({
                 id: zod.number().min(1),
@@ -2162,7 +2165,7 @@ export const listTestCyclesResponse = zod
                     "The REST API endpoint to get more resource details.",
                   ),
               })
-              .nullish(),
+              .optional(),
             customFields: zod
               .record(zod.string(), zod.object({}))
               .optional()
@@ -2336,7 +2339,9 @@ export const createTestCycleBody = zod.object({
     .number()
     .min(1)
     .optional()
-    .describe("ID of the version from Jira."),
+    .describe(
+      "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+    ),
   statusName: zod
     .string()
     .min(1)
@@ -2414,7 +2419,10 @@ export const getTestCycleResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .nullish(),
+    .optional()
+    .describe(
+      "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+    ),
   status: zod
     .object({
       id: zod.number().min(1),
@@ -2467,7 +2475,7 @@ export const getTestCycleResponse = zod.object({
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
-    .nullish(),
+    .optional(),
   customFields: zod
     .record(zod.string(), zod.object({}))
     .optional()
@@ -2647,7 +2655,10 @@ export const updateTestCycleBody = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .nullish(),
+    .optional()
+    .describe(
+      "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+    ),
   status: zod
     .object({
       id: zod.number().min(1),
@@ -2700,7 +2711,7 @@ export const updateTestCycleBody = zod.object({
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
-    .nullish(),
+    .optional(),
   customFields: zod
     .record(zod.string(), zod.object({}))
     .optional()
@@ -3770,7 +3781,10 @@ export const listTestExecutionsResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .optional()
+              .describe(
+                "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+              ),
             testExecutionStatus: zod
               .object({
                 id: zod.number().min(1),
@@ -4189,7 +4203,10 @@ export const listTestExecutionsNextgenResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .optional()
+              .describe(
+                "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+              ),
             testExecutionStatus: zod
               .object({
                 id: zod.number().min(1),
@@ -4421,7 +4438,10 @@ export const getTestExecutionResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .optional()
+    .describe(
+      "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+    ),
   testExecutionStatus: zod
     .object({
       id: zod.number().min(1),
@@ -6105,7 +6125,9 @@ export const createCustomExecutionsBody = zod.object({
         .number()
         .min(1)
         .optional()
-        .describe("ID of the version from Jira."),
+        .describe(
+          "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+        ),
       folderId: zod
         .number()
         .min(1)
@@ -6193,7 +6215,9 @@ export const createCucumberExecutionsBody = zod.object({
         .number()
         .min(1)
         .optional()
-        .describe("ID of the version from Jira."),
+        .describe(
+          "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+        ),
       folderId: zod
         .number()
         .min(1)
@@ -6280,7 +6304,9 @@ export const createJUnitExecutionsBody = zod.object({
         .number()
         .min(1)
         .optional()
-        .describe("ID of the version from Jira."),
+        .describe(
+          "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+        ),
       folderId: zod
         .number()
         .min(1)
