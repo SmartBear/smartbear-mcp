@@ -32,6 +32,7 @@ export async function runHttpMode() {
     "Content-Type",
     "Authorization",
     "MCP-Session-Id", // Required for StreamableHTTP
+    "x-custom-auth-headers",
     ...allowedAuthHeaders,
   ].join(", ");
 
@@ -368,13 +369,13 @@ async function newServer(
   try {
     await clientRegistry.configure(server, (client, key) => {
       const headerName = getHeaderName(client, key);
-      const value = req.headers[headerName];
+      // check both original case and lower-case headers for compatibility
+      const value =
+        req.headers[headerName] || req.headers[headerName.toLowerCase()];
       if (typeof value === "string") {
         return value;
       }
-      throw new Error(
-        `Missing required config for ${client.name}: ${headerName}`,
-      );
+      return null;
     });
   } catch (error: any) {
     const headerHelp = getHttpHeadersHelp();
