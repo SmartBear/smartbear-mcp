@@ -102,6 +102,9 @@ export const listTestCasesResponseValuesItemNameRegExp = /^(?!\\s*$).+/;
 
 export const listTestCasesResponseValuesItemEstimatedTimeMin = 0;
 
+export const listTestCasesResponseValuesItemOwnerAccountIdRegExp =
+  /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const listTestCasesResponse = zod
   .object({
     next: zod
@@ -246,11 +249,15 @@ export const listTestCasesResponse = zod
               .nullish(),
             owner: zod
               .object({
+                accountId: zod
+                  .string()
+                  .regex(listTestCasesResponseValuesItemOwnerAccountIdRegExp)
+                  .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
                   .optional()
                   .describe(
-                    "The REST API endpoint to get more resource details.",
+                    "The Jira REST API endpoint to get the full representation of the Jira user.",
                   ),
               })
               .optional(),
@@ -490,6 +497,9 @@ export const listTestCasesCursorPaginatedResponseValuesItemNameRegExp =
 
 export const listTestCasesCursorPaginatedResponseValuesItemEstimatedTimeMin = 0;
 
+export const listTestCasesCursorPaginatedResponseValuesItemOwnerAccountIdRegExp =
+  /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const listTestCasesCursorPaginatedResponse = zod
   .object({
     next: zod.string().nullish(),
@@ -617,11 +627,17 @@ export const listTestCasesCursorPaginatedResponse = zod
               .nullish(),
             owner: zod
               .object({
+                accountId: zod
+                  .string()
+                  .regex(
+                    listTestCasesCursorPaginatedResponseValuesItemOwnerAccountIdRegExp,
+                  )
+                  .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
                   .optional()
                   .describe(
-                    "The REST API endpoint to get more resource details.",
+                    "The Jira REST API endpoint to get the full representation of the Jira user.",
                   ),
               })
               .optional(),
@@ -751,6 +767,8 @@ export const getTestCaseResponseNameRegExp = /^(?!\\s*$).+/;
 
 export const getTestCaseResponseEstimatedTimeMin = 0;
 
+export const getTestCaseResponseOwnerAccountIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const getTestCaseResponse = zod.object({
   id: zod.number().min(1),
   key: zod
@@ -851,10 +869,16 @@ export const getTestCaseResponse = zod.object({
     .nullish(),
   owner: zod
     .object({
+      accountId: zod
+        .string()
+        .regex(getTestCaseResponseOwnerAccountIdRegExp)
+        .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
         .optional()
-        .describe("The REST API endpoint to get more resource details."),
+        .describe(
+          "The Jira REST API endpoint to get the full representation of the Jira user.",
+        ),
     })
     .optional(),
   testScript: zod
@@ -973,6 +997,8 @@ export const updateTestCaseBodyNameRegExp = /^(?!\\s*$).+/;
 
 export const updateTestCaseBodyEstimatedTimeMin = 0;
 
+export const updateTestCaseBodyOwnerAccountIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const updateTestCaseBody = zod.object({
   id: zod.number().min(1),
   key: zod
@@ -1073,10 +1099,16 @@ export const updateTestCaseBody = zod.object({
     .nullish(),
   owner: zod
     .object({
+      accountId: zod
+        .string()
+        .regex(updateTestCaseBodyOwnerAccountIdRegExp)
+        .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
         .optional()
-        .describe("The REST API endpoint to get more resource details."),
+        .describe(
+          "The Jira REST API endpoint to get the full representation of the Jira user.",
+        ),
     })
     .optional(),
   testScript: zod
@@ -1427,6 +1459,9 @@ export const getTestCaseVersionResponseNameRegExp = /^(?!\\s*$).+/;
 
 export const getTestCaseVersionResponseEstimatedTimeMin = 0;
 
+export const getTestCaseVersionResponseOwnerAccountIdRegExp =
+  /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const getTestCaseVersionResponse = zod.object({
   id: zod.number().min(1),
   key: zod
@@ -1527,10 +1562,16 @@ export const getTestCaseVersionResponse = zod.object({
     .nullish(),
   owner: zod
     .object({
+      accountId: zod
+        .string()
+        .regex(getTestCaseVersionResponseOwnerAccountIdRegExp)
+        .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
         .optional()
-        .describe("The REST API endpoint to get more resource details."),
+        .describe(
+          "The Jira REST API endpoint to get the full representation of the Jira user.",
+        ),
     })
     .optional(),
   testScript: zod
@@ -2029,6 +2070,9 @@ export const listTestCyclesResponseValuesItemKeyRegExp =
   /([A-Z][A-Z_0-9]+-R[0-9]+)/;
 export const listTestCyclesResponseValuesItemNameRegExp = /^(?!\s*$).+/;
 
+export const listTestCyclesResponseValuesItemOwnerAccountIdRegExp =
+  /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const listTestCyclesResponse = zod
   .object({
     next: zod
@@ -2158,11 +2202,15 @@ export const listTestCyclesResponse = zod
               ),
             owner: zod
               .object({
+                accountId: zod
+                  .string()
+                  .regex(listTestCyclesResponseValuesItemOwnerAccountIdRegExp)
+                  .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
                   .optional()
                   .describe(
-                    "The REST API endpoint to get more resource details.",
+                    "The Jira REST API endpoint to get the full representation of the Jira user.",
                   ),
               })
               .optional(),
@@ -2383,6 +2431,9 @@ export const getTestCycleParams = zod.object({
 export const getTestCycleResponseKeyRegExp = /([A-Z][A-Z_0-9]+-R[0-9]+)/;
 export const getTestCycleResponseNameRegExp = /^(?!\s*$).+/;
 
+export const getTestCycleResponseOwnerAccountIdRegExp =
+  /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const getTestCycleResponse = zod.object({
   id: zod.number().min(1),
   key: zod
@@ -2470,10 +2521,16 @@ export const getTestCycleResponse = zod.object({
     ),
   owner: zod
     .object({
+      accountId: zod
+        .string()
+        .regex(getTestCycleResponseOwnerAccountIdRegExp)
+        .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
         .optional()
-        .describe("The REST API endpoint to get more resource details."),
+        .describe(
+          "The Jira REST API endpoint to get the full representation of the Jira user.",
+        ),
     })
     .optional(),
   customFields: zod
@@ -2619,6 +2676,8 @@ export const updateTestCycleParams = zod.object({
 export const updateTestCycleBodyKeyRegExp = /([A-Z][A-Z_0-9]+-R[0-9]+)/;
 export const updateTestCycleBodyNameRegExp = /^(?!\s*$).+/;
 
+export const updateTestCycleBodyOwnerAccountIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const updateTestCycleBody = zod.object({
   id: zod.number().min(1),
   key: zod
@@ -2706,10 +2765,16 @@ export const updateTestCycleBody = zod.object({
     ),
   owner: zod
     .object({
+      accountId: zod
+        .string()
+        .regex(updateTestCycleBodyOwnerAccountIdRegExp)
+        .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
         .optional()
-        .describe("The REST API endpoint to get more resource details."),
+        .describe(
+          "The Jira REST API endpoint to get the full representation of the Jira user.",
+        ),
     })
     .optional(),
   customFields: zod
@@ -3048,6 +3113,9 @@ export const listTestPlansResponseTotalMin = 0;
 export const listTestPlansResponseValuesItemKeyRegExp = /.+-P[0-9]+/;
 export const listTestPlansResponseValuesItemNameRegExp = /^(?!\\s*$).+/;
 
+export const listTestPlansResponseValuesItemOwnerAccountIdRegExp =
+  /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const listTestPlansResponse = zod
   .object({
     next: zod
@@ -3141,11 +3209,15 @@ export const listTestPlansResponse = zod
               .nullish(),
             owner: zod
               .object({
+                accountId: zod
+                  .string()
+                  .regex(listTestPlansResponseValuesItemOwnerAccountIdRegExp)
+                  .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
                   .optional()
                   .describe(
-                    "The REST API endpoint to get more resource details.",
+                    "The Jira REST API endpoint to get the full representation of the Jira user.",
                   ),
               })
               .optional(),
@@ -3338,6 +3410,8 @@ export const getTestPlanParams = zod.object({
 export const getTestPlanResponseKeyRegExp = /.+-P[0-9]+/;
 export const getTestPlanResponseNameRegExp = /^(?!\\s*$).+/;
 
+export const getTestPlanResponseOwnerAccountIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
+
 export const getTestPlanResponse = zod.object({
   id: zod.number().min(1),
   key: zod
@@ -3391,10 +3465,16 @@ export const getTestPlanResponse = zod.object({
     .nullish(),
   owner: zod
     .object({
+      accountId: zod
+        .string()
+        .regex(getTestPlanResponseOwnerAccountIdRegExp)
+        .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
         .optional()
-        .describe("The REST API endpoint to get more resource details."),
+        .describe(
+          "The Jira REST API endpoint to get the full representation of the Jira user.",
+        ),
     })
     .optional(),
   customFields: zod
