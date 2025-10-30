@@ -19,20 +19,6 @@ export const StartAtSchema = z
     Zero-indexed starting position used to paginate through results. Defaults to 0.
   `);
 
-export const ZephyrProjectSchema = z.object({
-  id: z.number().describe("The ID of the project in Zephyr."),
-  jiraProjectId: z.number().describe("The ID of the project in Jira."),
-  key: z.string(),
-  enabled: z.boolean(),
-});
-
-export const ProjectIdOrKeySchema = z
-  .string()
-  .regex(/^(\d+)|([A-Z][A-Z_0-9]+)$/)
-  .describe("The Zephyr project ID or Jira project key.");
-
-export type ZephyrProject = z.infer<typeof ZephyrProjectSchema>;
-
 export function createListSchema<T extends ZodTypeAny>(itemSchema: T) {
   return z.object({
     next: z

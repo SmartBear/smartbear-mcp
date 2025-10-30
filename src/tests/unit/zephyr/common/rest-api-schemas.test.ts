@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { listProjectsResponse } from "../../../../zephyr/common/rest-api-schemas";
+import {
+  getProjectResponse,
+  listProjectsResponse,
+} from "../../../../zephyr/common/rest-api-schemas";
 
 describe("listProjectsResponse", () => {
   it("validates a correct project list", () => {
@@ -24,5 +27,22 @@ describe("listProjectsResponse", () => {
       values: [{ id: "x", jiraProjectId: 2, key: "ABC", enabled: true }],
     };
     expect(() => listProjectsResponse.parse(invalid)).toThrow();
+  });
+});
+
+describe("getProjectResponse", () => {
+  it("validates a correct project", () => {
+    const valid = {
+      id: 1,
+      jiraProjectId: 2,
+      key: "ABC",
+      enabled: true,
+    };
+    expect(() => getProjectResponse.parse(valid)).not.toThrow();
+  });
+
+  it("rejects an invalid project", () => {
+    const invalid = { id: "x", jiraProjectId: 2, key: "ABC", enabled: true };
+    expect(() => getProjectResponse.parse(invalid)).toThrow();
   });
 });

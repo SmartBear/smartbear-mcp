@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { ZephyrProjectSchema } from "../../../../../zephyr/common/types.js";
 import {
-  GetProject,
-  GetProjectInputSchema,
-} from "../../../../../zephyr/tool/project/get-project.js";
+  getProjectParams,
+  getProjectResponse,
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetProject } from "../../../../../zephyr/tool/project/get-project.js";
 
 describe("GetProject", () => {
   const mockApiClient = { get: vi.fn() };
@@ -16,8 +16,8 @@ describe("GetProject", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(GetProjectInputSchema);
-    expect(instance.specification.outputSchema).toBe(ZephyrProjectSchema);
+    expect(instance.specification.inputSchema).toBe(getProjectParams);
+    expect(instance.specification.outputSchema).toBe(getProjectResponse);
   });
 
   it("should call apiClient.get with string projectIdOrKey and return formatted content", async () => {
