@@ -260,7 +260,7 @@ export const listTestCasesResponse = zod
                     "The Jira REST API endpoint to get the full representation of the Jira user.",
                   ),
               })
-              .optional(),
+              .nullish(),
             testScript: zod
               .object({
                 self: zod
@@ -272,7 +272,7 @@ export const listTestCasesResponse = zod
               })
               .optional(),
             customFields: zod
-              .record(zod.string(), zod.object({}))
+              .record(zod.string(), zod.unknown())
               .optional()
               .describe(
                 "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -435,7 +435,7 @@ export const createTestCaseBody = zod.object({
     .optional()
     .describe("Array of labels associated to this entity."),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -640,7 +640,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                     "The Jira REST API endpoint to get the full representation of the Jira user.",
                   ),
               })
-              .optional(),
+              .nullish(),
             testScript: zod
               .object({
                 self: zod
@@ -652,7 +652,7 @@ export const listTestCasesCursorPaginatedResponse = zod
               })
               .optional(),
             customFields: zod
-              .record(zod.string(), zod.object({}))
+              .record(zod.string(), zod.unknown())
               .optional()
               .describe(
                 "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -880,7 +880,7 @@ export const getTestCaseResponse = zod.object({
           "The Jira REST API endpoint to get the full representation of the Jira user.",
         ),
     })
-    .optional(),
+    .nullish(),
   testScript: zod
     .object({
       self: zod
@@ -890,7 +890,7 @@ export const getTestCaseResponse = zod.object({
     })
     .optional(),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -1110,7 +1110,7 @@ export const updateTestCaseBody = zod.object({
           "The Jira REST API endpoint to get the full representation of the Jira user.",
         ),
     })
-    .optional(),
+    .nullish(),
   testScript: zod
     .object({
       self: zod
@@ -1120,7 +1120,7 @@ export const updateTestCaseBody = zod.object({
     })
     .optional(),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -1573,7 +1573,7 @@ export const getTestCaseVersionResponse = zod.object({
           "The Jira REST API endpoint to get the full representation of the Jira user.",
         ),
     })
-    .optional(),
+    .nullish(),
   testScript: zod
     .object({
       self: zod
@@ -1583,7 +1583,7 @@ export const getTestCaseVersionResponse = zod.object({
     })
     .optional(),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -1830,7 +1830,7 @@ export const getTestCaseTestStepsResponse = zod
                       "The expected outcome of executing the instruction",
                     ),
                   customFields: zod
-                    .record(zod.string(), zod.object({}))
+                    .record(zod.string(), zod.unknown())
                     .optional()
                     .describe(
                       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -1947,7 +1947,7 @@ export const createTestCaseTestStepsBody = zod
                     "The expected outcome of executing the instruction",
                   ),
                 customFields: zod
-                  .record(zod.string(), zod.object({}))
+                  .record(zod.string(), zod.unknown())
                   .optional()
                   .describe(
                     "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -2147,7 +2147,7 @@ export const listTestCyclesResponse = zod
                     ),
                 }),
               )
-              .optional()
+              .nullish()
               .describe(
                 "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
               ),
@@ -2213,9 +2213,9 @@ export const listTestCyclesResponse = zod
                     "The Jira REST API endpoint to get the full representation of the Jira user.",
                   ),
               })
-              .optional(),
+              .nullish(),
             customFields: zod
-              .record(zod.string(), zod.object({}))
+              .record(zod.string(), zod.unknown())
               .optional()
               .describe(
                 "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -2407,7 +2407,7 @@ export const createTestCycleBody = zod.object({
     .optional()
     .describe("Atlassian Account ID of the Jira user."),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -2470,7 +2470,7 @@ export const getTestCycleResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional()
+    .nullish()
     .describe(
       "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
     ),
@@ -2532,9 +2532,9 @@ export const getTestCycleResponse = zod.object({
           "The Jira REST API endpoint to get the full representation of the Jira user.",
         ),
     })
-    .optional(),
+    .nullish(),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -2714,7 +2714,7 @@ export const updateTestCycleBody = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional()
+    .nullish()
     .describe(
       "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
     ),
@@ -2776,9 +2776,9 @@ export const updateTestCycleBody = zod.object({
           "The Jira REST API endpoint to get the full representation of the Jira user.",
         ),
     })
-    .optional(),
+    .nullish(),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -3220,9 +3220,9 @@ export const listTestPlansResponse = zod
                     "The Jira REST API endpoint to get the full representation of the Jira user.",
                   ),
               })
-              .optional(),
+              .nullish(),
             customFields: zod
-              .record(zod.string(), zod.object({}))
+              .record(zod.string(), zod.unknown())
               .optional()
               .describe(
                 "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -3385,7 +3385,7 @@ export const createTestPlanBody = zod.object({
     .optional()
     .describe("Array of labels associated to this entity."),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -3476,9 +3476,9 @@ export const getTestPlanResponse = zod.object({
           "The Jira REST API endpoint to get the full representation of the Jira user.",
         ),
     })
-    .optional(),
+    .nullish(),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -3861,7 +3861,7 @@ export const listTestExecutionsResponse = zod
                     ),
                 }),
               )
-              .optional()
+              .nullish()
               .describe(
                 "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
               ),
@@ -3933,7 +3933,7 @@ export const listTestExecutionsResponse = zod
               )
               .optional(),
             customFields: zod
-              .record(zod.string(), zod.object({}))
+              .record(zod.string(), zod.unknown())
               .optional()
               .describe(
                 "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -4089,7 +4089,7 @@ export const createTestExecutionBody = zod.object({
     .optional()
     .describe("Comment added against overall test case execution."),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -4283,7 +4283,7 @@ export const listTestExecutionsNextgenResponse = zod
                     ),
                 }),
               )
-              .optional()
+              .nullish()
               .describe(
                 "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
               ),
@@ -4359,7 +4359,7 @@ export const listTestExecutionsNextgenResponse = zod
               )
               .optional(),
             customFields: zod
-              .record(zod.string(), zod.object({}))
+              .record(zod.string(), zod.unknown())
               .optional()
               .describe(
                 "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -4518,7 +4518,7 @@ export const getTestExecutionResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional()
+    .nullish()
     .describe(
       "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
     ),
@@ -4584,7 +4584,7 @@ export const getTestExecutionResponse = zod.object({
     )
     .optional(),
   customFields: zod
-    .record(zod.string(), zod.object({}))
+    .record(zod.string(), zod.unknown())
     .optional()
     .describe(
       "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -6214,7 +6214,7 @@ export const createCustomExecutionsBody = zod.object({
         .optional()
         .describe("ID of a folder to place the entity within."),
       customFields: zod
-        .record(zod.string(), zod.object({}))
+        .record(zod.string(), zod.unknown())
         .optional()
         .describe(
           "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -6304,7 +6304,7 @@ export const createCucumberExecutionsBody = zod.object({
         .optional()
         .describe("ID of a folder to place the entity within."),
       customFields: zod
-        .record(zod.string(), zod.object({}))
+        .record(zod.string(), zod.unknown())
         .optional()
         .describe(
           "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
@@ -6393,7 +6393,7 @@ export const createJUnitExecutionsBody = zod.object({
         .optional()
         .describe("ID of a folder to place the entity within."),
       customFields: zod
-        .record(zod.string(), zod.object({}))
+        .record(zod.string(), zod.unknown())
         .optional()
         .describe(
           "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
