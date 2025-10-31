@@ -2375,10 +2375,8 @@ export const listTestCyclesResponse = zod
                       .array(
                         zod.object({
                           id: zod
-                            .object({
-                              id: zod.number().min(1),
-                            })
-                            .describe("The ID of the resource")
+                            .number()
+                            .min(1)
                             .optional()
                             .describe(
                               "The ID that represents the link between the Test Cycle and the Test Plan.",
@@ -2701,10 +2699,8 @@ export const getTestCycleResponse = zod
             .array(
               zod.object({
                 id: zod
-                  .object({
-                    id: zod.number().min(1),
-                  })
-                  .describe("The ID of the resource")
+                  .number()
+                  .min(1)
                   .optional()
                   .describe(
                     "The ID that represents the link between the Test Cycle and the Test Plan.",
@@ -2957,10 +2953,8 @@ export const updateTestCycleBody = zod
             .array(
               zod.object({
                 id: zod
-                  .object({
-                    id: zod.number().min(1),
-                  })
-                  .describe("The ID of the resource")
+                  .number()
+                  .min(1)
                   .optional()
                   .describe(
                     "The ID that represents the link between the Test Cycle and the Test Plan.",
@@ -3095,10 +3089,8 @@ export const getTestCycleLinksResponse = zod
         .array(
           zod.object({
             id: zod
-              .object({
-                id: zod.number().min(1),
-              })
-              .describe("The ID of the resource")
+              .number()
+              .min(1)
               .optional()
               .describe(
                 "The ID that represents the link between the Test Cycle and the Test Plan.",
