@@ -107,6 +107,7 @@ export const listTestCasesResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -155,6 +156,7 @@ export const listTestCasesResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -195,6 +197,7 @@ export const listTestCasesResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -211,6 +214,7 @@ export const listTestCasesResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -226,6 +230,7 @@ export const listTestCasesResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -241,6 +246,7 @@ export const listTestCasesResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -256,6 +262,7 @@ export const listTestCasesResponse = zod
                   .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -266,6 +273,7 @@ export const listTestCasesResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -282,6 +290,7 @@ export const listTestCasesResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -302,6 +311,7 @@ export const listTestCasesResponse = zod
                           zod.object({
                             self: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -315,6 +325,7 @@ export const listTestCasesResponse = zod
                               ),
                             target: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -336,12 +347,13 @@ export const listTestCasesResponse = zod
                             .string()
                             .optional()
                             .describe("The web link description"),
-                          url: zod.string().describe("The web link URL"),
+                          url: zod.string().url().describe("The web link URL"),
                         })
                         .and(
                           zod.object({
                             self: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -501,7 +513,7 @@ export const listTestCasesCursorPaginatedResponseValuesItemOwnerAccountIdRegExp 
 
 export const listTestCasesCursorPaginatedResponse = zod
   .object({
-    next: zod.string().nullish(),
+    next: zod.string().url().nullish(),
     nextStartAtId: zod
       .number()
       .min(listTestCasesCursorPaginatedResponseNextStartAtIdMin)
@@ -530,6 +542,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -572,6 +585,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -588,6 +602,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -603,6 +618,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -618,6 +634,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -635,6 +652,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                   .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -645,6 +663,7 @@ export const listTestCasesCursorPaginatedResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -661,6 +680,7 @@ export const listTestCasesCursorPaginatedResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -681,6 +701,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                           zod.object({
                             self: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -694,6 +715,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                               ),
                             target: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -715,12 +737,13 @@ export const listTestCasesCursorPaginatedResponse = zod
                             .string()
                             .optional()
                             .describe("The web link description"),
-                          url: zod.string().describe("The web link URL"),
+                          url: zod.string().url().describe("The web link URL"),
                         })
                         .and(
                           zod.object({
                             self: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -783,6 +806,7 @@ export const getTestCaseResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -821,6 +845,7 @@ export const getTestCaseResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -835,6 +860,7 @@ export const getTestCaseResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -848,6 +874,7 @@ export const getTestCaseResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -861,6 +888,7 @@ export const getTestCaseResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -874,6 +902,7 @@ export const getTestCaseResponse = zod.object({
         .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
+        .url()
         .optional()
         .describe(
           "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -884,6 +913,7 @@ export const getTestCaseResponse = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -898,6 +928,7 @@ export const getTestCaseResponse = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -913,6 +944,7 @@ export const getTestCaseResponse = zod.object({
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -926,6 +958,7 @@ export const getTestCaseResponse = zod.object({
                     ),
                   target: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -947,12 +980,13 @@ export const getTestCaseResponse = zod.object({
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().describe("The web link URL"),
+                url: zod.string().url().describe("The web link URL"),
               })
               .and(
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -1012,6 +1046,7 @@ export const updateTestCaseBody = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1050,6 +1085,7 @@ export const updateTestCaseBody = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1064,6 +1100,7 @@ export const updateTestCaseBody = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1077,6 +1114,7 @@ export const updateTestCaseBody = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1090,6 +1128,7 @@ export const updateTestCaseBody = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1103,6 +1142,7 @@ export const updateTestCaseBody = zod.object({
         .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
+        .url()
         .optional()
         .describe(
           "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -1113,6 +1153,7 @@ export const updateTestCaseBody = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -1127,6 +1168,7 @@ export const updateTestCaseBody = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -1142,6 +1184,7 @@ export const updateTestCaseBody = zod.object({
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -1155,6 +1198,7 @@ export const updateTestCaseBody = zod.object({
                     ),
                   target: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -1176,12 +1220,13 @@ export const updateTestCaseBody = zod.object({
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().describe("The web link URL"),
+                url: zod.string().url().describe("The web link URL"),
               })
               .and(
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -1221,6 +1266,7 @@ export const getTestCaseLinksResponse = zod
   .object({
     self: zod
       .string()
+      .url()
       .optional()
       .describe("The REST API endpoint to get more resource details."),
   })
@@ -1236,6 +1282,7 @@ export const getTestCaseLinksResponse = zod
               zod.object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -1249,6 +1296,7 @@ export const getTestCaseLinksResponse = zod
                   ),
                 target: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -1270,12 +1318,13 @@ export const getTestCaseLinksResponse = zod
                 .string()
                 .optional()
                 .describe("The web link description"),
-              url: zod.string().describe("The web link URL"),
+              url: zod.string().url().describe("The web link URL"),
             })
             .and(
               zod.object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -1330,7 +1379,7 @@ export const createTestCaseWebLinkParams = zod.object({
 
 export const createTestCaseWebLinkBody = zod.object({
   description: zod.string().optional().describe("The web link description"),
-  url: zod.string().describe("The web link URL"),
+  url: zod.string().url().describe("The web link URL"),
 });
 
 /**
@@ -1380,6 +1429,7 @@ export const listTestCaseVersionsResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -1416,6 +1466,7 @@ export const listTestCaseVersionsResponse = zod
             .object({
               self: zod
                 .string()
+                .url()
                 .optional()
                 .describe(
                   "The REST API endpoint to get more resource details.",
@@ -1472,6 +1523,7 @@ export const getTestCaseVersionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1510,6 +1562,7 @@ export const getTestCaseVersionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1524,6 +1577,7 @@ export const getTestCaseVersionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1537,6 +1591,7 @@ export const getTestCaseVersionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1550,6 +1605,7 @@ export const getTestCaseVersionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -1563,6 +1619,7 @@ export const getTestCaseVersionResponse = zod.object({
         .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
+        .url()
         .optional()
         .describe(
           "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -1573,6 +1630,7 @@ export const getTestCaseVersionResponse = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -1587,6 +1645,7 @@ export const getTestCaseVersionResponse = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -1602,6 +1661,7 @@ export const getTestCaseVersionResponse = zod.object({
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -1615,6 +1675,7 @@ export const getTestCaseVersionResponse = zod.object({
                     ),
                   target: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -1636,12 +1697,13 @@ export const getTestCaseVersionResponse = zod.object({
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().describe("The web link URL"),
+                url: zod.string().url().describe("The web link URL"),
               })
               .and(
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -1770,6 +1832,7 @@ export const getTestCaseTestStepsResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -1838,6 +1901,7 @@ export const getTestCaseTestStepsResponse = zod
                 .object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -1955,6 +2019,7 @@ export const createTestCaseTestStepsBody = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -2068,6 +2133,7 @@ export const listTestCyclesResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -2120,6 +2186,7 @@ export const listTestCyclesResponse = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The REST API endpoint to get more resource details.",
@@ -2136,6 +2203,7 @@ export const listTestCyclesResponse = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The REST API endpoint to get more resource details.",
@@ -2155,6 +2223,7 @@ export const listTestCyclesResponse = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The REST API endpoint to get more resource details.",
@@ -2170,6 +2239,7 @@ export const listTestCyclesResponse = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The REST API endpoint to get more resource details.",
@@ -2203,6 +2273,7 @@ export const listTestCyclesResponse = zod
                     .describe("Atlassian Account ID of the Jira user."),
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -2219,6 +2290,7 @@ export const listTestCyclesResponse = zod
                 .object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -2239,6 +2311,7 @@ export const listTestCyclesResponse = zod
                             zod.object({
                               self: zod
                                 .string()
+                                .url()
                                 .optional()
                                 .describe(
                                   "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -2252,6 +2325,7 @@ export const listTestCyclesResponse = zod
                                 ),
                               target: zod
                                 .string()
+                                .url()
                                 .optional()
                                 .describe(
                                   "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -2273,12 +2347,16 @@ export const listTestCyclesResponse = zod
                               .string()
                               .optional()
                               .describe("The web link description"),
-                            url: zod.string().describe("The web link URL"),
+                            url: zod
+                              .string()
+                              .url()
+                              .describe("The web link URL"),
                           })
                           .and(
                             zod.object({
                               self: zod
                                 .string()
+                                .url()
                                 .optional()
                                 .describe(
                                   "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -2307,6 +2385,7 @@ export const listTestCyclesResponse = zod
                             ),
                           self: zod
                             .string()
+                            .url()
                             .optional()
                             .describe(
                               "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -2321,6 +2400,7 @@ export const listTestCyclesResponse = zod
                             .describe("The link type"),
                           target: zod
                             .string()
+                            .url()
                             .optional()
                             .describe(
                               "The Zephyr REST API endpoint to get the full representation of the test plan",
@@ -2448,6 +2528,7 @@ export const getTestCycleResponse = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -2462,6 +2543,7 @@ export const getTestCycleResponse = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -2479,6 +2561,7 @@ export const getTestCycleResponse = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -2492,6 +2575,7 @@ export const getTestCycleResponse = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -2523,6 +2607,7 @@ export const getTestCycleResponse = zod
           .describe("Atlassian Account ID of the Jira user."),
         self: zod
           .string()
+          .url()
           .optional()
           .describe(
             "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -2539,6 +2624,7 @@ export const getTestCycleResponse = zod
       .object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       })
@@ -2554,6 +2640,7 @@ export const getTestCycleResponse = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -2567,6 +2654,7 @@ export const getTestCycleResponse = zod
                       ),
                     target: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -2588,12 +2676,13 @@ export const getTestCycleResponse = zod
                     .string()
                     .optional()
                     .describe("The web link description"),
-                  url: zod.string().describe("The web link URL"),
+                  url: zod.string().url().describe("The web link URL"),
                 })
                 .and(
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -2622,6 +2711,7 @@ export const getTestCycleResponse = zod
                   ),
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -2636,6 +2726,7 @@ export const getTestCycleResponse = zod
                   .describe("The link type"),
                 target: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint to get the full representation of the test plan",
@@ -2693,6 +2784,7 @@ export const updateTestCycleBody = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -2707,6 +2799,7 @@ export const updateTestCycleBody = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -2724,6 +2817,7 @@ export const updateTestCycleBody = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -2737,6 +2831,7 @@ export const updateTestCycleBody = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -2768,6 +2863,7 @@ export const updateTestCycleBody = zod
           .describe("Atlassian Account ID of the Jira user."),
         self: zod
           .string()
+          .url()
           .optional()
           .describe(
             "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -2784,6 +2880,7 @@ export const updateTestCycleBody = zod
       .object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       })
@@ -2799,6 +2896,7 @@ export const updateTestCycleBody = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -2812,6 +2910,7 @@ export const updateTestCycleBody = zod
                       ),
                     target: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -2833,12 +2932,13 @@ export const updateTestCycleBody = zod
                     .string()
                     .optional()
                     .describe("The web link description"),
-                  url: zod.string().describe("The web link URL"),
+                  url: zod.string().url().describe("The web link URL"),
                 })
                 .and(
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -2867,6 +2967,7 @@ export const updateTestCycleBody = zod
                   ),
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -2881,6 +2982,7 @@ export const updateTestCycleBody = zod
                   .describe("The link type"),
                 target: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint to get the full representation of the test plan",
@@ -2916,6 +3018,7 @@ export const getTestCycleLinksResponse = zod
   .object({
     self: zod
       .string()
+      .url()
       .optional()
       .describe("The REST API endpoint to get more resource details."),
   })
@@ -2931,6 +3034,7 @@ export const getTestCycleLinksResponse = zod
               zod.object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -2944,6 +3048,7 @@ export const getTestCycleLinksResponse = zod
                   ),
                 target: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -2965,12 +3070,13 @@ export const getTestCycleLinksResponse = zod
                 .string()
                 .optional()
                 .describe("The web link description"),
-              url: zod.string().describe("The web link URL"),
+              url: zod.string().url().describe("The web link URL"),
             })
             .and(
               zod.object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -2999,6 +3105,7 @@ export const getTestCycleLinksResponse = zod
               ),
             self: zod
               .string()
+              .url()
               .optional()
               .describe(
                 "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -3013,6 +3120,7 @@ export const getTestCycleLinksResponse = zod
               .describe("The link type"),
             target: zod
               .string()
+              .url()
               .optional()
               .describe(
                 "The Zephyr REST API endpoint to get the full representation of the test plan",
@@ -3061,7 +3169,7 @@ export const createTestCycleWebLinkParams = zod.object({
 
 export const createTestCycleWebLinkBody = zod.object({
   description: zod.string().optional().describe("The web link description"),
-  url: zod.string().describe("The web link URL"),
+  url: zod.string().url().describe("The web link URL"),
 });
 
 /**
@@ -3112,6 +3220,7 @@ export const listTestPlansResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -3164,6 +3273,7 @@ export const listTestPlansResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -3180,6 +3290,7 @@ export const listTestPlansResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -3195,6 +3306,7 @@ export const listTestPlansResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -3210,6 +3322,7 @@ export const listTestPlansResponse = zod
                   .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -3236,12 +3349,13 @@ export const listTestPlansResponse = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().describe("The web link URL"),
+                        url: zod.string().url().describe("The web link URL"),
                       })
                       .and(
                         zod.object({
                           self: zod
                             .string()
+                            .url()
                             .optional()
                             .describe(
                               "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -3269,6 +3383,7 @@ export const listTestPlansResponse = zod
                         zod.object({
                           self: zod
                             .string()
+                            .url()
                             .optional()
                             .describe(
                               "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -3282,6 +3397,7 @@ export const listTestPlansResponse = zod
                             ),
                           target: zod
                             .string()
+                            .url()
                             .optional()
                             .describe(
                               "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -3306,6 +3422,7 @@ export const listTestPlansResponse = zod
                         zod.object({
                           self: zod
                             .string()
+                            .url()
                             .optional()
                             .describe(
                               "The REST API endpoint to get more resource details.",
@@ -3425,6 +3542,7 @@ export const getTestPlanResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -3439,6 +3557,7 @@ export const getTestPlanResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -3452,6 +3571,7 @@ export const getTestPlanResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -3465,6 +3585,7 @@ export const getTestPlanResponse = zod.object({
         .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
+        .url()
         .optional()
         .describe(
           "The Jira REST API endpoint to get the full representation of the Jira user.",
@@ -3491,12 +3612,13 @@ export const getTestPlanResponse = zod.object({
                 .string()
                 .optional()
                 .describe("The web link description"),
-              url: zod.string().describe("The web link URL"),
+              url: zod.string().url().describe("The web link URL"),
             })
             .and(
               zod.object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
@@ -3521,6 +3643,7 @@ export const getTestPlanResponse = zod.object({
               zod.object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -3534,6 +3657,7 @@ export const getTestPlanResponse = zod.object({
                   ),
                 target: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -3558,6 +3682,7 @@ export const getTestPlanResponse = zod.object({
               zod.object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -3603,7 +3728,7 @@ export const createTestPlanWebLinkParams = zod.object({
 export const createTestPlanWebLinkBody = zod
   .object({
     description: zod.string().optional().describe("The web link description"),
-    url: zod.string().describe("The web link URL"),
+    url: zod.string().url().describe("The web link URL"),
   })
   .and(zod.unknown());
 
@@ -3754,6 +3879,7 @@ export const listTestExecutionsResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -3802,6 +3928,7 @@ export const listTestExecutionsResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -3813,6 +3940,7 @@ export const listTestExecutionsResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -3832,6 +3960,7 @@ export const listTestExecutionsResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -3848,6 +3977,7 @@ export const listTestExecutionsResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -3867,6 +3997,7 @@ export const listTestExecutionsResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -3914,6 +4045,7 @@ export const listTestExecutionsResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -3935,6 +4067,7 @@ export const listTestExecutionsResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -3955,6 +4088,7 @@ export const listTestExecutionsResponse = zod
                           zod.object({
                             self: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -3968,6 +4102,7 @@ export const listTestExecutionsResponse = zod
                               ),
                             target: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -4200,7 +4335,7 @@ export const listTestExecutionsNextgenResponseValuesItemAssignedToIdRegExp =
 
 export const listTestExecutionsNextgenResponse = zod
   .object({
-    next: zod.string().nullish(),
+    next: zod.string().url().nullish(),
     nextStartAtId: zod
       .number()
       .min(listTestExecutionsNextgenResponseNextStartAtIdMin)
@@ -4227,6 +4362,7 @@ export const listTestExecutionsNextgenResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -4238,6 +4374,7 @@ export const listTestExecutionsNextgenResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -4257,6 +4394,7 @@ export const listTestExecutionsNextgenResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -4273,6 +4411,7 @@ export const listTestExecutionsNextgenResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -4292,6 +4431,7 @@ export const listTestExecutionsNextgenResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -4343,6 +4483,7 @@ export const listTestExecutionsNextgenResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -4364,6 +4505,7 @@ export const listTestExecutionsNextgenResponse = zod
               .object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The REST API endpoint to get more resource details.",
@@ -4384,6 +4526,7 @@ export const listTestExecutionsNextgenResponse = zod
                           zod.object({
                             self: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -4397,6 +4540,7 @@ export const listTestExecutionsNextgenResponse = zod
                               ),
                             target: zod
                               .string()
+                              .url()
                               .optional()
                               .describe(
                                 "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -4473,6 +4617,7 @@ export const getTestExecutionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -4482,6 +4627,7 @@ export const getTestExecutionResponse = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -4499,6 +4645,7 @@ export const getTestExecutionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -4513,6 +4660,7 @@ export const getTestExecutionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -4530,6 +4678,7 @@ export const getTestExecutionResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -4573,6 +4722,7 @@ export const getTestExecutionResponse = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -4592,6 +4742,7 @@ export const getTestExecutionResponse = zod.object({
     .object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     })
@@ -4607,6 +4758,7 @@ export const getTestExecutionResponse = zod.object({
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -4620,6 +4772,7 @@ export const getTestExecutionResponse = zod.object({
                     ),
                   target: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -4757,6 +4910,7 @@ export const getTestExecutionTestStepsResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -4832,6 +4986,7 @@ export const getTestExecutionTestStepsResponse = zod
                       zod.object({
                         self: zod
                           .string()
+                          .url()
                           .optional()
                           .describe(
                             "The REST API endpoint to get more resource details.",
@@ -4903,6 +5058,7 @@ export const syncTestExecutionScriptParams = zod.object({
 export const syncTestExecutionScriptResponse = zod.object({
   self: zod
     .string()
+    .url()
     .optional()
     .describe("The REST API endpoint to get more resource details."),
 });
@@ -4927,6 +5083,7 @@ export const listTestExecutionLinksResponse = zod
   .object({
     self: zod
       .string()
+      .url()
       .optional()
       .describe("The REST API endpoint to get more resource details."),
   })
@@ -4942,6 +5099,7 @@ export const listTestExecutionLinksResponse = zod
               zod.object({
                 self: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
@@ -4955,6 +5113,7 @@ export const listTestExecutionLinksResponse = zod
                   ),
                 target: zod
                   .string()
+                  .url()
                   .optional()
                   .describe(
                     "The Jira Cloud REST API endpoint to get the full representation of the issue",
@@ -5027,6 +5186,7 @@ export const listProjectsResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -5150,6 +5310,7 @@ export const listFoldersResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -5201,6 +5362,7 @@ export const listFoldersResponse = zod
                 zod.object({
                   self: zod
                     .string()
+                    .url()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
@@ -5275,6 +5437,7 @@ export const getFolderResponse = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -5333,6 +5496,7 @@ export const listPrioritiesResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -5377,6 +5541,7 @@ export const listPrioritiesResponse = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The REST API endpoint to get more resource details.",
@@ -5470,6 +5635,7 @@ export const getPriorityResponse = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -5522,6 +5688,7 @@ export const updatePriorityBody = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -5597,6 +5764,7 @@ export const listStatusesResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -5641,6 +5809,7 @@ export const listStatusesResponse = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The REST API endpoint to get more resource details.",
@@ -5735,6 +5904,7 @@ export const getStatusResponse = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -5784,6 +5954,7 @@ export const updateStatusBody = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -5857,6 +6028,7 @@ export const listEnvironmentsResponse = zod
   .object({
     next: zod
       .string()
+      .url()
       .nullish()
       .describe(
         "URL to the next page of results, or null if there are no more results.",
@@ -5901,6 +6073,7 @@ export const listEnvironmentsResponse = zod
                   zod.object({
                     self: zod
                       .string()
+                      .url()
                       .optional()
                       .describe(
                         "The REST API endpoint to get more resource details.",
@@ -5982,6 +6155,7 @@ export const getEnvironmentResponse = zod
         zod.object({
           self: zod
             .string()
+            .url()
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
@@ -6027,6 +6201,7 @@ export const updateEnvironmentBody = zod.object({
       zod.object({
         self: zod
           .string()
+          .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
@@ -6077,6 +6252,7 @@ export const getIssueLinkTestCasesResponseItem = zod
     zod.object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     }),
@@ -6107,6 +6283,7 @@ export const getIssueLinkTestCyclesResponseItem = zod
     zod.object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     }),
@@ -6137,6 +6314,7 @@ export const getIssueLinkTestPlansResponseItem = zod
     zod.object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     }),
@@ -6167,6 +6345,7 @@ export const getIssueLinkTestExecutionsResponseItem = zod
     zod.object({
       self: zod
         .string()
+        .url()
         .optional()
         .describe("The REST API endpoint to get more resource details."),
     }),
