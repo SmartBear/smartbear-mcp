@@ -93,8 +93,6 @@ export const listTestCasesQueryParams = zod.object({
 
 export const listTestCasesResponseStartAtMin = 0;
 
-export const listTestCasesResponseMaxResultsMin = 0;
-
 export const listTestCasesResponseTotalMin = 0;
 
 export const listTestCasesResponseValuesItemKeyRegExp = /.+-T[0-9]+/;
@@ -121,8 +119,10 @@ export const listTestCasesResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listTestCasesResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listTestCasesResponseTotalMin)
@@ -160,7 +160,8 @@ export const listTestCasesResponse = zod
                       "The REST API endpoint to get more resource details.",
                     ),
                 }),
-              ),
+              )
+              .describe("ID and link relative to Zephyr project."),
             createdOn: zod
               .string()
               .datetime({})
@@ -292,24 +293,26 @@ export const listTestCasesResponse = zod
                     .array(
                       zod
                         .object({
-                          self: zod
-                            .string()
-                            .optional()
-                            .describe(
-                              "The REST API endpoint to get more resource details.",
-                            ),
+                          issueId: zod
+                            .number()
+                            .min(1)
+                            .describe("The Jira issue ID"),
                         })
                         .and(
                           zod.object({
-                            issueId: zod
+                            self: zod
+                              .string()
+                              .optional()
+                              .describe(
+                                "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                              ),
+                            id: zod
                               .number()
                               .min(1)
-                              .describe("The Jira issue ID"),
-                          }),
-                        )
-                        .and(
-                          zod.object({
-                            id: zod.number().min(1).optional(),
+                              .optional()
+                              .describe(
+                                "The ID that represents the link between the entity and the Jira issue.",
+                              ),
                             target: zod
                               .string()
                               .optional()
@@ -329,24 +332,20 @@ export const listTestCasesResponse = zod
                     .array(
                       zod
                         .object({
-                          self: zod
+                          description: zod
                             .string()
                             .optional()
-                            .describe(
-                              "The REST API endpoint to get more resource details.",
-                            ),
+                            .describe("The web link description"),
+                          url: zod.string().describe("The web link URL"),
                         })
                         .and(
                           zod.object({
-                            description: zod
+                            self: zod
                               .string()
                               .optional()
-                              .describe("The web link description"),
-                            url: zod.string().describe("The web link URL"),
-                          }),
-                        )
-                        .and(
-                          zod.object({
+                              .describe(
+                                "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                              ),
                             id: zod.number().min(1).optional(),
                             type: zod
                               .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -536,7 +535,8 @@ export const listTestCasesCursorPaginatedResponse = zod
                       "The REST API endpoint to get more resource details.",
                     ),
                 }),
-              ),
+              )
+              .describe("ID and link relative to Zephyr project."),
             createdOn: zod
               .string()
               .datetime({})
@@ -672,24 +672,26 @@ export const listTestCasesCursorPaginatedResponse = zod
                     .array(
                       zod
                         .object({
-                          self: zod
-                            .string()
-                            .optional()
-                            .describe(
-                              "The REST API endpoint to get more resource details.",
-                            ),
+                          issueId: zod
+                            .number()
+                            .min(1)
+                            .describe("The Jira issue ID"),
                         })
                         .and(
                           zod.object({
-                            issueId: zod
+                            self: zod
+                              .string()
+                              .optional()
+                              .describe(
+                                "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                              ),
+                            id: zod
                               .number()
                               .min(1)
-                              .describe("The Jira issue ID"),
-                          }),
-                        )
-                        .and(
-                          zod.object({
-                            id: zod.number().min(1).optional(),
+                              .optional()
+                              .describe(
+                                "The ID that represents the link between the entity and the Jira issue.",
+                              ),
                             target: zod
                               .string()
                               .optional()
@@ -709,24 +711,20 @@ export const listTestCasesCursorPaginatedResponse = zod
                     .array(
                       zod
                         .object({
-                          self: zod
+                          description: zod
                             .string()
                             .optional()
-                            .describe(
-                              "The REST API endpoint to get more resource details.",
-                            ),
+                            .describe("The web link description"),
+                          url: zod.string().describe("The web link URL"),
                         })
                         .and(
                           zod.object({
-                            description: zod
+                            self: zod
                               .string()
                               .optional()
-                              .describe("The web link description"),
-                            url: zod.string().describe("The web link URL"),
-                          }),
-                        )
-                        .and(
-                          zod.object({
+                              .describe(
+                                "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                              ),
                             id: zod.number().min(1).optional(),
                             type: zod
                               .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -788,7 +786,8 @@ export const getTestCaseResponse = zod.object({
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
-    ),
+    )
+    .describe("ID and link relative to Zephyr project."),
   createdOn: zod
     .string()
     .datetime({})
@@ -908,21 +907,23 @@ export const getTestCaseResponse = zod.object({
           .array(
             zod
               .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
+                issueId: zod.number().min(1).describe("The Jira issue ID"),
               })
               .and(
                 zod.object({
-                  issueId: zod.number().min(1).describe("The Jira issue ID"),
-                }),
-              )
-              .and(
-                zod.object({
-                  id: zod.number().min(1).optional(),
+                  self: zod
+                    .string()
+                    .optional()
+                    .describe(
+                      "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                    ),
+                  id: zod
+                    .number()
+                    .min(1)
+                    .optional()
+                    .describe(
+                      "The ID that represents the link between the entity and the Jira issue.",
+                    ),
                   target: zod
                     .string()
                     .optional()
@@ -942,24 +943,20 @@ export const getTestCaseResponse = zod.object({
           .array(
             zod
               .object({
-                self: zod
+                description: zod
                   .string()
                   .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
+                  .describe("The web link description"),
+                url: zod.string().describe("The web link URL"),
               })
               .and(
                 zod.object({
-                  description: zod
+                  self: zod
                     .string()
                     .optional()
-                    .describe("The web link description"),
-                  url: zod.string().describe("The web link URL"),
-                }),
-              )
-              .and(
-                zod.object({
+                    .describe(
+                      "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                    ),
                   id: zod.number().min(1).optional(),
                   type: zod
                     .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -1018,7 +1015,8 @@ export const updateTestCaseBody = zod.object({
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
-    ),
+    )
+    .describe("ID and link relative to Zephyr project."),
   createdOn: zod
     .string()
     .datetime({})
@@ -1138,21 +1136,23 @@ export const updateTestCaseBody = zod.object({
           .array(
             zod
               .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
+                issueId: zod.number().min(1).describe("The Jira issue ID"),
               })
               .and(
                 zod.object({
-                  issueId: zod.number().min(1).describe("The Jira issue ID"),
-                }),
-              )
-              .and(
-                zod.object({
-                  id: zod.number().min(1).optional(),
+                  self: zod
+                    .string()
+                    .optional()
+                    .describe(
+                      "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                    ),
+                  id: zod
+                    .number()
+                    .min(1)
+                    .optional()
+                    .describe(
+                      "The ID that represents the link between the entity and the Jira issue.",
+                    ),
                   target: zod
                     .string()
                     .optional()
@@ -1172,24 +1172,20 @@ export const updateTestCaseBody = zod.object({
           .array(
             zod
               .object({
-                self: zod
+                description: zod
                   .string()
                   .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
+                  .describe("The web link description"),
+                url: zod.string().describe("The web link URL"),
               })
               .and(
                 zod.object({
-                  description: zod
+                  self: zod
                     .string()
                     .optional()
-                    .describe("The web link description"),
-                  url: zod.string().describe("The web link URL"),
-                }),
-              )
-              .and(
-                zod.object({
+                    .describe(
+                      "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                    ),
                   id: zod.number().min(1).optional(),
                   type: zod
                     .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -1234,21 +1230,23 @@ export const getTestCaseLinksResponse = zod
         .array(
           zod
             .object({
-              self: zod
-                .string()
-                .optional()
-                .describe(
-                  "The REST API endpoint to get more resource details.",
-                ),
+              issueId: zod.number().min(1).describe("The Jira issue ID"),
             })
             .and(
               zod.object({
-                issueId: zod.number().min(1).describe("The Jira issue ID"),
-              }),
-            )
-            .and(
-              zod.object({
-                id: zod.number().min(1).optional(),
+                self: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                  ),
+                id: zod
+                  .number()
+                  .min(1)
+                  .optional()
+                  .describe(
+                    "The ID that represents the link between the entity and the Jira issue.",
+                  ),
                 target: zod
                   .string()
                   .optional()
@@ -1268,24 +1266,20 @@ export const getTestCaseLinksResponse = zod
         .array(
           zod
             .object({
-              self: zod
+              description: zod
                 .string()
                 .optional()
-                .describe(
-                  "The REST API endpoint to get more resource details.",
-                ),
+                .describe("The web link description"),
+              url: zod.string().describe("The web link URL"),
             })
             .and(
               zod.object({
-                description: zod
+                self: zod
                   .string()
                   .optional()
-                  .describe("The web link description"),
-                url: zod.string().describe("The web link URL"),
-              }),
-            )
-            .and(
-              zod.object({
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                  ),
                 id: zod.number().min(1).optional(),
                 type: zod
                   .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -1380,8 +1374,6 @@ export const listTestCaseVersionsQueryParams = zod.object({
 
 export const listTestCaseVersionsResponseStartAtMin = 0;
 
-export const listTestCaseVersionsResponseMaxResultsMin = 0;
-
 export const listTestCaseVersionsResponseTotalMin = 0;
 
 export const listTestCaseVersionsResponse = zod
@@ -1400,8 +1392,10 @@ export const listTestCaseVersionsResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listTestCaseVersionsResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listTestCaseVersionsResponseTotalMin)
@@ -1481,7 +1475,8 @@ export const getTestCaseVersionResponse = zod.object({
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
-    ),
+    )
+    .describe("ID and link relative to Zephyr project."),
   createdOn: zod
     .string()
     .datetime({})
@@ -1601,21 +1596,23 @@ export const getTestCaseVersionResponse = zod.object({
           .array(
             zod
               .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
+                issueId: zod.number().min(1).describe("The Jira issue ID"),
               })
               .and(
                 zod.object({
-                  issueId: zod.number().min(1).describe("The Jira issue ID"),
-                }),
-              )
-              .and(
-                zod.object({
-                  id: zod.number().min(1).optional(),
+                  self: zod
+                    .string()
+                    .optional()
+                    .describe(
+                      "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                    ),
+                  id: zod
+                    .number()
+                    .min(1)
+                    .optional()
+                    .describe(
+                      "The ID that represents the link between the entity and the Jira issue.",
+                    ),
                   target: zod
                     .string()
                     .optional()
@@ -1635,24 +1632,20 @@ export const getTestCaseVersionResponse = zod.object({
           .array(
             zod
               .object({
-                self: zod
+                description: zod
                   .string()
                   .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
+                  .describe("The web link description"),
+                url: zod.string().describe("The web link URL"),
               })
               .and(
                 zod.object({
-                  description: zod
+                  self: zod
                     .string()
                     .optional()
-                    .describe("The web link description"),
-                  url: zod.string().describe("The web link URL"),
-                }),
-              )
-              .and(
-                zod.object({
+                    .describe(
+                      "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                    ),
                   id: zod.number().min(1).optional(),
                   type: zod
                     .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -1768,8 +1761,6 @@ export const getTestCaseTestStepsQueryParams = zod.object({
 
 export const getTestCaseTestStepsResponseStartAtMin = 0;
 
-export const getTestCaseTestStepsResponseMaxResultsMin = 0;
-
 export const getTestCaseTestStepsResponseTotalMin = 0;
 
 export const getTestCaseTestStepsResponseValuesItemTestCaseTestCaseKeyRegExp =
@@ -1791,8 +1782,10 @@ export const getTestCaseTestStepsResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(getTestCaseTestStepsResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(getTestCaseTestStepsResponseTotalMin)
@@ -2062,8 +2055,6 @@ export const listTestCyclesQueryParams = zod.object({
 
 export const listTestCyclesResponseStartAtMin = 0;
 
-export const listTestCyclesResponseMaxResultsMin = 0;
-
 export const listTestCyclesResponseTotalMin = 0;
 
 export const listTestCyclesResponseValuesItemKeyRegExp =
@@ -2089,8 +2080,10 @@ export const listTestCyclesResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listTestCyclesResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listTestCyclesResponseTotalMin)
@@ -2107,242 +2100,243 @@ export const listTestCyclesResponse = zod
     zod.object({
       values: zod
         .array(
-          zod.object({
-            id: zod.number().min(1),
-            key: zod
-              .string()
-              .regex(listTestCyclesResponseValuesItemKeyRegExp)
-              .describe("Unique key of the test cycle"),
-            name: zod
-              .string()
-              .regex(listTestCyclesResponseValuesItemNameRegExp)
-              .describe("Name of the Test Cycle"),
-            project: zod
-              .object({
-                id: zod.number().min(1),
-              })
-              .describe("The ID of the resource")
-              .and(
-                zod.object({
+          zod
+            .object({
+              id: zod.number().min(1),
+              key: zod
+                .string()
+                .regex(listTestCyclesResponseValuesItemKeyRegExp)
+                .describe("Unique key of the test cycle"),
+              name: zod
+                .string()
+                .regex(listTestCyclesResponseValuesItemNameRegExp)
+                .describe("Name of the Test Cycle"),
+              project: zod
+                .object({
+                  id: zod.number().min(1),
+                })
+                .describe("The ID of the resource")
+                .and(
+                  zod.object({
+                    self: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The REST API endpoint to get more resource details.",
+                      ),
+                  }),
+                )
+                .describe("ID and link relative to Zephyr project."),
+              jiraProjectVersion: zod
+                .object({
+                  id: zod.number().min(1),
+                })
+                .describe("The ID of the resource")
+                .and(
+                  zod.object({
+                    self: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The REST API endpoint to get more resource details.",
+                      ),
+                  }),
+                )
+                .nullish()
+                .describe(
+                  "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+                ),
+              status: zod
+                .object({
+                  id: zod.number().min(1),
+                })
+                .describe("The ID of the resource")
+                .and(
+                  zod.object({
+                    self: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The REST API endpoint to get more resource details.",
+                      ),
+                  }),
+                ),
+              folder: zod
+                .object({
+                  id: zod.number().min(1),
+                })
+                .describe("The ID of the resource")
+                .and(
+                  zod.object({
+                    self: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The REST API endpoint to get more resource details.",
+                      ),
+                  }),
+                )
+                .nullish(),
+              description: zod
+                .string()
+                .nullish()
+                .describe("Description outlining the scope."),
+              plannedStartDate: zod
+                .string()
+                .datetime({})
+                .nullish()
+                .describe(
+                  "Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
+                ),
+              plannedEndDate: zod
+                .string()
+                .datetime({})
+                .nullish()
+                .describe(
+                  "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
+                ),
+              owner: zod
+                .object({
+                  accountId: zod
+                    .string()
+                    .regex(listTestCyclesResponseValuesItemOwnerAccountIdRegExp)
+                    .describe("Atlassian Account ID of the Jira user."),
+                  self: zod
+                    .string()
+                    .optional()
+                    .describe(
+                      "The Jira REST API endpoint to get the full representation of the Jira user.",
+                    ),
+                })
+                .nullish(),
+              customFields: zod
+                .record(zod.string(), zod.unknown())
+                .optional()
+                .describe(
+                  "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+                ),
+              links: zod
+                .object({
                   self: zod
                     .string()
                     .optional()
                     .describe(
                       "The REST API endpoint to get more resource details.",
                     ),
-                }),
-              ),
-            jiraProjectVersion: zod
-              .object({
-                id: zod.number().min(1),
-              })
-              .describe("The ID of the resource")
-              .and(
-                zod.object({
-                  self: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The REST API endpoint to get more resource details.",
-                    ),
-                }),
-              )
-              .nullish()
-              .describe(
-                "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
-              ),
-            status: zod
-              .object({
-                id: zod.number().min(1),
-              })
-              .describe("The ID of the resource")
-              .and(
-                zod.object({
-                  self: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The REST API endpoint to get more resource details.",
-                    ),
-                }),
-              ),
-            folder: zod
-              .object({
-                id: zod.number().min(1),
-              })
-              .describe("The ID of the resource")
-              .and(
-                zod.object({
-                  self: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The REST API endpoint to get more resource details.",
-                    ),
-                }),
-              )
-              .nullish(),
-            description: zod
-              .string()
-              .nullish()
-              .describe("Description outlining the scope."),
-            plannedStartDate: zod
-              .string()
-              .datetime({})
-              .nullish()
-              .describe(
-                "Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
-              ),
-            plannedEndDate: zod
-              .string()
-              .datetime({})
-              .nullish()
-              .describe(
-                "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
-              ),
-            owner: zod
-              .object({
-                accountId: zod
-                  .string()
-                  .regex(listTestCyclesResponseValuesItemOwnerAccountIdRegExp)
-                  .describe("Atlassian Account ID of the Jira user."),
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The Jira REST API endpoint to get the full representation of the Jira user.",
-                  ),
-              })
-              .nullish(),
-            customFields: zod
-              .record(zod.string(), zod.unknown())
-              .optional()
-              .describe(
-                "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-              ),
-            links: zod
-              .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
-              })
-              .and(
-                zod.object({
-                  issues: zod
-                    .array(
-                      zod
-                        .object({
-                          self: zod
-                            .string()
-                            .optional()
-                            .describe(
-                              "The REST API endpoint to get more resource details.",
-                            ),
-                        })
-                        .and(
-                          zod.object({
+                })
+                .and(
+                  zod.object({
+                    issues: zod
+                      .array(
+                        zod
+                          .object({
                             issueId: zod
                               .number()
                               .min(1)
                               .describe("The Jira issue ID"),
-                          }),
-                        )
-                        .and(
-                          zod.object({
-                            id: zod.number().min(1).optional(),
-                            target: zod
-                              .string()
-                              .optional()
-                              .describe(
-                                "The Jira Cloud REST API endpoint to get the full representation of the issue",
-                              ),
-                            type: zod
-                              .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                              .optional()
-                              .describe("The link type"),
-                          }),
-                        ),
-                    )
-                    .optional()
-                    .describe("A list of Jira issues linked to this entity"),
-                  webLinks: zod
-                    .array(
-                      zod
-                        .object({
-                          self: zod
-                            .string()
-                            .optional()
-                            .describe(
-                              "The REST API endpoint to get more resource details.",
-                            ),
-                        })
-                        .and(
-                          zod.object({
+                          })
+                          .and(
+                            zod.object({
+                              self: zod
+                                .string()
+                                .optional()
+                                .describe(
+                                  "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                                ),
+                              id: zod
+                                .number()
+                                .min(1)
+                                .optional()
+                                .describe(
+                                  "The ID that represents the link between the entity and the Jira issue.",
+                                ),
+                              target: zod
+                                .string()
+                                .optional()
+                                .describe(
+                                  "The Jira Cloud REST API endpoint to get the full representation of the issue",
+                                ),
+                              type: zod
+                                .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                                .optional()
+                                .describe("The link type"),
+                            }),
+                          ),
+                      )
+                      .optional()
+                      .describe("A list of Jira issues linked to this entity"),
+                    webLinks: zod
+                      .array(
+                        zod
+                          .object({
                             description: zod
                               .string()
                               .optional()
                               .describe("The web link description"),
                             url: zod.string().describe("The web link URL"),
-                          }),
-                        )
-                        .and(
-                          zod.object({
-                            id: zod.number().min(1).optional(),
-                            type: zod
-                              .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                              .optional()
-                              .describe("The link type"),
-                          }),
-                        ),
-                    )
-                    .optional()
-                    .describe("A list of web links for this entity"),
-                  testPlans: zod
-                    .array(
-                      zod
-                        .object({
-                          id: zod.number().min(1),
-                        })
-                        .describe("The ID of the resource")
-                        .and(
-                          zod.object({
-                            self: zod
-                              .string()
-                              .optional()
-                              .describe(
-                                "The REST API endpoint to get more resource details.",
-                              ),
-                          }),
-                        )
-                        .and(
-                          zod.object({
-                            testPlanId: zod
-                              .number()
-                              .optional()
-                              .describe("The ID of the test plan"),
-                            type: zod
-                              .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                              .optional()
-                              .describe("The link type"),
-                            target: zod
-                              .string()
-                              .optional()
-                              .describe(
-                                "The Zephyr REST API endpoint to get the full representation of the test plan",
-                              ),
-                          }),
-                        ),
-                    )
-                    .optional()
-                    .describe("A list of test plans linked to a test cycle"),
-                }),
-              )
-              .optional()
-              .describe("This property is ignored on updates."),
-          }),
+                          })
+                          .and(
+                            zod.object({
+                              self: zod
+                                .string()
+                                .optional()
+                                .describe(
+                                  "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                                ),
+                              id: zod.number().min(1).optional(),
+                              type: zod
+                                .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                                .optional()
+                                .describe("The link type"),
+                            }),
+                          ),
+                      )
+                      .optional()
+                      .describe("A list of web links for this entity"),
+                    testPlans: zod
+                      .array(
+                        zod.object({
+                          id: zod
+                            .object({
+                              id: zod.number().min(1),
+                            })
+                            .describe("The ID of the resource")
+                            .optional()
+                            .describe(
+                              "The ID that represents the link between the Test Cycle and the Test Plan.",
+                            ),
+                          self: zod
+                            .string()
+                            .optional()
+                            .describe(
+                              "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                            ),
+                          testPlanId: zod
+                            .number()
+                            .optional()
+                            .describe("The ID of the test plan"),
+                          type: zod
+                            .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                            .optional()
+                            .describe("The link type"),
+                          target: zod
+                            .string()
+                            .optional()
+                            .describe(
+                              "The Zephyr REST API endpoint to get the full representation of the test plan",
+                            ),
+                        }),
+                      )
+                      .optional()
+                      .describe("A list of test plans linked to a test cycle"),
+                  }),
+                )
+                .optional()
+                .describe(
+                  "Represents all links that a Test Cycle has. This property is ignored on update operations.",
+                ),
+            })
+            .describe("Details of a test cycle"),
         )
         .optional(),
     }),
@@ -2434,229 +2428,230 @@ export const getTestCycleResponseNameRegExp = /^(?!\s*$).+/;
 export const getTestCycleResponseOwnerAccountIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const getTestCycleResponse = zod.object({
-  id: zod.number().min(1),
-  key: zod
-    .string()
-    .regex(getTestCycleResponseKeyRegExp)
-    .describe("Unique key of the test cycle"),
-  name: zod
-    .string()
-    .regex(getTestCycleResponseNameRegExp)
-    .describe("Name of the Test Cycle"),
-  project: zod
-    .object({
-      id: zod.number().min(1),
-    })
-    .describe("The ID of the resource")
-    .and(
-      zod.object({
+export const getTestCycleResponse = zod
+  .object({
+    id: zod.number().min(1),
+    key: zod
+      .string()
+      .regex(getTestCycleResponseKeyRegExp)
+      .describe("Unique key of the test cycle"),
+    name: zod
+      .string()
+      .regex(getTestCycleResponseNameRegExp)
+      .describe("Name of the Test Cycle"),
+    project: zod
+      .object({
+        id: zod.number().min(1),
+      })
+      .describe("The ID of the resource")
+      .and(
+        zod.object({
+          self: zod
+            .string()
+            .optional()
+            .describe("The REST API endpoint to get more resource details."),
+        }),
+      )
+      .describe("ID and link relative to Zephyr project."),
+    jiraProjectVersion: zod
+      .object({
+        id: zod.number().min(1),
+      })
+      .describe("The ID of the resource")
+      .and(
+        zod.object({
+          self: zod
+            .string()
+            .optional()
+            .describe("The REST API endpoint to get more resource details."),
+        }),
+      )
+      .nullish()
+      .describe(
+        "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+      ),
+    status: zod
+      .object({
+        id: zod.number().min(1),
+      })
+      .describe("The ID of the resource")
+      .and(
+        zod.object({
+          self: zod
+            .string()
+            .optional()
+            .describe("The REST API endpoint to get more resource details."),
+        }),
+      ),
+    folder: zod
+      .object({
+        id: zod.number().min(1),
+      })
+      .describe("The ID of the resource")
+      .and(
+        zod.object({
+          self: zod
+            .string()
+            .optional()
+            .describe("The REST API endpoint to get more resource details."),
+        }),
+      )
+      .nullish(),
+    description: zod
+      .string()
+      .nullish()
+      .describe("Description outlining the scope."),
+    plannedStartDate: zod
+      .string()
+      .datetime({})
+      .nullish()
+      .describe(
+        "Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
+      ),
+    plannedEndDate: zod
+      .string()
+      .datetime({})
+      .nullish()
+      .describe(
+        "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
+      ),
+    owner: zod
+      .object({
+        accountId: zod
+          .string()
+          .regex(getTestCycleResponseOwnerAccountIdRegExp)
+          .describe("Atlassian Account ID of the Jira user."),
+        self: zod
+          .string()
+          .optional()
+          .describe(
+            "The Jira REST API endpoint to get the full representation of the Jira user.",
+          ),
+      })
+      .nullish(),
+    customFields: zod
+      .record(zod.string(), zod.unknown())
+      .optional()
+      .describe(
+        "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+      ),
+    links: zod
+      .object({
         self: zod
           .string()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    ),
-  jiraProjectVersion: zod
-    .object({
-      id: zod.number().min(1),
-    })
-    .describe("The ID of the resource")
-    .and(
-      zod.object({
-        self: zod
-          .string()
-          .optional()
-          .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .nullish()
-    .describe(
-      "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
-    ),
-  status: zod
-    .object({
-      id: zod.number().min(1),
-    })
-    .describe("The ID of the resource")
-    .and(
-      zod.object({
-        self: zod
-          .string()
-          .optional()
-          .describe("The REST API endpoint to get more resource details."),
-      }),
-    ),
-  folder: zod
-    .object({
-      id: zod.number().min(1),
-    })
-    .describe("The ID of the resource")
-    .and(
-      zod.object({
-        self: zod
-          .string()
-          .optional()
-          .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .nullish(),
-  description: zod
-    .string()
-    .nullish()
-    .describe("Description outlining the scope."),
-  plannedStartDate: zod
-    .string()
-    .datetime({})
-    .nullish()
-    .describe(
-      "Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
-    ),
-  plannedEndDate: zod
-    .string()
-    .datetime({})
-    .nullish()
-    .describe(
-      "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
-    ),
-  owner: zod
-    .object({
-      accountId: zod
-        .string()
-        .regex(getTestCycleResponseOwnerAccountIdRegExp)
-        .describe("Atlassian Account ID of the Jira user."),
-      self: zod
-        .string()
-        .optional()
-        .describe(
-          "The Jira REST API endpoint to get the full representation of the Jira user.",
-        ),
-    })
-    .nullish(),
-  customFields: zod
-    .record(zod.string(), zod.unknown())
-    .optional()
-    .describe(
-      "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-    ),
-  links: zod
-    .object({
-      self: zod
-        .string()
-        .optional()
-        .describe("The REST API endpoint to get more resource details."),
-    })
-    .and(
-      zod.object({
-        issues: zod
-          .array(
-            zod
-              .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
-              })
-              .and(
-                zod.object({
+      })
+      .and(
+        zod.object({
+          issues: zod
+            .array(
+              zod
+                .object({
                   issueId: zod.number().min(1).describe("The Jira issue ID"),
-                }),
-              )
-              .and(
-                zod.object({
-                  id: zod.number().min(1).optional(),
-                  target: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The Jira Cloud REST API endpoint to get the full representation of the issue",
-                    ),
-                  type: zod
-                    .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                    .optional()
-                    .describe("The link type"),
-                }),
-              ),
-          )
-          .optional()
-          .describe("A list of Jira issues linked to this entity"),
-        webLinks: zod
-          .array(
-            zod
-              .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
-              })
-              .and(
-                zod.object({
+                })
+                .and(
+                  zod.object({
+                    self: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                      ),
+                    id: zod
+                      .number()
+                      .min(1)
+                      .optional()
+                      .describe(
+                        "The ID that represents the link between the entity and the Jira issue.",
+                      ),
+                    target: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The Jira Cloud REST API endpoint to get the full representation of the issue",
+                      ),
+                    type: zod
+                      .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                      .optional()
+                      .describe("The link type"),
+                  }),
+                ),
+            )
+            .optional()
+            .describe("A list of Jira issues linked to this entity"),
+          webLinks: zod
+            .array(
+              zod
+                .object({
                   description: zod
                     .string()
                     .optional()
                     .describe("The web link description"),
                   url: zod.string().describe("The web link URL"),
-                }),
-              )
-              .and(
-                zod.object({
-                  id: zod.number().min(1).optional(),
-                  type: zod
-                    .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                    .optional()
-                    .describe("The link type"),
-                }),
-              ),
-          )
-          .optional()
-          .describe("A list of web links for this entity"),
-        testPlans: zod
-          .array(
-            zod
-              .object({
-                id: zod.number().min(1),
-              })
-              .describe("The ID of the resource")
-              .and(
-                zod.object({
-                  self: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The REST API endpoint to get more resource details.",
-                    ),
-                }),
-              )
-              .and(
-                zod.object({
-                  testPlanId: zod
-                    .number()
-                    .optional()
-                    .describe("The ID of the test plan"),
-                  type: zod
-                    .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                    .optional()
-                    .describe("The link type"),
-                  target: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The Zephyr REST API endpoint to get the full representation of the test plan",
-                    ),
-                }),
-              ),
-          )
-          .optional()
-          .describe("A list of test plans linked to a test cycle"),
-      }),
-    )
-    .optional()
-    .describe("This property is ignored on updates."),
-});
+                })
+                .and(
+                  zod.object({
+                    self: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                      ),
+                    id: zod.number().min(1).optional(),
+                    type: zod
+                      .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                      .optional()
+                      .describe("The link type"),
+                  }),
+                ),
+            )
+            .optional()
+            .describe("A list of web links for this entity"),
+          testPlans: zod
+            .array(
+              zod.object({
+                id: zod
+                  .object({
+                    id: zod.number().min(1),
+                  })
+                  .describe("The ID of the resource")
+                  .optional()
+                  .describe(
+                    "The ID that represents the link between the Test Cycle and the Test Plan.",
+                  ),
+                self: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                  ),
+                testPlanId: zod
+                  .number()
+                  .optional()
+                  .describe("The ID of the test plan"),
+                type: zod
+                  .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                  .optional()
+                  .describe("The link type"),
+                target: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint to get the full representation of the test plan",
+                  ),
+              }),
+            )
+            .optional()
+            .describe("A list of test plans linked to a test cycle"),
+        }),
+      )
+      .optional()
+      .describe(
+        "Represents all links that a Test Cycle has. This property is ignored on update operations.",
+      ),
+  })
+  .describe("Details of a test cycle");
 
 /**
  * Updates an existing test cycle.  Please take into account that for each non-specified field the value will be cleared. If the project has test cycle custom fields, all custom fields should be present in the request. To leave any of them blank, please set them null if they are not required custom fields.
@@ -2678,229 +2673,230 @@ export const updateTestCycleBodyNameRegExp = /^(?!\s*$).+/;
 
 export const updateTestCycleBodyOwnerAccountIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const updateTestCycleBody = zod.object({
-  id: zod.number().min(1),
-  key: zod
-    .string()
-    .regex(updateTestCycleBodyKeyRegExp)
-    .describe("Unique key of the test cycle"),
-  name: zod
-    .string()
-    .regex(updateTestCycleBodyNameRegExp)
-    .describe("Name of the Test Cycle"),
-  project: zod
-    .object({
-      id: zod.number().min(1),
-    })
-    .describe("The ID of the resource")
-    .and(
-      zod.object({
+export const updateTestCycleBody = zod
+  .object({
+    id: zod.number().min(1),
+    key: zod
+      .string()
+      .regex(updateTestCycleBodyKeyRegExp)
+      .describe("Unique key of the test cycle"),
+    name: zod
+      .string()
+      .regex(updateTestCycleBodyNameRegExp)
+      .describe("Name of the Test Cycle"),
+    project: zod
+      .object({
+        id: zod.number().min(1),
+      })
+      .describe("The ID of the resource")
+      .and(
+        zod.object({
+          self: zod
+            .string()
+            .optional()
+            .describe("The REST API endpoint to get more resource details."),
+        }),
+      )
+      .describe("ID and link relative to Zephyr project."),
+    jiraProjectVersion: zod
+      .object({
+        id: zod.number().min(1),
+      })
+      .describe("The ID of the resource")
+      .and(
+        zod.object({
+          self: zod
+            .string()
+            .optional()
+            .describe("The REST API endpoint to get more resource details."),
+        }),
+      )
+      .nullish()
+      .describe(
+        "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+      ),
+    status: zod
+      .object({
+        id: zod.number().min(1),
+      })
+      .describe("The ID of the resource")
+      .and(
+        zod.object({
+          self: zod
+            .string()
+            .optional()
+            .describe("The REST API endpoint to get more resource details."),
+        }),
+      ),
+    folder: zod
+      .object({
+        id: zod.number().min(1),
+      })
+      .describe("The ID of the resource")
+      .and(
+        zod.object({
+          self: zod
+            .string()
+            .optional()
+            .describe("The REST API endpoint to get more resource details."),
+        }),
+      )
+      .nullish(),
+    description: zod
+      .string()
+      .nullish()
+      .describe("Description outlining the scope."),
+    plannedStartDate: zod
+      .string()
+      .datetime({})
+      .nullish()
+      .describe(
+        "Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
+      ),
+    plannedEndDate: zod
+      .string()
+      .datetime({})
+      .nullish()
+      .describe(
+        "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
+      ),
+    owner: zod
+      .object({
+        accountId: zod
+          .string()
+          .regex(updateTestCycleBodyOwnerAccountIdRegExp)
+          .describe("Atlassian Account ID of the Jira user."),
+        self: zod
+          .string()
+          .optional()
+          .describe(
+            "The Jira REST API endpoint to get the full representation of the Jira user.",
+          ),
+      })
+      .nullish(),
+    customFields: zod
+      .record(zod.string(), zod.unknown())
+      .optional()
+      .describe(
+        "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+      ),
+    links: zod
+      .object({
         self: zod
           .string()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    ),
-  jiraProjectVersion: zod
-    .object({
-      id: zod.number().min(1),
-    })
-    .describe("The ID of the resource")
-    .and(
-      zod.object({
-        self: zod
-          .string()
-          .optional()
-          .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .nullish()
-    .describe(
-      "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
-    ),
-  status: zod
-    .object({
-      id: zod.number().min(1),
-    })
-    .describe("The ID of the resource")
-    .and(
-      zod.object({
-        self: zod
-          .string()
-          .optional()
-          .describe("The REST API endpoint to get more resource details."),
-      }),
-    ),
-  folder: zod
-    .object({
-      id: zod.number().min(1),
-    })
-    .describe("The ID of the resource")
-    .and(
-      zod.object({
-        self: zod
-          .string()
-          .optional()
-          .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .nullish(),
-  description: zod
-    .string()
-    .nullish()
-    .describe("Description outlining the scope."),
-  plannedStartDate: zod
-    .string()
-    .datetime({})
-    .nullish()
-    .describe(
-      "Planned start date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
-    ),
-  plannedEndDate: zod
-    .string()
-    .datetime({})
-    .nullish()
-    .describe(
-      "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
-    ),
-  owner: zod
-    .object({
-      accountId: zod
-        .string()
-        .regex(updateTestCycleBodyOwnerAccountIdRegExp)
-        .describe("Atlassian Account ID of the Jira user."),
-      self: zod
-        .string()
-        .optional()
-        .describe(
-          "The Jira REST API endpoint to get the full representation of the Jira user.",
-        ),
-    })
-    .nullish(),
-  customFields: zod
-    .record(zod.string(), zod.unknown())
-    .optional()
-    .describe(
-      "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-    ),
-  links: zod
-    .object({
-      self: zod
-        .string()
-        .optional()
-        .describe("The REST API endpoint to get more resource details."),
-    })
-    .and(
-      zod.object({
-        issues: zod
-          .array(
-            zod
-              .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
-              })
-              .and(
-                zod.object({
+      })
+      .and(
+        zod.object({
+          issues: zod
+            .array(
+              zod
+                .object({
                   issueId: zod.number().min(1).describe("The Jira issue ID"),
-                }),
-              )
-              .and(
-                zod.object({
-                  id: zod.number().min(1).optional(),
-                  target: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The Jira Cloud REST API endpoint to get the full representation of the issue",
-                    ),
-                  type: zod
-                    .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                    .optional()
-                    .describe("The link type"),
-                }),
-              ),
-          )
-          .optional()
-          .describe("A list of Jira issues linked to this entity"),
-        webLinks: zod
-          .array(
-            zod
-              .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
-              })
-              .and(
-                zod.object({
+                })
+                .and(
+                  zod.object({
+                    self: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                      ),
+                    id: zod
+                      .number()
+                      .min(1)
+                      .optional()
+                      .describe(
+                        "The ID that represents the link between the entity and the Jira issue.",
+                      ),
+                    target: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The Jira Cloud REST API endpoint to get the full representation of the issue",
+                      ),
+                    type: zod
+                      .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                      .optional()
+                      .describe("The link type"),
+                  }),
+                ),
+            )
+            .optional()
+            .describe("A list of Jira issues linked to this entity"),
+          webLinks: zod
+            .array(
+              zod
+                .object({
                   description: zod
                     .string()
                     .optional()
                     .describe("The web link description"),
                   url: zod.string().describe("The web link URL"),
-                }),
-              )
-              .and(
-                zod.object({
-                  id: zod.number().min(1).optional(),
-                  type: zod
-                    .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                    .optional()
-                    .describe("The link type"),
-                }),
-              ),
-          )
-          .optional()
-          .describe("A list of web links for this entity"),
-        testPlans: zod
-          .array(
-            zod
-              .object({
-                id: zod.number().min(1),
-              })
-              .describe("The ID of the resource")
-              .and(
-                zod.object({
-                  self: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The REST API endpoint to get more resource details.",
-                    ),
-                }),
-              )
-              .and(
-                zod.object({
-                  testPlanId: zod
-                    .number()
-                    .optional()
-                    .describe("The ID of the test plan"),
-                  type: zod
-                    .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                    .optional()
-                    .describe("The link type"),
-                  target: zod
-                    .string()
-                    .optional()
-                    .describe(
-                      "The Zephyr REST API endpoint to get the full representation of the test plan",
-                    ),
-                }),
-              ),
-          )
-          .optional()
-          .describe("A list of test plans linked to a test cycle"),
-      }),
-    )
-    .optional()
-    .describe("This property is ignored on updates."),
-});
+                })
+                .and(
+                  zod.object({
+                    self: zod
+                      .string()
+                      .optional()
+                      .describe(
+                        "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                      ),
+                    id: zod.number().min(1).optional(),
+                    type: zod
+                      .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                      .optional()
+                      .describe("The link type"),
+                  }),
+                ),
+            )
+            .optional()
+            .describe("A list of web links for this entity"),
+          testPlans: zod
+            .array(
+              zod.object({
+                id: zod
+                  .object({
+                    id: zod.number().min(1),
+                  })
+                  .describe("The ID of the resource")
+                  .optional()
+                  .describe(
+                    "The ID that represents the link between the Test Cycle and the Test Plan.",
+                  ),
+                self: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                  ),
+                testPlanId: zod
+                  .number()
+                  .optional()
+                  .describe("The ID of the test plan"),
+                type: zod
+                  .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                  .optional()
+                  .describe("The link type"),
+                target: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint to get the full representation of the test plan",
+                  ),
+              }),
+            )
+            .optional()
+            .describe("A list of test plans linked to a test cycle"),
+        }),
+      )
+      .optional()
+      .describe(
+        "Represents all links that a Test Cycle has. This property is ignored on update operations.",
+      ),
+  })
+  .describe("Details of a test cycle");
 
 /**
  * Returns links for a test cycle with specified key.
@@ -2929,21 +2925,23 @@ export const getTestCycleLinksResponse = zod
         .array(
           zod
             .object({
-              self: zod
-                .string()
-                .optional()
-                .describe(
-                  "The REST API endpoint to get more resource details.",
-                ),
+              issueId: zod.number().min(1).describe("The Jira issue ID"),
             })
             .and(
               zod.object({
-                issueId: zod.number().min(1).describe("The Jira issue ID"),
-              }),
-            )
-            .and(
-              zod.object({
-                id: zod.number().min(1).optional(),
+                self: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                  ),
+                id: zod
+                  .number()
+                  .min(1)
+                  .optional()
+                  .describe(
+                    "The ID that represents the link between the entity and the Jira issue.",
+                  ),
                 target: zod
                   .string()
                   .optional()
@@ -2963,24 +2961,20 @@ export const getTestCycleLinksResponse = zod
         .array(
           zod
             .object({
-              self: zod
+              description: zod
                 .string()
                 .optional()
-                .describe(
-                  "The REST API endpoint to get more resource details.",
-                ),
+                .describe("The web link description"),
+              url: zod.string().describe("The web link URL"),
             })
             .and(
               zod.object({
-                description: zod
+                self: zod
                   .string()
                   .optional()
-                  .describe("The web link description"),
-                url: zod.string().describe("The web link URL"),
-              }),
-            )
-            .and(
-              zod.object({
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                  ),
                 id: zod.number().min(1).optional(),
                 type: zod
                   .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -2993,45 +2987,45 @@ export const getTestCycleLinksResponse = zod
         .describe("A list of web links for this entity"),
       testPlans: zod
         .array(
-          zod
-            .object({
-              id: zod.number().min(1),
-            })
-            .describe("The ID of the resource")
-            .and(
-              zod.object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
-              }),
-            )
-            .and(
-              zod.object({
-                testPlanId: zod
-                  .number()
-                  .optional()
-                  .describe("The ID of the test plan"),
-                type: zod
-                  .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                  .optional()
-                  .describe("The link type"),
-                target: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The Zephyr REST API endpoint to get the full representation of the test plan",
-                  ),
-              }),
-            ),
+          zod.object({
+            id: zod
+              .object({
+                id: zod.number().min(1),
+              })
+              .describe("The ID of the resource")
+              .optional()
+              .describe(
+                "The ID that represents the link between the Test Cycle and the Test Plan.",
+              ),
+            self: zod
+              .string()
+              .optional()
+              .describe(
+                "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+              ),
+            testPlanId: zod
+              .number()
+              .optional()
+              .describe("The ID of the test plan"),
+            type: zod
+              .enum(["COVERAGE", "BLOCKS", "RELATED"])
+              .optional()
+              .describe("The link type"),
+            target: zod
+              .string()
+              .optional()
+              .describe(
+                "The Zephyr REST API endpoint to get the full representation of the test plan",
+              ),
+          }),
         )
         .optional()
         .describe("A list of test plans linked to a test cycle"),
     }),
   )
-  .describe("This property is ignored on updates.");
+  .describe(
+    "Represents all links that a Test Cycle has. This property is ignored on update operations.",
+  );
 
 /**
  * Creates a link between a test cycle and a Jira issue.
@@ -3106,8 +3100,6 @@ export const listTestPlansQueryParams = zod.object({
 
 export const listTestPlansResponseStartAtMin = 0;
 
-export const listTestPlansResponseMaxResultsMin = 0;
-
 export const listTestPlansResponseTotalMin = 0;
 
 export const listTestPlansResponseValuesItemKeyRegExp = /.+-P[0-9]+/;
@@ -3132,8 +3124,10 @@ export const listTestPlansResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listTestPlansResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listTestPlansResponseTotalMin)
@@ -3175,7 +3169,8 @@ export const listTestPlansResponse = zod
                       "The REST API endpoint to get more resource details.",
                     ),
                 }),
-              ),
+              )
+              .describe("ID and link relative to Zephyr project."),
             status: zod
               .object({
                 id: zod.number().min(1),
@@ -3237,24 +3232,20 @@ export const listTestPlansResponse = zod
                   .array(
                     zod
                       .object({
-                        self: zod
+                        description: zod
                           .string()
                           .optional()
-                          .describe(
-                            "The REST API endpoint to get more resource details.",
-                          ),
+                          .describe("The web link description"),
+                        url: zod.string().describe("The web link URL"),
                       })
                       .and(
                         zod.object({
-                          description: zod
+                          self: zod
                             .string()
                             .optional()
-                            .describe("The web link description"),
-                          url: zod.string().describe("The web link URL"),
-                        }),
-                      )
-                      .and(
-                        zod.object({
+                            .describe(
+                              "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                            ),
                           id: zod.number().min(1).optional(),
                           type: zod
                             .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -3269,24 +3260,26 @@ export const listTestPlansResponse = zod
                   .array(
                     zod
                       .object({
-                        self: zod
-                          .string()
-                          .optional()
-                          .describe(
-                            "The REST API endpoint to get more resource details.",
-                          ),
+                        issueId: zod
+                          .number()
+                          .min(1)
+                          .describe("The Jira issue ID"),
                       })
                       .and(
                         zod.object({
-                          issueId: zod
+                          self: zod
+                            .string()
+                            .optional()
+                            .describe(
+                              "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                            ),
+                          id: zod
                             .number()
                             .min(1)
-                            .describe("The Jira issue ID"),
-                        }),
-                      )
-                      .and(
-                        zod.object({
-                          id: zod.number().min(1).optional(),
+                            .optional()
+                            .describe(
+                              "The ID that represents the link between the entity and the Jira issue.",
+                            ),
                           target: zod
                             .string()
                             .optional()
@@ -3435,7 +3428,8 @@ export const getTestPlanResponse = zod.object({
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
-    ),
+    )
+    .describe("ID and link relative to Zephyr project."),
   status: zod
     .object({
       id: zod.number().min(1),
@@ -3493,24 +3487,20 @@ export const getTestPlanResponse = zod.object({
         .array(
           zod
             .object({
-              self: zod
+              description: zod
                 .string()
                 .optional()
-                .describe(
-                  "The REST API endpoint to get more resource details.",
-                ),
+                .describe("The web link description"),
+              url: zod.string().describe("The web link URL"),
             })
             .and(
               zod.object({
-                description: zod
+                self: zod
                   .string()
                   .optional()
-                  .describe("The web link description"),
-                url: zod.string().describe("The web link URL"),
-              }),
-            )
-            .and(
-              zod.object({
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                  ),
                 id: zod.number().min(1).optional(),
                 type: zod
                   .enum(["COVERAGE", "BLOCKS", "RELATED"])
@@ -3525,21 +3515,23 @@ export const getTestPlanResponse = zod.object({
         .array(
           zod
             .object({
-              self: zod
-                .string()
-                .optional()
-                .describe(
-                  "The REST API endpoint to get more resource details.",
-                ),
+              issueId: zod.number().min(1).describe("The Jira issue ID"),
             })
             .and(
               zod.object({
-                issueId: zod.number().min(1).describe("The Jira issue ID"),
-              }),
-            )
-            .and(
-              zod.object({
-                id: zod.number().min(1).optional(),
+                self: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                  ),
+                id: zod
+                  .number()
+                  .min(1)
+                  .optional()
+                  .describe(
+                    "The ID that represents the link between the entity and the Jira issue.",
+                  ),
                 target: zod
                   .string()
                   .optional()
@@ -3745,8 +3737,6 @@ export const listTestExecutionsQueryParams = zod.object({
 
 export const listTestExecutionsResponseStartAtMin = 0;
 
-export const listTestExecutionsResponseMaxResultsMin = 0;
-
 export const listTestExecutionsResponseTotalMin = 0;
 
 export const listTestExecutionsResponseValuesItemKeyRegExp = /.+-E[0-9]+/;
@@ -3776,8 +3766,10 @@ export const listTestExecutionsResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listTestExecutionsResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listTestExecutionsResponseTotalMin)
@@ -3815,7 +3807,8 @@ export const listTestExecutionsResponse = zod
                       "The REST API endpoint to get more resource details.",
                     ),
                 }),
-              ),
+              )
+              .describe("ID and link relative to Zephyr project."),
             testCase: zod
               .object({
                 self: zod
@@ -3863,7 +3856,7 @@ export const listTestExecutionsResponse = zod
               )
               .nullish()
               .describe(
-                "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+                "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
               ),
             testExecutionStatus: zod
               .object({
@@ -3953,24 +3946,26 @@ export const listTestExecutionsResponse = zod
                     .array(
                       zod
                         .object({
-                          self: zod
-                            .string()
-                            .optional()
-                            .describe(
-                              "The REST API endpoint to get more resource details.",
-                            ),
+                          issueId: zod
+                            .number()
+                            .min(1)
+                            .describe("The Jira issue ID"),
                         })
                         .and(
                           zod.object({
-                            issueId: zod
+                            self: zod
+                              .string()
+                              .optional()
+                              .describe(
+                                "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                              ),
+                            id: zod
                               .number()
                               .min(1)
-                              .describe("The Jira issue ID"),
-                          }),
-                        )
-                        .and(
-                          zod.object({
-                            id: zod.number().min(1).optional(),
+                              .optional()
+                              .describe(
+                                "The ID that represents the link between the entity and the Jira issue.",
+                              ),
                             target: zod
                               .string()
                               .optional()
@@ -4237,7 +4232,8 @@ export const listTestExecutionsNextgenResponse = zod
                       "The REST API endpoint to get more resource details.",
                     ),
                 }),
-              ),
+              )
+              .describe("ID and link relative to Zephyr project."),
             testCase: zod
               .object({
                 self: zod
@@ -4285,7 +4281,7 @@ export const listTestExecutionsNextgenResponse = zod
               )
               .nullish()
               .describe(
-                "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+                "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
               ),
             testExecutionStatus: zod
               .object({
@@ -4379,24 +4375,26 @@ export const listTestExecutionsNextgenResponse = zod
                     .array(
                       zod
                         .object({
-                          self: zod
-                            .string()
-                            .optional()
-                            .describe(
-                              "The REST API endpoint to get more resource details.",
-                            ),
+                          issueId: zod
+                            .number()
+                            .min(1)
+                            .describe("The Jira issue ID"),
                         })
                         .and(
                           zod.object({
-                            issueId: zod
+                            self: zod
+                              .string()
+                              .optional()
+                              .describe(
+                                "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                              ),
+                            id: zod
                               .number()
                               .min(1)
-                              .describe("The Jira issue ID"),
-                          }),
-                        )
-                        .and(
-                          zod.object({
-                            id: zod.number().min(1).optional(),
+                              .optional()
+                              .describe(
+                                "The ID that represents the link between the entity and the Jira issue.",
+                              ),
                             target: zod
                               .string()
                               .optional()
@@ -4478,7 +4476,8 @@ export const getTestExecutionResponse = zod.object({
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
-    ),
+    )
+    .describe("ID and link relative to Zephyr project."),
   testCase: zod
     .object({
       self: zod
@@ -4520,7 +4519,7 @@ export const getTestExecutionResponse = zod.object({
     )
     .nullish()
     .describe(
-      "Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+      "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
     ),
   testExecutionStatus: zod
     .object({
@@ -4602,21 +4601,23 @@ export const getTestExecutionResponse = zod.object({
           .array(
             zod
               .object({
-                self: zod
-                  .string()
-                  .optional()
-                  .describe(
-                    "The REST API endpoint to get more resource details.",
-                  ),
+                issueId: zod.number().min(1).describe("The Jira issue ID"),
               })
               .and(
                 zod.object({
-                  issueId: zod.number().min(1).describe("The Jira issue ID"),
-                }),
-              )
-              .and(
-                zod.object({
-                  id: zod.number().min(1).optional(),
+                  self: zod
+                    .string()
+                    .optional()
+                    .describe(
+                      "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                    ),
+                  id: zod
+                    .number()
+                    .min(1)
+                    .optional()
+                    .describe(
+                      "The ID that represents the link between the entity and the Jira issue.",
+                    ),
                   target: zod
                     .string()
                     .optional()
@@ -4750,8 +4751,6 @@ export const getTestExecutionTestStepsQueryParams = zod.object({
 
 export const getTestExecutionTestStepsResponseStartAtMin = 0;
 
-export const getTestExecutionTestStepsResponseMaxResultsMin = 0;
-
 export const getTestExecutionTestStepsResponseTotalMin = 0;
 
 export const getTestExecutionTestStepsResponse = zod
@@ -4770,8 +4769,10 @@ export const getTestExecutionTestStepsResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(getTestExecutionTestStepsResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(getTestExecutionTestStepsResponseTotalMin)
@@ -4935,21 +4936,23 @@ export const listTestExecutionLinksResponse = zod
         .array(
           zod
             .object({
-              self: zod
-                .string()
-                .optional()
-                .describe(
-                  "The REST API endpoint to get more resource details.",
-                ),
+              issueId: zod.number().min(1).describe("The Jira issue ID"),
             })
             .and(
               zod.object({
-                issueId: zod.number().min(1).describe("The Jira issue ID"),
-              }),
-            )
-            .and(
-              zod.object({
-                id: zod.number().min(1).optional(),
+                self: zod
+                  .string()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                  ),
+                id: zod
+                  .number()
+                  .min(1)
+                  .optional()
+                  .describe(
+                    "The ID that represents the link between the entity and the Jira issue.",
+                  ),
                 target: zod
                   .string()
                   .optional()
@@ -5018,8 +5021,6 @@ export const listProjectsQueryParams = zod.object({
 
 export const listProjectsResponseStartAtMin = 0;
 
-export const listProjectsResponseMaxResultsMin = 0;
-
 export const listProjectsResponseTotalMin = 0;
 
 export const listProjectsResponse = zod
@@ -5038,8 +5039,10 @@ export const listProjectsResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listProjectsResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listProjectsResponseTotalMin)
@@ -5138,8 +5141,6 @@ export const listFoldersQueryParams = zod.object({
 
 export const listFoldersResponseStartAtMin = 0;
 
-export const listFoldersResponseMaxResultsMin = 0;
-
 export const listFoldersResponseTotalMin = 0;
 
 export const listFoldersResponseValuesItemNameRegExp = /^(?!\\s*$).+/;
@@ -5161,8 +5162,10 @@ export const listFoldersResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listFoldersResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listFoldersResponseTotalMin)
@@ -5204,7 +5207,8 @@ export const listFoldersResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .optional()
+              .describe("ID and link relative to Zephyr project."),
           }),
         )
         .optional(),
@@ -5275,7 +5279,8 @@ export const getFolderResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .optional()
+    .describe("ID and link relative to Zephyr project."),
 });
 
 /**
@@ -5315,8 +5320,6 @@ export const listPrioritiesQueryParams = zod.object({
 
 export const listPrioritiesResponseStartAtMin = 0;
 
-export const listPrioritiesResponseMaxResultsMin = 0;
-
 export const listPrioritiesResponseTotalMin = 0;
 
 export const listPrioritiesResponseValuesItemNameRegExp = /^(?!\\s*$).+/;
@@ -5342,8 +5345,10 @@ export const listPrioritiesResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listPrioritiesResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listPrioritiesResponseTotalMin)
@@ -5377,7 +5382,8 @@ export const listPrioritiesResponse = zod
                         "The REST API endpoint to get more resource details.",
                       ),
                   }),
-                ),
+                )
+                .describe("ID and link relative to Zephyr project."),
               name: zod
                 .string()
                 .regex(listPrioritiesResponseValuesItemNameRegExp),
@@ -5467,7 +5473,8 @@ export const getPriorityResponse = zod
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
-      ),
+      )
+      .describe("ID and link relative to Zephyr project."),
     name: zod.string().regex(getPriorityResponseNameRegExp),
     description: zod
       .string()
@@ -5518,7 +5525,8 @@ export const updatePriorityBody = zod.object({
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
-    ),
+    )
+    .describe("ID and link relative to Zephyr project."),
   name: zod
     .string()
     .min(1)
@@ -5577,8 +5585,6 @@ export const listStatusesQueryParams = zod.object({
 
 export const listStatusesResponseStartAtMin = 0;
 
-export const listStatusesResponseMaxResultsMin = 0;
-
 export const listStatusesResponseTotalMin = 0;
 
 export const listStatusesResponseValuesItemNameRegExp = /^(?!\\s*$).+/;
@@ -5603,8 +5609,10 @@ export const listStatusesResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listStatusesResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listStatusesResponseTotalMin)
@@ -5638,7 +5646,8 @@ export const listStatusesResponse = zod
                         "The REST API endpoint to get more resource details.",
                       ),
                   }),
-                ),
+                )
+                .describe("ID and link relative to Zephyr project."),
               name: zod
                 .string()
                 .regex(listStatusesResponseValuesItemNameRegExp),
@@ -5729,7 +5738,8 @@ export const getStatusResponse = zod
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
-      ),
+      )
+      .describe("ID and link relative to Zephyr project."),
     name: zod.string().regex(getStatusResponseNameRegExp),
     description: zod
       .string()
@@ -5777,7 +5787,8 @@ export const updateStatusBody = zod.object({
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
-    ),
+    )
+    .describe("ID and link relative to Zephyr project."),
   name: zod
     .string()
     .min(1)
@@ -5835,8 +5846,6 @@ export const listEnvironmentsQueryParams = zod.object({
 
 export const listEnvironmentsResponseStartAtMin = 0;
 
-export const listEnvironmentsResponseMaxResultsMin = 0;
-
 export const listEnvironmentsResponseTotalMin = 0;
 
 export const listEnvironmentsResponseValuesItemNameRegExp = /^(?!\\s*$).+/;
@@ -5860,8 +5869,10 @@ export const listEnvironmentsResponse = zod
       ),
     maxResults: zod
       .number()
-      .min(listEnvironmentsResponseMaxResultsMin)
-      .describe("Indicates the maximum number of results in this response."),
+      .min(1)
+      .describe(
+        "Indicates the maximum number of results in this response. Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints.",
+      ),
     total: zod
       .number()
       .min(listEnvironmentsResponseTotalMin)
@@ -5895,7 +5906,8 @@ export const listEnvironmentsResponse = zod
                         "The REST API endpoint to get more resource details.",
                       ),
                   }),
-                ),
+                )
+                .describe("ID and link relative to Zephyr project."),
               name: zod
                 .string()
                 .regex(listEnvironmentsResponseValuesItemNameRegExp),
@@ -5973,7 +5985,8 @@ export const getEnvironmentResponse = zod
             .optional()
             .describe("The REST API endpoint to get more resource details."),
         }),
-      ),
+      )
+      .describe("ID and link relative to Zephyr project."),
     name: zod.string().regex(getEnvironmentResponseNameRegExp),
     description: zod
       .string()
@@ -6017,7 +6030,8 @@ export const updateEnvironmentBody = zod.object({
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       }),
-    ),
+    )
+    .describe("ID and link relative to Zephyr project."),
   name: zod
     .string()
     .min(1)
