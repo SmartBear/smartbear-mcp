@@ -5,9 +5,21 @@ import {
 } from "../../../../zephyr/common/rest-api-schemas";
 
 describe("listProjectsResponse", () => {
-  it("validates a correct project list", () => {
+  it("rejects responses with invalid next", () => {
     const valid = {
       next: "",
+      startAt: 0,
+      maxResults: 10,
+      total: 1,
+      isLast: true,
+      values: [{ id: 1, jiraProjectId: 2, key: "ABC", enabled: true }],
+    };
+    expect(() => listProjectsResponse.parse(valid)).toThrow();
+  });
+
+  it("validates a correct project list", () => {
+    const valid = {
+      next: "https://api.zephyrscale.smartbear.com/v2/projects?startAt=10&maxResults=10",
       startAt: 0,
       maxResults: 10,
       total: 1,
