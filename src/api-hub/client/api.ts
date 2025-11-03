@@ -1,10 +1,6 @@
 import { ToolError } from "../../common/types.js";
 import type { ApiHubConfiguration } from "./configuration.js";
 import type {
-  OrganizationsListResponse,
-  OrganizationsQueryParams,
-} from "./user-management-types.js";
-import type {
   CreatePortalArgs,
   CreateProductBody,
   CreateTableOfContentsBody,
@@ -41,6 +37,10 @@ import type {
   ScanStandardizationParams,
   StandardizationResult,
 } from "./registry-types.js";
+import type {
+  OrganizationsListResponse,
+  OrganizationsQueryParams,
+} from "./user-management-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version

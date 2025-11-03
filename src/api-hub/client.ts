@@ -4,10 +4,6 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
-import type {
-  OrganizationsListResponse,
-  OrganizationsQueryParams,
-} from "./client/user-management-types.js";
 import {
   type ApiDefinitionParams,
   ApiHubAPI,
@@ -44,6 +40,10 @@ import {
   type UpdatePortalArgs,
   type UpdateProductArgs,
 } from "./client/index.js";
+import type {
+  OrganizationsListResponse,
+  OrganizationsQueryParams,
+} from "./client/user-management-types.js";
 
 // Tool definitions for API Hub API client
 export class ApiHubClient implements Client {
