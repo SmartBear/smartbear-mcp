@@ -4,7 +4,10 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
-import type { OrganizationsListResponse, OrganizationsQueryParams } from "./client/user-management-types.js";
+import type {
+  OrganizationsListResponse,
+  OrganizationsQueryParams,
+} from "./client/user-management-types.js";
 import {
   type ApiDefinitionParams,
   ApiHubAPI,

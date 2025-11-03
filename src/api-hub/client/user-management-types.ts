@@ -27,11 +27,28 @@ export interface OrganizationsListResponse extends PagedResult {
 
 // Query parameters for getting organizations
 export const OrganizationsQuerySchema = z.object({
-  q: z.string().optional().describe("Search organizations by partial or full name (case-insensitive)"),
-  sortBy: z.enum(["NAME", "EMAIL"]).optional().describe("The property to sort the results by"),
+  q: z
+    .string()
+    .optional()
+    .describe(
+      "Search organizations by partial or full name (case-insensitive)",
+    ),
+  sortBy: z
+    .enum(["NAME", "EMAIL"])
+    .optional()
+    .describe("The property to sort the results by"),
   order: z.enum(["ASC", "DESC"]).optional().describe("Sort order"),
-  page: z.number().min(0).optional().describe("0-based index of the page to return"),
-  pageSize: z.number().min(1).max(1000).optional().describe("Number of results per page to return"),
+  page: z
+    .number()
+    .min(0)
+    .optional()
+    .describe("0-based index of the page to return"),
+  pageSize: z
+    .number()
+    .min(1)
+    .max(1000)
+    .optional()
+    .describe("Number of results per page to return"),
 });
 
 export type OrganizationsQueryParams = z.infer<typeof OrganizationsQuerySchema>;

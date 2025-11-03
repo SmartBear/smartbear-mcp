@@ -20,7 +20,8 @@ export class ApiHubConfiguration {
     this.registryBasePath =
       param.registryBasePath || "https://api.swaggerhub.com";
     this.userManagementBasePath =
-      param.userManagementBasePath || "https://api.swaggerhub.com/user-management/v1";
+      param.userManagementBasePath ||
+      "https://api.swaggerhub.com/user-management/v1";
     // Use Bearer token format consistently across all APIs
     this.headers = {
       Authorization: `Bearer ${this.token}`,
