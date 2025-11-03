@@ -6,7 +6,7 @@
 -   Check that environment variables are properly set and match the expected names:
     -   `BUGSNAG_AUTH_TOKEN` for BugSnag
     -   `REFLECT_API_TOKEN` for Reflect
-    -   `API_HUB_API_KEY` for API Hub
+    -   `API_HUB_API_KEY` for Swagger
     -   `QMETRY_API_KEY` for QMetry
     -   `ZEPHYR_API_TOKEN` for Zephyr
 -   Ensure you have the correct token type (Auth Token vs API Key) for each desired service.
