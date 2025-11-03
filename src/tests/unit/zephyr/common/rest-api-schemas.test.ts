@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getProjectResponse,
   listProjectsResponse,
-} from "../../../../zephyr/common/rest-api-schemas";
+} from "../../../../zephyr/common/rest-api-schemas.js";
 
 describe("listProjectsResponse", () => {
   it("rejects responses with invalid next", () => {
