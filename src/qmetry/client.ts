@@ -9,7 +9,7 @@ import {
 } from "./client/auto-resolve.js";
 import { QMETRY_HANDLER_MAP } from "./client/handlers.js";
 import { getProjectInfo } from "./client/project.js";
-import { TOOLS } from "./client/tools.js";
+import { TOOLS } from "./client/tools/index.js";
 import { QMETRY_DEFAULTS } from "./config/constants.js";
 
 export class QmetryClient implements Client {
