@@ -6,7 +6,7 @@ This guide is to help you get up and running with our MCP server.
 
 Before setting up and using the SmartBear MCP Server, ensure you have: 
 
--   An active account across our relevant hubs (e.g. [API Hub](https://try.platform.smartbear.com/?product=ApiHub), [Test Hub](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
+-   An active account across our relevant hubs (e.g. [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Test Hub](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
 -   Node.js 20 or later installed on your development machine
 -   A compatible MCP client (Claude Desktop, Cursor, etc.)
 
@@ -38,11 +38,11 @@ npm install @smartbear/mcp
 
 The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its own authentication token.
 
-- **API Hub - Portal**
+- **Swagger - Portal**
 
-  Copy the API key from the API Hub dashboard at [`app.swaggerhub.com`](https://app.swaggerhub.com/settings/apiKey).
+  Copy the API key from the Swagger dashboard at [`app.swaggerhub.com`](https://app.swaggerhub.com/settings/apiKey).
 
-- **API Hub - Contract Testing (PactFlow)**
+- **Swagger - Contract Testing (PactFlow)**
 
   Copy the relevant API tokens from [`app.pactflow.io`](https://app.pactflow.io/settings/api-tokens). You will also need to note the tenant URL for your organization (e.g., `{tenant}.pactflow.io`). The MCP server also supports the open source Pact Broker, in which case you will need a username and password instead of a token.
 
@@ -75,10 +75,10 @@ export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 # Required for Reflect tools
 export REFLECT_API_TOKEN=your-reflect-api-token
 
-# Required for API Hub - Portal tools
+# Required for Swagger - Portal tools
 export API_HUB_API_KEY=your-api-hub-api-key
 
-# Required for API Hub - Contract Testing (PactFlow) tools
+# Required for Swagger - Contract Testing (PactFlow) tools
 export PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io
 export PACT_BROKER_TOKEN=your-pactflow-api-token
 # If using the open source Pact broker, replace the token with:
@@ -152,7 +152,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
     {
       "id": "api_hub_api_key",
       "type": "promptString",
-      "description": "API Hub API Key",
+      "description": "Swagger API Key",
       "password": true
     },
     {
@@ -372,7 +372,7 @@ To run the built server locally in VS Code, add the following configuration to 
       {
          "id": "api_hub_api_key",
          "type": "promptString",
-         "description": "API Hub API Key",
+         "description": "Swagger API Key",
          "password": true
       },
       {
@@ -467,7 +467,7 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "List all projects in organization org_12345"
 -   "Show me project details for the mobile app project"
 
-### API Hub Contract Testing (PactFlow)
+### Swagger Contract Testing (PactFlow)
 
 -   "List all the provider states for the current provider"
 -   "Generate Pact tests from this OpenAPI spec: [spec link]"

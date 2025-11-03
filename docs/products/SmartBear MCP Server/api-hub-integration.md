@@ -1,6 +1,6 @@
 ![api-hub.png](./images/embedded/api-hub.png)
 
-The API Hub client provides comprehensive API Hub Portal and API Hub for Design management capabilities. Access to these features requires authentication with an `API_HUB_API_KEY`.
+The Swagger client provides comprehensive Swagger Portal and Swagger Studio management capabilities. Access to these features requires authentication with an `API_HUB_API_KEY`.
 
 ## Available Tools
 
@@ -8,7 +8,7 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 
 #### `list_portals`
 
--   Purpose: Search for available portals within API Hub. Returns only the portals for which you are an owner or designer, either at the product or organization level.
+-   Purpose: Search for available portals within Swagger. Returns only the portals for which you are an owner or designer, either at the product or organization level.
 -   Returns: Paginated list of portals, including metadata such as name, subdomain, status, and more.
 -   Use case: Discovery of available portals.
 
@@ -21,7 +21,7 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 
 #### `create_portal`
 
--   Purpose: Create a new portal with API Hub.
+-   Purpose: Create a new portal with Swagger.
 -   Returns: Complete set of metadata properties for a specific portal.
 -   Use case: Get full details on a specific portal configuration.
 -   Parameters:
@@ -33,7 +33,7 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 | `offline` | If set to true the portal will not be visible to customers.<br />Default: `false` | boolean | No |
 | `routing` | Determines the routing strategy ('`browser`' or '`proxy`').<br />Default: `browser` | string | No |
 | `credentialsEnabled` | Indicates if credentials are enabled for the portal.<br />Default: `true` | boolean | No |
-| `swaggerHubOrganizationId` | The corresponding API Hub (formerly SwaggerHub) organization UUID | string (uuid) | Yes |
+| `swaggerHubOrganizationId` | The corresponding Swagger (formerly SwaggerHub) organization UUID | string (uuid) | Yes |
 | `openapiRenderer` | Portal level setting for the OpenAPI renderer.<br />-   `SWAGGER_UI` - Use the Swagger UI renderer<br />-   `ELEMENTS` - Use the Elements renderer<br />-   `TOGGLE` - Switch between the two renderers with elements set as the default<br />Default: `TOGGLE` | string | No |
 | `pageContentFormat` | Determines the format of the page content (`HTML` or `MARKDOWN` or `BOTH`)<br />Default: `HTML` | string | No |
 
@@ -42,13 +42,13 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 -   Purpose: Delete a portal.
 -   Parameters: Portal UUID or subdomain (`portalId`).
 -   Returns: No content on success.
--   Use case: Delete an existing portal from API Hub.
+-   Use case: Delete an existing portal from Swagger.
 
 #### `update_portal`
 
 -   Purpose: Update a specific portal's configuration.
 -   Returns: Complete set of metadata properties for a specific portal.
--   Use case: Update configuration settings of existing API Hub portal.
+-   Use case: Update configuration settings of existing Swagger portal.
 -   Parameters:
 
 | Parameter | Description | Type | Required |
@@ -60,7 +60,7 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 | `gtmKey` | The Google Tag Manager key for this portal. | string | No |
 | `routing` | Determines the routing strategy ('`browser`' or '`proxy`').<br />Default: `browser` | string | No |
 | `credentialsEnabled` | Indicates if credentials are enabled for the portal.<br />Default: `true` | boolean | No |
-| `swaggerHubOrganizationId` | The corresponding API Hub (formerly SwaggerHub) organization UUID | string (uuid) | Yes |
+| `swaggerHubOrganizationId` | The corresponding Swagger Studio (formerly SwaggerHub) organization UUID | string (uuid) | Yes |
 | `openapiRenderer` | Portal level setting for the OpenAPI renderer.<br />-   `SWAGGER_UI` - Use the Swagger UI renderer<br />-   `ELEMENTS` - Use the Elements renderer<br />-   `TOGGLE` - Switch between the two renderers with elements set as the default<br />Default: `TOGGLE` | string | No |
 | `pageContentFormat` | Determines the format of the page content (`HTML` or `MARKDOWN` or `BOTH`)<br />Default: `HTML` | string | No |
 
@@ -117,13 +117,13 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 -   Purpose: Delete a product from a specific portal.
 -   Parameters: Product UUID (`productId`).
 -   Returns: No content on success.
--   Use case: Delete an existing product from an API Hub portal.
+-   Use case: Delete an existing product from a Swagger portal.
 
-### API Hub for Design API Tools
+### Swagger Studio API Tools
 
 #### `search_apis_and_domains`
 
--   Purpose: Search for APIs and Domains in API Hub for Design using the comprehensive /specs endpoint and retrieve metadata including owner, name, description, summary, version, and specification.
+-   Purpose: Search for APIs and Domains in Swagger Studio using the comprehensive /specs endpoint and retrieve metadata including owner, name, description, summary, version, and specification.
 -   Returns: List of API and Domain specifications matching the search criteria.
 -   Use case: Discover existing APIs and domains for integration or reference.
 -   Parameters:
@@ -142,7 +142,7 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 
 #### `get_api_definition`
 
--   Purpose: Fetch a resolved API definition from API Hub for Design based on its owner, API name, and version.
+-   Purpose: Fetch a resolved API definition from Swagger Studio based on its owner, API name, and version.
 -   Returns: Complete OpenAPI specification for the requested API.
 -   Use case: Retrieve the specified API definitions for integration, testing, or documentation purposes.
 -   Parameters:
@@ -155,9 +155,9 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 
 #### `create_or_update_api`
 
--   Purpose: Create a new API or update an existing API in SwaggerHub Registry for API Hub for Design. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. If an API with the same owner and name already exists, it will be updated; otherwise, a new API will be created.
+-   Purpose: Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. If an API with the same owner and name already exists, it will be updated; otherwise, a new API will be created.
 -   Returns: API metadata including owner, name, version (always 1.0.0), SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
--   Use case: Programmatically create new APIs from OpenAPI/AsyncAPI specifications, update existing API definitions with new versions of the specification, or migrate APIs into API Hub for Design.
+-   Use case: Programmatically create new APIs from OpenAPI/AsyncAPI specifications, update existing API definitions with new versions of the specification, or migrate APIs into Swagger Studio.
 -   Parameters:
 
 | Parameter | Description | Type | Required |
@@ -193,14 +193,14 @@ The API Hub client provides comprehensive API Hub Portal and API Hub for Design 
 
 ## Configuration
 
-To use API Hub tools, you need to configure the `API_HUB_API_KEY` environment variable with your API Hub API token.
+To use Swagger tools, you need to configure the `API_HUB_API_KEY` environment variable with your Swagger API token.
 
 ## Common Use Cases
 
 1. **Portal Discovery**: Use `list_portals` to find available portals you have access to.
 2. **Portal Management**: Create, update, and delete portals using the respective tools.
 3. **Product Organization**: Manage products within portals for better API organization.
-4. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your API Hub for Design.
+4. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your Swagger Studio.
 5. **API Integration**: Retrieve specific API definitions with `get_api_definition` for development or testing purposes.
 6. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions or `create_api_from_template` using organization templates.
 7. **API Governance**: Validate API definitions against organization standards using `scan_api_standardization` to ensure compliance with governance policies.

@@ -28,13 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [Qmetry] Added 4 New QMetry tools to enhance test management capabilities [#194](https://github.com/SmartBear/smartbear-mcp/pull/194)
 - [Qmetry] Implement comprehensive test case tooling with enhanced error handling [#193](https://github.com/SmartBear/smartbear-mcp/pull/193)
-- [API Hub] Add `scan_api_standardization` tool for validating API definitions against organization standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
+- [Swagger] Add `scan_api_standardization` tool for validating API definitions against organization standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
 
 ## [0.8.0] - 2025-10-13
 
 ### Added
-- [API Hub] Add `create_or_update_api` tool for creating or updating new API definitions in API Hub for Design
-- [API Hub] Add `create_api_from_template` tool for creating new API definitions from templates in API Hub for Design
+- [Swagger] Add `create_or_update_api` tool for creating or updating new API definitions in Swagger Studio
+- [Swagger] Add `create_api_from_template` tool for creating new API definitions from templates in Swagger Studio
 - [Zephyr] Add Zephyr capabilities to MCP [#171](https://github.com/SmartBear/smartbear-mcp/pull/171)
 
 ### Changed
@@ -45,8 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - [Qmetry] Add QMetry Test Management capabilities to MCP [#152](https://github.com/SmartBear/smartbear-mcp/pull/152)
-- [API Hub] Add `search_apis_and_domains` tool for discovering APIs and Domains in API Hub for Design [#154](https://github.com/SmartBear/smartbear-mcp/pull/154)
-- [API Hub] Add `get_api_definition` tool for fetching resolved API definitions from API Hub for Design [#154](https://github.com/SmartBear/smartbear-mcp/pull/154)
+- [Swagger] Add `search_apis_and_domains` tool for discovering APIs and Domains in Swagger Studio [#154](https://github.com/SmartBear/smartbear-mcp/pull/154)
+- [Swagger] Add `get_api_definition` tool for fetching resolved API definitions from Swagger Studio [#154](https://github.com/SmartBear/smartbear-mcp/pull/154)
 
 ## [0.6.0] - 2025-09-15
 
@@ -107,7 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [API Hub] Add user agent header to API requests [#34](https://github.com/SmartBear/smartbear-mcp/pull/34)
+- [Swagger] Add user agent header to API requests [#34](https://github.com/SmartBear/smartbear-mcp/pull/34)
 - [Reflect] Add user agent header to API requests [#34](https://github.com/SmartBear/smartbear-mcp/pull/34)
 
 ## [0.2.1] - 2025-07-09
@@ -141,6 +141,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial release of SmartBear MCP server npm package
-- Provides programmatic access to SmartBear BugSnag, Reflect, and API Hub
+- Provides programmatic access to SmartBear BugSnag, Reflect, and Swagger
 - Includes runtime field filtering for API responses based on TypeScript types
 - Documentation and usage instructions for npm and local development

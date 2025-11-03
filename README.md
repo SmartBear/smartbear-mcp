@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [API Hub](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [Swagger](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
 
 ## What is MCP?
 
@@ -30,7 +30,7 @@ See individual guides for suggested prompts and supported tools and resources:
 
 - [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - Comprehensive error monitoring and debugging capabilities
 - [Test Hub](https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration) - Test management and execution capabilities
-- [API Hub](https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration) - Portal management capabilities
+- [Swagger](https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration) - Portal management capabilities
 - [PactFlow](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
@@ -40,7 +40,7 @@ See individual guides for suggested prompts and supported tools and resources:
 ## Prerequisites
 
 - Node.js 20+ and npm
-- Access to SmartBear products (BugSnag, Reflect, API Hub, QMetry, or Zephyr)
+- Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, or Zephyr)
 - Valid API tokens for the products you want to integrate
 
 ## Installation
@@ -109,7 +109,7 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
       {
          "id": "api_hub_api_key",
          "type": "promptString",
-         "description": "API Hub API Key - leave blank to disable API Hub tools",
+         "description": "Swagger API Key - leave blank to disable Swagger tools",
          "password": true
       },
       {
