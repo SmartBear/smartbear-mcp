@@ -180,6 +180,15 @@ export const CommonFields = {
         'Only specify if user wants specific folder like "Automation/Regression".',
     )
     .default(""),
+  tsFolderPath: z
+    .string()
+    .optional()
+    .describe(
+      "Folder path for test suites - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
+        'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+        'Only specify if user wants specific folder like "Automation/Regression".',
+    )
+    .default(""),
   folderID: z
     .number()
     .optional()
@@ -224,6 +233,14 @@ export const CommonFields = {
       "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
         "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically. " +
+        "Manual viewId only needed if you want to override the automatic resolution.",
+    ),
+  tsViewId: z
+    .number()
+    .describe(
+      "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific viewId. " +
+        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. " +
         "Manual viewId only needed if you want to override the automatic resolution.",
     ),
   tsrunID: z
@@ -667,6 +684,27 @@ export const UpdateTestSuiteArgsSchema = z.object({
   testSuiteState: z.number().optional().describe("State of the Test Suite"),
 });
 
+export const TestSuiteListArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  viewId: CommonFields.tsViewId,
+  folderPath: CommonFields.tsFolderPath,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  scope: CommonFields.scope,
+  getSubEntities: CommonFields.getSubEntities,
+  filter: CommonFields.filter,
+  udfFilter: CommonFields.udfFilter,
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      "Sort Records - refer json schema, Possible property - entityKey, name, testsuiteStatus, linkedPlatformCount, linkedTcCount, createdDate, createdByAlias, updatedDate, updatedByAlias, attachmentCount, owner, remExecutionTime, totalExecutionTime",
+    )
+    .default('[{"property":"name","direction":"ASC"}]'),
+});
+
 export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
@@ -837,6 +875,35 @@ export const UpdateIssueArgsSchema = z.object({
     .describe("Cycle IDs affected by this issue"),
 });
 
+export const IssuesListArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  viewId: z
+    .number()
+    .describe(
+      "ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific viewId. " +
+        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically. " +
+        "Manual viewId only needed if you want to override the automatic resolution.",
+    ),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+  isJiraIntegrated: z
+    .boolean()
+    .optional()
+    .describe("Send true if current project is Integrated with Jira")
+    .default(false),
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      "Sort Records - refer json schema, Possible property - entityKey, name, typeAlias, stateAlias, createdDate, createdByAlias, updatedDate, updatedByAlias, priorityAlias, createdSystem, linkedTcrCount, linkedRqCount, dfOwner, attachmentCount, environmentText",
+    )
+    .default('[{"property":"name","direction":"ASC"}]'),
+});
+
 // Export for Link Issues to Testcase Run tool
 export const LinkIssuesToTestcaseRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
@@ -845,4 +912,20 @@ export const LinkIssuesToTestcaseRunArgsSchema = z.object({
     .array(z.union([z.string(), z.number()]))
     .describe("ID of issues to be linked to Testcase Run"),
   tcrId: z.number().describe("ID of Testcase Run to link issues with"),
+});
+
+// Export for Link Platforms to Test Suite tool
+export const LinkPlatformsToTestSuiteArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  qmTsId: z
+    .number()
+    .describe(
+      "Id of Test Suite (required). To get the qmTsId - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id",
+    ),
+  qmPlatformId: z
+    .string()
+    .describe(
+      "Comma-separated value of PlatformId (required). To get the qmPlatformId - Call API 'Platform/List' From the response, get value of following attribute -> data[<index>].platformID",
+    ),
 });

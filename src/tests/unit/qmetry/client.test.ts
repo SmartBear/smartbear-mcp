@@ -49,10 +49,10 @@ describe("QmetryClient", () => {
 
       expect(mockRegister).toHaveBeenCalledTimes(TOOLS.length);
       expect(mockRegister.mock.calls[0][0].title).toBe(
-        "Set QMetry Project Info",
+        "Fetch QMetry list Projects",
       );
       expect(mockRegister.mock.calls[0][0].summary).toBe(
-        "Set current QMetry project for your account",
+        "Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
       );
     });
 

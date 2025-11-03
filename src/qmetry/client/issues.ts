@@ -3,9 +3,11 @@ import {
   type CreateIssuePayload,
   DEFAULT_CREATE_ISSUE_PAYLOAD,
   DEFAULT_FETCH_ISSUES_LINKED_TO_TESTCASE_PAYLOAD,
+  DEFAULT_FETCH_ISSUES_PAYLOAD,
   DEFAULT_LINK_ISSUES_TO_TESTCASE_RUN_PAYLOAD,
   DEFAULT_UPDATE_ISSUE_PAYLOAD,
   type FetchIssuesLinkedToTestCasePayload,
+  type FetchIssuesPayload,
   type LinkIssuesToTestcaseRunPayload,
   type UpdateIssuePayload,
 } from "../types/issues.js";
@@ -87,6 +89,42 @@ export async function updateIssue(
   return qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.ISSUES.CREATE_UPDATE_ISSUE,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Fetches a list of test suites.
+ * @throws If `viewId` or `folderPath` are missing/invalid.
+ */
+export async function fetchIssues(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchIssuesPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: FetchIssuesPayload = {
+    ...DEFAULT_FETCH_ISSUES_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.viewId !== "number") {
+    throw new Error(
+      "[fetchIssues] Missing or invalid required parameter: 'viewId'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.ISSUES.GET_ISSUES_LIST,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

@@ -24,6 +24,7 @@ export const QMetryToolsHandlers = {
   FETCH_REQUIREMENTS_LINKED_TO_TESTCASE: "getRequirementsLinkedToTestCase",
   CREATE_TEST_SUITE: "createTestSuite",
   UPDATE_TEST_SUITE: "updateTestSuite",
+  FETCH_TEST_SUITES: "getTestSuites",
   FETCH_TESTSUITES_FOR_TESTCASE: "getTestSuitesForTestCase",
   FETCH_TESTCASES_BY_TESTSUITE: "getTestCasesByTestSuite",
   FETCH_EXECUTIONS_BY_TESTSUITE: "getExecutionsByTestSuite",
@@ -34,5 +35,7 @@ export const QMetryToolsHandlers = {
   REQUIREMENTS_LINKED_TESTCASES_TO_TESTSUITE: "reqLinkedTestCasesToTestSuite",
   CREATE_ISSUE: "createIssue",
   UPDATE_ISSUE: "updateIssue",
+  FETCH_ISSUES: "getIssues",
   LINK_ISSUES_TO_TESTCASE_RUN: "linkIssuesToTestcaseRun",
+  LINK_PLATFORMS_TO_TESTSUITE: "linkPlatformsToTestSuite",
 };

@@ -24,13 +24,16 @@ export const QMETRY_PATHS = {
   TESTSUITE: {
     CREATE_UPDATE_TS: "/rest/testsuites",
     GET_TS_LIST_FOR_TC: "/rest/testsuites/list/forTC",
+    GET_TS_LIST: "/rest/testsuites/list/viewColumns",
     GET_TESTCASES_BY_TESTSUITE: "/rest/testcases/list/forTS",
     LINKED_TESTCASES_TO_TESTSUITE: "/rest/testsuites/dolink/TCs",
     GET_EXECUTIONS_BY_TESTSUITE: "/rest/execution/list/platformHome",
     GET_TESTCASE_RUNS_BY_TESTSUITE_RUN: "/rest/execution/list/viewColumns",
     GET_LINKED_ISSUES_BY_TESTCASE_RUN: "/rest/execution/issue/list/forTCRun",
+    LINK_PLATFORMS_TO_TESTSUITE: "/rest/testsuites/link/platforms",
   },
   ISSUES: {
+    GET_ISSUES_LIST: "/rest/issues/list/viewColumns",
     CREATE_UPDATE_ISSUE: "/rest/issues",
     GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
     LINK_ISSUES_TO_TESTCASE_RUN: "/rest/execution/link/issue",

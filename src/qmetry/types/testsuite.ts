@@ -1,8 +1,10 @@
 import {
   DEFAULT_FILTER,
   DEFAULT_PAGINATION,
+  DEFAULT_SORT,
   type FilterPayload,
   type PaginationPayload,
+  type SortPayload,
 } from "./common.js";
 
 export interface ReleaseCycleMapping {
@@ -35,6 +37,17 @@ export interface FetchTestSuitesForTestCasePayload
   tsFolderID: number; // required - Test Suite folder ID
   viewId?: number; // optional - Test Suite folder view ID (auto-resolved if not provided)
   getColumns?: boolean; // whether to get column information
+}
+
+export interface FetchTestSuitesPayload
+  extends PaginationPayload,
+    FilterPayload,
+    SortPayload {
+  viewId: number; // required
+  folderPath: string; // required
+  scope?: string; // optional - scope filter
+  getSubEntities?: boolean; // optional - whether to get sub-entities
+  udfFilter?: string; // only this API uses udfFilter
 }
 
 export const DEFAULT_FETCH_TESTSUITES_FOR_TESTCASE_PAYLOAD: Omit<
@@ -98,6 +111,11 @@ export interface ReqLinkedTestCasesToTestSuitePayload {
   fromReqs?: boolean; // optional - Indicates whether to link from requirements
 }
 
+export interface LinkedPlatformsToTestSuitePayload {
+  qmTsId: number; // required - Test Suite ID
+  qmPlatformId: string[]; // required - Array of Platform IDs (as strings)
+}
+
 export const DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD: Omit<
   FetchTestCaseRunsByTestSuiteRunPayload,
   "tsrunID" | "viewId"
@@ -149,4 +167,20 @@ export const DEFAULT_CREATE_TESTSUITE_PAYLOAD: Omit<
 export const DEFAULT_UPDATE_TESTSUITE_PAYLOAD: Omit<
   UpdateTestSuitePayload,
   "entityKey" | "TsFolderID" | "id"
+> = {};
+
+export const DEFAULT_FETCH_TESTSUITES_PAYLOAD: Omit<
+  FetchTestSuitesPayload,
+  "viewId" | "folderPath"
+> = {
+  ...DEFAULT_PAGINATION,
+  ...DEFAULT_FILTER,
+  ...DEFAULT_SORT,
+  udfFilter: "[]",
+  scope: "cycle",
+};
+
+export const DEFAULT_LINKED_PLATFORMS_TO_TESTSUITE_PAYLOAD: Omit<
+  LinkedPlatformsToTestSuitePayload,
+  "qmTsId" | "qmPlatformId"
 > = {};

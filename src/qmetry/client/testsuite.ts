@@ -7,6 +7,8 @@ import {
   DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD,
   DEFAULT_FETCH_TESTCASES_BY_TESTSUITE_PAYLOAD,
   DEFAULT_FETCH_TESTSUITES_FOR_TESTCASE_PAYLOAD,
+  DEFAULT_FETCH_TESTSUITES_PAYLOAD,
+  DEFAULT_LINKED_PLATFORMS_TO_TESTSUITE_PAYLOAD,
   DEFAULT_LINKED_TESTCASE_TO_TESTSUITE_PAYLOAD,
   DEFAULT_REQLINKED_TESTCASE_TO_TESTSUITE_PAYLOAD,
   DEFAULT_UPDATE_TESTSUITE_PAYLOAD,
@@ -15,6 +17,8 @@ import {
   type FetchTestCaseRunsByTestSuiteRunPayload,
   type FetchTestCasesByTestSuitePayload,
   type FetchTestSuitesForTestCasePayload,
+  type FetchTestSuitesPayload,
+  type LinkedPlatformsToTestSuitePayload,
   type LinkedTestCasesToTestSuitePayload,
   type ReqLinkedTestCasesToTestSuitePayload,
   type UpdateTestSuitePayload,
@@ -102,6 +106,47 @@ export async function updateTestSuite(
   return qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTSUITE.CREATE_UPDATE_TS,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Fetches a list of test suites.
+ * @throws If `viewId` or `folderPath` are missing/invalid.
+ */
+export async function fetchTestSuites(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchTestSuitesPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: FetchTestSuitesPayload = {
+    ...DEFAULT_FETCH_TESTSUITES_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.viewId !== "number") {
+    throw new Error(
+      "[fetchTestSuites] Missing or invalid required parameter: 'viewId'.",
+    );
+  }
+  if (typeof body.folderPath !== "string") {
+    throw new Error(
+      "[fetchTestSuites] Missing or invalid required parameter: 'folderPath'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTSUITE.GET_TS_LIST,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
@@ -370,6 +415,48 @@ export async function reqLinkedTestCasesToTestSuite(
   return qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTSUITE.LINKED_TESTCASES_TO_TESTSUITE,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Link platforms to a test suite.
+ * @throws If `qmTsId` or `qmPlatformId` are missing/invalid.
+ */
+export async function linkPlatformsToTestSuite(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: LinkedPlatformsToTestSuitePayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: LinkedPlatformsToTestSuitePayload = {
+    ...DEFAULT_LINKED_PLATFORMS_TO_TESTSUITE_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.qmTsId !== "number") {
+    throw new Error(
+      "[linkPlatformsToTestSuite] Missing or invalid required parameter: 'qmTsId'.",
+    );
+  }
+
+  if (!body.qmPlatformId) {
+    throw new Error(
+      "[linkPlatformsToTestSuite] Missing or invalid required parameter: 'qmPlatformId'.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "PUT",
+    path: QMETRY_PATHS.TESTSUITE.LINK_PLATFORMS_TO_TESTSUITE,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

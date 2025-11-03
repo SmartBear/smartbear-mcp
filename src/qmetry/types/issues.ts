@@ -1,8 +1,10 @@
 import {
   DEFAULT_FILTER,
   DEFAULT_PAGINATION,
+  DEFAULT_SORT,
   type FilterPayload,
   type PaginationPayload,
+  type SortPayload,
 } from "./common.js";
 
 /**
@@ -79,3 +81,21 @@ export const DEFAULT_LINK_ISSUES_TO_TESTCASE_RUN_PAYLOAD: Omit<
   LinkIssuesToTestcaseRunPayload,
   "issueIds" | "tcrId"
 > = {};
+
+export interface FetchIssuesPayload
+  extends PaginationPayload,
+    FilterPayload,
+    SortPayload {
+  viewId: number; // required
+  isJiraIntegated?: boolean; // optional - default false
+  udfFilter?: string; // only this API uses udfFilter
+}
+
+export const DEFAULT_FETCH_ISSUES_PAYLOAD: Omit<FetchIssuesPayload, "viewId"> =
+  {
+    ...DEFAULT_PAGINATION,
+    ...DEFAULT_FILTER,
+    ...DEFAULT_SORT,
+    udfFilter: "[]",
+    isJiraIntegated: false,
+  };

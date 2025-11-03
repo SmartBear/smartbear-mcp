@@ -1,6 +1,7 @@
 import { QMetryToolsHandlers } from "../config/constants.js";
 import {
   createIssue,
+  fetchIssues,
   fetchIssuesLinkedToTestCase,
   linkIssuesToTestcaseRun,
   updateIssue,
@@ -34,7 +35,9 @@ import {
   fetchLinkedIssuesByTestCaseRun,
   fetchTestCaseRunsByTestSuiteRun,
   fetchTestCasesByTestSuite,
+  fetchTestSuites,
   fetchTestSuitesForTestCase,
+  linkPlatformsToTestSuite,
   linkTestCasesToTestSuite,
   reqLinkedTestCasesToTestSuite,
   updateTestSuite,
@@ -78,6 +81,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
     fetchRequirementsLinkedToTestCase,
   [QMetryToolsHandlers.CREATE_TEST_SUITE]: createTestSuites,
   [QMetryToolsHandlers.UPDATE_TEST_SUITE]: updateTestSuite,
+  [QMetryToolsHandlers.FETCH_TEST_SUITES]: fetchTestSuites,
   [QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE]:
     fetchTestSuitesForTestCase,
   [QMetryToolsHandlers.LINK_TESTCASES_TO_TESTSUITE]: linkTestCasesToTestSuite,
@@ -94,5 +98,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
     fetchIssuesLinkedToTestCase,
   [QMetryToolsHandlers.CREATE_ISSUE]: createIssue,
   [QMetryToolsHandlers.UPDATE_ISSUE]: updateIssue,
+  [QMetryToolsHandlers.FETCH_ISSUES]: fetchIssues,
   [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
+  [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
 };

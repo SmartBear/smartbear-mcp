@@ -39,6 +39,11 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Requirements",
   },
   {
+    handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
+    viewIdPath: "latestViews.TS.viewId",
+    moduleName: "Test Suites",
+  },
+  {
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
     viewIdPath: "latestViews.TSFS.viewId",
     folderIdPath: "rootFolders.TS.id",
@@ -50,6 +55,11 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     folderIdPath: "rootFolders.TS.id",
     folderIdField: "parentFolderId",
     moduleName: "Test Suites",
+  },
+  {
+    handler: QMetryToolsHandlers.FETCH_ISSUES,
+    viewIdPath: "latestViews.IS.viewId",
+    moduleName: "Issues",
   },
 ];
 

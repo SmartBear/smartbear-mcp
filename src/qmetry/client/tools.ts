@@ -7,8 +7,10 @@ import {
   CreateTestSuiteArgsSchema,
   ExecutionsByTestSuiteArgsSchema,
   IssuesLinkedToTestCaseArgsSchema,
+  IssuesListArgsSchema,
   LinkedIssuesByTestCaseRunArgsSchema,
   LinkIssuesToTestcaseRunArgsSchema,
+  LinkPlatformsToTestSuiteArgsSchema,
   LinkRequirementToTestCaseArgsSchema,
   LinkTestCasesToTestSuiteArgsSchema,
   PlatformArgsSchema,
@@ -27,6 +29,7 @@ import {
   TestCasesByTestSuiteArgsSchema,
   TestCasesLinkedToRequirementArgsSchema,
   TestCaseVersionDetailsArgsSchema,
+  TestSuiteListArgsSchema,
   TestSuitesForTestCaseArgsSchema,
   UpdateIssueArgsSchema,
   UpdateTestCaseArgsSchema,
@@ -1599,37 +1602,42 @@ export const TOOLS: QMetryToolParams[] = [
       {
         description: "Create a test suite with some details and metadata",
         parameters: {
-          parentFolderId: "541",
+          parentFolderId: "113557",
           isAutomatedFlag: false,
           name: "Testsuite Summary",
           description: "desc",
-          testsuiteOwner: 3,
-          testSuiteState: 21746,
+          testsuiteOwner: 6963,
+          testSuiteState: 505035,
           associateRelCyc: true,
           releaseCycleMapping: [
             {
-              buildID: 21395,
-              releaseId: 14239,
+              buildID: 18411,
+              releaseId: 10286,
             },
           ],
         },
-        expectedOutput: "Test suite created with details and metadata",
+        expectedOutput:
+          "Test suite created with details and metadata. Example uses: parentFolderId=113557 (MAC root TS folder from rootFolders.TS.id), testsuiteOwner=6963 (umang.savaliya from customListObjs.owner[index].id), testSuiteState=505035 (New from customListObjs.testSuiteState[index].id), releaseId=10286 (Air release from projects[index].releases[index].releaseID), buildID=18411 (Air Q1-19 cycle from projects[index].releases[index].builds[index].buildID)",
       },
     ],
     hints: [
       "If parentFolderId is not provided, it will be auto-resolved to the root test suite folder using project info (rootFolders.TS.id).",
-      "To get valid values for testsuiteOwner, testSuiteState, etc., call the project info tool and use the returned customListObjs IDs.",
-      "If the user provides an owner name (testsuiteOwner), fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testsuiteOwner. If the name is not found, skip the testsuiteOwner field (it is not required) and show a user-friendly message: 'Test suite created without owner, as given owner is not available in the current project.'",
+      "To get valid values for testsuiteOwner, testSuiteState, etc., call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs.",
+      "CRITICAL: For testsuiteOwner mapping - Call API 'Admin/Get info Service', from the response get value from customListObjs.owner[<index>].id. Match the user by customListObjs.owner[<index>].name.",
+      "If the user provides an owner name (testsuiteOwner), fetch project info, find the matching owner in customListObjs.owner[index].name or customListObjs.owner[index].uniqueLabel, and use its ID in the payload as testsuiteOwner. If the name is not found, skip the testsuiteOwner field (it is not required) and show a user-friendly message: 'Test suite created without owner, as given owner is not available in the current project.'",
+      "CRITICAL: For testSuiteState mapping - Call API 'Admin/Get info Service', from the response get value from customListObjs.testSuiteState[<index>].id. Match the state by customListObjs.testSuiteState[<index>].name.",
       "If the user provides a test suite state name(testSuiteState), fetch project info, find the matching state in customListObjs.testSuiteState[index].name, and use its ID in the payload as testSuiteState. If the name is not found, skip the testSuiteState field (it is not required) and show a user-friendly message: 'Test suite created without test suite state, as given state is not available in the current project.'",
-      "tcFolderID is required; use the root folder ID from project info or a specific folder.",
+      "parentFolderId is required; use the root folder ID from project info (rootFolders.TS.id) or a specific folder.",
       "Release/cycle mapping is optional but useful for planning.",
       "If the user wants to link or associate a release and cycle to the test suite, set associateRelCyc: true in the payload.",
-      "If the user provides a release ID, map it from projects.releases[index].releaseID in the project info response, and use that ID in releaseCycleMapping.",
-      "If the user provides a build ID, map it from projects.releases.builds[index].buildID in the project info response, and use that ID in releaseCycleMapping.",
-      "If the user provides a release name, map it to its ID from project info; if a build name is provided, map it to its ID from the associated release's builds list.",
+      "CRITICAL: For releaseCycleMapping.releaseId - Call API 'Release/List' (or use project info projects[<index>].releases[<index>].releaseID), from the response get value from data[<index>].releaseID or projects[<index>].releases[<index>].releaseID. Match the release by name.",
+      "CRITICAL: For releaseCycleMapping.buildID - Call API 'Cycle/List' (or use project info projects[<index>].releases[<index>].builds[<index>].buildID), from the response get value from data[<index>].buildID or projects[<index>].releases[<index>].builds[<index>].buildID. Match the build/cycle by name.",
+      "If the user provides a release name, map it to its ID from projects[<index>].releases[<index>].releaseID in the project info response, and use that ID as releaseId in releaseCycleMapping.",
+      "If the user provides a build/cycle name, map it to its ID from projects[<index>].releases[<index>].builds[<index>].buildID in the project info response, and use that ID as buildID in releaseCycleMapping.",
       "Example payload: releaseCycleMapping: [ { releaseId: <releaseID>, buildID: <buildID> } ]",
+      "Example: For 'Air' release and 'Air Q1-19' cycle in MAC project, use releaseId: 10286 and buildID: 18411",
       "LLM should ensure that provided release/cycle names or IDs exist in the current project before using them in the payload. If not found, skip and show a user-friendly message: 'Test suite created without release/cycle association, as given release/cycle is not available in the current project.'",
-      "All IDs (testSuiteState, testsuiteOwner, releaseCycleMapping etc.) must be valid for your QMetry instance.",
+      "All IDs (testSuiteState from customListObjs.testSuiteState[index].id, testsuiteOwner from customListObjs.owner[index].id, releaseId from projects.releases[index].releaseID, buildID from projects.releases.builds[index].buildID) must be valid for your QMetry instance.",
       "If a custom field is mandatory, include it in the UDF object.",
     ],
     outputDescription:
@@ -1666,17 +1674,16 @@ export const TOOLS: QMetryToolParams[] = [
           "Test suite summary updated. Only 'name' field changed. Field IDs auto-resolved from project info. id(test suite numeric id) resolved from entityKey. TsFolderID auto-resolved. from the project info. info on rootFolders.TS.id.",
       },
       {
-        description:
-          "Update state to Open and owner to john.doe of the test suite",
+        description: "Update state to Open and owner of the test suite",
         parameters: {
           id: 1505898,
           entityKey: "VT-TS-7",
           TsFolderID: 1644087,
-          testSuiteState: 2231981,
+          testSuiteState: 505036,
           testsuiteOwner: 6963,
         },
         expectedOutput:
-          "State and owner updated. Field IDs auto-resolved from project info. id(test suite numeric id) resolved from entityKey. TsFolderID auto-resolved. from the project info. info on rootFolders.TS.id.",
+          "State and owner updated. Example uses: testSuiteState=505036 (Open from customListObjs.testSuiteState[index].id), testsuiteOwner=6963 (umang.savaliya from customListObjs.owner[index].id). Field IDs auto-resolved from project info. id(test suite numeric id) resolved from entityKey. TsFolderID auto-resolved from the project info rootFolders.TS.id.",
       },
       {
         description: "Update only description of the test suite",
@@ -1691,19 +1698,139 @@ export const TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
-      "If user provides entityKey (e.g., MAC-TC-1684), first call Fetch Test Suites for Test Suite with a filter on entityKeyId to resolve the id (test suite numeric id) and TsFolderID from rootFolders.TS.id.",
-      "To get valid values for owner, state, etc., call the project info tool and use the returned customListObjs IDs.",
-      "If the user provides an owner name, fetch project info, find the matching owner in customListObjs.owner[index].name, and use its ID in the payload as testsuiteOwner. If the name is not found, skip the testsuiteOwner field (it is not required) and show a user-friendly message: 'Test suite updated without owner, as given owner is not available in the current project.'",
+      "If user provides entityKey (e.g., MAC-TS-7), first call Fetch Test Suites with a filter on entityKeyId to resolve the id (test suite numeric id) and TsFolderID from rootFolders.TS.id.",
+      "To get valid values for owner, state, etc., call the 'Admin/Get info Service' API (FETCH_PROJECT_INFO tool) and use the returned customListObjs IDs.",
+      "CRITICAL: For testsuiteOwner mapping - Call API 'Admin/Get info Service', from the response get value from customListObjs.owner[<index>].id. Match the user by customListObjs.owner[<index>].name.",
+      "If the user provides an owner name, fetch project info, find the matching user in customListObjs.owner[index].name, and use its ID in the payload as testsuiteOwner. If the name is not found, skip the testsuiteOwner field (it is not required) and show a user-friendly message: 'Test suite updated without owner, as given owner is not available in the current project.'",
+      "CRITICAL: For testSuiteState mapping - Call API 'Admin/Get info Service', from the response get value from customListObjs.testSuiteState[<index>].id. Match the state by customListObjs.testSuiteState[<index>].name.",
       "If the user provides a test suite state name, fetch project info, find the matching state in customListObjs.testSuiteState[index].name, and use its ID in the payload as testSuiteState. If the name is not found, skip the testSuiteState field (it is not required) and show a user-friendly message: 'Test suite updated without test suite state, as given state is not available in the current project.'",
       "If either owner or state is not found in project info, the update for that field will be skipped and a user-friendly message will be shown to the user.",
       "UDF fields in steps must match your QMetry custom field configuration.",
-      "All IDs (state, owner, etc.) must be valid for your QMetry instance.",
+      "All IDs (testSuiteState from customListObjs.testSuiteState[index].id, testsuiteOwner from customListObjs.owner[index].id) must be valid for your QMetry instance.",
       "If a custom field is mandatory, include it in the UDF object.",
     ],
     outputDescription:
       "JSON object containing the new test suite ID, summary, and creation metadata.",
     readOnly: false,
     idempotent: false,
+  },
+  {
+    title: "Fetch Test Suites",
+    summary:
+      "Fetch QMetry test suites - automatically handles viewId resolution based on project",
+    handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
+    inputSchema: TestSuiteListArgsSchema,
+    purpose:
+      "Get test suites from QMetry. System automatically gets correct viewId from project info if not provided.",
+    useCases: [
+      "List all test suites in a project",
+      "Search for specific test suites using filters",
+      "Browse test suites in specific folders",
+      "Get paginated test suite results",
+    ],
+    examples: [
+      {
+        description:
+          "Get all test suites from default project - system will auto-fetch viewId",
+        parameters: {},
+        expectedOutput:
+          "List of test suites from default project with auto-resolved viewId",
+      },
+      {
+        description:
+          "Get all test suites from UT project - system will auto-fetch UT project's viewId",
+        parameters: { projectKey: "UT" },
+        expectedOutput:
+          "List of test suites from UT project using UT's specific TS viewId",
+      },
+      {
+        description:
+          "Get test suites with manual viewId (skip auto-resolution)",
+        parameters: { projectKey: "MAC", viewId: 103097, folderPath: "" },
+        expectedOutput: "Test suites using manually specified viewId 103097",
+      },
+      {
+        description:
+          "List test suites from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
+        parameters: {
+          projectKey: "use specific given project key",
+          viewId: "fetch specific project given projectKey Test Suite ViewId",
+          folderPath: "",
+        },
+        expectedOutput:
+          "Test suites using manually specified viewId 103097 or projectKey",
+      },
+      {
+        description: "Get test suites by release/cycle filter",
+        parameters: {
+          projectKey: "MAC",
+          filter:
+            '[{"value":[55178],"type":"list","field":"release"},{"value":[111577],"type":"list","field":"cycle"}]',
+        },
+        expectedOutput:
+          "Test suites associated with Release 8.12 (ID: 55178) and Cycle 8.12.1 (ID: 111577)",
+      },
+      {
+        description: "Get test suites by release only",
+        parameters: {
+          projectKey: "MAC",
+          filter: '[{"value":[55178],"type":"list","field":"release"}]',
+        },
+        expectedOutput:
+          "All test suites associated with Release 8.12 (ID: 55178)",
+      },
+      {
+        description: "Get test suites by cycle only",
+        parameters: {
+          projectKey: "MAC",
+          filter: '[{"value":[111577],"type":"list","field":"cycle"}]',
+        },
+        expectedOutput:
+          "All test suites associated with Cycle 8.12.1 (ID: 111577)",
+      },
+      {
+        description: "Search for specific test suite by entity key",
+        parameters: {
+          projectKey: "MAC",
+          filter:
+            '[{"type":"string","value":"MAC-TS-1684","field":"entityKeyId"}]',
+        },
+        expectedOutput: "Test suites matching the entity key criteria",
+      },
+      {
+        description:
+          "Search for multiple test suites by comma-separated entity keys",
+        parameters: {
+          projectKey: "MAC",
+          filter:
+            '[{"type":"string","value":"MAC-TS-1684,MAC-TS-1685,MAC-TS-1686","field":"entityKeyId"}]',
+        },
+        expectedOutput: "Test suites matching any of the specified entity keys",
+      },
+    ],
+    hints: [
+      "CRITICAL WORKFLOW: Always use the SAME projectKey for both project info and test suite fetching",
+      "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
+      "Step 2: Get project info using that projectKey, extract latestViews.TS.viewId",
+      "Step 3: Use the SAME projectKey and the extracted TS viewId for fetching test suites",
+      "Step 4: If user doesn't specify projectKey, use 'default' for both project info and test suite fetching",
+      "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
+      'For search by test suite key (like MAC-TS-1684), use filter: \'[{"type":"string","value":"MAC-TS-1684","field":"entityKeyId"}]\'',
+      "RELEASE/CYCLE FILTERING: Use release and cycle IDs, not names, for filtering",
+      'For release filter: \'[{"value":[releaseId],"type":"list","field":"release"}]\'',
+      'For cycle filter: \'[{"value":[cycleId],"type":"list","field":"cycle"}]\'',
+      'For combined release+cycle: \'[{"value":[releaseId],"type":"list","field":"release"},{"value":[cycleId],"type":"list","field":"cycle"}]\'',
+      "Get release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool before filtering",
+      "FILTER FIELDS: name, release, cycle, platform, isArchived, testsuiteStatus, createdByAlias, createdDate, entityKeyId, attachmentCount, linkedPlatformCount, linkedTcCount, updatedByAlias, updatedDate, owner, remExecutionTime, and totalExecutionTime",
+      "SORT FIELDS: entityKey, name, testsuiteStatus, linkedPlatformCount, linkedTcCount, createdDate, createdByAlias, updatedDate, updatedByAlias, attachmentCount, remExecutionTime, and totalExecutionTime",
+      "For multiple entity keys, use comma-separated values in filter",
+      "Use empty string '' as folderPath for root directory",
+    ],
+    outputDescription:
+      "JSON object with 'data' array containing test suites and pagination info",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
   },
   {
     title: "Fetch Test Suites for Test Case",
@@ -1933,6 +2060,64 @@ export const TOOLS: QMetryToolParams[] = [
       "Set fromReqs to true to link requirements linked test cases instead of direct test case linkage.",
     ],
     outputDescription: "JSON object with linkage status and details.",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Link Platforms to Test Suite",
+    summary: "Link one or more platforms to a QMetry Test Suite.",
+    handler: QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE,
+    inputSchema: LinkPlatformsToTestSuiteArgsSchema,
+    purpose:
+      "Associate testing platforms (browsers, OS, devices, or environments) with a specific Test Suite. " +
+      "This enables tracking which platforms a test suite should be executed on and helps organize test execution across different environments.",
+    useCases: [
+      "Link a single platform to a test suite",
+      "Link multiple platforms to a test suite for cross-platform testing",
+      "Define execution environments for a test suite",
+      "Organize test suites by supported platforms",
+      "Set up platform-specific test suite configurations",
+    ],
+    examples: [
+      {
+        description: "Link single platform to a test suite",
+        parameters: {
+          qmTsId: 1511970,
+          qmPlatformId: "63004",
+        },
+        expectedOutput:
+          "Platform 63004 linked to test suite 1511970 successfully.",
+      },
+      {
+        description: "Link multiple platforms to a test suite",
+        parameters: {
+          qmTsId: 1511970,
+          qmPlatformId: "63004,63005,63006",
+        },
+        expectedOutput:
+          "Platforms 63004, 63005, 63006 linked to test suite 1511970 successfully.",
+      },
+    ],
+    hints: [
+      "CRITICAL: qmTsId and qmPlatformId are REQUIRED parameters",
+      "To get the qmTsId (Test Suite ID):",
+      "  1. Call 'Testsuite/Fetch Testsuite' API",
+      "  2. From response, use data[<index>].id",
+      "  3. Example: Test Suite 'Login Tests' might have ID 1511970",
+      "To get the qmPlatformId (Platform ID):",
+      "  1. Call 'Platform/List' API (Fetch Platforms tool)",
+      "  2. From response, use data[<index>].platformID",
+      "  3. Example: Platform 'Chrome' might have ID 63004",
+      "qmPlatformId accepts comma-separated values for multiple platforms",
+      "Format for multiple platforms: '63004,63005,63006'",
+      "No spaces in the comma-separated list",
+      "If test suite entity key (e.g., VT-TS-12) is provided, first fetch test suites to resolve numeric ID",
+      "Platforms represent browsers, operating systems, devices, or custom environments",
+      "This tool helps organize cross-platform test execution",
+      "Essential for comprehensive platform coverage testing",
+    ],
+    outputDescription:
+      "JSON object with linkage status, success message, and details.",
     readOnly: false,
     idempotent: false,
   },
@@ -2664,6 +2849,126 @@ export const TOOLS: QMetryToolParams[] = [
     outputDescription: "JSON object with update status and details.",
     readOnly: false,
     idempotent: false,
+  },
+  {
+    title: "Fetch Defects or Issues",
+    summary:
+      "Fetch QMetry defects or issues - automatically handles viewId resolution based on project",
+    handler: QMetryToolsHandlers.FETCH_ISSUES,
+    inputSchema: IssuesListArgsSchema,
+    purpose:
+      "Get defects or issues from QMetry. System automatically gets correct viewId from project info if not provided.",
+    useCases: [
+      "List all issues in a project",
+      "Search for specific issues using filters",
+      "Get paginated issue results",
+    ],
+    examples: [
+      {
+        description:
+          "Get all issues from default project - system will auto-fetch viewId",
+        parameters: {},
+        expectedOutput:
+          "List of issues from default project with auto-resolved viewId",
+      },
+      {
+        description:
+          "Get all issues from UT project - system will auto-fetch UT project's viewId",
+        parameters: { projectKey: "UT" },
+        expectedOutput:
+          "List of issues from UT project using UT's specific IS viewId",
+      },
+      {
+        description: "Get issues with manual viewId (skip auto-resolution)",
+        parameters: { projectKey: "MAC", viewId: 166065 },
+        expectedOutput: "Issues using manually specified viewId 166065",
+      },
+      {
+        description:
+          "List issues from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
+        parameters: {
+          projectKey: "use specific given project key",
+          viewId:
+            "fetch specific project given projectKey defects or issues ViewId",
+        },
+        expectedOutput:
+          "Issues using manually specified viewId 103097 or projectKey",
+      },
+      {
+        description: "Get issues by release/cycle filter",
+        parameters: {
+          projectKey: "MAC",
+          filter:
+            '[{"value":[55178],"type":"list","field":"release"},{"value":[111577],"type":"list","field":"cycle"}]',
+        },
+        expectedOutput:
+          "Issues associated with Release 8.12 (ID: 55178) and Cycle 8.12.1 (ID: 111577)",
+      },
+      {
+        description: "Get issues by release only",
+        parameters: {
+          projectKey: "MAC",
+          filter: '[{"value":[55178],"type":"list","field":"release"}]',
+        },
+        expectedOutput:
+          "All defects or issues associated with Release 8.12 (ID: 55178)",
+      },
+      {
+        description: "Get issues by cycle only",
+        parameters: {
+          projectKey: "MAC",
+          filter: '[{"value":[111577],"type":"list","field":"cycle"}]',
+        },
+        expectedOutput:
+          "All defects or issues associated with Cycle 8.12.1 (ID: 111577)",
+      },
+      {
+        description: "Search for specific issue by entity key",
+        parameters: {
+          projectKey: "MAC",
+          filter:
+            '[{"type":"string","value":"MAC-IS-636","field":"entityKeyId"}]',
+        },
+        expectedOutput: "Issues matching the entity key criteria",
+      },
+      {
+        description:
+          "Search for multiple defects or issues by comma-separated entity keys",
+        parameters: {
+          projectKey: "MAC",
+          filter:
+            '[{"type":"string","value":"MAC-IS-636,MAC-IS-637,MAC-IS-638","field":"entityKeyId"}]',
+        },
+        expectedOutput: "Issues matching any of the specified entity keys",
+      },
+    ],
+    hints: [
+      "CRITICAL WORKFLOW: Always use the SAME projectKey for both project info and issues fetching",
+      "Step 1: If user specifies projectKey (like 'UT', 'MAC'), use that EXACT projectKey for project info",
+      "Step 2: Get project info using that projectKey, extract latestViews.IS.viewId",
+      "Step 3: Use the SAME projectKey and the extracted IS viewId for fetching issues",
+      "Step 4: If user doesn't specify projectKey, use 'default' for both project info and issues fetching",
+      "NEVER mix project keys - if user says 'MAC project', use projectKey='MAC' for everything",
+      'For search by issues key (like MAC-IS-1684), use filter: \'[{"type":"string","value":"MAC-IS-1684","field":"entityKeyId"}]\'',
+      "RELEASE/CYCLE FILTERING: Use release and cycle IDs, not names, for filtering",
+      'For release filter: \'[{"value":[releaseId],"type":"list","field":"release"}]\'',
+      'For cycle filter: \'[{"value":[cycleId],"type":"list","field":"cycle"}]\'',
+      'For combined release+cycle: \'[{"value":[releaseId],"type":"list","field":"release"},{"value":[cycleId],"type":"list","field":"cycle"}]\'',
+      "Get release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool before filtering",
+      "FILTER FIELDS: name, stateAlias, typeAlias, entityKeyId, createdDate, createdByAlias, updatedDate, updatedByAlias, createdSystem, dfOwner, priorityAlias, linkedTcrCount, linkedRqCount, attachmentCount, componentAlias, environmentText",
+      "SORT FIELDS: entityKey, name, typeAlias, stateAlias, createdDate, createdByAlias, updatedDate, updatedByAlias, priorityAlias, createdSystem, linkedTcrCount, linkedRqCount, dfOwner, attachmentCount, environmentText",
+      "For multiple entity keys, use comma-separated values in filter",
+      "Use pagination for large result sets (start, page, limit parameters)",
+      "This tool is essential for defect management and issue tracking",
+      "Critical for quality assurance and defect lifecycle analysis",
+      "Use for compliance reporting and issue traceability",
+      "Helps maintain visibility into project defects and issues",
+    ],
+    outputDescription:
+      "JSON object with 'data' array containing issues and pagination info",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
   },
   {
     title: "Link Issues to Testcase Run",
