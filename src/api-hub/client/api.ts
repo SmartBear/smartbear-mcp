@@ -1,6 +1,6 @@
 import { ToolError } from "../../common/types.js";
 import type { ApiHubConfiguration } from "./configuration.js";
-import type { OrganizationsListResponse } from "./core-types.js";
+import type { OrganizationsListResponse, OrganizationsQueryParams } from "./user-management-types.js";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -143,14 +143,33 @@ export class ApiHubAPI {
     return result as PortalsListResponse;
   }
 
-  async getOrganizations(): Promise<OrganizationsListResponse> {
-    const response = await fetch(`${this.config.coreBasePath}/organizations`, {
+  async getOrganizations(params?: OrganizationsQueryParams): Promise<OrganizationsListResponse> {
+    // Build query string if parameters are provided
+    const searchParams = new URLSearchParams();
+    if (params?.q) searchParams.append("q", params.q);
+    if (params?.sortBy) searchParams.append("sortBy", params.sortBy);
+    if (params?.order) searchParams.append("order", params.order);
+    if (params?.page !== undefined) searchParams.append("page", params.page.toString());
+    if (params?.pageSize) searchParams.append("pageSize", params.pageSize.toString());
+    
+    const queryString = searchParams.toString();
+    const url = `${this.config.userManagementBasePath}/orgs${queryString ? `?${queryString}` : ""}`;
+    
+    const response = await fetch(url, {
       method: "GET",
       headers: this.headers,
     });
+    
+    const defaultResponse: OrganizationsListResponse = {
+      items: [],
+      totalCount: 0,
+      pageSize: 50,
+      page: 0,
+    };
+    
     const result = await this.handleResponse<OrganizationsListResponse>(
       response,
-      [],
+      defaultResponse,
     );
     return result as OrganizationsListResponse;
   }

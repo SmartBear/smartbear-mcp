@@ -30,6 +30,7 @@ import {
   CreateApiParamsSchema,
   ScanStandardizationParamsSchema,
 } from "./registry-types.js";
+import { OrganizationsQuerySchema } from "./user-management-types.js";
 
 export interface ApiHubToolParams extends ToolParams {
   handler: string;
@@ -187,12 +188,12 @@ export const TOOLS: ApiHubToolParams[] = [
     inputSchema: CreateApiFromTemplateParamsSchema,
     handler: "createApiFromTemplate",
   },
-  // Core API tools for apihub-core functionality
+  // User Management API tools for organization management functionality
   {
     title: "List Organizations",
     summary:
-      "Search for available organizations within API Hub. Only organizations to which you have access are returned.",
-    parameters: [],
+      "Get organizations for a user. Returns a list of organizations that the authenticating user is a member of. On-Premise admin gets a list of all organizations in the system.",
+    inputSchema: OrganizationsQuerySchema,
     handler: "getOrganizations",
   },
   {

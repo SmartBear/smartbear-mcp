@@ -4,7 +4,7 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
-import type { OrganizationsListResponse } from "./client/core-types.js";
+import type { OrganizationsListResponse, OrganizationsQueryParams } from "./client/user-management-types.js";
 import {
   type ApiDefinitionParams,
   ApiHubAPI,
@@ -195,11 +195,11 @@ export class ApiHubClient implements Client {
     return this.api.createApiFromTemplate(args);
   }
 
-  // Core API methods
-  async getOrganizations(): Promise<
-    OrganizationsListResponse | FallbackResponse
-  > {
-    return this.api.getOrganizations();
+  // User Management API methods
+  async getOrganizations(
+    args?: OrganizationsQueryParams,
+  ): Promise<OrganizationsListResponse | FallbackResponse> {
+    return this.api.getOrganizations(args);
   }
 
   async scanStandardization(
