@@ -18,6 +18,7 @@ import {
 import {
   ApiDefinitionParamsSchema,
   ApiSearchParamsSchema,
+  CreateApiFromPromptParamsSchema,
   CreateApiFromTemplateParamsSchema,
   CreateApiParamsSchema,
   ScanStandardizationParamsSchema,
@@ -127,5 +128,12 @@ export const TOOLS: ApiHubToolParams[] = [
       "Run a standardization scan against an API definition using the organization's standardization configuration. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of standardization errors and validation issues.",
     zodSchema: ScanStandardizationParamsSchema,
     handler: "scanStandardization",
+  },
+  {
+    title: "Create API from Prompt using SmartBear AI",
+    summary:
+      "Generate and save an API definition based on a prompt using SmartBear AI. The specification type determines the format of the generated definition (OpenAPI 2.0, 3.0, 3.1, AsyncAPI 2.0, 3.0). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
+    zodSchema: CreateApiFromPromptParamsSchema,
+    handler: "createApiFromPrompt",
   },
 ];

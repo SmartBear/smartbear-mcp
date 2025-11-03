@@ -19,6 +19,8 @@ import type {
   ApiSearchResponse,
   ApiSpecification,
   ApisJsonResponse,
+  CreateApiFromPromptParams,
+  CreateApiFromPromptResponse,
   CreateApiFromTemplateParams,
   CreateApiFromTemplateResponse,
   CreateApiParams,
@@ -503,6 +505,53 @@ export class ApiHubAPI {
       owner: params.owner,
       apiName: params.apiName,
       template: params.template,
+      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}`,
+      operation,
+    };
+  }
+
+  /**
+   * Create API from Prompt using SmartBear AI
+   * @param params Parameters for creating API from prompt including owner, api name, prompt, and specification type
+   * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 for update, HTTP 205 for reload
+   */
+  async createApiFromPrompt(
+    params: CreateApiFromPromptParams,
+  ): Promise<CreateApiFromPromptResponse> {
+    // Construct the URL with query parameters
+    const searchParams = new URLSearchParams();
+    searchParams.append("specification", params.specification);
+
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
+      params.owner,
+    )}/${encodeURIComponent(params.apiName)}/.ai?${searchParams.toString()}`;
+
+    // Use POST method with JSON body containing the prompt
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(params.prompt),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API createApiFromPrompt failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    // Determine operation type based on HTTP status code
+    // 201 = new API created, 200 = existing API updated, 205 = API saved and should be reloaded
+    const operation = response.status === 201 ? "create" : "update";
+
+    // Return formatted response with the required fields
+    return {
+      owner: params.owner,
+      apiName: params.apiName,
+      specification: params.specification,
       url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}`,
       operation,
     };

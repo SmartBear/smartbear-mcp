@@ -10,6 +10,8 @@ import {
   ApiHubConfiguration,
   type ApiSearchParams,
   type ApiSearchResponse,
+  type CreateApiFromPromptParams,
+  type CreateApiFromPromptResponse,
   type CreateApiFromTemplateParams,
   type CreateApiFromTemplateResponse,
   type CreateApiParams,
@@ -129,6 +131,12 @@ export class ApiHubClient implements Client {
     args: CreateApiFromTemplateParams,
   ): Promise<CreateApiFromTemplateResponse | FallbackResponse> {
     return this.api.createApiFromTemplate(args);
+  }
+
+  async createApiFromPrompt(
+    args: CreateApiFromPromptParams,
+  ): Promise<CreateApiFromPromptResponse | FallbackResponse> {
+    return this.api.createApiFromPrompt(args);
   }
 
   async scanStandardization(

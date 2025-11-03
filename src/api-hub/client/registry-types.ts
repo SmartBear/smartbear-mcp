@@ -95,6 +95,36 @@ export const ScanStandardizationParamsSchema = z.object({
     ),
 });
 
+export const CreateApiFromPromptParamsSchema = z.object({
+  owner: z.string().describe("API owner (organization or user, case-sensitive)"),
+  apiName: z.string().describe("API name"),
+  prompt: z
+    .string()
+    .describe(
+      "The prompt describing the desired API functionality (e.g., 'Create a RESTful API for managing a pet store with endpoints for pets, orders, and inventory')",
+    ),
+  specification: z
+    .enum([
+      "openapi-2.0",
+      "openapi-3.0.0",
+      "openapi-3.0.1",
+      "openapi-3.0.2",
+      "openapi-3.0.3",
+      "openapi-3.1.0",
+      "asyncapi-2.0.0",
+      "asyncapi-2.1.0",
+      "asyncapi-2.2.0",
+      "asyncapi-2.3.0",
+      "asyncapi-2.4.0",
+      "asyncapi-2.5.0",
+      "asyncapi-2.6.0",
+      "asyncapi-3.0.0",
+    ])
+    .describe(
+      "Specification type for the generated API definition (e.g., openapi-2.0, openapi-3.0.0, openapi-3.1.0, asyncapi-2.0.0, asyncapi-3.0.0)",
+    ),
+});
+
 // Registry API types for SwaggerHub Design functionality - generated from Zod schemas
 export type ApiSearchParams = z.infer<typeof ApiSearchParamsSchema>;
 export type ApiDefinitionParams = z.infer<typeof ApiDefinitionParamsSchema>;
@@ -104,6 +134,9 @@ export type CreateApiFromTemplateParams = z.infer<
 >;
 export type ScanStandardizationParams = z.infer<
   typeof ScanStandardizationParamsSchema
+>;
+export type CreateApiFromPromptParams = z.infer<
+  typeof CreateApiFromPromptParamsSchema
 >;
 
 // APIs.json format response types
@@ -163,6 +196,15 @@ export interface CreateApiFromTemplateResponse {
   owner: string;
   apiName: string;
   template: string;
+  url: string;
+  operation: "create" | "update";
+}
+
+// Response type for API created from prompt
+export interface CreateApiFromPromptResponse {
+  owner: string;
+  apiName: string;
+  specification: string;
   url: string;
   operation: "create" | "update";
 }
