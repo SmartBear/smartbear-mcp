@@ -15,16 +15,18 @@ import {
   Configuration,
   CurrentUserAPI,
   ErrorAPI,
-  ErrorUpdateRequest,
   type EventField,
   type Organization,
+  ErrorUpdateRequest,
   type Project,
   ProjectAPI,
   type Release,
+  type PerformanceFilter,
+  type ProjectPerformanceScoreOverview
 } from "./client/api/index.js";
 import { type FilterObject, toUrlSearchParams } from "./client/filters.js";
 import { toolInputParameters } from "./input-schemas.js";
-
+  
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
 const HUB_DOMAIN = "bugsnag.smartbear.com";
@@ -352,6 +354,341 @@ export class BugsnagClient implements Client {
       meetsTargetStability,
       meetsCriticalStability,
     };
+  }
+
+  /**
+   * Get performance score overview for a project
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param releaseStageName Optional release stage name filter
+   * @returns Promise resolving to the performance score overview
+   */
+  async getProjectPerformanceScore(
+    projectId?: string,
+    releaseStageName?: string,
+  ): Promise<ProjectPerformanceScoreOverview> {
+    const project = await this.getInputProject(projectId);
+    return (
+      await this.projectApi.getProjectPerformanceScoreOverview(
+        project.id,
+        releaseStageName,
+      )
+    ).body;
+  }
+
+  /**
+   * List span groups for a project
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @returns Promise resolving to the list of span groups
+   */
+  async listSpanGroups(
+    projectId?: string,
+    sort?: string,
+    direction?: string,
+    perPage?: number,
+    offset?: number,
+    filters?: Array<PerformanceFilter>,
+    starredOnly?: boolean,
+    nextUrl?: string,
+  ) {
+    const project = await this.getInputProject(projectId);
+    return await this.projectApi.listProjectSpanGroups(
+      project.id,
+      sort,
+      direction,
+      perPage,
+      offset,
+      filters,
+      starredOnly,
+      nextUrl,
+    );
+  }
+
+  /**
+   * Get a specific span group
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param spanGroupId ID of the span group
+   * @param filters Optional performance filters
+   * @returns Promise resolving to the span group
+   */
+  async getSpanGroup(
+    projectId?: string,
+    spanGroupId?: string,
+    filters?: Array<PerformanceFilter>,
+  ) {
+    const project = await this.getInputProject(projectId);
+    if (!spanGroupId) {
+      throw new ToolError("spanGroupId is required");
+    }
+    return await this.projectApi.getProjectSpanGroup(
+      project.id,
+      spanGroupId,
+      filters,
+    );
+  }
+
+  /**
+   * List span group summaries for a project
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @returns Promise resolving to the list of span group summaries
+   */
+  async listSpanGroupSummaries(
+    projectId?: string,
+    perPage?: number,
+    offset?: number,
+    filters?: Array<PerformanceFilter>,
+    nextUrl?: string,
+  ) {
+    const project = await this.getInputProject(projectId);
+    return await this.projectApi.listProjectSpanGroupSummaries(
+      project.id,
+      perPage,
+      offset,
+      filters,
+      nextUrl,
+    );
+  }
+
+  /**
+   * Get timeline for a span group
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param spanGroupId ID of the span group
+   * @param filters Optional performance filters
+   * @returns Promise resolving to the span group timeline
+   */
+  async getSpanGroupTimeline(
+    projectId?: string,
+    spanGroupId?: string,
+    filters?: Array<PerformanceFilter>,
+  ) {
+    const project = await this.getInputProject(projectId);
+    if (!spanGroupId) {
+      throw new ToolError("spanGroupId is required");
+    }
+    return await this.projectApi.getProjectSpanGroupTimeline(
+      project.id,
+      spanGroupId,
+      filters,
+    );
+  }
+
+  /**
+   * Get distribution for a span group
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param spanGroupId ID of the span group
+   * @param filters Optional performance filters
+   * @returns Promise resolving to the span group distribution
+   */
+  async getSpanGroupDistribution(
+    projectId?: string,
+    spanGroupId?: string,
+    filters?: Array<PerformanceFilter>,
+  ) {
+    const project = await this.getInputProject(projectId);
+    if (!spanGroupId) {
+      throw new ToolError("spanGroupId is required");
+    }
+    return await this.projectApi.getProjectSpanGroupDistribution(
+      project.id,
+      spanGroupId,
+      filters,
+    );
+  }
+
+  /**
+   * List starred span groups for a project
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @returns Promise resolving to the list of starred span groups
+   */
+  async listStarredSpanGroups(
+    projectId?: string,
+    categories?: Array<string>,
+    perPage?: number,
+    offset?: number,
+    nextUrl?: string,
+  ) {
+    const project = await this.getInputProject(projectId);
+    return await this.projectApi.listProjectStarredSpanGroups(
+      project.id,
+      categories,
+      perPage,
+      offset,
+      nextUrl,
+    );
+  }
+
+  /**
+   * List performance targets for a span group
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param spanGroupId ID of the span group
+   * @returns Promise resolving to the list of performance targets
+   */
+  async listSpanGroupPerformanceTargets(
+    projectId?: string,
+    spanGroupId?: string,
+  ) {
+    const project = await this.getInputProject(projectId);
+    if (!spanGroupId) {
+      throw new ToolError("spanGroupId is required");
+    }
+    return await this.projectApi.listProjectSpanGroupPerformanceTargets(
+      project.id,
+      spanGroupId,
+    );
+  }
+
+  /**
+   * Get spans by category and name
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param category Span category
+   * @param name Span name
+   * @returns Promise resolving to the spans
+   */
+  async getSpansByCategoryAndName(
+    projectId?: string,
+    category?: string,
+    name?: string,
+  ) {
+    const project = await this.getInputProject(projectId);
+    if (!category || !name) {
+      throw new ToolError("category and name are required");
+    }
+    return await this.projectApi.getSpansByCategoryAndName(
+      project.id,
+      category,
+      name,
+    );
+  }
+
+  /**
+   * List spans by span group ID
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param spanGroupId ID of the span group
+   * @returns Promise resolving to the list of spans
+   */
+  async listSpansBySpanGroupId(
+    projectId?: string,
+    spanGroupId?: string,
+    filters?: Array<PerformanceFilter>,
+    sort?: string,
+    direction?: string,
+    perPage?: number,
+    nextUrl?: string,
+  ) {
+    const project = await this.getInputProject(projectId);
+    if (!spanGroupId) {
+      throw new ToolError("spanGroupId is required");
+    }
+    return await this.projectApi.listSpansBySpanGroupId(
+      project.id,
+      spanGroupId,
+      filters,
+      sort,
+      direction,
+      perPage,
+      nextUrl,
+    );
+  }
+
+  /**
+   * List spans by trace ID
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param traceId Trace ID
+   * @param from Start time
+   * @param to End time
+   * @returns Promise resolving to the list of spans
+   */
+  async listSpansByTraceId(
+    projectId?: string,
+    traceId?: string,
+    from?: string,
+    to?: string,
+    targetSpanId?: string,
+    perPage?: number,
+    nextUrl?: string,
+  ) {
+    const project = await this.getInputProject(projectId);
+    if (!traceId || !from || !to) {
+      throw new ToolError("traceId, from, and to are required");
+    }
+    return await this.projectApi.listSpansByTraceId(
+      project.id,
+      traceId,
+      from,
+      to,
+      targetSpanId,
+      perPage,
+      nextUrl,
+    );
+  }
+
+  /**
+   * List page load span groups for a project
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @returns Promise resolving to the list of page load span groups
+   */
+  async listPageLoadSpanGroups(
+    projectId?: string,
+    sort?: string,
+    direction?: string,
+    perPage?: number,
+    offset?: number,
+    filters?: Array<PerformanceFilter>,
+    starredOnly?: boolean,
+    nextUrl?: string,
+  ) {
+    const project = await this.getInputProject(projectId);
+    return await this.projectApi.listProjectPageLoadSpanGroups(
+      project.id,
+      sort,
+      direction,
+      perPage,
+      offset,
+      filters,
+      starredOnly,
+      nextUrl,
+    );
+  }
+
+  /**
+   * Get a page load span group by ID
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @param pageLoadSpanGroupId ID of the page load span group
+   * @returns Promise resolving to the page load span group
+   */
+  async getPageLoadSpanGroupById(
+    projectId?: string,
+    pageLoadSpanGroupId?: string,
+    filters?: Array<PerformanceFilter>,
+  ) {
+    const project = await this.getInputProject(projectId);
+    if (!pageLoadSpanGroupId) {
+      throw new ToolError("pageLoadSpanGroupId is required");
+    }
+    return await this.projectApi.getProjectPageLoadSpanGroupById(
+      project.id,
+      pageLoadSpanGroupId,
+      filters,
+    );
+  }
+
+  /**
+   * List trace fields for a project
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @returns Promise resolving to the list of trace fields
+   */
+  async listTraceFields(projectId?: string) {
+    const project = await this.getInputProject(projectId);
+    return await this.projectApi.listProjectTraceFields(project.id);
+  }
+
+  /**
+   * Get network grouping ruleset for a project
+   * @param projectId Optional project ID (uses configured project if omitted)
+   * @returns Promise resolving to the network grouping ruleset
+   */
+  async getNetworkGroupingRuleset(projectId?: string) {
+    const project = await this.getInputProject(projectId);
+    return await this.projectApi.getProjectNetworkGroupingRuleset(project.id);
   }
 
   registerTools(
@@ -1064,6 +1401,1057 @@ export class BugsnagClient implements Client {
         const build = this.addStabilityData(response.body, project);
         return {
           content: [{ type: "text", text: JSON.stringify(build) }],
+        };
+      },
+    );
+
+    // ============================================================
+    // Performance Monitoring Tools
+    // ============================================================
+
+    // 1. Performance Overview
+    register(
+      {
+        title: "Get Performance Score Overview",
+        summary: "Get the overall performance score and timeline for a project",
+        purpose:
+          "Monitor and analyze application performance metrics over time",
+        useCases: [
+          "View current performance score to assess app health",
+          "Track performance trends over time using the timeline",
+          "Filter performance data by release stage (e.g., production, staging)",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project to query",
+                  required: true,
+                },
+              ]),
+          {
+            name: "releaseStageName",
+            type: z.string().optional(),
+            description: "Release stage to filter by",
+            required: false,
+            examples: ["production", "staging", "development"],
+          },
+        ],
+        examples: [
+          {
+            description: "Get performance score for production",
+            parameters: { releaseStageName: "production" },
+            expectedOutput:
+              "Performance score (0.0-1.0), span count, and timeline data",
+          },
+        ],
+        hints: [
+          "Performance score ranges from 0.0 (worst) to 1.0 (best)",
+          "Timeline shows historical performance trends",
+          "Filter by release stage to isolate specific environments",
+        ],
+      },
+      async (args, _extra) => {
+        const result = await this.getProjectPerformanceScore(
+          args.projectId,
+          args.releaseStageName,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }],
+        };
+      },
+    );
+
+    // 2. List Span Groups
+    register(
+      {
+        title: "List Span Groups",
+        summary:
+          "List span groups (operations) tracked for performance monitoring",
+        purpose: "Discover and analyze different operations being monitored",
+        useCases: [
+          "View all operations being tracked for performance",
+          "Find slow operations by sorting by duration metrics",
+          "Filter to starred/important span groups",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "sort",
+            type: z.string().optional(),
+            description: "Field to sort by",
+            required: false,
+            examples: ["displayName", "p50", "p95", "spanCount"],
+          },
+          {
+            name: "direction",
+            type: z.enum(["asc", "desc"]).optional(),
+            description: "Sort direction",
+            required: false,
+          },
+          {
+            name: "perPage",
+            type: z.number().min(1).max(100).optional(),
+            description: "Results per page",
+            required: false,
+          },
+          {
+            name: "starredOnly",
+            type: z.boolean().optional(),
+            description: "Show only starred span groups",
+            required: false,
+          },
+          {
+            name: "nextUrl",
+            type: z.string().optional(),
+            description: "URL for next page of results",
+            required: false,
+          },
+        ],
+        examples: [
+          {
+            description: "List slowest operations",
+            parameters: { sort: "p95", direction: "desc", perPage: 10 },
+            expectedOutput:
+              "Array of span groups sorted by 95th percentile duration",
+          },
+        ],
+        hints: [
+          "Span groups represent different operation types (page loads, API calls, etc.)",
+          "Use sort by p95 or p99 to find the slowest operations",
+          "Star important span groups for quick access",
+          "Use nextUrl for pagination",
+        ],
+      },
+      async (args, _extra) => {
+        const result = await this.listSpanGroups(
+          args.projectId,
+          args.sort,
+          args.direction,
+          args.perPage,
+          undefined,
+          args.filters,
+          args.starredOnly,
+          args.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    // 3. Show Span Group
+    register(
+      {
+        title: "Show Span Group",
+        summary: "Get detailed performance metrics for a specific span group",
+        purpose: "Analyze performance characteristics of a specific operation",
+        useCases: [
+          "View detailed statistics (p50, p75, p90, p95, p99) for an operation",
+          "Check if performance targets are configured",
+          "Monitor span count to understand operation volume",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "spanGroupId",
+            type: z.string(),
+            description:
+              "ID of the span group (will be URL-encoded automatically)",
+            required: true,
+            examples: ["[HttpClient]GET-api.example.com"],
+          },
+        ],
+        examples: [
+          {
+            description: "Get details for an API endpoint span group",
+            parameters: { spanGroupId: "[HttpClient]GET-api.example.com" },
+            expectedOutput: "Statistics, category, and performance target info",
+          },
+        ],
+        hints: [
+          "Use List Span Groups first to discover available span group IDs",
+          "IDs are automatically URL-encoded - provide the raw ID",
+          "Statistics include p50, p75, p90, p95, p99 percentiles",
+        ],
+      },
+      async (args, _extra) => {
+        if (!args.spanGroupId) {
+          throw new ToolError("spanGroupId is required");
+        }
+        const result = await this.getSpanGroup(
+          args.projectId,
+          args.spanGroupId,
+          args.filters,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
+
+    // 4. List Span Group Summaries
+    register(
+      {
+        title: "List Span Group Summaries",
+        summary: "Get a summarized list of all span groups with key metrics",
+        purpose:
+          "Quick overview of all operations with essential performance data",
+        useCases: [
+          "Get a high-level view of all monitored operations",
+          "Compare performance across multiple span groups",
+          "Identify operations that need attention",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "perPage",
+            type: z.number().min(1).max(100).optional(),
+            description: "Results per page",
+            required: false,
+          },
+          {
+            name: "nextUrl",
+            type: z.string().optional(),
+            description: "URL for next page of results",
+            required: false,
+          },
+        ],
+        examples: [
+          {
+            description: "Get summary of all span groups",
+            parameters: { perPage: 50 },
+            expectedOutput: "Array of span group summaries with key metrics",
+          },
+        ],
+        hints: [
+          "Provides a lightweight view compared to full span group details",
+          "Good for dashboards and overview pages",
+        ],
+      },
+      async (args, _extra) => {
+        const result = await this.listSpanGroupSummaries(
+          args.projectId,
+          args.perPage,
+          undefined,
+          args.filters,
+          args.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    // 5. Get Span Group Timeline
+    register(
+      {
+        title: "Get Span Group Timeline",
+        summary: "Get performance timeline data for a span group",
+        purpose: "Visualize performance trends over time for an operation",
+        useCases: [
+          "Track performance improvements or degradations over time",
+          "Correlate performance changes with deployments",
+          "Generate performance trend reports",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "spanGroupId",
+            type: z.string(),
+            description: "ID of the span group",
+            required: true,
+          },
+        ],
+        examples: [
+          {
+            description: "Get timeline for an API endpoint",
+            parameters: { spanGroupId: "[HttpClient]GET-api.example.com" },
+            expectedOutput:
+              "Time-series data showing performance metrics over time",
+          },
+        ],
+        hints: [
+          "Timeline data includes timestamps and performance metrics",
+          "Useful for identifying when performance issues started",
+        ],
+      },
+      async (args, _extra) => {
+        if (!args.spanGroupId) {
+          throw new ToolError("spanGroupId is required");
+        }
+        const result = await this.getSpanGroupTimeline(
+          args.projectId,
+          args.spanGroupId,
+          args.filters,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
+
+    // 6. Get Span Group Distribution
+    register(
+      {
+        title: "Get Span Group Distribution",
+        summary: "Get duration distribution histogram for a span group",
+        purpose:
+          "Understand the distribution of response times for an operation",
+        useCases: [
+          "Identify outliers and anomalies in response times",
+          "Understand the typical range of operation durations",
+          "Analyze performance consistency",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "spanGroupId",
+            type: z.string(),
+            description: "ID of the span group",
+            required: true,
+          },
+        ],
+        examples: [
+          {
+            description: "Get distribution for an operation",
+            parameters: { spanGroupId: "[HttpClient]GET-api.example.com" },
+            expectedOutput:
+              "Histogram buckets showing count of operations at different duration ranges",
+          },
+        ],
+        hints: [
+          "Distribution shows how durations are spread across buckets",
+          "Helps identify if you have bimodal or long-tail distributions",
+        ],
+      },
+      async (args, _extra) => {
+        if (!args.spanGroupId) {
+          throw new ToolError("spanGroupId is required");
+        }
+        const result = await this.getSpanGroupDistribution(
+          args.projectId,
+          args.spanGroupId,
+          args.filters,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
+
+    // 7. List Starred Span Groups
+    register(
+      {
+        title: "List Starred Span Groups",
+        summary: "List span groups that have been marked as starred/important",
+        purpose:
+          "Quick access to operations marked as important for monitoring",
+        useCases: [
+          "View critical operations that need regular monitoring",
+          "Focus on high-priority performance metrics",
+          "Create dashboards for key operations",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "categories",
+            type: z.array(z.string()).optional(),
+            description: "Filter by span categories",
+            required: false,
+            examples: ["HttpClient", "Database", "FullPageLoad"],
+          },
+          {
+            name: "perPage",
+            type: z.number().min(1).max(100).optional(),
+            description: "Results per page",
+            required: false,
+          },
+          {
+            name: "nextUrl",
+            type: z.string().optional(),
+            description: "URL for next page of results",
+            required: false,
+          },
+        ],
+        examples: [
+          {
+            description: "Get all starred span groups",
+            parameters: {},
+            expectedOutput: "Array of starred span groups with metrics",
+          },
+        ],
+        hints: [
+          "Star span groups in the BugSnag dashboard to mark them as important",
+          "Use categories to filter by operation type",
+        ],
+      },
+      async (args, _extra) => {
+        const result = await this.listStarredSpanGroups(
+          args.projectId,
+          args.categories,
+          args.perPage,
+          undefined,
+          args.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    // 8. List Performance Targets
+    register(
+      {
+        title: "List Performance Targets for Span Group",
+        summary:
+          "Get configured performance targets/SLOs for a specific span group",
+        purpose:
+          "View performance targets and check if the operation is meeting them",
+        useCases: [
+          "Check if an operation meets its performance SLOs",
+          "Review configured performance thresholds",
+          "Track SLO compliance over time",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "spanGroupId",
+            type: z.string(),
+            description: "ID of the span group",
+            required: true,
+          },
+        ],
+        examples: [
+          {
+            description: "Get performance targets for an API endpoint",
+            parameters: { spanGroupId: "[HttpClient]GET-api.example.com" },
+            expectedOutput:
+              "Array of performance targets with thresholds and current status",
+          },
+        ],
+        hints: [
+          "Performance targets are configured in the BugSnag dashboard",
+          "Targets typically include thresholds for p50, p95, p99",
+          "Status indicates if current performance meets the target",
+        ],
+      },
+      async (args, _extra) => {
+        if (!args.spanGroupId) {
+          throw new ToolError("spanGroupId is required");
+        }
+        const result = await this.listSpanGroupPerformanceTargets(
+          args.projectId,
+          args.spanGroupId,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
+
+    // 9. Get Spans by Category and Name
+    register(
+      {
+        title: "Get Spans by Category and Name",
+        summary: "Get spans matching a specific category and name",
+        purpose: "Find individual span instances for detailed analysis",
+        useCases: [
+          "Investigate specific instances of an operation",
+          "Debug performance issues by examining individual traces",
+          "Analyze patterns in span attributes",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "category",
+            type: z.string(),
+            description: "Span category (e.g., HttpClient, Database)",
+            required: true,
+          },
+          {
+            name: "name",
+            type: z.string(),
+            description: "Span name",
+            required: true,
+          },
+        ],
+        examples: [
+          {
+            description: "Get HTTP client spans for a specific endpoint",
+            parameters: {
+              category: "HttpClient",
+              name: "GET-api.example.com",
+            },
+            expectedOutput:
+              "Array of span instances with durations and metadata",
+          },
+        ],
+        hints: [
+          "Use List Span Groups to discover available categories and names",
+          "Each span represents a single operation instance",
+        ],
+      },
+      async (args, _extra) => {
+        if (!args.category || !args.name) {
+          throw new ToolError("category and name are required");
+        }
+        const result = await this.getSpansByCategoryAndName(
+          args.projectId,
+          args.category,
+          args.name,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
+
+    // 10. List Spans by Span Group ID
+    register(
+      {
+        title: "List Spans by Span Group ID",
+        summary: "Get individual spans belonging to a span group",
+        purpose: "Examine individual operation instances within a span group",
+        useCases: [
+          "Analyze individual slow operations",
+          "Debug performance issues by examining specific traces",
+          "Find patterns in operation attributes",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "spanGroupId",
+            type: z.string(),
+            description: "ID of the span group",
+            required: true,
+          },
+          {
+            name: "sort",
+            type: z.string().optional(),
+            description: "Field to sort by",
+            required: false,
+            examples: ["duration", "timestamp"],
+          },
+          {
+            name: "direction",
+            type: z.enum(["asc", "desc"]).optional(),
+            description: "Sort direction",
+            required: false,
+          },
+          {
+            name: "perPage",
+            type: z.number().min(1).max(100).optional(),
+            description: "Results per page",
+            required: false,
+          },
+          {
+            name: "nextUrl",
+            type: z.string().optional(),
+            description: "URL for next page of results",
+            required: false,
+          },
+        ],
+        examples: [
+          {
+            description: "Get slowest spans for an operation",
+            parameters: {
+              spanGroupId: "[HttpClient]GET-api.example.com",
+              sort: "duration",
+              direction: "desc",
+              perPage: 10,
+            },
+            expectedOutput: "Array of the 10 slowest span instances",
+          },
+        ],
+        hints: [
+          "Sort by duration descending to find the slowest instances",
+          "Each span includes trace ID for further investigation",
+        ],
+      },
+      async (args, _extra) => {
+        if (!args.spanGroupId) {
+          throw new ToolError("spanGroupId is required");
+        }
+        const result = await this.listSpansBySpanGroupId(
+          args.projectId,
+          args.spanGroupId,
+          args.filters,
+          args.sort,
+          args.direction,
+          args.perPage,
+          args.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    // 11. List Spans by Trace ID
+    register(
+      {
+        title: "List Spans by Trace ID",
+        summary: "Get all spans within a specific trace",
+        purpose:
+          "View the complete trace of operations for a request/transaction",
+        useCases: [
+          "Debug slow requests by viewing all operations in the trace",
+          "Understand the flow of a request through the system",
+          "Identify bottlenecks in distributed systems",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "traceId",
+            type: z.string(),
+            description: "Trace ID",
+            required: true,
+          },
+          {
+            name: "from",
+            type: z.string(),
+            description: "Start time (ISO 8601 format)",
+            required: true,
+            examples: ["2024-01-01T00:00:00Z"],
+          },
+          {
+            name: "to",
+            type: z.string(),
+            description: "End time (ISO 8601 format)",
+            required: true,
+            examples: ["2024-01-01T23:59:59Z"],
+          },
+          {
+            name: "targetSpanId",
+            type: z.string().optional(),
+            description: "Optional target span ID to focus on",
+            required: false,
+          },
+          {
+            name: "perPage",
+            type: z.number().min(1).max(100).optional(),
+            description: "Results per page",
+            required: false,
+          },
+          {
+            name: "nextUrl",
+            type: z.string().optional(),
+            description: "URL for next page of results",
+            required: false,
+          },
+        ],
+        examples: [
+          {
+            description: "Get all spans for a trace",
+            parameters: {
+              traceId: "abc123",
+              from: "2024-01-01T00:00:00Z",
+              to: "2024-01-01T23:59:59Z",
+            },
+            expectedOutput:
+              "Array of all spans in the trace with timing and hierarchy",
+          },
+        ],
+        hints: [
+          "Traces show the complete execution path of a request",
+          "Use from/to parameters to narrow the time window",
+          "targetSpanId can be used to focus on a specific span in the trace",
+        ],
+      },
+      async (args, _extra) => {
+        if (!args.traceId || !args.from || !args.to) {
+          throw new ToolError("traceId, from, and to are required");
+        }
+        const result = await this.listSpansByTraceId(
+          args.projectId,
+          args.traceId,
+          args.from,
+          args.to,
+          args.targetSpanId,
+          args.perPage,
+          args.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    // 12. List Page Load Span Groups
+    register(
+      {
+        title: "List Page Load Span Groups",
+        summary: "List page load operations tracked for performance monitoring",
+        purpose: "Monitor and analyze web page load performance",
+        useCases: [
+          "View all pages being monitored for performance",
+          "Find slow-loading pages",
+          "Track Core Web Vitals metrics",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "sort",
+            type: z.string().optional(),
+            description: "Field to sort by",
+            required: false,
+            examples: ["displayName", "p50", "p95"],
+          },
+          {
+            name: "direction",
+            type: z.enum(["asc", "desc"]).optional(),
+            description: "Sort direction",
+            required: false,
+          },
+          {
+            name: "perPage",
+            type: z.number().min(1).max(100).optional(),
+            description: "Results per page",
+            required: false,
+          },
+          {
+            name: "starredOnly",
+            type: z.boolean().optional(),
+            description: "Show only starred page loads",
+            required: false,
+          },
+          {
+            name: "nextUrl",
+            type: z.string().optional(),
+            description: "URL for next page of results",
+            required: false,
+          },
+        ],
+        examples: [
+          {
+            description: "List slowest pages",
+            parameters: { sort: "p95", direction: "desc", perPage: 10 },
+            expectedOutput:
+              "Array of page load span groups sorted by 95th percentile load time",
+          },
+        ],
+        hints: [
+          "Page load metrics include Core Web Vitals (LCP, FID, CLS)",
+          "Sort by p95 to find pages with consistently slow load times",
+          "Star important pages for quick access",
+        ],
+      },
+      async (args, _extra) => {
+        const result = await this.listPageLoadSpanGroups(
+          args.projectId,
+          args.sort,
+          args.direction,
+          args.perPage,
+          undefined,
+          args.filters,
+          args.starredOnly,
+          args.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    // 13. Show Page Load Span Group
+    register(
+      {
+        title: "Show Page Load Span Group",
+        summary: "Get detailed performance metrics for a specific page load",
+        purpose: "Analyze performance characteristics of a specific page",
+        useCases: [
+          "View Core Web Vitals for a specific page",
+          "Check page load performance statistics",
+          "Monitor page-specific performance targets",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+          {
+            name: "pageLoadSpanGroupId",
+            type: z.string(),
+            description: "ID of the page load span group",
+            required: true,
+          },
+        ],
+        examples: [
+          {
+            description: "Get details for a specific page",
+            parameters: { pageLoadSpanGroupId: "[FullPageLoad]/home" },
+            expectedOutput:
+              "Page load statistics including Core Web Vitals and load times",
+          },
+        ],
+        hints: [
+          "Use List Page Load Span Groups to discover page IDs",
+          "Core Web Vitals include LCP (Largest Contentful Paint), FID (First Input Delay), CLS (Cumulative Layout Shift)",
+        ],
+      },
+      async (args, _extra) => {
+        if (!args.pageLoadSpanGroupId) {
+          throw new ToolError("pageLoadSpanGroupId is required");
+        }
+        const result = await this.getPageLoadSpanGroupById(
+          args.projectId,
+          args.pageLoadSpanGroupId,
+          args.filters,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
+
+    // 14. List Trace Fields
+    register(
+      {
+        title: "List Trace Fields",
+        summary: "Get available trace fields/attributes for filtering",
+        purpose: "Discover what custom attributes are available for filtering",
+        useCases: [
+          "Find available custom attributes for performance filtering",
+          "Understand what metadata is attached to traces",
+          "Build dynamic filters based on available fields",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+        ],
+        examples: [
+          {
+            description: "Get all trace fields",
+            parameters: {},
+            expectedOutput:
+              "Array of field names and types available for filtering",
+          },
+        ],
+        hints: [
+          "Trace fields are custom attributes added to spans",
+          "Use these fields for filtering other performance queries",
+        ],
+      },
+      async (args, _extra) => {
+        const result = await this.listTraceFields(args.projectId);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
+
+    // 15. Get Network Grouping Ruleset
+    register(
+      {
+        title: "Get Network Grouping Ruleset",
+        summary: "Get the network request grouping rules for the project",
+        purpose:
+          "Understand how network requests are grouped for performance monitoring",
+        useCases: [
+          "View configured rules for grouping similar network requests",
+          "Understand how URLs are normalized for monitoring",
+          "Troubleshoot why requests are grouped a certain way",
+        ],
+        parameters: [
+          ...(this.projectApiKey
+            ? []
+            : [
+                {
+                  name: "projectId",
+                  type: z.string(),
+                  description: "ID of the project",
+                  required: true,
+                },
+              ]),
+        ],
+        examples: [
+          {
+            description: "Get network grouping rules",
+            parameters: {},
+            expectedOutput:
+              "Ruleset object containing patterns and grouping logic",
+          },
+        ],
+        hints: [
+          "Grouping rules help consolidate similar requests (e.g., /user/123 and /user/456 become /user/:id)",
+          "Rules are configured in the BugSnag dashboard",
+        ],
+      },
+      async (args, _extra) => {
+        const result = await this.getNetworkGroupingRuleset(args.projectId);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
         };
       },
     );
