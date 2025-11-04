@@ -16,6 +16,12 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of project information available within your account.
 -   Use case: Retrieve current project details.
 
+### `list_qmetry_project_list`
+
+-   Purpose: Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations.
+-   Returns: Complete list of project details, viewIds, folderPaths, and project configuration.
+-   Use case: Retrieve all projects available in your account.
+
 ### `get_qmetry_releases_cycles`
 
 -   Purpose: Fetch QMetry releases and cycles from your account.
@@ -48,12 +54,40 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete details for the given requirement.
 -   Use case: Retrieve requirement details.
 
-### `qmetry_testcases_linked_to_requirement`
+### `linked_requirements_to_testcase`
 
--   Purpose: Get test cases that are linked to a specific requirement.
--   Parameters: Requirement identifier (`rqID`).
+-   Purpose: Link requirements to test case.
+-   Parameters: Test case identifier (`tcID`), test case version identifier (`tcVersionId`), and requirement identifier (`rqVersionIds`).
+-   Returns: Requirements linked to test case successfully.
+-   Use case: Link requirements to test case.
+
+### `fetch_test_cases_linked_to_requirement`
+
+-   Purpose: Get test cases that are linked to a specific requirement in QMetry.
+-   Parameters: Requirement numeric ID (`rqID`).
 -   Returns: Complete list of test cases linked to a requirement.
--   Use case: Retrieve available test cases linked to a requirement.
+-   Use case: Retrieve all test cases linked to a specific requirement.
+
+### `fetch_requirements_linked_to_test_case`
+
+-   Purpose: Get requirements that are linked to a specific test case in QMetry.
+-   Parameters: Test Case numeric ID (`tcID`).
+-   Returns: Complete list of requirements linked to a test case.
+-   Use case: Retrieve all requirements linked to a specific test case.
+
+### `create_test_case`
+
+-   Purpose: Create a new test case in QMetry with steps, metadata, and release/cycle mapping.
+-   Parameters: Test case folder ID (`tcFolderID`), test case name (`name`), optional steps array with custom fields, priority, components, owner, state, type, testing type, estimated time, description, and release/cycle mapping.
+-   Returns: JSON object containing the new test case ID, summary, and creation metadata.
+-   Use case: Create test cases with detailed steps and custom fields (UDFs), set priority/owner/component using valid IDs from project info, associate with release/cycle for planning, add test cases for automation or manual testing types.
+
+### `update_test_case`
+
+-   Purpose: Update an existing QMetry test case by test case ID.
+-   Parameters: Test case ID (`tcID`), version ID (`tcVersionID`), optional fields to update including name, priority, owner, component, state, type, description, estimated time, testing type, steps array, remove steps array, and step update flag (`isStepUpdated`).
+-   Returns: JSON object containing the updated test case information and metadata.
+-   Use case: Update test case metadata or steps, edit/add/remove test steps with step IDs, change priority/owner/state, update only metadata without affecting steps, modify description or estimated time.
 
 ### `list_qmetry_testcases`
 
@@ -83,13 +117,6 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete test case steps details for given test case.
 -   Use case: Retrieve test case steps.
 
-### `qmetry_requirements_linked_to_testcase`
-
--   Purpose: Get requirements that are linked to a specific test case.
--   Parameters: Test Case identifier (`tcID`).
--   Returns: Complete list of requirements linked to a test case.
--   Use case: Retrieve available requirements linked to a test case.
-
 ### `qmetry_testcase_executions`
 
 -   Purpose: Get execution records for a specific test case by ID.
@@ -97,12 +124,47 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of test case executions.
 -   Use case: Retrieve available test case execution records.
 
-### `get_issues_linked_to_tc`
+### `create_test_suite`
 
--   Purpose: Get issues that are linked to a specific test case in QMetry.
--   Parameters: Test Case identifier (`tcID`).
--   Returns: Complete list of issues linked to the test case with issue details, priorities, and status information.
--   Use case: Retrieve defects and issues associated with a specific test case for traceability and defect tracking.
+-   Purpose: Create a new test suite in QMetry with metadata and release/cycle mapping.
+-   Parameters: Test suite parent folder ID (`parentFolderId`), test suite name (`name`), optional automation flag (`isAutomatedFlag`), description, owner, state, and release/cycle mapping with build ID.
+-   Returns: JSON object containing the new test suite ID, summary, and creation metadata.
+-   Use case: Create test suites with metadata, set owner/state using valid IDs from project info, associate with release/cycle/build for planning, create automated or manual test suites.
+
+### `update_test_suite`
+
+-   Purpose: Update an existing QMetry test suite by test suite ID.
+-   Parameters: Test suite ID (`id`), entity key (`entityKey`), folder ID (`TsFolderID`), optional fields to update including name, description, owner, and state.
+-   Returns: JSON object containing the updated test suite information and metadata.
+-   Use case: Update test suite summary/name, change owner or state, modify description, bulk update using entity key auto-resolution.
+
+### `fetch_test_suites`
+
+-   Purpose: Fetch QMetry test suites from the current project.
+-   Parameters: Test Suite view ID (`viewId`), folder path (`folderPath`).
+-   Returns: Complete list of test suites available within the current project with pagination info.
+-   Use case: List all test suites in a project, search for specific test suites using filters, browse test suites in specific folders.
+
+### `link_testcases_to_testsuite`
+
+-   Purpose: Link test cases to a test suite in QMetry.
+-   Parameters: Test suite ID (`tsID`), array of test case version IDs (`tcvdIDs`), flag to indicate if linking from requirements (`fromReqs` - default false).
+-   Returns: JSON object with linkage status and details.
+-   Use case: Link test cases to a test suite by entity keys, bulk link multiple test cases to a suite, automate test suite composition from test cases.
+
+### `requirements_linked_testcases_to_testsuite`
+
+-   Purpose: Link test cases (including those linked to requirements) to a test suite in QMetry.
+-   Parameters: Test suite ID (`tsID`), array of test case version IDs from requirements (`tcvdIDs`), flag to indicate linking from requirements (`fromReqs` - set to true).
+-   Returns: JSON object with linkage status and details.
+-   Use case: Link requirements-linked test cases to a test suite, bulk link multiple requirements-linked test cases, automate test suite composition from requirement-based test cases.
+
+### `link_platforms_to_testsuite`
+
+-   Purpose: Link one or more platforms to a QMetry test suite.
+-   Parameters: Test suite ID (`qmTsId`), comma-separated platform IDs (`qmPlatformId`).
+-   Returns: JSON object with linkage status, success message, and details.
+-   Use case: Link single or multiple platforms to a test suite for cross-platform testing, define execution environments, organize test suites by supported platforms.
 
 ### `get_testsuites_by_testcase`
 
@@ -131,6 +193,41 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: Test Suite Run identifier (`test suite run ID`), Test Execution View identifier (`viewId`).
 -   Returns: Complete list of test case runs with detailed execution information, status, tester details, and run metadata.
 -   Use case: Retrieve individual test case execution results and status within a specific test suite run.
+
+### `create_issue`
+
+-   Purpose: Create a new issue in QMetry for linking to test executions.
+-   Parameters: Issue name (`name`), issue type ID (`issueType`), issue priority ID (`issuePriority`), optional issue owner (`issueOwner`), description, affected release array, affected cycles array, and component array.
+-   Returns: JSON object containing the new issue ID, defect ID (dfid), and creation metadata.
+-   Use case: Create defects/issues with summary and metadata, set issueType/priority/owner using valid IDs from project info, associate with releases/cycles for planning, create issues for automation or manual testing types.
+
+### `update_issue`
+
+-   Purpose: Update an existing QMetry issue by defect ID.
+-   Parameters: Defect ID (`DefectId`), optional entity key (`entityKey`), optional fields to update including summary, issue type, priority, owner, description, affected release, and affected cycles.
+-   Returns: JSON object with update status and details.
+-   Use case: Update issue summary/title, change issue priority/type/owner, update affected release or cycles, modify description, bulk update using DefectId and entityKey.
+
+### `fetch_issues`
+
+-   Purpose: Fetch QMetry issues from the current project.
+-   Parameters: Issue view ID (`viewId`).
+-   Returns: Complete list of issues with pagination info and issue details including priorities, status, and metadata.
+-   Use case: List all issues in a project, search for specific issues using filters, get paginated issue results.
+
+### `link_issues_to_testcase_run`
+
+-   Purpose: Link one or more issues to a QMetry test case run (execution).
+-   Parameters: Array of issue IDs (`issueIds`), test case run ID (`tcrId`).
+-   Returns: JSON object with linkage status and details.
+-   Use case: Link single or multiple issues to a test case run, automate defect association during test execution, maintain traceability between defects and test runs.
+
+### `get_issues_linked_to_tc`
+
+-   Purpose: Get issues that are linked to a specific test case in QMetry.
+-   Parameters: Test Case identifier (`tcID`).
+-   Returns: Complete list of issues linked to the test case with issue details, priorities, and status information.
+-   Use case: Retrieve defects and issues associated with a specific test case for traceability and defect tracking.
 
 ### `get_linked_issues_by_testcase_run`
 
