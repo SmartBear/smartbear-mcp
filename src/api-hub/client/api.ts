@@ -461,7 +461,7 @@ export class ApiHubAPI {
       owner: params.owner,
       apiName: params.apiName,
       version: "1.0.0",
-      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}/1.0.0`,
+      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/1.0.0`,
       operation,
     };
   }
@@ -505,7 +505,7 @@ export class ApiHubAPI {
       owner: params.owner,
       apiName: params.apiName,
       template: params.template,
-      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}`,
+      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
       operation,
     };
   }
@@ -552,7 +552,7 @@ export class ApiHubAPI {
       owner: params.owner,
       apiName: params.apiName,
       specification: params.specification,
-      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}`,
+      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
       operation,
     };
   }

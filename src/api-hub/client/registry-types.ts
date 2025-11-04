@@ -96,7 +96,9 @@ export const ScanStandardizationParamsSchema = z.object({
 });
 
 export const CreateApiFromPromptParamsSchema = z.object({
-  owner: z.string().describe("API owner (organization or user, case-sensitive)"),
+  owner: z
+    .string()
+    .describe("API owner (organization or user, case-sensitive)"),
   apiName: z.string().describe("API name"),
   prompt: z
     .string()
