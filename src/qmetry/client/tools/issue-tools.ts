@@ -39,7 +39,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description:
-          "Create a an issue with Major priority and Bug type to Bug with summary 'Login Issue'",
+          "Create an issue with Major priority and Bug type to Bug with summary 'Login Issue'",
         parameters: {
           name: "Login Issue",
           issuePriority: 2231988,
@@ -50,7 +50,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description:
-          "Create a an issue with summary 'Login Issue' and set issueOwner to 'John Doe'",
+          "Create an issue with summary 'Login Issue' and set issueOwner to 'John Doe'",
         parameters: {
           name: "Login Issue",
           issueOwner: 15112,
@@ -62,7 +62,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description:
-          "Create a an issue with summary 'Login Issue' and link it to test case run ID 567890",
+          "Create an issue with summary 'Login Issue' and link it to test case run ID 567890",
         parameters: {
           name: "Login Issue",
           issueOwner: 15112,
@@ -75,7 +75,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description:
-          "Create a an issue with summary 'Login Issue' and set description to 'User is unable to login' and owner to 'John Doe' and link it to test case run ID 567890",
+          "Create an issue with summary 'Login Issue' and set description to 'User is unable to login' and owner to 'John Doe' and link it to test case run ID 567890",
         parameters: {
           name: "Login Issue",
           issueOwner: 15112,
@@ -89,7 +89,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description:
-          "Create a an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycles and owner to 'John Doe'",
+          "Create an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycles and owner to 'John Doe'",
         parameters: {
           name: "Login Issue",
           issueOwner: 15112,
@@ -103,7 +103,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description:
-          "Create a an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycle 'Cycle 1.0.1', 'Cycle 1.0.2'",
+          "Create an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycle 'Cycle 1.0.1', 'Cycle 1.0.2'",
         parameters: {
           name: "Login Issue",
           issuePriority: 2231988,

@@ -167,7 +167,7 @@ export const CommonFields = {
     .optional()
     .describe(
       "Folder path for requirements - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
-        'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+        'Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). ' +
         'Only specify if user wants specific folder like "Automation/Regression".',
     )
     .default(""),
@@ -176,7 +176,7 @@ export const CommonFields = {
     .optional()
     .describe(
       "Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
-        'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+        'Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). ' +
         'Only specify if user wants specific folder like "Automation/Regression".',
     )
     .default(""),
@@ -185,7 +185,7 @@ export const CommonFields = {
     .optional()
     .describe(
       "Folder path for test suites - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
-        'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+        'Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). ' +
         'Only specify if user wants specific folder like "Automation/Regression".',
     )
     .default(""),
