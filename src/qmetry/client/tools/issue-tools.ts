@@ -12,8 +12,7 @@ import type { QMetryToolParams } from "./types.js";
 export const ISSUE_TOOLS: QMetryToolParams[] = [
   {
     title: "Create Defect or Issue",
-    summary:
-      "Create a new defect/issue internal for link it to a test execution in QMetry.",
+    summary: "Create a new defect/issue internally in QMetry.",
     handler: QMetryToolsHandlers.CREATE_ISSUE,
     inputSchema: CreateIssueArgsSchema,
     purpose:

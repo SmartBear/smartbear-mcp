@@ -28,7 +28,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
 
     useCases: [
       "Create a basic test suite with just a name and folder",
-      "Add detailed like description to a test suite",
+      "Add detailed metadata like description to a test suite",
       "Associate test suite with specific release/cycle for planning",
       "Set testsuiteOwner, testSuiteState, and other metadata using valid IDs from project info",
       "Create test suites for isAutomatedFlag true or false for automated or manual types, default is false",
