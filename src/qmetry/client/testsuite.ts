@@ -448,9 +448,13 @@ export async function linkPlatformsToTestSuite(
     );
   }
 
-  if (!body.qmPlatformId) {
+  if (
+    !body.qmPlatformId ||
+    typeof body.qmPlatformId !== "string" ||
+    body.qmPlatformId.trim().length === 0
+  ) {
     throw new Error(
-      "[linkPlatformsToTestSuite] Missing or invalid required parameter: 'qmPlatformId'.",
+      "[linkPlatformsToTestSuite] Missing or invalid required parameter: 'qmPlatformId'. It must be a non-empty comma-separated string of Platform IDs.",
     );
   }
 

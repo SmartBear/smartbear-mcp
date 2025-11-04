@@ -113,7 +113,7 @@ export interface ReqLinkedTestCasesToTestSuitePayload {
 
 export interface LinkedPlatformsToTestSuitePayload {
   qmTsId: number; // required - Test Suite ID
-  qmPlatformId: string[]; // required - Array of Platform IDs (as strings)
+  qmPlatformId: string; // required - Comma-separated Platform IDs (as a string)
 }
 
 export const DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD: Omit<

@@ -148,14 +148,14 @@ The QMetry client provides the following test management capabilities as listed 
 ### `link_testcases_to_testsuite`
 
 -   Purpose: Link test cases to a test suite in QMetry.
--   Parameters: Test suite ID (`tsID`), array of test case version IDs (`tcvdIDs`), flag to indicate if linking from requirements (`fromReqs` - default false).
+-   Parameters: Test suite ID (`tsID`), array of test case version identifiers, flag to indicate if linking from requirements (default false).
 -   Returns: JSON object with linkage status and details.
 -   Use case: Link test cases to a test suite by entity keys, bulk link multiple test cases to a suite, automate test suite composition from test cases.
 
 ### `requirements_linked_testcases_to_testsuite`
 
 -   Purpose: Link test cases (including those linked to requirements) to a test suite in QMetry.
--   Parameters: Test suite ID (`tsID`), array of test case version IDs from requirements (`tcvdIDs`), flag to indicate linking from requirements (`fromReqs` - set to true).
+-   Parameters: Test suite ID (`tsID`), array of test case version identifiers from requirements, flag to indicate linking from requirements (set to true).
 -   Returns: JSON object with linkage status and details.
 -   Use case: Link requirements-linked test cases to a test suite, bulk link multiple requirements-linked test cases, automate test suite composition from requirement-based test cases.
 
@@ -198,7 +198,7 @@ The QMetry client provides the following test management capabilities as listed 
 
 -   Purpose: Create a new issue in QMetry for linking to test executions.
 -   Parameters: Issue name (`name`), issue type ID (`issueType`), issue priority ID (`issuePriority`), optional issue owner (`issueOwner`), description, affected release array, affected cycles array, and component array.
--   Returns: JSON object containing the new issue ID, defect ID (dfid), and creation metadata.
+-   Returns: JSON object containing the new issue ID, defect ID, and creation metadata.
 -   Use case: Create defects/issues with summary and metadata, set issueType/priority/owner using valid IDs from project info, associate with releases/cycles for planning, create issues for automation or manual testing types.
 
 ### `update_issue`
