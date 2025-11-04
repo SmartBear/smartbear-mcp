@@ -6,3 +6,4 @@ export {
 export * from "./portal-types.js";
 export * from "./registry-types.js";
 export { type ApiHubToolParams, TOOLS } from "./tools.js";
+export * from "./user-management-types.js";
