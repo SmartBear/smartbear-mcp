@@ -110,6 +110,7 @@ export class ErrorAPI extends BaseAPI {
       direction,
       perPage,
       undefined,
+      undefined,
       options,
     );
     return await this.requestArray<ErrorApiView>(
