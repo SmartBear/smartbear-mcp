@@ -16,6 +16,9 @@ import type { Client } from "./types.js";
  */
 export async function runHttpMode() {
   const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3000;
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
+    "http://localhost:3000",
+  ];
 
   // Store transports by session ID
   const transports = new Map<
@@ -39,7 +42,10 @@ export async function runHttpMode() {
   const httpServer = createServer(
     async (req: IncomingMessage, res: ServerResponse) => {
       // Enable CORS
-      res.setHeader("Access-Control-Allow-Origin", "*");
+      const origin = req.headers.origin || "";
+      if (allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+      }
       res.setHeader(
         "Access-Control-Allow-Methods",
         "GET, POST, DELETE, OPTIONS",
