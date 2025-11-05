@@ -30,7 +30,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary:
       "Generate Pact tests using PactFlow AI. You can provide one or more of the following input types: (1) request/response pairs for specific interactions, (2) code files to analyze and extract interactions from, and/or (3) OpenAPI document to generate tests for specific endpoints. When providing an OpenAPI document, a matcher is required to specify which endpoints to generate tests for.",
     purpose: "Generate Pact tests for API interactions",
-    zodSchema: GenerationInputSchema,
+    inputSchema: GenerationInputSchema,
     handler: "generate",
     clients: ["pactflow"], // ONLY pactflow
     enableElicitation: true,
@@ -40,7 +40,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary:
       "Review Pact tests using PactFlow AI. You can provide the following inputs: (1) Pact tests to be reviewed along with metadata",
     purpose: "Review Pact tests for API interactions",
-    zodSchema: RefineInputSchema,
+    inputSchema: RefineInputSchema,
     handler: "review",
     clients: ["pactflow"],
     enableElicitation: true,
@@ -67,7 +67,7 @@ export const TOOLS: PactflowToolParams[] = [
       "Performs a comprehensive compatibility check to determine whether a specific version of a service (pacticipant) can be safely deployed into a given environment. It analyzes the complete contract matrix of consumer-provider relationships to confirm that all required integrations are verified and compatible.",
     purpose:
       "To serve as a deployment safety check within the PactBroker and PactFlow ecosystem, leveraging contract testing results to validate whether a specific service / pacticipant version is compatible with all integrated services. This feature prevents unsafe releases, reduces integration risks, and enables teams to confidently automate deployments across environments with a clear, auditable record of verification results.",
-    zodSchema: CanIDeploySchema,
+    inputSchema: CanIDeploySchema,
     handler: "canIDeploy",
     clients: ["pactflow", "pact_broker"],
   },
@@ -85,7 +85,7 @@ export const TOOLS: PactflowToolParams[] = [
       "Support informed deployment decisions by answering 'can I deploy version X of this service to production?'",
       "Expose contract verification details to non-frequent API users in a more accessible format.",
     ],
-    zodSchema: MatrixSchema,
+    inputSchema: MatrixSchema,
     handler: "getMatrix",
     clients: ["pactflow", "pact_broker"],
   },

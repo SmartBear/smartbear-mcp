@@ -16,18 +16,34 @@ import {
   type CreateApiResponse,
   type CreatePortalArgs,
   type CreateProductArgs,
+  type CreateTableOfContentsArgs,
+  type DeleteDocumentArgs,
+  type DeleteTableOfContentsArgs,
+  type Document,
   type FallbackResponse,
+  type GetDocumentArgs,
+  type GetProductSectionsArgs,
+  type GetTableOfContentsArgs,
   type Portal,
   type PortalsListResponse,
   type Product,
   type ProductsListResponse,
+  type PublishProductArgs,
   type ScanStandardizationParams,
+  type SectionsListResponse,
   type StandardizationResult,
   type SuccessResponse,
+  type TableOfContentsItem,
+  type TableOfContentsListResponse,
   TOOLS,
+  type UpdateDocumentArgs,
   type UpdatePortalArgs,
   type UpdateProductArgs,
 } from "./client/index.js";
+import type {
+  OrganizationsListResponse,
+  OrganizationsQueryParams,
+} from "./client/user-management-types.js";
 
 // Tool definitions for API Hub API client
 export class ApiHubClient implements Client {
@@ -105,6 +121,57 @@ export class ApiHubClient implements Client {
     return this.api.updatePortalProduct(productId, body);
   }
 
+  async publishPortalProduct(
+    args: PublishProductArgs,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    const { productId, preview } = args;
+    return this.api.publishPortalProduct(productId, preview);
+  }
+
+  async getPortalProductSections(
+    args: GetProductSectionsArgs,
+  ): Promise<SectionsListResponse | SuccessResponse | FallbackResponse> {
+    const { productId, ...params } = args;
+    return this.api.getPortalProductSections(productId, params);
+  }
+
+  async createTableOfContents(
+    args: CreateTableOfContentsArgs,
+  ): Promise<TableOfContentsItem | FallbackResponse> {
+    const { sectionId, ...body } = args;
+    return this.api.createTableOfContents(sectionId, body);
+  }
+
+  async getTableOfContents(
+    args: GetTableOfContentsArgs,
+  ): Promise<TableOfContentsListResponse | FallbackResponse> {
+    return this.api.getTableOfContents(args);
+  }
+
+  async getDocument(
+    args: GetDocumentArgs,
+  ): Promise<Document | FallbackResponse> {
+    return this.api.getDocument(args);
+  }
+
+  async updateDocument(
+    args: UpdateDocumentArgs,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    return this.api.updateDocument(args);
+  }
+
+  async deleteDocument(
+    args: DeleteDocumentArgs,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    return this.api.deleteDocument(args);
+  }
+
+  async deleteTableOfContents(
+    args: DeleteTableOfContentsArgs,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    return this.api.deleteTableOfContents(args);
+  }
+
   // Registry API methods for SwaggerHub Design functionality
 
   async searchApis(
@@ -129,6 +196,13 @@ export class ApiHubClient implements Client {
     args: CreateApiFromTemplateParams,
   ): Promise<CreateApiFromTemplateResponse | FallbackResponse> {
     return this.api.createApiFromTemplate(args);
+  }
+
+  // User Management API methods
+  async getOrganizations(
+    args?: OrganizationsQueryParams,
+  ): Promise<OrganizationsListResponse | FallbackResponse> {
+    return this.api.getOrganizations(args);
   }
 
   async scanStandardization(

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag.js";
 import { SmartBearMcpServer } from "../../../common/server.js";
-import { ToolError } from "../../../common/types.js";
+import { ToolError, type ToolParams } from "../../../common/types.js";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({
@@ -44,12 +44,12 @@ describe("SmartBearMcpServer", () => {
         examples: z.enum(["test_1", "test_2"]),
         constraints: z.enum(["test_1", "test_2"]),
       });
-      const toolparams = {
+      const toolParams: ToolParams = {
         title: "Test Tool",
         summary: "A test tool",
-        zodSchema: zSchema,
+        inputSchema: zSchema,
       };
-      const description = server.getDescription(toolparams);
+      const description = server.getDescription(toolParams);
       expect(description).toBe(`A test tool
 
 **Parameters:**
@@ -212,7 +212,7 @@ describe("SmartBearMcpServer", () => {
             },
           ],
           hints: ["First hint", "Second hint"],
-          outputFormat: "The output format",
+          outputDescription: "The output description",
           readOnly: true,
           destructive: true,
           idempotent: true,
@@ -239,7 +239,7 @@ describe("SmartBearMcpServer", () => {
           "- p7 (literal) *required*\n" +
           "- p8 (union) *required*\n" +
           "- p9 (any) *required*\n\n" +
-          "**Output Format:** The output format\n\n" +
+          "**Output Description:** The output description\n\n" +
           "**Use Cases:** 1. Testing 2. Development\n\n" +
           "**Examples:**\n" +
           "1. Example 1\n" +
@@ -269,6 +269,7 @@ describe("SmartBearMcpServer", () => {
         idempotentHint: true,
         openWorldHint: true,
       });
+      expect(registerToolParams[1].outputSchema).toBeUndefined();
     });
 
     it("should handle tool errors when registering tools", async () => {
@@ -442,6 +443,188 @@ describe("SmartBearMcpServer", () => {
         expect.any(Error),
         expect.any(Function),
       );
+    });
+
+    it("should register tool with inputSchema and outputSchema, and handle structuredContent", async () => {
+      server.addClient(mockClient);
+      const registerCbMock = vi.fn().mockResolvedValue({
+        isError: false,
+        structuredContent: {
+          values: [
+            { id: "1", name: "Alpha" },
+            { id: "2", name: "Beta" },
+          ],
+        },
+      });
+
+      const inputSchema = z.object({
+        query: z.string().describe("Search query"),
+        limit: z.number().optional().describe("Max results"),
+      });
+      const outputSchema = z.object({
+        values: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          )
+          .describe("List of values"),
+      });
+
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      registerFn(
+        {
+          title: "Search values",
+          summary: "Tool using input and output schemas",
+          inputSchema,
+          outputSchema,
+        },
+        registerCbMock,
+      );
+
+      expect(superRegisterToolMock).toHaveBeenCalledOnce();
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      expect(registerToolParams[0]).toBe("test_product_search_values");
+      expect(registerToolParams[1].title).toBe("Test Product: Search values");
+
+      // Description should list parameters derived from inputSchema
+      expect(registerToolParams[1].description).toBe(
+        "Tool using input and output schemas\n\n" +
+          "**Parameters:**\n" +
+          "- query (string) *required*: Search query\n" +
+          "- limit (number): Max results",
+      );
+
+      // Input schema should reflect raw shape merging (only inputSchema here)
+      expect(registerToolParams[1].inputSchema.query.toString()).toBe(
+        z.string().describe("Search query").toString(),
+      );
+      expect(registerToolParams[1].inputSchema.limit.toString()).toBe(
+        z.number().describe("Max results").optional().toString(),
+      );
+
+      // Output schema should be raw shape of outputSchema
+      expect(registerToolParams[1].outputSchema.values.toString()).toBe(
+        z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          )
+          .describe("List of values")
+          .toString(),
+      );
+
+      // Execute wrapper function to validate structuredContent -> content conversion
+      const result = await registerToolParams[2]({ query: "alpha" }, {});
+      expect(registerCbMock).toHaveBeenCalledOnce();
+      expect(result.isError).toBe(false);
+      expect(result.structuredContent?.values.length).toBe(2);
+      expect(result.content?.[0].text).toBe(
+        JSON.stringify(result.structuredContent),
+      );
+      expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
+    });
+
+    it("should register tool with outputSchema and throw error if structuredContent is missing", async () => {
+      server.addClient(mockClient);
+      const registerCbMock = vi.fn().mockResolvedValue({
+        isError: false,
+      });
+
+      const outputSchema = z.object({
+        values: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          )
+          .describe("List of values"),
+      });
+
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      registerFn(
+        {
+          title: "Get values",
+          summary: "Tool using output schema",
+          outputSchema,
+        },
+        registerCbMock,
+      );
+
+      expect(superRegisterToolMock).toHaveBeenCalledOnce();
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      // Execute wrapper function to validate error on missing structuredContent
+      await expect(registerToolParams[2]({}, {})).rejects.toThrow(
+        "The result of the tool 'Get values' must include 'structuredContent'",
+      );
+
+      expect(registerCbMock).toHaveBeenCalledOnce();
+      expect(vi.mocked(Bugsnag.notify)).toHaveBeenCalled();
+    });
+
+    it("should register tool with outputSchema and not throw error if structuredContent is missing but isError", async () => {
+      server.addClient(mockClient);
+      const registerCbMock = vi.fn().mockResolvedValue({
+        isError: true,
+      });
+
+      const outputSchema = z.object({
+        values: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          )
+          .describe("List of values"),
+      });
+
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      registerFn(
+        {
+          title: "Get values",
+          summary: "Tool using output schema",
+          outputSchema,
+        },
+        registerCbMock,
+      );
+
+      expect(superRegisterToolMock).toHaveBeenCalledOnce();
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      // Execute wrapper function to validate no error on missing structuredContent when isError is true
+      const result = await registerToolParams[2]({}, {});
+      expect(result.isError).toBe(true);
+
+      expect(registerCbMock).toHaveBeenCalledOnce();
+      expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("schemaToRawShape", () => {
+    it("should convert Zod schema to raw shape", () => {
+      const schema = z.object({
+        name: z.string().describe("The name of the person"),
+        age: z.number().min(0).describe("The age of the person"),
+        isActive: z.boolean().describe("Is the person active?"),
+      });
+      const result = server.schemaToRawShape(schema);
+      expect(result).toEqual(schema.shape);
+    });
+    it("returns an empty object if it's not a ZodObject", () => {
+      const schema = z.array(z.string());
+      const rawShape = server.schemaToRawShape(schema);
+      expect(rawShape).toBeUndefined();
+    });
+    it("returns an empty object if the schema is undefined", () => {
+      const rawShape = server.schemaToRawShape(undefined);
+      expect(rawShape).toBeUndefined();
     });
   });
 });

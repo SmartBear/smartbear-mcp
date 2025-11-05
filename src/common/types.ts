@@ -16,8 +16,16 @@ import type { ZodRawShape, ZodType, ZodTypeAny } from "zod";
 export interface ToolParams {
   title: string;
   summary: string;
-  parameters?: Parameters; // either parameters or a zodSchema should be present
-  zodSchema?: ZodTypeAny;
+  parameters?: Parameters; // either 'parameters' or an 'inputSchema' should be present
+  inputSchema?: ZodTypeAny;
+  /**
+   * Specifies the type of object returned by the tool. <br>
+   * When `outputSchema` is specified, make sure the tool returns `structuredContent` in its callback. <br>
+   * To keep backwards compatibility, the tool's callback can still return a text `content`.
+   *
+   * https://modelcontextprotocol.io/specification/2025-06-18/server/tools#output-schema
+   */
+  outputSchema?: ZodTypeAny;
   purpose?: string;
   useCases?: string[];
   examples?: Array<{
@@ -26,7 +34,7 @@ export interface ToolParams {
     expectedOutput?: string;
   }>;
   hints?: string[];
-  outputFormat?: string;
+  outputDescription?: string;
   readOnly?: boolean;
   destructive?: boolean;
   idempotent?: boolean;
