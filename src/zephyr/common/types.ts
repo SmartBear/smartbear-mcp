@@ -86,6 +86,11 @@ export const JiraUserSchema = z.object({
   accountId: z.string().describe("The Atlassian account ID of the user."),
 });
 
+export const ProjectReferenceSchema = z.object({
+  id: z.number().describe("The ID of the project"),
+  self: z.string().url().describe("The API URL to get project details."),
+});
+
 export const CustomFieldsSchema = z
   .record(z.any())
   .describe("Custom fields with dynamic keys and values.");
@@ -153,3 +158,22 @@ export const TestCycleSchema = z.object({
 
 export const TestCycleListSchema = createListSchema(TestCycleSchema);
 export type TestCycleList = z.infer<typeof TestCycleListSchema>;
+
+
+export const GetProjectPrioritiesQueryValuesSchema = z.object({
+  projectKey: ProjectKeySchema.optional(),
+  maxResults: MaxResultsSchema.optional(),
+  startAt: StartAtSchema.optional(),
+}); 
+
+export const GetPrioritiesProjectSubSchema = z.object({
+  id: z.number().describe("The ID of the project in Zephyr."),
+  project: ProjectReferenceSchema.describe("The project details."),
+  name: z.string().describe("The name of the project in Zephyr."),
+  description: z.string().nullable().describe("The description of the project."),
+  index: z.number().describe("The index of the project."),
+  color: z.string().describe("The color associated with the project."),
+  default: z.boolean().describe("Indicates if this is the default project."),
+});
+
+export const GetProjectPrioritiesResponseSchema = createListSchema(GetPrioritiesProjectSubSchema);
