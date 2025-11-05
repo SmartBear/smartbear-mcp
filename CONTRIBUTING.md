@@ -29,15 +29,15 @@ Thank you for your contributing to SmartBear MCP!
 
 ### Branching Strategy
 
-Releases are automatically deployed on merge to `main` (see [below](#releases)), so in order to coordinate a release between the various products a `next` branch is used to accumulate changes and avoid unintentionally releasing part changes.
+The repository uses `main` as the sole primary development and release branch.
 
 Please read the following guidance:
 
-- Feature branches should be created from `next` and PRs made into `next`
+- Feature branches should be created from `main` and PRs made into `main`
+- Create `integration/` branches from `main` if you want to keep a larger change away from the release during development
 - If your change is noteworthy to our customers, update the [CHANGELOG.md](./CHANGELOG.md) in your PR with details of your changes
   - You may need to create a new section if your change is the first since the last release
-- This is a public repo, so consider a squash-commit of your feature PRs to give a cleaner history
-- Create `integration/` branches from `next` if you want to keep a larger change away from the release during development
+- This is a public repo, so a squash-commit of your feature PRs is strongly encouraged to give a cleaner history
 - Don't forget to update the `docs/` directory with any noteworthy changes to functionality or configuration
 
 ## Development Setup
@@ -133,17 +133,17 @@ npm run test:coverage
 
 ## Documentation
 
-Documentation lives in the `/docs` directory of this repo. Changes to the documentation will be automatically deployed to the docs site when merged to `main` and to a SmartBear-internal staging site when merged to `next`. For full information on the markdown syntax allowed in these docs, please see the [SwaggerHub Portal Management](https://github.com/frankkilcommins/SwaggerHub-Portal-Management) docs.
+Documentation lives in the `/docs` directory of this repo. Changes to the documentation will be automatically deployed to the docs site when a release is published and to a SmartBear-internal staging site when merged to `main`. For full information on the markdown syntax allowed in these docs, please see the [SwaggerHub Portal Management](https://github.com/frankkilcommins/SwaggerHub-Portal-Management) docs.
 
 ### Previewing docs
 
-SmartBear team members wishing to preview docs changes before a change is merged to `next`, run the "Publish Portal Content" GitHub Action manually from the "Actions" tab in this repository, selecting your branch as the workflow input. Changes will be visible in the [preview site](https://smartbear-internal.portal.swaggerhub.com/smartbear-mcp) on completion.
+SmartBear team members wishing to preview docs changes in the internal site before a change is merged to `main`, run the "Publish Portal Content" GitHub Action manually from the "Actions" tab in this repository, selecting your branch as the workflow input.
 
-Please note – there is only one preview site, shared with `next` merges.
+Please note – there is only one preview site, shared with `main` merges.
 
 ## Releases
 
-A release will be carried out by a member of the SmartBear team when a set of releasable changes is ready on the `next` branch. If there are commits from more than one product, the releasing engineer will coordinate with each product team to ensure the release is appropriate and sufficiently documented in the changelog/docs.
+A release will be carried out by a member of the SmartBear team when a set of releasable changes is ready on the `main` branch. If there are commits from more than one product, the releasing engineer will coordinate with each product team to ensure the release is appropriate and sufficiently documented in the changelog/docs.
 
 Please follow these steps to create a new release:
 
@@ -152,7 +152,7 @@ Please follow these steps to create a new release:
 
 2. **Create Release Branch**
     ```bash
-    git checkout next
+    git checkout main
     git pull
     git checkout -b release/v1.2.3
     ```
@@ -167,7 +167,7 @@ Please follow these steps to create a new release:
     - Changes will be automatically deployed once the Github release is created
 
 5. **Post-Release**
-    - A PR should automatically be created to merge `main` back into `next`, this should be merged down soon after release
+    - Check the publish action to make sure all deployments succeeded
     - Check https://developer.smartbear.com/smartbear-mcp/ to ensure the docs have been updated correctly
 
 Please ensure you update internal ticketing systems accordingly.
