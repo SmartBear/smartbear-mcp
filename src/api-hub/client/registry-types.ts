@@ -107,20 +107,11 @@ export const CreateApiFromPromptParamsSchema = z.object({
     ),
   specification: z
     .enum([
-      "openapi-2.0",
-      "openapi-3.0.0",
-      "openapi-3.0.1",
-      "openapi-3.0.2",
-      "openapi-3.0.3",
-      "openapi-3.1.0",
-      "asyncapi-2.0.0",
-      "asyncapi-2.1.0",
-      "asyncapi-2.2.0",
-      "asyncapi-2.3.0",
-      "asyncapi-2.4.0",
-      "asyncapi-2.5.0",
-      "asyncapi-2.6.0",
-      "asyncapi-3.0.0",
+      "openapi20",
+      "openapi30x",
+      "openapi31x",
+      "asyncapi2xx",
+      "asyncapi30x",
     ])
     .describe(
       "Specification type for the generated API definition (e.g., openapi-2.0, openapi-3.0.0, openapi-3.1.0, asyncapi-2.0.0, asyncapi-3.0.0)",
