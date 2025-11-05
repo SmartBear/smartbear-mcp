@@ -132,7 +132,7 @@ export const TOOLS: ApiHubToolParams[] = [
   {
     title: "Create API from Prompt using SmartBear AI",
     summary:
-      "Generate and save an API definition based on a prompt using SmartBear AI. The specification type determines the format of the generated definition (OpenAPI 2.0, 3.0, 3.1, AsyncAPI 2.0, 3.0). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
+      "Generate and save an API definition based on a prompt using SmartBear AI. The specification type determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
     zodSchema: CreateApiFromPromptParamsSchema,
     handler: "createApiFromPrompt",
   },

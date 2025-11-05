@@ -114,7 +114,7 @@ export const CreateApiFromPromptParamsSchema = z.object({
       "asyncapi30x",
     ])
     .describe(
-      "Specification type for the generated API definition (e.g., openapi-2.0, openapi-3.0.0, openapi-3.1.0, asyncapi-2.0.0, asyncapi-3.0.0)",
+      "Specification type for the generated API definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x",
     ),
 });
 
