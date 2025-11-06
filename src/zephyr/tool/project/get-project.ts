@@ -1,17 +1,12 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type ZodRawShape, z } from "zod";
+import type { ZodRawShape } from "zod";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
-  ProjectIdOrKeySchema,
-  type ZephyrProject,
-  ZephyrProjectSchema,
-} from "../../common/types.js";
+  getProjectParams,
+  getProjectResponse,
+} from "../../common/rest-api-schemas.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
-
-export const GetProjectInputSchema = z.object({
-  projectIdOrKey: ProjectIdOrKeySchema,
-});
 
 export class GetProject implements ZephyrTool {
   private readonly apiClient: ApiClient;
@@ -25,8 +20,8 @@ export class GetProject implements ZephyrTool {
     summary: "Get details of project specified by id or key in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: GetProjectInputSchema,
-    outputSchema: ZephyrProjectSchema,
+    inputSchema: getProjectParams,
+    outputSchema: getProjectResponse,
     examples: [
       {
         description: "Get the project with id 1",
@@ -46,10 +41,8 @@ export class GetProject implements ZephyrTool {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
-    const { projectIdOrKey } = GetProjectInputSchema.parse(args);
-    const response: ZephyrProject = await this.apiClient.get(
-      `/projects/${projectIdOrKey}`,
-    );
+    const { projectIdOrKey } = getProjectParams.parse(args);
+    const response = await this.apiClient.get(`/projects/${projectIdOrKey}`);
     return {
       structuredContent: response,
       content: [],
