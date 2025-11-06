@@ -39,7 +39,7 @@
         },
         {
           "name": "SWAGGER_API_KEY",
-          "description": "Swagger API key. Leave empty to disable Swagger tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration",
+          "description": "Swagger API key. Leave empty to disable Swagger tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration",
           "isRequired": false,
           "isSecret": true
         },
