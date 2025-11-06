@@ -1,6 +1,6 @@
 {
   "productMetadata": {
-    "description": "Integrate capabilities from SmartBear's API Hub, Test Hub, and BugSnag into your AI development workflow.",
+    "description": "Integrate capabilities from SmartBear's Swagger, Test Hub, and BugSnag into your AI development workflow.",
     "slug": "smartbear-mcp",
     "public": true,
     "hidden": false,
@@ -29,7 +29,7 @@
     {
       "order": 2,
       "parent": "mcp-server-capabilities",
-      "name": "API Hub Integration",
+      "name": "Swagger Integration",
       "slug": "api-hub-integration",
       "type": "markdown",
       "contentUrl": "api-hub-integration.md"

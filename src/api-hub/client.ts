@@ -8,8 +8,8 @@ import type {
 } from "../common/types.js";
 import {
   type ApiDefinitionParams,
-  ApiHubAPI,
-  ApiHubConfiguration,
+  SwaggerAPI,
+  SwaggerConfiguration,
   type ApiSearchParams,
   type ApiSearchResponse,
   type CreateApiFromTemplateParams,
@@ -48,16 +48,16 @@ import type {
 } from "./client/user-management-types.js";
 
 const ConfigurationSchema = z.object({
-  api_key: z.string().describe("API Hub API key for authentication"),
+  api_key: z.string().describe("Swagger API key for authentication"),
 });
 
 // Tool definitions for API Hub API client
-export class ApiHubClient implements Client {
-  private api: ApiHubAPI | undefined;
+export class SwaggerClient implements Client {
+  private api: SwaggerAPI | undefined;
 
-  name = "API Hub";
-  toolPrefix = "api_hub";
-  configPrefix = "Api-Hub";
+  name = "Swagger";
+  toolPrefix = "swagger";
+  configPrefix = "Swagger";
   config = ConfigurationSchema;
 
   async configure(
@@ -66,18 +66,18 @@ export class ApiHubClient implements Client {
     _cache?: any,
   ): Promise<boolean> {
     this.api = new ApiHubAPI(
-      new ApiHubConfiguration({ token: config.api_key }),
+      new SwaggerConfiguration({ token: config.api_key }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
     return true;
   }
 
-  getApi(): ApiHubAPI {
+  getApi(): SwaggerAPI {
     if (!this.api) throw new Error("Client not configured");
     return this.api;
   }
 
-  // Delegate API methods to the ApiHubAPI instance
+  // Delegate API methods to the SwaggerAPI instance
   async getPortals(): Promise<PortalsListResponse | FallbackResponse> {
     return this.getApi().getPortals();
   }
@@ -238,7 +238,7 @@ export class ApiHubClient implements Client {
           // Dynamic method invocation
           const handlerFn = (this as any)[handler];
           if (typeof handlerFn !== "function") {
-            throw new Error(`Handler '${handler}' not found on ApiHubClient`);
+            throw new Error(`Handler '${handler}' not found on SwaggerClient`);
           }
 
           const result = await handlerFn.call(this, args);

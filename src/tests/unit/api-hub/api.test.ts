@@ -1,21 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { ApiHubAPI } from "../../../api-hub/client/api.js";
-import { ApiHubConfiguration } from "../../../api-hub/client/configuration.js";
+import { SwaggerAPI } from "../../../api-hub/client/api.js";
+import { SwaggerConfiguration } from "../../../api-hub/client/configuration.js";
 
 const fetchMock = createFetchMock(vi);
 
-describe("ApiHubAPI", () => {
-  let api: ApiHubAPI;
-  let config: ApiHubConfiguration;
+describe("SwaggerAPI", () => {
+  let api: SwaggerAPI;
+  let config: SwaggerConfiguration;
 
   beforeEach(() => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
 
-    config = new ApiHubConfiguration({ token: "test-token" });
-    api = new ApiHubAPI(config, "SmartBear-MCP/1.0.0");
+    config = new SwaggerConfiguration({ token: "test-token" });
+    api = new SwaggerAPI(config, "SmartBear-MCP/1.0.0");
   });
 
   afterEach(() => {
