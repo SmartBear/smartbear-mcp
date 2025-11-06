@@ -7,6 +7,20 @@ import {
   type SortPayload,
 } from "./common.js";
 
+export interface FetchProjectsPayload extends PaginationPayload, FilterPayload {
+  params: {
+    showArchive: boolean;
+  };
+}
+
+export const DEFAULT_FETCH_PROJECTS_PAYLOAD = {
+  ...DEFAULT_PAGINATION,
+  ...DEFAULT_FILTER,
+  params: {
+    showArchive: false,
+  },
+};
+
 export interface FetchBuildsPayload extends PaginationPayload, FilterPayload {}
 
 export const DEFAULT_FETCH_BUILD_PAYLOAD = {

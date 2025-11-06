@@ -16,6 +16,7 @@ modelcontextprotocol
 Negroni
 pactflow
 pacticipant
+petstore
 qmetry
 Reactnative
 reindexing

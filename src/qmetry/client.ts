@@ -9,7 +9,7 @@ import {
 } from "./client/auto-resolve.js";
 import { QMETRY_HANDLER_MAP } from "./client/handlers.js";
 import { getProjectInfo } from "./client/project.js";
-import { TOOLS } from "./client/tools.js";
+import { TOOLS } from "./client/tools/index.js";
 import { QMETRY_DEFAULTS } from "./config/constants.js";
 
 export class QmetryClient implements Client {
@@ -80,10 +80,21 @@ export class QmetryClient implements Client {
               autoResolveConfig.folderIdField &&
               !a[autoResolveConfig.folderIdField];
 
+            // Explicit condition for auto-resolving tcFolderID for Create Test Case
+            const needsTcFolderIdAutoResolve =
+              autoResolveConfig.folderIdField === "tcFolderID" && !a.tcFolderID;
+
+            // Explicit condition for auto-resolving parentFolderId for Create Test Suite
+            const needsParentFolderIdAutoResolve =
+              autoResolveConfig.folderIdField === "parentFolderId" &&
+              !a.parentFolderId;
+
             if (
               needsViewIdResolve ||
               needsFolderPathResolve ||
-              needsFolderIdResolve
+              needsFolderIdResolve ||
+              needsTcFolderIdAutoResolve ||
+              needsParentFolderIdAutoResolve
             ) {
               let projectInfo: any;
               try {

@@ -28,9 +28,20 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Test Cases",
   },
   {
+    handler: QMetryToolsHandlers.CREATE_TEST_CASE,
+    folderIdPath: "rootFolders.TC.id",
+    folderIdField: "tcFolderID",
+    moduleName: "Test Cases",
+  },
+  {
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS,
     viewIdPath: "latestViews.RQ.viewId",
     moduleName: "Requirements",
+  },
+  {
+    handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
+    viewIdPath: "latestViews.TS.viewId",
+    moduleName: "Test Suites",
   },
   {
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
@@ -38,6 +49,17 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     folderIdPath: "rootFolders.TS.id",
     folderIdField: "tsFolderID",
     moduleName: "Test Suites",
+  },
+  {
+    handler: QMetryToolsHandlers.CREATE_TEST_SUITE,
+    folderIdPath: "rootFolders.TS.id",
+    folderIdField: "parentFolderId",
+    moduleName: "Test Suites",
+  },
+  {
+    handler: QMetryToolsHandlers.FETCH_ISSUES,
+    viewIdPath: "latestViews.IS.viewId",
+    moduleName: "Issues",
   },
 ];
 
