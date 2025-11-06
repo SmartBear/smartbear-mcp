@@ -18,7 +18,7 @@ export default defineConfig({
         // Main entry point (tested via integration)
         "src/index.ts",
         // Other client implementations (not currently tested)
-        "src/api-hub/client.ts",
+        "src/swagger/client.ts",
         "src/reflect/client.ts",
         // Utility modules
         "src/common/bugsnag.ts",
