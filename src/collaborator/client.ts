@@ -1,9 +1,9 @@
-import type {
-  RegisterToolsFunction,
-  GetInputFunction,
-  Client,
-} from "../common/types.js";
 import { z } from "zod";
+import type {
+  Client,
+  GetInputFunction,
+  RegisterToolsFunction,
+} from "../common/types.js";
 
 export class CollaboratorClient implements Client {
   name = "Collaborator";
