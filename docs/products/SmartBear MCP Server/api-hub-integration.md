@@ -1,6 +1,6 @@
 ![api-hub.png](./images/embedded/api-hub.png)
 
-The Swagger client provides comprehensive Swagger Portal and Swagger Studio management capabilities. Access to these features requires authentication with an `API_HUB_API_KEY`.
+The Swagger client provides comprehensive Swagger Portal and Swagger Studio management capabilities. Access to these features requires authentication with a `SWAGGER_API_KEY`.
 
 ## Available Tools
 
@@ -193,7 +193,7 @@ The Swagger client provides comprehensive Swagger Portal and Swagger Studio mana
 
 ## Configuration
 
-To use Swagger tools, you need to configure the `API_HUB_API_KEY` environment variable with your Swagger API token.
+To use Swagger tools, you need to configure the `SWAGGER_API_KEY` environment variable with your Swagger API token.
 
 ## Common Use Cases
 

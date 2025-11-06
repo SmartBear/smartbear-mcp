@@ -1,5 +1,5 @@
 import { ToolError } from "../../common/types.js";
-import type { ApiHubConfiguration } from "./configuration.js";
+import type { SwaggerConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -52,11 +52,11 @@ import type {
 const SWAGGER_URL_REGEX =
   /\/(apis|domains|templates)\/([^/]+)\/([^/]+)\/([^/]+)/;
 
-export class ApiHubAPI {
-  private config: ApiHubConfiguration;
+export class SwaggerAPI {
+  private config: SwaggerConfiguration;
   private headers: Record<string, string>;
 
-  constructor(config: ApiHubConfiguration, userAgent: string) {
+  constructor(config: SwaggerConfiguration, userAgent: string) {
     this.config = config;
     this.headers = config.getHeaders(userAgent);
   }
@@ -220,7 +220,7 @@ export class ApiHubAPI {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(
-        `API Hub deletePortal failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
+        `Swagger deletePortal failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
       );
     }
   }

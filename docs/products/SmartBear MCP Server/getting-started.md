@@ -76,7 +76,7 @@ export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 export REFLECT_API_TOKEN=your-reflect-api-token
 
 # Required for Swagger - Portal tools
-export API_HUB_API_KEY=your-api-hub-api-key
+export SWAGGER_API_KEY=your-swagger-api-key
 
 # Required for Swagger - Contract Testing (PactFlow) tools
 export PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io
@@ -120,7 +120,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-        "API_HUB_API_KEY": "${input:api_hub_api_key}",
+        "SWAGGER_API_KEY": "${input:swagger_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
         // "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
@@ -150,7 +150,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "password": true
     },
     {
-      "id": "api_hub_api_key",
+      "id": "swagger_api_key",
       "type": "promptString",
       "description": "Swagger API Key",
       "password": true
@@ -213,7 +213,7 @@ Add to your `mcp.json` configuration:
         "BUGSNAG_AUTH_TOKEN": "your-bugsnag-auth-token",
         "BUGSNAG_PROJECT_API_KEY": "your-bugsnag-project-api-key",
         "REFLECT_API_TOKEN": "your-reflect-api-token",
-        "API_HUB_API_KEY": "your-api-hub-api-key",
+        "SWAGGER_API_KEY": "your-swagger-api-key",
         "PACT_BROKER_BASE_URL": "https://your-tenant.pactflow.io",
         "PACT_BROKER_TOKEN": "your-pact-broker-token",
         // If using the open source Pact broker, replace the token with:
@@ -230,7 +230,7 @@ Add to your `mcp.json` configuration:
 
 ### Claude Desktop
 
-Edit your `claude_desktop_config.json` file:
+Edit your `claude_desktop_config.json` file:
 
 ```
 {
@@ -245,7 +245,7 @@ Edit your `claude_desktop_config.json` file:
         "BUGSNAG_AUTH_TOKEN": "your-bugsnag-auth-token",
         "BUGSNAG_PROJECT_API_KEY": "your-bugsnag-project-api-key",
         "REFLECT_API_TOKEN": "your-reflect-api-token",
-        "API_HUB_API_KEY": "your-api-hub-api-key",
+        "SWAGGER_API_KEY": "your-swagger-api-key",
         "PACT_BROKER_BASE_URL": "https://your-tenant.pactflow.io",
         "PACT_BROKER_TOKEN": "your-pact-broker-token",
         // If using the open source Pact broker, replace the token with:
@@ -282,7 +282,7 @@ Then set the required environment variables:
 export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 export REFLECT_API_TOKEN=your-reflect-api-token
-export API_HUB_API_KEY=your-api-hub-api-key
+export SWAGGER_API_KEY=your-swagger-api-key
 export QMETRY_API_KEY=your-qmetry_api_key
 export QMETRY_BASE_URL=https://testmanagement.qmetry.com
 
@@ -339,7 +339,7 @@ To run the built server locally in VS Code, add the following configuration to 
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-        "API_HUB_API_KEY": "${input:api_hub_api_key}",
+        "SWAGGER_API_KEY": "${input:swagger_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
         // If using the open source Pact broker, replace the token with:
@@ -370,7 +370,7 @@ To run the built server locally in VS Code, add the following configuration to 
          "password": true
       },
       {
-         "id": "api_hub_api_key",
+         "id": "swagger_api_key",
          "type": "promptString",
          "description": "Swagger API Key",
          "password": true
@@ -424,7 +424,7 @@ To test the MCP server locally before integrating with your preferred host, you 
 BUGSNAG_AUTH_TOKEN=your_token \
 BUGSNAG_PROJECT_API_KEY=your_project_api_key \
 REFLECT_API_TOKEN=your_reflect_token \
-API_HUB_API_KEY=your_api_hub_key \
+SWAGGER_API_KEY=your_swagger_key \
 PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io \
 PACT_BROKER_TOKEN=your_pactflow_token \
 QMETRY_API_KEY=your_qmetry_key \

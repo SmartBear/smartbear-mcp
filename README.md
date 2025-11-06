@@ -72,7 +72,7 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-        "API_HUB_API_KEY": "${input:api_hub_api_key}",
+        "SWAGGER_API_KEY": "${input:swagger_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
         "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
@@ -107,7 +107,7 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
          "password": true
       },
       {
-         "id": "api_hub_api_key",
+         "id": "swagger_api_key",
          "type": "promptString",
          "description": "Swagger API Key - leave blank to disable Swagger tools",
          "password": true
@@ -200,7 +200,7 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "BUGSNAG_AUTH_TOKEN": "your_personal_auth_token",
         "BUGSNAG_PROJECT_API_KEY": "your_project_api_key",
         "REFLECT_API_TOKEN": "your_reflect_token",
-        "API_HUB_API_KEY": "your_api_hub_key",
+        "SWAGGER_API_KEY": "your_swagger_key",
         "PACT_BROKER_BASE_URL": "your_pactflow_or_pactbroker_base_url",
         "PACT_BROKER_TOKEN": "your_pactflow_token",
         "PACT_BROKER_USERNAME": "your_pact_broker_username",
