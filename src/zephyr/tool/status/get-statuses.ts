@@ -1,24 +1,12 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type ZodRawShape, z } from "zod";
+import type { ZodRawShape } from "zod";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
-  MaxResultsSchema,
-  StartAtSchema,
-  type StatusList,
-  StatusListSchema,
-  StatusTypeSchema,
-  ZephyrProjectKeySchema,
-} from "../../common/types.js";
+  listStatusesQueryParams,
+  listStatusesResponse,
+} from "../../common/rest-api-schemas.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
-
-export const GetStatusesInputSchema = z.object({
-  startAt: StartAtSchema.optional(),
-  maxResults: MaxResultsSchema.optional(),
-  projectKey: ZephyrProjectKeySchema.optional(),
-  statusType: StatusTypeSchema.optional(),
-});
-type GetStatusesInput = z.infer<typeof GetStatusesInputSchema>;
 
 export class GetStatuses implements ZephyrTool {
   private readonly apiClient: ApiClient;
@@ -32,8 +20,8 @@ export class GetStatuses implements ZephyrTool {
     summary: "Get statuses of different types of test artifacts in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: GetStatusesInputSchema,
-    outputSchema: StatusListSchema,
+    inputSchema: listStatusesQueryParams,
+    outputSchema: listStatusesResponse,
     examples: [
       {
         description: "Get the first 10 statuses",
@@ -65,13 +53,9 @@ export class GetStatuses implements ZephyrTool {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (
-    getStatusesInput: GetStatusesInput,
-  ) => {
-    const response: StatusList = await this.apiClient.get(
-      "/statuses",
-      getStatusesInput,
-    );
+  handle: ToolCallback<ZodRawShape> = async (args) => {
+    const getStatusesInput = listStatusesQueryParams.parse(args);
+    const response = await this.apiClient.get("/statuses", getStatusesInput);
     return {
       structuredContent: response,
       content: [],

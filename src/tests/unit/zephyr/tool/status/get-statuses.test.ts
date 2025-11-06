@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { StatusListSchema } from "../../../../../zephyr/common/types.js";
 import {
-  GetStatuses,
-  GetStatusesInputSchema,
-} from "../../../../../zephyr/tool/status/get-statuses.js";
+  listStatusesQueryParams,
+  listStatusesResponse,
+} from "../../../../../zephyr/common/rest-api-schemas.js";
+import { GetStatuses } from "../../../../../zephyr/tool/status/get-statuses.js";
 
 const responseMock = {
   next: null,
@@ -36,8 +36,8 @@ describe("GetStatuses", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(GetStatusesInputSchema);
-    expect(instance.specification.outputSchema).toBe(StatusListSchema);
+    expect(instance.specification.inputSchema).toBe(listStatusesQueryParams);
+    expect(instance.specification.outputSchema).toBe(listStatusesResponse);
   });
 
   it("should call apiClient.get with all params including statusType and projectKey", async () => {
@@ -57,7 +57,10 @@ describe("GetStatuses", () => {
     mockApiClient.get.mockResolvedValueOnce(responseMock);
     const args = { statusType: "TEST_PLAN" } as const;
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", args);
+    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", {
+      ...args,
+      maxResults: 10,
+    });
     expect(result.structuredContent).toEqual(responseMock);
   });
 
@@ -65,14 +68,19 @@ describe("GetStatuses", () => {
     mockApiClient.get.mockResolvedValueOnce(responseMock);
     const args = { projectKey: "PROJ" } as const;
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", args);
+    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", {
+      ...args,
+      maxResults: 10,
+    });
     expect(result.structuredContent).toEqual(responseMock);
   });
 
   it("should handle empty args (all undefined optional params)", async () => {
     mockApiClient.get.mockResolvedValueOnce(responseMock);
     const result = await instance.handle({}, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", {});
+    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", {
+      maxResults: 10,
+    });
     expect(result.structuredContent).toEqual(responseMock);
   });
 
