@@ -5739,7 +5739,10 @@ export const listStatusesQueryParams = zod.object({
     .regex(listStatusesQueryProjectKeyRegExp)
     .optional()
     .describe("Jira project key filter"),
-  statusType: zod.string().optional(),
+  statusType: zod
+    .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
+    .optional()
+    .describe("Determines which type of entity the status belongs to."),
 });
 
 export const listStatusesResponseStartAtMin = 0;
@@ -5821,7 +5824,12 @@ export const listStatusesResponse = zod
             .and(
               zod.object({
                 color: zod.string().optional(),
-                archived: zod.boolean().optional(),
+                archived: zod
+                  .boolean()
+                  .optional()
+                  .describe(
+                    "Determines whether the status is archived. Archived statuses are read-only and cannot be assigned to entities.",
+                  ),
                 default: zod.boolean().optional(),
               }),
             ),
@@ -5852,10 +5860,8 @@ export const createStatusBody = zod.object({
     .max(createStatusBodyNameMax)
     .describe("The status name."),
   type: zod
-    .string()
-    .describe(
-      'Valid values: `"TEST_CASE"`, `"TEST_PLAN"`, `"TEST_CYCLE"`, `"TEST_EXECUTION"`',
-    ),
+    .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
+    .describe("Determines which type of entity the status belongs to."),
   description: zod
     .string()
     .min(1)
@@ -5912,7 +5918,12 @@ export const getStatusResponse = zod
   .and(
     zod.object({
       color: zod.string().optional(),
-      archived: zod.boolean().optional(),
+      archived: zod
+        .boolean()
+        .optional()
+        .describe(
+          "Determines whether the status is archived. Archived statuses are read-only and cannot be assigned to entities.",
+        ),
       default: zod.boolean().optional(),
     }),
   );
