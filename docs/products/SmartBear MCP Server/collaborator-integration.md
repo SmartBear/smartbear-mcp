@@ -38,7 +38,7 @@ These credentials are used to authenticate all API requests automatically.
     - `login`, `role`, `creator`, `reviewPhase`, `fullInfo`, `fromDate`, `toDate` (all optional).
 
 - **ReviewService Action**
-  - Invoke ReviewService method(eg moveReviewToAnnotatePhase, cancel, reopen, uncancel).
+  - Invoke ReviewService method(eg moveReviewToAnnotatePhase, cancel, reopen, un-cancel).
   - Parameters:
   - `reviewId` (required): The review ID.
 
@@ -76,7 +76,7 @@ These credentials are used to authenticate all API requests automatically.
 1. Create a new review.
 2. Find a review by id.
 3. Reject a review by id and reason.
-4. moveReviewToAnnotatePhase, cancel, reopen and uncancel the review by id.
+4. moveReviewToAnnotatePhase, cancel, reopen and un-cancel the review by id.
 5. Manage remote system configurations (create, edit, delete, test, update webhook).
 
 ---
