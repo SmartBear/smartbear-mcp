@@ -109,7 +109,7 @@ async function main() {
 
   if (!client_defined) {
     console.error(
-      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY, QMETRY_API_KEY, ZEPHYR_API_TOKEN, COLLABORATOR_BASE_URL(and relevant collab environment variables) or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
+      "No SmartBear products were configured. Please provide at least one of the required configuration options.",
     );
     process.exit(1);
   }

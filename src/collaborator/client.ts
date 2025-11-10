@@ -63,29 +63,17 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          const { reviewId } = args;
-          const commands = [
-            {
-              command: "ReviewService.findReviewById",
-              args: { reviewId },
-            },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const { reviewId } = args;
+        const commands = [
+          {
+            command: "ReviewService.findReviewById",
+            args: { reviewId },
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -121,35 +109,23 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          const commandArgs: any = {};
-          if (args.creator !== undefined) commandArgs.creator = args.creator;
-          if (args.title !== undefined) commandArgs.title = args.title;
-          if (args.templateName !== undefined)
-            commandArgs.templateName = args.templateName;
-          if (args.accessPolicy !== undefined)
-            commandArgs.accessPolicy = args.accessPolicy;
-          const commands = [
-            {
-              command: "ReviewService.createReview",
-              args: commandArgs,
-            },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const commandArgs: any = {};
+        if (args.creator !== undefined) commandArgs.creator = args.creator;
+        if (args.title !== undefined) commandArgs.title = args.title;
+        if (args.templateName !== undefined)
+          commandArgs.templateName = args.templateName;
+        if (args.accessPolicy !== undefined)
+          commandArgs.accessPolicy = args.accessPolicy;
+        const commands = [
+          {
+            command: "ReviewService.createReview",
+            args: commandArgs,
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -167,32 +143,20 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          const { reviewId, reason } = args;
-          const commands = [
-            {
-              command: "ReviewService.reject",
-              args: {
-                reviewId,
-                reason,
-              },
+        const { reviewId, reason } = args;
+        const commands = [
+          {
+            command: "ReviewService.reject",
+            args: {
+              reviewId,
+              reason,
             },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -212,24 +176,12 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (params, _extra) => {
-        try {
-          const { action, args } = params;
-          const commands = [{ command: `ReviewService.${action}`, args }];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const { action, args } = params;
+        const commands = [{ command: `ReviewService.${action}`, args }];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -271,38 +223,25 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          // Only include provided fields in reviewArgs
-          const reviewArgs: any = {};
-          if (args.login !== undefined) reviewArgs.login = args.login;
-          if (args.role !== undefined) reviewArgs.role = args.role;
-          if (args.creator !== undefined) reviewArgs.creator = args.creator;
-          if (args.reviewPhase !== undefined)
-            reviewArgs.reviewPhase = args.reviewPhase;
-          if (args.fullInfo !== undefined) reviewArgs.fullInfo = args.fullInfo;
-          if (args.fromDate !== undefined) reviewArgs.fromDate = args.fromDate;
-          if (args.toDate !== undefined) reviewArgs.toDate = args.toDate;
-          const commands = [
-            {
-              command: "ReviewService.getReviews",
-              args: reviewArgs,
-            },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const reviewArgs: any = {};
+        if (args.login !== undefined) reviewArgs.login = args.login;
+        if (args.role !== undefined) reviewArgs.role = args.role;
+        if (args.creator !== undefined) reviewArgs.creator = args.creator;
+        if (args.reviewPhase !== undefined)
+          reviewArgs.reviewPhase = args.reviewPhase;
+        if (args.fullInfo !== undefined) reviewArgs.fullInfo = args.fullInfo;
+        if (args.fromDate !== undefined) reviewArgs.fromDate = args.fromDate;
+        if (args.toDate !== undefined) reviewArgs.toDate = args.toDate;
+        const commands = [
+          {
+            command: "ReviewService.getReviews",
+            args: reviewArgs,
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -331,31 +270,19 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          const { token, title, config, reviewTemplateId } = args;
-          const commandArgs: any = { token, title, config };
-          if (reviewTemplateId) commandArgs.reviewTemplateId = reviewTemplateId;
-          const commands = [
-            {
-              command: "AdminRemoteSystemService.createIntegration",
-              args: commandArgs,
-            },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const { token, title, config, reviewTemplateId } = args;
+        const commandArgs: any = { token, title, config };
+        if (reviewTemplateId) commandArgs.reviewTemplateId = reviewTemplateId;
+        const commands = [
+          {
+            command: "AdminRemoteSystemService.createIntegration",
+            args: commandArgs,
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -385,33 +312,21 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          const { id, title, config, reviewTemplateId } = args;
-          const commandArgs: any = { id };
-          if (title) commandArgs.title = title;
-          if (config) commandArgs.config = config;
-          if (reviewTemplateId) commandArgs.reviewTemplateId = reviewTemplateId;
-          const commands = [
-            {
-              command: "AdminRemoteSystemService.editIntegration",
-              args: commandArgs,
-            },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const { id, title, config, reviewTemplateId } = args;
+        const commandArgs: any = { id };
+        if (title) commandArgs.title = title;
+        if (config) commandArgs.config = config;
+        if (reviewTemplateId) commandArgs.reviewTemplateId = reviewTemplateId;
+        const commands = [
+          {
+            command: "AdminRemoteSystemService.editIntegration",
+            args: commandArgs,
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -428,34 +343,22 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          const commandArgs: any = {};
-          if (args.id !== undefined)
-            commandArgs.id =
-              typeof args.id === "string" && !Number.isNaN(Number(args.id))
-                ? Number(args.id)
-                : args.id;
-          const commands = [
-            {
-              command: "AdminRemoteSystemService.deleteIntegration",
-              args: commandArgs,
-            },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const commandArgs: any = {};
+        if (args.id !== undefined)
+          commandArgs.id =
+            typeof args.id === "string" && !Number.isNaN(Number(args.id))
+              ? Number(args.id)
+              : args.id;
+        const commands = [
+          {
+            command: "AdminRemoteSystemService.deleteIntegration",
+            args: commandArgs,
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -473,34 +376,22 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          const commandArgs: any = {};
-          if (args.id !== undefined)
-            commandArgs.id =
-              typeof args.id === "string" && !Number.isNaN(Number(args.id))
-                ? Number(args.id)
-                : args.id;
-          const commands = [
-            {
-              command: "AdminRemoteSystemService.updateWebhook",
-              args: commandArgs,
-            },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const commandArgs: any = {};
+        if (args.id !== undefined)
+          commandArgs.id =
+            typeof args.id === "string" && !Number.isNaN(Number(args.id))
+              ? Number(args.id)
+              : args.id;
+        const commands = [
+          {
+            command: "AdminRemoteSystemService.updateWebhook",
+            args: commandArgs,
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
 
@@ -519,34 +410,22 @@ export class CollaboratorClient implements Client {
         }),
       },
       async (args, _extra) => {
-        try {
-          const commandArgs: any = {};
-          if (args.id !== undefined)
-            commandArgs.id =
-              typeof args.id === "string" && !Number.isNaN(Number(args.id))
-                ? Number(args.id)
-                : args.id;
-          const commands = [
-            {
-              command: "AdminRemoteSystemService.testConnection",
-              args: commandArgs,
-            },
-          ];
-          const result = await this.call(commands);
-          return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          };
-        } catch (err) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+        const commandArgs: any = {};
+        if (args.id !== undefined)
+          commandArgs.id =
+            typeof args.id === "string" && !Number.isNaN(Number(args.id))
+              ? Number(args.id)
+              : args.id;
+        const commands = [
+          {
+            command: "AdminRemoteSystemService.testConnection",
+            args: commandArgs,
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
       },
     );
   }
