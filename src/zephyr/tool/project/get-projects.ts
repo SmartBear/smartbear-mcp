@@ -1,20 +1,12 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type ZodRawShape, z } from "zod";
+import type { ZodRawShape } from "zod";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
-  MaxResultsSchema,
-  StartAtSchema,
-  type ZephyrProjectList,
-  ZephyrProjectListSchema,
-} from "../../common/types.js";
+  listProjectsQueryParams,
+  listProjectsResponse,
+} from "../../common/rest-api-schemas.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
-
-export const GetProjectsInputSchema = z.object({
-  startAt: StartAtSchema.optional(),
-  maxResults: MaxResultsSchema.optional(),
-});
-type GetProjectsInput = z.infer<typeof GetProjectsInputSchema>;
 
 export class GetProjects implements ZephyrTool {
   private readonly apiClient: ApiClient;
@@ -28,8 +20,8 @@ export class GetProjects implements ZephyrTool {
     summary: "Get details of projects in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: GetProjectsInputSchema,
-    outputSchema: ZephyrProjectListSchema,
+    inputSchema: listProjectsQueryParams,
+    outputSchema: listProjectsResponse,
     examples: [
       {
         description: "Get the first 10 projects",
@@ -58,12 +50,9 @@ export class GetProjects implements ZephyrTool {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args: GetProjectsInput) => {
-    const { maxResults, startAt } = args;
-    const response: ZephyrProjectList = await this.apiClient.get("/projects", {
-      maxResults,
-      startAt,
-    });
+  handle: ToolCallback<ZodRawShape> = async (args) => {
+    const parsedArgs = listProjectsQueryParams.parse(args);
+    const response = await this.apiClient.get("/projects", parsedArgs);
     return {
       structuredContent: response,
       content: [],

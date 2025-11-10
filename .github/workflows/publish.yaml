@@ -6,6 +6,22 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      push_ecr:
+        description: "Push Docker image to Amazon ECR"
+        required: false
+        type: boolean
+        default: true
+      publish_npm:
+        description: "Publish the package to npm"
+        required: false
+        type: boolean
+        default: true
+      publish_mcp:
+        description: "Publish to the MCP Registry"
+        required: false
+        type: boolean
+        default: true
   release:
     types: [published]
 
@@ -14,6 +30,10 @@ jobs:
     name: Publish package
     runs-on: ubuntu-24.04
     environment: Production
+    env:
+      RUN_PUSH_ECR: ${{ github.event_name != 'workflow_dispatch' || inputs.push_ecr }}
+      RUN_PUBLISH_NPM: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_npm }}
+      RUN_PUBLISH_MCP: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_mcp }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -25,13 +45,23 @@ jobs:
           registry-url: 'https://registry.npmjs.org/'
           scope: '@smartbear'
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.7.1
+        with:
+          install: true
+
       - name: Configure AWS credentials
+        if: ${{ env.RUN_PUSH_ECR == 'true' }}
         uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838 # v5.0.0
         with:
           role-to-assume: ${{ secrets.ECR_IAM_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Login to Amazon ECR private
+        if: ${{ env.RUN_PUSH_ECR == 'true' }}
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
         with:
           registries: "709825985650"
@@ -48,30 +78,48 @@ jobs:
             '.version = $v | .packages[0].version = $v' \
             server.json > server.json.tmp && mv server.json.tmp server.json
 
+      - name: Run container tests on linux/amd64 and linux/arm64
+        if: ${{ env.RUN_PUSH_ECR == 'true' }}
+        run: |
+          docker buildx build \
+            --target tester \
+            --platform linux/amd64,linux/arm64 \
+            --progress plain \
+            .
+
       - name: Build, tag, and push docker image
+        if: ${{ env.RUN_PUSH_ECR == 'true' }}
         env:
           IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
         run: |
           DEST=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}:${IMAGE_TAG}
-          docker build -t $DEST .
-          docker push $DEST
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --tag "$DEST" \
+            --push \
+            .
 
       - name: Install dependencies
+        if: ${{ env.RUN_PUBLISH_NPM == 'true' }}
         run: npm ci
 
       - name: Publish to npm
+        if: ${{ env.RUN_PUBLISH_NPM == 'true' }}
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: prepare mcp-publisher
+        if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
         run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.2.3/mcp-publisher_1.2.3_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
 
       - name: Login
+        if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
         run: |
           ./mcp-publisher login github-oidc
           ./mcp-publisher login dns --domain smartbear.com --private-key "${{ secrets.GH_MCP_REGISTRY_KEY }}"
 
       - name: Publish to MCP Registry
+        if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
         run: ./mcp-publisher publish
