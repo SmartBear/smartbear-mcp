@@ -10,6 +10,7 @@
 
 import { ApiHubClient } from "../api-hub/client.js";
 import { BugsnagClient } from "../bugsnag/client.js";
+import { CollaboratorClient } from "../collaborator/client.js";
 import { PactflowClient } from "../pactflow/client.js";
 import { QmetryClient } from "../qmetry/client.js";
 import { ReflectClient } from "../reflect/client.js";
@@ -33,3 +34,6 @@ clientRegistry.register(new QmetryClient());
 
 // Register Zephyr client
 clientRegistry.register(new ZephyrClient());
+
+// Register Collaborator client
+clientRegistry.register(new CollaboratorClient());

@@ -1217,4 +1217,1140 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("Production");
     });
   });
+
+  describe("Fetch QMetry list Projects", () => {
+    it("should fetch project list with default parameters", async () => {
+      (project.getProjects as any).mockResolvedValue({
+        data: [
+          {
+            projectID: 1,
+            name: "Project A",
+            projectKey: "PA",
+            isArchived: false,
+          },
+          {
+            projectID: 2,
+            name: "Project B",
+            projectKey: "PB",
+            isArchived: false,
+          },
+        ],
+        total: 2,
+      });
+
+      const handler = getHandler("Fetch QMetry list Projects");
+      const result = await handler({ params: { showArchive: false } });
+
+      expect(project.getProjects).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          params: { showArchive: false },
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Project A");
+      expect(result.content[0].text).toContain("Project B");
+    });
+
+    it("should fetch project list with filter and pagination", async () => {
+      (project.getProjects as any).mockResolvedValue({
+        data: [
+          {
+            projectID: 3,
+            name: "MAC Project",
+            projectKey: "MAC",
+            isArchived: false,
+          },
+        ],
+        total: 1,
+      });
+
+      const handler = getHandler("Fetch QMetry list Projects");
+      const result = await handler({
+        params: { showArchive: true },
+        filter: '[{"value":"MAC","type":"string","field":"name"}]',
+        limit: 10,
+        page: 1,
+      });
+
+      expect(project.getProjects).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          params: { showArchive: true },
+          filter: '[{"value":"MAC","type":"string","field":"name"}]',
+          limit: 10,
+          page: 1,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("MAC Project");
+    });
+  });
+
+  describe("Set QMetry Project Info", () => {
+    it("should set project info with default project key", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        id: 1,
+        name: "default",
+        projectKey: "default",
+      });
+
+      const handler = getHandler("Set QMetry Project Info");
+      const result = await handler({});
+
+      expect(project.getProjectInfo).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        {},
+      );
+
+      expect(result.content[0].text).toContain("default");
+    });
+
+    it("should set project info with custom project key", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        id: 2,
+        name: "MAC Project",
+        projectKey: "MAC",
+      });
+
+      const handler = getHandler("Set QMetry Project Info");
+      const result = await handler({ projectKey: "MAC" });
+
+      expect(project.getProjectInfo).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "MAC",
+        {},
+      );
+
+      expect(result.content[0].text).toContain("MAC");
+    });
+  });
+
+  describe("Fetch Releases and Cycles", () => {
+    it("should fetch releases and cycles with default parameters", async () => {
+      (project.getReleasesCycles as any).mockResolvedValue({
+        projects: [
+          {
+            releases: [
+              { releaseID: 123, name: "Release 1.0", isArchived: false },
+              { releaseID: 124, name: "Release 2.0", isArchived: false },
+            ],
+          },
+        ],
+      });
+
+      const handler = getHandler("Fetch Releases and Cycles");
+      const result = await handler({});
+
+      expect(project.getReleasesCycles).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        {},
+      );
+
+      expect(result.content[0].text).toContain("Release 1.0");
+      expect(result.content[0].text).toContain("Release 2.0");
+    });
+
+    it("should fetch releases including archived with showArchive true", async () => {
+      (project.getReleasesCycles as any).mockResolvedValue({
+        projects: [
+          {
+            releases: [
+              { releaseID: 125, name: "Archived Release", isArchived: true },
+            ],
+          },
+        ],
+      });
+
+      const handler = getHandler("Fetch Releases and Cycles");
+      const result = await handler({ showArchive: true });
+
+      expect(project.getReleasesCycles).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({ showArchive: true }),
+      );
+
+      expect(result.content[0].text).toContain("Archived Release");
+    });
+  });
+
+  describe("Fetch Builds", () => {
+    it("should fetch builds with default pagination", async () => {
+      (project.getBuilds as any).mockResolvedValue({
+        data: [
+          { buildID: 1, name: "Build 1.0", isArchived: false },
+          { buildID: 2, name: "Build 1.1", isArchived: false },
+        ],
+        total: 2,
+      });
+
+      const handler = getHandler("Fetch Builds");
+      const result = await handler({});
+
+      expect(project.getBuilds).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({}),
+      );
+
+      expect(result.content[0].text).toContain("Build 1.0");
+      expect(result.content[0].text).toContain("Build 1.1");
+    });
+
+    it("should fetch builds with filter by name", async () => {
+      (project.getBuilds as any).mockResolvedValue({
+        data: [{ buildID: 3, name: "Build 2.0", isArchived: false }],
+        total: 1,
+      });
+
+      const handler = getHandler("Fetch Builds");
+      const result = await handler({
+        filter: '[{"value":"Build 2.0","type":"string","field":"name"}]',
+        limit: 20,
+      });
+
+      expect(project.getBuilds).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          filter: '[{"value":"Build 2.0","type":"string","field":"name"}]',
+          limit: 20,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Build 2.0");
+    });
+  });
+
+  describe("Fetch Platforms", () => {
+    it("should fetch platforms with default parameters", async () => {
+      (project.getPlatforms as any).mockResolvedValue({
+        data: [
+          { platformID: 1, name: "Chrome", isPlatformArchived: false },
+          { platformID: 2, name: "Firefox", isPlatformArchived: false },
+        ],
+        total: 2,
+      });
+
+      const handler = getHandler("Fetch Platforms");
+      const result = await handler({});
+
+      expect(project.getPlatforms).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({}),
+      );
+
+      expect(result.content[0].text).toContain("Chrome");
+      expect(result.content[0].text).toContain("Firefox");
+    });
+
+    it("should fetch platforms with archive filter", async () => {
+      (project.getPlatforms as any).mockResolvedValue({
+        data: [{ platformID: 3, name: "Safari", isPlatformArchived: false }],
+        total: 1,
+      });
+
+      const handler = getHandler("Fetch Platforms");
+      const result = await handler({
+        filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
+      });
+
+      expect(project.getPlatforms).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Safari");
+    });
+  });
+
+  describe("Create Test Case", () => {
+    it("should create test case with required parameters", async () => {
+      (testcase.createTestCases as any).mockResolvedValue({
+        id: 12345,
+        entityKey: "TC-001",
+        name: "New Test Case",
+      });
+
+      const handler = getHandler("Create Test Case");
+      const result = await handler({
+        tcFolderID: "102653",
+        name: "New Test Case",
+      });
+
+      expect(testcase.createTestCases).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcFolderID: "102653",
+          name: "New Test Case",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("TC-001");
+      expect(result.content[0].text).toContain("New Test Case");
+    });
+
+    it("should create test case with steps and metadata", async () => {
+      (testcase.createTestCases as any).mockResolvedValue({
+        id: 12346,
+        entityKey: "TC-002",
+        name: "Test with Steps",
+      });
+
+      const handler = getHandler("Create Test Case");
+      const result = await handler({
+        tcFolderID: "102653",
+        name: "Test with Steps",
+        steps: [
+          {
+            orderId: 1,
+            description: "Step 1",
+            inputData: "Input 1",
+            expectedOutcome: "Outcome 1",
+          },
+        ],
+        priority: 123,
+      });
+
+      expect(testcase.createTestCases).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcFolderID: "102653",
+          name: "Test with Steps",
+          steps: expect.arrayContaining([
+            expect.objectContaining({
+              orderId: 1,
+              description: "Step 1",
+            }),
+          ]),
+          priority: 123,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("TC-002");
+    });
+  });
+
+  describe("Update Test Case", () => {
+    it("should update test case with basic fields", async () => {
+      (testcase.updateTestCase as any).mockResolvedValue({
+        id: 4519260,
+        entityKey: "TC-003",
+        name: "Updated Test Case",
+      });
+
+      const handler = getHandler("Update Test Case");
+      const result = await handler({
+        tcID: 4519260,
+        tcVersionID: 5448492,
+        name: "Updated Test Case",
+      });
+
+      expect(testcase.updateTestCase).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcID: 4519260,
+          tcVersionID: 5448492,
+          name: "Updated Test Case",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Updated Test Case");
+    });
+
+    it("should update test case with steps", async () => {
+      (testcase.updateTestCase as any).mockResolvedValue({
+        id: 4519260,
+        entityKey: "TC-004",
+        name: "Test with Updated Steps",
+      });
+
+      const handler = getHandler("Update Test Case");
+      const result = await handler({
+        tcID: 4519260,
+        tcVersionID: 5448492,
+        steps: [
+          {
+            orderId: 1,
+            description: "Updated Step",
+            tcStepID: 3014032,
+          },
+        ],
+        isStepUpdated: true,
+      });
+
+      expect(testcase.updateTestCase).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcID: 4519260,
+          tcVersionID: 5448492,
+          steps: expect.arrayContaining([
+            expect.objectContaining({
+              orderId: 1,
+              description: "Updated Step",
+            }),
+          ]),
+          isStepUpdated: true,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("TC-004");
+    });
+  });
+
+  describe("Create Test Suite", () => {
+    it("should create test suite with required parameters", async () => {
+      (testsuite.createTestSuites as any).mockResolvedValue({
+        id: 1505898,
+        entityKey: "TS-001",
+        name: "New Test Suite",
+      });
+
+      const handler = getHandler("Create Test Suite");
+      const result = await handler({
+        parentFolderId: "113557",
+        name: "New Test Suite",
+      });
+
+      expect(testsuite.createTestSuites).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          parentFolderId: "113557",
+          name: "New Test Suite",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("TS-001");
+      expect(result.content[0].text).toContain("New Test Suite");
+    });
+
+    it("should create test suite with metadata and release mapping", async () => {
+      (testsuite.createTestSuites as any).mockResolvedValue({
+        id: 1505899,
+        entityKey: "TS-002",
+        name: "Suite with Metadata",
+      });
+
+      const handler = getHandler("Create Test Suite");
+      const result = await handler({
+        parentFolderId: "113557",
+        name: "Suite with Metadata",
+        description: "Test suite description",
+        testsuiteOwner: 6963,
+        associateRelCyc: true,
+        releaseCycleMapping: [{ buildID: 18411, releaseId: 10286 }],
+      });
+
+      expect(testsuite.createTestSuites).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          parentFolderId: "113557",
+          name: "Suite with Metadata",
+          testsuiteOwner: 6963,
+          associateRelCyc: true,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("TS-002");
+    });
+  });
+
+  describe("Update Test Suite", () => {
+    it("should update test suite name", async () => {
+      (testsuite.updateTestSuite as any).mockResolvedValue({
+        id: 1505898,
+        entityKey: "TS-003",
+        name: "Updated Suite Name",
+      });
+
+      const handler = getHandler("Update Test Suite");
+      const result = await handler({
+        id: 1505898,
+        entityKey: "TS-003",
+        TsFolderID: 1644087,
+        name: "Updated Suite Name",
+      });
+
+      expect(testsuite.updateTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          id: 1505898,
+          entityKey: "TS-003",
+          TsFolderID: 1644087,
+          name: "Updated Suite Name",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Updated Suite Name");
+    });
+
+    it("should update test suite state and owner", async () => {
+      (testsuite.updateTestSuite as any).mockResolvedValue({
+        id: 1505898,
+        entityKey: "TS-004",
+        testSuiteState: 505036,
+        testsuiteOwner: 6963,
+      });
+
+      const handler = getHandler("Update Test Suite");
+      const result = await handler({
+        id: 1505898,
+        entityKey: "TS-004",
+        TsFolderID: 1644087,
+        testSuiteState: 505036,
+        testsuiteOwner: 6963,
+      });
+
+      expect(testsuite.updateTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          id: 1505898,
+          testSuiteState: 505036,
+          testsuiteOwner: 6963,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("505036");
+    });
+  });
+
+  describe("Fetch Test Suites", () => {
+    it("should auto-resolve viewId and fetch test suites", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        latestViews: { TS: { viewId: 103097 } },
+      });
+      (testsuite.fetchTestSuites as any).mockResolvedValue({
+        data: [
+          { id: 1, name: "Suite 1", entityKey: "TS-001" },
+          { id: 2, name: "Suite 2", entityKey: "TS-002" },
+        ],
+      });
+
+      const handler = getHandler("Fetch Test Suites");
+      const result = await handler({});
+
+      expect(project.getProjectInfo).toHaveBeenCalled();
+      expect(testsuite.fetchTestSuites).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          viewId: 103097,
+          folderPath: "",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Suite 1");
+      expect(result.content[0].text).toContain("Suite 2");
+    });
+
+    it("should skip auto-resolution when viewId provided", async () => {
+      (testsuite.fetchTestSuites as any).mockResolvedValue({
+        data: [{ id: 3, name: "Suite 3", entityKey: "TS-003" }],
+      });
+
+      const handler = getHandler("Fetch Test Suites");
+      const result = await handler({ viewId: 99999, folderPath: "" });
+
+      expect(project.getProjectInfo).not.toHaveBeenCalled();
+      expect(testsuite.fetchTestSuites).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          viewId: 99999,
+          folderPath: "",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Suite 3");
+    });
+  });
+
+  describe("Fetch Test Suites for Test Case", () => {
+    it("should fetch test suites for test case with auto-resolution", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        latestViews: { TSFS: { viewId: 104316 } },
+      });
+      (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
+        data: [
+          { id: 101, name: "Available Suite 1" },
+          { id: 102, name: "Available Suite 2" },
+        ],
+      });
+
+      const handler = getHandler("Fetch Test Suites for Test Case");
+      const result = await handler({ tsFolderID: 113557 });
+
+      expect(project.getProjectInfo).toHaveBeenCalled();
+      expect(testsuite.fetchTestSuitesForTestCase).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsFolderID: 113557,
+          viewId: 104316,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Available Suite 1");
+    });
+
+    it("should fetch test suites with filter", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        latestViews: { TSFS: { viewId: 104316 } },
+      });
+      (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
+        data: [{ id: 103, name: "Filtered Suite" }],
+      });
+
+      const handler = getHandler("Fetch Test Suites for Test Case");
+      const result = await handler({
+        tsFolderID: 113557,
+        filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
+      });
+
+      expect(testsuite.fetchTestSuitesForTestCase).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsFolderID: 113557,
+          filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Filtered Suite");
+    });
+  });
+
+  describe("Link Requirements to Testcase", () => {
+    it("should link requirements to test case", async () => {
+      (testcase.linkRequirementToTestCase as any).mockResolvedValue({
+        success: true,
+        message: "Requirements linked successfully",
+      });
+
+      const handler = getHandler("Link Requirements to Testcase");
+      const result = await handler({
+        tcID: "VT-TC-26",
+        tcVersionId: 5448515,
+        rqVersionIds: "5009939,5009937",
+      });
+
+      expect(testcase.linkRequirementToTestCase).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcID: "VT-TC-26",
+          tcVersionId: 5448515,
+          rqVersionIds: "5009939,5009937",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("linked");
+    });
+
+    it("should handle API errors gracefully", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      (testcase.linkRequirementToTestCase as any).mockRejectedValue(
+        new Error("Test case not found"),
+      );
+
+      const handler = getHandler("Link Requirements to Testcase");
+      const result = await handler({
+        tcID: "VT-TC-99",
+        tcVersionId: 999,
+        rqVersionIds: "111",
+      });
+
+      expect(result.content[0].success).toBe(false);
+      expect(result.content[0].text).toContain("Test case not found");
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("Fetch Requirements Linked to Test Case", () => {
+    it("should fetch requirements linked to test case", async () => {
+      (requirement.fetchRequirementsLinkedToTestCase as any).mockResolvedValue({
+        data: [
+          { entityKey: "RQ-001", name: "Requirement 1" },
+          { entityKey: "RQ-002", name: "Requirement 2" },
+        ],
+      });
+
+      const handler = getHandler("Fetch Requirements Linked to Test Case");
+      const result = await handler({ tcID: 594294 });
+
+      expect(
+        requirement.fetchRequirementsLinkedToTestCase,
+      ).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcID: 594294,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("RQ-001");
+      expect(result.content[0].text).toContain("Requirement 1");
+    });
+
+    it("should fetch unlinked requirements with getLinked false", async () => {
+      (requirement.fetchRequirementsLinkedToTestCase as any).mockResolvedValue({
+        data: [{ entityKey: "RQ-003", name: "Unlinked Requirement" }],
+      });
+
+      const handler = getHandler("Fetch Requirements Linked to Test Case");
+      const result = await handler({ tcID: 594294, getLinked: false });
+
+      expect(
+        requirement.fetchRequirementsLinkedToTestCase,
+      ).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tcID: 594294,
+          getLinked: false,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("RQ-003");
+    });
+  });
+
+  describe("Link Test Cases to Test Suite", () => {
+    it("should link test cases to test suite", async () => {
+      (testsuite.linkTestCasesToTestSuite as any).mockResolvedValue({
+        success: true,
+        message: "Test cases linked successfully",
+      });
+
+      const handler = getHandler("Link Test Cases to Test Suite");
+      const result = await handler({
+        tsID: 1487397,
+        tcvdIDs: [5448504, 5448503],
+        fromReqs: false,
+      });
+
+      expect(testsuite.linkTestCasesToTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsID: 1487397,
+          tcvdIDs: [5448504, 5448503],
+          fromReqs: false,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("linked");
+    });
+
+    it("should handle linking multiple test cases", async () => {
+      (testsuite.linkTestCasesToTestSuite as any).mockResolvedValue({
+        success: true,
+        linkedCount: 4,
+      });
+
+      const handler = getHandler("Link Test Cases to Test Suite");
+      const result = await handler({
+        tsID: 1487397,
+        tcvdIDs: [5448504, 5448503, 5448505, 5448506],
+        fromReqs: false,
+      });
+
+      expect(testsuite.linkTestCasesToTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsID: 1487397,
+          tcvdIDs: expect.arrayContaining([5448504, 5448503, 5448505, 5448506]),
+        }),
+      );
+
+      expect(result.content[0].text).toContain("4");
+    });
+  });
+
+  describe("Requirements Linked Test Cases to Test Suite", () => {
+    it("should link requirement-linked test cases to test suite", async () => {
+      (testsuite.reqLinkedTestCasesToTestSuite as any).mockResolvedValue({
+        success: true,
+        message: "Requirement-linked test cases linked successfully",
+      });
+
+      const handler = getHandler(
+        "Requirements Linked Test Cases to Test Suite",
+      );
+      const result = await handler({
+        tsID: 1487397,
+        tcvdIDs: [5448504, 5448503],
+        fromReqs: true,
+      });
+
+      expect(testsuite.reqLinkedTestCasesToTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsID: 1487397,
+          tcvdIDs: [5448504, 5448503],
+          fromReqs: true,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("linked");
+    });
+
+    it("should link multiple requirement-linked test cases", async () => {
+      (testsuite.reqLinkedTestCasesToTestSuite as any).mockResolvedValue({
+        success: true,
+        linkedCount: 4,
+      });
+
+      const handler = getHandler(
+        "Requirements Linked Test Cases to Test Suite",
+      );
+      const result = await handler({
+        tsID: 8674,
+        tcvdIDs: [5448504, 5448503, 5448505, 5448506],
+        fromReqs: true,
+      });
+
+      expect(testsuite.reqLinkedTestCasesToTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          tsID: 8674,
+          fromReqs: true,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("4");
+    });
+  });
+
+  describe("Create Defect or Issue", () => {
+    it("should create issue with required parameters", async () => {
+      (issues.createIssue as any).mockResolvedValue({
+        id: 5057882,
+        entityKey: "IS-001",
+        summary: "Login button not working",
+      });
+
+      const handler = getHandler("Create Defect or Issue");
+      const result = await handler({
+        summary: "Login button not working",
+        issueType: 2231983,
+        issuePriority: 2231988,
+      });
+
+      expect(issues.createIssue).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          summary: "Login button not working",
+          issueType: 2231983,
+          issuePriority: 2231988,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("IS-001");
+      expect(result.content[0].text).toContain("Login button not working");
+    });
+
+    it("should create issue with all optional parameters", async () => {
+      (issues.createIssue as any).mockResolvedValue({
+        id: 5057883,
+        entityKey: "IS-002",
+        summary: "Complete Issue",
+      });
+
+      const handler = getHandler("Create Defect or Issue");
+      const result = await handler({
+        summary: "Complete Issue",
+        issueType: 2231983,
+        issuePriority: 2231988,
+        issueOwner: 15112,
+        description: "Detailed description",
+        affectedRelease: [111840],
+        affectedCycles: [112345],
+        tcRunID: 567890,
+      });
+
+      expect(issues.createIssue).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          summary: "Complete Issue",
+          issueOwner: 15112,
+          affectedRelease: [111840],
+          tcRunID: 567890,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("IS-002");
+    });
+  });
+
+  describe("Update Issue", () => {
+    it("should update issue summary", async () => {
+      (issues.updateIssue as any).mockResolvedValue({
+        id: 118150,
+        summary: "Updated summary",
+      });
+
+      const handler = getHandler("Update Issue");
+      const result = await handler({
+        DefectId: 118150,
+        summary: "Updated summary",
+      });
+
+      expect(issues.updateIssue).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          DefectId: 118150,
+          summary: "Updated summary",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("Updated summary");
+    });
+
+    it("should update issue priority and type", async () => {
+      (issues.updateIssue as any).mockResolvedValue({
+        id: 118150,
+        issuePriority: 189340,
+        issueType: 189337,
+      });
+
+      const handler = getHandler("Update Issue");
+      const result = await handler({
+        DefectId: 118150,
+        issuePriority: 189340,
+        issueType: 189337,
+      });
+
+      expect(issues.updateIssue).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          DefectId: 118150,
+          issuePriority: 189340,
+          issueType: 189337,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("189340");
+    });
+  });
+
+  describe("Fetch Defects or Issues", () => {
+    it("should auto-resolve viewId and fetch issues", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        latestViews: { IS: { viewId: 169424 } },
+      });
+      (issues.fetchIssues as any).mockResolvedValue({
+        data: [
+          { id: 1, entityKey: "IS-001", name: "Issue 1" },
+          { id: 2, entityKey: "IS-002", name: "Issue 2" },
+        ],
+      });
+
+      const handler = getHandler("Fetch Defects or Issues");
+      const result = await handler({});
+
+      expect(project.getProjectInfo).toHaveBeenCalled();
+      expect(issues.fetchIssues).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          viewId: 169424,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("IS-001");
+      expect(result.content[0].text).toContain("IS-002");
+    });
+
+    it("should fetch issues with filter", async () => {
+      (project.getProjectInfo as any).mockResolvedValue({
+        latestViews: { IS: { viewId: 169424 } },
+      });
+      (issues.fetchIssues as any).mockResolvedValue({
+        data: [{ id: 3, entityKey: "IS-003", name: "Filtered Issue" }],
+      });
+
+      const handler = getHandler("Fetch Defects or Issues");
+      const result = await handler({
+        filter: '[{"type":"string","value":"IS-003","field":"entityKeyId"}]',
+      });
+
+      expect(issues.fetchIssues).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          filter: '[{"type":"string","value":"IS-003","field":"entityKeyId"}]',
+        }),
+      );
+
+      expect(result.content[0].text).toContain("IS-003");
+    });
+  });
+
+  describe("Link Issues to Testcase Run", () => {
+    it("should link single issue to testcase run", async () => {
+      (issues.linkIssuesToTestcaseRun as any).mockResolvedValue({
+        success: true,
+        message: "Issue linked successfully",
+      });
+
+      const handler = getHandler("Link Issues to Testcase Run");
+      const result = await handler({
+        issueIds: ["5054834"],
+        tcrId: 567890,
+      });
+
+      expect(issues.linkIssuesToTestcaseRun).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          issueIds: ["5054834"],
+          tcrId: 567890,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("linked");
+    });
+
+    it("should link multiple issues to testcase run", async () => {
+      (issues.linkIssuesToTestcaseRun as any).mockResolvedValue({
+        success: true,
+        linkedCount: 2,
+      });
+
+      const handler = getHandler("Link Issues to Testcase Run");
+      const result = await handler({
+        issueIds: ["5054834", "5054835"],
+        tcrId: 567890,
+      });
+
+      expect(issues.linkIssuesToTestcaseRun).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          issueIds: ["5054834", "5054835"],
+          tcrId: 567890,
+        }),
+      );
+
+      expect(result.content[0].text).toContain("2");
+    });
+  });
+
+  describe("Link Platforms to Test Suite", () => {
+    it("should link single platform to test suite", async () => {
+      (testsuite.linkPlatformsToTestSuite as any).mockResolvedValue({
+        success: true,
+        message: "Platform linked successfully",
+      });
+
+      const handler = getHandler("Link Platforms to Test Suite");
+      const result = await handler({
+        qmTsId: 1511970,
+        qmPlatformId: "63004",
+      });
+
+      expect(testsuite.linkPlatformsToTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          qmTsId: 1511970,
+          qmPlatformId: "63004",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("linked");
+    });
+
+    it("should link multiple platforms to test suite", async () => {
+      (testsuite.linkPlatformsToTestSuite as any).mockResolvedValue({
+        success: true,
+        linkedCount: 3,
+      });
+
+      const handler = getHandler("Link Platforms to Test Suite");
+      const result = await handler({
+        qmTsId: 1511970,
+        qmPlatformId: "63004,63005,63006",
+      });
+
+      expect(testsuite.linkPlatformsToTestSuite).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "default",
+        expect.objectContaining({
+          qmTsId: 1511970,
+          qmPlatformId: "63004,63005,63006",
+        }),
+      );
+
+      expect(result.content[0].text).toContain("linked");
+    });
+  });
 });

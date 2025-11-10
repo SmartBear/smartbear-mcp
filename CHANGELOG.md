@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - [Common] Refactor client authentication [#196](https://github.com/SmartBear/smartbear-mcp/pull/196)
+- [Qmetry] New QMetry MCP Server Tools Added, Refactored the existing tools structure [#217](https://github.com/SmartBear/smartbear-mcp/pull/217)
 
 ## [0.9.0] - 2025-10-22
 

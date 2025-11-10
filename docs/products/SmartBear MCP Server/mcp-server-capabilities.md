@@ -10,3 +10,4 @@ The SmartBear MCP Server provides access to multiple capabilities across our API
 -   [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - provides error monitoring and debugging capabilities
 -   [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - provides QMetry Test Management capabilities
 -   [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
+-   [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - provides Review and Remote System Configuration management capabilities

@@ -11,6 +11,7 @@ import {
   ZodArray,
   ZodBoolean,
   ZodEnum,
+  ZodIntersection,
   ZodLiteral,
   ZodNumber,
   ZodObject,
@@ -188,8 +189,15 @@ export class SmartBearMcpServer extends McpServer {
   private schemaToRawShape(
     schema: ZodTypeAny | undefined,
   ): ZodRawShape | undefined {
-    if (schema && schema instanceof ZodObject) {
-      return schema.shape;
+    if (schema) {
+      if (schema instanceof ZodObject) {
+        return schema.shape;
+      }
+      if (schema instanceof ZodIntersection) {
+        const leftShape = this.schemaToRawShape(schema._def.left);
+        const rightShape = this.schemaToRawShape(schema._def.right);
+        return { ...leftShape, ...rightShape };
+      }
     }
     return undefined;
   }

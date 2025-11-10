@@ -3,12 +3,23 @@ import type { ApiHubConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,
   CreateProductBody,
+  CreateTableOfContentsBody,
+  DeleteDocumentArgs,
+  DeleteTableOfContentsArgs,
+  Document,
   FallbackResponse,
+  GetDocumentArgs,
+  GetProductSectionsArgs,
+  GetTableOfContentsArgs,
   Portal,
   PortalsListResponse,
   Product,
   ProductsListResponse,
+  SectionsListResponse,
   SuccessResponse,
+  TableOfContentsItem,
+  TableOfContentsListResponse,
+  UpdateDocumentArgs,
   UpdatePortalBody,
   UpdateProductBody,
 } from "./portal-types.js";
@@ -26,6 +37,10 @@ import type {
   ScanStandardizationParams,
   StandardizationResult,
 } from "./registry-types.js";
+import type {
+  OrganizationsListResponse,
+  OrganizationsQueryParams,
+} from "./user-management-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
@@ -129,6 +144,41 @@ export class ApiHubAPI {
       [] as unknown as PortalsListResponse,
     );
     return result as PortalsListResponse;
+  }
+
+  async getOrganizations(
+    params?: OrganizationsQueryParams,
+  ): Promise<OrganizationsListResponse> {
+    // Build query string if parameters are provided
+    const searchParams = new URLSearchParams();
+    if (params?.q) searchParams.append("q", params.q);
+    if (params?.sortBy) searchParams.append("sortBy", params.sortBy);
+    if (params?.order) searchParams.append("order", params.order);
+    if (params?.page !== undefined)
+      searchParams.append("page", params.page.toString());
+    if (params?.pageSize)
+      searchParams.append("pageSize", params.pageSize.toString());
+
+    const queryString = searchParams.toString();
+    const url = `${this.config.userManagementBasePath}/orgs${queryString ? `?${queryString}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    const defaultResponse: OrganizationsListResponse = {
+      items: [],
+      totalCount: 0,
+      pageSize: 50,
+      page: 0,
+    };
+
+    const result = await this.handleResponse<OrganizationsListResponse>(
+      response,
+      defaultResponse,
+    );
+    return result as OrganizationsListResponse;
   }
 
   async createPortal(body: CreatePortalArgs): Promise<Portal> {
@@ -268,6 +318,235 @@ export class ApiHubAPI {
     return this.handleResponse<Product | SuccessResponse>(response, {
       success: true,
     } as SuccessResponse);
+  }
+
+  async publishPortalProduct(
+    productId: string,
+    preview: boolean = false,
+  ): Promise<SuccessResponse | FallbackResponse> {
+    const response = await fetch(
+      `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
+      {
+        method: "PUT",
+        headers: this.headers,
+      },
+    );
+    return this.handleResponse<SuccessResponse>(response, {
+      success: true,
+    } as SuccessResponse);
+  }
+
+  async getPortalProductSections(
+    productId: string,
+    params: Omit<GetProductSectionsArgs, "productId">,
+  ): Promise<SectionsListResponse> {
+    const queryParameters = new URLSearchParams();
+
+    if (params.embed) {
+      for (const item of params.embed) {
+        queryParameters.append("embed", item);
+      }
+    }
+    if (params.page !== undefined) {
+      queryParameters.append("page", params.page.toString());
+    }
+    if (params.size !== undefined) {
+      queryParameters.append("size", params.size.toString());
+    }
+
+    const url = `${this.config.portalBasePath}/products/${productId}/sections${queryParameters.toString() ? `?${queryParameters.toString()}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    const result = await this.handleResponse<SectionsListResponse>(
+      response,
+      [] as SectionsListResponse,
+    );
+    return result as SectionsListResponse;
+  }
+
+  /**
+   * Create a new table of contents item in a portal product section
+   * @param sectionId - Section ID where the table of contents item will be created
+   * @param body - Table of contents creation parameters
+   * @returns Created table of contents item with metadata
+   */
+  async createTableOfContents(
+    sectionId: string,
+    body: CreateTableOfContentsBody,
+  ): Promise<TableOfContentsItem> {
+    const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub createTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    const result = await response.json();
+    return result as TableOfContentsItem;
+  }
+
+  /**
+   * Get table of contents for a section
+   * @param args - Parameters for retrieving table of contents
+   * @returns List of table of contents items
+   */
+  async getTableOfContents(
+    args: GetTableOfContentsArgs,
+  ): Promise<TableOfContentsListResponse> {
+    const { sectionId, embed, page, size } = args;
+
+    const searchParams = new URLSearchParams();
+    if (embed) {
+      for (const item of embed) {
+        searchParams.append("embed", item);
+      }
+    }
+    if (page !== undefined) {
+      searchParams.set("page", page.toString());
+    }
+    if (size !== undefined) {
+      searchParams.set("size", size.toString());
+    }
+
+    const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub getTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    const result = await response.json();
+
+    // The API returns a paginated response, so we extract the items array
+    return result.items as TableOfContentsListResponse;
+  }
+
+  /**
+   * Get document content and metadata
+   * @param args - Parameters for retrieving document
+   * @returns Document with content and metadata
+   */
+  async getDocument(args: GetDocumentArgs): Promise<Document> {
+    const { documentId } = args;
+
+    const url = `${this.config.portalBasePath}/documents/${documentId}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub getDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    const result = await response.json();
+
+    return result as Document;
+  }
+
+  /**
+   * Update document content
+   * @param args - Parameters for updating document
+   * @returns Success response
+   */
+  async updateDocument(args: UpdateDocumentArgs): Promise<SuccessResponse> {
+    const { documentId, ...body } = args;
+
+    const url = `${this.config.portalBasePath}/documents/${documentId}`;
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub updateDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Delete document
+   * @param args - Parameters for deleting document
+   * @returns Success response
+   */
+  async deleteDocument(args: DeleteDocumentArgs): Promise<SuccessResponse> {
+    const { documentId } = args;
+    const url = `${this.config.portalBasePath}/documents/${documentId}`;
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub deleteDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Delete table of contents entry
+   * @param args - Parameters for deleting table of contents entry
+   * @returns Success response
+   */
+  async deleteTableOfContents(
+    args: DeleteTableOfContentsArgs,
+  ): Promise<SuccessResponse> {
+    const { tableOfContentsId, recursive } = args;
+
+    const searchParams = new URLSearchParams();
+    if (recursive !== undefined) {
+      searchParams.set("recursive", recursive.toString());
+    }
+
+    const url = `${this.config.portalBasePath}/table-of-contents/${tableOfContentsId}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API Hub deleteTableOfContents failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
+      );
+    }
+
+    return { success: true };
   }
 
   /**

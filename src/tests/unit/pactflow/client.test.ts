@@ -1024,7 +1024,7 @@ describe("PactFlowClient", () => {
 
         const spyGetResult = vi.spyOn(client, "getResult");
         spyGetResult.mockResolvedValue({ result: "done" });
-        const result = await client["pollForCompletion"](
+        const result = await (client as any).pollForCompletion(
           status_response as any,
           "TestOp",
         );
@@ -1043,7 +1043,7 @@ describe("PactFlowClient", () => {
         const spyGetStatus = vi.spyOn(client, "getStatus");
         spyGetStatus.mockResolvedValue({ status: 500, isComplete: false });
         await expect(
-          client["pollForCompletion"](status_response as any, "TestOp"),
+          (client as any).pollForCompletion(status_response as any, "TestOp"),
         ).rejects.toThrow("TestOp failed with status: 500");
       });
     });
