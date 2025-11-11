@@ -2,6 +2,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { ApiHubClient } from "./api-hub/client.js";
 import { BugsnagClient } from "./bugsnag/client.js";
+import { CollaboratorClient } from "./collaborator/client.js";
 import Bugsnag from "./common/bugsnag.js";
 import { SmartBearMcpServer } from "./common/server.js";
 import { PactflowClient } from "./pactflow/client.js";
@@ -30,6 +31,9 @@ async function main() {
   const qmetryBaseUrl = process.env.QMETRY_BASE_URL;
   const zephyrToken = process.env.ZEPHYR_API_TOKEN;
   const zephyrBaseUrl = process.env.ZEPHYR_BASE_URL;
+  const collaboratorBaseUrl = process.env.COLLAB_BASE_URL;
+  const collaboratorUsername = process.env.COLLAB_USERNAME;
+  const collaboratorLoginTicket = process.env.COLLAB_LOGIN_TICKET;
 
   let client_defined = false;
 
@@ -92,9 +96,20 @@ async function main() {
     client_defined = true;
   }
 
+  if (collaboratorBaseUrl && collaboratorUsername && collaboratorLoginTicket) {
+    server.addClient(
+      new CollaboratorClient(
+        collaboratorBaseUrl,
+        collaboratorUsername,
+        collaboratorLoginTicket,
+      ),
+    );
+    client_defined = true;
+  }
+
   if (!client_defined) {
     console.error(
-      "Please set one of REFLECT_API_TOKEN, BUGSNAG_AUTH_TOKEN, API_HUB_API_KEY, QMETRY_API_KEY, ZEPHYR_API_TOKEN, or PACT_BROKER_BASE_URL / (and relevant Pact auth) environment variables",
+      "No SmartBear products were configured. Please provide at least one of the required configuration options.",
     );
     process.exit(1);
   }
