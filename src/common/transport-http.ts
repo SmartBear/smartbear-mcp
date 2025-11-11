@@ -119,6 +119,8 @@ export async function runHttpMode() {
 
 /**
  * Parse request body for POST requests
+ * Reads the request stream and parses it as JSON
+ * @returns Parsed JSON object or undefined if not a POST request or parsing fails
  */
 async function parseRequestBody(req: IncomingMessage): Promise<unknown> {
   if (req.method !== "POST") {
@@ -144,6 +146,8 @@ async function parseRequestBody(req: IncomingMessage): Promise<unknown> {
 
 /**
  * Get existing transport for session or return error response
+ * Validates that the session exists and uses StreamableHTTP transport
+ * @returns StreamableHTTPServerTransport if valid, null otherwise (with error response sent)
  */
 function getExistingTransport(
   sessionId: string,
@@ -161,6 +165,7 @@ function getExistingTransport(
     return existing.transport;
   }
 
+  // Session doesn't exist or is using a different transport (e.g., SSE)
   res.writeHead(400, { "Content-Type": "application/json" });
   res.end(
     JSON.stringify({
@@ -178,6 +183,9 @@ function getExistingTransport(
 
 /**
  * Create new transport for initialize request
+ * Sets up a new MCP server instance with configuration from HTTP headers,
+ * creates a StreamableHTTP transport, and registers session lifecycle handlers
+ * @returns StreamableHTTPServerTransport if successful, null if server initialization fails
  */
 async function createNewTransport(
   req: IncomingMessage,
@@ -190,19 +198,23 @@ async function createNewTransport(
     }
   >,
 ): Promise<StreamableHTTPServerTransport | null> {
+  // Create and configure server with headers from the request
   const server = await newServer(req, res);
   if (!server) {
     return null;
   }
 
+  // Create transport with session management
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (newSessionId) => {
       console.log(`[MCP] New session initialized: ${newSessionId}`);
+      // Store session so subsequent requests can find it
       transports.set(newSessionId, { server, transport });
     },
   });
 
+  // Clean up session on close
   transport.onclose = () => {
     if (transport.sessionId) {
       console.log(`[MCP] Session closed: ${transport.sessionId}`);
@@ -210,12 +222,20 @@ async function createNewTransport(
     }
   };
 
+  // Connect server to transport to start handling messages
   await server.connect(transport);
   return transport;
 }
 
 /**
  * Handle modern Streamable HTTP requests
+ * This is the main endpoint (/mcp) for the modern MCP StreamableHTTP transport.
+ *
+ * Request flow:
+ * 1. First request (initialize): No session ID, body contains initialize request
+ *    - Creates new server + transport, generates session ID
+ * 2. Subsequent requests: Include MCP-Session-Id header
+ *    - Routes to existing transport for the session
  */
 async function handleStreamableHttpRequest(
   req: IncomingMessage,
@@ -234,6 +254,7 @@ async function handleStreamableHttpRequest(
 
     let transport: StreamableHTTPServerTransport;
 
+    // Case 1: Existing session - route to existing transport
     if (sessionId && transports.has(sessionId)) {
       const existingTransport = getExistingTransport(
         sessionId,
@@ -242,7 +263,9 @@ async function handleStreamableHttpRequest(
       );
       if (!existingTransport) return;
       transport = existingTransport;
-    } else if (
+    }
+    // Case 2: New session - must be an initialize request
+    else if (
       !sessionId &&
       req.method === "POST" &&
       parsedBody &&
@@ -251,7 +274,9 @@ async function handleStreamableHttpRequest(
       const newTransport = await createNewTransport(req, res, transports);
       if (!newTransport) return;
       transport = newTransport;
-    } else {
+    }
+    // Case 3: Invalid request
+    else {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
@@ -266,6 +291,7 @@ async function handleStreamableHttpRequest(
       return;
     }
 
+    // Delegate to transport to handle the MCP protocol message
     await transport.handleRequest(req, res, parsedBody);
   } catch (error) {
     console.error("Error handling StreamableHTTP request:", error);
@@ -275,7 +301,13 @@ async function handleStreamableHttpRequest(
 }
 
 /**
- * Handle legacy SSE connection requests
+ * Handle legacy SSE connection requests (GET /sse)
+ *
+ * SSE (Server-Sent Events) transport maintains a long-lived connection
+ * for server-to-client messages, with a separate POST endpoint for client-to-server.
+ *
+ * This is kept for backwards compatibility with older MCP clients.
+ * New integrations should use the modern StreamableHTTP transport (/mcp).
  */
 async function handleLegacySseRequest(
   req: IncomingMessage,
@@ -293,12 +325,14 @@ async function handleLegacySseRequest(
   if (!server) {
     return;
   }
+
+  // SSE transport keeps the connection open and sends events to the client
   const transport = new SSEServerTransport("/message", res);
 
-  // Store the session
+  // Store the session so POST /message requests can find it
   transports.set(transport.sessionId, { server, transport });
 
-  // Handle connection close
+  // Clean up session when connection closes
   res.on("close", () => {
     transports.delete(transport.sessionId);
   });
@@ -308,7 +342,14 @@ async function handleLegacySseRequest(
 }
 
 /**
- * Handle legacy POST message requests
+ * Handle legacy POST message requests (POST /message?sessionId=xxx)
+ *
+ * This endpoint is part of the legacy SSE transport, handling client-to-server messages.
+ * The SSE transport uses:
+ * - GET /sse: Server-to-client events (long-lived connection)
+ * - POST /message: Client-to-server messages (individual requests)
+ *
+ * New integrations should use the modern StreamableHTTP transport (/mcp).
  */
 async function handleLegacyMessageRequest(
   req: IncomingMessage,
@@ -322,7 +363,7 @@ async function handleLegacyMessageRequest(
     }
   >,
 ) {
-  // Route message to appropriate session
+  // Extract session ID from query parameter
   const sessionId = url.searchParams.get("sessionId");
 
   if (!sessionId) {
@@ -331,6 +372,7 @@ async function handleLegacyMessageRequest(
     return;
   }
 
+  // Find the session created by the SSE connection
   const session = transports.get(sessionId);
   if (!session) {
     res.writeHead(404, { "Content-Type": "text/plain" });
@@ -338,13 +380,14 @@ async function handleLegacyMessageRequest(
     return;
   }
 
+  // Validate this session is using SSE transport
   if (!(session.transport instanceof SSEServerTransport)) {
     res.writeHead(400, { "Content-Type": "text/plain" });
     res.end("Invalid transport for this endpoint");
     return;
   }
 
-  // Parse request body
+  // Read and parse the request body
   let body = "";
   req.on("data", (chunk) => {
     body += chunk.toString();
@@ -353,7 +396,7 @@ async function handleLegacyMessageRequest(
   req.on("end", async () => {
     try {
       const parsedBody = JSON.parse(body);
-      // TypeScript now knows session.transport is SSEServerTransport
+      // Route message to the SSE transport for processing
       await (session.transport as SSEServerTransport).handlePostMessage(
         req,
         res,
@@ -367,15 +410,28 @@ async function handleLegacyMessageRequest(
   });
 }
 
+/**
+ * Create a new MCP server instance with configuration from HTTP headers
+ *
+ * Configuration is read from HTTP headers in the format:
+ * {ClientPrefix}-{Field-Name} (e.g., Bugsnag-Auth-Token, Reflect-Api-Token)
+ *
+ * The ClientRegistry validates the configuration and initializes enabled clients.
+ * If configuration fails, an error response is sent and null is returned.
+ *
+ * @returns SmartBearMcpServer instance if successful, null if configuration fails
+ */
 async function newServer(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
   const server = new SmartBearMcpServer();
   try {
+    // Configure server with values from HTTP headers
     await clientRegistry.configure(server, (client, key) => {
       const headerName = getHeaderName(client, key);
-      // check both original case and lower-case headers for compatibility
+      // Check both original case and lower-case headers for compatibility
+      // (HTTP headers are case-insensitive, but Node.js lowercases them)
       const value =
         req.headers[headerName] || req.headers[headerName.toLowerCase()];
       if (typeof value === "string") {
@@ -384,6 +440,7 @@ async function newServer(
       return null;
     });
   } catch (error: any) {
+    // Configuration failed - provide helpful error message
     const headerHelp = getHttpHeadersHelp();
     const errorMessage =
       headerHelp.length > 0
@@ -397,6 +454,20 @@ async function newServer(
   return server;
 }
 
+/**
+ * Convert a config key to HTTP header name format
+ *
+ * Examples:
+ * - auth_token -> Auth-Token
+ * - project_api_key -> Project-Api-Key
+ * - base_url -> Base-Url
+ *
+ * Combined with configPrefix: Bugsnag-Auth-Token, Reflect-Api-Token, etc.
+ *
+ * @param client The client instance (provides configPrefix)
+ * @param key The config key in snake_case
+ * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
+ */
 function getHeaderName(client: Client, key: string): string {
   return `${client.configPrefix}-${key
     .split("_")
