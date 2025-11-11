@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [Qmetry] Added 4 New QMetry tools to enhance test management capabilities [#194](https://github.com/SmartBear/smartbear-mcp/pull/194)
 - [Qmetry] Implement comprehensive test case tooling with enhanced error handling [#193](https://github.com/SmartBear/smartbear-mcp/pull/193)
-- [Swagger] Add `scan_api_standardization` tool for validating API definitions against organization standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
+- [API Hub] Add `scan_api_standardization` tool for validating API definitions against organization standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
 
 ## [0.8.0] - 2025-10-13
 

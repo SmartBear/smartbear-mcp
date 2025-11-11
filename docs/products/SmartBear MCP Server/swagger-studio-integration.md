@@ -1,4 +1,4 @@
-![api-hub.png](./images/embedded/api-hub.png)
+![swagger-studio.png](./images/embedded/swagger-studio.png)
 
 The Swagger Studio client provides comprehensive API and Domain management capabilities through SwaggerHub Registry. Access to these features requires authentication with a `SWAGGER_API_KEY`.
 
