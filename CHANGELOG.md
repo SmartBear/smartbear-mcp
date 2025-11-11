@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.0] - 2025-11-11
 
 ### Added
 - [Qmetry] New QMetry MCP Server Tools Added, Refactored the existing tools structure [#217](https://github.com/SmartBear/smartbear-mcp/pull/217)
+- [Collaborator] Initial Collaborator client implementation [#223](https://github.com/SmartBear/smartbear-mcp/pull/223)
 
 ## [0.9.0] - 2025-10-22
 
