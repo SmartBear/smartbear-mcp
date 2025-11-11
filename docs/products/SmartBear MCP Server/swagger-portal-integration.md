@@ -1,4 +1,4 @@
-![api-hub.png](./images/embedded/api-hub.png)
+![swagger-portal.png](./images/embedded/swagger-portal.png)
 
 The Swagger Portal client provides comprehensive portal and product management capabilities. Access to these features requires authentication with a `SWAGGER_API_KEY`.
 

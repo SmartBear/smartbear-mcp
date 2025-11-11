@@ -38,9 +38,11 @@ npm install @smartbear/mcp
 
 The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its own authentication token.
 
-- **Swagger - Portal**
+- **Swagger - Portal & Studio**
 
   Copy the API key from the Swagger dashboard at [`app.swaggerhub.com`](https://app.swaggerhub.com/settings/apiKey).
+
+  > **Note:** The environment variable `API_HUB_API_KEY` is still supported for backward compatibility, but `SWAGGER_API_KEY` is now the preferred name.
 
 - **Swagger - Contract Testing (PactFlow)**
 
@@ -75,7 +77,7 @@ export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 # Required for Reflect tools
 export REFLECT_API_TOKEN=your-reflect-api-token
 
-# Required for Swagger - Portal tools
+# Required for Swagger - Portal & Studio tools
 export SWAGGER_API_KEY=your-swagger-api-key
 
 # Required for Swagger - Contract Testing (PactFlow) tools
