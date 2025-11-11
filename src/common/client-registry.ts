@@ -74,7 +74,7 @@ class ClientRegistry {
                 }
               } catch (error) {
                 console.warn(
-                  `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}`,
+                  `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}, error: ${error}`,
                 );
               }
             } else {
