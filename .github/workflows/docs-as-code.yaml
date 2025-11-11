@@ -12,6 +12,10 @@ on:
       - 'docs/**'
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'Deployment environment: Production or Staging'
+        required: false
+        default: 'Staging'
       log_level:
         description: 'Log level: 1=DEBUG, 2=INFO, 3=WARNING, 4=ERROR'
         required: false
@@ -69,7 +73,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'release' && 'Production' || 'Staging' }}
+    environment: ${{ github.event_name == 'release' && 'Production' || github.event.inputs.environment || 'Staging' }}
     needs: [spell-check, validate-manifests]
     if: github.event.inputs.skip_api_linting == 'true' || (needs.spell-check.result == 'success' && needs['validate-manifests'].result == 'success')
 
