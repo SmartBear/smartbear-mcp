@@ -100,7 +100,11 @@ export interface Client {
   toolPrefix: string;
   /** Prefix for configuration (environment variables and http headers) */
   configPrefix: string;
-  /** Zod schema defining configuration fields for this client */
+  /**
+   * Zod schema defining configuration fields for this client
+   * Field names must use snake case to ensure they are mapped to environment variables and HTTP headers correctly.
+   * e.g., `config.my_property` would refer to the environment variable `TOOL_MY_PROPERTY`, http header `Tool-My-Property`
+   */
   config: ZodObject<ZodRawShape>;
   /**
    * Configure the client with the given server and configuration
