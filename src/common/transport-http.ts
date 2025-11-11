@@ -35,7 +35,7 @@ export async function runHttpMode() {
     "Content-Type",
     "Authorization",
     "MCP-Session-Id", // Required for StreamableHTTP
-    "x-custom-auth-headers",
+    "x-custom-auth-headers", // used by mcp-inspector
     ...allowedAuthHeaders,
   ].join(", ");
 
