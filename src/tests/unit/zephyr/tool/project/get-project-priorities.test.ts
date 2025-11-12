@@ -3,11 +3,11 @@ import {
   listPrioritiesQueryParams,
   listPrioritiesResponse,
 } from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetProjectPriorities } from "../../../../../zephyr/tool/project/get-project-priorities.js";
+import { GetPriorities } from "../../../../../zephyr/tool/priority/get-priorities.js";
 
 describe("GetProjectPriorities", () => {
   const mockApiClient = { get: vi.fn() };
-  const instance = new GetProjectPriorities(mockApiClient as any);
+  const instance = new GetPriorities(mockApiClient as any);
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get project priorities");

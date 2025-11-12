@@ -5,9 +5,9 @@ import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
 
-export const GetProjectPrioritiesInputSchema = listPrioritiesQueryParams;
+export const GetPrioritiesInputSchema = listPrioritiesQueryParams;
 
- export class GetProjectPriorities implements ZephyrTool {
+ export class GetPriorities implements ZephyrTool {
   private readonly apiClient: ApiClient;
 
   constructor(apiClient: ApiClient) {
@@ -15,17 +15,19 @@ export const GetProjectPrioritiesInputSchema = listPrioritiesQueryParams;
   }
 
   specification: ToolParams = {
-    title: "Get project priorities",
-    summary: "Get project priorities with optional filters",
+    title: "Get priorities",
+    summary: "Get Zephyr Test Case priorities with optional filters",
     readOnly: true,
     idempotent: true,
-    inputSchema: GetProjectPrioritiesInputSchema,
+    inputSchema: GetPrioritiesInputSchema,
     outputSchema: listPrioritiesResponse,
     examples: [
       {
-        description: "Get the first 10 project priorities",
-        parameters: {startAt: 0 },
-        expectedOutput: "The first 10 project priorities with their details",
+        description: "Get the first 10 priorities",
+        parameters: {
+          maxResults: 10, 
+          startAt: 0 },
+        expectedOutput: "The first 10 priorities with their details",
       },
       {
         description: "Get priorities for a specific project",
@@ -33,19 +35,15 @@ export const GetProjectPrioritiesInputSchema = listPrioritiesQueryParams;
         expectedOutput: "The priorities for project PROJ",
       },
       {
-        description: "Get all project priorities",
+        description: "Get all priorities",
         parameters: {},
-        expectedOutput: "All project priorities",
+        expectedOutput: "All priorities",
       },
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
-    const { maxResults, startAt, projectKey } = args as any;
-    const response = await this.apiClient.get("/priorities", {
-      maxResults,
-      startAt,
-      projectKey,
-    });
+    const getPrioritiesInput = listPrioritiesQueryParams.parse(args);
+    const response = await this.apiClient.get("/priorities", getPrioritiesInput);
     return {
       structuredContent: response,
       content: [],
