@@ -10,6 +10,7 @@ import {
   ZodAny,
   ZodArray,
   ZodBoolean,
+  ZodDefault,
   ZodEnum,
   ZodIntersection,
   ZodLiteral,
@@ -17,6 +18,7 @@ import {
   ZodObject,
   ZodOptional,
   type ZodRawShape,
+  ZodRecord,
   ZodString,
   type ZodType,
   type ZodTypeAny,
@@ -270,19 +272,58 @@ export class SmartBearMcpServer extends McpServer {
     return description.trim();
   }
 
-  private formatParameterDescription(key: string, field: any) {
+  private formatParameterDescription(
+    key: string,
+    field: ZodType,
+    description: string | null = null,
+    isOptional = false,
+    defaultValue: string | null = null,
+  ): string {
+    description = description ?? (field.description || null);
+    if (field instanceof ZodOptional) {
+      field = (field as ZodOptional<ZodTypeAny>).unwrap();
+      return this.formatParameterDescription(
+        key,
+        field,
+        description,
+        true,
+        defaultValue,
+      );
+    }
+    if (field instanceof ZodDefault) {
+      defaultValue = JSON.stringify(
+        (field as ZodDefault<ZodTypeAny>)._def.defaultValue(),
+      );
+      field = (field as ZodDefault<ZodTypeAny>).removeDefault();
+      return this.formatParameterDescription(
+        key,
+        field,
+        description,
+        true,
+        defaultValue,
+      );
+    }
     return (
       `- ${key} (${this.getReadableTypeName(field)})` +
-      `${field.isOptional() ? "" : " *required*"}` +
-      `${field.description ? `: ${field.description}` : ""}` +
-      `${key === "examples" && field instanceof ZodEnum ? ` (e.g. ${Object.keys(field.enum).join(", ")})` : ""}` +
-      `${key === "constraints" && field instanceof ZodEnum ? `\n  - ${Object.keys(field.enum).join("\n  - ")}` : ""}`
+      `${isOptional ? "" : " *required*"}` +
+      `${description ? `: ${description}` : ""}` +
+      `${defaultValue ? ` (default: ${defaultValue})` : ""}`
     );
   }
 
   private getReadableTypeName(zodType: ZodType): string {
     if (zodType instanceof ZodOptional) {
-      zodType = zodType._def.innerType;
+      return this.getReadableTypeName(
+        (zodType as ZodOptional<ZodTypeAny>).unwrap(),
+      );
+    }
+    if (zodType instanceof ZodDefault) {
+      return this.getReadableTypeName(
+        (zodType as ZodDefault<ZodTypeAny>).removeDefault(),
+      );
+    }
+    if (zodType instanceof ZodRecord) {
+      return `record<${this.getReadableTypeName((zodType as ZodRecord).keySchema)}, ${this.getReadableTypeName((zodType as ZodRecord).valueSchema)}>`;
     }
     if (zodType instanceof ZodString) return "string";
     if (zodType instanceof ZodNumber) return "number";

@@ -382,7 +382,7 @@ describe("ClientRegistry", () => {
 
         const result = await clientRegistry.configure(
           mockServer,
-          (client, key) => (key === "api_key" ? "test-key" : null),
+          (_client, key) => (key === "api_key" ? "test-key" : null),
         );
 
         expect(result).toBe(1);
@@ -427,7 +427,7 @@ describe("ClientRegistry", () => {
 
         const result = await clientRegistry.configure(
           mockServer,
-          (client, key) => (key === "api_key" ? "test-key" : "test-user"),
+          (_client, key) => (key === "api_key" ? "test-key" : "test-user"),
         );
 
         expect(result).toBe(1);

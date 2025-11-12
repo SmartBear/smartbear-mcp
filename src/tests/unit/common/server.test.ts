@@ -1,10 +1,9 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { config } from "process";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag.js";
 import { SmartBearMcpServer } from "../../../common/server.js";
-import { ToolError, type ToolParams } from "../../../common/types.js";
+import { ToolError } from "../../../common/types.js";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({
@@ -37,28 +36,6 @@ describe("SmartBearMcpServer", () => {
 
     // Reset the Bugsnag mock
     vi.mocked(Bugsnag.notify).mockClear();
-  });
-
-  describe("getDescription tests", () => {
-    it("should return the correct description", () => {
-      const zSchema = z.object({
-        examples: z.enum(["test_1", "test_2"]),
-        constraints: z.enum(["test_1", "test_2"]),
-      });
-      const toolParams: ToolParams = {
-        title: "Test Tool",
-        summary: "A test tool",
-        inputSchema: zSchema,
-      };
-      const description = server.getDescription(toolParams);
-      expect(description).toBe(`A test tool
-
-**Parameters:**
-- examples (enum) *required* (e.g. test_1, test_2)
-- constraints (enum) *required*
-  - test_1
-  - test_2`);
-    });
   });
 
   describe("addClient", () => {
@@ -462,8 +439,13 @@ describe("SmartBearMcpServer", () => {
       });
 
       const inputSchema = z.object({
-        query: z.string().describe("Search query"),
-        limit: z.number().optional().describe("Max results"),
+        p1: z.string().describe("param-required-string"),
+        p2: z.number().min(0).describe("param-optional-number").optional(),
+        p3: z.number().describe("param-defaulted-number").default(1),
+        p4: z
+          .boolean()
+          .default(false)
+          .describe("param-defaulted-bool-described-after"),
       });
       const outputSchema = z.object({
         values: z
@@ -497,17 +479,13 @@ describe("SmartBearMcpServer", () => {
       expect(registerToolParams[1].description).toBe(
         "Tool using input and output schemas\n\n" +
           "**Parameters:**\n" +
-          "- query (string) *required*: Search query\n" +
-          "- limit (number): Max results",
+          "- p1 (string) *required*: param-required-string\n" +
+          "- p2 (number): param-optional-number\n" +
+          "- p3 (number): param-defaulted-number (default: 1)\n" +
+          "- p4 (boolean): param-defaulted-bool-described-after (default: false)",
       );
 
-      // Input schema should reflect raw shape merging (only inputSchema here)
-      expect(registerToolParams[1].inputSchema.query.toString()).toBe(
-        z.string().describe("Search query").toString(),
-      );
-      expect(registerToolParams[1].inputSchema.limit.toString()).toBe(
-        z.number().describe("Max results").optional().toString(),
-      );
+      expect(Object.keys(registerToolParams[1].inputSchema).length).toBe(4);
 
       // Output schema should be raw shape of outputSchema
       expect(registerToolParams[1].outputSchema.values.toString()).toBe(
@@ -618,17 +596,42 @@ describe("SmartBearMcpServer", () => {
         age: z.number().min(0).describe("The age of the person"),
         isActive: z.boolean().describe("Is the person active?"),
       });
-      const result = server.schemaToRawShape(schema);
+      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
+      const result = server["schemaToRawShape"](schema);
       expect(result).toEqual(schema.shape);
     });
     it("returns an empty object if it's not a ZodObject", () => {
       const schema = z.array(z.string());
-      const rawShape = server.schemaToRawShape(schema);
+      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
+      const rawShape = server["schemaToRawShape"](schema);
       expect(rawShape).toBeUndefined();
     });
     it("returns an empty object if the schema is undefined", () => {
-      const rawShape = server.schemaToRawShape(undefined);
+      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
+      const rawShape = server["schemaToRawShape"](undefined);
       expect(rawShape).toBeUndefined();
+    });
+  });
+
+  describe("getReadableTypeName", () => {
+    it.each([
+      ["string", z.string()],
+      ["number", z.number()],
+      ["boolean", z.boolean()],
+      ["array", z.array(z.string())],
+      ["object", z.object({ key: z.string() })],
+      ["enum", z.enum(["value1", "value2"])],
+      ["literal", z.literal("value")],
+      ["union", z.union([z.string(), z.number()])],
+      ["record<string, number>", z.record(z.string(), z.number())],
+      ["record<string, array>", z.record(z.string(), z.array(z.string()))],
+      ["any", z.any()],
+      ["string", z.optional(z.string())],
+      ["string", z.string().default("default")],
+    ])("should return '%s' for the given Zod type", (expected, zodType) => {
+      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
+      const result = server["getReadableTypeName"](zodType);
+      expect(result).toBe(expected);
     });
   });
 });
