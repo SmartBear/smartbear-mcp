@@ -1,3 +1,4 @@
+import z from "zod";
 import type {
   Client,
   GetInputFunction,
@@ -12,19 +13,41 @@ import { getProjectInfo } from "./client/project.js";
 import { TOOLS } from "./client/tools/index.js";
 import { QMETRY_DEFAULTS } from "./config/constants.js";
 
+const ConfigurationSchema = z.object({
+  api_key: z.string().describe("QMetry API key for authentication"),
+  base_url: z
+    .string()
+    .url()
+    .optional()
+    .describe(
+      "Optional QMetry base URL for custom or region-specific endpoints",
+    ),
+});
+
 export class QmetryClient implements Client {
   name = "QMetry";
-  prefix = "qmetry";
-  private token: string;
-  private projectApiKey: string;
-  private endpoint: string;
-  constructor(token: string, endpoint?: string) {
-    this.token = token;
-    this.projectApiKey = QMETRY_DEFAULTS.PROJECT_KEY;
-    this.endpoint = endpoint || QMETRY_DEFAULTS.BASE_URL;
+  toolPrefix = "qmetry";
+  configPrefix = "Qmetry";
+  config = ConfigurationSchema;
+
+  private token: string | undefined;
+  private projectApiKey: string = QMETRY_DEFAULTS.PROJECT_KEY;
+  private endpoint: string = QMETRY_DEFAULTS.BASE_URL;
+
+  async configure(
+    _server: any,
+    config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
+  ): Promise<boolean> {
+    this.token = config.api_key;
+    if (config.base_url) {
+      this.endpoint = config.base_url;
+    }
+    return true;
   }
 
   getToken() {
+    if (!this.token) throw new Error("Client not configured");
     return this.token;
   }
 
@@ -99,7 +122,7 @@ export class QmetryClient implements Client {
               let projectInfo: any;
               try {
                 projectInfo = (await getProjectInfo(
-                  this.token,
+                  this.getToken(),
                   baseUrl,
                   projectKey,
                 )) as any;
@@ -127,7 +150,7 @@ export class QmetryClient implements Client {
           const { projectKey: _, baseUrl: __, ...cleanArgs } = a;
 
           const result = await handlerFn(
-            this.token,
+            this.getToken(),
             baseUrl,
             projectKey,
             cleanArgs,

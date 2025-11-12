@@ -8,12 +8,13 @@ const fetchMock = createFetchMock(vi);
 describe("ApiHubClient", () => {
   let client: ApiHubClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
 
-    client = new ApiHubClient("test-token");
+    client = new ApiHubClient();
+    await client.configure({} as any, { api_key: "test-token" });
   });
 
   afterEach(() => {
@@ -24,7 +25,8 @@ describe("ApiHubClient", () => {
     it("should initialize with correct parameters", () => {
       expect(client).toBeInstanceOf(ApiHubClient);
       expect(client.name).toBe("API Hub");
-      expect(client.prefix).toBe("api_hub");
+      expect(client.toolPrefix).toBe("api_hub");
+      expect(client.configPrefix).toBe("Api-Hub");
     });
 
     it("should create configuration and API instances", () => {

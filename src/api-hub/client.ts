@@ -1,4 +1,6 @@
+import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import type { SmartBearMcpServer } from "../common/server.js";
 import type {
   Client,
   GetInputFunction,
@@ -45,131 +47,145 @@ import type {
   OrganizationsQueryParams,
 } from "./client/user-management-types.js";
 
+const ConfigurationSchema = z.object({
+  api_key: z.string().describe("API Hub API key for authentication"),
+});
+
 // Tool definitions for API Hub API client
 export class ApiHubClient implements Client {
-  private config: ApiHubConfiguration;
-  private api: ApiHubAPI;
+  private api: ApiHubAPI | undefined;
 
   name = "API Hub";
-  prefix = "api_hub";
+  toolPrefix = "api_hub";
+  configPrefix = "Api-Hub";
+  config = ConfigurationSchema;
 
-  constructor(token: string) {
-    this.config = new ApiHubConfiguration({ token });
+  async configure(
+    _server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
+  ): Promise<boolean> {
     this.api = new ApiHubAPI(
-      this.config,
+      new ApiHubConfiguration({ token: config.api_key }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
+    return true;
+  }
+
+  getApi(): ApiHubAPI {
+    if (!this.api) throw new Error("Client not configured");
+    return this.api;
   }
 
   // Delegate API methods to the ApiHubAPI instance
   async getPortals(): Promise<PortalsListResponse | FallbackResponse> {
-    return this.api.getPortals();
+    return this.getApi().getPortals();
   }
 
   async createPortal(
     body: CreatePortalArgs,
   ): Promise<Portal | FallbackResponse> {
-    return this.api.createPortal(body);
+    return this.getApi().createPortal(body);
   }
 
   async getPortal(args: {
     portalId: string;
   }): Promise<Portal | FallbackResponse> {
-    return this.api.getPortal(args.portalId);
+    return this.getApi().getPortal(args.portalId);
   }
 
   async deletePortal(args: { portalId: string }): Promise<void> {
-    return this.api.deletePortal(args.portalId);
+    return this.getApi().deletePortal(args.portalId);
   }
 
   async updatePortal(
     args: UpdatePortalArgs,
   ): Promise<Portal | FallbackResponse> {
     const { portalId, ...body } = args;
-    return this.api.updatePortal(portalId, body);
+    return this.getApi().updatePortal(portalId, body);
   }
 
   async getPortalProducts(args: {
     portalId: string;
   }): Promise<ProductsListResponse | FallbackResponse> {
-    return this.api.getPortalProducts(args.portalId);
+    return this.getApi().getPortalProducts(args.portalId);
   }
 
   async createPortalProduct(
     args: CreateProductArgs,
   ): Promise<Product | FallbackResponse> {
     const { portalId, ...body } = args;
-    return this.api.createPortalProduct(portalId, body);
+    return this.getApi().createPortalProduct(portalId, body);
   }
 
   async getPortalProduct(args: {
     productId: string;
   }): Promise<Product | FallbackResponse> {
-    return this.api.getPortalProduct(args.productId);
+    return this.getApi().getPortalProduct(args.productId);
   }
 
   async deletePortalProduct(args: {
     productId: string;
   }): Promise<Record<string, never> | FallbackResponse> {
-    return this.api.deletePortalProduct(args.productId);
+    return this.getApi().deletePortalProduct(args.productId);
   }
 
   async updatePortalProduct(
     args: UpdateProductArgs,
   ): Promise<Product | SuccessResponse | FallbackResponse> {
     const { productId, ...body } = args;
-    return this.api.updatePortalProduct(productId, body);
+    return this.getApi().updatePortalProduct(productId, body);
   }
 
   async publishPortalProduct(
     args: PublishProductArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
     const { productId, preview } = args;
-    return this.api.publishPortalProduct(productId, preview);
+    return this.getApi().publishPortalProduct(productId, preview);
   }
 
   async getPortalProductSections(
     args: GetProductSectionsArgs,
   ): Promise<SectionsListResponse | SuccessResponse | FallbackResponse> {
     const { productId, ...params } = args;
-    return this.api.getPortalProductSections(productId, params);
+    return this.getApi().getPortalProductSections(productId, params);
   }
 
   async createTableOfContents(
     args: CreateTableOfContentsArgs,
   ): Promise<TableOfContentsItem | FallbackResponse> {
     const { sectionId, ...body } = args;
-    return this.api.createTableOfContents(sectionId, body);
+    return this.getApi().createTableOfContents(sectionId, body);
   }
 
   async getTableOfContents(
     args: GetTableOfContentsArgs,
   ): Promise<TableOfContentsListResponse | FallbackResponse> {
-    return this.api.getTableOfContents(args);
+    return this.getApi().getTableOfContents(args);
   }
 
   async getDocument(
     args: GetDocumentArgs,
   ): Promise<Document | FallbackResponse> {
-    return this.api.getDocument(args);
+    return this.getApi().getDocument(args);
   }
 
   async updateDocument(
     args: UpdateDocumentArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
-    return this.api.updateDocument(args);
+    return this.getApi().updateDocument(args);
   }
 
   async deleteDocument(
     args: DeleteDocumentArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
-    return this.api.deleteDocument(args);
+    return this.getApi().deleteDocument(args);
   }
 
   async deleteTableOfContents(
     args: DeleteTableOfContentsArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
-    return this.api.deleteTableOfContents(args);
+    return this.getApi().deleteTableOfContents(args);
   }
 
   // Registry API methods for SwaggerHub Design functionality
@@ -177,38 +193,38 @@ export class ApiHubClient implements Client {
   async searchApis(
     args: ApiSearchParams = {},
   ): Promise<ApiSearchResponse | FallbackResponse> {
-    return this.api.searchApis(args);
+    return this.getApi().searchApis(args);
   }
 
   async getApiDefinition(
     args: ApiDefinitionParams,
   ): Promise<unknown | FallbackResponse> {
-    return this.api.getApiDefinition(args);
+    return this.getApi().getApiDefinition(args);
   }
 
   async createOrUpdateApi(
     args: CreateApiParams,
   ): Promise<CreateApiResponse | FallbackResponse> {
-    return this.api.createOrUpdateApi(args);
+    return this.getApi().createOrUpdateApi(args);
   }
 
   async createApiFromTemplate(
     args: CreateApiFromTemplateParams,
   ): Promise<CreateApiFromTemplateResponse | FallbackResponse> {
-    return this.api.createApiFromTemplate(args);
+    return this.getApi().createApiFromTemplate(args);
   }
 
   // User Management API methods
   async getOrganizations(
     args?: OrganizationsQueryParams,
   ): Promise<OrganizationsListResponse | FallbackResponse> {
-    return this.api.getOrganizations(args);
+    return this.getApi().getOrganizations(args);
   }
 
   async scanStandardization(
     args: ScanStandardizationParams,
   ): Promise<StandardizationResult | FallbackResponse> {
-    return this.api.scanStandardization(args);
+    return this.getApi().scanStandardization(args);
   }
 
   registerTools(

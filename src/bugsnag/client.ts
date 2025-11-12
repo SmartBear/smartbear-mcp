@@ -1,7 +1,8 @@
-import NodeCache from "node-cache";
 import { z } from "zod";
 
+import type { CacheService } from "../common/cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import type { SmartBearMcpServer } from "../common/server.js";
 import {
   type Client,
   type GetInputFunction,
@@ -61,41 +62,74 @@ interface StabilityData {
   meetsCriticalStability: boolean;
 }
 
+const ConfigurationSchema = z.object({
+  auth_token: z.string().describe("BugSnag personal authentication token"),
+  project_api_key: z.string().describe("BugSnag project API key").optional(),
+  endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
+});
+
 export class BugsnagClient implements Client {
-  private currentUserApi: CurrentUserAPI;
-  private errorsApi: ErrorAPI;
-  private cache: NodeCache;
-  private projectApi: ProjectAPI;
+  private cache?: CacheService;
   private projectApiKey?: string;
-  private apiEndpoint: string;
-  private appEndpoint: string;
+  private _currentUserApi: CurrentUserAPI | undefined;
+  private _errorsApi: ErrorAPI | undefined;
+  private _projectApi: ProjectAPI | undefined;
+  private _appEndpoint: string | undefined;
+
+  get currentUserApi(): CurrentUserAPI {
+    if (!this._currentUserApi) throw new Error("Client not configured");
+    return this._currentUserApi;
+  }
+
+  get errorsApi(): ErrorAPI {
+    if (!this._errorsApi) throw new Error("Client not configured");
+    return this._errorsApi;
+  }
+
+  get projectApi(): ProjectAPI {
+    if (!this._projectApi) throw new Error("Client not configured");
+    return this._projectApi;
+  }
+
+  get appEndpoint(): string {
+    if (!this._appEndpoint) throw new Error("Client not configured");
+    return this._appEndpoint;
+  }
 
   name = "BugSnag";
-  prefix = "bugsnag";
+  toolPrefix = "bugsnag";
+  configPrefix = "Bugsnag";
+  config = ConfigurationSchema;
 
-  constructor(token: string, projectApiKey?: string, endpoint?: string) {
-    this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
-    this.appEndpoint = this.getEndpoint("app", projectApiKey, endpoint);
-    const config = new Configuration({
-      apiKey: `token ${token}`,
+  async configure(
+    server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+  ): Promise<boolean> {
+    this.cache = server.getCache();
+    this._appEndpoint = this.getEndpoint(
+      "app",
+      config.project_api_key,
+      config.endpoint,
+    );
+    const apiConfig = new Configuration({
+      apiKey: `token ${config.auth_token}`,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",
       },
-      basePath: this.apiEndpoint,
+      basePath: this.getEndpoint(
+        "api",
+        config.project_api_key,
+        config.endpoint,
+      ),
     });
-    this.currentUserApi = new CurrentUserAPI(config);
-    this.errorsApi = new ErrorAPI(config);
-    this.cache = new NodeCache({
-      stdTTL: 24 * 60 * 60, // default cache TTL of 24 hours
-    });
-    this.projectApi = new ProjectAPI(config);
-    this.projectApiKey = projectApiKey;
-  }
+    this._currentUserApi = new CurrentUserAPI(apiConfig);
+    this._errorsApi = new ErrorAPI(apiConfig);
+    this._projectApi = new ProjectAPI(apiConfig);
+    this.projectApiKey = config.project_api_key;
 
-  async initialize(): Promise<void> {
     // Trigger caching of org and projects
     try {
       await this.getProjects();
@@ -119,6 +153,7 @@ export class BugsnagClient implements Client {
         );
       }
     }
+    return true;
   }
 
   getHost(apiKey: string | undefined, subdomain: string): string {
@@ -175,7 +210,7 @@ export class BugsnagClient implements Client {
   }
 
   async getOrganization(): Promise<Organization> {
-    let org = this.cache.get<Organization>(cacheKeys.ORG);
+    let org = this.cache?.get<Organization>(cacheKeys.ORG);
     if (!org) {
       const response = await this.currentUserApi.listUserOrganizations();
       const orgs = response.body;
@@ -183,7 +218,7 @@ export class BugsnagClient implements Client {
         throw new Error("No organizations found for the current user.");
       }
       org = orgs[0];
-      this.cache.set(cacheKeys.ORG, org);
+      this.cache?.set(cacheKeys.ORG, org);
     }
     return org;
   }
@@ -193,14 +228,14 @@ export class BugsnagClient implements Client {
   // stores them in the cache for future use.
   // It throws an error if no organizations are found in the cache.
   async getProjects(): Promise<Project[]> {
-    let projects = this.cache.get<Project[]>(cacheKeys.PROJECTS);
+    let projects = this.cache?.get<Project[]>(cacheKeys.PROJECTS);
     if (!projects) {
       const org = await this.getOrganization();
       const response = await this.currentUserApi.getOrganizationProjects(
         org.id,
       );
       projects = response.body;
-      this.cache.set(cacheKeys.PROJECTS, projects);
+      this.cache?.set(cacheKeys.PROJECTS, projects);
     }
     return projects;
   }
@@ -211,7 +246,7 @@ export class BugsnagClient implements Client {
   }
 
   async getCurrentProject(): Promise<Project | null> {
-    let project = this.cache.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
+    let project = this.cache?.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
     if (!project && this.projectApiKey) {
       const projects = await this.getProjects();
       project =
@@ -221,9 +256,9 @@ export class BugsnagClient implements Client {
           "Unable to find project with the configured API key.",
         );
       }
-      this.cache.set(cacheKeys.CURRENT_PROJECT, project);
+      this.cache?.set(cacheKeys.CURRENT_PROJECT, project);
       if (project) {
-        this.cache.set(
+        this.cache?.set(
           cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
           await this.getProjectEventFilters(project),
         );
@@ -743,7 +778,7 @@ export class BugsnagClient implements Client {
         // Validate filter keys against cached event fields
         if (args.filters) {
           const eventFields =
-            this.cache.get<EventField[]>(
+            this.cache?.get<EventField[]>(
               cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
             ) || [];
           const validKeys = new Set(eventFields.map((f) => f.displayId));
@@ -808,7 +843,7 @@ export class BugsnagClient implements Client {
         ],
       },
       async (_args: any, _extra: any) => {
-        const projectFields = this.cache.get<EventField[]>(
+        const projectFields = this.cache?.get<EventField[]>(
           cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
         );
         if (!projectFields)

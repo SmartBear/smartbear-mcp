@@ -1,21 +1,38 @@
 import { z } from "zod";
+import type { SmartBearMcpServer } from "../common/server.js";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
 
+const ConfigurationSchema = z.object({
+  base_url: z.string().url().describe("Collaborator server base URL"),
+  username: z.string().describe("Collaborator username for authentication"),
+  login_ticket: z
+    .string()
+    .describe("Collaborator login ticket for authentication"),
+});
+
 export class CollaboratorClient implements Client {
   name = "Collaborator";
-  prefix = "collaborator";
-  private readonly baseUrl: string;
-  private readonly username: string;
-  private readonly loginTicket: string;
+  toolPrefix = "collaborator";
+  configPrefix = "Collaborator";
+  config = ConfigurationSchema;
 
-  constructor(baseUrl: string, username: string, loginTicket: string) {
-    this.baseUrl = baseUrl;
-    this.username = username;
-    this.loginTicket = loginTicket;
+  private baseUrl: string | undefined;
+  private username: string | undefined;
+  private loginTicket: string | undefined;
+
+  async configure(
+    _server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
+  ): Promise<boolean> {
+    this.baseUrl = config.base_url;
+    this.username = config.username;
+    this.loginTicket = config.login_ticket;
+    return true;
   }
 
   /**
@@ -24,6 +41,10 @@ export class CollaboratorClient implements Client {
    * @returns Raw Collaborator API response
    */
   async call(commands: any[]): Promise<any> {
+    if (!this.baseUrl || !this.username || !this.loginTicket) {
+      throw new Error("Collaborator client not configured");
+    }
+
     const url = `${this.baseUrl}/services/json/v1`;
     // Always prepend authentication command automatically
     const body = [
