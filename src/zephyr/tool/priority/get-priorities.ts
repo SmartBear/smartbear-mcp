@@ -1,8 +1,11 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import { listPrioritiesQueryParams, listPrioritiesResponse } from "../../common/rest-api-schemas.js";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
+import {
+  listPrioritiesQueryParams,
+  listPrioritiesResponse,
+} from "../../common/rest-api-schemas.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
 
 export class GetPriorities implements ZephyrTool {
@@ -23,13 +26,14 @@ export class GetPriorities implements ZephyrTool {
       {
         description: "Get the first 10 priorities",
         parameters: {
-          maxResults: 10, 
-          startAt: 0 },
+          maxResults: 10,
+          startAt: 0,
+        },
         expectedOutput: "The first 10 priorities with their details",
       },
       {
         description: "Get priorities for a specific project",
-        parameters: { projectKey: "PROJ"},
+        parameters: { projectKey: "PROJ" },
         expectedOutput: "The priorities for project PROJ",
       },
       {
@@ -41,7 +45,10 @@ export class GetPriorities implements ZephyrTool {
   };
   handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
     const getPrioritiesInput = listPrioritiesQueryParams.parse(args);
-    const response = await this.apiClient.get("/priorities", getPrioritiesInput);
+    const response = await this.apiClient.get(
+      "/priorities",
+      getPrioritiesInput,
+    );
     return {
       structuredContent: response,
       content: [],

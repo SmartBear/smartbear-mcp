@@ -5,9 +5,9 @@ import type {
   RegisterToolsFunction,
 } from "../common/types.js";
 import { ApiClient } from "./common/api-client.js";
+import { GetPriorities } from "./tool/priority/get-priorities.js";
 import { GetProject } from "./tool/project/get-project.js";
 import { GetProjects } from "./tool/project/get-projects.js";
-import { GetPriorities } from "./tool/priority/get-priorities.js"
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
