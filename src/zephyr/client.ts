@@ -54,10 +54,10 @@ export class ZephyrClient implements Client {
   ): void {
     const apiClient = this.getApiClient();
     const tools: ZephyrTool[] = [
-      new GetProjects(this.apiClient),
-      new GetProject(this.apiClient),
-      new GetTestCycles(this.apiClient),
-      new GetPriorities(this.apiClient),
+      new GetProjects(apiClient),
+      new GetProject(apiClient),
+      new GetTestCycles(apiClient),
+      new GetPriorities(apiClient),
     ];
 
     tools.forEach((tool) => {
