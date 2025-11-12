@@ -35,21 +35,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
 
-      - name: Build Docker image to tester stage for ${{ matrix.arch }}
+      - name: Build Docker image to builder stage for ${{ matrix.arch }}
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: .
-          target: tester
+          target: builder
           push: false
           platforms: ${{ matrix.platform }}
-          tags: mcp/smartbear:tester-${{ matrix.arch }}
+          tags: mcp/smartbear:builder-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
           load: true
 
       - name: Run container tests (vitest) on ${{ matrix.arch }}
         run: |
-          docker run --rm mcp/smartbear:tester-${{ matrix.arch }}
+          docker run --rm mcp/smartbear:builder-${{ matrix.arch }} npm run test:run
 
   dockerfile-lint:
     runs-on: ubuntu-latest
