@@ -5,6 +5,10 @@ const filterValueSchema = z.object({
   value: z.union([z.string(), z.boolean(), z.number()]),
 });
 
+/**
+ * A collection of input parameter schemas for reuse between tools.
+ * Add new entries when common parameters are identified.
+ */
 export const toolInputParameters = {
   errorId: z.string().describe("Unique identifier of the error"),
   sort: z
