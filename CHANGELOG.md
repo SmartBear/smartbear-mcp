@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [Zephyr] Added a tool for retrieving statuses [#212](https://github.com/SmartBear/smartbear-mcp/pull/212)
 - [Zephyr] Added a tool for retrieving Test Cases [#230](https://github.com/SmartBear/smartbear-mcp/pull/230)
+- [BugSnag] Add "Get Current Project" tool to retrieve details of the currently configured project and improve project detection if not configured at startup [#229](https://github.com/SmartBear/smartbear-mcp/pull/229)
 
 ## [0.10.0] - 2025-11-11
 

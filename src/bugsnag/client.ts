@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import type { CacheService } from "../common/cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type { SmartBearMcpServer } from "../common/server.js";
@@ -32,8 +31,8 @@ const HUB_DOMAIN = "bugsnag.smartbear.com";
 const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
+  PROJECT_EVENT_FILTERS: "bugsnag_project_event_filters",
   CURRENT_PROJECT: "bugsnag_current_project",
-  CURRENT_PROJECT_EVENT_FILTERS: "bugsnag_current_project_event_filters",
 };
 
 // Exclude certain event fields from the project event filters to improve agent usage
@@ -69,6 +68,7 @@ const ConfigurationSchema = z.object({
 export class BugsnagClient implements Client {
   private cache?: CacheService;
   private projectApiKey?: string;
+  private configuredProjectApiKey?: string;
   private _currentUserApi: CurrentUserAPI | undefined;
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
@@ -130,7 +130,11 @@ export class BugsnagClient implements Client {
 
     // Trigger caching of org and projects
     try {
-      await this.getProjects();
+      const projects = await this.getProjects();
+      // If there's just one project, make this the current project
+      if (projects.length === 1 && !this.projectApiKey) {
+        this.projectApiKey = projects[0].apiKey;
+      }
     } catch (error) {
       // Swallow auth errors here to allow the tools to be registered for visibility, even if the token is invalid
       console.error(
@@ -139,6 +143,7 @@ export class BugsnagClient implements Client {
       );
     }
     if (this.projectApiKey) {
+      this.configuredProjectApiKey = this.projectApiKey; // Store the originally configured API key
       let currentProject = null;
       try {
         currentProject = await this.getCurrentProject();
@@ -148,7 +153,9 @@ export class BugsnagClient implements Client {
           error,
         );
       }
-      if (!currentProject) {
+      if (currentProject) {
+        await this.getProjectEventFilters(currentProject);
+      } else {
         // Clear the project API key to allow tools to work across all projects
         this.projectApiKey = undefined;
         console.error(
@@ -256,27 +263,34 @@ export class BugsnagClient implements Client {
       project =
         projects.find((p: Project) => p.apiKey === this.projectApiKey) ?? null;
       this.cache?.set(cacheKeys.CURRENT_PROJECT, project);
-      if (project) {
-        this.cache?.set(
-          cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
-          await this.getProjectEventFilters(project),
-        );
-      }
     }
     return project;
   }
 
   async getProjectEventFilters(project: Project): Promise<EventField[]> {
-    let filtersResponse = (
-      await this.projectApi.listProjectEventFields(project.id)
-    ).body;
-    if (!filtersResponse || filtersResponse.length === 0) {
-      throw new ToolError(`No event fields found for project ${project.name}.`);
-    }
-    filtersResponse = filtersResponse.filter(
-      (field) => field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
+    let projectFiltersCache = this.cache?.get<Record<string, EventField[]>>(
+      cacheKeys.PROJECT_EVENT_FILTERS,
     );
-    return filtersResponse;
+    if (!projectFiltersCache) {
+      projectFiltersCache = {};
+      this.cache?.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFiltersCache);
+    }
+    if (!projectFiltersCache[project.id]) {
+      let filtersResponse = (
+        await this.projectApi.listProjectEventFields(project.id)
+      ).body;
+      if (!filtersResponse || filtersResponse.length === 0) {
+        throw new ToolError(
+          `No event fields found for project ${project.name}.`,
+        );
+      }
+      filtersResponse = filtersResponse.filter(
+        (field) =>
+          field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
+      );
+      projectFiltersCache[project.id] = filtersResponse;
+    }
+    return projectFiltersCache[project.id];
   }
 
   async getEvent(eventId: string, projectId?: string): Promise<any> {
@@ -298,6 +312,10 @@ export class BugsnagClient implements Client {
       const maybeProject = await this.getProject(projectId);
       if (!maybeProject) {
         throw new ToolError(`Project with ID ${projectId} not found.`);
+      }
+      // If this hasn't been configured at startup, set this to the current project for future tool calls
+      if (!this.configuredProjectApiKey) {
+        this.cache?.set(cacheKeys.CURRENT_PROJECT, maybeProject);
       }
       return maybeProject;
     } else {
@@ -358,74 +376,84 @@ export class BugsnagClient implements Client {
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): void {
-    if (!this.projectApiKey) {
-      const listProjectsInputSchema = z.object({
-        perPage: toolInputParameters.perPage,
-        page: toolInputParameters.page,
-      });
-      register(
-        {
-          title: "List Projects",
-          summary:
-            "List all projects in the organization with optional pagination",
-          purpose:
-            "Retrieve available projects for browsing and selecting which project to analyze",
-          useCases: [
-            "Browse available projects when no specific project API key is configured",
-            "Find project IDs needed for other tools",
-            "Get an overview of all projects in the organization",
-          ],
-          inputSchema: listProjectsInputSchema,
-          examples: [
-            {
-              description: "Get first 10 projects",
-              parameters: {
-                perPage: 10,
-                page: 1,
-              },
-              expectedOutput:
-                "JSON array of project objects with IDs, names, and metadata",
-            },
-            {
-              description: "Get all projects (no pagination)",
-              parameters: {},
-              expectedOutput: "JSON array of all available projects",
-            },
-          ],
-          hints: [
-            "Use pagination for organizations with many projects to avoid large responses",
-            "Project IDs from this list can be used with other tools when no project API key is configured",
-          ],
-        },
-        async (args, _extra) => {
-          const params = listProjectsInputSchema.parse(args);
-          let projects = await this.getProjects();
-          if (!projects || projects.length === 0) {
-            return {
-              content: [{ type: "text", text: "No projects found." }],
-            };
-          }
-          if (params.perPage || params.page) {
-            const perPage = params.perPage;
-            const page = params.page;
-            projects = projects.slice((page - 1) * perPage, page * perPage);
-          }
+    register(
+      {
+        title: "Get Current Project",
+        summary:
+          "Retrieve the 'current' project on which tools should operate by default. This allows BugSnag tools to be called with no projectId parameter.",
+        purpose:
+          "Gets information about the 'current' BugSnag project, including ID and API key",
+        useCases: ["Understand if a current project has been set"],
+        inputSchema: toolInputParameters.empty,
+        hints: [
+          "If a project is returned, it can be assumed that the user expects interactions with BugSnag tools to refer to this project",
+          "If this tool returns no current project then other BugSnag tools will require an explicit project ID parameter",
+          "Call the List Projects tool to see all projects that the user has access to. Get the project ID from this list either by asking the user for the project name or slug",
+          "You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project 'apiKey' field from the project list",
+        ],
+      },
+      async (_args, _extra) => {
+        const project = await this.getCurrentProject();
+        if (!project) {
+          throw new ToolError(
+            "No current project is configured in the MCP server - use List Projects to see the available projects and use the project ID as a parameter to other BugSnag tools. You can ask the user to select the project based on the name or slug, or use the apiKey field and see if there's a BugSnag API key set in the user's code when they configure the BugSnag SDK",
+          );
+        }
+        return {
+          content: [{ type: "text", text: JSON.stringify(project) }],
+        };
+      },
+    );
 
-          const result = {
-            data: projects,
-            count: projects.length,
-          };
-          return {
-            content: [{ type: "text", text: JSON.stringify(result) }],
-          };
-        },
-      );
-    }
+    const listProjectsInputSchema = z.object({
+      apiKey: z
+        .string()
+        .optional()
+        .describe("The API key of the BugSnag project, if known."),
+    });
+
+    register(
+      {
+        title: "List Projects",
+        summary:
+          "List all projects in the organization that the current user has access to, or find a project matching an API key.",
+        purpose:
+          "Retrieve available projects for browsing and selecting which project to analyze.",
+        useCases: [
+          "Get an overview of all projects in the organization",
+          "Locate a project by its API key if known from the user's code",
+        ],
+        inputSchema: listProjectsInputSchema,
+        hints: [
+          "Project IDs from this list can be used with other tools when no project API key is configured",
+        ],
+      },
+      async (args, _extra) => {
+        const params = listProjectsInputSchema.parse(args);
+        let projects = await this.getProjects();
+        if (!projects || projects.length === 0) {
+          throw new ToolError(
+            "No BugSnag projects found for the current user.",
+          );
+        }
+        if (params.apiKey) {
+          const matchedProject = projects.find(
+            (p: Project) => p.apiKey === params.apiKey,
+          );
+          projects = matchedProject ? [matchedProject] : [];
+        }
+        const content = {
+          data: projects,
+          count: projects.length,
+        };
+        return {
+          content: [{ type: "text", text: JSON.stringify(content) }],
+        };
+      },
+    );
 
     const getErrorInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       errorId: toolInputParameters.errorId.describe(
         "Unique identifier of the error to retrieve",
       ),
@@ -596,9 +624,7 @@ export class BugsnagClient implements Client {
     );
 
     const listProjectErrorsInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       filters: toolInputParameters.filters.describe(
         "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
           "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
@@ -663,7 +689,7 @@ export class BugsnagClient implements Client {
           },
         ],
         hints: [
-          "Use list_project_event_filters tool first to discover valid filter field names for your project",
+          "Use List Project Event Filters tool first to discover valid filter field names for your project",
           "Combine multiple filters to narrow results - filters are applied with AND logic",
           "For time filters: use relative format (7d, 24h) for recent periods or ISO 8601 UTC format (2018-05-20T00:00:00Z) for specific dates",
           "Common time filters: event.since (from this time), event.before (until this time)",
@@ -680,10 +706,7 @@ export class BugsnagClient implements Client {
 
         // Validate filter keys against cached event fields
         if (params.filters) {
-          const eventFields =
-            this.cache?.get<EventField[]>(
-              cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
-            ) || [];
+          const eventFields = await this.getProjectEventFilters(project);
           const validKeys = new Set(eventFields.map((f) => f.displayId));
           for (const key of Object.keys(params.filters)) {
             if (!validKeys.has(key)) {
@@ -720,10 +743,14 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const listProjectEventFiltersInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+    });
+
     register(
       {
         title: "List Project Event Filters",
-        summary: "Get available event filter fields for the current project",
+        summary: "Get available event filter fields for a project",
         purpose:
           "Discover valid filter field names and options that can be used with the List Errors or Get Error tools",
         useCases: [
@@ -731,7 +758,7 @@ export class BugsnagClient implements Client {
           "Find the correct field names for filtering by user, environment, or custom metadata",
           "Understand filter options and data types for building complex queries",
         ],
-        inputSchema: z.object({}),
+        inputSchema: listProjectEventFiltersInputSchema,
         examples: [
           {
             description: "Get all available filter fields",
@@ -745,23 +772,19 @@ export class BugsnagClient implements Client {
           "Look for display_id field in the response - these are the field names to use in filters",
         ],
       },
-      async (_args, _extra) => {
-        const projectFields = this.cache?.get<EventField[]>(
-          cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
+      async (args, _extra) => {
+        const params = listProjectEventFiltersInputSchema.parse(args);
+        const eventFilters = await this.getProjectEventFilters(
+          await this.getInputProject(params.projectId),
         );
-        if (!projectFields)
-          throw new ToolError("No event filters found in cache.");
-
         return {
-          content: [{ type: "text", text: JSON.stringify(projectFields) }],
+          content: [{ type: "text", text: JSON.stringify(eventFilters) }],
         };
       },
     );
 
     const updateErrorInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       errorId: toolInputParameters.errorId,
       operation: z
         .enum(PERMITTED_UPDATE_OPERATIONS)
@@ -779,9 +802,7 @@ export class BugsnagClient implements Client {
           "Discard or un-discard an error",
           "Update the severity of an error",
         ],
-        inputSchema: this.projectApiKey
-          ? updateErrorInputSchema.omit({ projectId: true })
-          : updateErrorInputSchema,
+        inputSchema: updateErrorInputSchema,
         examples: [
           {
             description: "Mark an error as fixed",
@@ -851,9 +872,7 @@ export class BugsnagClient implements Client {
     );
 
     const listReleasesInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       releaseStage: toolInputParameters.releaseStage,
       visibleOnly: z
         .boolean()
@@ -947,9 +966,7 @@ export class BugsnagClient implements Client {
     );
 
     const getReleaseInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       releaseId: toolInputParameters.releaseId,
     });
 
@@ -1017,9 +1034,7 @@ export class BugsnagClient implements Client {
     );
 
     const getBuildInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       buildId: toolInputParameters.buildId,
     });
 
