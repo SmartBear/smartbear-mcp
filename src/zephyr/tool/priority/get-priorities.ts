@@ -5,9 +5,7 @@ import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
 
-export const GetPrioritiesInputSchema = listPrioritiesQueryParams;
-
- export class GetPriorities implements ZephyrTool {
+export class GetPriorities implements ZephyrTool {
   private readonly apiClient: ApiClient;
 
   constructor(apiClient: ApiClient) {
@@ -19,7 +17,7 @@ export const GetPrioritiesInputSchema = listPrioritiesQueryParams;
     summary: "Get Zephyr Test Case priorities with optional filters",
     readOnly: true,
     idempotent: true,
-    inputSchema: GetPrioritiesInputSchema,
+    inputSchema: listPrioritiesQueryParams,
     outputSchema: listPrioritiesResponse,
     examples: [
       {
