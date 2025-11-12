@@ -2,7 +2,7 @@ name: Validate Portal Content
 
 on:
   pull_request:
-    branches: [ main, next ]
+    branches: [ main ]
     paths:
       - 'docs/**'
 

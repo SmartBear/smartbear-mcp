@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { ZephyrProjectListSchema } from "../../../../../zephyr/common/types.js";
 import {
-  GetProjects,
-  GetProjectsInputSchema,
-} from "../../../../../zephyr/tool/project/get-projects.js";
+  listProjectsQueryParams,
+  listProjectsResponse,
+} from "../../../../../zephyr/common/rest-api-schemas.js";
+import { GetProjects } from "../../../../../zephyr/tool/project/get-projects.js";
 
 describe("GetProjects", () => {
   const mockApiClient = { get: vi.fn() };
@@ -16,8 +16,8 @@ describe("GetProjects", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(GetProjectsInputSchema);
-    expect(instance.specification.outputSchema).toBe(ZephyrProjectListSchema);
+    expect(instance.specification.inputSchema).toBe(listProjectsQueryParams);
+    expect(instance.specification.outputSchema).toBe(listProjectsResponse);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
@@ -62,7 +62,7 @@ describe("GetProjects", () => {
     mockApiClient.get.mockResolvedValueOnce(responseMock);
     const result = await instance.handle({}, {});
     expect(mockApiClient.get).toHaveBeenCalledWith("/projects", {
-      maxResults: undefined,
+      maxResults: 10, // default value
       startAt: undefined,
     });
     expect(result.structuredContent).toBe(responseMock);

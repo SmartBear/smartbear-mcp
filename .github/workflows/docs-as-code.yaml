@@ -4,7 +4,10 @@ on:
   push:
     branches:
       - main
-      - next
+    paths:
+      - 'docs/**'
+  release:
+    types: [published]
     paths:
       - 'docs/**'
   workflow_dispatch:
@@ -66,7 +69,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+    environment: ${{ github.event_name == 'release' && 'Production' || 'Staging' }}
     needs: [spell-check, validate-manifests]
     if: github.event.inputs.skip_api_linting == 'true' || (needs.spell-check.result == 'success' && needs['validate-manifests'].result == 'success')
 

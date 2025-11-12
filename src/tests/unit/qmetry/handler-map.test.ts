@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { QMETRY_HANDLER_MAP } from "../../../qmetry/client/handlers.js";
-import { TOOLS } from "../../../qmetry/client/tools.js";
+import { TOOLS } from "../../../qmetry/client/tools/index.js";
 
 describe("QMetry handler map", () => {
   it("should have a function handler for every tool", () => {
