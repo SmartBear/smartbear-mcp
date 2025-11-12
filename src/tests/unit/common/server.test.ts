@@ -1,4 +1,5 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { config } from "process";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag.js";
@@ -66,7 +67,8 @@ describe("SmartBearMcpServer", () => {
     beforeEach(() => {
       mockClient = {
         name: "Test Product",
-        prefix: "test_product",
+        toolPrefix: "test_product",
+        configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: vi.fn(),
       };
@@ -367,7 +369,8 @@ describe("SmartBearMcpServer", () => {
     it("should register resources when client provides them", async () => {
       const mockClient = {
         name: "Test Product",
-        prefix: "test_product",
+        toolPrefix: "test_product",
+        configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: vi.fn(),
       };
@@ -408,7 +411,8 @@ describe("SmartBearMcpServer", () => {
     it("should not register resources when client does not provide them", async () => {
       const mockClient = {
         name: "Test Product",
-        prefix: "test_product",
+        toolPrefix: "test_product",
+        configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: undefined,
       };

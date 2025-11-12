@@ -1,18 +1,31 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { QmetryClient } from "../../../qmetry/client";
-import { TOOLS } from "../../../qmetry/client/tools.js";
+import { TOOLS } from "../../../qmetry/client/tools/index.js";
 
 const fetchMock = createFetchMock(vi);
+
+// Helper to create and configure a client
+async function createConfiguredClient(
+  apiKey = "fake-token",
+  baseUrl = "https://qmetry.example",
+): Promise<QmetryClient> {
+  const client = new QmetryClient();
+  await client.configure({} as any, {
+    api_key: apiKey,
+    base_url: baseUrl,
+  });
+  return client;
+}
 
 describe("QmetryClient", () => {
   let client: QmetryClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
-    client = new QmetryClient("fake-token", "https://qmetry.example");
+    client = await createConfiguredClient();
   });
 
   afterEach(() => {
@@ -20,8 +33,8 @@ describe("QmetryClient", () => {
   });
 
   describe("constructor", () => {
-    it("should initialize with correct parameters", () => {
-      const testClient = new QmetryClient(
+    it("should initialize with correct parameters", async () => {
+      const testClient = await createConfiguredClient(
         "fake-token",
         "https://qmetry.example",
       );
@@ -49,10 +62,10 @@ describe("QmetryClient", () => {
 
       expect(mockRegister).toHaveBeenCalledTimes(TOOLS.length);
       expect(mockRegister.mock.calls[0][0].title).toBe(
-        "Set QMetry Project Info",
+        "Fetch QMetry list Projects",
       );
       expect(mockRegister.mock.calls[0][0].summary).toBe(
-        "Set current QMetry project for your account",
+        "Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
       );
     });
 

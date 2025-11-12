@@ -6628,4 +6628,8 @@ export const retrieveBDDTestCasesQueryParams = zod.object({
 
 export const retrieveBDDTestCasesHeader = zod.object({
   Accept: zod.enum(["application/zip"]),
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> main

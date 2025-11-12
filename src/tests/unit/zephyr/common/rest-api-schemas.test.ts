@@ -57,4 +57,8 @@ describe("getProjectResponse", () => {
     const invalid = { id: "x", jiraProjectId: 2, key: "ABC", enabled: true };
     expect(() => getProjectResponse.parse(invalid)).toThrow();
   });
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> main

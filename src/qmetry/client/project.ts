@@ -3,8 +3,10 @@ import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import {
   DEFAULT_FETCH_BUILD_PAYLOAD,
   DEFAULT_FETCH_PLATFORMS_PAYLOAD,
+  DEFAULT_FETCH_PROJECTS_PAYLOAD,
   type FetchBuildsPayload,
   type FetchPlatformsPayload,
+  type FetchProjectsPayload,
 } from "../types/project.js";
 import { qmetryRequest } from "./api/client-api.js";
 
@@ -34,6 +36,30 @@ export async function getProjectInfo(
     token,
     baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
+  });
+}
+
+/**
+ * Fetches a List of projects.
+ */
+export async function getProjects(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchProjectsPayload,
+) {
+  const body: FetchProjectsPayload = {
+    ...DEFAULT_FETCH_PROJECTS_PAYLOAD,
+    ...payload,
+  };
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.PROJECT.GET_PROJECTS,
+    token,
+    baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
+    project: project || QMETRY_DEFAULTS.PROJECT_KEY,
+    body,
   });
 }
 

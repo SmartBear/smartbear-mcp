@@ -14,8 +14,11 @@ Magento
 minidump
 modelcontextprotocol
 Negroni
+onsessioninitialized
 pactflow
 pacticipant
+pacticipants
+petstore
 qmetry
 Reactnative
 reindexing
@@ -23,6 +26,7 @@ smartbear
 sogou
 stackframe
 stackframes
+Streamable
 SWAGGERHUB
 symbolicate
 Symfony

@@ -11,6 +11,7 @@ import {
   ZodArray,
   ZodBoolean,
   ZodEnum,
+  ZodIntersection,
   ZodLiteral,
   ZodNumber,
   ZodObject,
@@ -22,10 +23,13 @@ import {
   ZodUnion,
 } from "zod";
 import Bugsnag from "../common/bugsnag.js";
+import { CacheService } from "./cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
 import { type Client, ToolError, type ToolParams } from "./types.js";
 
 export class SmartBearMcpServer extends McpServer {
+  private cache: CacheService;
+
   constructor() {
     super(
       {
@@ -43,12 +47,17 @@ export class SmartBearMcpServer extends McpServer {
         },
       },
     );
+    this.cache = new CacheService();
+  }
+
+  getCache(): CacheService {
+    return this.cache;
   }
 
   addClient(client: Client): void {
     client.registerTools(
       (params, cb) => {
-        const toolName = `${client.prefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
+        const toolName = `${client.toolPrefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
         const toolTitle = `${client.name}: ${params.title}`;
         return super.registerTool(
           toolName,
@@ -97,7 +106,7 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       client.registerResources((name, path, cb) => {
-        const url = `${client.prefix}://${name}/${path}`;
+        const url = `${client.toolPrefix}://${name}/${path}`;
         return super.registerResource(
           name,
           new ResourceTemplate(url, {
@@ -180,8 +189,15 @@ export class SmartBearMcpServer extends McpServer {
   private schemaToRawShape(
     schema: ZodTypeAny | undefined,
   ): ZodRawShape | undefined {
-    if (schema && schema instanceof ZodObject) {
-      return schema.shape;
+    if (schema) {
+      if (schema instanceof ZodObject) {
+        return schema.shape;
+      }
+      if (schema instanceof ZodIntersection) {
+        const leftShape = this.schemaToRawShape(schema._def.left);
+        const rightShape = this.schemaToRawShape(schema._def.right);
+        return { ...leftShape, ...rightShape };
+      }
     }
     return undefined;
   }
