@@ -3,7 +3,6 @@ import {
   type FilterObject,
   toUrlSearchParams,
 } from "../../../bugsnag/client/filters.js";
-import type { PerformanceFilter } from "../../../bugsnag/client/api/index.js";
 
 describe("Filter Utilities", () => {
   describe("toUrlSearchParams", () => {

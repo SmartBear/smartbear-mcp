@@ -1259,7 +1259,6 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = getSpanGroupInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-
         const spanGroupResults = await this.projectApi.getProjectSpanGroup(
           project.id,
           params.spanGroupId,
