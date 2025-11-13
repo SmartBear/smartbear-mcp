@@ -44,7 +44,7 @@ const mockProjectAPI = {
   listProjectStarredSpanGroups: vi.fn(),
   listProjectTraceFields: vi.fn(),
   listSpansBySpanGroupId: vi.fn(),
-  listSpansByTraceId: vi.fn()
+  listSpansByTraceId: vi.fn(),
 } satisfies Omit<ProjectAPI, keyof BaseAPI>;
 
 const mockCache = {
@@ -2079,8 +2079,16 @@ describe("BugsnagClient", () => {
       it("should list span groups with default parameters", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
         const mockSpanGroups = [
-          { id: "span-group-1", displayName: "GET /api/users", totalSpans: 100 },
-          { id: "span-group-2", displayName: "POST /api/login", totalSpans: 50 },
+          {
+            id: "span-group-1",
+            displayName: "GET /api/users",
+            totalSpans: 100,
+          },
+          {
+            id: "span-group-2",
+            displayName: "POST /api/login",
+            totalSpans: 50,
+          },
         ];
 
         mockCache.get.mockReturnValue(mockProject);
@@ -2124,7 +2132,11 @@ describe("BugsnagClient", () => {
       it("should list span groups with sorting and filtering", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
         const mockSpanGroups = [
-          { id: "span-group-1", displayName: "GET /api/users", durationP95: 500 },
+          {
+            id: "span-group-1",
+            displayName: "GET /api/users",
+            durationP95: 500,
+          },
         ];
         const mockFilters = [
           {
@@ -2186,7 +2198,9 @@ describe("BugsnagClient", () => {
           displayName: "GET /api/users",
           statistics: { p50: 100, p95: 500, p99: 1000 },
         };
-        const mockTimeline = { buckets: [{ timestamp: "2024-01-01", p95: 450 }] };
+        const mockTimeline = {
+          buckets: [{ timestamp: "2024-01-01", p95: 450 }],
+        };
         const mockDistribution = { buckets: [{ range: "0-100ms", count: 50 }] };
 
         mockCache.get.mockReturnValue(mockProject);
@@ -2220,11 +2234,9 @@ describe("BugsnagClient", () => {
           "span-group-1",
           undefined,
         );
-        expect(mockProjectAPI.getProjectSpanGroupDistribution).toHaveBeenCalledWith(
-          "proj-1",
-          "span-group-1",
-          undefined,
-        );
+        expect(
+          mockProjectAPI.getProjectSpanGroupDistribution,
+        ).toHaveBeenCalledWith("proj-1", "span-group-1", undefined);
         expect(result).toEqual({
           content: [
             {
@@ -2249,9 +2261,7 @@ describe("BugsnagClient", () => {
           (call: any) => call[0].title === "Get Span Group",
         )[1];
 
-        await expect(getSpanGroupHandler({})).rejects.toThrow(
-          "Required",
-        );
+        await expect(getSpanGroupHandler({})).rejects.toThrow("Required");
       });
     });
 
@@ -2325,9 +2335,7 @@ describe("BugsnagClient", () => {
           (call: any) => call[0].title === "List Spans",
         )[1];
 
-        await expect(listSpansHandler({})).rejects.toThrow(
-          "Required",
-        );
+        await expect(listSpansHandler({})).rejects.toThrow("Required");
       });
     });
 
