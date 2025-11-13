@@ -385,207 +385,7 @@ export class BugsnagClient implements Client {
     };
   }
 
-  /**
-   * List span groups for a project
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @returns Promise resolving to the list of span groups
-   */
-  async listSpanGroups(
-    projectId?: string,
-    sort?: string,
-    direction?: string,
-    perPage?: number,
-    offset?: number,
-    filters?: Array<PerformanceFilter>,
-    starredOnly?: boolean,
-    nextUrl?: string,
-  ) {
-    const project = await this.getInputProject(projectId);
-    return await this.projectApi.listProjectSpanGroups(
-      project.id,
-      sort,
-      direction,
-      perPage,
-      offset,
-      filters,
-      starredOnly,
-      nextUrl,
-    );
-  }
 
-  /**
-   * Get a specific span group
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @param spanGroupId ID of the span group
-   * @param filters Optional performance filters
-   * @returns Promise resolving to the span group
-   */
-  async getSpanGroup(
-    projectId?: string,
-    spanGroupId?: string,
-    filters?: Array<PerformanceFilter>,
-  ) {
-    const project = await this.getInputProject(projectId);
-    if (!spanGroupId) {
-      throw new ToolError("spanGroupId is required");
-    }
-    return await this.projectApi.getProjectSpanGroup(
-      project.id,
-      spanGroupId,
-      filters,
-    );
-  }
-
-  /**
-   * Get timeline for a span group
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @param spanGroupId ID of the span group
-   * @param filters Optional performance filters
-   * @returns Promise resolving to the span group timeline
-   */
-  async getSpanGroupTimeline(
-    projectId?: string,
-    spanGroupId?: string,
-    filters?: Array<PerformanceFilter>,
-  ) {
-    const project = await this.getInputProject(projectId);
-    if (!spanGroupId) {
-      throw new ToolError("spanGroupId is required");
-    }
-    return await this.projectApi.getProjectSpanGroupTimeline(
-      project.id,
-      spanGroupId,
-      filters,
-    );
-  }
-
-  /**
-   * Get distribution for a span group
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @param spanGroupId ID of the span group
-   * @param filters Optional performance filters
-   * @returns Promise resolving to the span group distribution
-   */
-  async getSpanGroupDistribution(
-    projectId?: string,
-    spanGroupId?: string,
-    filters?: Array<PerformanceFilter>,
-  ) {
-    const project = await this.getInputProject(projectId);
-    if (!spanGroupId) {
-      throw new ToolError("spanGroupId is required");
-    }
-    return await this.projectApi.getProjectSpanGroupDistribution(
-      project.id,
-      spanGroupId,
-      filters,
-    );
-  }
-
-
-  /**
-   * List performance targets for a span group
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @param spanGroupId ID of the span group
-   * @returns Promise resolving to the list of performance targets
-   */
-  async listSpanGroupPerformanceTargets(
-    projectId?: string,
-    spanGroupId?: string,
-  ) {
-    const project = await this.getInputProject(projectId);
-    if (!spanGroupId) {
-      throw new ToolError("spanGroupId is required");
-    }
-    return await this.projectApi.listProjectSpanGroupPerformanceTargets(
-      project.id,
-      spanGroupId,
-    );
-  }
-
-  /**
-   * List spans by span group ID
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @param spanGroupId ID of the span group
-   * @returns Promise resolving to the list of spans
-   */
-  async listSpansBySpanGroupId(
-    projectId?: string,
-    spanGroupId?: string,
-    filters?: Array<PerformanceFilter>,
-    sort?: string,
-    direction?: string,
-    perPage?: number,
-    nextUrl?: string,
-  ) {
-    const project = await this.getInputProject(projectId);
-    if (!spanGroupId) {
-      throw new ToolError("spanGroupId is required");
-    }
-    return await this.projectApi.listSpansBySpanGroupId(
-      project.id,
-      spanGroupId,
-      filters,
-      sort,
-      direction,
-      perPage,
-      nextUrl,
-    );
-  }
-
-  /**
-   * List spans by trace ID
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @param traceId Trace ID
-   * @param from Start time
-   * @param to End time
-   * @returns Promise resolving to the list of spans
-   */
-  async listSpansByTraceId(
-    projectId?: string,
-    traceId?: string,
-    from?: string,
-    to?: string,
-    targetSpanId?: string,
-    perPage?: number,
-    nextUrl?: string,
-  ) {
-    const project = await this.getInputProject(projectId);
-    if (!traceId || !from || !to) {
-      throw new ToolError("traceId, from, and to are required");
-    }
-    return await this.projectApi.listSpansByTraceId(
-      project.id,
-      traceId,
-      from,
-      to,
-      targetSpanId,
-      perPage,
-      nextUrl,
-    );
-  }
-
-
-
-  /**
-   * List trace fields for a project
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @returns Promise resolving to the list of trace fields
-   */
-  async listTraceFields(projectId?: string) {
-    const project = await this.getInputProject(projectId);
-    return await this.projectApi.listProjectTraceFields(project.id);
-  }
-
-  /**
-   * Get network grouping ruleset for a project
-   * @param projectId Optional project ID (uses configured project if omitted)
-   * @returns Promise resolving to the network grouping ruleset
-   */
-  async getNetworkGroupingRuleset(projectId?: string) {
-    const project = await this.getInputProject(projectId);
-    return await this.projectApi.getProjectNetworkGroupingRuleset(project.id);
-  }
 
   registerTools(
     register: RegisterToolsFunction,
@@ -1393,8 +1193,9 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         const params = listSpanGroupsInputSchema.parse(args);
-        const result = await this.listSpanGroups(
-          params.projectId,
+        const project = await this.getInputProject(params.projectId);
+        const result = await this.projectApi.listProjectSpanGroups(
+          project.id,
           params.sort,
           params.direction,
           params.perPage,
@@ -1464,20 +1265,25 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         const params = getSpanGroupInputSchema.parse(args);
-        const spanGroupResults = await this.getSpanGroup(
-          params.projectId,
+        const project = await this.getInputProject(params.projectId);
+        if (!params.spanGroupId) {
+          throw new ToolError("spanGroupId is required");
+        }
+        
+        const spanGroupResults = await this.projectApi.getProjectSpanGroup(
+          project.id,
           params.spanGroupId,
           params.filters as Array<PerformanceFilter> | undefined,
         );
 
-        const spanGroupTimelineResult = await this.getSpanGroupTimeline(
-          params.projectId,
+        const spanGroupTimelineResult = await this.projectApi.getProjectSpanGroupTimeline(
+          project.id,
           params.spanGroupId,
           params.filters as Array<PerformanceFilter> | undefined,
         );
 
-          const spanGroupDistributionResult = await this.getSpanGroupDistribution(
-          params.projectId,
+        const spanGroupDistributionResult = await this.projectApi.getProjectSpanGroupDistribution(
+          project.id,
           params.spanGroupId,
           params.filters as Array<PerformanceFilter> | undefined,
         );
@@ -1572,8 +1378,12 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         const params = listSpansInputSchema.parse(args);
-        const result = await this.listSpansBySpanGroupId(
-          params.projectId,
+        const project = await this.getInputProject(params.projectId);
+        if (!params.spanGroupId) {
+          throw new ToolError("spanGroupId is required");
+        }
+        const result = await this.projectApi.listSpansBySpanGroupId(
+          project.id,
           params.spanGroupId,
           params.filters as Array<PerformanceFilter> | undefined,
           params.sort,
@@ -1661,8 +1471,12 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         const params = getTraceInputSchema.parse(args);
-        const result = await this.listSpansByTraceId(
-          params.projectId,
+        const project = await this.getInputProject(params.projectId);
+        if (!params.traceId || !params.from || !params.to) {
+          throw new ToolError("traceId, from, and to are required");
+        }
+        const result = await this.projectApi.listSpansByTraceId(
+          project.id,
           params.traceId,
           params.from,
           params.to,
@@ -1718,7 +1532,8 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         const params = listTraceFieldsInputSchema.parse(args);
-        const result = await this.listTraceFields(params.projectId);
+        const project = await this.getInputProject(params.projectId);
+        const result = await this.projectApi.listProjectTraceFields(project.id);
         return {
           content: [{ type: "text", text: JSON.stringify(result.body) }],
         };
