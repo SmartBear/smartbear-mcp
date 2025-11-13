@@ -35,6 +35,20 @@ const cacheKeys = {
   CURRENT_PROJECT: "bugsnag_current_project",
 };
 
+// Performance filter schemas that match the API structure
+const PerformanceFilterSchema = z.object({
+  key: z.string(),
+  filterValues: z.array(
+    z.object({
+      value: z.string(),
+      matchType: z.enum(["eq", "ne", "lt", "gt", "empty"]),
+    })
+  ).optional(),
+});
+
+export const PerformanceFiltersArraySchema = z.array(PerformanceFilterSchema);
+
+
 // Exclude certain event fields from the project event filters to improve agent usage
 const EXCLUDED_EVENT_FIELDS = new Set([
   "search", // This is searches multiple fields and is more a convenience for humans, we're removing to avoid over-matching
@@ -1434,9 +1448,6 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = getTraceInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-        if (!params.traceId || !params.from || !params.to) {
-          throw new ToolError("traceId, from, and to are required");
-        }
         const result = await this.projectApi.listSpansByTraceId(
           project.id,
           params.traceId,

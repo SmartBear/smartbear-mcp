@@ -51,16 +51,3 @@ export function toUrlSearchParams(filters: FilterObject): URLSearchParams {
 
   return params;
 }
-
-// Performance filter schemas that match the API structure
-const PerformanceFilterSchema = z.object({
-  key: z.string(),
-  filterValues: z.array(
-    z.object({
-      value: z.string(),
-      matchType: z.enum(["eq", "ne", "lt", "gt", "empty"]),
-    })
-  ).optional(),
-});
-
-export const PerformanceFiltersArraySchema = z.array(PerformanceFilterSchema);
