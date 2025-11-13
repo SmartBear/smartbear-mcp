@@ -25,6 +25,8 @@ import {
   type ProductsListResponse,
   type ScanStandardizationParams,
   type StandardizationResult,
+  type StandardizeApiParams,
+  type StandardizeApiResponse,
   type SuccessResponse,
   TOOLS,
   type UpdatePortalArgs,
@@ -143,6 +145,12 @@ export class ApiHubClient implements Client {
     args: ScanStandardizationParams,
   ): Promise<StandardizationResult | FallbackResponse> {
     return this.api.scanStandardization(args);
+  }
+
+  async standardizeApi(
+    args: StandardizeApiParams,
+  ): Promise<StandardizeApiResponse | FallbackResponse> {
+    return this.api.standardizeApi(args);
   }
 
   registerTools(

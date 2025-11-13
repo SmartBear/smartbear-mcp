@@ -27,6 +27,8 @@ import type {
   CreateApiResponse,
   ScanStandardizationParams,
   StandardizationResult,
+  StandardizeApiParams,
+  StandardizeApiResponse,
 } from "./registry-types.js";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
@@ -520,7 +522,8 @@ export class ApiHubAPI {
   ): Promise<CreateApiFromPromptResponse> {
     // Construct the URL with query parameters
     const searchParams = new URLSearchParams();
-    searchParams.append("specification", params.specification);
+    const specType = params.specType ?? "openapi30x";
+    searchParams.append("specType", specType);
 
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,
@@ -551,7 +554,7 @@ export class ApiHubAPI {
     return {
       owner: params.owner,
       apiName: params.apiName,
-      specification: params.specification,
+      specType: specType,
       url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
       operation,
     };
@@ -629,5 +632,41 @@ export class ApiHubAPI {
     }
 
     return await this.handleResponse<StandardizationResult>(response);
+  }
+
+  /**
+   * Standardize and fix an API definition using AI
+   * @param params Parameters including owner, API name, and version
+   * @returns Standardization response with status and fixed definition
+   */
+  async standardizeApi(
+    params: StandardizeApiParams,
+  ): Promise<StandardizeApiResponse> {
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
+      params.owner,
+    )}/${encodeURIComponent(params.api)}/${encodeURIComponent(
+      params.version,
+    )}/standardize`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(
+        `SwaggerHub Registry API standardizeApi failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    const result = await this.handleResponse<StandardizeApiResponse>(response);
+    
+    // Validate that we have the expected response structure
+    if (!("message" in (result as any)) || !("errorsFound" in (result as any))) {
+      throw new Error("Unexpected response format from standardizeApi endpoint");
+    }
+    
+    return result as StandardizeApiResponse;
   }
 }

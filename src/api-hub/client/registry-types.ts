@@ -105,7 +105,7 @@ export const CreateApiFromPromptParamsSchema = z.object({
     .describe(
       "The prompt describing the desired API functionality (e.g., 'Create a RESTful API for managing a pet store with endpoints for pets, orders, and inventory')",
     ),
-  specification: z
+  specType: z
     .enum([
       "openapi20",
       "openapi30x",
@@ -113,9 +113,18 @@ export const CreateApiFromPromptParamsSchema = z.object({
       "asyncapi2xx",
       "asyncapi30x",
     ])
+    .default("openapi30x")
     .describe(
-      "Specification type for the generated API definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x",
+      "Specification type for the generated API definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x (default), 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x",
     ),
+});
+
+export const StandardizeApiParamsSchema = z.object({
+  owner: z
+    .string()
+    .describe("API owner (organization or user, case-sensitive)"),
+  api: z.string().describe("API name (case-sensitive)"),
+  version: z.string().describe("Version identifier"),
 });
 
 // Registry API types for SwaggerHub Design functionality - generated from Zod schemas
@@ -131,6 +140,7 @@ export type ScanStandardizationParams = z.infer<
 export type CreateApiFromPromptParams = z.infer<
   typeof CreateApiFromPromptParamsSchema
 >;
+export type StandardizeApiParams = z.infer<typeof StandardizeApiParamsSchema>;
 
 // APIs.json format response types
 export interface ApiProperty {
@@ -197,7 +207,7 @@ export interface CreateApiFromTemplateResponse {
 export interface CreateApiFromPromptResponse {
   owner: string;
   apiName: string;
-  specification: string;
+  specType: string;
   url: string;
   operation: "create" | "update";
 }
@@ -206,3 +216,16 @@ export interface CreateApiFromPromptResponse {
 export interface StandardizationResult {
   [key: string]: unknown; // The API returns standardization errors/results
 }
+
+// Response type for API standardization
+export interface StandardizeApiResponse {
+  message: string;
+  errorsFound: number;
+  fixedDefinition?: string;
+  errors?: Array<{
+    description: string;
+    line?: number;
+    severity?: string;
+  }>;
+}
+
