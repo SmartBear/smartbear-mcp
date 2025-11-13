@@ -22,7 +22,7 @@ import {
   type Release,
   type PerformanceFilter,
 } from "./client/api/index.js";
-import { type FilterObject, PerformanceFiltersArraySchema, toUrlSearchParams } from "./client/filters.js";
+import { type FilterObject, toUrlSearchParams } from "./client/filters.js";
 import { toolInputParameters } from "./input-schemas.js";
   
 const HUB_PREFIX = "00000";
@@ -35,6 +35,20 @@ const cacheKeys = {
   PROJECT_EVENT_FILTERS: "bugsnag_project_event_filters",
   CURRENT_PROJECT: "bugsnag_current_project",
 };
+
+// Performance filter schemas that match the API structure
+const PerformanceFilterSchema = z.object({
+  key: z.string(),
+  filterValues: z.array(
+    z.object({
+      value: z.string(),
+      matchType: z.enum(["eq", "ne", "lt", "gt", "empty"]),
+    })
+  ).optional(),
+});
+
+export const PerformanceFiltersArraySchema = z.array(PerformanceFilterSchema);
+
 
 // Exclude certain event fields from the project event filters to improve agent usage
 const EXCLUDED_EVENT_FIELDS = new Set([
@@ -1288,6 +1302,59 @@ export class BugsnagClient implements Client {
     // Performance Monitoring Tools
     // ============================================================
 
+    const listSpanGroupsInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      sort: z
+        .enum([
+          "total_spans",
+          "last_seen",
+          "name",
+          "display_name",
+          "network_http_method",
+          "rendering_slow_frame_span_percentage",
+          "rendering_frozen_frame_span_percentage",
+          "duration_p50",
+          "duration_p75",
+          "duration_p90",
+          "duration_p95",
+          "duration_p99",
+          "system_metrics_cpu_total_mean_p50",
+          "system_metrics_cpu_total_mean_p75",
+          "system_metrics_cpu_total_mean_p90",
+          "system_metrics_cpu_total_mean_p95",
+          "system_metrics_cpu_total_mean_p99",
+          "system_metrics_memory_device_mean_p50",
+          "system_metrics_memory_device_mean_p75",
+          "system_metrics_memory_device_mean_p90",
+          "system_metrics_memory_device_mean_p95",
+          "system_metrics_memory_device_mean_p99",
+          "rendering_metrics_fps_mean_p50",
+          "rendering_metrics_fps_mean_p75",
+          "rendering_metrics_fps_mean_p90",
+          "rendering_metrics_fps_mean_p95",
+          "rendering_metrics_fps_mean_p99",
+          "http_response_4xx_percentage",
+          "http_response_5xx_percentage",
+        ])
+        .optional()
+        .describe("Field to sort by"),
+      direction: z
+        .enum(["asc", "desc"])
+        .optional()
+        .describe("Sort direction"),
+      perPage: toolInputParameters.perPage,
+      starredOnly: z
+        .boolean()
+        .optional()
+        .describe("Show only starred span groups"),
+      nextUrl: toolInputParameters.nextUrl,
+      filters: PerformanceFiltersArraySchema.optional().describe(
+        "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
+      ),
+    });
+
     // TODO: Check we get performance targets
     register(
       {
@@ -1300,116 +1367,33 @@ export class BugsnagClient implements Client {
           "Find slow operations by sorting by duration metrics",
           "Filter to starred/important span groups",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project",
-                  required: true,
-                },
-              ]),
-          {
-            name: "sort",
-            type: z.enum([
-              "total_spans",
-              "last_seen", 
-              "name",
-              "display_name",
-              "network_http_method",
-              "rendering_slow_frame_span_percentage",
-              "rendering_frozen_frame_span_percentage",
-              "duration_p50",
-              "duration_p75",
-              "duration_p90",
-              "duration_p95",
-              "duration_p99",
-              "system_metrics_cpu_total_mean_p50",
-              "system_metrics_cpu_total_mean_p75",
-              "system_metrics_cpu_total_mean_p90",
-              "system_metrics_cpu_total_mean_p95",
-              "system_metrics_cpu_total_mean_p99",
-              "system_metrics_memory_device_mean_p50",
-              "system_metrics_memory_device_mean_p75",
-              "system_metrics_memory_device_mean_p90",
-              "system_metrics_memory_device_mean_p95",
-              "system_metrics_memory_device_mean_p99",
-              "rendering_metrics_fps_mean_p50",
-              "rendering_metrics_fps_mean_p75",
-              "rendering_metrics_fps_mean_p90",
-              "rendering_metrics_fps_mean_p95",
-              "rendering_metrics_fps_mean_p99",
-              "http_response_4xx_percentage",
-              "http_response_5xx_percentage"
-            ]).optional(),
-            description: "Field to sort by",
-            required: false,
-            examples: ["total_spans", "last_seen", "name", "display_name", "duration_p50", "duration_p95", "duration_p99"],
-          },
-          {
-            name: "direction",
-            type: z.enum(["asc", "desc"]).optional(),
-            description: "Sort direction",
-            required: false,
-          },
-          {
-            name: "perPage",
-            type: z.number().min(1).max(100).optional(),
-            description: "Results per page",
-            required: false,
-          },
-          {
-            name: "starredOnly",
-            type: z.boolean().optional(),
-            description: "Show only starred span groups",
-            required: false,
-          },
-          {
-            name: "nextUrl",
-            type: z.string().optional(),
-            description: "URL for next page of results",
-            required: false,
-          },
-          {
-            name: "filters",
-            type: PerformanceFiltersArraySchema,
-            required: false,
-            description:
-              "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
-            examples: [
-              '[{"key": "span_group.category", "filterValues": [{"matchType": "eq", "value": "full_page_load"}]}]',
-              '[{"key": "device.browser_name", "filterValues": [{"matchType": "eq", "value": "Chrome"}]}]',
-              '[{"key": "os.name", "filterValues": [{"matchType": "eq", "value": "iOS"}]}]',
-            ]
-          },
-        ],
+        inputSchema: listSpanGroupsInputSchema,
         examples: [
           {
             description: "List slowest operations",
-            parameters: { sort: "p95", direction: "desc", perPage: 10 },
+            parameters: { sort: "duration_p95", direction: "desc", perPage: 10 },
             expectedOutput:
               "Array of span groups sorted by 95th percentile duration",
           },
         ],
         hints: [
           "Span groups represent different operation types (page loads, API calls, etc.)",
-          "Use sort by p95 or p99 to find the slowest operations",
+          "Use sort by duration_p95 or duration_p99 to find the slowest operations",
           "Star important span groups for quick access",
           "Use nextUrl for pagination",
         ],
       },
       async (args, _extra) => {
+        const params = listSpanGroupsInputSchema.parse(args);
         const result = await this.listSpanGroups(
-          args.projectId,
-          args.sort,
-          args.direction,
-          args.perPage,
+          params.projectId,
+          params.sort,
+          params.direction,
+          params.perPage,
           undefined,
-          args.filters,
-          args.starredOnly,
-          args.nextUrl,
+          params.filters as Array<PerformanceFilter> | undefined,
+          params.starredOnly,
+          params.nextUrl,
         );
         return {
           content: [
@@ -1426,6 +1410,18 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const getSpanGroupInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      spanGroupId: z
+        .string()
+        .describe("ID of the span group (will be URL-encoded automatically)"),
+      filters: PerformanceFiltersArraySchema.optional().describe(
+        "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
+      ),
+    });
+
     register(
       {
         title: "Get Span Group",
@@ -1436,38 +1432,7 @@ export class BugsnagClient implements Client {
           "Check if performance targets are configured",
           "Monitor span count to understand operation volume",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project",
-                  required: true,
-                },
-              ]),
-          {
-            name: "spanGroupId",
-            type: z.string(),
-            description:
-              "ID of the span group (will be URL-encoded automatically)",
-            required: true,
-            examples: ["[HttpClient]GET-api.example.com"],
-          },
-          {
-            name: "filters",
-            type: PerformanceFiltersArraySchema,
-            required: false,
-            description:
-              "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
-            examples: [
-              '[{"key": "span_group.category", "filterValues": [{"matchType": "eq", "value": "full_page_load"}]}]',
-              '[{"key": "device.browser_name", "filterValues": [{"matchType": "eq", "value": "Chrome"}]}]',
-              '[{"key": "os.name", "filterValues": [{"matchType": "eq", "value": "iOS"}]}]',
-            ]
-          },
-        ],
+        inputSchema: getSpanGroupInputSchema,
         examples: [
           {
             description: "Get details for an API endpoint span group",
@@ -1482,25 +1447,23 @@ export class BugsnagClient implements Client {
         ],
       },
       async (args, _extra) => {
-        if (!args.spanGroupId) {
-          throw new ToolError("spanGroupId is required");
-        }
+        const params = getSpanGroupInputSchema.parse(args);
         const spanGroupResults = await this.getSpanGroup(
-          args.projectId,
-          args.spanGroupId,
-          args.filters,
+          params.projectId,
+          params.spanGroupId,
+          params.filters as Array<PerformanceFilter> | undefined,
         );
 
         const spanGroupTimelineResult = await this.getSpanGroupTimeline(
-          args.projectId,
-          args.spanGroupId,
-          args.filters,
+          params.projectId,
+          params.spanGroupId,
+          params.filters as Array<PerformanceFilter> | undefined,
         );
 
           const spanGroupDistributionResult = await this.getSpanGroupDistribution(
-          args.projectId,
-          args.spanGroupId,
-          args.filters,
+          params.projectId,
+          params.spanGroupId,
+          params.filters as Array<PerformanceFilter> | undefined,
         );
 
         // TODO: Check if performance targets are included, otherwise call List Performance Targets
@@ -1516,6 +1479,44 @@ export class BugsnagClient implements Client {
       },
     );
     
+    const listSpansInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      spanGroupId: z
+        .string()
+        .describe("ID of the span group"),
+      sort: z
+        .enum([
+          "duration",
+          "timestamp",
+          "full_page_load_lcp",
+          "full_page_load_fid",
+          "full_page_load_cls",
+          "full_page_load_ttfb",
+          "full_page_load_fcp",
+          "rendering_slow_frame_percentage",
+          "rendering_frozen_frame_percentage",
+          "system_metrics_cpu_total_mean",
+          "system_metrics_memory_device_mean",
+          "rendering_metrics_fps_mean",
+          "rendering_metrics_fps_minimum",
+          "rendering_metrics_fps_maximum",
+          "http_response_code"
+        ])
+        .optional()
+        .describe("Field to sort by"),
+      direction: z
+        .enum(["asc", "desc"])
+        .optional()
+        .describe("Sort direction"),
+      perPage: toolInputParameters.perPage,
+      nextUrl: toolInputParameters.nextUrl,
+      filters: PerformanceFiltersArraySchema.optional().describe(
+        "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
+      ),
+    });
+
     register(
       {
         title: "List Spans",
@@ -1526,77 +1527,7 @@ export class BugsnagClient implements Client {
           "Debug performance issues by examining specific traces",
           "Find patterns in operation attributes",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project",
-                  required: true,
-                },
-              ]),
-          {
-            name: "spanGroupId",
-            type: z.string(),
-            description: "ID of the span group",
-            required: true,
-          },
-          {
-            name: "sort",
-            type: z.enum([
-              "duration",
-              "timestamp",
-              "full_page_load_lcp",
-              "full_page_load_fid",
-              "full_page_load_cls",
-              "full_page_load_ttfb",
-              "full_page_load_fcp",
-              "rendering_slow_frame_percentage",
-              "rendering_frozen_frame_percentage",
-              "system_metrics_cpu_total_mean",
-              "system_metrics_memory_device_mean",
-              "rendering_metrics_fps_mean",
-              "rendering_metrics_fps_minimum",
-              "rendering_metrics_fps_maximum",
-              "http_response_code"
-            ]).optional(),
-            description: "Field to sort by",
-            required: false,
-            examples: ["duration", "timestamp"],
-          },
-          {
-            name: "direction",
-            type: z.enum(["asc", "desc"]).optional(),
-            description: "Sort direction",
-            required: false,
-          },
-          {
-            name: "perPage",
-            type: z.number().min(1).max(100).optional(),
-            description: "Results per page",
-            required: false,
-          },
-          {
-            name: "nextUrl",
-            type: z.string().optional(),
-            description: "URL for next page of results",
-            required: false,
-          },
-          {
-            name: "filters",
-            type: PerformanceFiltersArraySchema,
-            required: false,
-            description:
-              "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
-            examples: [
-              '[{"key": "span_group.category", "filterValues": [{"matchType": "eq", "value": "full_page_load"}]}]',
-              '[{"key": "device.browser_name", "filterValues": [{"matchType": "eq", "value": "Chrome"}]}]',
-              '[{"key": "os.name", "filterValues": [{"matchType": "eq", "value": "iOS"}]}]',
-            ]
-          },
-        ],
+        inputSchema: listSpansInputSchema,
         examples: [
           {
             description: "Get slowest spans for an operation",
@@ -1615,17 +1546,15 @@ export class BugsnagClient implements Client {
         ],
       },
       async (args, _extra) => {
-        if (!args.spanGroupId) {
-          throw new ToolError("spanGroupId is required");
-        }
+        const params = listSpansInputSchema.parse(args);
         const result = await this.listSpansBySpanGroupId(
-          args.projectId,
-          args.spanGroupId,
-          args.filters,
-          args.sort,
-          args.direction,
-          args.perPage,
-          args.nextUrl,
+          params.projectId,
+          params.spanGroupId,
+          params.filters as Array<PerformanceFilter> | undefined,
+          params.sort,
+          params.direction,
+          params.perPage,
+          params.nextUrl,
         );
         return {
           content: [
@@ -1642,6 +1571,27 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const getTraceInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      traceId: z
+        .string()
+        .describe("Trace ID"),
+      from: z
+        .string()
+        .describe("Start time (ISO 8601 format)"),
+      to: z
+        .string()
+        .describe("End time (ISO 8601 format)"),
+      targetSpanId: z
+        .string()
+        .optional()
+        .describe("Optional target span ID to focus on"),
+      perPage: toolInputParameters.perPage,
+      nextUrl: toolInputParameters.nextUrl,
+    });
+
     register(
       {
         title: "Get Trace",
@@ -1653,56 +1603,7 @@ export class BugsnagClient implements Client {
           "Understand the flow of a request through the system",
           "Identify bottlenecks in distributed systems",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project",
-                  required: true,
-                },
-              ]),
-          {
-            name: "traceId",
-            type: z.string(),
-            description: "Trace ID",
-            required: true,
-          },
-          {
-            name: "from",
-            type: z.string(),
-            description: "Start time (ISO 8601 format)",
-            required: true,
-            examples: ["2024-01-01T00:00:00Z"],
-          },
-          {
-            name: "to",
-            type: z.string(),
-            description: "End time (ISO 8601 format)",
-            required: true,
-            examples: ["2024-01-01T23:59:59Z"],
-          },
-          {
-            name: "targetSpanId",
-            type: z.string().optional(),
-            description: "Optional target span ID to focus on",
-            required: false,
-          },
-          {
-            name: "perPage",
-            type: z.number().min(1).max(100).optional(),
-            description: "Results per page",
-            required: false,
-          },
-          {
-            name: "nextUrl",
-            type: z.string().optional(),
-            description: "URL for next page of results",
-            required: false,
-          },
-        ],
+        inputSchema: getTraceInputSchema,
         examples: [
           {
             description: "Get all spans for a trace",
@@ -1722,17 +1623,15 @@ export class BugsnagClient implements Client {
         ],
       },
       async (args, _extra) => {
-        if (!args.traceId || !args.from || !args.to) {
-          throw new ToolError("traceId, from, and to are required");
-        }
+        const params = getTraceInputSchema.parse(args);
         const result = await this.listSpansByTraceId(
-          args.projectId,
-          args.traceId,
-          args.from,
-          args.to,
-          args.targetSpanId,
-          args.perPage,
-          args.nextUrl,
+          params.projectId,
+          params.traceId,
+          params.from,
+          params.to,
+          params.targetSpanId,
+          params.perPage,
+          params.nextUrl,
         );
         return {
           content: [
@@ -1749,6 +1648,12 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const listTraceFieldsInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+    });
+
     // Similar to event filters, consider caching
     register(
       {
@@ -1760,18 +1665,7 @@ export class BugsnagClient implements Client {
           "Understand what metadata is attached to traces",
           "Build dynamic filters based on available fields",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project",
-                  required: true,
-                },
-              ]),
-        ],
+        inputSchema: listTraceFieldsInputSchema,
         examples: [
           {
             description: "Get all trace fields",
@@ -1786,7 +1680,8 @@ export class BugsnagClient implements Client {
         ],
       },
       async (args, _extra) => {
-        const result = await this.listTraceFields(args.projectId);
+        const params = listTraceFieldsInputSchema.parse(args);
+        const result = await this.listTraceFields(params.projectId);
         return {
           content: [{ type: "text", text: JSON.stringify(result.body) }],
         };

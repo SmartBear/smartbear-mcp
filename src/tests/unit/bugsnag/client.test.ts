@@ -5,7 +5,7 @@ import type {
   CurrentUserAPI,
   ErrorAPI,
 } from "../../../bugsnag/client/api/index.js";
-import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
+import { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
 import { BugsnagClient } from "../../../bugsnag/client.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
 import { ToolError } from "../../../common/types.js";
@@ -31,6 +31,21 @@ const mockProjectAPI = {
   listProjectReleaseGroups: vi.fn(),
   getReleaseGroup: vi.fn(),
   listBuildsInRelease: vi.fn(),
+  getProjectNetworkGroupingRuleset: vi.fn(),
+  getProjectPageLoadSpanGroupById: vi.fn(),
+  getProjectPerformanceScoreOverview: vi.fn(),
+  getProjectSpanGroup: vi.fn(),
+  getProjectSpanGroupDistribution: vi.fn(),
+  getProjectSpanGroupTimeline: vi.fn(),
+  getSpansByCategoryAndName: vi.fn(),
+  listProjectPageLoadSpanGroups: vi.fn(),
+  listProjectSpanGroupPerformanceTargets: vi.fn(),
+  listProjectSpanGroups: vi.fn(),
+  listProjectSpanGroupSummaries: vi.fn(),
+  listProjectStarredSpanGroups: vi.fn(),
+  listProjectTraceFields: vi.fn(),
+  listSpansBySpanGroupId: vi.fn(),
+  listSpansByTraceId: vi.fn()
 } satisfies Omit<ProjectAPI, keyof BaseAPI>;
 
 const mockCache = {
@@ -837,7 +852,12 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("Get Build");
       expect(registeredTools).toContain("List Releases");
       expect(registeredTools).toContain("Get Release");
-      expect(registeredTools.length).toBe(10);
+      expect(registeredTools).toContain("List Span Groups");
+      expect(registeredTools).toContain("Get Span Group");
+      expect(registeredTools).toContain("List Spans");
+      expect(registeredTools).toContain("Get Trace");
+      expect(registeredTools).toContain("List Trace Fields");
+      expect(registeredTools.length).toBe(15);
     });
   });
 
@@ -2109,6 +2129,421 @@ describe("BugsnagClient", () => {
             operation: "fix",
           }),
         ).rejects.toThrow("Project with ID non-existent-project not found.");
+      });
+    });
+
+    describe("List Span Groups tool handler", () => {
+      it("should list span groups with default parameters", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockSpanGroups = [
+          { id: "span-group-1", displayName: "GET /api/users", totalSpans: 100 },
+          { id: "span-group-2", displayName: "POST /api/login", totalSpans: 50 },
+        ];
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
+          body: mockSpanGroups,
+          nextUrl: null,
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const listSpanGroupsHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Span Groups",
+        )[1];
+
+        const result = await listSpanGroupsHandler({});
+
+        expect(mockProjectAPI.listProjectSpanGroups).toHaveBeenCalledWith(
+          "proj-1",
+          undefined,
+          undefined,
+          30,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+        );
+        expect(result).toEqual({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: mockSpanGroups,
+                next_url: null,
+                count: 2,
+              }),
+            },
+          ],
+        });
+      });
+
+      it("should list span groups with sorting and filtering", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockSpanGroups = [
+          { id: "span-group-1", displayName: "GET /api/users", durationP95: 500 },
+        ];
+        const mockFilters = [
+          {
+            key: "span_group.category",
+            filterValues: [{ matchType: "eq", value: "http_request" }],
+          },
+        ];
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
+          body: mockSpanGroups,
+          nextUrl: "/next",
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const listSpanGroupsHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Span Groups",
+        )[1];
+
+        const result = await listSpanGroupsHandler({
+          sort: "duration_p95",
+          direction: "desc",
+          perPage: 10,
+          starredOnly: true,
+          filters: mockFilters,
+        });
+
+        expect(mockProjectAPI.listProjectSpanGroups).toHaveBeenCalledWith(
+          "proj-1",
+          "duration_p95",
+          "desc",
+          10,
+          undefined,
+          mockFilters,
+          true,
+          undefined,
+        );
+        expect(result).toEqual({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: mockSpanGroups,
+                next_url: "/next",
+                count: 1,
+              }),
+            },
+          ],
+        });
+      });
+    });
+
+    describe("Get Span Group tool handler", () => {
+      it("should get span group with timeline and distribution", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockSpanGroup = {
+          id: "span-group-1",
+          displayName: "GET /api/users",
+          statistics: { p50: 100, p95: 500, p99: 1000 },
+        };
+        const mockTimeline = { buckets: [{ timestamp: "2024-01-01", p95: 450 }] };
+        const mockDistribution = { buckets: [{ range: "0-100ms", count: 50 }] };
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockProjectAPI.getProjectSpanGroup.mockResolvedValue({
+          body: mockSpanGroup,
+        });
+        mockProjectAPI.getProjectSpanGroupTimeline.mockResolvedValue({
+          body: mockTimeline,
+        });
+        mockProjectAPI.getProjectSpanGroupDistribution.mockResolvedValue({
+          body: mockDistribution,
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const getSpanGroupHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Span Group",
+        )[1];
+
+        const result = await getSpanGroupHandler({
+          spanGroupId: "span-group-1",
+        });
+
+        expect(mockProjectAPI.getProjectSpanGroup).toHaveBeenCalledWith(
+          "proj-1",
+          "span-group-1",
+          undefined,
+        );
+        expect(mockProjectAPI.getProjectSpanGroupTimeline).toHaveBeenCalledWith(
+          "proj-1",
+          "span-group-1",
+          undefined,
+        );
+        expect(mockProjectAPI.getProjectSpanGroupDistribution).toHaveBeenCalledWith(
+          "proj-1",
+          "span-group-1",
+          undefined,
+        );
+        expect(result).toEqual({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                ...mockSpanGroup,
+                timeline: mockTimeline,
+                distribution: mockDistribution,
+              }),
+            },
+          ],
+        });
+      });
+
+      it("should throw error when spanGroupId is missing", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        mockCache.get.mockReturnValue(mockProject);
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const getSpanGroupHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Span Group",
+        )[1];
+
+        await expect(getSpanGroupHandler({})).rejects.toThrow(
+          "Required",
+        );
+      });
+    });
+
+    describe("List Spans tool handler", () => {
+      it("should list spans for a span group", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockSpans = [
+          {
+            id: "span-1",
+            traceId: "trace-abc",
+            duration: 250,
+            timestamp: "2024-01-01T10:00:00Z",
+          },
+          {
+            id: "span-2",
+            traceId: "trace-def",
+            duration: 180,
+            timestamp: "2024-01-01T10:01:00Z",
+          },
+        ];
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockProjectAPI.listSpansBySpanGroupId.mockResolvedValue({
+          body: mockSpans,
+          nextUrl: null,
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const listSpansHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Spans",
+        )[1];
+
+        const result = await listSpansHandler({
+          spanGroupId: "span-group-1",
+          sort: "duration",
+          direction: "desc",
+          perPage: 20,
+        });
+
+        expect(mockProjectAPI.listSpansBySpanGroupId).toHaveBeenCalledWith(
+          "proj-1",
+          "span-group-1",
+          undefined,
+          "duration",
+          "desc",
+          20,
+          undefined,
+        );
+        expect(result).toEqual({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: mockSpans,
+                next_url: null,
+                count: 2,
+              }),
+            },
+          ],
+        });
+      });
+
+      it("should throw error when spanGroupId is missing", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        mockCache.get.mockReturnValue(mockProject);
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const listSpansHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Spans",
+        )[1];
+
+        await expect(listSpansHandler({})).rejects.toThrow(
+          "Required",
+        );
+      });
+    });
+
+    describe("Get Trace tool handler", () => {
+      it("should get all spans for a trace", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockSpans = [
+          {
+            id: "span-1",
+            traceId: "trace-abc",
+            duration: 250,
+            parentSpanId: null,
+          },
+          {
+            id: "span-2",
+            traceId: "trace-abc",
+            duration: 100,
+            parentSpanId: "span-1",
+          },
+        ];
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockProjectAPI.listSpansByTraceId.mockResolvedValue({
+          body: mockSpans,
+          nextUrl: null,
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const getTraceHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Trace",
+        )[1];
+
+        const result = await getTraceHandler({
+          traceId: "trace-abc",
+          from: "2024-01-01T00:00:00Z",
+          to: "2024-01-01T23:59:59Z",
+          targetSpanId: "span-1",
+          perPage: 50,
+        });
+
+        expect(mockProjectAPI.listSpansByTraceId).toHaveBeenCalledWith(
+          "proj-1",
+          "trace-abc",
+          "2024-01-01T00:00:00Z",
+          "2024-01-01T23:59:59Z",
+          "span-1",
+          50,
+          undefined,
+        );
+        expect(result).toEqual({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: mockSpans,
+                next_url: null,
+                count: 2,
+              }),
+            },
+          ],
+        });
+      });
+
+      it("should throw error when required parameters are missing", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        mockCache.get.mockReturnValue(mockProject);
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const getTraceHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Trace",
+        )[1];
+
+        await expect(
+          getTraceHandler({
+            traceId: "trace-abc",
+            // Missing from and to
+          }),
+        ).rejects.toThrow("Required");
+
+        await expect(
+          getTraceHandler({
+            from: "2024-01-01T00:00:00Z",
+            to: "2024-01-01T23:59:59Z",
+            // Missing traceId
+          }),
+        ).rejects.toThrow("Required");
+      });
+    });
+
+    describe("List Trace Fields tool handler", () => {
+      it("should list available trace fields", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockTraceFields = [
+          { name: "user.id", type: "string" },
+          { name: "device.type", type: "string" },
+          { name: "app.version", type: "string" },
+        ];
+
+        mockCache.get.mockReturnValue(mockProject);
+        mockProjectAPI.listProjectTraceFields.mockResolvedValue({
+          body: mockTraceFields,
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Trace Fields",
+        )[1];
+
+        const result = await listTraceFieldsHandler({});
+
+        expect(mockProjectAPI.listProjectTraceFields).toHaveBeenCalledWith(
+          "proj-1",
+        );
+        expect(result).toEqual({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(mockTraceFields),
+            },
+          ],
+        });
+      });
+
+      it("should work with explicit projectId", async () => {
+        const mockProjects = [
+          { id: "proj-1", name: "Project 1" },
+          { id: "proj-2", name: "Project 2" },
+        ];
+        const mockTraceFields = [{ name: "custom.field", type: "string" }];
+
+        mockCache.get.mockReturnValue(mockProjects);
+        mockProjectAPI.listProjectTraceFields.mockResolvedValue({
+          body: mockTraceFields,
+        });
+
+        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Trace Fields",
+        )[1];
+
+        const result = await listTraceFieldsHandler({
+          projectId: "proj-2",
+        });
+
+        expect(mockProjectAPI.listProjectTraceFields).toHaveBeenCalledWith(
+          "proj-2",
+        );
+        expect(result).toEqual({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(mockTraceFields),
+            },
+          ],
+        });
       });
     });
   });
