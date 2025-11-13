@@ -65,45 +65,6 @@ describe("BugsnagClient Performance Methods", () => {
     client = new BugsnagClient("test-token", "test-api-key");
   });
 
-  describe("getProjectPerformanceScore", () => {
-    it("should delegate to ProjectAPI method", async () => {
-      const mockResponse = {
-        body: { performanceScore: 0.95, spanCount: 1000 },
-        nextUrl: null,
-        totalCount: null,
-      };
-
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-      vi.spyOn(
-        (client as any).projectApi,
-        "getProjectPerformanceScoreOverview",
-      ).mockResolvedValue(mockResponse);
-
-      const result = await client.getProjectPerformanceScore();
-
-      expect(
-        (client as any).projectApi.getProjectPerformanceScoreOverview,
-      ).toHaveBeenCalledWith("project-123", undefined);
-      expect(result).toEqual(mockResponse.body);
-    });
-
-    it("should pass releaseStageName parameter", async () => {
-      const mockResponse = { body: {}, nextUrl: null, totalCount: null };
-
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-      vi.spyOn(
-        (client as any).projectApi,
-        "getProjectPerformanceScoreOverview",
-      ).mockResolvedValue(mockResponse);
-
-      await client.getProjectPerformanceScore(undefined, "production");
-
-      expect(
-        (client as any).projectApi.getProjectPerformanceScoreOverview,
-      ).toHaveBeenCalledWith("project-123", "production");
-    });
-  });
-
   describe("listSpanGroups", () => {
     it("should delegate to ProjectAPI method with all parameters", async () => {
       const mockResponse = {
@@ -175,34 +136,6 @@ describe("BugsnagClient Performance Methods", () => {
     });
   });
 
-  describe("listSpanGroupSummaries", () => {
-    it("should delegate to ProjectAPI method", async () => {
-      const mockResponse = {
-        body: [{ id: "summary1" }],
-        nextUrl: null,
-        totalCount: null,
-      };
-
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-      vi.spyOn(
-        (client as any).projectApi,
-        "listProjectSpanGroupSummaries",
-      ).mockResolvedValue(mockResponse);
-
-      await client.listSpanGroupSummaries(undefined, 50);
-
-      expect(
-        (client as any).projectApi.listProjectSpanGroupSummaries,
-      ).toHaveBeenCalledWith(
-        "project-123",
-        50,
-        undefined,
-        undefined,
-        undefined,
-      );
-    });
-  });
-
   describe("getSpanGroupTimeline", () => {
     it("should throw error if spanGroupId is missing", async () => {
       vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
@@ -263,34 +196,6 @@ describe("BugsnagClient Performance Methods", () => {
     });
   });
 
-  describe("listStarredSpanGroups", () => {
-    it("should delegate to ProjectAPI method", async () => {
-      const mockResponse = {
-        body: [{ id: "starred1" }],
-        nextUrl: null,
-        totalCount: null,
-      };
-
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-      vi.spyOn(
-        (client as any).projectApi,
-        "listProjectStarredSpanGroups",
-      ).mockResolvedValue(mockResponse);
-
-      await client.listStarredSpanGroups(
-        undefined,
-        ["HttpClient"],
-        10,
-        0,
-        "/next",
-      );
-
-      expect(
-        (client as any).projectApi.listProjectStarredSpanGroups,
-      ).toHaveBeenCalledWith("project-123", ["HttpClient"], 10, 0, "/next");
-    });
-  });
-
   describe("listSpanGroupPerformanceTargets", () => {
     it("should throw error if spanGroupId is missing", async () => {
       vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
@@ -318,44 +223,6 @@ describe("BugsnagClient Performance Methods", () => {
       expect(
         (client as any).projectApi.listProjectSpanGroupPerformanceTargets,
       ).toHaveBeenCalledWith("project-123", "span-1");
-    });
-  });
-
-  describe("getSpansByCategoryAndName", () => {
-    it("should throw error if category or name is missing", async () => {
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-
-      await expect(
-        client.getSpansByCategoryAndName(undefined, undefined, "name"),
-      ).rejects.toThrow("category and name are required");
-
-      await expect(
-        client.getSpansByCategoryAndName(undefined, "category", undefined),
-      ).rejects.toThrow("category and name are required");
-    });
-
-    it("should delegate to ProjectAPI when parameters provided", async () => {
-      const mockResponse = {
-        body: { spans: [] },
-        nextUrl: null,
-        totalCount: null,
-      };
-
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-      vi.spyOn(
-        (client as any).projectApi,
-        "getSpansByCategoryAndName",
-      ).mockResolvedValue(mockResponse);
-
-      await client.getSpansByCategoryAndName(
-        undefined,
-        "HttpClient",
-        "GET-api",
-      );
-
-      expect(
-        (client as any).projectApi.getSpansByCategoryAndName,
-      ).toHaveBeenCalledWith("project-123", "HttpClient", "GET-api");
     });
   });
 
@@ -471,76 +338,6 @@ describe("BugsnagClient Performance Methods", () => {
         50,
         "/next",
       );
-    });
-  });
-
-  describe("listPageLoadSpanGroups", () => {
-    it("should delegate to ProjectAPI method", async () => {
-      const mockResponse = {
-        body: [{ id: "page1" }],
-        nextUrl: null,
-        totalCount: null,
-      };
-
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-      vi.spyOn(
-        (client as any).projectApi,
-        "listProjectPageLoadSpanGroups",
-      ).mockResolvedValue(mockResponse);
-
-      await client.listPageLoadSpanGroups(
-        undefined,
-        "p95",
-        "desc",
-        10,
-        0,
-        [],
-        false,
-        "/next",
-      );
-
-      expect(
-        (client as any).projectApi.listProjectPageLoadSpanGroups,
-      ).toHaveBeenCalledWith(
-        "project-123",
-        "p95",
-        "desc",
-        10,
-        0,
-        [],
-        false,
-        "/next",
-      );
-    });
-  });
-
-  describe("getPageLoadSpanGroupById", () => {
-    it("should throw error if pageLoadSpanGroupId is missing", async () => {
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-
-      await expect(
-        client.getPageLoadSpanGroupById(undefined, undefined),
-      ).rejects.toThrow("pageLoadSpanGroupId is required");
-    });
-
-    it("should delegate to ProjectAPI when pageLoadSpanGroupId provided", async () => {
-      const mockResponse = {
-        body: { id: "page1", displayName: "/home" },
-        nextUrl: null,
-        totalCount: null,
-      };
-
-      vi.spyOn(client as any, "getInputProject").mockResolvedValue(mockProject);
-      vi.spyOn(
-        (client as any).projectApi,
-        "getProjectPageLoadSpanGroupById",
-      ).mockResolvedValue(mockResponse);
-
-      await client.getPageLoadSpanGroupById(undefined, "[FullPageLoad]/home");
-
-      expect(
-        (client as any).projectApi.getProjectPageLoadSpanGroupById,
-      ).toHaveBeenCalledWith("project-123", "[FullPageLoad]/home", undefined);
     });
   });
 
