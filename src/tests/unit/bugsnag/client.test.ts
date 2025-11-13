@@ -2144,8 +2144,15 @@ describe("BugsnagClient", () => {
             filterValues: [{ matchType: "eq", value: "http_request" }],
           },
         ];
+        const mockTraceFields = [
+          { key: "span_group.category", name: "Category", displayId: "span_group.category" },
+        ];
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockImplementation((key) => {
+          if (key === "bugsnag_current_project") return mockProject;
+          if (key === "bugsnag_current_project_trace_fields") return mockTraceFields;
+          return null;
+        });
         mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
           body: mockSpanGroups,
           nextUrl: "/next",
@@ -2192,7 +2199,8 @@ describe("BugsnagClient", () => {
 
     describe("Get Span Group tool handler", () => {
       it("should get span group with timeline and distribution", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockProject = { id: "proj-1", name: "Project 1", slug: "Project 1" };
+        const mockOrg = { id: "org-1", name: "Test Org", slug: "org-1" };
         const mockSpanGroup = {
           id: "span-group-1",
           displayName: "GET /api/users",
@@ -2203,7 +2211,11 @@ describe("BugsnagClient", () => {
         };
         const mockDistribution = { buckets: [{ range: "0-100ms", count: 50 }] };
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockImplementation((key) => {
+          if (key === "bugsnag_current_project") return mockProject;
+          if (key === "bugsnag_org") return mockOrg;
+          return null;
+        });
         mockProjectAPI.getProjectSpanGroup.mockResolvedValue({
           body: mockSpanGroup,
         });
@@ -2245,6 +2257,7 @@ describe("BugsnagClient", () => {
                 ...mockSpanGroup,
                 timeline: mockTimeline,
                 distribution: mockDistribution,
+                url: "https://app.bugsnag.com/org-1/Project 1/performance/span-groups/span-group-1",
               }),
             },
           ],
@@ -2341,7 +2354,8 @@ describe("BugsnagClient", () => {
 
     describe("Get Trace tool handler", () => {
       it("should get all spans for a trace", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockProject = { id: "proj-1", name: "Project 1", slug: "Project 1" };
+        const mockOrg = { id: "org-1", name: "Test Org", slug: "org-1" };
         const mockSpans = [
           {
             id: "span-1",
@@ -2357,7 +2371,11 @@ describe("BugsnagClient", () => {
           },
         ];
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockImplementation((key) => {
+          if (key === "bugsnag_current_project") return mockProject;
+          if (key === "bugsnag_org") return mockOrg;
+          return null;
+        });
         mockProjectAPI.listSpansByTraceId.mockResolvedValue({
           body: mockSpans,
           nextUrl: null,
@@ -2394,6 +2412,7 @@ describe("BugsnagClient", () => {
                 data: mockSpans,
                 next_url: null,
                 count: 2,
+                trace_url: "https://app.bugsnag.com/org-1/Project 1/performance/traces/trace-abc",
               }),
             },
           ],
@@ -2436,7 +2455,11 @@ describe("BugsnagClient", () => {
           { name: "app.version", type: "string" },
         ];
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockImplementation((key) => {
+          if (key === "bugsnag_current_project") return mockProject;
+          if (key === "bugsnag_current_project_trace_fields") return null; // Cache miss for trace fields
+          return null;
+        });
         mockProjectAPI.listProjectTraceFields.mockResolvedValue({
           body: mockTraceFields,
         });
@@ -2469,7 +2492,11 @@ describe("BugsnagClient", () => {
         ];
         const mockTraceFields = [{ name: "custom.field", type: "string" }];
 
-        mockCache.get.mockReturnValue(mockProjects);
+        mockCache.get.mockImplementation((key) => {
+          if (key === "bugsnag_projects") return mockProjects;
+          if (key === "bugsnag_current_project_trace_fields") return null; // Cache miss for trace fields
+          return null;
+        });
         mockProjectAPI.listProjectTraceFields.mockResolvedValue({
           body: mockTraceFields,
         });
