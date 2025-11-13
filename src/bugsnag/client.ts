@@ -1355,7 +1355,6 @@ export class BugsnagClient implements Client {
       ),
     });
 
-    // TODO: Check we get performance targets
     register(
       {
         title: "List Span Groups",
@@ -1466,7 +1465,6 @@ export class BugsnagClient implements Client {
           params.filters as Array<PerformanceFilter> | undefined,
         );
 
-        // TODO: Check if performance targets are included, otherwise call List Performance Targets
         const result = {
           ...spanGroupResults.body,
           timeline: spanGroupTimelineResult.body,
