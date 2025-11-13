@@ -52,4 +52,26 @@ export const toolInputParameters = {
     .default("production"),
   releaseId: z.string().describe("ID of the release"),
   buildId: z.string().describe("ID of the build"),
+  spanGroupId: z
+    .string()
+    .min(1, "Span group ID cannot be empty")
+    .describe("ID of the span group"),
+  traceId: z
+    .string()
+    .min(1, "Trace ID cannot be empty")
+    .describe("Trace ID"),
+  performanceSort: z
+    .enum([
+      "total_spans",
+      "last_seen", 
+      "name",
+      "display_name",
+      "duration_p50",
+      "duration_p75",
+      "duration_p90", 
+      "duration_p95",
+      "duration_p99",
+    ])
+    .describe("Field to sort performance data by")
+    .default("last_seen"),
 };

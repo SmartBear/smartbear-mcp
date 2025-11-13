@@ -35,6 +35,7 @@ const cacheKeys = {
   PROJECTS: "bugsnag_projects",
   CURRENT_PROJECT: "bugsnag_current_project",
   CURRENT_PROJECT_EVENT_FILTERS: "bugsnag_current_project_event_filters",
+  CURRENT_PROJECT_TRACE_FIELDS: "bugsnag_current_project_trace_fields",
 };
 
 // Performance filter schemas that match the API structure
@@ -229,6 +230,16 @@ export class BugsnagClient implements Client {
     return `${dashboardUrl}/errors/${errorId}${queryString ? `?${queryString}` : ""}`;
   }
 
+  async getSpanGroupUrl(project: Project, spanGroupId: string): Promise<string> {
+    const dashboardUrl = await this.getDashboardUrl(project);
+    return `${dashboardUrl}/performance/span-groups/${encodeURIComponent(spanGroupId)}`;
+  }
+
+  async getTraceUrl(project: Project, traceId: string): Promise<string> {
+    const dashboardUrl = await this.getDashboardUrl(project);
+    return `${dashboardUrl}/performance/traces/${traceId}`;
+  }
+
   async getOrganization(): Promise<Organization> {
     let org = this.cache?.get<Organization>(cacheKeys.ORG);
     if (!org) {
@@ -368,6 +379,23 @@ export class BugsnagClient implements Client {
       meetsTargetStability,
       meetsCriticalStability,
     };
+  }
+
+  private validatePerformanceFilters(filters: any[]): void {
+    if (!filters || filters.length === 0) return;
+    
+    const traceFields = this.cache?.get<any[]>(cacheKeys.CURRENT_PROJECT_TRACE_FIELDS);
+    if (!traceFields || !Array.isArray(traceFields)) {
+      console.warn("Trace fields not cached or invalid format. Consider calling List Trace Fields first for better validation.");
+      return;
+    }
+    
+    const validKeys = new Set(traceFields.map((f) => f.key || f.name || f.displayId));
+    for (const filter of filters) {
+      if (!validKeys.has(filter.key)) {
+        throw new ToolError(`Invalid performance filter key: ${filter.key}. Use List Trace Fields tool to see available keys.`);
+      }
+    }
   }
 
   registerTools(
@@ -1065,7 +1093,8 @@ export class BugsnagClient implements Client {
         readOnly: true,
         idempotent: true,
         outputDescription:
-          "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
+          "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets. " +
+          "Key fields include: version, sourceControl info, errorCount, userStability, sessionStability, meetsTargetStability",
       },
       async (args, _extra) => {
         const params = getBuildInputSchema.parse(args);
@@ -1185,6 +1214,10 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = listSpanGroupsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
+        
+        // Validate filter keys against cached trace fields if filters are provided
+        this.validatePerformanceFilters(params.filters || []);
+        
         const result = await this.projectApi.listProjectSpanGroups(
           project.id,
           params.sort,
@@ -1216,6 +1249,7 @@ export class BugsnagClient implements Client {
         : toolInputParameters.projectId,
       spanGroupId: z
         .string()
+        .min(1, "Span group ID cannot be empty")
         .describe("ID of the span group (will be URL-encoded automatically)"),
       filters: PerformanceFiltersArraySchema.optional().describe(
         "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
@@ -1263,9 +1297,12 @@ export class BugsnagClient implements Client {
         const params = getSpanGroupInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
         if (!params.spanGroupId) {
-          throw new ToolError("spanGroupId is required");
+          throw new ToolError("spanGroupId is required. Use the List Span Groups tool to find available span group IDs.");
         }
-
+        
+        // Validate performance filters
+        this.validatePerformanceFilters(params.filters || []);
+        
         const spanGroupResults = await this.projectApi.getProjectSpanGroup(
           project.id,
           params.spanGroupId,
@@ -1290,6 +1327,7 @@ export class BugsnagClient implements Client {
           ...spanGroupResults.body,
           timeline: spanGroupTimelineResult.body,
           distribution: spanGroupDistributionResult.body,
+          url: await this.getSpanGroupUrl(project, params.spanGroupId),
         };
 
         return {
@@ -1379,8 +1417,12 @@ export class BugsnagClient implements Client {
         const params = listSpansInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
         if (!params.spanGroupId) {
-          throw new ToolError("spanGroupId is required");
+          throw new ToolError("spanGroupId is required. Use the List Span Groups tool to find available span group IDs.");
         }
+        
+        // Validate performance filters
+        this.validatePerformanceFilters(params.filters || []);
+        
         const result = await this.projectApi.listSpansBySpanGroupId(
           project.id,
           params.spanGroupId,
@@ -1409,15 +1451,31 @@ export class BugsnagClient implements Client {
       projectId: this.projectApiKey
         ? toolInputParameters.projectId.optional()
         : toolInputParameters.projectId,
-      traceId: z.string().describe("Trace ID"),
-      from: z.string().describe("Start time (ISO 8601 format)"),
-      to: z.string().describe("End time (ISO 8601 format)"),
+      traceId: z
+        .string()
+        .min(1, "Trace ID cannot be empty")
+        .describe("Trace ID"),
+      from: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/, "Must be in ISO 8601 format (e.g., 2024-01-01T00:00:00Z)")
+        .describe("Start time (ISO 8601 format)"),
+      to: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/, "Must be in ISO 8601 format (e.g., 2024-01-01T23:59:59Z)")
+        .describe("End time (ISO 8601 format)"),
       targetSpanId: z
         .string()
         .optional()
         .describe("Optional target span ID to focus on"),
       perPage: toolInputParameters.perPage,
       nextUrl: toolInputParameters.nextUrl,
+    }).refine((data) => {
+      const fromDate = new Date(data.from);
+      const toDate = new Date(data.to);
+      return fromDate < toDate;
+    }, {
+      message: "Start time (from) must be before end time (to)",
+      path: ["from"],
     });
 
     register(
@@ -1467,7 +1525,7 @@ export class BugsnagClient implements Client {
         const params = getTraceInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
         if (!params.traceId || !params.from || !params.to) {
-          throw new ToolError("traceId, from, and to are required");
+          throw new ToolError("traceId, from, and to are required. Trace IDs can be found in span data from List Spans tool. Time should be in ISO 8601 format (e.g., 2024-01-01T00:00:00Z).");
         }
         const result = await this.projectApi.listSpansByTraceId(
           project.id,
@@ -1486,6 +1544,7 @@ export class BugsnagClient implements Client {
                 data: result.body,
                 next_url: result.nextUrl,
                 count: result.body?.length,
+                trace_url: result.body && result.body.length > 0 ? await this.getTraceUrl(project, params.traceId) : undefined,
               }),
             },
           ],
@@ -1499,7 +1558,6 @@ export class BugsnagClient implements Client {
         : toolInputParameters.projectId,
     });
 
-    // Similar to event filters, consider caching
     register(
       {
         title: "List Trace Fields",
@@ -1522,14 +1580,23 @@ export class BugsnagClient implements Client {
         hints: [
           "Trace fields are custom attributes added to spans",
           "Use these fields for filtering other performance queries",
+          "Results are cached for better performance on subsequent calls",
         ],
       },
       async (args, _extra) => {
         const params = listTraceFieldsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-        const result = await this.projectApi.listProjectTraceFields(project.id);
+        
+        // Check cache first
+        let traceFields = this.cache?.get<any[]>(cacheKeys.CURRENT_PROJECT_TRACE_FIELDS);
+        if (!traceFields) {
+          const result = await this.projectApi.listProjectTraceFields(project.id);
+          traceFields = result.body || [];
+          this.cache?.set(cacheKeys.CURRENT_PROJECT_TRACE_FIELDS, traceFields);
+        }
+        
         return {
-          content: [{ type: "text", text: JSON.stringify(result.body) }],
+          content: [{ type: "text", text: JSON.stringify(traceFields) }],
         };
       },
     );
