@@ -2145,12 +2145,17 @@ describe("BugsnagClient", () => {
           },
         ];
         const mockTraceFields = [
-          { key: "span_group.category", name: "Category", displayId: "span_group.category" },
+          {
+            key: "span_group.category",
+            name: "Category",
+            displayId: "span_group.category",
+          },
         ];
 
         mockCache.get.mockImplementation((key) => {
           if (key === "bugsnag_current_project") return mockProject;
-          if (key === "bugsnag_current_project_trace_fields") return mockTraceFields;
+          if (key === "bugsnag_current_project_trace_fields")
+            return mockTraceFields;
           return null;
         });
         mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
@@ -2199,7 +2204,11 @@ describe("BugsnagClient", () => {
 
     describe("Get Span Group tool handler", () => {
       it("should get span group with timeline and distribution", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1", slug: "Project 1" };
+        const mockProject = {
+          id: "proj-1",
+          name: "Project 1",
+          slug: "Project 1",
+        };
         const mockOrg = { id: "org-1", name: "Test Org", slug: "org-1" };
         const mockSpanGroup = {
           id: "span-group-1",
@@ -2354,7 +2363,11 @@ describe("BugsnagClient", () => {
 
     describe("Get Trace tool handler", () => {
       it("should get all spans for a trace", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1", slug: "Project 1" };
+        const mockProject = {
+          id: "proj-1",
+          name: "Project 1",
+          slug: "Project 1",
+        };
         const mockOrg = { id: "org-1", name: "Test Org", slug: "org-1" };
         const mockSpans = [
           {
@@ -2412,7 +2425,8 @@ describe("BugsnagClient", () => {
                 data: mockSpans,
                 next_url: null,
                 count: 2,
-                trace_url: "https://app.bugsnag.com/org-1/Project 1/performance/traces/trace-abc",
+                trace_url:
+                  "https://app.bugsnag.com/org-1/Project 1/performance/traces/trace-abc",
               }),
             },
           ],
