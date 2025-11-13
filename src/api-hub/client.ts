@@ -65,7 +65,7 @@ export class SwaggerClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<boolean> {
-    this.api = new ApiHubAPI(
+    this.api = new SwaggerAPI(
       new SwaggerConfiguration({ token: config.api_key }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
