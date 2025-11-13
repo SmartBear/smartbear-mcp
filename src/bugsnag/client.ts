@@ -398,7 +398,7 @@ export class BugsnagClient implements Client {
     }
 
     const validKeys = new Set(
-      traceFields.map((f) => f.key || f.name || f.displayId),
+      traceFields.map((f) => f.key || f.name || f.displayId).filter(Boolean),
     );
     for (const filter of filters) {
       if (!validKeys.has(filter.key)) {
@@ -1471,20 +1471,8 @@ export class BugsnagClient implements Client {
           .string()
           .min(1, "Trace ID cannot be empty")
           .describe("Trace ID"),
-        from: z
-          .string()
-          .regex(
-            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/,
-            "Must be in ISO 8601 format (e.g., 2024-01-01T00:00:00Z)",
-          )
-          .describe("Start time (ISO 8601 format)"),
-        to: z
-          .string()
-          .regex(
-            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/,
-            "Must be in ISO 8601 format (e.g., 2024-01-01T23:59:59Z)",
-          )
-          .describe("End time (ISO 8601 format)"),
+        from: z.string().datetime().describe("Start time (ISO 8601 format)"),
+        to: z.string().datetime().describe("End time (ISO 8601 format)"),
         targetSpanId: z
           .string()
           .optional()
