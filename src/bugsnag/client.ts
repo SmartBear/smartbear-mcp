@@ -14,17 +14,17 @@ import {
   Configuration,
   CurrentUserAPI,
   ErrorAPI,
+  ErrorUpdateRequest,
   type EventField,
   type Organization,
-  ErrorUpdateRequest,
+  type PerformanceFilter,
   type Project,
   ProjectAPI,
   type Release,
-  type PerformanceFilter,
 } from "./client/api/index.js";
 import { type FilterObject, toUrlSearchParams } from "./client/filters.js";
 import { toolInputParameters } from "./input-schemas.js";
-  
+
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
 const HUB_DOMAIN = "bugsnag.smartbear.com";
@@ -39,16 +39,17 @@ const cacheKeys = {
 // Performance filter schemas that match the API structure
 const PerformanceFilterSchema = z.object({
   key: z.string(),
-  filterValues: z.array(
-    z.object({
-      value: z.string(),
-      matchType: z.enum(["eq", "ne", "lt", "gt", "empty"]),
-    })
-  ).optional(),
+  filterValues: z
+    .array(
+      z.object({
+        value: z.string(),
+        matchType: z.enum(["eq", "ne", "lt", "gt", "empty"]),
+      }),
+    )
+    .optional(),
 });
 
 export const PerformanceFiltersArraySchema = z.array(PerformanceFilterSchema);
-
 
 // Exclude certain event fields from the project event filters to improve agent usage
 const EXCLUDED_EVENT_FIELDS = new Set([
@@ -384,8 +385,6 @@ export class BugsnagClient implements Client {
       meetsCriticalStability,
     };
   }
-
-
 
   registerTools(
     register: RegisterToolsFunction,
@@ -1140,10 +1139,7 @@ export class BugsnagClient implements Client {
         ])
         .optional()
         .describe("Field to sort by"),
-      direction: z
-        .enum(["asc", "desc"])
-        .optional()
-        .describe("Sort direction"),
+      direction: z.enum(["asc", "desc"]).optional().describe("Sort direction"),
       perPage: toolInputParameters.perPage,
       starredOnly: z
         .boolean()
@@ -1170,18 +1166,26 @@ export class BugsnagClient implements Client {
         examples: [
           {
             description: "List slowest operations",
-            parameters: { sort: "duration_p95", direction: "desc", perPage: 10 },
+            parameters: {
+              sort: "duration_p95",
+              direction: "desc",
+              perPage: 10,
+            },
             expectedOutput:
               "Array of span groups sorted by 95th percentile duration",
           },
           {
             description: "List starred span groups with filtering",
-            parameters: { 
+            parameters: {
               starredOnly: true,
-              filters: [{"key": "span_group.category", "filterValues": [{"matchType": "eq", "value": "full_page_load"}]}]
+              filters: [
+                {
+                  key: "span_group.category",
+                  filterValues: [{ matchType: "eq", value: "full_page_load" }],
+                },
+              ],
             },
-            expectedOutput:
-              "Array of starred span groups filtered by category",
+            expectedOutput: "Array of starred span groups filtered by category",
           },
         ],
         hints: [
@@ -1250,9 +1254,14 @@ export class BugsnagClient implements Client {
           },
           {
             description: "Get span group details with device filtering",
-            parameters: { 
+            parameters: {
               spanGroupId: "[HttpClient]GET-api.example.com",
-              filters: [{"key": "device.browser_name", "filterValues": [{"matchType": "eq", "value": "Chrome"}]}]
+              filters: [
+                {
+                  key: "device.browser_name",
+                  filterValues: [{ matchType: "eq", value: "Chrome" }],
+                },
+              ],
             },
             expectedOutput: "Statistics filtered for Chrome browser only",
           },
@@ -1269,24 +1278,26 @@ export class BugsnagClient implements Client {
         if (!params.spanGroupId) {
           throw new ToolError("spanGroupId is required");
         }
-        
+
         const spanGroupResults = await this.projectApi.getProjectSpanGroup(
           project.id,
           params.spanGroupId,
           params.filters as Array<PerformanceFilter> | undefined,
         );
 
-        const spanGroupTimelineResult = await this.projectApi.getProjectSpanGroupTimeline(
-          project.id,
-          params.spanGroupId,
-          params.filters as Array<PerformanceFilter> | undefined,
-        );
+        const spanGroupTimelineResult =
+          await this.projectApi.getProjectSpanGroupTimeline(
+            project.id,
+            params.spanGroupId,
+            params.filters as Array<PerformanceFilter> | undefined,
+          );
 
-        const spanGroupDistributionResult = await this.projectApi.getProjectSpanGroupDistribution(
-          project.id,
-          params.spanGroupId,
-          params.filters as Array<PerformanceFilter> | undefined,
-        );
+        const spanGroupDistributionResult =
+          await this.projectApi.getProjectSpanGroupDistribution(
+            project.id,
+            params.spanGroupId,
+            params.filters as Array<PerformanceFilter> | undefined,
+          );
 
         const result = {
           ...spanGroupResults.body,
@@ -1299,14 +1310,12 @@ export class BugsnagClient implements Client {
         };
       },
     );
-    
+
     const listSpansInputSchema = z.object({
       projectId: this.projectApiKey
         ? toolInputParameters.projectId.optional()
         : toolInputParameters.projectId,
-      spanGroupId: z
-        .string()
-        .describe("ID of the span group"),
+      spanGroupId: z.string().describe("ID of the span group"),
       sort: z
         .enum([
           "duration",
@@ -1323,14 +1332,11 @@ export class BugsnagClient implements Client {
           "rendering_metrics_fps_mean",
           "rendering_metrics_fps_minimum",
           "rendering_metrics_fps_maximum",
-          "http_response_code"
+          "http_response_code",
         ])
         .optional()
         .describe("Field to sort by"),
-      direction: z
-        .enum(["asc", "desc"])
-        .optional()
-        .describe("Sort direction"),
+      direction: z.enum(["asc", "desc"]).optional().describe("Sort direction"),
       perPage: toolInputParameters.perPage,
       nextUrl: toolInputParameters.nextUrl,
       filters: PerformanceFiltersArraySchema.optional().describe(
@@ -1365,10 +1371,16 @@ export class BugsnagClient implements Client {
             parameters: {
               spanGroupId: "[HttpClient]GET-api.example.com",
               sort: "timestamp",
-              filters: [{"key": "os.name", "filterValues": [{"matchType": "eq", "value": "iOS"}]}],
-              nextUrl: "/projects/123/spans?offset=30&per_page=30"
+              filters: [
+                {
+                  key: "os.name",
+                  filterValues: [{ matchType: "eq", value: "iOS" }],
+                },
+              ],
+              nextUrl: "/projects/123/spans?offset=30&per_page=30",
             },
-            expectedOutput: "Array of spans from iOS devices with next page navigation",
+            expectedOutput:
+              "Array of spans from iOS devices with next page navigation",
           },
         ],
         hints: [
@@ -1410,15 +1422,9 @@ export class BugsnagClient implements Client {
       projectId: this.projectApiKey
         ? toolInputParameters.projectId.optional()
         : toolInputParameters.projectId,
-      traceId: z
-        .string()
-        .describe("Trace ID"),
-      from: z
-        .string()
-        .describe("Start time (ISO 8601 format)"),
-      to: z
-        .string()
-        .describe("End time (ISO 8601 format)"),
+      traceId: z.string().describe("Trace ID"),
+      from: z.string().describe("Start time (ISO 8601 format)"),
+      to: z.string().describe("End time (ISO 8601 format)"),
       targetSpanId: z
         .string()
         .optional()
@@ -1451,9 +1457,10 @@ export class BugsnagClient implements Client {
               "Array of all spans in the trace with timing and hierarchy",
           },
           {
-            description: "Get spans for a trace with pagination and target span",
+            description:
+              "Get spans for a trace with pagination and target span",
             parameters: {
-              traceId: "def456", 
+              traceId: "def456",
               from: "2024-01-01T00:00:00Z",
               to: "2024-01-01T23:59:59Z",
               targetSpanId: "span-789",
