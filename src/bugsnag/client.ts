@@ -1361,6 +1361,15 @@ export class BugsnagClient implements Client {
             expectedOutput:
               "Array of span groups sorted by 95th percentile duration",
           },
+          {
+            description: "List starred span groups with filtering",
+            parameters: { 
+              starredOnly: true,
+              filters: [{"key": "span_group.category", "filterValues": [{"matchType": "eq", "value": "full_page_load"}]}]
+            },
+            expectedOutput:
+              "Array of starred span groups filtered by category",
+          },
         ],
         hints: [
           "Span groups represent different operation types (page loads, API calls, etc.)",
@@ -1424,6 +1433,14 @@ export class BugsnagClient implements Client {
             description: "Get details for an API endpoint span group",
             parameters: { spanGroupId: "[HttpClient]GET-api.example.com" },
             expectedOutput: "Statistics, category, and performance target info",
+          },
+          {
+            description: "Get span group details with device filtering",
+            parameters: { 
+              spanGroupId: "[HttpClient]GET-api.example.com",
+              filters: [{"key": "device.browser_name", "filterValues": [{"matchType": "eq", "value": "Chrome"}]}]
+            },
+            expectedOutput: "Statistics filtered for Chrome browser only",
           },
         ],
         hints: [
@@ -1524,6 +1541,16 @@ export class BugsnagClient implements Client {
             },
             expectedOutput: "Array of the 10 slowest span instances",
           },
+          {
+            description: "Get spans filtered by OS with pagination",
+            parameters: {
+              spanGroupId: "[HttpClient]GET-api.example.com",
+              sort: "timestamp",
+              filters: [{"key": "os.name", "filterValues": [{"matchType": "eq", "value": "iOS"}]}],
+              nextUrl: "/projects/123/spans?offset=30&per_page=30"
+            },
+            expectedOutput: "Array of spans from iOS devices with next page navigation",
+          },
         ],
         hints: [
           "Sort by duration descending to find the slowest instances",
@@ -1599,6 +1626,18 @@ export class BugsnagClient implements Client {
             },
             expectedOutput:
               "Array of all spans in the trace with timing and hierarchy",
+          },
+          {
+            description: "Get spans for a trace with pagination and target span",
+            parameters: {
+              traceId: "def456", 
+              from: "2024-01-01T00:00:00Z",
+              to: "2024-01-01T23:59:59Z",
+              targetSpanId: "span-789",
+              perPage: 50,
+            },
+            expectedOutput:
+              "Array of up to 50 spans focused around the target span",
           },
         ],
         hints: [
