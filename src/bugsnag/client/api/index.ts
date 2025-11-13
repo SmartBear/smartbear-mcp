@@ -2,7 +2,7 @@ import type { ProjectApiView, ReleaseApiView, ReleaseGroup } from "./api.js";
 
 // Exporting all the types required outside of the api module - all imports from the tool should come from here
 
-export { EventField } from "./api.js";
+export { ErrorUpdateRequest, EventField } from "./api.js";
 export { CurrentUserAPI, Organization } from "./CurrentUser.js";
 export { Configuration } from "./configuration.js";
 export { ErrorAPI } from "./Error.js";
