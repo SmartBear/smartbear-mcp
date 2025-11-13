@@ -413,7 +413,7 @@ export class BugsnagClient implements Client {
     }
 
     const validKeys = new Set(
-      traceFields.map((f) => f.key || f.name || f.displayId),
+      traceFields.map((f) => f.key || f.name || f.displayId).filter(Boolean),
     );
     for (const filter of filters) {
       if (!validKeys.has(filter.key)) {
@@ -1436,9 +1436,9 @@ export class BugsnagClient implements Client {
 
     const getTraceInputSchema = z.object({
       projectId: toolInputParameters.projectId,
-      traceId: z.string().describe("Trace ID"),
-      from: z.string().describe("Start time (ISO 8601 format)"),
-      to: z.string().describe("End time (ISO 8601 format)"),
+      traceId: toolInputParameters.traceId,
+      from: z.string().datetime().describe("Start time (ISO 8601 format)"),
+        to: z.string().datetime().describe("End time (ISO 8601 format)"),
       targetSpanId: z
         .string()
         .optional()
