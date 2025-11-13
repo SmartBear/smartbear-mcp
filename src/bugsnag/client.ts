@@ -236,7 +236,10 @@ export class BugsnagClient implements Client {
     return `${dashboardUrl}/errors/${errorId}${queryString ? `?${queryString}` : ""}`;
   }
 
-  async getSpanGroupUrl(project: Project, spanGroupId: string): Promise<string> {
+  async getSpanGroupUrl(
+    project: Project,
+    spanGroupId: string,
+  ): Promise<string> {
     const dashboardUrl = await this.getDashboardUrl(project);
     return `${dashboardUrl}/performance/span-groups/${encodeURIComponent(spanGroupId)}`;
   }
@@ -398,17 +401,25 @@ export class BugsnagClient implements Client {
 
   private validatePerformanceFilters(filters: any[]): void {
     if (!filters || filters.length === 0) return;
-    
-    const traceFields = this.cache?.get<any[]>(cacheKeys.CURRENT_PROJECT_TRACE_FIELDS);
+
+    const traceFields = this.cache?.get<any[]>(
+      cacheKeys.CURRENT_PROJECT_TRACE_FIELDS,
+    );
     if (!traceFields || !Array.isArray(traceFields)) {
-      console.warn("Trace fields not cached or invalid format. Consider calling List Trace Fields first for better validation.");
+      console.warn(
+        "Trace fields not cached or invalid format. Consider calling List Trace Fields first for better validation.",
+      );
       return;
     }
-    
-    const validKeys = new Set(traceFields.map((f) => f.key || f.name || f.displayId));
+
+    const validKeys = new Set(
+      traceFields.map((f) => f.key || f.name || f.displayId),
+    );
     for (const filter of filters) {
       if (!validKeys.has(filter.key)) {
-        throw new ToolError(`Invalid performance filter key: ${filter.key}. Use List Trace Fields tool to see available keys.`);
+        throw new ToolError(
+          `Invalid performance filter key: ${filter.key}. Use List Trace Fields tool to see available keys.`,
+        );
       }
     }
   }
@@ -1221,10 +1232,10 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = listSpanGroupsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-        
+
         // Validate filter keys against cached trace fields if filters are provided
         this.validatePerformanceFilters(params.filters || []);
-        
+
         const result = await this.projectApi.listProjectSpanGroups(
           project.id,
           params.sort,
@@ -1506,7 +1517,10 @@ export class BugsnagClient implements Client {
                 data: result.body,
                 next_url: result.nextUrl,
                 count: result.body?.length,
-                trace_url: result.body && result.body.length > 0 ? await this.getTraceUrl(project, params.traceId) : undefined,
+                trace_url:
+                  result.body && result.body.length > 0
+                    ? await this.getTraceUrl(project, params.traceId)
+                    : undefined,
               }),
             },
           ],
@@ -1546,15 +1560,19 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = listTraceFieldsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-        
+
         // Check cache first
-        let traceFields = this.cache?.get<any[]>(cacheKeys.CURRENT_PROJECT_TRACE_FIELDS);
+        let traceFields = this.cache?.get<any[]>(
+          cacheKeys.CURRENT_PROJECT_TRACE_FIELDS,
+        );
         if (!traceFields) {
-          const result = await this.projectApi.listProjectTraceFields(project.id);
+          const result = await this.projectApi.listProjectTraceFields(
+            project.id,
+          );
           traceFields = result.body || [];
           this.cache?.set(cacheKeys.CURRENT_PROJECT_TRACE_FIELDS, traceFields);
         }
-        
+
         return {
           content: [{ type: "text", text: JSON.stringify(traceFields) }],
         };
