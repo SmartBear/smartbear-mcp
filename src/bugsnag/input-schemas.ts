@@ -63,9 +63,26 @@ export const toolInputParameters = {
       "Filter releases by this stage (e.g. production, staging), defaults to 'production'",
     )
     .default("production"),
-  sort: z
-    .enum(["first_seen", "last_seen", "events", "users", "unsorted"])
-    .describe("Field to sort the errors by")
+  spanGroupId: z
+    .string()
+    .min(1, "Span group ID cannot be empty")
+    .describe("ID of the span group"),
+  traceId: z
+    .string()
+    .min(1, "Trace ID cannot be empty")
+    .describe("Trace ID"),
+  performanceSort: z
+    .enum([
+      "total_spans",
+      "last_seen", 
+      "name",
+      "display_name",
+      "duration_p50",
+      "duration_p75",
+      "duration_p90", 
+      "duration_p95",
+      "duration_p99",
+    ])
+    .describe("Field to sort performance data by")
     .default("last_seen"),
-  spanGroupId: z.string().describe("ID of the span group"),
 };
