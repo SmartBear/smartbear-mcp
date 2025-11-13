@@ -5,7 +5,7 @@ import type {
   CurrentUserAPI,
   ErrorAPI,
 } from "../../../bugsnag/client/api/index.js";
-import { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
+import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
 import { BugsnagClient } from "../../../bugsnag/client.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
 
