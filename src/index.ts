@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SwaggerClient } from "./swagger/client.js";
+import { BugsnagClient } from "./bugsnag/client.js";
 import Bugsnag from "./common/bugsnag.js";
 import "./common/register-clients.js"; // Register all available clients
 import { runHttpMode } from "./common/transport-http.js";
