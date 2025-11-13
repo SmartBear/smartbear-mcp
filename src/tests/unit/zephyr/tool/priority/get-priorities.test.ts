@@ -10,9 +10,9 @@ describe("GetProjectPriorities", () => {
   const instance = new GetPriorities(mockApiClient as any);
 
   it("should set specification correctly", () => {
-    expect(instance.specification.title).toBe("Get project priorities");
+    expect(instance.specification.title).toBe("Get priorities");
     expect(instance.specification.summary).toBe(
-      "Get project priorities with optional filters",
+      "Get Zephyr Test Case priorities with optional filters",
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
@@ -77,7 +77,7 @@ describe("GetProjectPriorities", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
-  it("should handle empty args and call apiClient.get with undefined params", async () => {
+  it("should handle empty args and call apiClient.get with default params", async () => {
     const responseMock = {
       next: null,
       startAt: 0,
@@ -102,9 +102,7 @@ describe("GetProjectPriorities", () => {
     mockApiClient.get.mockResolvedValueOnce(responseMock);
     const result = await instance.handle({}, {} as any);
     expect(mockApiClient.get).toHaveBeenCalledWith("/priorities", {
-      maxResults: undefined,
-      startAt: undefined,
-      projectKey: undefined,
+      maxResults: 10, // default value from schema
     });
     expect(result.structuredContent).toBe(responseMock);
   });
