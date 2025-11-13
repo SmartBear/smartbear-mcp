@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool for retrieving statuses [#212](https://github.com/SmartBear/smartbear-mcp/pull/212)
 - [Zephyr] Added a tool for retrieving Test Cases [#230](https://github.com/SmartBear/smartbear-mcp/pull/230)
 
+### Changed
+- [API Hub / Swagger] Rebranding from API Hub to Swagger 
+
 ## [0.10.0] - 2025-11-11
 
 ### Added
@@ -22,9 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Common] Refactor client authentication [#196](https://github.com/SmartBear/smartbear-mcp/pull/196)
 - [Qmetry] New QMetry MCP Server Tools Added, Refactored the existing tools structure [#217](https://github.com/SmartBear/smartbear-mcp/pull/217)
 - [Collaborator] Initial Collaborator client implementation [#223](https://github.com/SmartBear/smartbear-mcp/pull/223)
-
-### Changed
-- [API Hub] Rebranding from API Hub to Swagger 
 
 ## [0.9.0] - 2025-10-22
 
