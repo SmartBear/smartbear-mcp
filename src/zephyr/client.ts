@@ -7,6 +7,7 @@ import type {
 import { ApiClient } from "./common/api-client.js";
 import { GetProject } from "./tool/project/get-project.js";
 import { GetProjects } from "./tool/project/get-projects.js";
+import { GetStatuses } from "./tool/status/get-statuses.js";
 import { GetTestCases } from "./tool/test-case/get-test-cases.js";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
@@ -57,11 +58,12 @@ export class ZephyrClient implements Client {
       new GetProjects(apiClient),
       new GetProject(apiClient),
       new GetTestCycles(apiClient),
+      new GetStatuses(apiClient),
       new GetTestCases(apiClient),
     ];
 
-    tools.forEach((tool) => {
+    for (const tool of tools) {
       register(tool.specification, tool.handle);
-    });
+    }
   }
 }
