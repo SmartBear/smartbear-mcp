@@ -56,12 +56,13 @@ export class GetTestCycles implements ZephyrTool {
         expectedOutput: "One Test Cycle from project PROJ with its details",
       },
       {
-        description: "Get one Test Cycle from the folder 123",
+        description: "Get one Test Cycle from the folder with ID 123",
         parameters: {
           folderId: 123,
           maxResults: 1,
         },
-        expectedOutput: "One Test Cycle from folder 123 with its details",
+        expectedOutput:
+          "One Test Cycle from folder with ID 123 with its details",
       },
       {
         description: "Get one Test Cycle from the version 456",

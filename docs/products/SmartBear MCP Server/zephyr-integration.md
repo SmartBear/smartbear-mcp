@@ -54,3 +54,14 @@ The following environment variables configure the Zephyr integration:
   - optional type of status (`statusType`)
 - **Returns**: A list of statuses along with their properties, including name and color. Results are filtered based on the provided parameters.
 - **Use case**: Getting details about Zephyr statuses based on the provided filters.
+
+### Get Test Cases
+
+-  **Purpose**: Retrieve Test Cases available within your Zephyr account.
+-  **Parameters**:
+- optional Project key (`projectKey`)
+- optional Folder ID (`folderId`)
+- optional max results to return (`limit`)
+- optional starting cursor position for pagination (`startAtId`)
+-  **Returns**: A list of Test Cases along with their properties.
+-  **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
