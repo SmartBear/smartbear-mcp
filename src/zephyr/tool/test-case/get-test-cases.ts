@@ -56,12 +56,13 @@ export class GetTestCases implements ZephyrTool {
         expectedOutput: "One Test Case from project PROJ with its details",
       },
       {
-        description: "Get one Test Case from the folder 123",
+        description: "Get one Test Case from the folder with ID 123",
         parameters: {
           folderId: 123,
           limit: 1,
         },
-        expectedOutput: "One Test Case from folder 123 with its details",
+        expectedOutput:
+          "One Test Case from folder with ID 123 with its details",
       },
     ],
   };
