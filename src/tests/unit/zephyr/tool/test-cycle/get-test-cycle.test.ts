@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { TestCycleSchema } from "../../../../../zephyr/common/types.js";
 import {
-  GetTestCycle,
-  GetTestCycleInputSchema,
-} from "../../../../../zephyr/tool/test-cycle/get-testcycle.js";
+  getTestCycleParams,
+  getTestCycleResponse
+} from "../../../../../zephyr/common/rest-api-schemas.js";
+import { GetTestCycle } from "../../../../../zephyr/tool/test-cycle/get-test-cycle.js";
 
 describe("GetTestCycle", () => {
   const mockApiClient = { get: vi.fn() };
@@ -16,8 +16,8 @@ describe("GetTestCycle", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(GetTestCycleInputSchema);
-    expect(instance.specification.outputSchema).toBe(TestCycleSchema);
+    expect(instance.specification.inputSchema).toBe(getTestCycleParams);
+    expect(instance.specification.outputSchema).toBe(getTestCycleResponse);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
