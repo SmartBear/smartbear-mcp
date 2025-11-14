@@ -57,7 +57,7 @@ The following environment variables configure the Zephyr integration:
 
 ### Get Priorities
 
-- **Purpose**: Retrieve priorities related to Test Cases, Cycles, Plans or Executions from your Zephyr account.
+- **Purpose**: Retrieve priorities related to Test Cases from your Zephyr account.
 - **Parameters**:
   - optional starting position for pagination (`startAt`)
   - optional max results to return (`maxResults`)
