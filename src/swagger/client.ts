@@ -8,8 +8,6 @@ import type {
 } from "../common/types.js";
 import {
   type ApiDefinitionParams,
-  SwaggerAPI,
-  SwaggerConfiguration,
   type ApiSearchParams,
   type ApiSearchResponse,
   type CreateApiFromTemplateParams,
@@ -35,6 +33,8 @@ import {
   type SectionsListResponse,
   type StandardizationResult,
   type SuccessResponse,
+  SwaggerAPI,
+  SwaggerConfiguration,
   type TableOfContentsItem,
   type TableOfContentsListResponse,
   TOOLS,
