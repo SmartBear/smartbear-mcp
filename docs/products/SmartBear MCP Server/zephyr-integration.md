@@ -54,3 +54,13 @@ The following environment variables configure the Zephyr integration:
   - optional type of status (`statusType`)
 - **Returns**: A list of statuses along with their properties, including name and color. Results are filtered based on the provided parameters.
 - **Use case**: Getting details about Zephyr statuses based on the provided filters.
+
+### Get Priorities
+
+- **Purpose**: Retrieve priorities related to Test Cases, Cycles, Plans or Executions from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Project key (`projectKey`)
+- **Returns**: A list of priorities along with their properties, including name and color. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr priorities based on the provided filters.
