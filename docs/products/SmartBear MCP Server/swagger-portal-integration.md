@@ -83,7 +83,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 -   Purpose: Create a new product within a specific portal.
 -   Returns: Information about the newly created product.
 -   Use case: Add a new product to a portal.
--   Parameters: 
+-   Parameters:
 
 | Parameter          |               | Description | Type | Required |
 | ------------------ | ------------- | ----------- | ---- | -------- |
@@ -100,7 +100,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 -   Purpose: Update an product within a specific portal.
 -   Returns: Information about the update product.
 -   Use case: Change information on an existing product.
--   Parameters: 
+-   Parameters:
 
 | Parameter          |               | Description | Type | Required |
 | ------------------ | ------------- | ----------- | ---- | -------- |
