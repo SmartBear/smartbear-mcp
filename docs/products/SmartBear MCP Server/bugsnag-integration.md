@@ -9,7 +9,7 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 ### List Projects
 
 -   Lists the projects in your organization.
--   Only available when no project API key is configured.
+-   Optionally locates a project by its API key.
 
 ### List Project Errors
 
@@ -54,6 +54,11 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 ### Get Build
 
 -   Get detailed information about a specific build, including source control information and metadata.
+
+### Get Current Project
+
+-   Retrieve details of the currently configured project.
+-   This is either set via the `BUGSNAG_PROJECT_API_KEY` environment variable or from project IDs provided to other tools.
 
 ## Available Resources
 
