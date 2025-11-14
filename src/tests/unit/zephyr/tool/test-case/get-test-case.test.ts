@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { TestCaseSchema } from "../../../../../zephyr/common/types.js";
 import {
-  GetTestCase,
-  GetTestCaseInputSchema,
-} from "../../../../../zephyr/tool/test-case/get-test-case.js";
+  getTestCaseParams,
+  getTestCaseResponse,
+} from "../../../../../zephyr/common/rest-api-schemas.js";
+import { GetTestCase } from "../../../../../zephyr/tool/test-case/get-test-case.js";
 
 describe("GetTestCase", () => {
   const mockApiClient = { get: vi.fn() };
@@ -16,8 +16,8 @@ describe("GetTestCase", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(GetTestCaseInputSchema);
-    expect(instance.specification.outputSchema).toBe(TestCaseSchema);
+    expect(instance.specification.inputSchema).toBe(getTestCaseParams);
+    expect(instance.specification.outputSchema).toBe(getTestCaseResponse);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
