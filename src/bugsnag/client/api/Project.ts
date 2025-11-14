@@ -13,6 +13,41 @@ import { ProjectsApiFetchParamCreator } from "./api.js";
 import { type ApiResponse, BaseAPI, getQueryParams } from "./base.js";
 import type { Build, Project, Release } from "./index.js";
 
+/**
+ * Helper function to serialize performance filters into query parameters
+ * Converts filters array into the format expected by BugSnag API:
+ * filters[<key>][][type]=<type>&filters[<key>][][value]=<value>
+ */
+function serializePerformanceFilters(
+  filters: Array<PerformanceFilter>,
+): Record<string, string[]> {
+  const serialized: Record<string, string[]> = {};
+
+  for (const filter of filters) {
+    const key = filter.key;
+    if (!filter.filterValues || filter.filterValues.length === 0) {
+      continue;
+    }
+
+    for (const filterValue of filter.filterValues) {
+      const typeKey = `filters[${key}][][type]`;
+      const valueKey = `filters[${key}][][value]`;
+
+      if (!serialized[typeKey]) {
+        serialized[typeKey] = [];
+      }
+      if (!serialized[valueKey]) {
+        serialized[valueKey] = [];
+      }
+
+      serialized[typeKey].push(String(filterValue.matchType));
+      serialized[valueKey].push(String(filterValue.value));
+    }
+  }
+
+  return serialized;
+}
+
 export class ProjectAPI extends BaseAPI {
   static projectFields: (keyof Project)[] = [
     "id",
@@ -225,6 +260,10 @@ export class ProjectAPI extends BaseAPI {
     if (nextUrl) {
       options.query.per_page = perPage ? perPage.toString() : undefined;
     }
+    // Serialize filters if provided
+    if (filters && filters.length > 0) {
+      Object.assign(options.query, serializePerformanceFilters(filters));
+    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listProjectSpanGroups(
@@ -233,7 +272,7 @@ export class ProjectAPI extends BaseAPI {
       direction,
       perPage,
       offset,
-      filters,
+      undefined, // Don't pass filters to API - already serialized in options
       starredOnly,
       options,
     );
@@ -257,9 +296,13 @@ export class ProjectAPI extends BaseAPI {
     id: string,
     filters?: Array<PerformanceFilter>,
   ): Promise<ApiResponse<SpanGroup>> {
+    const options: any = {};
+    if (filters && filters.length > 0) {
+      options.query = serializePerformanceFilters(filters);
+    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).getProjectSpanGroup(projectId, id, filters);
+    ).getProjectSpanGroup(projectId, id, undefined, options);
     return await this.requestObject<SpanGroup>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
@@ -287,13 +330,16 @@ export class ProjectAPI extends BaseAPI {
     if (nextUrl) {
       options.query.per_page = perPage ? perPage.toString() : undefined;
     }
+    if (filters && filters.length > 0) {
+      Object.assign(options.query, serializePerformanceFilters(filters));
+    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listProjectSpanGroupSummaries(
       projectId,
       perPage,
       offset,
-      filters,
+      undefined,
       options,
     );
     return await this.requestArray<SpanGroupDescription>(
@@ -316,9 +362,13 @@ export class ProjectAPI extends BaseAPI {
     id: string,
     filters?: Array<PerformanceFilter>,
   ): Promise<ApiResponse<any>> {
+    const options: any = {};
+    if (filters && filters.length > 0) {
+      options.query = serializePerformanceFilters(filters);
+    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).getProjectSpanGroupTimeline(projectId, id, filters);
+    ).getProjectSpanGroupTimeline(projectId, id, undefined, options);
     return await this.requestObject<any>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
@@ -338,9 +388,13 @@ export class ProjectAPI extends BaseAPI {
     id: string,
     filters?: Array<PerformanceFilter>,
   ): Promise<ApiResponse<any>> {
+    const options: any = {};
+    if (filters && filters.length > 0) {
+      options.query = serializePerformanceFilters(filters);
+    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).getProjectSpanGroupDistribution(projectId, id, filters);
+    ).getProjectSpanGroupDistribution(projectId, id, undefined, options);
     return await this.requestObject<any>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
@@ -452,12 +506,15 @@ export class ProjectAPI extends BaseAPI {
     if (nextUrl) {
       options.query.per_page = perPage ? perPage.toString() : undefined;
     }
+    if (filters && filters.length > 0) {
+      Object.assign(options.query, serializePerformanceFilters(filters));
+    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listSpansBySpanGroupId(
       projectId,
       id,
-      filters,
+      undefined,
       sort,
       direction,
       perPage,
@@ -540,6 +597,9 @@ export class ProjectAPI extends BaseAPI {
     if (nextUrl) {
       options.query.per_page = perPage ? perPage.toString() : undefined;
     }
+    if (filters && filters.length > 0) {
+      Object.assign(options.query, serializePerformanceFilters(filters));
+    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listProjectPageLoadSpanGroups(
@@ -548,7 +608,7 @@ export class ProjectAPI extends BaseAPI {
       direction,
       perPage,
       offset,
-      filters,
+      undefined,
       starredOnly,
       options,
     );
@@ -572,9 +632,13 @@ export class ProjectAPI extends BaseAPI {
     id: string,
     filters?: Array<PerformanceFilter>,
   ): Promise<ApiResponse<PageLoadSpanGroup>> {
+    const options: any = {};
+    if (filters && filters.length > 0) {
+      options.query = serializePerformanceFilters(filters);
+    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).getProjectPageLoadSpanGroupById(projectId, id, filters);
+    ).getProjectPageLoadSpanGroupById(projectId, id, undefined, options);
     return await this.requestObject<PageLoadSpanGroup>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
