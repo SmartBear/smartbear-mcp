@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json#/definitions/ServerDetail",
   "title": "SmartBear MCP",
   "name": "com.smartbear/smartbear-mcp",
-  "description": "MCP server for AI access to SmartBear tools, including BugSnag, Reflect, API Hub, PactFlow.",
+  "description": "MCP server for AI access to SmartBear tools, including BugSnag, Reflect, Swagger, PactFlow.",
   "repository": {
     "url": "https://github.com/SmartBear/smartbear-mcp",
     "source": "github"
@@ -38,8 +38,8 @@
           "isSecret": true
         },
         {
-          "name": "API_HUB_API_KEY",
-          "description": "API Hub API key. Leave empty to disable API Hub tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration",
+          "name": "SWAGGER_API_KEY",
+          "description": "Swagger API key. Leave empty to disable Swagger tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration",
           "isRequired": false,
           "isSecret": true
         },

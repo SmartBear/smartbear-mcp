@@ -6,7 +6,7 @@ This guide is to help you get up and running with our MCP server.
 
 Before setting up and using the SmartBear MCP Server, ensure you have: 
 
--   An active account across our relevant hubs (e.g. [API Hub](https://try.platform.smartbear.com/?product=ApiHub), [Test Hub](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
+-   An active account across our relevant hubs (e.g. [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Test Hub](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
 -   Node.js 20 or later installed on your development machine
 -   A compatible MCP client (Claude Desktop, Cursor, etc.)
 
@@ -38,11 +38,13 @@ npm install @smartbear/mcp
 
 The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its own authentication token.
 
-- **API Hub - Portal**
+- **Swagger - Portal & Studio**
 
-  Copy the API key from the API Hub dashboard at [`app.swaggerhub.com`](https://app.swaggerhub.com/settings/apiKey).
+  Copy the API key from the Swagger dashboard at [`app.swaggerhub.com`](https://app.swaggerhub.com/settings/apiKey).
 
-- **API Hub - Contract Testing (PactFlow)**
+  > **Note:** The environment variable `API_HUB_API_KEY` is still supported for backward compatibility, but `SWAGGER_API_KEY` is now the preferred name.
+
+- **Swagger - Contract Testing (PactFlow)**
 
   Copy the relevant API tokens from [`app.pactflow.io`](https://app.pactflow.io/settings/api-tokens). You will also need to note the tenant URL for your organization (e.g., `{tenant}.pactflow.io`). The MCP server also supports the open source Pact Broker, in which case you will need a username and password instead of a token.
 
@@ -75,10 +77,10 @@ export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 # Required for Reflect tools
 export REFLECT_API_TOKEN=your-reflect-api-token
 
-# Required for API Hub - Portal tools
-export API_HUB_API_KEY=your-api-hub-api-key
+# Required for Swagger - Portal & Studio tools
+export SWAGGER_API_KEY=your-swagger-api-key
 
-# Required for API Hub - Contract Testing (PactFlow) tools
+# Required for Swagger - Contract Testing (PactFlow) tools
 export PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io
 export PACT_BROKER_TOKEN=your-pactflow-api-token
 # If using the open source Pact broker, replace the token with:
@@ -120,7 +122,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-        "API_HUB_API_KEY": "${input:api_hub_api_key}",
+        "SWAGGER_API_KEY": "${input:swagger_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
         // "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
@@ -150,9 +152,9 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "password": true
     },
     {
-      "id": "api_hub_api_key",
+      "id": "swagger_api_key",
       "type": "promptString",
-      "description": "API Hub API Key",
+      "description": "Swagger API Key",
       "password": true
     },
     {
@@ -213,7 +215,7 @@ Add to your `mcp.json` configuration:
         "BUGSNAG_AUTH_TOKEN": "your-bugsnag-auth-token",
         "BUGSNAG_PROJECT_API_KEY": "your-bugsnag-project-api-key",
         "REFLECT_API_TOKEN": "your-reflect-api-token",
-        "API_HUB_API_KEY": "your-api-hub-api-key",
+        "SWAGGER_API_KEY": "your-swagger-api-key",
         "PACT_BROKER_BASE_URL": "https://your-tenant.pactflow.io",
         "PACT_BROKER_TOKEN": "your-pact-broker-token",
         // If using the open source Pact broker, replace the token with:
@@ -230,7 +232,7 @@ Add to your `mcp.json` configuration:
 
 ### Claude Desktop
 
-Edit your `claude_desktop_config.json` file:
+Edit your `claude_desktop_config.json` file:
 
 ```
 {
@@ -245,7 +247,7 @@ Edit your `claude_desktop_config.json` file:
         "BUGSNAG_AUTH_TOKEN": "your-bugsnag-auth-token",
         "BUGSNAG_PROJECT_API_KEY": "your-bugsnag-project-api-key",
         "REFLECT_API_TOKEN": "your-reflect-api-token",
-        "API_HUB_API_KEY": "your-api-hub-api-key",
+        "SWAGGER_API_KEY": "your-swagger-api-key",
         "PACT_BROKER_BASE_URL": "https://your-tenant.pactflow.io",
         "PACT_BROKER_TOKEN": "your-pact-broker-token",
         // If using the open source Pact broker, replace the token with:
@@ -282,7 +284,7 @@ Then set the required environment variables:
 export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 export REFLECT_API_TOKEN=your-reflect-api-token
-export API_HUB_API_KEY=your-api-hub-api-key
+export SWAGGER_API_KEY=your-swagger-api-key
 export QMETRY_API_KEY=your-qmetry_api_key
 export QMETRY_BASE_URL=https://testmanagement.qmetry.com
 
@@ -339,7 +341,7 @@ To run the built server locally in VS Code, add the following configuration to 
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-        "API_HUB_API_KEY": "${input:api_hub_api_key}",
+        "SWAGGER_API_KEY": "${input:swagger_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
         // If using the open source Pact broker, replace the token with:
@@ -370,9 +372,9 @@ To run the built server locally in VS Code, add the following configuration to 
          "password": true
       },
       {
-         "id": "api_hub_api_key",
+         "id": "swagger_api_key",
          "type": "promptString",
-         "description": "API Hub API Key",
+         "description": "Swagger API Key",
          "password": true
       },
       {
@@ -424,7 +426,7 @@ To test the MCP server locally before integrating with your preferred host, you 
 BUGSNAG_AUTH_TOKEN=your_token \
 BUGSNAG_PROJECT_API_KEY=your_project_api_key \
 REFLECT_API_TOKEN=your_reflect_token \
-API_HUB_API_KEY=your_api_hub_key \
+SWAGGER_API_KEY=your_swagger_key \
 PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io \
 PACT_BROKER_TOKEN=your_pactflow_token \
 QMETRY_API_KEY=your_qmetry_key \
@@ -467,7 +469,7 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "List all projects in organization org_12345"
 -   "Show me project details for the mobile app project"
 
-### API Hub Contract Testing (PactFlow)
+### Swagger Contract Testing (PactFlow)
 
 -   "List all the provider states for the current provider"
 -   "Generate Pact tests from this OpenAPI spec: [spec link]"

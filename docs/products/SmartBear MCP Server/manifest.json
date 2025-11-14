@@ -1,6 +1,6 @@
 {
   "productMetadata": {
-    "description": "Integrate capabilities from SmartBear's API Hub, Test Hub, and BugSnag into your AI development workflow.",
+    "description": "Integrate capabilities from SmartBear's Swagger, Test Hub, and BugSnag into your AI development workflow.",
     "slug": "smartbear-mcp",
     "public": true,
     "hidden": false,
@@ -29,13 +29,21 @@
     {
       "order": 2,
       "parent": "mcp-server-capabilities",
-      "name": "API Hub Integration",
-      "slug": "api-hub-integration",
+      "name": "Swagger Portal Integration",
+      "slug": "swagger-portal-integration",
       "type": "markdown",
-      "contentUrl": "api-hub-integration.md"
+      "contentUrl": "swagger-portal-integration.md"
     },
     {
       "order": 3,
+      "parent": "mcp-server-capabilities",
+      "name": "Swagger Studio Integration",
+      "slug": "swagger-studio-integration",
+      "type": "markdown",
+      "contentUrl": "swagger-studio-integration.md"
+    },
+    {
+      "order": 4,
       "parent": "mcp-server-capabilities",
       "name": "Test Hub Integration",
       "slug": "test-hub-integration",
@@ -43,7 +51,7 @@
       "contentUrl": "test-hub-integration.md"
     },
     {
-      "order": 4,
+      "order": 5,
       "parent": "mcp-server-capabilities",
       "name": "BugSnag Integration",
       "slug": "bugsnag-integration",
@@ -51,7 +59,7 @@
       "contentUrl": "bugsnag-integration.md"
     },
     {
-      "order": 5,
+      "order": 6,
       "parent": "mcp-server-capabilities",
       "name": "Contract Testing with PactFlow",
       "slug": "contract-testing-with-pactflow",
@@ -59,7 +67,7 @@
       "contentUrl": "contract-testing-with-pactflow.md"
     },
     {
-      "order": 6,
+      "order": 7,
       "parent": "mcp-server-capabilities",
       "name": "QMetry Integration",
       "slug": "qmetry-integration",
@@ -67,7 +75,7 @@
       "contentUrl": "qmetry-integration.md"
     },
     {
-      "order": 7,
+      "order": 8,
       "parent": "mcp-server-capabilities",
       "name": "Zephyr Integration",
       "slug": "zephyr-integration",
