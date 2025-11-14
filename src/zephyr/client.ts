@@ -9,8 +9,8 @@ import { GetProject } from "./tool/project/get-project.js";
 import { GetProjects } from "./tool/project/get-projects.js";
 import { GetStatuses } from "./tool/status/get-statuses.js";
 import { GetTestCases } from "./tool/test-case/get-test-cases.js";
+import { GetTestCycle } from "./tool/test-cycle/get-test-cycle.js";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
-import {GetTestCycle} from "./tool/test-cycle/get-test-cycle.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";

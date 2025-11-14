@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   getTestCycleParams,
-  getTestCycleResponse
+  getTestCycleResponse,
 } from "../../../../../zephyr/common/rest-api-schemas.js";
 import { GetTestCycle } from "../../../../../zephyr/tool/test-cycle/get-test-cycle.js";
 

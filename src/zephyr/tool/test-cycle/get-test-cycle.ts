@@ -2,11 +2,11 @@ import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
-import type { ZephyrTool } from "../zephyr-tool.js";
 import {
   getTestCycleParams,
   getTestCycleResponse,
 } from "../../common/rest-api-schemas.js";
+import type { ZephyrTool } from "../zephyr-tool.js";
 
 export class GetTestCycle implements ZephyrTool {
   private readonly apiClient: ApiClient;
