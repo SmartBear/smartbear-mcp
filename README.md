@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [API Hub](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), and [Zephyr](https://smartbear.com/test-management/zephyr/).
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [API Hub](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
 
 ## What is MCP?
 
@@ -34,6 +34,7 @@ See individual guides for suggested prompts and supported tools and resources:
 - [PactFlow](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
+- [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - Review and Remote System Configuration management capabilities
 
 
 ## Prerequisites
@@ -79,7 +80,10 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
-        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}"
+        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
+        "COLLAB_BASE_URL": "${input:collab_base_url}",
+        "COLLAB_USERNAME": "${input:collab_username}",
+        "COLLAB_LOGIN_TICKET": "${input:collab_login_ticket}"
       }
     }
   },
@@ -155,6 +159,24 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
           "type": "promptString",
           "description": "Zephyr API base URL. By default, connects to https://api.zephyrscale.smartbear.com/v2. Change to region-specific endpoint if needed.",
           "password": false
+      },
+      {
+          "id": "collab_base_url",
+          "type": "promptString",
+          "description": "Collab base url",
+          "password": true
+      },
+      {
+          "id": "collab_username",
+          "type": "promptString",
+          "description": "Collab username",
+          "password": true
+      },
+      {
+          "id": "collab_login_ticket",
+          "type": "promptString",
+          "description": "Collab login ticket",
+          "password": true
       }
   ]
 }
@@ -186,7 +208,10 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "QMETRY_API_KEY": "your_qmetry_api_key",
         "QMETRY_BASE_URL": "https://testmanagement.qmetry.com",
         "ZEPHYR_API_TOKEN": "your_zephyr_api_token",
-        "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2"
+        "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
+        "COLLAB_BASE_URL": "your collab base url",
+        "COLLAB_USERNAME": "your collab user name",
+        "COLLAB_LOGIN_TICKET": "your collab login ticket"
       }
     }
   }

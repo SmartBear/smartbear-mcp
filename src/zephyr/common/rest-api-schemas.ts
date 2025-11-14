@@ -173,16 +173,16 @@ export const listTestCasesResponse = zod
               ),
             objective: zod
               .string()
-              .optional()
+              .nullish()
               .describe("A description of the objective."),
             precondition: zod
               .string()
-              .optional()
+              .nullish()
               .describe("Any conditions that need to be met."),
             estimatedTime: zod
               .number()
               .min(listTestCasesResponseValuesItemEstimatedTimeMin)
-              .optional()
+              .nullish()
               .describe("Estimated duration in milliseconds."),
             labels: zod
               .array(zod.string())
@@ -204,7 +204,7 @@ export const listTestCasesResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .nullish(),
             priority: zod
               .object({
                 id: zod.number().min(1),
@@ -401,13 +401,10 @@ export const createTestCaseBody = zod.object({
     .regex(createTestCaseBodyProjectKeyRegExp)
     .describe("Jira project key."),
   name: zod.string().regex(createTestCaseBodyNameRegExp),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   precondition: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Any conditions that need to be met."),
   estimatedTime: zod
     .number()
@@ -559,18 +556,18 @@ export const listTestCasesCursorPaginatedResponse = zod
               ),
             objective: zod
               .string()
-              .optional()
+              .nullish()
               .describe("A description of the objective."),
             precondition: zod
               .string()
-              .optional()
+              .nullish()
               .describe("Any conditions that need to be met."),
             estimatedTime: zod
               .number()
               .min(
                 listTestCasesCursorPaginatedResponseValuesItemEstimatedTimeMin,
               )
-              .optional()
+              .nullish()
               .describe("Estimated duration in milliseconds."),
             labels: zod
               .array(zod.string())
@@ -592,7 +589,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .nullish(),
             priority: zod
               .object({
                 id: zod.number().min(1),
@@ -819,18 +816,15 @@ export const getTestCaseResponse = zod.object({
     .describe(
       "Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.\n",
     ),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   precondition: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Any conditions that need to be met."),
   estimatedTime: zod
     .number()
     .min(getTestCaseResponseEstimatedTimeMin)
-    .optional()
+    .nullish()
     .describe("Estimated duration in milliseconds."),
   labels: zod
     .array(zod.string())
@@ -850,7 +844,7 @@ export const getTestCaseResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .nullish(),
   priority: zod
     .object({
       id: zod.number().min(1),
@@ -1059,18 +1053,15 @@ export const updateTestCaseBody = zod.object({
     .describe(
       "Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.\n",
     ),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   precondition: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Any conditions that need to be met."),
   estimatedTime: zod
     .number()
     .min(updateTestCaseBodyEstimatedTimeMin)
-    .optional()
+    .nullish()
     .describe("Estimated duration in milliseconds."),
   labels: zod
     .array(zod.string())
@@ -1090,7 +1081,7 @@ export const updateTestCaseBody = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .nullish(),
   priority: zod
     .object({
       id: zod.number().min(1),
@@ -1536,18 +1527,15 @@ export const getTestCaseVersionResponse = zod.object({
     .describe(
       "Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.\n",
     ),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   precondition: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Any conditions that need to be met."),
   estimatedTime: zod
     .number()
     .min(getTestCaseVersionResponseEstimatedTimeMin)
-    .optional()
+    .nullish()
     .describe("Estimated duration in milliseconds."),
   labels: zod
     .array(zod.string())
@@ -1567,7 +1555,7 @@ export const getTestCaseVersionResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .nullish(),
   priority: zod
     .object({
       id: zod.number().min(1),
@@ -3254,7 +3242,7 @@ export const listTestPlansResponse = zod
             name: zod.string().regex(listTestPlansResponseValuesItemNameRegExp),
             objective: zod
               .string()
-              .optional()
+              .nullish()
               .describe("A description of the objective."),
             project: zod
               .object({
@@ -3462,10 +3450,7 @@ export const createTestPlanBody = zod.object({
     .regex(createTestPlanBodyProjectKeyRegExp)
     .describe("Jira project key."),
   name: zod.string().regex(createTestPlanBodyNameRegExp),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   folderId: zod
     .number()
     .min(1)
@@ -3521,10 +3506,7 @@ export const getTestPlanResponse = zod.object({
     .regex(getTestPlanResponseKeyRegExp)
     .describe("Key of the test plan"),
   name: zod.string().regex(getTestPlanResponseNameRegExp),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   project: zod
     .object({
       id: zod.number().min(1),
@@ -5739,7 +5721,10 @@ export const listStatusesQueryParams = zod.object({
     .regex(listStatusesQueryProjectKeyRegExp)
     .optional()
     .describe("Jira project key filter"),
-  statusType: zod.string().optional(),
+  statusType: zod
+    .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
+    .optional()
+    .describe("Determines which type of entity the status belongs to."),
 });
 
 export const listStatusesResponseStartAtMin = 0;
@@ -5821,7 +5806,12 @@ export const listStatusesResponse = zod
             .and(
               zod.object({
                 color: zod.string().optional(),
-                archived: zod.boolean().optional(),
+                archived: zod
+                  .boolean()
+                  .optional()
+                  .describe(
+                    "Determines whether the status is archived. Archived statuses are read-only and cannot be assigned to entities.",
+                  ),
                 default: zod.boolean().optional(),
               }),
             ),
@@ -5852,10 +5842,8 @@ export const createStatusBody = zod.object({
     .max(createStatusBodyNameMax)
     .describe("The status name."),
   type: zod
-    .string()
-    .describe(
-      'Valid values: `"TEST_CASE"`, `"TEST_PLAN"`, `"TEST_CYCLE"`, `"TEST_EXECUTION"`',
-    ),
+    .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
+    .describe("Determines which type of entity the status belongs to."),
   description: zod
     .string()
     .min(1)
@@ -5912,7 +5900,12 @@ export const getStatusResponse = zod
   .and(
     zod.object({
       color: zod.string().optional(),
-      archived: zod.boolean().optional(),
+      archived: zod
+        .boolean()
+        .optional()
+        .describe(
+          "Determines whether the status is archived. Archived statuses are read-only and cannot be assigned to entities.",
+        ),
       default: zod.boolean().optional(),
     }),
   );
