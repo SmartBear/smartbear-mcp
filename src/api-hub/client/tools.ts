@@ -10,8 +10,16 @@ import type { ToolParams } from "../../common/types.js";
 import {
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
+  CreateTableOfContentsArgsSchema,
+  DeleteDocumentArgsSchema,
+  DeleteTableOfContentsArgsSchema,
+  GetDocumentArgsSchema,
+  GetProductSectionsArgsSchema,
+  GetTableOfContentsArgsSchema,
   PortalArgsSchema,
   ProductArgsSchema,
+  PublishProductArgsSchema,
+  UpdateDocumentArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
 } from "./portal-types.js";
@@ -22,6 +30,7 @@ import {
   CreateApiParamsSchema,
   ScanStandardizationParamsSchema,
 } from "./registry-types.js";
+import { OrganizationsQuerySchema } from "./user-management-types.js";
 
 export interface ApiHubToolParams extends ToolParams {
   handler: string;
@@ -92,6 +101,64 @@ export const TOOLS: ApiHubToolParams[] = [
     inputSchema: UpdateProductArgsSchema,
     handler: "updatePortalProduct",
   },
+  {
+    title: "Publish Portal Product",
+    summary:
+      "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.",
+    inputSchema: PublishProductArgsSchema,
+    handler: "publishPortalProduct",
+  },
+  {
+    title: "List Portal Product Sections",
+    summary: "Get sections for a specific product within a portal.",
+    inputSchema: GetProductSectionsArgsSchema,
+    handler: "getPortalProductSections",
+  },
+  {
+    title: "Create Table Of Contents",
+    summary:
+      "Create a new table of contents item in a portal product section. Supports API references, HTML content, and Markdown content types.",
+    inputSchema: CreateTableOfContentsArgsSchema,
+    handler: "createTableOfContents",
+  },
+  {
+    title: "List Table Of Contents",
+    summary:
+      "Get table of contents for a section of a product within a portal.",
+    inputSchema: GetTableOfContentsArgsSchema,
+    handler: "getTableOfContents",
+  },
+  {
+    title: "Delete Table Of Contents",
+    summary:
+      "Delete table of contents entry. Performs a soft-delete of an entry from the table of contents. Supports recursive deletion of nested items.",
+    inputSchema: DeleteTableOfContentsArgsSchema,
+    handler: "deleteTableOfContents",
+  },
+
+  // Document management tools
+  {
+    title: "Get Document",
+    summary:
+      "Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.",
+    inputSchema: GetDocumentArgsSchema,
+    handler: "getDocument",
+  },
+  {
+    title: "Update Document",
+    summary:
+      "Update the content of an existing document. Supports both HTML and Markdown content types.",
+    inputSchema: UpdateDocumentArgsSchema,
+    handler: "updateDocument",
+  },
+  {
+    title: "Delete Document",
+    summary:
+      "Delete a document by its ID. This will permanently remove the document content.",
+    inputSchema: DeleteDocumentArgsSchema,
+    handler: "deleteDocument",
+  },
+
   // Registry API tools for SwaggerHub Design functionality
   {
     title: "Search APIs and Domains",
@@ -120,6 +187,14 @@ export const TOOLS: ApiHubToolParams[] = [
       "Create a new API in SwaggerHub Registry using a predefined template. This endpoint creates APIs based on existing templates without requiring manual definition content. APIs are always created with fixed values: private visibility, no project assignment, and reconciliation enabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field and API details with SwaggerHub URL.",
     inputSchema: CreateApiFromTemplateParamsSchema,
     handler: "createApiFromTemplate",
+  },
+  // User Management API tools for organization management functionality
+  {
+    title: "List Organizations",
+    summary:
+      "Get organizations for a user. Returns a list of organizations that the authenticating user is a member of. On-Premise admin gets a list of all organizations in the system.",
+    inputSchema: OrganizationsQuerySchema,
+    handler: "getOrganizations",
   },
   {
     title: "Scan API Standardization",

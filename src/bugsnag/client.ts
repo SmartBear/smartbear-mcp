@@ -1,7 +1,8 @@
-import NodeCache from "node-cache";
 import { z } from "zod";
 
+import type { CacheService } from "../common/cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import type { SmartBearMcpServer } from "../common/server.js";
 import {
   type Client,
   type GetInputFunction,
@@ -14,17 +15,15 @@ import {
   Configuration,
   CurrentUserAPI,
   ErrorAPI,
+  ErrorUpdateRequest,
   type EventField,
   type Organization,
   type Project,
   ProjectAPI,
   type Release,
 } from "./client/api/index.js";
-import {
-  type FilterObject,
-  FilterObjectSchema,
-  toUrlSearchParams,
-} from "./client/filters.js";
+import { type FilterObject, toUrlSearchParams } from "./client/filters.js";
+import { toolInputParameters } from "./input-schemas.js";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -61,41 +60,74 @@ interface StabilityData {
   meetsCriticalStability: boolean;
 }
 
+const ConfigurationSchema = z.object({
+  auth_token: z.string().describe("BugSnag personal authentication token"),
+  project_api_key: z.string().describe("BugSnag project API key").optional(),
+  endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
+});
+
 export class BugsnagClient implements Client {
-  private currentUserApi: CurrentUserAPI;
-  private errorsApi: ErrorAPI;
-  private cache: NodeCache;
-  private projectApi: ProjectAPI;
+  private cache?: CacheService;
   private projectApiKey?: string;
-  private apiEndpoint: string;
-  private appEndpoint: string;
+  private _currentUserApi: CurrentUserAPI | undefined;
+  private _errorsApi: ErrorAPI | undefined;
+  private _projectApi: ProjectAPI | undefined;
+  private _appEndpoint: string | undefined;
+
+  get currentUserApi(): CurrentUserAPI {
+    if (!this._currentUserApi) throw new Error("Client not configured");
+    return this._currentUserApi;
+  }
+
+  get errorsApi(): ErrorAPI {
+    if (!this._errorsApi) throw new Error("Client not configured");
+    return this._errorsApi;
+  }
+
+  get projectApi(): ProjectAPI {
+    if (!this._projectApi) throw new Error("Client not configured");
+    return this._projectApi;
+  }
+
+  get appEndpoint(): string {
+    if (!this._appEndpoint) throw new Error("Client not configured");
+    return this._appEndpoint;
+  }
 
   name = "BugSnag";
-  prefix = "bugsnag";
+  toolPrefix = "bugsnag";
+  configPrefix = "Bugsnag";
+  config = ConfigurationSchema;
 
-  constructor(token: string, projectApiKey?: string, endpoint?: string) {
-    this.apiEndpoint = this.getEndpoint("api", projectApiKey, endpoint);
-    this.appEndpoint = this.getEndpoint("app", projectApiKey, endpoint);
-    const config = new Configuration({
-      apiKey: `token ${token}`,
+  async configure(
+    server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+  ): Promise<boolean> {
+    this.cache = server.getCache();
+    this._appEndpoint = this.getEndpoint(
+      "app",
+      config.project_api_key,
+      config.endpoint,
+    );
+    const apiConfig = new Configuration({
+      apiKey: `token ${config.auth_token}`,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",
       },
-      basePath: this.apiEndpoint,
+      basePath: this.getEndpoint(
+        "api",
+        config.project_api_key,
+        config.endpoint,
+      ),
     });
-    this.currentUserApi = new CurrentUserAPI(config);
-    this.errorsApi = new ErrorAPI(config);
-    this.cache = new NodeCache({
-      stdTTL: 24 * 60 * 60, // default cache TTL of 24 hours
-    });
-    this.projectApi = new ProjectAPI(config);
-    this.projectApiKey = projectApiKey;
-  }
+    this._currentUserApi = new CurrentUserAPI(apiConfig);
+    this._errorsApi = new ErrorAPI(apiConfig);
+    this._projectApi = new ProjectAPI(apiConfig);
+    this.projectApiKey = config.project_api_key;
 
-  async initialize(): Promise<void> {
     // Trigger caching of org and projects
     try {
       await this.getProjects();
@@ -107,18 +139,25 @@ export class BugsnagClient implements Client {
       );
     }
     if (this.projectApiKey) {
+      let currentProject = null;
       try {
-        await this.getCurrentProject();
+        currentProject = await this.getCurrentProject();
       } catch (error) {
+        console.error(
+          "An error occurred while fetching project information",
+          error,
+        );
+      }
+      if (!currentProject) {
         // Clear the project API key to allow tools to work across all projects
         this.projectApiKey = undefined;
         console.error(
           "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
             "Check your configured BugSnag project API key.",
-          error,
         );
       }
     }
+    return true;
   }
 
   getHost(apiKey: string | undefined, subdomain: string): string {
@@ -175,7 +214,7 @@ export class BugsnagClient implements Client {
   }
 
   async getOrganization(): Promise<Organization> {
-    let org = this.cache.get<Organization>(cacheKeys.ORG);
+    let org = this.cache?.get<Organization>(cacheKeys.ORG);
     if (!org) {
       const response = await this.currentUserApi.listUserOrganizations();
       const orgs = response.body;
@@ -183,7 +222,7 @@ export class BugsnagClient implements Client {
         throw new Error("No organizations found for the current user.");
       }
       org = orgs[0];
-      this.cache.set(cacheKeys.ORG, org);
+      this.cache?.set(cacheKeys.ORG, org);
     }
     return org;
   }
@@ -193,14 +232,14 @@ export class BugsnagClient implements Client {
   // stores them in the cache for future use.
   // It throws an error if no organizations are found in the cache.
   async getProjects(): Promise<Project[]> {
-    let projects = this.cache.get<Project[]>(cacheKeys.PROJECTS);
+    let projects = this.cache?.get<Project[]>(cacheKeys.PROJECTS);
     if (!projects) {
       const org = await this.getOrganization();
       const response = await this.currentUserApi.getOrganizationProjects(
         org.id,
       );
       projects = response.body;
-      this.cache.set(cacheKeys.PROJECTS, projects);
+      this.cache?.set(cacheKeys.PROJECTS, projects);
     }
     return projects;
   }
@@ -211,19 +250,14 @@ export class BugsnagClient implements Client {
   }
 
   async getCurrentProject(): Promise<Project | null> {
-    let project = this.cache.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
+    let project = this.cache?.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
     if (!project && this.projectApiKey) {
       const projects = await this.getProjects();
       project =
         projects.find((p: Project) => p.apiKey === this.projectApiKey) ?? null;
-      if (!project) {
-        throw new ToolError(
-          "Unable to find project with the configured API key.",
-        );
-      }
-      this.cache.set(cacheKeys.CURRENT_PROJECT, project);
+      this.cache?.set(cacheKeys.CURRENT_PROJECT, project);
       if (project) {
-        this.cache.set(
+        this.cache?.set(
           cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
           await this.getProjectEventFilters(project),
         );
@@ -325,6 +359,10 @@ export class BugsnagClient implements Client {
     getInput: GetInputFunction,
   ): void {
     if (!this.projectApiKey) {
+      const listProjectsInputSchema = z.object({
+        perPage: toolInputParameters.perPage,
+        page: toolInputParameters.page,
+      });
       register(
         {
           title: "List Projects",
@@ -337,28 +375,12 @@ export class BugsnagClient implements Client {
             "Find project IDs needed for other tools",
             "Get an overview of all projects in the organization",
           ],
-          parameters: [
-            {
-              name: "pageSize",
-              type: z.number(),
-              description:
-                "Number of projects to return per page for pagination",
-              required: false,
-              examples: ["10", "25", "50"],
-            },
-            {
-              name: "page",
-              type: z.number(),
-              description: "Page number to return (starts from 1)",
-              required: false,
-              examples: ["1", "2", "3"],
-            },
-          ],
+          inputSchema: listProjectsInputSchema,
           examples: [
             {
               description: "Get first 10 projects",
               parameters: {
-                pageSize: 10,
+                perPage: 10,
                 page: 1,
               },
               expectedOutput:
@@ -375,17 +397,18 @@ export class BugsnagClient implements Client {
             "Project IDs from this list can be used with other tools when no project API key is configured",
           ],
         },
-        async (args: any, _extra: any) => {
+        async (args, _extra) => {
+          const params = listProjectsInputSchema.parse(args);
           let projects = await this.getProjects();
           if (!projects || projects.length === 0) {
             return {
               content: [{ type: "text", text: "No projects found." }],
             };
           }
-          if (args.pageSize || args.page) {
-            const pageSize = args.pageSize || 10;
-            const page = args.page || 1;
-            projects = projects.slice((page - 1) * pageSize, page * pageSize);
+          if (params.perPage || params.page) {
+            const perPage = params.perPage;
+            const page = params.page;
+            projects = projects.slice((page - 1) * perPage, page * perPage);
           }
 
           const result = {
@@ -398,6 +421,19 @@ export class BugsnagClient implements Client {
         },
       );
     }
+
+    const getErrorInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      errorId: toolInputParameters.errorId.describe(
+        "Unique identifier of the error to retrieve",
+      ),
+      filters: toolInputParameters.filters.describe(
+        "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
+          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+      ),
+    });
 
     register(
       {
@@ -412,43 +448,7 @@ export class BugsnagClient implements Client {
           "Get error details for debugging and root cause analysis",
           "Retrieve error metadata for incident reports and documentation",
         ],
-        parameters: [
-          {
-            name: "errorId",
-            type: z.string(),
-            required: true,
-            description: "Unique identifier of the error to retrieve",
-            examples: ["6863e2af8c857c0a5023b411"],
-          },
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  required: true,
-                  description: "ID of the project containing the error",
-                },
-              ]),
-          {
-            name: "filters",
-            type: FilterObjectSchema,
-            required: false,
-            description:
-              "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields",
-            examples: [
-              '{"error.status": [{"type": "eq", "value": "open"}]}',
-              '{"event.since": [{"type": "eq", "value": "7d"}]} // Relative time: last 7 days',
-              '{"event.since": [{"type": "eq", "value": "2018-05-20T00:00:00Z"}]} // ISO 8601 UTC format',
-              '{"user.email": [{"type": "eq", "value": "user@example.com"}]}',
-            ],
-            constraints: [
-              "Time filters support ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h)",
-              "ISO 8601 times must be in UTC and use extended format",
-              "Relative time periods: h (hours), d (days)",
-            ],
-          },
-        ],
+        inputSchema: getErrorInputSchema,
         outputDescription:
           "JSON object containing: " +
           " - error_details: Aggregated data about the error, including first and last seen occurrence" +
@@ -473,22 +473,19 @@ export class BugsnagClient implements Client {
         ],
       },
       async (args, _extra) => {
-        const project = await this.getInputProject(args.projectId);
-        if (!args.errorId)
-          throw new ToolError(
-            "Both projectId and errorId arguments are required",
-          );
+        const params = getErrorInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
         const errorDetails = (
-          await this.errorsApi.viewErrorOnProject(project.id, args.errorId)
+          await this.errorsApi.viewErrorOnProject(project.id, params.errorId)
         ).body;
         if (!errorDetails) {
           throw new ToolError(
-            `Error with ID ${args.errorId} not found in project ${project.id}.`,
+            `Error with ID ${params.errorId} not found in project ${project.id}.`,
           );
         }
 
         const filters: FilterObject = {
-          error: [{ type: "eq", value: args.errorId }],
+          error: [{ type: "eq", value: params.errorId }],
           ...args.filters,
         };
 
@@ -538,6 +535,14 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const getEventDetailsInputSchema = z.object({
+      link: z
+        .string()
+        .describe(
+          "Full URL to the event details page in the BugSnag dashboard (web interface), containing project slug and event_id parameter.",
+        ),
+    });
+
     register(
       {
         title: "Get Event Details",
@@ -550,21 +555,7 @@ export class BugsnagClient implements Client {
           "Extract event information from shared links or browser URLs",
           "Quick lookup of event details without needing separate project and event IDs",
         ],
-        parameters: [
-          {
-            name: "link",
-            type: z.string(),
-            description:
-              "Full URL to the event details page in the BugSnag dashboard (web interface)",
-            required: true,
-            examples: [
-              "https://app.bugsnag.com/my-org/my-project/errors/6863e2af8c857c0a5023b411?event_id=6863e2af012caf1d5c320000",
-            ],
-            constraints: [
-              "Must be a valid dashboard URL containing project slug and event_id parameter",
-            ],
-          },
-        ],
+        inputSchema: getEventDetailsInputSchema,
         examples: [
           {
             description: "Get event details from a dashboard URL",
@@ -580,9 +571,9 @@ export class BugsnagClient implements Client {
           "This is useful when users share BugSnag dashboard URLs and you need to extract the event data",
         ],
       },
-      async (args: any, _extra: any) => {
-        if (!args.link) throw new ToolError("link argument is required");
-        const url = new URL(args.link);
+      async (args, _extra) => {
+        const params = getEventDetailsInputSchema.parse(args);
+        const url = new URL(params.link);
         const eventId = url.searchParams.get("event_id");
         const projectSlug = url.pathname.split("/")[2];
         if (!projectSlug || !eventId)
@@ -604,6 +595,20 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const listProjectErrorsInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      filters: toolInputParameters.filters.describe(
+        "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
+          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+      ),
+      sort: toolInputParameters.sort,
+      direction: toolInputParameters.direction,
+      perPage: toolInputParameters.perPage,
+      nextUrl: toolInputParameters.nextUrl,
+    });
+
     register(
       {
         title: "List Project Errors",
@@ -617,75 +622,7 @@ export class BugsnagClient implements Client {
           "Monitor error trends over time using date range filters",
           "Find errors affecting specific users or environments using metadata filters",
         ],
-        parameters: [
-          {
-            name: "filters",
-            type: FilterObjectSchema.default({
-              "event.since": [{ type: "eq", value: "30d" }],
-              "error.status": [{ type: "eq", value: "open" }],
-            }),
-            description:
-              "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields",
-            required: false,
-            examples: [
-              '{"error.status": [{"type": "eq", "value": "open"}]}',
-              '{"event.since": [{"type": "eq", "value": "7d"}]} // Relative time: last 7 days',
-              '{"event.since": [{"type": "eq", "value": "2018-05-20T00:00:00Z"}]} // ISO 8601 UTC format',
-              '{"user.email": [{"type": "eq", "value": "user@example.com"}]}',
-            ],
-            constraints: [
-              "Time filters support ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h)",
-              "ISO 8601 times must be in UTC and use extended format",
-              "Relative time periods: h (hours), d (days)",
-            ],
-          },
-          {
-            name: "sort",
-            type: z
-              .enum(["first_seen", "last_seen", "events", "users", "unsorted"])
-              .default("last_seen"),
-            description: "Field to sort the errors by",
-            required: false,
-            examples: ["last_seen"],
-          },
-          {
-            name: "direction",
-            type: z.enum(["asc", "desc"]).default("desc"),
-            description: "Sort direction for ordering results",
-            required: false,
-            examples: ["desc"],
-          },
-          {
-            name: "perPage",
-            type: z.number().min(1).max(100).default(30),
-            description: "How many results to return per page.",
-            required: false,
-            examples: ["30", "50", "100"],
-          },
-          {
-            name: "nextUrl",
-            type: z.string(),
-            description:
-              "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available.",
-            required: false,
-            examples: [
-              "https://api.bugsnag.com/projects/515fb9337c1074f6fd000003/errors?offset=30&per_page=30&sort=last_seen",
-            ],
-            constraints: [
-              "Only values provided in the output from this tool can be used. Do not attempt to construct it manually.",
-            ],
-          },
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project to query for errors",
-                  required: true,
-                },
-              ]),
-        ],
+        inputSchema: listProjectErrorsInputSchema,
         examples: [
           {
             description:
@@ -737,17 +674,18 @@ export class BugsnagClient implements Client {
           "Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size.",
         ],
       },
-      async (args: any, _extra: any) => {
-        const project = await this.getInputProject(args.projectId);
+      async (args, _extra) => {
+        const params = listProjectErrorsInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
 
         // Validate filter keys against cached event fields
-        if (args.filters) {
+        if (params.filters) {
           const eventFields =
-            this.cache.get<EventField[]>(
+            this.cache?.get<EventField[]>(
               cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
             ) || [];
           const validKeys = new Set(eventFields.map((f) => f.displayId));
-          for (const key of Object.keys(args.filters)) {
+          for (const key of Object.keys(params.filters)) {
             if (!validKeys.has(key)) {
               throw new ToolError(`Invalid filter key: ${key}`);
             }
@@ -757,17 +695,17 @@ export class BugsnagClient implements Client {
         const filters: FilterObject = {
           "event.since": [{ type: "eq", value: "30d" }],
           "error.status": [{ type: "eq", value: "open" }],
-          ...args.filters,
+          ...params.filters,
         };
 
         const response = await this.errorsApi.listProjectErrors(
           project.id,
           null,
-          args.sort || "last_seen",
-          args.direction || "desc",
-          args.perPage || 30,
+          params.sort,
+          params.direction,
+          params.perPage,
           filters,
-          args.nextUrl,
+          params.nextUrl,
         );
 
         const result = {
@@ -793,7 +731,7 @@ export class BugsnagClient implements Client {
           "Find the correct field names for filtering by user, environment, or custom metadata",
           "Understand filter options and data types for building complex queries",
         ],
-        parameters: [],
+        inputSchema: z.object({}),
         examples: [
           {
             description: "Get all available filter fields",
@@ -807,8 +745,8 @@ export class BugsnagClient implements Client {
           "Look for display_id field in the response - these are the field names to use in filters",
         ],
       },
-      async (_args: any, _extra: any) => {
-        const projectFields = this.cache.get<EventField[]>(
+      async (_args, _extra) => {
+        const projectFields = this.cache?.get<EventField[]>(
           cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
         );
         if (!projectFields)
@@ -819,6 +757,16 @@ export class BugsnagClient implements Client {
         };
       },
     );
+
+    const updateErrorInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      errorId: toolInputParameters.errorId,
+      operation: z
+        .enum(PERMITTED_UPDATE_OPERATIONS)
+        .describe("The operation to apply to the error"),
+    });
 
     register(
       {
@@ -831,33 +779,9 @@ export class BugsnagClient implements Client {
           "Discard or un-discard an error",
           "Update the severity of an error",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description:
-                    "ID of the project that contains the error to be updated",
-                  required: true,
-                },
-              ]),
-          {
-            name: "errorId",
-            type: z.string(),
-            description: "ID of the error to update",
-            required: true,
-            examples: ["6863e2af8c857c0a5023b411"],
-          },
-          {
-            name: "operation",
-            type: z.enum(PERMITTED_UPDATE_OPERATIONS),
-            description: "The operation to apply to the error",
-            required: true,
-            examples: ["fix", "open", "ignore", "discard", "undiscard"],
-          },
-        ],
+        inputSchema: this.projectApiKey
+          ? updateErrorInputSchema.omit({ projectId: true })
+          : updateErrorInputSchema,
         examples: [
           {
             description: "Mark an error as fixed",
@@ -875,12 +799,12 @@ export class BugsnagClient implements Client {
         readOnly: false,
         idempotent: false,
       },
-      async (args: any, _extra: any) => {
-        const { errorId, operation } = args;
-        const project = await this.getInputProject(args.projectId);
+      async (args, _extra) => {
+        const params = updateErrorInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
 
         let severity: any;
-        if (operation === "override_severity") {
+        if (params.operation === "override_severity") {
           // illicit the severity from the user
           const result = await getInput({
             message:
@@ -905,9 +829,11 @@ export class BugsnagClient implements Client {
 
         const result = await this.errorsApi.updateErrorOnProject(
           project.id,
-          errorId,
+          params.errorId,
           {
-            operation: operation,
+            operation: Object.values(ErrorUpdateRequest.OperationEnum).find(
+              (value) => value === params.operation,
+            ) as ErrorUpdateRequest.OperationEnum,
             severity: severity,
           },
         );
@@ -924,6 +850,21 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const listReleasesInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      releaseStage: toolInputParameters.releaseStage,
+      visibleOnly: z
+        .boolean()
+        .describe(
+          "Whether to only include releases that are marked as visible in the dashboard",
+        )
+        .default(false),
+      perPage: toolInputParameters.perPage,
+      nextUrl: toolInputParameters.nextUrl,
+    });
+
     register(
       {
         title: "List Releases",
@@ -934,51 +875,7 @@ export class BugsnagClient implements Client {
           "View recent releases to correlate with error spikes",
           "Filter releases by stage (e.g. production, staging) for targeted analysis",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project to list releases for",
-                  required: true,
-                },
-              ]),
-          {
-            name: "releaseStage",
-            type: z.string().default("production"),
-            description:
-              "Filter releases by this stage (e.g. production, staging), defaults to 'production'",
-            required: false,
-            examples: ["production", "staging"],
-          },
-          {
-            name: "visibleOnly",
-            type: z.boolean().default(false),
-            description:
-              "Whether to only include releases that are marked as visible in the dashboard, defaults to false",
-            required: false,
-            examples: ["true", "false"],
-          },
-          {
-            name: "perPage",
-            type: z.number().min(1).max(100).default(30),
-            description: "How many results to return per page.",
-            required: false,
-            examples: ["30", "50", "100"],
-          },
-          {
-            name: "nextUrl",
-            type: z.string(),
-            description:
-              "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. If provided, other parameters are ignored.",
-            required: false,
-            examples: [
-              "/projects/515fb9337c1074f6fd000003/releases?offset=30&per_page=30",
-            ],
-          },
-        ],
+        inputSchema: listReleasesInputSchema,
         examples: [
           {
             description: "List production releases for a project",
@@ -1015,14 +912,15 @@ export class BugsnagClient implements Client {
           "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
       },
       async (args, _extra) => {
-        const project = await this.getInputProject(args.projectId);
+        const params = listReleasesInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
         const response = await this.projectApi.listProjectReleaseGroups(
           project.id,
-          args.releaseStage || "production",
+          params.releaseStage,
           false, // Not top-only
-          args.visibleOnly || false,
-          args.perPage || 30,
-          args.nextUrl,
+          params.visibleOnly,
+          params.perPage,
+          params.nextUrl,
         );
 
         let releases: (Release & StabilityData)[] = [];
@@ -1048,6 +946,13 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const getReleaseInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      releaseId: toolInputParameters.releaseId,
+    });
+
     register(
       {
         title: "Get Release",
@@ -1060,25 +965,7 @@ export class BugsnagClient implements Client {
           "Analyze the stability data and targets for a release",
           "See the builds that make up the release",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project containing the release",
-                  required: true,
-                },
-              ]),
-          {
-            name: "releaseId",
-            type: z.string(),
-            description: "ID of the release to retrieve",
-            required: true,
-            examples: ["5f8d0d55c9e77c0017a1b2c3"],
-          },
-        ],
+        inputSchema: getReleaseInputSchema,
         examples: [
           {
             description: "Get details for a specific release",
@@ -1096,19 +983,18 @@ export class BugsnagClient implements Client {
           "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {
-        if (!args.releaseId)
-          throw new ToolError("releaseId argument is required");
-        const project = await this.getInputProject(args.projectId);
+        const params = getReleaseInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
         const releaseResponse = await this.projectApi.getReleaseGroup(
-          args.releaseId,
+          params.releaseId,
         );
         if (!releaseResponse.body)
-          throw new ToolError(`No release for ${args.releaseId} found.`);
+          throw new ToolError(`No release for ${params.releaseId} found.`);
         const release = this.addStabilityData(releaseResponse.body, project);
         let builds: (Build & StabilityData)[] = [];
         if (releaseResponse.body) {
           const buildsResponse = await this.projectApi.listBuildsInRelease(
-            args.releaseId,
+            params.releaseId,
           );
           if (buildsResponse.body) {
             builds = buildsResponse.body.map((b) =>
@@ -1130,6 +1016,13 @@ export class BugsnagClient implements Client {
       },
     );
 
+    const getBuildInputSchema = z.object({
+      projectId: this.projectApiKey
+        ? toolInputParameters.projectId.optional()
+        : toolInputParameters.projectId,
+      buildId: toolInputParameters.buildId,
+    });
+
     register(
       {
         title: "Get Build",
@@ -1141,25 +1034,7 @@ export class BugsnagClient implements Client {
           "Analyze a specific build to correlate with error spikes or deployments",
           "See the stability targets for a project and if the build meets them",
         ],
-        parameters: [
-          ...(this.projectApiKey
-            ? []
-            : [
-                {
-                  name: "projectId",
-                  type: z.string(),
-                  description: "ID of the project containing the build",
-                  required: true,
-                },
-              ]),
-          {
-            name: "buildId",
-            type: z.string(),
-            description: "ID of the build to retrieve",
-            required: true,
-            examples: ["5f8d0d55c9e77c0017a1b2c3"],
-          },
-        ],
+        inputSchema: getBuildInputSchema,
         examples: [
           {
             description: "Get details for a specific build",
@@ -1177,15 +1052,15 @@ export class BugsnagClient implements Client {
           "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
       },
       async (args, _extra) => {
-        if (!args.buildId) throw new ToolError("buildId argument is required");
-        const project = await this.getInputProject(args.projectId);
+        const params = getBuildInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
         const response = await this.projectApi.getProjectReleaseById(
           project.id,
-          args.buildId,
+          params.buildId,
         );
 
         if (!response.body)
-          throw new ToolError(`No build for ${args.buildId} found.`);
+          throw new ToolError(`No build for ${params.buildId} found.`);
         const build = this.addStabilityData(response.body, project);
         return {
           content: [{ type: "text", text: JSON.stringify(build) }],

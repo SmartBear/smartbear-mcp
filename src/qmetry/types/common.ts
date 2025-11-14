@@ -120,6 +120,12 @@ export const CommonFields = {
       "Test Case version number. " +
         "This is the internal numeric identifier for the version.",
     ),
+  tcVersionID: z
+    .number()
+    .describe(
+      "Test Case version number. " +
+        "This is the internal numeric identifier for the version.",
+    ),
   versionOptional: z
     .number()
     .optional()
@@ -161,7 +167,7 @@ export const CommonFields = {
     .optional()
     .describe(
       "Folder path for requirements - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
-        'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+        'Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). ' +
         'Only specify if user wants specific folder like "Automation/Regression".',
     )
     .default(""),
@@ -170,7 +176,16 @@ export const CommonFields = {
     .optional()
     .describe(
       "Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
-        'Leave empty unless you want specific folder. System will automatically use "" (root directory). ' +
+        'Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). ' +
+        'Only specify if user wants specific folder like "Automation/Regression".',
+    )
+    .default(""),
+  tsFolderPath: z
+    .string()
+    .optional()
+    .describe(
+      "Folder path for test suites - SYSTEM AUTOMATICALLY SETS TO ROOT. " +
+        'Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). ' +
         'Only specify if user wants specific folder like "Automation/Regression".',
     )
     .default(""),
@@ -218,6 +233,14 @@ export const CommonFields = {
       "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
         "System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically. " +
+        "Manual viewId only needed if you want to override the automatic resolution.",
+    ),
+  tsViewId: z
+    .number()
+    .describe(
+      "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific viewId. " +
+        "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. " +
         "Manual viewId only needed if you want to override the automatic resolution.",
     ),
   tsrunID: z
@@ -314,6 +337,26 @@ export const CommonFields = {
     ),
 } as const;
 
+export const ProjectListArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  params: z.object({
+    showArchive: z
+      .boolean()
+      .optional()
+      .describe(
+        "Whether to include archived records in the results. " +
+          "When true, returns both active and archived items. " +
+          "When false, returns only active (non-archived) items. ",
+      )
+      .default(false),
+  }),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+});
+
 export const ProjectArgsSchema = z.object({
   projectKey: CommonFields.projectKey,
 });
@@ -346,6 +389,75 @@ export const PlatformArgsSchema = z.object({
     )
     .default('[{"property":"platformID","direction":"DESC"}]'),
   filter: CommonFields.filter,
+});
+
+export const CreateTestCaseStepSchema = z.object({
+  orderId: z.number(),
+  description: z.string(),
+  inputData: z.string().optional(),
+  expectedOutcome: z.string().optional(),
+  UDF: z.record(z.string()).optional(),
+});
+
+export const UpdateTestCaseRemoveStepSchema = z.object({
+  tcID: z.number(),
+  projectID: z.number(),
+  tcStepID: z.number(),
+  tcVersionID: z.number(),
+  tcVersion: z.number(),
+  tcsAttCount: z.number(),
+  orderId: z.number(),
+  description: z.string(),
+  inputData: z.string().optional(),
+  expectedOutcome: z.string().optional(),
+  UDF: z.record(z.string()).optional(),
+  tcsIsShared: z.boolean(),
+  tcsIsParameterized: z.boolean(),
+});
+
+export const CreateTestCaseArgsSchema = z.object({
+  tcFolderID: z.string(),
+  steps: z.array(CreateTestCaseStepSchema).optional(),
+  name: z.string(),
+  priority: z.number().optional(),
+  component: z.array(z.number()).optional(),
+  testcaseOwner: z.number().optional(),
+  testCaseState: z.number().optional(),
+  testCaseType: z.number().optional(),
+  estimatedTime: z.number().optional(),
+  testingType: z.number().optional(),
+  description: z.string().optional(),
+  associateRelCyc: z.boolean().optional(),
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        release: z.number(),
+        cycle: z.array(z.number()),
+        version: z.number().optional(),
+      }),
+    )
+    .optional(),
+});
+export const UpdateTestCaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  tcID: CommonFields.tcID,
+  tcVersionID: CommonFields.tcVersionID,
+  withVersion: z.boolean().optional(),
+  notrunall: z.boolean().optional(),
+  isStepUpdated: z.boolean().optional(),
+  steps: z.array(CreateTestCaseStepSchema).optional(),
+  removeSteps: z.array(UpdateTestCaseRemoveStepSchema).optional(),
+  name: z.string().optional(),
+  priority: z.number().optional(),
+  component: z.array(z.number()).optional(),
+  owner: z.number().optional(),
+  testCaseState: z.number().optional(),
+  testCaseType: z.number().optional(),
+  executionMinutes: z.number().optional(),
+  testingType: z.number().optional(),
+  description: z.string().optional(),
+  updateOnlyMetadata: z.boolean().optional(),
 });
 
 export const TestCaseListArgsSchema = z.object({
@@ -468,6 +580,16 @@ export const RequirementsLinkedToTestCaseArgsSchema = z.object({
   filter: CommonFields.filter,
 });
 
+export const LinkRequirementToTestCaseArgsSchema = z.object({
+  tcID: z.string().describe("EntityKey of Testcase (e.g. 'COD-TC-29')"),
+  tcVersionId: CommonFields.tcVersionID,
+  rqVersionIds: z
+    .string()
+    .describe(
+      "Comma-separated values of versionId of the Requirement (e.g. '236124,236125')",
+    ),
+});
+
 export const TestCasesLinkedToRequirementArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
@@ -530,6 +652,59 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
     .default(true),
 });
 
+export const CreateTestSuiteArgsSchema = z.object({
+  parentFolderId: z.string(),
+  name: z.string(),
+  isAutomatedFlag: z.boolean().optional(),
+  description: z.string().optional(),
+  testsuiteOwner: z.number().optional(),
+  testSuiteState: z.number().optional(),
+  associateRelCyc: z.boolean().optional(),
+  releaseCycleMapping: z
+    .array(
+      z.object({
+        buildID: z.number(),
+        releaseId: z.number(),
+      }),
+    )
+    .optional(),
+});
+
+export const UpdateTestSuiteArgsSchema = z.object({
+  id: z.number().describe("Id of Test Suite to be updated (required)"),
+  TsFolderID: z
+    .number()
+    .describe("Folder ID where Test Suite resides (required)"),
+  entityKey: z
+    .string()
+    .describe("Entity Key of Test Suite to be updated (required)"),
+  name: z.string().optional().describe("Name of the Test Suite"),
+  description: z.string().optional().describe("Description of the Test Suite"),
+  testsuiteOwner: z.number().optional().describe("Owner ID of the Test Suite"),
+  testSuiteState: z.number().optional().describe("State of the Test Suite"),
+});
+
+export const TestSuiteListArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  viewId: CommonFields.tsViewId,
+  folderPath: CommonFields.tsFolderPath,
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  scope: CommonFields.scope,
+  getSubEntities: CommonFields.getSubEntities,
+  filter: CommonFields.filter,
+  udfFilter: CommonFields.udfFilter,
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      "Sort Records - refer json schema, Possible property - entityKey, name, testsuiteStatus, linkedPlatformCount, linkedTcCount, createdDate, createdByAlias, updatedDate, updatedByAlias, attachmentCount, owner, remExecutionTime, totalExecutionTime",
+    )
+    .default('[{"property":"name","direction":"ASC"}]'),
+});
+
 export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
@@ -541,6 +716,36 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
   getColumns: CommonFields.getColumns,
   filter: CommonFields.filter,
 });
+
+export const LinkTestCasesToTestSuiteArgsSchema = z
+  .object({
+    tsID: z.number().describe("Id of Test Suite (required)"),
+    tcvdIDs: z
+      .array(z.number())
+      .describe(
+        "Array of Test Case Version IDs (required if fromReqs is false)",
+      ),
+    fromReqs: z
+      .boolean()
+      .optional()
+      .describe("Link TestCases from Requirements (optional, default false)"),
+  })
+  .strip();
+
+export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
+  .object({
+    tsID: z.number().describe("Id of Test Suite (required)"),
+    tcvdIDs: z
+      .array(z.number())
+      .describe(
+        "Array of Test Case Version IDs (required if fromReqs is true)",
+      ),
+    fromReqs: z
+      .boolean()
+      .optional()
+      .describe("Link TestCases from Requirements (optional, default true)"),
+  })
+  .strip();
 
 export const IssuesLinkedToTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
@@ -598,4 +803,129 @@ export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
   page: CommonFields.page,
   limit: CommonFields.limit,
   filter: CommonFields.filter,
+});
+
+export const CreateIssueArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  issueType: z.number().describe("Issue type ID (e.g. Bug, Enhancement, etc.)"),
+  issuePriority: z
+    .number()
+    .describe("Issue priority ID (e.g. High, Medium, Low, etc.)"),
+  summary: z.string().describe("Summary or title of the defect/issue"),
+  description: z
+    .string()
+    .optional()
+    .describe("Detailed description of the defect/issue"),
+  sync_with: z
+    .string()
+    .optional()
+    .describe("External system to sync with (e.g. JIRA, QMetry, etc.)"),
+  issueOwner: z.number().optional().describe("Owner/user ID for the issue"),
+  component: z
+    .array(z.number())
+    .optional()
+    .describe("Component IDs associated with the issue"),
+  affectedRelease: z
+    .array(z.number())
+    .optional()
+    .describe("Release IDs affected by this issue"),
+  affectedCycles: z
+    .array(z.number())
+    .optional()
+    .describe("Cycle IDs affected by this issue"),
+  tcRunID: z
+    .number()
+    .optional()
+    .describe(
+      "Test Case Run ID to link this defect/issue to a test execution (optional)",
+    ),
+});
+
+export const UpdateIssueArgsSchema = z.object({
+  DefectId: z.number().describe("ID of the defect/issue to be updated"),
+  entityKey: z
+    .string()
+    .optional()
+    .describe("Entity Key of the defect/issue to be updated"),
+  issueType: z
+    .number()
+    .optional()
+    .describe("Issue type ID (e.g. Bug, Enhancement, etc.)"),
+  issuePriority: z
+    .number()
+    .optional()
+    .describe("Issue priority ID (e.g. High, Medium, Low, etc.)"),
+  summary: z
+    .string()
+    .optional()
+    .describe("Summary or title of the defect/issue"),
+  description: z
+    .string()
+    .optional()
+    .describe("Detailed description of the defect/issue"),
+  issueOwner: z.number().optional().describe("Owner/user ID for the issue"),
+  affectedRelease: z
+    .number()
+    .optional()
+    .describe("Release IDs affected by this issue"),
+  affectedCycles: z
+    .number()
+    .optional()
+    .describe("Cycle IDs affected by this issue"),
+});
+
+export const IssuesListArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  viewId: z
+    .number()
+    .describe(
+      "ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific viewId. " +
+        "System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically. " +
+        "Manual viewId only needed if you want to override the automatic resolution.",
+    ),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  filter: CommonFields.filter,
+  isJiraIntegrated: z
+    .boolean()
+    .optional()
+    .describe("Send true if current project is Integrated with Jira")
+    .default(false),
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      "Sort Records - refer json schema, Possible property - entityKey, name, typeAlias, stateAlias, createdDate, createdByAlias, updatedDate, updatedByAlias, priorityAlias, createdSystem, linkedTcrCount, linkedRqCount, dfOwner, attachmentCount, environmentText",
+    )
+    .default('[{"property":"name","direction":"ASC"}]'),
+});
+
+// Export for Link Issues to Testcase Run tool
+export const LinkIssuesToTestcaseRunArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  issueIds: z
+    .array(z.union([z.string(), z.number()]))
+    .describe("ID of issues to be linked to Testcase Run"),
+  tcrId: z.number().describe("ID of Testcase Run to link issues with"),
+});
+
+// Export for Link Platforms to Test Suite tool
+export const LinkPlatformsToTestSuiteArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  qmTsId: z
+    .number()
+    .describe(
+      "Id of Test Suite (required). To get the qmTsId - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id",
+    ),
+  qmPlatformId: z
+    .string()
+    .describe(
+      "Comma-separated value of PlatformId (required). To get the qmPlatformId - Call API 'Platform/List' From the response, get value of following attribute -> data[<index>].platformID",
+    ),
 });

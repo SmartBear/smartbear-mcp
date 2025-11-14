@@ -10,22 +10,28 @@ import {
   ZodAny,
   ZodArray,
   ZodBoolean,
+  ZodDefault,
   ZodEnum,
+  ZodIntersection,
   ZodLiteral,
   ZodNumber,
   ZodObject,
   ZodOptional,
   type ZodRawShape,
+  ZodRecord,
   ZodString,
   type ZodType,
   type ZodTypeAny,
   ZodUnion,
 } from "zod";
 import Bugsnag from "../common/bugsnag.js";
+import { CacheService } from "./cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
 import { type Client, ToolError, type ToolParams } from "./types.js";
 
 export class SmartBearMcpServer extends McpServer {
+  private cache: CacheService;
+
   constructor() {
     super(
       {
@@ -43,12 +49,17 @@ export class SmartBearMcpServer extends McpServer {
         },
       },
     );
+    this.cache = new CacheService();
+  }
+
+  getCache(): CacheService {
+    return this.cache;
   }
 
   addClient(client: Client): void {
     client.registerTools(
       (params, cb) => {
-        const toolName = `${client.prefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
+        const toolName = `${client.toolPrefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
         const toolTitle = `${client.name}: ${params.title}`;
         return super.registerTool(
           toolName,
@@ -97,7 +108,7 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       client.registerResources((name, path, cb) => {
-        const url = `${client.prefix}://${name}/${path}`;
+        const url = `${client.toolPrefix}://${name}/${path}`;
         return super.registerResource(
           name,
           new ResourceTemplate(url, {
@@ -180,8 +191,15 @@ export class SmartBearMcpServer extends McpServer {
   private schemaToRawShape(
     schema: ZodTypeAny | undefined,
   ): ZodRawShape | undefined {
-    if (schema && schema instanceof ZodObject) {
-      return schema.shape;
+    if (schema) {
+      if (schema instanceof ZodObject) {
+        return schema.shape;
+      }
+      if (schema instanceof ZodIntersection) {
+        const leftShape = this.schemaToRawShape(schema._def.left);
+        const rightShape = this.schemaToRawShape(schema._def.right);
+        return { ...leftShape, ...rightShape };
+      }
     }
     return undefined;
   }
@@ -254,19 +272,58 @@ export class SmartBearMcpServer extends McpServer {
     return description.trim();
   }
 
-  private formatParameterDescription(key: string, field: any) {
+  private formatParameterDescription(
+    key: string,
+    field: ZodType,
+    description: string | null = null,
+    isOptional = false,
+    defaultValue: string | null = null,
+  ): string {
+    description = description ?? (field.description || null);
+    if (field instanceof ZodOptional) {
+      field = (field as ZodOptional<ZodTypeAny>).unwrap();
+      return this.formatParameterDescription(
+        key,
+        field,
+        description,
+        true,
+        defaultValue,
+      );
+    }
+    if (field instanceof ZodDefault) {
+      defaultValue = JSON.stringify(
+        (field as ZodDefault<ZodTypeAny>)._def.defaultValue(),
+      );
+      field = (field as ZodDefault<ZodTypeAny>).removeDefault();
+      return this.formatParameterDescription(
+        key,
+        field,
+        description,
+        true,
+        defaultValue,
+      );
+    }
     return (
       `- ${key} (${this.getReadableTypeName(field)})` +
-      `${field.isOptional() ? "" : " *required*"}` +
-      `${field.description ? `: ${field.description}` : ""}` +
-      `${key === "examples" && field instanceof ZodEnum ? ` (e.g. ${Object.keys(field.enum).join(", ")})` : ""}` +
-      `${key === "constraints" && field instanceof ZodEnum ? `\n  - ${Object.keys(field.enum).join("\n  - ")}` : ""}`
+      `${isOptional ? "" : " *required*"}` +
+      `${description ? `: ${description}` : ""}` +
+      `${defaultValue ? ` (default: ${defaultValue})` : ""}`
     );
   }
 
   private getReadableTypeName(zodType: ZodType): string {
     if (zodType instanceof ZodOptional) {
-      zodType = zodType._def.innerType;
+      return this.getReadableTypeName(
+        (zodType as ZodOptional<ZodTypeAny>).unwrap(),
+      );
+    }
+    if (zodType instanceof ZodDefault) {
+      return this.getReadableTypeName(
+        (zodType as ZodDefault<ZodTypeAny>).removeDefault(),
+      );
+    }
+    if (zodType instanceof ZodRecord) {
+      return `record<${this.getReadableTypeName((zodType as ZodRecord).keySchema)}, ${this.getReadableTypeName((zodType as ZodRecord).valueSchema)}>`;
     }
     if (zodType instanceof ZodString) return "string";
     if (zodType instanceof ZodNumber) return "number";

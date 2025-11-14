@@ -1,21 +1,32 @@
-# This workflow tests that Docker builds are successful
-# It validates the Dockerfile and ensures the container can be built
+# This workflow tests that Docker builds are successful on native architecture runners
+# It validates the Dockerfile and ensures the container can be built for multiple platforms
 
 name: Docker Build Test
 
 on:
   push:
-    branches: [ main, next ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, next ]
+    branches: [ main ]
   # Allow manual triggering
   workflow_dispatch:
 
 permissions: read-all
 
 jobs:
+  # Build and test on native runners for each architecture
   docker-build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout code
@@ -24,14 +35,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
 
-      - name: Build Docker image
+      - name: Build Docker image to builder stage for ${{ matrix.arch }}
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: .
+          target: builder
           push: false
-          tags: mcp/smartbear:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          platforms: ${{ matrix.platform }}
+          tags: mcp/smartbear:builder-${{ matrix.arch }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          load: true
+
+      - name: Run container tests (vitest) on ${{ matrix.arch }}
+        run: |
+          docker run --rm mcp/smartbear:builder-${{ matrix.arch }} npm run test:run
 
   dockerfile-lint:
     runs-on: ubuntu-latest

@@ -1,14 +1,14 @@
 FROM node:22-alpine AS builder
 
-# Must be entire project because `prepare` script is run during `npm install` and requires all files.
-COPY src/ /app/src/
-COPY package.json package-lock.json tsconfig.json /app/
-
+# Must be entire project because `prepare` script is run during dependency installation and requires all files.
 WORKDIR /app
 
-RUN --mount=type=cache,target=/root/.npm npm install
+COPY src/ ./src/
+COPY package.json package-lock.json tsconfig.json ./
 
-RUN --mount=type=cache,target=/root/.npm-production npm ci --ignore-scripts --omit-dev
+RUN --mount=type=cache,target=/root/.npm npm ci
+
+RUN npm run build
 
 FROM node:22-alpine AS release
 
@@ -20,6 +20,6 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 
-RUN npm ci --ignore-scripts --omit-dev
+RUN --mount=type=cache,target=/root/.npm-production npm ci --ignore-scripts --omit-dev
 
 ENTRYPOINT ["node", "dist/index.js"]
