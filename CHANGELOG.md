@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- [API Hub / Swagger] Rebranding from API Hub to Swagger 
+- [API Hub / Swagger] Rebranding from API Hub to Swagger
 
 ## [0.10.0] - 2025-11-11
 
