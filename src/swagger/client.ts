@@ -6,6 +6,8 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types.js";
+// Apply backward compatibility for API_HUB_API_KEY
+import "./config-utils.js";
 import {
   type ApiDefinitionParams,
   type ApiSearchParams,
