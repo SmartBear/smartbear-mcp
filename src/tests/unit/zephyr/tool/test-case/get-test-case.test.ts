@@ -108,4 +108,8 @@ describe("GetTestCase", () => {
     const result = await instance.handle({ testCaseKey: "SA-T10" }, {});
     expect(result.structuredContent).toBeUndefined();
   });
+
+  it("should throw validation error if testCaseKey is missing", async () => {
+    await expect(instance.handle({}, {})).rejects.toThrow();
+  });
 });
