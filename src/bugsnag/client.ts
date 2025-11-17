@@ -268,13 +268,10 @@ export class BugsnagClient implements Client {
   }
 
   async getProjectEventFilters(project: Project): Promise<EventField[]> {
-    let projectFiltersCache = this.cache?.get<Record<string, EventField[]>>(
-      cacheKeys.PROJECT_EVENT_FILTERS,
-    );
-    if (!projectFiltersCache) {
-      projectFiltersCache = {};
-      this.cache?.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFiltersCache);
-    }
+    const projectFiltersCache =
+      this.cache?.get<Record<string, EventField[]>>(
+        cacheKeys.PROJECT_EVENT_FILTERS,
+      ) || {};
     if (!projectFiltersCache[project.id]) {
       let filtersResponse = (
         await this.projectApi.listProjectEventFields(project.id)
@@ -289,6 +286,7 @@ export class BugsnagClient implements Client {
           field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
       );
       projectFiltersCache[project.id] = filtersResponse;
+      this.cache?.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFiltersCache);
     }
     return projectFiltersCache[project.id];
   }
