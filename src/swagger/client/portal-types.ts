@@ -255,6 +255,13 @@ export const CreateProductArgsSchema = PortalArgsSchema.extend({
     .describe(
       "Product creation type - 'new' to create from scratch or 'copy' to duplicate an existing product",
     ),
+  productId: z
+    .string()
+    .uuid()
+    .optional()
+    .describe(
+      "Source product UUID to copy from - required when type is 'copy', specifies which existing product to duplicate. Omit when type is 'new'",
+    ),
   name: z
     .string()
     .describe(
