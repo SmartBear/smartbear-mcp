@@ -20,4 +20,3 @@ export function applySwaggerApiKeyFallback(): void {
 
 // Apply the fallback immediately when this module is imported
 applySwaggerApiKeyFallback();
-
