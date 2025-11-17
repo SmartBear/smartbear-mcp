@@ -292,6 +292,16 @@ export class BugsnagClient implements Client {
       project =
         projects.find((p: Project) => p.apiKey === this.projectApiKey) ?? null;
       this.cache?.set(cacheKeys.CURRENT_PROJECT, project);
+      if (project) {
+        this.cache?.set(
+          cacheKeys.CURRENT_PROJECT_EVENT_FILTERS,
+          await this.getProjectEventFilters(project),
+        );
+        this.cache?.set(
+          cacheKeys.CURRENT_PROJECT_TRACE_FIELDS,
+          (await this.projectApi.listProjectTraceFields(project.id)).body || [],
+        );
+      }
     }
     return project;
   }
