@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [API Hub](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [Swagger](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
 
 ## What is MCP?
 
@@ -30,8 +30,10 @@ See individual guides for suggested prompts and supported tools and resources:
 
 - [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - Comprehensive error monitoring and debugging capabilities
 - [Test Hub](https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration) - Test management and execution capabilities
-- [API Hub](https://developer.smartbear.com/smartbear-mcp/docs/api-hub-integration) - Portal management capabilities
-- [PactFlow](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
+- **Swagger**
+  - [Portal](https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration) - Portal and product management capabilities
+  - [Studio](https://developer.smartbear.com/smartbear-mcp/docs/swagger-studio-integration) - API and Domain management capabilities
+  - [Contract Testing (PactFlow)](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
 - [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - Review and Remote System Configuration management capabilities
@@ -40,7 +42,7 @@ See individual guides for suggested prompts and supported tools and resources:
 ## Prerequisites
 
 - Node.js 20+ and npm
-- Access to SmartBear products (BugSnag, Reflect, API Hub, QMetry, or Zephyr)
+- Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, or Zephyr)
 - Valid API tokens for the products you want to integrate
 
 ## Installation
@@ -72,7 +74,7 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
-        "API_HUB_API_KEY": "${input:api_hub_api_key}",
+        "SWAGGER_API_KEY": "${input:swagger_api_key}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
         "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
@@ -107,9 +109,9 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
          "password": true
       },
       {
-         "id": "api_hub_api_key",
+         "id": "swagger_api_key",
          "type": "promptString",
-         "description": "API Hub API Key - leave blank to disable API Hub tools",
+         "description": "Swagger API Key - leave blank to disable Swagger tools",
          "password": true
       },
       {
@@ -200,7 +202,7 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "BUGSNAG_AUTH_TOKEN": "your_personal_auth_token",
         "BUGSNAG_PROJECT_API_KEY": "your_project_api_key",
         "REFLECT_API_TOKEN": "your_reflect_token",
-        "API_HUB_API_KEY": "your_api_hub_key",
+        "SWAGGER_API_KEY": "your_swagger_key",
         "PACT_BROKER_BASE_URL": "your_pactflow_or_pactbroker_base_url",
         "PACT_BROKER_TOKEN": "your_pactflow_token",
         "PACT_BROKER_USERNAME": "your_pact_broker_username",
