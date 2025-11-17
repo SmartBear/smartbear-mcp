@@ -425,7 +425,7 @@ export type SuccessResponse = {
   success: boolean;
 };
 
-// Common API Hub response entities
+// Common Swagger response entities
 export interface Portal {
   id: string;
   name: string;
