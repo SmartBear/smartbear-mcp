@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool for retrieving a Test Case [#215](https://github.com/SmartBear/smartbear-mcp/pull/215)
 
 ### Changed
-- [API Hub / Swagger] Rebranding from API Hub to Swagger
+- [API Hub / Swagger] Rebranding from API Hub to Swagger [#233](https://github.com/SmartBear/smartbear-mcp/pull/233). **Note:** The environment variable `API_HUB_API_KEY` has been replaced with `SWAGGER_API_KEY`. The old variable name will still be supported for some time for backward compatibility.
 
 ## [0.10.0] - 2025-11-11
 
