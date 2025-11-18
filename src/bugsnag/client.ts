@@ -1275,9 +1275,6 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = getSpanGroupInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-        if (!params.spanGroupId) {
-          throw new ToolError("spanGroupId is required");
-        }
 
         const spanGroupResults = await this.projectApi.getProjectSpanGroup(
           project.id,
@@ -1391,9 +1388,6 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = listSpansInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-        if (!params.spanGroupId) {
-          throw new ToolError("spanGroupId is required");
-        }
         const result = await this.projectApi.listSpansBySpanGroupId(
           project.id,
           params.spanGroupId,
