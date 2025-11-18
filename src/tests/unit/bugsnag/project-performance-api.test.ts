@@ -24,53 +24,6 @@ describe("ProjectAPI Performance Methods", () => {
     global.fetch = mockFetch;
   });
 
-  describe("getProjectPerformanceScoreOverview", () => {
-    it("should call the correct endpoint without releaseStageName", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        headers: new Headers(),
-        json: async () => ({
-          performanceScore: 0.95,
-          spanCount: 1000,
-          timeline: [],
-        }),
-      });
-
-      const result =
-        await projectApi.getProjectPerformanceScoreOverview("project-123");
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://api.bugsnag.com/projects/project-123/performance_overview",
-        expect.objectContaining({
-          method: "GET",
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-          }),
-        }),
-      );
-      expect(result.body?.performanceScore).toBe(0.95);
-      expect(result.body?.spanCount).toBe(1000);
-    });
-
-    it("should include releaseStageName parameter when provided", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        headers: new Headers(),
-        json: async () => ({}),
-      });
-
-      await projectApi.getProjectPerformanceScoreOverview(
-        "project-123",
-        "production",
-      );
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("release_stage_name=production"),
-        expect.any(Object),
-      );
-    });
-  });
-
   describe("listProjectSpanGroups", () => {
     it("should call the correct endpoint with pagination", async () => {
       mockFetch.mockResolvedValue({

@@ -4,7 +4,6 @@ import type {
   PerformanceFilter,
   PerformanceTarget,
   ProjectNetworkGroupingRuleset,
-  ProjectPerformanceScoreOverview,
   Span,
   SpanGroup,
   SpanGroupDescription,
@@ -212,26 +211,6 @@ export class ProjectAPI extends BaseAPI {
   // ============================================================================
   // Performance API Methods
   // ============================================================================
-
-  /**
-   * Retrieve the performance score for a specific project.
-   * GET /projects/{project_id}/performance_overview
-   * @param projectId The ID of the project to retrieve the performance score for.
-   * @param releaseStageName The name of the release stage to filter the performance score.
-   * @returns A promise that resolves to the performance score overview.
-   */
-  async getProjectPerformanceScoreOverview(
-    projectId: string,
-    releaseStageName?: string,
-  ): Promise<ApiResponse<ProjectPerformanceScoreOverview>> {
-    const localVarFetchArgs = ProjectsApiFetchParamCreator(
-      this.configuration,
-    ).getProjectPerformanceScoreOverview(projectId, releaseStageName);
-    return await this.requestObject<ProjectPerformanceScoreOverview>(
-      localVarFetchArgs.url,
-      localVarFetchArgs.options,
-    );
-  }
 
   /**
    * List span groups for a project with optional filtering and pagination.

@@ -33,7 +33,6 @@ const mockProjectAPI = {
   listBuildsInRelease: vi.fn(),
   getProjectNetworkGroupingRuleset: vi.fn(),
   getProjectPageLoadSpanGroupById: vi.fn(),
-  getProjectPerformanceScoreOverview: vi.fn(),
   getProjectSpanGroup: vi.fn(),
   getProjectSpanGroupDistribution: vi.fn(),
   getProjectSpanGroupTimeline: vi.fn(),

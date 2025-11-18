@@ -8173,67 +8173,6 @@ export const ProjectsApiFetchParamCreator = (
     };
   },
   /**
-   * Retrieve the performance score for a specific project.
-   * @summary Get Performance Score Overview for Project
-   * @param {string} projectId The ID of the project to retrieve the performance score for.
-   * @param {string} [releaseStageName] The name of the release stage to filter the performance score.
-   * @param {*} [options] Override http request option.
-   * @throws {RequiredError}
-   */
-  getProjectPerformanceScoreOverview(
-    projectId: string,
-    releaseStageName?: string,
-    options: any = {},
-  ): FetchArgs {
-    // verify required parameter 'projectId' is not null or undefined
-    if (projectId === null || projectId === undefined) {
-      throw new RequiredError(
-        "projectId",
-        "Required parameter projectId was null or undefined when calling getProjectPerformanceScoreOverview.",
-      );
-    }
-    const localVarPath = `/projects/{project_id}/performance_overview`.replace(
-      `{${"project_id"}}`,
-      encodeURIComponent(String(projectId)),
-    );
-    const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
-    const localVarHeaderParameter = {} as any;
-    const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    if (releaseStageName !== undefined) {
-      localVarQueryParameter["release_stage_name"] = releaseStageName;
-    }
-
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
-    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-    localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
-
-    return {
-      url: url.format(localVarUrlObj),
-      options: localVarRequestOptions,
-    };
-  },
-  /**
    *
    * @summary View a Release
    * @param {string} projectId ID of the Project
