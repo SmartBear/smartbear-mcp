@@ -6,7 +6,7 @@ The SmartBear MCP Server provides access to multiple capabilities across our Swa
 
 -   [Swagger Portal](https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration) - provides portal and product management capabilities
 -   [Swagger Studio](https://developer.smartbear.com/smartbear-mcp/docs/swagger-studio-integration) - provides API and Domain management capabilities
--   [Swagger - Contract Testing (PactFlow)](https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow) - provides contract testing capabilities
+-   [Swagger Contract Testing (PactFlow)](https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow) - provides contract testing capabilities
 -   [Test Hub](https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration) - provides test management and execution capabilities
 -   [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - provides error monitoring and debugging capabilities
 -   [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - provides QMetry Test Management capabilities
