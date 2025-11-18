@@ -1,15 +1,14 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape, z } from "zod";
+import type { ZodRawShape } from "zod";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
-  GetTestExecutionsResponseSchema,
-  TestExecutionsQueryValuesSchema,
-} from "../../common/types.js";
+  listTestExecutionsNextgenResponse,
+  listTestExecutionsQueryParams,
+} from "../../common/rest-api-schemas.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
 
-export const GetTestExecutionsInputSchema = TestExecutionsQueryValuesSchema;
-type GetTestExecutionsInput = z.infer<typeof GetTestExecutionsInputSchema>;
+export const GetTestExecutionsInputSchema = listTestExecutionsQueryParams;
 
 export class GetTestExecutions implements ZephyrTool {
   private readonly apiClient: ApiClient;
@@ -24,7 +23,7 @@ export class GetTestExecutions implements ZephyrTool {
     readOnly: true,
     idempotent: true,
     inputSchema: GetTestExecutionsInputSchema,
-    outputSchema: GetTestExecutionsResponseSchema,
+    outputSchema: listTestExecutionsNextgenResponse,
     examples: [
       {
         description: "Get the first 10 test executions",
@@ -44,7 +43,7 @@ export class GetTestExecutions implements ZephyrTool {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args: GetTestExecutionsInput) => {
+  handle: ToolCallback<ZodRawShape> = async (args) => {
     const response = await this.apiClient.get("/testexecutions/nextgen", args);
     return {
       structuredContent: response,
