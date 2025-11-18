@@ -10,30 +10,20 @@ const filterValueSchema = z.object({
  * Add new entries when common parameters are identified.
  */
 export const toolInputParameters = {
+  empty: z.object({}).describe("No parameters are required for this tool"),
+  projectId: z
+    .string()
+    .optional()
+    .describe(
+      "ID of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.",
+    ),
   errorId: z.string().describe("Unique identifier of the error"),
-  sort: z
-    .enum(["first_seen", "last_seen", "events", "users", "unsorted"])
-    .describe("Field to sort the errors by")
-    .default("last_seen"),
+  releaseId: z.string().describe("ID of the release"),
+  buildId: z.string().describe("ID of the build"),
   direction: z
     .enum(["asc", "desc"])
     .describe("Sort direction for ordering results")
     .default("desc"),
-  page: z.number().describe("Page number to return (starts from 1)").default(1),
-  perPage: z
-    .number()
-    .describe("How many results to return per page.")
-    .min(1)
-    .max(100)
-    .default(30),
-  nextUrl: z
-    .string()
-    .describe(
-      "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. " +
-        "Only values provided in the output from this tool can be used. Do not attempt to construct it manually.",
-    )
-    .optional(),
-  projectId: z.string().describe("ID of the project"),
   filters: z
     .record(z.array(filterValueSchema))
     .describe(
@@ -44,12 +34,28 @@ export const toolInputParameters = {
       "event.since": [{ type: "eq", value: "30d" }],
       "error.status": [{ type: "eq", value: "open" }],
     }),
+  nextUrl: z
+    .string()
+    .describe(
+      "URL for retrieving the next page of results. Use the value in the previous response to get the next page when more results are available. " +
+        "Only values provided in the output from this tool can be used. Do not attempt to construct it manually.",
+    )
+    .optional(),
+  page: z.number().describe("Page number to return (starts from 1)").default(1),
+  perPage: z
+    .number()
+    .describe("How many results to return per page.")
+    .min(1)
+    .max(100)
+    .default(30),
   releaseStage: z
     .string()
     .describe(
       "Filter releases by this stage (e.g. production, staging), defaults to 'production'",
     )
     .default("production"),
-  releaseId: z.string().describe("ID of the release"),
-  buildId: z.string().describe("ID of the build"),
+  sort: z
+    .enum(["first_seen", "last_seen", "events", "users", "unsorted"])
+    .describe("Field to sort the errors by")
+    .default("last_seen"),
 };
