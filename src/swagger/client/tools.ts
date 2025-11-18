@@ -26,9 +26,11 @@ import {
 import {
   ApiDefinitionParamsSchema,
   ApiSearchParamsSchema,
+  CreateApiFromPromptParamsSchema,
   CreateApiFromTemplateParamsSchema,
   CreateApiParamsSchema,
   ScanStandardizationParamsSchema,
+  StandardizeApiParamsSchema,
 } from "./registry-types.js";
 import { OrganizationsQuerySchema } from "./user-management-types.js";
 
@@ -202,5 +204,19 @@ export const TOOLS: SwaggerToolParams[] = [
       "Run a standardization scan against an API definition using the organization's standardization configuration. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of standardization errors and validation issues.",
     inputSchema: ScanStandardizationParamsSchema,
     handler: "scanStandardization",
+  },
+  {
+    title: "Create API from Prompt using SmartBear AI",
+    summary:
+      "Generate and save an API definition based on a prompt using SmartBear AI. This tool automatically applies organization standardization rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Use this tool when creating APIs with organization standardization rules or when generating APIs from natural language descriptions. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
+    inputSchema: CreateApiFromPromptParamsSchema,
+    handler: "createApiFromPrompt",
+  },
+  {
+    title: "Standardize API",
+    summary:
+      "Standardize and fix an API definition using AI. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. If errors are found, they will be sent to SmartBear AI to generate a corrected definition, which is then saved back to the registry. Returns the number of errors found and the fixed definition if successful.",
+    inputSchema: StandardizeApiParamsSchema,
+    handler: "standardizeApi",
   },
 ];
