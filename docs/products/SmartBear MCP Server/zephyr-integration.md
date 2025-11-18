@@ -75,3 +75,10 @@ The following environment variables configure the Zephyr integration:
 - optional starting cursor position for pagination (`startAtId`)
 -  **Returns**: A list of Test Cases along with their properties.
 -  **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
+
+### Get Test Case
+
+- **Purpose**: Retrieve the test case available within your Zephyr projects by key
+- **Parameters:** Test case key
+- **Returns**: A test case along with its properties.
+- **Use case**: Retrieve detailed information about a test case.

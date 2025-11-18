@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool for retrieving statuses [#212](https://github.com/SmartBear/smartbear-mcp/pull/212)
 - [Zephyr] Added a tool for retrieving Test Cases [#230](https://github.com/SmartBear/smartbear-mcp/pull/230)
 - [Zephyr] Added a tool for retrieving Priorities [#227](https://github.com/SmartBear/smartbear-mcp/pull/227)
+- [Zephyr] Added a tool for retrieving a Test Case [#215](https://github.com/SmartBear/smartbear-mcp/pull/215)
 
 ### Changed
 - [API Hub / Swagger] Rebranding from API Hub to Swagger
