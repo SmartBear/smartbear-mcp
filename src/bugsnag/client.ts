@@ -35,21 +35,6 @@ const cacheKeys = {
   CURRENT_PROJECT: "bugsnag_current_project",
 };
 
-// Performance filter schemas that match the API structure
-const PerformanceFilterSchema = z.object({
-  key: z.string(),
-  filterValues: z
-    .array(
-      z.object({
-        value: z.string(),
-        matchType: z.enum(["eq", "ne", "lt", "gt", "empty"]),
-      }),
-    )
-    .optional(),
-});
-
-export const PerformanceFiltersArraySchema = z.array(PerformanceFilterSchema);
-
 // Exclude certain event fields from the project event filters to improve agent usage
 const EXCLUDED_EVENT_FIELDS = new Set([
   "search", // This is searches multiple fields and is more a convenience for humans, we're removing to avoid over-matching
@@ -1101,9 +1086,7 @@ export class BugsnagClient implements Client {
     // ============================================================
 
     const listSpanGroupsInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       sort: z
         .enum([
           "total_spans",
@@ -1221,9 +1204,7 @@ export class BugsnagClient implements Client {
     );
 
     const getSpanGroupInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       spanGroupId: toolInputParameters.spanGroupId,
       filters: toolInputParameters.performanceFilters,
     });
@@ -1302,9 +1283,7 @@ export class BugsnagClient implements Client {
     );
 
     const listSpansInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       spanGroupId: toolInputParameters.spanGroupId,
       sort: z
         .enum([
@@ -1404,9 +1383,7 @@ export class BugsnagClient implements Client {
     );
 
     const getTraceInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
       traceId: z.string().describe("Trace ID"),
       from: z.string().describe("Start time (ISO 8601 format)"),
       to: z.string().describe("End time (ISO 8601 format)"),
@@ -1492,9 +1469,7 @@ export class BugsnagClient implements Client {
     );
 
     const listTraceFieldsInputSchema = z.object({
-      projectId: this.projectApiKey
-        ? toolInputParameters.projectId.optional()
-        : toolInputParameters.projectId,
+      projectId: toolInputParameters.projectId,
     });
 
     // Similar to event filters, consider caching
