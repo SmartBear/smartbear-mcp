@@ -73,5 +73,5 @@ The following environment variables configure the Zephyr integration:
   - optional starting position for pagination (`startAt`)
   - optional max results to return (`maxResults`)
   - optional Project key (`projectKey`)
-- **Returns**: A list of environments along with their properties, including name and description. Results are filtered based on the provided parameters.
+- **Returns**: A list of environments along with their properties, including but not limited to name and description. Results are filtered based on the provided parameters.
 - **Use case**: Getting details about Zephyr Environments based on the provided filters.
