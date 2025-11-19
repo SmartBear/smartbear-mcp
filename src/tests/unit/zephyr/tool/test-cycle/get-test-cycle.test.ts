@@ -102,4 +102,10 @@ describe("GetTestCycle", () => {
     const result = await instance.handle({ testCycleIdOrKey: "1" }, {});
     expect(result.structuredContent).toBeUndefined();
   });
+
+  it("should throw validation error if testCycleKey is missing", async () => {
+    await expect(instance.handle({}, {})).rejects.toThrow();
+  });
 });
+
+
