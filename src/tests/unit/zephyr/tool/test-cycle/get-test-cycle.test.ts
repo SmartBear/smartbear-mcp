@@ -107,5 +107,3 @@ describe("GetTestCycle", () => {
     await expect(instance.handle({}, {})).rejects.toThrow();
   });
 });
-
-
