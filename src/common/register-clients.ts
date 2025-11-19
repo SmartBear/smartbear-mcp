@@ -8,12 +8,12 @@
  * 3. Specify if the client needs the MCP server instance or async initialization
  */
 
-import { ApiHubClient } from "../api-hub/client.js";
 import { BugsnagClient } from "../bugsnag/client.js";
 import { CollaboratorClient } from "../collaborator/client.js";
 import { PactflowClient } from "../pactflow/client.js";
 import { QmetryClient } from "../qmetry/client.js";
 import { ReflectClient } from "../reflect/client.js";
+import { SwaggerClient } from "../swagger/client.js";
 import { ZephyrClient } from "../zephyr/client.js";
 import { clientRegistry } from "./client-registry.js";
 
@@ -23,8 +23,8 @@ clientRegistry.register(new ReflectClient());
 // Register Bugsnag client
 clientRegistry.register(new BugsnagClient());
 
-// Register API Hub client
-clientRegistry.register(new ApiHubClient());
+// Register Swagger client
+clientRegistry.register(new SwaggerClient());
 
 // Register PactFlow/Pact Broker client
 clientRegistry.register(new PactflowClient());
