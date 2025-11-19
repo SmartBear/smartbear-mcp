@@ -17,7 +17,6 @@ import {
   ErrorUpdateRequest,
   type EventField,
   type Organization,
-  type PerformanceFilter,
   type Project,
   ProjectAPI,
   type Release,
@@ -1139,16 +1138,14 @@ export class BugsnagClient implements Client {
         ])
         .optional()
         .describe("Field to sort by"),
-      direction: z.enum(["asc", "desc"]).optional().describe("Sort direction"),
+      direction: toolInputParameters.direction,
       perPage: toolInputParameters.perPage,
       starredOnly: z
         .boolean()
         .optional()
         .describe("Show only starred span groups"),
       nextUrl: toolInputParameters.nextUrl,
-      filters: PerformanceFiltersArraySchema.optional().describe(
-        "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
-      ),
+      filters: toolInputParameters.performanceFilters,
     });
 
     register(
@@ -1204,7 +1201,7 @@ export class BugsnagClient implements Client {
           params.direction,
           params.perPage,
           undefined,
-          params.filters as Array<PerformanceFilter> | undefined,
+          params.filters,
           params.starredOnly,
           params.nextUrl,
         );
@@ -1227,12 +1224,8 @@ export class BugsnagClient implements Client {
       projectId: this.projectApiKey
         ? toolInputParameters.projectId.optional()
         : toolInputParameters.projectId,
-      spanGroupId: z
-        .string()
-        .describe("ID of the span group (will be URL-encoded automatically)"),
-      filters: PerformanceFiltersArraySchema.optional().describe(
-        "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
-      ),
+      spanGroupId: toolInputParameters.spanGroupId,
+      filters: toolInputParameters.performanceFilters,
     });
 
     register(
@@ -1279,21 +1272,21 @@ export class BugsnagClient implements Client {
         const spanGroupResults = await this.projectApi.getProjectSpanGroup(
           project.id,
           params.spanGroupId,
-          params.filters as Array<PerformanceFilter> | undefined,
+          params.filters,
         );
 
         const spanGroupTimelineResult =
           await this.projectApi.getProjectSpanGroupTimeline(
             project.id,
             params.spanGroupId,
-            params.filters as Array<PerformanceFilter> | undefined,
+            params.filters,
           );
 
         const spanGroupDistributionResult =
           await this.projectApi.getProjectSpanGroupDistribution(
             project.id,
             params.spanGroupId,
-            params.filters as Array<PerformanceFilter> | undefined,
+            params.filters,
           );
 
         const result = {
@@ -1312,7 +1305,7 @@ export class BugsnagClient implements Client {
       projectId: this.projectApiKey
         ? toolInputParameters.projectId.optional()
         : toolInputParameters.projectId,
-      spanGroupId: z.string().describe("ID of the span group"),
+      spanGroupId: toolInputParameters.spanGroupId,
       sort: z
         .enum([
           "duration",
@@ -1333,12 +1326,10 @@ export class BugsnagClient implements Client {
         ])
         .optional()
         .describe("Field to sort by"),
-      direction: z.enum(["asc", "desc"]).optional().describe("Sort direction"),
+      direction: toolInputParameters.direction,
       perPage: toolInputParameters.perPage,
       nextUrl: toolInputParameters.nextUrl,
-      filters: PerformanceFiltersArraySchema.optional().describe(
-        "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields",
-      ),
+      filters: toolInputParameters.performanceFilters,
     });
 
     register(
@@ -1391,7 +1382,7 @@ export class BugsnagClient implements Client {
         const result = await this.projectApi.listSpansBySpanGroupId(
           project.id,
           params.spanGroupId,
-          params.filters as Array<PerformanceFilter> | undefined,
+          params.filters,
           params.sort,
           params.direction,
           params.perPage,

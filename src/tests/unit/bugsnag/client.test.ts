@@ -32,16 +32,10 @@ const mockProjectAPI = {
   getReleaseGroup: vi.fn(),
   listBuildsInRelease: vi.fn(),
   getProjectNetworkGroupingRuleset: vi.fn(),
-  getProjectPageLoadSpanGroupById: vi.fn(),
   getProjectSpanGroup: vi.fn(),
   getProjectSpanGroupDistribution: vi.fn(),
   getProjectSpanGroupTimeline: vi.fn(),
-  getSpansByCategoryAndName: vi.fn(),
-  listProjectPageLoadSpanGroups: vi.fn(),
-  listProjectSpanGroupPerformanceTargets: vi.fn(),
   listProjectSpanGroups: vi.fn(),
-  listProjectSpanGroupSummaries: vi.fn(),
-  listProjectStarredSpanGroups: vi.fn(),
   listProjectTraceFields: vi.fn(),
   listSpansBySpanGroupId: vi.fn(),
   listSpansByTraceId: vi.fn(),
@@ -2164,10 +2158,17 @@ describe("BugsnagClient", () => {
         expect(mockProjectAPI.listProjectSpanGroups).toHaveBeenCalledWith(
           "proj-1",
           undefined,
-          undefined,
+          "desc",
           30,
           undefined,
-          undefined,
+          {
+            "span.since": [
+              {
+                type: "eq",
+                value: "7d",
+              },
+            ],
+          },
           undefined,
           undefined,
         );
@@ -2194,12 +2195,9 @@ describe("BugsnagClient", () => {
             durationP95: 500,
           },
         ];
-        const mockFilters = [
-          {
-            key: "span_group.category",
-            filterValues: [{ matchType: "eq", value: "http_request" }],
-          },
-        ];
+        const mockFilters = {
+          "span_group.category": [{ type: "eq", value: "http_request" }],
+        };
 
         mockCache.get.mockReturnValue(mockProject);
         mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
@@ -2283,16 +2281,37 @@ describe("BugsnagClient", () => {
         expect(mockProjectAPI.getProjectSpanGroup).toHaveBeenCalledWith(
           "proj-1",
           "span-group-1",
-          undefined,
+          {
+            "span.since": [
+              {
+                type: "eq",
+                value: "7d",
+              },
+            ],
+          },
         );
         expect(mockProjectAPI.getProjectSpanGroupTimeline).toHaveBeenCalledWith(
           "proj-1",
           "span-group-1",
-          undefined,
+          {
+            "span.since": [
+              {
+                type: "eq",
+                value: "7d",
+              },
+            ],
+          },
         );
         expect(
           mockProjectAPI.getProjectSpanGroupDistribution,
-        ).toHaveBeenCalledWith("proj-1", "span-group-1", undefined);
+        ).toHaveBeenCalledWith("proj-1", "span-group-1", {
+          "span.since": [
+            {
+              type: "eq",
+              value: "7d",
+            },
+          ],
+        });
         expect(result).toEqual({
           content: [
             {
@@ -2361,7 +2380,14 @@ describe("BugsnagClient", () => {
         expect(mockProjectAPI.listSpansBySpanGroupId).toHaveBeenCalledWith(
           "proj-1",
           "span-group-1",
-          undefined,
+          {
+            "span.since": [
+              {
+                type: "eq",
+                value: "7d",
+              },
+            ],
+          },
           "duration",
           "desc",
           20,
