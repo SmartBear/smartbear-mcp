@@ -135,14 +135,14 @@ describe("GetEnvironments", () => {
 
   it("should handle apiClient.get throwing error", async () => {
     mockApiClient.get.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ limit: 1 }, {})).rejects.toThrow(
+    await expect(instance.handle({ maxResults: 1 }, {})).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockApiClient.get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ limit: 1 }, {});
+    const result = await instance.handle({ maxResults: 1 }, {});
     expect(result.structuredContent).toBeUndefined();
   });
 });
