@@ -1158,12 +1158,11 @@ export class BugsnagClient implements Client {
             description: "List starred span groups with filtering",
             parameters: {
               starredOnly: true,
-              filters: [
-                {
-                  key: "span_group.category",
-                  filterValues: [{ matchType: "eq", value: "full_page_load" }],
-                },
-              ],
+              filters: {
+                "span_group.category": [
+                  { type: "eq", value: "full_page_load" },
+                ],
+              },
             },
             expectedOutput: "Array of starred span groups filtered by category",
           },
@@ -1230,12 +1229,9 @@ export class BugsnagClient implements Client {
             description: "Get span group details with device filtering",
             parameters: {
               spanGroupId: "[HttpClient]GET-api.example.com",
-              filters: [
-                {
-                  key: "device.browser_name",
-                  filterValues: [{ matchType: "eq", value: "Chrome" }],
-                },
-              ],
+              filters: {
+                "device.browser_name": [{ type: "eq", value: "Chrome" }],
+              },
             },
             expectedOutput: "Statistics filtered for Chrome browser only",
           },
@@ -1338,12 +1334,9 @@ export class BugsnagClient implements Client {
             parameters: {
               spanGroupId: "[HttpClient]GET-api.example.com",
               sort: "timestamp",
-              filters: [
-                {
-                  key: "os.name",
-                  filterValues: [{ matchType: "eq", value: "iOS" }],
-                },
-              ],
+              filters: {
+                "os.name": [{ type: "eq", value: "iOS" }],
+              },
               nextUrl: "/projects/123/spans?offset=30&per_page=30",
             },
             expectedOutput:
