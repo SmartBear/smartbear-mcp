@@ -55,6 +55,16 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of statuses along with their properties, including name and color. Results are filtered based on the provided parameters.
 - **Use case**: Getting details about Zephyr statuses based on the provided filters.
 
+### Get Priorities
+
+- **Purpose**: Retrieve priorities related to Test Cases from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Project key (`projectKey`)
+- **Returns**: A list of priorities along with their properties, including name and color. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr priorities based on the provided filters.
+
 ### Get Test Cases
 
 -  **Purpose**: Retrieve Test Cases available within your Zephyr account.
@@ -65,3 +75,17 @@ The following environment variables configure the Zephyr integration:
 - optional starting cursor position for pagination (`startAtId`)
 -  **Returns**: A list of Test Cases along with their properties.
 -  **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
+
+### Get Test Case
+
+- **Purpose**: Retrieve the test case available within your Zephyr projects by key
+- **Parameters:** Test case key
+- **Returns**: A test case along with its properties.
+- **Use case**: Retrieve detailed information about a test case.
+
+### Get Test Execution
+
+- **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
+- **Parameters:** Test Execution key or ID
+- **Returns**: A Test Execution along with its properties.
+- **Use case**: Getting a Test Execution with its properties.

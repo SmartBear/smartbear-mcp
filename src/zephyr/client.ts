@@ -5,11 +5,14 @@ import type {
   RegisterToolsFunction,
 } from "../common/types.js";
 import { ApiClient } from "./common/api-client.js";
+import { GetPriorities } from "./tool/priority/get-priorities.js";
 import { GetProject } from "./tool/project/get-project.js";
 import { GetProjects } from "./tool/project/get-projects.js";
 import { GetStatuses } from "./tool/status/get-statuses.js";
+import { GetTestCase } from "./tool/test-case/get-test-case.js";
 import { GetTestCases } from "./tool/test-case/get-test-cases.js";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
+import { GetTestExecution } from "./tool/test-execution/get-test-execution.js";
 import { GetTestExecutions } from "./tool/testexecution/get-test-executions.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
@@ -59,8 +62,11 @@ export class ZephyrClient implements Client {
       new GetProjects(apiClient),
       new GetProject(apiClient),
       new GetTestCycles(apiClient),
+      new GetPriorities(apiClient),
       new GetStatuses(apiClient),
       new GetTestCases(apiClient),
+      new GetTestCase(apiClient),
+      new GetTestExecution(apiClient),
       new GetTestExecutions(apiClient),
     ];
 
