@@ -65,3 +65,13 @@ The following environment variables configure the Zephyr integration:
 - optional starting cursor position for pagination (`startAtId`)
 -  **Returns**: A list of Test Cases along with their properties.
 -  **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
+
+### Ger Environments
+
+- **Purpose**: Retrieve Environments from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Project key (`projectKey`)
+- **Returns**: A list of environments along with their properties, including name and description. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr Environments based on the provided filters.
