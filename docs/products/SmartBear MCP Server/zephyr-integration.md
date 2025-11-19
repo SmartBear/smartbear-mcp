@@ -66,7 +66,7 @@ The following environment variables configure the Zephyr integration:
 -  **Returns**: A list of Test Cases along with their properties.
 -  **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
 
-### Ger Environments
+### Get Environments
 
 - **Purpose**: Retrieve Environments from your Zephyr account.
 - **Parameters**:
