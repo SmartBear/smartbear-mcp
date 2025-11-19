@@ -12,6 +12,7 @@ import { GetStatuses } from "./tool/status/get-statuses.js";
 import { GetTestCase } from "./tool/test-case/get-test-case.js";
 import { GetTestCases } from "./tool/test-case/get-test-cases.js";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
+import { GetTestExecution } from "./tool/test-execution/get-test-execution.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
@@ -64,6 +65,7 @@ export class ZephyrClient implements Client {
       new GetStatuses(apiClient),
       new GetTestCases(apiClient),
       new GetTestCase(apiClient),
+      new GetTestExecution(apiClient),
     ];
 
     for (const tool of tools) {
