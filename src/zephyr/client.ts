@@ -5,12 +5,17 @@ import type {
   RegisterToolsFunction,
 } from "../common/types.js";
 import { ApiClient } from "./common/api-client.js";
+
 import { GetEnvironments } from "./tool/environment/get-environments.js";
+import { GetPriorities } from "./tool/priority/get-priorities.js";
 import { GetProject } from "./tool/project/get-project.js";
 import { GetProjects } from "./tool/project/get-projects.js";
 import { GetStatuses } from "./tool/status/get-statuses.js";
+import { GetTestCase } from "./tool/test-case/get-test-case.js";
 import { GetTestCases } from "./tool/test-case/get-test-cases.js";
+import { GetTestCycle } from "./tool/test-cycle/get-test-cycle.js";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
+import { GetTestExecution } from "./tool/test-execution/get-test-execution.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
@@ -59,9 +64,13 @@ export class ZephyrClient implements Client {
       new GetProjects(apiClient),
       new GetProject(apiClient),
       new GetTestCycles(apiClient),
+      new GetTestCycle(apiClient),
+      new GetPriorities(apiClient),
       new GetStatuses(apiClient),
       new GetTestCases(apiClient),
       new GetEnvironments(apiClient),
+      new GetTestCase(apiClient),
+      new GetTestExecution(apiClient),
     ];
 
     for (const tool of tools) {

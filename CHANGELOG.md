@@ -8,8 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- [Zephyr] Added a tool for retrieving Test Cycle [#210](https://github.com/SmartBear/smartbear-mcp/pull/210)
 - [Zephyr] Added a tool for retrieving statuses [#212](https://github.com/SmartBear/smartbear-mcp/pull/212)
 - [Zephyr] Added a tool for retrieving Test Cases [#230](https://github.com/SmartBear/smartbear-mcp/pull/230)
+- [BugSnag] Add "Get Current Project" tool to retrieve details of the currently configured project and improve project detection if not configured at startup [#229](https://github.com/SmartBear/smartbear-mcp/pull/229)
+- [Zephyr] Added a tool for retrieving Priorities [#227](https://github.com/SmartBear/smartbear-mcp/pull/227)
+- [Zephyr] Added a tool for retrieving a Test Case [#215](https://github.com/SmartBear/smartbear-mcp/pull/215)
+- [Zephyr] Added a tool for retrieving a Test Execution [#239](https://github.com/SmartBear/smartbear-mcp/pull/239)
+
+### Changed
+- [API Hub / Swagger] Rebranding from API Hub to Swagger [#233](https://github.com/SmartBear/smartbear-mcp/pull/233). **Note:** The environment variable `API_HUB_API_KEY` has been replaced with `SWAGGER_API_KEY`. The old variable name will still be supported for some time for backward compatibility.
 
 ## [0.10.0] - 2025-11-11
 
