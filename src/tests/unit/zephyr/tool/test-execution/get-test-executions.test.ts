@@ -27,10 +27,8 @@ describe("GetTestExecutions", () => {
   it("should call apiClient.get with correct params and return formatted content", async () => {
     const responseMock = {
       next: null,
-      startAt: 0,
+      nextStartAtId: null,
       limit: 10,
-      total: 2,
-      isLast: true,
       values: [
         {
           id: 1,
@@ -43,6 +41,14 @@ describe("GetTestExecutions", () => {
             id: 200,
             self: "https://api.example.com/testcases/200",
           },
+          environment: {
+            id: 5,
+            self: "https://api.example.com/environments/5",
+          },
+          jiraProjectVersion: {
+            id: 10,
+            self: "https://api.example.com/versions/10",
+          },
           testExecutionStatus: {
             id: 1,
             self: "https://api.example.com/statuses/1",
@@ -54,14 +60,6 @@ describe("GetTestExecutions", () => {
           assignedToId: "account-id-456",
           comment: "Test completed successfully",
           automated: false,
-          environment: {
-            id: 5,
-            self: "https://api.example.com/environments/5",
-          },
-          jiraProjectVersion: {
-            id: 10,
-            self: "https://api.example.com/versions/10",
-          },
           testCycle: {
             id: 50,
             self: "https://api.example.com/cycles/50",
