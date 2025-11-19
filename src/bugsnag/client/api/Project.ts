@@ -228,7 +228,7 @@ export class ProjectAPI extends BaseAPI {
    * Get detailed information about a specific span group.
    * GET /projects/{project_id}/span_groups/{id}
    * @param projectId The ID of the project to which the Span Group belongs.
-   * @param id The URL-encoded ID of the Span Group.
+   * @param id The ID of the Span Group.
    * @param filters The current filters that are being applied.
    * @returns A promise that resolves to the span group.
    */
@@ -254,7 +254,7 @@ export class ProjectAPI extends BaseAPI {
    * Get time-series performance metrics for a span group.
    * GET /projects/{project_id}/span_groups/{id}/timeline
    * @param projectId The ID of the project to which the Span Group belongs.
-   * @param id The URL-encoded ID of the Span Group.
+   * @param id The ID of the Span Group.
    * @param filters The current filters that are being applied.
    * @returns A promise that resolves to the timeline data.
    */
@@ -280,7 +280,7 @@ export class ProjectAPI extends BaseAPI {
    * Get distribution histogram of span durations for a span group.
    * GET /projects/{project_id}/span_groups/{id}/distribution
    * @param projectId The ID of the project to which the Span Group belongs.
-   * @param id The URL-encoded ID of the Span Group.
+   * @param id The ID of the Span Group.
    * @param filters The current filters that are being applied.
    * @returns A promise that resolves to the distribution data.
    */
@@ -306,7 +306,7 @@ export class ProjectAPI extends BaseAPI {
    * List individual spans for a specific span group with filtering and sorting.
    * GET /projects/{project_id}/span_groups/{id}/spans
    * @param projectId The ID of the project to which the spans belong.
-   * @param id The URL-encoded ID of the Span Group.
+   * @param id The ID of the Span Group.
    * @param filters The current filters that are being applied.
    * @param sort The field to sort the spans by.
    * @param direction The direction to sort the spans by.
