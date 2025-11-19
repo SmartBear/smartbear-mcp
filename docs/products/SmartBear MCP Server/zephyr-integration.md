@@ -89,3 +89,10 @@ The following environment variables configure the Zephyr integration:
 - **Parameters:** Test Execution key or ID
 - **Returns**: A Test Execution along with its properties.
 - **Use case**: Getting a Test Execution with its properties.
+
+### Get Test Cycle
+
+- **Purpose**: Retrieve the test cycle available within your Zephyr projects by either its key or id.
+- **Parameters:** Test cycle key or ID
+- **Returns**: A Test Cycle along with its properties.
+- **Use case**: Retrieve detailed information about a test cycle.

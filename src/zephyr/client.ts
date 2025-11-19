@@ -11,6 +11,7 @@ import { GetProjects } from "./tool/project/get-projects.js";
 import { GetStatuses } from "./tool/status/get-statuses.js";
 import { GetTestCase } from "./tool/test-case/get-test-case.js";
 import { GetTestCases } from "./tool/test-case/get-test-cases.js";
+import { GetTestCycle } from "./tool/test-cycle/get-test-cycle.js";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
 import { GetTestExecution } from "./tool/test-execution/get-test-execution.js";
 import type { ZephyrTool } from "./tool/zephyr-tool.js";
@@ -61,6 +62,7 @@ export class ZephyrClient implements Client {
       new GetProjects(apiClient),
       new GetProject(apiClient),
       new GetTestCycles(apiClient),
+      new GetTestCycle(apiClient),
       new GetPriorities(apiClient),
       new GetStatuses(apiClient),
       new GetTestCases(apiClient),
