@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  listTestExecutionsNextgenQueryParams,
   listTestExecutionsNextgenResponse,
-  listTestExecutionsQueryParams,
 } from "../../../../../zephyr/common/rest-api-schemas.js";
 import { GetTestExecutions } from "../../../../../zephyr/tool/testexecution/get-test-executions.js";
 
@@ -17,7 +17,7 @@ describe("GetTestExecutions", () => {
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
     expect(instance.specification.inputSchema).toBe(
-      listTestExecutionsQueryParams,
+      listTestExecutionsNextgenQueryParams,
     );
     expect(instance.specification.outputSchema).toBe(
       listTestExecutionsNextgenResponse,
@@ -27,28 +27,59 @@ describe("GetTestExecutions", () => {
   it("should call apiClient.get with correct params and return formatted content", async () => {
     const responseMock = {
       next: null,
+      startAt: 0,
       limit: 10,
-      startAtId: 0,
-      total: 1,
+      total: 2,
       isLast: true,
       values: [
         {
           id: 1,
-          key: "TE-1",
-          name: "Test Execution 1",
+          key: "TEST-E1",
           project: {
-            id: 10005,
-            self: "https://api.example.com/projects/10005",
+            id: 100,
+            self: "https://api.example.com/projects/100",
           },
-          status: "PASSED",
-          executedBy: {
-            accountId: "5b10a2844c20165700ede21g",
-            self: "https://jira.example.com/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+          testCase: {
+            id: 200,
+            self: "https://api.example.com/testcases/200",
           },
-          actualEndDate: "2024-05-01T10:00:00Z",
+          testExecutionStatus: {
+            id: 1,
+            self: "https://api.example.com/statuses/1",
+          },
+          actualEndDate: "2024-01-15T10:30:00Z",
+          estimatedTime: 3600000,
+          executionTime: 3500000,
+          executedById: "account-id-123",
+          assignedToId: "account-id-456",
+          comment: "Test completed successfully",
+          automated: false,
+          environment: {
+            id: 5,
+            self: "https://api.example.com/environments/5",
+          },
+          jiraProjectVersion: {
+            id: 10,
+            self: "https://api.example.com/versions/10",
+          },
+          testCycle: {
+            id: 50,
+            self: "https://api.example.com/cycles/50",
+          },
           customFields: {
-            Environment: "Staging",
-            Browser: "Chrome",
+            customfield_10001: "value1",
+          },
+          links: {
+            self: "https://api.example.com/executions/1",
+            issues: [
+              {
+                issueId: 300,
+                id: 1,
+                self: "https://api.example.com/links/1",
+                target: "https://jira.example.com/rest/api/3/issue/300",
+                type: "COVERAGE",
+              },
+            ],
           },
         },
       ],
@@ -74,10 +105,9 @@ describe("GetTestExecutions", () => {
     };
     mockApiClient.get.mockResolvedValueOnce(responseMock);
     const result = await instance.handle({}, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith(
-      "/testexecutions/nextgen",
-      {},
-    );
+    expect(mockApiClient.get).toHaveBeenCalledWith("/testexecutions/nextgen", {
+      limit: 10,
+    });
     expect(result.structuredContent).toBe(responseMock);
   });
 

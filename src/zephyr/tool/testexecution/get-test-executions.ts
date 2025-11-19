@@ -3,12 +3,10 @@ import type { ZodRawShape } from "zod";
 import type { ToolParams } from "../../../common/types.js";
 import type { ApiClient } from "../../common/api-client.js";
 import {
+  listTestExecutionsNextgenQueryParams,
   listTestExecutionsNextgenResponse,
-  listTestExecutionsQueryParams,
 } from "../../common/rest-api-schemas.js";
 import type { ZephyrTool } from "../zephyr-tool.js";
-
-export const GetTestExecutionsInputSchema = listTestExecutionsQueryParams;
 
 export class GetTestExecutions implements ZephyrTool {
   private readonly apiClient: ApiClient;
@@ -22,7 +20,7 @@ export class GetTestExecutions implements ZephyrTool {
     summary: "Get test executions with optional filters",
     readOnly: true,
     idempotent: true,
-    inputSchema: GetTestExecutionsInputSchema,
+    inputSchema: listTestExecutionsNextgenQueryParams,
     outputSchema: listTestExecutionsNextgenResponse,
     examples: [
       {
@@ -44,7 +42,11 @@ export class GetTestExecutions implements ZephyrTool {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const response = await this.apiClient.get("/testexecutions/nextgen", args);
+    const parsedArgs = listTestExecutionsNextgenQueryParams.parse(args);
+    const response = await this.apiClient.get(
+      "/testexecutions/nextgen",
+      parsedArgs,
+    );
     return {
       structuredContent: response,
       content: [],
