@@ -52,7 +52,7 @@ export class GetEnvironments implements ZephyrTool {
           startAt: 10,
         },
         expectedOutput:
-          "The first 10 Environments with their details from project with projectKey TEST",
+          "The second 10 Environments with their details from project with projectKey TEST",
       },
       {
         description:
