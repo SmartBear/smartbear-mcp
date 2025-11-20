@@ -118,7 +118,7 @@ async function createConfiguredClient(
   const mockServer = { getCache: () => mockCache } as any;
   if (projectApiKey) {
     // Allow configure to find a project to ensure the projectApiKey remains set for the test
-    const project = { id: "proj-1", name: "Project 1", apiKey: projectApiKey };
+    const project = { id: "proj-1", name: "Project 1", api_key: projectApiKey };
     mockCache.get
       .mockReturnValueOnce([project])
       .mockReturnValueOnce(project)
@@ -651,7 +651,7 @@ describe("BugsnagClient", () => {
       );
       // Verify that 'search' field is filtered out
       const filteredFields = mockEventFields.filter(
-        (field) => field.displayId !== "search",
+        (field) => field.display_id !== "search",
       );
       expect(mockCache.set).toHaveBeenCalledWith(
         "bugsnag_project_event_fields",
@@ -968,7 +968,7 @@ describe("BugsnagClient", () => {
         );
       });
 
-      it("should filter projects by apiKey parameter", async () => {
+      it("should filter projects by API key parameter", async () => {
         const mockProjects = [
           getMockProject("proj-1", "Project 1", "key-1"),
           getMockProject("proj-2", "Project 2", "key-2"),
@@ -1014,7 +1014,7 @@ describe("BugsnagClient", () => {
       it("should get error details with project from cache", async () => {
         const mockEvents = [getMockEvent("event-1")];
         const mockPivots: PivotApiView[] = [
-          { name: "test-pivot", eventFieldDisplayId: "test" },
+          { name: "test-pivot", event_field_display_id: "test" },
         ];
 
         mockCache.get
@@ -1397,33 +1397,33 @@ describe("BugsnagClient", () => {
     describe("Get Build tool handler", () => {
       const mockProjects = [
         getMockProject("proj-1", "Project 1", undefined, {
-          targetStability: {
+          target_stability: {
             value: 0.995,
           },
-          criticalStability: {
+          critical_stability: {
             value: 0.85,
           },
-          stabilityTargetType: "user",
+          stability_target_type: "user",
         }),
         getMockProject("proj-2", "Project 2"),
       ];
       const mockBuild = getMockRelease("rel-1", {
-        errorsIntroducedCount: 5,
-        errorsSeenCount: 10,
-        totalSessionsCount: 100,
-        unhandledSessionsCount: 10,
-        accumulativeDailyUsersSeen: 50,
-        accumulativeDailyUsersWithUnhandled: 5,
+        errors_introduced_count: 5,
+        errors_seen_count: 10,
+        total_sessions_count: 100,
+        unhandled_sessions_count: 10,
+        accumulative_daily_users_seen: 50,
+        accumulative_daily_users_with_unhandled: 5,
       });
       it("should get build details", async () => {
         const basicBuild = getMockRelease("rel-1", {
           ...mockBuild,
-          errorsIntroducedCount: 5,
-          errorsSeenCount: 10,
-          totalSessionsCount: 100,
-          unhandledSessionsCount: 10,
-          accumulativeDailyUsersSeen: 50,
-          accumulativeDailyUsersWithUnhandled: 5,
+          errors_introduced_count: 5,
+          errors_seen_count: 10,
+          total_sessions_count: 100,
+          unhandled_sessions_count: 10,
+          accumulative_daily_users_seen: 50,
+          accumulative_daily_users_with_unhandled: 5,
         });
 
         // First get for the project, second for cached build (return null to call API)
@@ -1447,13 +1447,13 @@ describe("BugsnagClient", () => {
         expect(result.content[0].text).toBe(
           JSON.stringify({
             ...basicBuild,
-            userStability: 0.9,
-            sessionStability: 0.9,
-            stabilityTargetType: "user",
-            targetStability: 0.995,
-            criticalStability: 0.85,
-            meetsTargetStability: false,
-            meetsCriticalStability: true,
+            user_stability: 0.9,
+            session_stability: 0.9,
+            stability_target_type: "user",
+            target_stability: 0.995,
+            critical_stability: 0.85,
+            meets_target_stability: false,
+            meets_critical_stability: true,
           }),
         );
       });
@@ -1461,7 +1461,7 @@ describe("BugsnagClient", () => {
       it("should handle 0 daily users", async () => {
         const basicBuild = getMockRelease("rel-1", {
           ...mockBuild,
-          accumulativeDailyUsersSeen: 0,
+          accumulative_daily_users_seen: 0,
         });
 
         // First get for the project, second for cached build (return null to call API)
@@ -1485,13 +1485,13 @@ describe("BugsnagClient", () => {
         expect(result.content[0].text).toBe(
           JSON.stringify({
             ...basicBuild,
-            userStability: 0,
-            sessionStability: 0.9,
-            stabilityTargetType: "user",
-            targetStability: 0.995,
-            criticalStability: 0.85,
-            meetsTargetStability: false,
-            meetsCriticalStability: false,
+            user_stability: 0,
+            session_stability: 0.9,
+            stability_target_type: "user",
+            target_stability: 0.995,
+            critical_stability: 0.85,
+            meets_target_stability: false,
+            meets_critical_stability: false,
           }),
         );
       });
@@ -1503,12 +1503,12 @@ describe("BugsnagClient", () => {
           undefined,
           {
             ...mockProjects[0],
-            stabilityTargetType: "session" as const,
+            stability_target_type: "session" as const,
           },
         );
         const basicBuild = getMockRelease("rel-1", {
           ...mockBuild,
-          totalSessionsCount: 0,
+          total_sessions_count: 0,
         });
 
         // First get for the project, second for cached build (return null to call API)
@@ -1532,13 +1532,13 @@ describe("BugsnagClient", () => {
         expect(result.content[0].text).toBe(
           JSON.stringify({
             ...basicBuild,
-            userStability: 0.9,
-            sessionStability: 0,
-            stabilityTargetType: "session",
-            targetStability: 0.995,
-            criticalStability: 0.85,
-            meetsTargetStability: false,
-            meetsCriticalStability: false,
+            user_stability: 0.9,
+            session_stability: 0,
+            stability_target_type: "session",
+            target_stability: 0.995,
+            critical_stability: 0.85,
+            meets_target_stability: false,
+            meets_critical_stability: false,
           }),
         );
       });
@@ -1546,10 +1546,10 @@ describe("BugsnagClient", () => {
       it("should get build with explicit project ID", async () => {
         const basicBuild = getMockRelease("rel-1", {
           ...mockBuild,
-          totalSessionsCount: 50,
-          unhandledSessionsCount: 5,
-          accumulativeDailyUsersSeen: 30,
-          accumulativeDailyUsersWithUnhandled: 3,
+          total_sessions_count: 50,
+          unhandled_sessions_count: 5,
+          accumulative_daily_users_seen: 30,
+          accumulative_daily_users_with_unhandled: 3,
         });
 
         mockCache.get
@@ -1576,13 +1576,13 @@ describe("BugsnagClient", () => {
         expect(result.content[0].text).toBe(
           JSON.stringify({
             ...basicBuild,
-            userStability: 0.9,
-            sessionStability: 0.9,
-            stabilityTargetType: "user",
-            targetStability: 0.995,
-            criticalStability: 0.85,
-            meetsTargetStability: false,
-            meetsCriticalStability: true,
+            user_stability: 0.9,
+            session_stability: 0.9,
+            stability_target_type: "user",
+            target_stability: 0.995,
+            critical_stability: 0.85,
+            meets_target_stability: false,
+            meets_critical_stability: true,
           }),
         );
       });
@@ -1621,23 +1621,23 @@ describe("BugsnagClient", () => {
       const mockProjects = [
         getMockProject("proj-1", "Project 1"),
         getMockProject("proj-2", "Project 2", undefined, {
-          targetStability: {
+          target_stability: {
             value: 0.995,
           },
-          criticalStability: {
+          critical_stability: {
             value: 0.85,
           },
-          stabilityTargetType: "user" as const,
+          stability_target_type: "user" as const,
         }),
       ];
       it("should list releases with project from cache", async () => {
         const mockReleases = [
           getMockRelease("rel-group-1", {
-            appVersion: "1.0.0",
-            totalSessionsCount: 50,
-            unhandledSessionsCount: 5,
-            accumulativeDailyUsersSeen: 30,
-            accumulativeDailyUsersWithUnhandled: 3,
+            app_version: "1.0.0",
+            total_sessions_count: 50,
+            unhandled_sessions_count: 5,
+            accumulative_daily_users_seen: 30,
+            accumulative_daily_users_with_unhandled: 3,
           }),
         ];
 
@@ -1672,13 +1672,13 @@ describe("BugsnagClient", () => {
             data: [
               {
                 ...mockReleases[0],
-                userStability: 0.9,
-                sessionStability: 0.9,
-                stabilityTargetType: "user",
-                targetStability: 0.995,
-                criticalStability: 0.85,
-                meetsTargetStability: false,
-                meetsCriticalStability: true,
+                user_stability: 0.9,
+                session_stability: 0.9,
+                stability_target_type: "user",
+                target_stability: 0.995,
+                critical_stability: 0.85,
+                meets_target_stability: false,
+                meets_critical_stability: true,
               },
             ],
             data_count: 1,
@@ -1689,11 +1689,11 @@ describe("BugsnagClient", () => {
       it("should list releases with explicit project ID", async () => {
         const mockReleases = [
           getMockRelease("rel-group-2", {
-            appVersion: "1.0.0",
-            totalSessionsCount: 50,
-            unhandledSessionsCount: 5,
-            accumulativeDailyUsersSeen: 30,
-            accumulativeDailyUsersWithUnhandled: 3,
+            app_version: "1.0.0",
+            total_sessions_count: 50,
+            unhandled_sessions_count: 5,
+            accumulative_daily_users_seen: 30,
+            accumulative_daily_users_with_unhandled: 3,
           }),
         ];
 
@@ -1729,13 +1729,13 @@ describe("BugsnagClient", () => {
             data: [
               {
                 ...mockReleases[0],
-                userStability: 0.9,
-                sessionStability: 0.9,
-                stabilityTargetType: "user",
-                targetStability: 0.995,
-                criticalStability: 0.85,
-                meetsTargetStability: false,
-                meetsCriticalStability: true,
+                user_stability: 0.9,
+                session_stability: 0.9,
+                stability_target_type: "user",
+                target_stability: 0.995,
+                critical_stability: 0.85,
+                meets_target_stability: false,
+                meets_critical_stability: true,
               },
             ],
             data_count: 1,
@@ -1788,33 +1788,33 @@ describe("BugsnagClient", () => {
       const mockProjects = [
         getMockProject("proj-1", "Project 1"),
         getMockProject("proj-2", "Project 2", undefined, {
-          targetStability: {
+          target_stability: {
             value: 0.995,
           },
-          criticalStability: {
+          critical_stability: {
             value: 0.85,
           },
-          stabilityTargetType: "user" as const,
+          stability_target_type: "user" as const,
         }),
       ];
       it("should get release with explicit project ID", async () => {
         const mockRelease = getMockRelease("rel-group-2", {
-          projectId: "proj-2",
-          appVersion: "1.0.0",
-          totalSessionsCount: 50,
-          unhandledSessionsCount: 5,
-          accumulativeDailyUsersSeen: 30,
-          accumulativeDailyUsersWithUnhandled: 3,
+          project_id: "proj-2",
+          app_version: "1.0.0",
+          total_sessions_count: 50,
+          unhandled_sessions_count: 5,
+          accumulative_daily_users_seen: 30,
+          accumulative_daily_users_with_unhandled: 3,
         });
 
         const mockBuildsInRelease = [
           getMockRelease("build-1", {
-            releaseTime: "2023-01-01T00:00:00Z",
-            appVersion: "1.0.0",
-            totalSessionsCount: 100,
-            unhandledSessionsCount: 10,
-            accumulativeDailyUsersSeen: 5,
-            accumulativeDailyUsersWithUnhandled: 1,
+            release_time: "2023-01-01T00:00:00Z",
+            app_version: "1.0.0",
+            total_sessions_count: 100,
+            unhandled_sessions_count: 10,
+            accumulative_daily_users_seen: 5,
+            accumulative_daily_users_with_unhandled: 1,
           }),
         ];
 
@@ -1847,24 +1847,24 @@ describe("BugsnagClient", () => {
           JSON.stringify({
             release: {
               ...mockRelease,
-              userStability: 0.9,
-              sessionStability: 0.9,
-              stabilityTargetType: "user",
-              targetStability: 0.995,
-              criticalStability: 0.85,
-              meetsTargetStability: false,
-              meetsCriticalStability: true,
+              user_stability: 0.9,
+              session_stability: 0.9,
+              stability_target_type: "user",
+              target_stability: 0.995,
+              critical_stability: 0.85,
+              meets_target_stability: false,
+              meets_critical_stability: true,
             },
             builds: [
               {
                 ...mockBuildsInRelease[0],
-                userStability: 0.8,
-                sessionStability: 0.9,
-                stabilityTargetType: "user",
-                targetStability: 0.995,
-                criticalStability: 0.85,
-                meetsTargetStability: false,
-                meetsCriticalStability: false,
+                user_stability: 0.8,
+                session_stability: 0.9,
+                stability_target_type: "user",
+                target_stability: 0.995,
+                critical_stability: 0.85,
+                meets_target_stability: false,
+                meets_critical_stability: false,
               },
             ],
           }),

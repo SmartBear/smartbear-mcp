@@ -1,56 +1,58 @@
 import { type FilterObject, toUrlSearchParams } from "../filters.js";
-import type {
-  EventField,
-  ProjectNetworkGroupingRuleset,
-  Span,
-  SpanGroup,
-  TraceField,
-} from "./api.js";
-import { ProjectsApiFetchParamCreator } from "./api.js";
 import { type ApiResponse, BaseAPI, getQueryParams } from "./base.js";
-import type { Build, Project, Release } from "./index.js";
+import {
+  type Build,
+  type EventField,
+  type Project,
+  type ProjectNetworkGroupingRuleset,
+  ProjectsApiFetchParamCreator,
+  type Release,
+  type Span,
+  type SpanGroup,
+  type TraceField,
+} from "./index.js";
 
 export class ProjectAPI extends BaseAPI {
   static projectFields: (keyof Project)[] = [
     "id",
     "name",
     "slug",
-    "apiKey",
-    "stabilityTargetType",
-    "targetStability",
-    "criticalStability",
+    "api_key",
+    "stability_target_type",
+    "target_stability",
+    "critical_stability",
   ];
   static eventFieldFields: (keyof EventField)[] = [
     "custom",
-    "displayId",
-    "filterOptions",
-    "pivotOptions",
+    "display_id",
+    "filter_options",
+    "pivot_options",
   ];
   static buildFields: (keyof Build)[] = [
     "id",
-    "releaseTime",
-    "appVersion",
-    "releaseStage",
-    "errorsIntroducedCount",
-    "errorsSeenCount",
-    "totalSessionsCount",
-    "unhandledSessionsCount",
-    "accumulativeDailyUsersSeen",
-    "accumulativeDailyUsersWithUnhandled",
+    "release_time",
+    "app_version",
+    "release_stage",
+    "errors_introduced_count",
+    "errors_seen_count",
+    "total_sessions_count",
+    "unhandled_sessions_count",
+    "accumulative_daily_users_seen",
+    "accumulative_daily_users_with_unhandled",
   ];
   static releaseFields: (keyof Release)[] = [
     "id",
-    "releaseStageName",
-    "appVersion",
-    "firstReleasedAt",
-    "firstReleaseId",
-    "releasesCount",
+    "release_stage_name",
+    "app_version",
+    "first_released_at",
+    "first_release_id",
+    "releases_count",
     "visible",
-    "totalSessionsCount",
-    "unhandledSessionsCount",
-    "sessionsCountInLast24h",
-    "accumulativeDailyUsersSeen",
-    "accumulativeDailyUsersWithUnhandled",
+    "total_sessions_count",
+    "unhandled_sessions_count",
+    "sessions_count_in_last_24h",
+    "accumulative_daily_users_seen",
+    "accumulative_daily_users_with_unhandled",
   ];
 
   /**

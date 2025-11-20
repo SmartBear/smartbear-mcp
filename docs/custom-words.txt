@@ -9,6 +9,7 @@ Dsyms
 Eventmachine
 frankkilcommins
 jailbroken
+Laravel
 latestby
 Magento
 minidump
@@ -22,6 +23,7 @@ petstore
 qmetry
 Reactnative
 reindexing
+SCIM
 smartbear
 sogou
 stackframe
@@ -31,6 +33,7 @@ SWAGGERHUB
 symbolicate
 Symfony
 testmanagement
+ttfb
 Tvos
 Unbucketed
 undiscard
