@@ -4912,6 +4912,148 @@ interface SystemMetricsMemoryStatistics {
   p99?: number;
 }
 /**
+ *
+ * @export
+ * @interface TraceField
+ */
+export interface TraceField {
+  /**
+   * Identifier that is used as the key for filtering by this field.
+   * @type {string}
+   * @memberof TraceField
+   */
+  displayId: string;
+  /**
+   *
+   * @type {TraceFieldOptions}
+   * @memberof TraceField
+   */
+  filterOptions: TraceFieldOptions;
+  /**
+   * Whether or not this Trace Field is for a user-specified attribute rather than a pre-defined filter.
+   * @type {boolean}
+   * @memberof TraceField
+   */
+  custom: boolean;
+  /**
+   * The key in metadata to use for this Trace Field. Only present when `custom` is `true`.
+   * @type {string}
+   * @memberof TraceField
+   */
+  metadataKey?: string;
+  /**
+   * The location of the metadata key within a Trace. Only present when `custom` is `true`.
+   * @type {string}
+   * @memberof TraceField
+   */
+  metadataLocation?: TraceField.MetadataLocationEnum;
+  /**
+   * The type of the field. Only present when `custom` is `true`.
+   * @type {string}
+   * @memberof TraceField
+   */
+  fieldType?: TraceField.FieldTypeEnum;
+}
+
+/**
+ * @export
+ * @namespace TraceField
+ */
+export namespace TraceField {
+  /**
+   * @export
+   * @enum {string}
+   */
+  export enum MetadataLocationEnum {
+    SpanAttribute = <any>"span_attribute",
+    ResourceAttribute = <any>"resource_attribute",
+  }
+  /**
+   * @export
+   * @enum {string}
+   */
+  export enum FieldTypeEnum {
+    String = <any>"string",
+    Boolean = <any>"boolean",
+    Number = <any>"number",
+  }
+}
+/**
+ *
+ * @export
+ * @interface TraceFieldOptionValue
+ */
+export interface TraceFieldOptionValue {
+  /**
+   * The identifier to use when filtering by this value.
+   * @type {string}
+   * @memberof TraceFieldOptionValue
+   */
+  id: string;
+  /**
+   * A human readable represenation of this value.
+   * @type {string}
+   * @memberof TraceFieldOptionValue
+   */
+  name: string;
+}
+/**
+ *
+ * @export
+ * @interface TraceFieldOptions
+ */
+export interface TraceFieldOptions {
+  /**
+   * Human readable display name for the filter.
+   * @type {string}
+   * @memberof TraceFieldOptions
+   */
+  name: string;
+  /**
+   * Description of what the filter is.
+   * @type {string}
+   * @memberof TraceFieldOptions
+   */
+  description: string;
+  /**
+   * Possible values for this filter, only if this filter has a fixed set of values.
+   * @type {Array<TraceFieldOptionValue>}
+   * @memberof TraceFieldOptions
+   */
+  values?: Array<TraceFieldOptionValue>;
+  /**
+   * The match types that are supported by this filter.
+   * @type {Array<string>}
+   * @memberof TraceFieldOptions
+   */
+  matchTypes: Array<TraceFieldOptions.MatchTypesEnum>;
+  /**
+   * Whether the filter is searchable in the search bar suggestions.
+   * @type {boolean}
+   * @memberof TraceFieldOptions
+   */
+  searchable: boolean;
+}
+
+/**
+ * @export
+ * @namespace TraceFieldOptions
+ */
+export namespace TraceFieldOptions {
+  /**
+   * @export
+   * @enum {string}
+   */
+  export enum MatchTypesEnum {
+    Eq = <any>"eq",
+    Ne = <any>"ne",
+    Lt = <any>"lt",
+    Gt = <any>"gt",
+    Empty = <any>"empty",
+  }
+}
+
+/**
  * CurrentUserApi - fetch parameter creator
  * @export
  */
