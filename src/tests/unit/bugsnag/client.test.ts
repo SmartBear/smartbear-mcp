@@ -1,10 +1,8 @@
-import { get } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ErrorApiView,
   EventApiView,
   EventField,
-  PerformanceFilter,
   PivotApiView,
   ProjectApiView,
   ReleaseApiView,
@@ -13,7 +11,6 @@ import type {
 } from "../../../bugsnag/client/api/api.js";
 import type { BaseAPI } from "../../../bugsnag/client/api/base.js";
 import type {
-  Build,
   CurrentUserAPI,
   ErrorAPI,
   Organization,
