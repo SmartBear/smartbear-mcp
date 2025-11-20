@@ -1,9 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ProjectApiView } from "../../../bugsnag/client/api/api.js";
+import type {
+  ErrorApiView,
+  EventApiView,
+  EventField,
+  PivotApiView,
+  ProjectApiView,
+  ReleaseApiView,
+  Span,
+  SpanGroup,
+  TraceField,
+} from "../../../bugsnag/client/api/api.js";
 import type { BaseAPI } from "../../../bugsnag/client/api/base.js";
 import type {
   CurrentUserAPI,
   ErrorAPI,
+  Organization,
 } from "../../../bugsnag/client/api/index.js";
 import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
 import { BugsnagClient } from "../../../bugsnag/client.js";
@@ -116,6 +127,31 @@ async function createConfiguredClient(
   });
   mockCache.get.mockClear();
   return client;
+}
+
+function getMockProject(
+  id: string,
+  name: string,
+  apiKey?: string,
+  slug?: string,
+): ProjectApiView {
+  return { id, name, apiKey, slug };
+}
+
+function getMockOrganization(
+  id: string,
+  name: string,
+  slug?: string,
+): Organization {
+  return {
+    id,
+    name,
+    slug: slug ?? name.toLowerCase().replace(/\s+/g, "-"),
+    updatedAt: new Date(),
+    createdAt: new Date(),
+    autoUpgrade: false,
+    managedByPlatformServices: false,
+  };
 }
 
 describe("BugsnagClient", () => {
@@ -540,8 +576,8 @@ describe("BugsnagClient", () => {
       mockCache.get.mockReturnValueOnce(null); // No cached org
       mockCache.get.mockReturnValueOnce(null); // No cached projects
 
-      const mockOrg = { id: "org-1", name: "Test Org" };
-      const mockProjects = [{ id: "proj-1", name: "Project 1" }];
+      const mockOrg = getMockOrganization("org-1", "Test Org");
+      const mockProjects = [getMockProject("proj-1", "Project 1")];
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
         body: [mockOrg],
       });
@@ -563,10 +599,10 @@ describe("BugsnagClient", () => {
   describe("initialization", () => {
     it("should initialize successfully with organizations and projects", async () => {
       const testClient = new BugsnagClient();
-      const mockOrg = { id: "org-1", name: "Test Org" };
+      const mockOrg = getMockOrganization("org-1", "Test Org");
       const mockProjects = [
-        { id: "proj-1", name: "Project 1", api_key: "key1" },
-        { id: "proj-2", name: "Project 2", api_key: "key2" },
+        getMockProject("proj-1", "Project 1"),
+        getMockProject("proj-2", "Project 2"),
       ];
 
       // Clear mocks from beforeEach
@@ -603,9 +639,9 @@ describe("BugsnagClient", () => {
 
     it("should initialize with project API key and set up event filters", async () => {
       const clientWithApiKey = new BugsnagClient();
-      const mockProjects: ProjectApiView[] = [
-        { id: "proj-1", name: "Project 1", apiKey: "project-api-key" },
-        { id: "proj-2", name: "Project 2", apiKey: "other-key" },
+      const mockProjects = [
+        getMockProject("proj-1", "Project 1", "project-api-key"),
+        getMockProject("proj-2", "Project 2", "other-key"),
       ];
       const mockEventFields = [
         { displayId: "user.email", custom: false },
@@ -665,12 +701,8 @@ describe("BugsnagClient", () => {
         auth_token: "test-token",
         project_api_key: "non-existent-key",
       });
-      const mockOrg = { id: "org-1", name: "Test Org" };
-      const mockProject = {
-        id: "proj-1",
-        name: "Project 1",
-        api_key: "other-key",
-      };
+      const mockOrg = getMockOrganization("org-1", "Test Org");
+      const mockProject = getMockProject("proj-1", "Project 1", "other-key");
 
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
         body: [mockOrg],
@@ -692,9 +724,9 @@ describe("BugsnagClient", () => {
 
     it("should throw error when no event fields found for project", async () => {
       const clientWithApiKey = new BugsnagClient();
-      const mockOrg = { id: "org-1", name: "Test Org" };
+      const mockOrg = getMockOrganization("org-1", "Test Org");
       const mockProjects = [
-        { id: "proj-1", name: "Project 1", api_key: "project-api-key" },
+        getMockProject("proj-1", "Project 1", "project-api-key"),
       ];
 
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
@@ -705,15 +737,12 @@ describe("BugsnagClient", () => {
       });
       mockProjectAPI.listProjectEventFields.mockResolvedValue({ body: [] });
 
-      await expect(
+      expect(
         clientWithApiKey.configure({ getCache: () => mockCache } as any, {
           auth_token: "test-token",
           project_api_key: "project-api-key",
         }),
-      ).resolves.toBe(true);
-      expect(console.error).toHaveBeenCalledWith(
-        "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. Check your configured BugSnag project API key.",
-      );
+      ).rejects.toThrow("No event fields found for project Project 1");
     });
   });
 
@@ -723,8 +752,10 @@ describe("BugsnagClient", () => {
     });
 
     describe("getProjects", () => {
+      const mockOrg = getMockOrganization("org-1", "Test Org");
+      const mockProjects = [getMockProject("proj-1", "Project 1")];
+
       it("should return cached projects when available", async () => {
-        const mockProjects = [{ id: "proj-1", name: "Project 1" }];
         mockCache.get.mockReturnValue(mockProjects);
 
         const result = await client.getProjects();
@@ -734,9 +765,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should fetch projects from API when not cached", async () => {
-        const mockOrg = { id: "org-1", name: "Test Org" };
-        const mockProjects = [{ id: "proj-1", name: "Project 1" }];
-
         mockCache.get
           .mockReturnValueOnce(null) // First call for projects
           .mockReturnValueOnce(mockOrg); // Second call for org
@@ -757,8 +785,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should return empty array when no projects found", async () => {
-        const mockOrg = { id: "org-1", name: "Test Org" };
-
         mockCache.get
           .mockReturnValueOnce(null) // First call for projects
           .mockReturnValueOnce(mockOrg); // Second call for org
@@ -771,13 +797,13 @@ describe("BugsnagClient", () => {
     });
 
     describe("getEventById", () => {
+      const mockOrgs = [getMockOrganization("org-1", "Test Org")];
+      const mockProjects = [
+        getMockProject("proj-1", "Project 1"),
+        getMockProject("proj-2", "Project 2"),
+      ];
       it("should find event across multiple projects", async () => {
-        const mockOrgs = [{ id: "org-1", name: "Test Org" }];
-        const mockProjects = [
-          { id: "proj-1", name: "Project 1" },
-          { id: "proj-2", name: "Project 2" },
-        ];
-        const mockEvent = { id: "event-1", project_id: "proj-2" };
+        const mockEvent: EventApiView = { id: "event-1" };
 
         mockCache.get.mockReturnValueOnce(mockProjects);
         mockCache.get.mockReturnValueOnce(mockOrgs);
@@ -802,9 +828,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should return null when event not found in any project", async () => {
-        const mockOrgs = [{ id: "org-1", name: "Test Org" }];
-        const mockProjects = [{ id: "proj-1", name: "Project 1" }];
-
         mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
           body: mockOrgs,
         });
@@ -886,15 +909,32 @@ describe("BugsnagClient", () => {
 
     describe("Setting the current project", () => {
       it("should set the current project for the next tool if no API key is configured", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockEventFields = {
+        const mockProject = getMockProject("proj-1", "Project 1");
+        const mockEventFields: Record<string, EventField[]> = {
           "proj-1": [
-            { displayId: "error.status", custom: false },
-            { displayId: "user.email", custom: false },
-            { displayId: "event.since", custom: false },
+            {
+              displayId: "error.status",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
+            {
+              displayId: "user.email",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
+            {
+              displayId: "event.since",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
           ],
         };
-        const mockErrors = [{ id: "error-1", message: "Test error" }];
+        const mockErrors: ErrorApiView[] = [
+          { id: "error-1", message: "Test error" },
+        ];
 
         mockCache.get
           .mockReturnValueOnce([mockProject])
@@ -934,7 +974,7 @@ describe("BugsnagClient", () => {
 
     describe("List Projects tool handler", () => {
       it("should return all projects", async () => {
-        const mockProjects = [{ id: "proj-1", name: "Project 1" }];
+        const mockProjects = [getMockProject("proj-1", "Project 1")];
         mockCache.get.mockReturnValue(mockProjects);
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -966,8 +1006,8 @@ describe("BugsnagClient", () => {
 
       it("should filter projects by apiKey parameter", async () => {
         const mockProjects = [
-          { id: "proj-1", name: "Project 1", apiKey: "key-1" },
-          { id: "proj-2", name: "Project 2", apiKey: "key-2" },
+          getMockProject("proj-1", "Project 1", "key-1"),
+          getMockProject("proj-2", "Project 2", "key-2"),
         ];
         mockCache.get.mockReturnValue(mockProjects);
 
@@ -985,9 +1025,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should filter projects by apiKey parameter - no match", async () => {
-        const mockProjects = [
-          { id: "proj-1", name: "Project 1", apiKey: "key-1" },
-        ];
+        const mockProjects = [getMockProject("proj-1", "Project 1", "key-1")];
         mockCache.get.mockReturnValue(mockProjects);
 
         clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1005,16 +1043,15 @@ describe("BugsnagClient", () => {
     });
 
     describe("Get Error tool handler", () => {
+      const mockOrg = getMockOrganization("org-1", "Test Org", "test-org");
+      const mockProject = getMockProject("proj-1", "Project 1", "my-project");
+      const mockError: ErrorApiView = { id: "error-1", message: "Test error" };
+
       it("should get error details with project from cache", async () => {
-        const mockProject = {
-          id: "proj-1",
-          name: "Project 1",
-          slug: "my-project",
-        };
-        const mockError = { id: "error-1", message: "Test error" };
-        const mockOrg = { id: "org-1", name: "Test Org", slug: "test-org" };
-        const mockEvents = [{ id: "event-1", timestamp: "2023-01-01" }];
-        const mockPivots = [{ id: "pivot-1", name: "test-pivot" }];
+        const mockEvents: EventApiView[] = [{ id: "event-1" }];
+        const mockPivots: PivotApiView[] = [
+          { name: "test-pivot", eventFieldDisplayId: "test" },
+        ];
 
         mockCache.get
           .mockReturnValueOnce(mockProject)
@@ -1054,14 +1091,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should get error details without any latest events or pivots", async () => {
-        const mockProject = {
-          id: "proj-1",
-          name: "Project 1",
-          slug: "my-project",
-        };
-        const mockError = { id: "error-1", message: "Test error" };
-        const mockOrg = { id: "org-1", name: "Test Org", slug: "test-org" };
-
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
@@ -1100,12 +1129,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw when error ID does not exist", async () => {
-        const mockProject = {
-          id: "proj-1",
-          name: "Project 1",
-          slug: "my-project",
-        };
-        const mockOrg = { id: "org-1", name: "Test Org", slug: "test-org" };
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
@@ -1125,9 +1148,9 @@ describe("BugsnagClient", () => {
     describe("Get Event Details tool handler", () => {
       it("should get event details from dashboard URL", async () => {
         const mockProjects = [
-          { id: "proj-1", slug: "my-project", name: "My Project" },
+          getMockProject("proj-1", "My Project", undefined, "my-project"),
         ];
-        const mockEvent = { id: "event-1", project_id: "proj-1" };
+        const mockEvent: EventApiView = { id: "event-1" };
 
         mockCache.get.mockReturnValue(mockProjects);
 
@@ -1160,7 +1183,7 @@ describe("BugsnagClient", () => {
 
       it("should throw error when project not found", async () => {
         mockCache.get.mockReturnValue([
-          { id: "proj-1", slug: "other-project", name: "Other Project" },
+          getMockProject("proj-1", "Other Project", "other-project"),
         ]);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1192,16 +1215,34 @@ describe("BugsnagClient", () => {
     });
 
     describe("List Project Errors tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
       it("should list project errors with supplied parameters", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockEventFields = {
+        const mockEventFields: Record<string, EventField[]> = {
           "proj-1": [
-            { displayId: "error.status", custom: false },
-            { displayId: "user.email", custom: false },
-            { displayId: "event.since", custom: false },
+            {
+              displayId: "error.status",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
+            {
+              displayId: "user.email",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
+            {
+              displayId: "event.since",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
           ],
         };
-        const mockErrors = [{ id: "error-1", message: "Test error" }];
+        const mockErrors: ErrorApiView[] = [
+          { id: "error-1", message: "Test error" },
+        ];
         const filters = {
           "error.status": [{ type: "eq" as const, value: "for_review" }],
           "event.since": [{ type: "eq", value: "7d" }],
@@ -1245,15 +1286,31 @@ describe("BugsnagClient", () => {
       });
 
       it("should use default filters when not specified", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockEventFields = {
+        const mockEventFields: Record<string, EventField[]> = {
           "proj-1": [
-            { displayId: "error.status", custom: false },
-            { displayId: "user.email", custom: false },
-            { displayId: "event.since", custom: false },
+            {
+              displayId: "error.status",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
+            {
+              displayId: "user.email",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
+            {
+              displayId: "event.since",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
           ],
         };
-        const mockErrors = [{ id: "error-1", message: "Test error" }];
+        const mockErrors: ErrorApiView[] = [
+          { id: "error-1", message: "Test error" },
+        ];
         const defaultFilters = {
           "error.status": [{ type: "eq" as const, value: "open" }],
           "event.since": [{ type: "eq", value: "30d" }],
@@ -1298,9 +1355,15 @@ describe("BugsnagClient", () => {
       });
 
       it("should validate filter keys against cached event fields", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockEventFields = {
-          "proj-1": [{ display_id: "error.status", custom: false }],
+        const mockEventFields: Record<string, EventField[]> = {
+          "proj-1": [
+            {
+              displayId: "error.status",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
+          ],
         };
         const filters = {
           "invalid.field": [{ type: "eq" as const, value: "test" }],
@@ -1335,12 +1398,23 @@ describe("BugsnagClient", () => {
     });
 
     describe("List Project Event Filters tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
       it("should return cached event fields", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockEventFields = {
+        const mockEventFields: Record<string, EventField[]> = {
           "proj-1": [
-            { displayId: "error.status", custom: false },
-            { displayId: "user.email", custom: false },
+            {
+              displayId: "error.status",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
+            {
+              displayId: "user.email",
+              custom: false,
+              filterOptions: { name: "filter" },
+              pivotOptions: {},
+            },
           ],
         };
         mockCache.get
@@ -1360,7 +1434,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when no event filters in cache", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(null);
@@ -1378,11 +1451,11 @@ describe("BugsnagClient", () => {
 
     describe("Get Current Project tool handler", () => {
       it("should return the current project when configured", async () => {
-        const mockProject = {
-          id: "proj-1",
-          name: "Project 1",
-          apiKey: "test-project-key",
-        };
+        const mockProject = getMockProject(
+          "proj-1",
+          "Project 1",
+          "test-project-key",
+        );
         mockCache.get.mockReturnValueOnce(mockProject);
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -1403,7 +1476,7 @@ describe("BugsnagClient", () => {
     });
 
     describe("Get Build tool handler", () => {
-      const mockProjects = [
+      const mockProjects: ProjectApiView[] = [
         {
           id: "proj-1",
           name: "Project 1",
@@ -1417,7 +1490,7 @@ describe("BugsnagClient", () => {
         },
         { id: "proj-2", name: "Project 2" },
       ];
-      const mockBuild = {
+      const mockBuild: ReleaseApiView = {
         id: "rel-1",
         releaseTime: "2023-01-01T00:00:00Z",
         appVersion: "1.0.0",
@@ -1479,7 +1552,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should handle 0 daily users", async () => {
-        const basicBuild = {
+        const basicBuild: ReleaseApiView = {
           ...mockBuild,
           accumulativeDailyUsersSeen: 0,
         };
@@ -1516,11 +1589,11 @@ describe("BugsnagClient", () => {
       });
 
       it("should handle 0 sessions", async () => {
-        const mockProjectSessionStability = {
+        const mockProjectSessionStability: ProjectApiView = {
           ...mockProjects[0],
           stabilityTargetType: "session" as const,
         };
-        const basicBuild = {
+        const basicBuild: ReleaseApiView = {
           ...mockBuild,
           totalSessionsCount: 0,
         };
@@ -1557,7 +1630,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should get build with explicit project ID", async () => {
-        const basicBuild = {
+        const basicBuild: ReleaseApiView = {
           ...mockBuild,
           totalSessionsCount: 50,
           unhandledSessionsCount: 5,
@@ -1631,7 +1704,7 @@ describe("BugsnagClient", () => {
     });
 
     describe("List Releases tool handler", () => {
-      const mockProjects = [
+      const mockProjects: ProjectApiView[] = [
         { id: "proj-1", name: "Project 1" },
         {
           id: "proj-2",
@@ -1646,12 +1719,10 @@ describe("BugsnagClient", () => {
         },
       ];
       it("should list releases with project from cache", async () => {
-        const mockReleases = [
+        const mockReleases: ReleaseApiView[] = [
           {
             id: "rel-group-1",
-            releaseStage_name: "production",
             appVersion: "1.0.0",
-            first_released_at: "2023-01-01T00:00:00Z",
             totalSessionsCount: 50,
             unhandledSessionsCount: 5,
             accumulativeDailyUsersSeen: 30,
@@ -1702,10 +1773,9 @@ describe("BugsnagClient", () => {
       });
 
       it("should list releases with explicit project ID", async () => {
-        const mockReleases = [
+        const mockReleases: ReleaseApiView[] = [
           {
             id: "rel-group-2",
-            releaseStage_name: "staging",
             appVersion: "1.0.0",
             totalSessionsCount: 50,
             unhandledSessionsCount: 5,
@@ -1799,7 +1869,7 @@ describe("BugsnagClient", () => {
     });
 
     describe("Get Release tool handler", () => {
-      const mockProjects = [
+      const mockProjects: ProjectApiView[] = [
         { id: "proj-1", name: "Project 1" },
         {
           id: "proj-2",
@@ -1814,12 +1884,10 @@ describe("BugsnagClient", () => {
         },
       ];
       it("should get release with explicit project ID", async () => {
-        const mockRelease = {
+        const mockRelease: ReleaseApiView = {
           id: "rel-group-2",
-          project_id: "proj-2",
-          releaseStage_name: "staging",
+          projectId: "proj-2",
           appVersion: "1.0.0",
-          first_released_at: "2023-01-01T00:00:00Z",
           totalSessionsCount: 50,
           unhandledSessionsCount: 5,
           accumulativeDailyUsersSeen: 30,
@@ -1837,7 +1905,7 @@ describe("BugsnagClient", () => {
           meetsCriticalStability: true,
         };
 
-        const mockBuildsInRelease = [
+        const mockBuildsInRelease: ReleaseApiView[] = [
           {
             id: "build-1",
             releaseTime: "2023-01-01T00:00:00Z",
@@ -1913,9 +1981,9 @@ describe("BugsnagClient", () => {
     });
 
     describe("Update Error tool handler", () => {
-      it("should update error successfully with project from cache", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
+      const mockProject = getMockProject("proj-1", "Project 1");
 
+      it("should update error successfully with project from cache", async () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
@@ -1939,8 +2007,8 @@ describe("BugsnagClient", () => {
 
       it("should update error successfully with explicit project ID", async () => {
         const mockProjects = [
-          { id: "proj-1", name: "Project 1" },
-          { id: "proj-2", name: "Project 2" },
+          getMockProject("proj-1", "Project 1"),
+          getMockProject("proj-2", "Project 2"),
         ];
         mockCache.get.mockReturnValue(mockProjects);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 204 });
@@ -1965,7 +2033,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should handle all permitted operations", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
         // Test all operations except override_severity which requires special elicitInput handling
         const operations = ["open", "fix", "ignore", "discard", "undiscard"];
 
@@ -1996,8 +2063,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should handle override_severity operation with elicitInput", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-
         getInputFunctionSpy.mockResolvedValue({
           action: "accept",
           content: { severity: "warning" },
@@ -2041,8 +2106,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should handle override_severity operation when elicitInput is rejected", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-
         getInputFunctionSpy.mockResolvedValue({
           action: "reject",
         });
@@ -2069,8 +2132,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should return false when API returns non-success status", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 400 });
 
@@ -2106,7 +2167,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when project ID not found", async () => {
-        const mockOrg = { id: "org-1", name: "Org 1", slug: "org-1" };
+        const mockOrg = getMockOrganization("org-1", "Org 1", "org-1");
 
         mockCache.get.mockReturnValueOnce(null).mockReturnValueOnce(mockOrg);
 
@@ -2126,18 +2187,21 @@ describe("BugsnagClient", () => {
     });
 
     describe("List Span Groups tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
       it("should list span groups with default parameters", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockSpanGroups = [
+        const mockSpanGroups: SpanGroup[] = [
           {
             id: "span-group-1",
+            name: "span-name-1",
             displayName: "GET /api/users",
-            totalSpans: 100,
+            category: <any>"app_start",
           },
           {
             id: "span-group-2",
+            name: "span-name-2",
             displayName: "POST /api/login",
-            totalSpans: 50,
+            category: <any>"http_request",
           },
         ];
 
@@ -2187,15 +2251,15 @@ describe("BugsnagClient", () => {
       });
 
       it("should list span groups with sorting and filtering", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockSpanGroups = [
+        const mockSpanGroups: SpanGroup[] = [
           {
             id: "span-group-1",
+            name: "span-name-1",
             displayName: "GET /api/users",
-            durationP95: 500,
+            category: <any>"http_request",
           },
         ];
-        const mockFilters = {
+        const filters = {
           "span_group.category": [{ type: "eq", value: "http_request" }],
         };
 
@@ -2216,7 +2280,7 @@ describe("BugsnagClient", () => {
           direction: "desc",
           perPage: 10,
           starredOnly: true,
-          filters: mockFilters,
+          filters: filters,
         });
 
         expect(mockProjectAPI.listProjectSpanGroups).toHaveBeenCalledWith(
@@ -2225,7 +2289,7 @@ describe("BugsnagClient", () => {
           "desc",
           10,
           undefined,
-          mockFilters,
+          filters,
           true,
           undefined,
         );
@@ -2245,12 +2309,14 @@ describe("BugsnagClient", () => {
     });
 
     describe("Get Span Group tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
       it("should get span group with timeline and distribution", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockSpanGroup = {
+        const mockSpanGroup: SpanGroup = {
           id: "span-group-1",
+          name: "span-name-1",
+          category: <any>"http_request",
           displayName: "GET /api/users",
-          statistics: { p50: 100, p95: 500, p99: 1000 },
         };
         const mockTimeline = {
           buckets: [{ timestamp: "2024-01-01", p95: 450 }],
@@ -2327,7 +2393,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when spanGroupId is missing", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
         mockCache.get.mockReturnValue(mockProject);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2341,20 +2406,33 @@ describe("BugsnagClient", () => {
     });
 
     describe("List Spans tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
       it("should list spans for a span group", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockSpans = [
+        const mockSpans: Span[] = [
           {
-            id: "span-1",
             traceId: "trace-abc",
+            id: "span-1",
+            name: "span-name-1",
+            displayName: "GET /api/users",
+            category: <any>"http_request",
             duration: 250,
             timestamp: "2024-01-01T10:00:00Z",
+            timeAdjustmentType: <any>"unadjusted",
+            startTime: "2024-01-01T09:59:59Z",
+            isFirstClass: true,
           },
           {
-            id: "span-2",
             traceId: "trace-def",
+            id: "span-2",
+            name: "span-name-2",
+            displayName: "POST /api/login",
+            category: <any>"http_request",
             duration: 180,
             timestamp: "2024-01-01T10:01:00Z",
+            timeAdjustmentType: <any>"unadjusted",
+            startTime: "2024-01-01T10:00:30Z",
+            isFirstClass: true,
           },
         ];
 
@@ -2408,7 +2486,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when spanGroupId is missing", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
         mockCache.get.mockReturnValue(mockProject);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2422,20 +2499,34 @@ describe("BugsnagClient", () => {
     });
 
     describe("Get Trace tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
       it("should get all spans for a trace", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockSpans = [
+        const mockSpans: Span[] = [
           {
-            id: "span-1",
             traceId: "trace-abc",
+            id: "span-1",
+            name: "span-name-1",
+            displayName: "GET /api/users",
+            category: <any>"http_request",
+            timeAdjustmentType: <any>"unadjusted",
+            timestamp: "2024-01-01T10:00:00Z",
+            startTime: "2024-01-01T09:59:59Z",
+            isFirstClass: true,
             duration: 250,
-            parentSpanId: null,
           },
           {
-            id: "span-2",
             traceId: "trace-abc",
-            duration: 100,
             parentSpanId: "span-1",
+            id: "span-2",
+            name: "span-name-2",
+            displayName: "POST /api/login",
+            category: <any>"http_request",
+            timeAdjustmentType: <any>"unadjusted",
+            timestamp: "2024-01-01T10:01:00Z",
+            startTime: "2024-01-01T10:00:30Z",
+            isFirstClass: true,
+            duration: 100,
           },
         ];
 
@@ -2483,7 +2574,6 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when required parameters are missing", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
         mockCache.get.mockReturnValue(mockProject);
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2510,8 +2600,9 @@ describe("BugsnagClient", () => {
     });
 
     describe("List Trace Fields tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
       it("should list available trace fields", async () => {
-        const mockProject = { id: "proj-1", name: "Project 1" };
         const mockTraceFields = [
           { name: "user.id", type: "string" },
           { name: "device.type", type: "string" },
@@ -2555,9 +2646,29 @@ describe("BugsnagClient", () => {
 
       it("should use cached trace fields when available", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockPerformanceFilters = [
-          { name: "cached.field", type: "string" },
-          { name: "another.field", type: "number" },
+        const mockPerformanceFilters: TraceField[] = [
+          {
+            display_id: "cached.field",
+            field_type: <any>"string",
+            filter_options: {
+              name: "cached.field",
+              description: "Cached field",
+              searchable: true,
+              match_types: [<any>"eq"],
+            },
+            custom: true,
+          },
+          {
+            display_id: "another.field",
+            field_type: <any>"number",
+            filter_options: {
+              name: "cached.field",
+              description: "Cached field",
+              searchable: true,
+              match_types: [<any>"eq"],
+            },
+            custom: true,
+          },
         ];
         const mockCachedFilters = { "proj-1": mockPerformanceFilters };
 
@@ -2593,10 +2704,22 @@ describe("BugsnagClient", () => {
 
       it("should work with explicit projectId", async () => {
         const mockProjects = [
-          { id: "proj-1", name: "Project 1" },
-          { id: "proj-2", name: "Project 2" },
+          getMockProject("proj-1", "Project 1"),
+          getMockProject("proj-2", "Project 2"),
         ];
-        const mockTraceFields = [{ name: "custom.field", type: "string" }];
+        const mockTraceFields: TraceField[] = [
+          {
+            display_id: "cached.field",
+            field_type: <any>"string",
+            filter_options: {
+              name: "cached.field",
+              description: "Cached field",
+              searchable: true,
+              match_types: [<any>"eq"],
+            },
+            custom: true,
+          },
+        ];
 
         mockCache.get.mockImplementation((key: string) => {
           if (key === "bugsnag_projects") {
@@ -2648,8 +2771,8 @@ describe("BugsnagClient", () => {
 
     describe("Event resource handler", () => {
       it("should find event by ID across projects", async () => {
-        const mockEvent = { id: "event-1", project_id: "proj-1" };
-        const mockProjects = [{ id: "proj-1", name: "Project 1" }];
+        const mockEvent: EventApiView = { id: "event-1" };
+        const mockProjects = [getMockProject("proj-1", "Project 1")];
 
         mockCache.get.mockReturnValueOnce(mockProjects);
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });

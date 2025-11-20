@@ -5,7 +5,7 @@ import type { ProjectApiView, ReleaseApiView, ReleaseGroup } from "./api.js";
 export {
   ErrorUpdateRequest,
   EventField,
-  PerformanceFilter,
+  TraceField,
 } from "./api.js";
 export { CurrentUserAPI, Organization } from "./CurrentUser.js";
 export { Configuration } from "./configuration.js";
