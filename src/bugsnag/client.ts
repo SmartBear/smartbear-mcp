@@ -33,6 +33,7 @@ const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
   PROJECT_EVENT_FILTERS: "bugsnag_project_event_filters",
+  PROJECT_PERFORMANCE_FILTERS: "bugsnag_project_performance_filters",
   PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
   CURRENT_PROJECT: "bugsnag_current_project",
 };
@@ -289,6 +290,31 @@ export class BugsnagClient implements Client {
       );
       projectFiltersCache[project.id] = filtersResponse;
       this.cache?.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFiltersCache);
+    }
+    return projectFiltersCache[project.id];
+  }
+
+  async getProjectPerformanceFilters(
+    project: Project,
+  ): Promise<PerformanceFilter[]> {
+    const projectFiltersCache =
+      this.cache?.get<Record<string, PerformanceFilter[]>>(
+        cacheKeys.PROJECT_PERFORMANCE_FILTERS,
+      ) || {};
+    if (!projectFiltersCache[project.id]) {
+      const filtersResponse = (
+        await this.projectApi.listProjectTraceFields(project.id)
+      ).body;
+      if (!filtersResponse || filtersResponse.length === 0) {
+        throw new ToolError(
+          `No trace fields found for project ${project.name}.`,
+        );
+      }
+      projectFiltersCache[project.id] = filtersResponse;
+      this.cache?.set(
+        cacheKeys.PROJECT_PERFORMANCE_FILTERS,
+        projectFiltersCache,
+      );
     }
     return projectFiltersCache[project.id];
   }
