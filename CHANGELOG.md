@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
+
 ## [0.11.0] - 2025-11-20
 
 ### Added
@@ -15,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool for retrieving Priorities [#227](https://github.com/SmartBear/smartbear-mcp/pull/227)
 - [Zephyr] Added a tool for retrieving a Test Case [#215](https://github.com/SmartBear/smartbear-mcp/pull/215)
 - [Zephyr] Added a tool for retrieving a Test Execution [#239](https://github.com/SmartBear/smartbear-mcp/pull/239)
-- [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
 
 ### Changed
 - [API Hub / Swagger] Rebranding from API Hub to Swagger [#233](https://github.com/SmartBear/smartbear-mcp/pull/233). **Note:** The environment variable `API_HUB_API_KEY` has been replaced with `SWAGGER_API_KEY`. The old variable name will still be supported for some time for backward compatibility.
