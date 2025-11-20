@@ -96,6 +96,7 @@ jobs:
             --platform ${{ matrix.platform }} \
             --tag "$DEST" \
             --cache-from type=gha,scope=${{ matrix.arch }} \
+            --provenance=false \
             --push \
             .
 
