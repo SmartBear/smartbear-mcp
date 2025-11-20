@@ -60,8 +60,6 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 -   Retrieve details of the currently configured project.
 -   This is either set via the `BUGSNAG_PROJECT_API_KEY` environment variable or from project IDs provided to other tools.
 
-## Performance Monitoring Tools
-
 ### List Span Groups
 
 -   List span groups in your project.
