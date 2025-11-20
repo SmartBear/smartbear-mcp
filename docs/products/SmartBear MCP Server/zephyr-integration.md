@@ -96,3 +96,13 @@ The following environment variables configure the Zephyr integration:
 - **Parameters:** Test cycle key or ID
 - **Returns**: A Test Cycle along with its properties.
 - **Use case**: Retrieve detailed information about a test cycle.
+
+### Get Environments
+
+- **Purpose**: Retrieve Environments from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Jira Project key (`projectKey`)
+- **Returns**: A list of environments along with their properties, including but not limited to name and description. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr Environments based on the provided filters.
