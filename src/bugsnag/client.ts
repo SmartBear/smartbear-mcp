@@ -17,10 +17,10 @@ import {
   ErrorUpdateRequest,
   type EventField,
   type Organization,
-  type PerformanceFilter,
   type Project,
   ProjectAPI,
   type Release,
+  type TraceField,
 } from "./client/api/index.js";
 import { type FilterObject, toUrlSearchParams } from "./client/filters.js";
 import { toolInputParameters } from "./input-schemas.js";
@@ -293,11 +293,9 @@ export class BugsnagClient implements Client {
     return projectFiltersCache[project.id];
   }
 
-  async getProjectPerformanceFilters(
-    project: Project,
-  ): Promise<PerformanceFilter[]> {
+  async getProjectPerformanceFilters(project: Project): Promise<TraceField[]> {
     const projectFiltersCache =
-      this.cache?.get<Record<string, PerformanceFilter[]>>(
+      this.cache?.get<Record<string, TraceField[]>>(
         cacheKeys.PROJECT_PERFORMANCE_FILTERS,
       ) || {};
     if (!projectFiltersCache[project.id]) {

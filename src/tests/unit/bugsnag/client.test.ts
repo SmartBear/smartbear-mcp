@@ -8,6 +8,7 @@ import type {
   ReleaseApiView,
   Span,
   SpanGroup,
+  TraceField,
 } from "../../../bugsnag/client/api/api.js";
 import type { BaseAPI } from "../../../bugsnag/client/api/base.js";
 import type {
@@ -2645,9 +2646,29 @@ describe("BugsnagClient", () => {
 
       it("should use cached trace fields when available", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockPerformanceFilters = [
-          { name: "cached.field", type: "string" },
-          { name: "another.field", type: "number" },
+        const mockPerformanceFilters: TraceField[] = [
+          {
+            display_id: "cached.field",
+            field_type: <any>"string",
+            filter_options: {
+              name: "cached.field",
+              description: "Cached field",
+              searchable: true,
+              match_types: [<any>"eq"],
+            },
+            custom: true,
+          },
+          {
+            display_id: "another.field",
+            field_type: <any>"number",
+            filter_options: {
+              name: "cached.field",
+              description: "Cached field",
+              searchable: true,
+              match_types: [<any>"eq"],
+            },
+            custom: true,
+          },
         ];
         const mockCachedFilters = { "proj-1": mockPerformanceFilters };
 
@@ -2686,7 +2707,19 @@ describe("BugsnagClient", () => {
           getMockProject("proj-1", "Project 1"),
           getMockProject("proj-2", "Project 2"),
         ];
-        const mockTraceFields = [{ name: "custom.field", type: "string" }];
+        const mockTraceFields: TraceField[] = [
+          {
+            display_id: "cached.field",
+            field_type: <any>"string",
+            filter_options: {
+              name: "cached.field",
+              description: "Cached field",
+              searchable: true,
+              match_types: [<any>"eq"],
+            },
+            custom: true,
+          },
+        ];
 
         mockCache.get.mockImplementation((key: string) => {
           if (key === "bugsnag_projects") {
