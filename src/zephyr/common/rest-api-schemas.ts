@@ -173,16 +173,16 @@ export const listTestCasesResponse = zod
               ),
             objective: zod
               .string()
-              .optional()
+              .nullish()
               .describe("A description of the objective."),
             precondition: zod
               .string()
-              .optional()
+              .nullish()
               .describe("Any conditions that need to be met."),
             estimatedTime: zod
               .number()
               .min(listTestCasesResponseValuesItemEstimatedTimeMin)
-              .optional()
+              .nullish()
               .describe("Estimated duration in milliseconds."),
             labels: zod
               .array(zod.string())
@@ -204,7 +204,7 @@ export const listTestCasesResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .nullish(),
             priority: zod
               .object({
                 id: zod.number().min(1),
@@ -259,6 +259,7 @@ export const listTestCasesResponse = zod
                 accountId: zod
                   .string()
                   .regex(listTestCasesResponseValuesItemOwnerAccountIdRegExp)
+                  .nullable()
                   .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
@@ -401,13 +402,10 @@ export const createTestCaseBody = zod.object({
     .regex(createTestCaseBodyProjectKeyRegExp)
     .describe("Jira project key."),
   name: zod.string().regex(createTestCaseBodyNameRegExp),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   precondition: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Any conditions that need to be met."),
   estimatedTime: zod
     .number()
@@ -439,7 +437,7 @@ export const createTestCaseBody = zod.object({
   ownerId: zod
     .string()
     .regex(createTestCaseBodyOwnerIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   labels: zod
     .array(zod.string())
@@ -559,18 +557,18 @@ export const listTestCasesCursorPaginatedResponse = zod
               ),
             objective: zod
               .string()
-              .optional()
+              .nullish()
               .describe("A description of the objective."),
             precondition: zod
               .string()
-              .optional()
+              .nullish()
               .describe("Any conditions that need to be met."),
             estimatedTime: zod
               .number()
               .min(
                 listTestCasesCursorPaginatedResponseValuesItemEstimatedTimeMin,
               )
-              .optional()
+              .nullish()
               .describe("Estimated duration in milliseconds."),
             labels: zod
               .array(zod.string())
@@ -592,7 +590,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .nullish(),
             priority: zod
               .object({
                 id: zod.number().min(1),
@@ -649,6 +647,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                   .regex(
                     listTestCasesCursorPaginatedResponseValuesItemOwnerAccountIdRegExp,
                   )
+                  .nullable()
                   .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
@@ -819,18 +818,15 @@ export const getTestCaseResponse = zod.object({
     .describe(
       "Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.\n",
     ),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   precondition: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Any conditions that need to be met."),
   estimatedTime: zod
     .number()
     .min(getTestCaseResponseEstimatedTimeMin)
-    .optional()
+    .nullish()
     .describe("Estimated duration in milliseconds."),
   labels: zod
     .array(zod.string())
@@ -850,7 +846,7 @@ export const getTestCaseResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .nullish(),
   priority: zod
     .object({
       id: zod.number().min(1),
@@ -899,6 +895,7 @@ export const getTestCaseResponse = zod.object({
       accountId: zod
         .string()
         .regex(getTestCaseResponseOwnerAccountIdRegExp)
+        .nullable()
         .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
@@ -1059,18 +1056,15 @@ export const updateTestCaseBody = zod.object({
     .describe(
       "Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.\n",
     ),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   precondition: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Any conditions that need to be met."),
   estimatedTime: zod
     .number()
     .min(updateTestCaseBodyEstimatedTimeMin)
-    .optional()
+    .nullish()
     .describe("Estimated duration in milliseconds."),
   labels: zod
     .array(zod.string())
@@ -1090,7 +1084,7 @@ export const updateTestCaseBody = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .nullish(),
   priority: zod
     .object({
       id: zod.number().min(1),
@@ -1139,6 +1133,7 @@ export const updateTestCaseBody = zod.object({
       accountId: zod
         .string()
         .regex(updateTestCaseBodyOwnerAccountIdRegExp)
+        .nullable()
         .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
@@ -1536,18 +1531,15 @@ export const getTestCaseVersionResponse = zod.object({
     .describe(
       "Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.\n",
     ),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   precondition: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Any conditions that need to be met."),
   estimatedTime: zod
     .number()
     .min(getTestCaseVersionResponseEstimatedTimeMin)
-    .optional()
+    .nullish()
     .describe("Estimated duration in milliseconds."),
   labels: zod
     .array(zod.string())
@@ -1567,7 +1559,7 @@ export const getTestCaseVersionResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .nullish(),
   priority: zod
     .object({
       id: zod.number().min(1),
@@ -1616,6 +1608,7 @@ export const getTestCaseVersionResponse = zod.object({
       accountId: zod
         .string()
         .regex(getTestCaseVersionResponseOwnerAccountIdRegExp)
+        .nullable()
         .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
@@ -2270,6 +2263,7 @@ export const listTestCyclesResponse = zod
                   accountId: zod
                     .string()
                     .regex(listTestCyclesResponseValuesItemOwnerAccountIdRegExp)
+                    .nullable()
                     .describe("Atlassian Account ID of the Jira user."),
                   self: zod
                     .string()
@@ -2476,7 +2470,7 @@ export const createTestCycleBody = zod.object({
   ownerId: zod
     .string()
     .regex(createTestCycleBodyOwnerIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   customFields: zod
     .record(zod.string(), zod.unknown())
@@ -2602,6 +2596,7 @@ export const getTestCycleResponse = zod
         accountId: zod
           .string()
           .regex(getTestCycleResponseOwnerAccountIdRegExp)
+          .nullable()
           .describe("Atlassian Account ID of the Jira user."),
         self: zod
           .string()
@@ -2856,6 +2851,7 @@ export const updateTestCycleBody = zod
         accountId: zod
           .string()
           .regex(updateTestCycleBodyOwnerAccountIdRegExp)
+          .nullable()
           .describe("Atlassian Account ID of the Jira user."),
         self: zod
           .string()
@@ -3254,7 +3250,7 @@ export const listTestPlansResponse = zod
             name: zod.string().regex(listTestPlansResponseValuesItemNameRegExp),
             objective: zod
               .string()
-              .optional()
+              .nullish()
               .describe("A description of the objective."),
             project: zod
               .object({
@@ -3311,6 +3307,7 @@ export const listTestPlansResponse = zod
                 accountId: zod
                   .string()
                   .regex(listTestPlansResponseValuesItemOwnerAccountIdRegExp)
+                  .nullable()
                   .describe("Atlassian Account ID of the Jira user."),
                 self: zod
                   .string()
@@ -3462,10 +3459,7 @@ export const createTestPlanBody = zod.object({
     .regex(createTestPlanBodyProjectKeyRegExp)
     .describe("Jira project key."),
   name: zod.string().regex(createTestPlanBodyNameRegExp),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   folderId: zod
     .number()
     .min(1)
@@ -3480,7 +3474,7 @@ export const createTestPlanBody = zod.object({
   ownerId: zod
     .string()
     .regex(createTestPlanBodyOwnerIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   labels: zod
     .array(zod.string())
@@ -3521,10 +3515,7 @@ export const getTestPlanResponse = zod.object({
     .regex(getTestPlanResponseKeyRegExp)
     .describe("Key of the test plan"),
   name: zod.string().regex(getTestPlanResponseNameRegExp),
-  objective: zod
-    .string()
-    .optional()
-    .describe("A description of the objective."),
+  objective: zod.string().nullish().describe("A description of the objective."),
   project: zod
     .object({
       id: zod.number().min(1),
@@ -3574,6 +3565,7 @@ export const getTestPlanResponse = zod.object({
       accountId: zod
         .string()
         .regex(getTestPlanResponseOwnerAccountIdRegExp)
+        .nullable()
         .describe("Atlassian Account ID of the Jira user."),
       self: zod
         .string()
@@ -3959,7 +3951,7 @@ export const listTestExecutionsResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .nullish(),
             jiraProjectVersion: zod
               .object({
                 id: zod.number().min(1),
@@ -4006,26 +3998,26 @@ export const listTestExecutionsResponse = zod
             estimatedTime: zod
               .number()
               .min(listTestExecutionsResponseValuesItemEstimatedTimeMin)
-              .optional()
+              .nullish()
               .describe("Estimated duration in milliseconds."),
             executionTime: zod
               .number()
               .min(listTestExecutionsResponseValuesItemExecutionTimeMin)
-              .optional()
+              .nullish()
               .describe("Actual test execution time in milliseconds."),
             executedById: zod
               .string()
               .regex(listTestExecutionsResponseValuesItemExecutedByIdRegExp)
-              .optional()
+              .nullish()
               .describe("Atlassian Account ID of the Jira user."),
             assignedToId: zod
               .string()
               .regex(listTestExecutionsResponseValuesItemAssignedToIdRegExp)
-              .optional()
+              .nullish()
               .describe("Atlassian Account ID of the Jira user."),
             comment: zod
               .string()
-              .optional()
+              .nullish()
               .describe("Comment added against overall test case execution."),
             automated: zod
               .boolean()
@@ -4048,7 +4040,7 @@ export const listTestExecutionsResponse = zod
                   id: zod.number().min(1).optional(),
                 }),
               )
-              .optional(),
+              .nullish(),
             customFields: zod
               .record(zod.string(), zod.unknown())
               .optional()
@@ -4199,16 +4191,16 @@ export const createTestExecutionBody = zod.object({
   executedById: zod
     .string()
     .regex(createTestExecutionBodyExecutedByIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   assignedToId: zod
     .string()
     .regex(createTestExecutionBodyAssignedToIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   comment: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Comment added against overall test case execution."),
   customFields: zod
     .record(zod.string(), zod.unknown())
@@ -4393,7 +4385,7 @@ export const listTestExecutionsNextgenResponse = zod
                     ),
                 }),
               )
-              .optional(),
+              .nullish(),
             jiraProjectVersion: zod
               .object({
                 id: zod.number().min(1),
@@ -4440,30 +4432,30 @@ export const listTestExecutionsNextgenResponse = zod
             estimatedTime: zod
               .number()
               .min(listTestExecutionsNextgenResponseValuesItemEstimatedTimeMin)
-              .optional()
+              .nullish()
               .describe("Estimated duration in milliseconds."),
             executionTime: zod
               .number()
               .min(listTestExecutionsNextgenResponseValuesItemExecutionTimeMin)
-              .optional()
+              .nullish()
               .describe("Actual test execution time in milliseconds."),
             executedById: zod
               .string()
               .regex(
                 listTestExecutionsNextgenResponseValuesItemExecutedByIdRegExp,
               )
-              .optional()
+              .nullish()
               .describe("Atlassian Account ID of the Jira user."),
             assignedToId: zod
               .string()
               .regex(
                 listTestExecutionsNextgenResponseValuesItemAssignedToIdRegExp,
               )
-              .optional()
+              .nullish()
               .describe("Atlassian Account ID of the Jira user."),
             comment: zod
               .string()
-              .optional()
+              .nullish()
               .describe("Comment added against overall test case execution."),
             automated: zod
               .boolean()
@@ -4486,7 +4478,7 @@ export const listTestExecutionsNextgenResponse = zod
                   id: zod.number().min(1).optional(),
                 }),
               )
-              .optional(),
+              .nullish(),
             customFields: zod
               .record(zod.string(), zod.unknown())
               .optional()
@@ -4642,7 +4634,7 @@ export const getTestExecutionResponse = zod.object({
           .describe("The REST API endpoint to get more resource details."),
       }),
     )
-    .optional(),
+    .nullish(),
   jiraProjectVersion: zod
     .object({
       id: zod.number().min(1),
@@ -4685,26 +4677,26 @@ export const getTestExecutionResponse = zod.object({
   estimatedTime: zod
     .number()
     .min(getTestExecutionResponseEstimatedTimeMin)
-    .optional()
+    .nullish()
     .describe("Estimated duration in milliseconds."),
   executionTime: zod
     .number()
     .min(getTestExecutionResponseExecutionTimeMin)
-    .optional()
+    .nullish()
     .describe("Actual test execution time in milliseconds."),
   executedById: zod
     .string()
     .regex(getTestExecutionResponseExecutedByIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   assignedToId: zod
     .string()
     .regex(getTestExecutionResponseAssignedToIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   comment: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Comment added against overall test case execution."),
   automated: zod
     .boolean()
@@ -4723,7 +4715,7 @@ export const getTestExecutionResponse = zod.object({
         id: zod.number().min(1).optional(),
       }),
     )
-    .optional(),
+    .nullish(),
   customFields: zod
     .record(zod.string(), zod.unknown())
     .optional()
@@ -4834,16 +4826,16 @@ export const updateTestExecutionBody = zod.object({
   executedById: zod
     .string()
     .regex(updateTestExecutionBodyExecutedByIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   assignedToId: zod
     .string()
     .regex(updateTestExecutionBodyAssignedToIdRegExp)
-    .optional()
+    .nullish()
     .describe("Atlassian Account ID of the Jira user."),
   comment: zod
     .string()
-    .optional()
+    .nullish()
     .describe("Comment added against overall test case execution."),
 });
 
@@ -5739,7 +5731,10 @@ export const listStatusesQueryParams = zod.object({
     .regex(listStatusesQueryProjectKeyRegExp)
     .optional()
     .describe("Jira project key filter"),
-  statusType: zod.string().optional(),
+  statusType: zod
+    .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
+    .optional()
+    .describe("Determines which type of entity the status belongs to."),
 });
 
 export const listStatusesResponseStartAtMin = 0;
@@ -5821,7 +5816,12 @@ export const listStatusesResponse = zod
             .and(
               zod.object({
                 color: zod.string().optional(),
-                archived: zod.boolean().optional(),
+                archived: zod
+                  .boolean()
+                  .optional()
+                  .describe(
+                    "Determines whether the status is archived. Archived statuses are read-only and cannot be assigned to entities.",
+                  ),
                 default: zod.boolean().optional(),
               }),
             ),
@@ -5852,10 +5852,8 @@ export const createStatusBody = zod.object({
     .max(createStatusBodyNameMax)
     .describe("The status name."),
   type: zod
-    .string()
-    .describe(
-      'Valid values: `"TEST_CASE"`, `"TEST_PLAN"`, `"TEST_CYCLE"`, `"TEST_EXECUTION"`',
-    ),
+    .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
+    .describe("Determines which type of entity the status belongs to."),
   description: zod
     .string()
     .min(1)
@@ -5912,7 +5910,12 @@ export const getStatusResponse = zod
   .and(
     zod.object({
       color: zod.string().optional(),
-      archived: zod.boolean().optional(),
+      archived: zod
+        .boolean()
+        .optional()
+        .describe(
+          "Determines whether the status is archived. Archived statuses are read-only and cannot be assigned to entities.",
+        ),
       default: zod.boolean().optional(),
     }),
   );

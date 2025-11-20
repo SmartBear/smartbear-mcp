@@ -1,5 +1,7 @@
 import { z } from "zod";
+
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import type { SmartBearMcpServer } from "../common/server.js";
 import {
   type Client,
   type GetInputFunction,
@@ -26,23 +28,31 @@ export interface testExecutionArgs {
   executionId: string;
 }
 
+const ConfigurationSchema = z.object({
+  api_token: z.string().describe("Reflect API authentication token"),
+});
+
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
-  private headers: {
-    "X-API-KEY": string;
-    "Content-Type": string;
-    "User-Agent": string;
-  };
+  private headers = {};
 
   name = "Reflect";
-  prefix = "reflect";
+  toolPrefix = "reflect";
+  configPrefix = "Reflect";
 
-  constructor(token: string) {
+  config = ConfigurationSchema;
+
+  async configure(
+    _server: SmartBearMcpServer,
+    config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
+  ): Promise<boolean> {
     this.headers = {
-      "X-API-KEY": `${token}`,
+      "X-API-KEY": `${config.api_token}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
+    return true;
   }
 
   async listReflectSuites(): Promise<any> {

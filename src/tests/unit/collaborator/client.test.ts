@@ -4,48 +4,64 @@ import { CollaboratorClient } from "../../../collaborator/client";
 
 const fetchMock = createFetchMock(vi);
 
+// Helper to create and configure a client
+async function createConfiguredClient(
+  baseUrl = "https://collab.example.com",
+  username = "admin",
+  loginTicket = "ticket123",
+): Promise<CollaboratorClient> {
+  const client = new CollaboratorClient();
+  await client.configure({} as any, {
+    base_url: baseUrl,
+    username: username,
+    login_ticket: loginTicket,
+  });
+  return client;
+}
+
 describe("CollaboratorClient", () => {
   let client: CollaboratorClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
+    client = await createConfiguredClient();
   });
 
   afterEach(() => {
     fetchMock.disableMocks();
   });
 
-  describe("constructor", () => {
-    it("sets baseUrl, username, and loginTicket", () => {
-      client = new CollaboratorClient(
-        "https://collab.example.com",
-        "admin",
-        "ticket123",
-      );
-      expect(client.baseUrl).toBe("https://collab.example.com");
-      expect(client.username).toBe("admin");
-      expect(client.loginTicket).toBe("ticket123");
+  describe("configure", () => {
+    it("sets baseUrl, username, and loginTicket", async () => {
+      const newClient = new CollaboratorClient();
+      const result = await newClient.configure({} as any, {
+        base_url: "https://collab.example.com",
+        username: "admin",
+        login_ticket: "ticket123",
+      });
+      expect(result).toBe(true);
+      expect(newClient).toBeInstanceOf(CollaboratorClient);
+    });
+
+    it("has correct client properties", () => {
+      expect(client.name).toBe("Collaborator");
+      expect(client.toolPrefix).toBe("collaborator");
+      expect(client.configPrefix).toBe("Collaborator");
     });
   });
 
   describe("call", () => {
-    beforeEach(() => {
-      client = new CollaboratorClient(
-        "https://collab.example.com",
-        "admin",
-        "ticket123",
-      );
-    });
-
     it("prepends authentication and sends correct payload", async () => {
       fetchMock.mockResponseOnce(JSON.stringify({ result: "ok" }));
       const commands = [
         { command: "ReviewService.findReviewById", args: { reviewId: "1" } },
       ];
       await client.call(commands);
-      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      const requestBody = fetchMock.mock.calls[0]?.[1]?.body;
+      expect(requestBody).toBeDefined();
+      const body = JSON.parse(requestBody as string);
       expect(body[0].command).toBe("SessionService.authenticate");
       expect(body[0].args).toEqual({ login: "admin", ticket: "ticket123" });
       expect(body[1].command).toBe("ReviewService.findReviewById");
@@ -60,17 +76,21 @@ describe("CollaboratorClient", () => {
         ]),
       ).rejects.toThrow("Collaborator API call failed: 401 - Unauthorized");
     });
+
+    it("throws error when client not configured", async () => {
+      const unconfiguredClient = new CollaboratorClient();
+      await expect(
+        unconfiguredClient.call([
+          { command: "ReviewService.findReviewById", args: { reviewId: "1" } },
+        ]),
+      ).rejects.toThrow("Collaborator client not configured");
+    });
   });
 
   describe("registerTools", () => {
     const mockRegister = vi.fn();
     const mockGetInput = vi.fn();
     beforeEach(() => {
-      client = new CollaboratorClient(
-        "https://collab.example.com",
-        "admin",
-        "ticket123",
-      );
       mockRegister.mockClear();
     });
 
@@ -98,12 +118,8 @@ describe("CollaboratorClient", () => {
   });
 
   describe("tool handlers", () => {
-    beforeEach(() => {
-      client = new CollaboratorClient(
-        "https://collab.example.com",
-        "admin",
-        "ticket123",
-      );
+    beforeEach(async () => {
+      client = await createConfiguredClient();
       fetchMock.resetMocks();
     });
 
