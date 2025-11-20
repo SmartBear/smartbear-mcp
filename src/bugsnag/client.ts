@@ -1527,6 +1527,123 @@ export class BugsnagClient implements Client {
         };
       },
     );
+
+    const getNetworkGroupingInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+    });
+
+    register(
+      {
+        title: "Get Network Endpoint Groupings",
+        summary: "Get the network endpoint grouping rules for a project",
+        purpose:
+          "Retrieve the URL patterns used to group network spans for performance monitoring",
+        useCases: [
+          "View current network endpoint grouping configuration",
+          "Understand how network requests are being grouped in performance monitoring",
+          "Check grouping patterns before making updates",
+        ],
+        inputSchema: getNetworkGroupingInputSchema,
+        examples: [
+          {
+            description: "Get network grouping rules for a project",
+            parameters: {},
+            expectedOutput:
+              "JSON object with projectId and array of endpoint URL patterns",
+          },
+        ],
+        hints: [
+          "Network grouping patterns help consolidate similar requests into single span groups",
+          "Patterns can use wildcards to match multiple endpoints",
+        ],
+        readOnly: true,
+        idempotent: true,
+      },
+      async (args, _extra) => {
+        const params = getNetworkGroupingInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+        const result = await this.projectApi.getProjectNetworkGroupingRuleset(
+          project.id,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
+
+    const setNetworkGroupingInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+      endpoints: z
+        .array(z.string())
+        .describe(
+          "Array of URL patterns by which network spans are grouped. Use wildcards (*) to match multiple endpoints. " +
+            "Endpoints follow the Open API path templating syntax for path parameters (https://swagger.io/specification/#path-templating)",
+        ),
+    });
+
+    register(
+      {
+        title: "Set Network Endpoint Groupings",
+        summary: "Set the network endpoint grouping rules for a project",
+        purpose:
+          "Configure URL patterns to control how network spans are grouped in performance monitoring",
+        useCases: [
+          "Consolidate similar API endpoints into single span groups",
+          "Add patterns to group dynamic URLs (e.g., /api/users/{id} to group /api/users/123, /api/users/456)",
+          "Simplify performance monitoring by reducing span group clutter",
+        ],
+        inputSchema: setNetworkGroupingInputSchema,
+        examples: [
+          {
+            description: "Group all user API endpoints under a single pattern",
+            parameters: {
+              endpoints: [
+                "/api/users/*",
+                "/api/products/*",
+                "/api/orders/{id}",
+              ],
+            },
+            expectedOutput: "Success response confirming the update",
+          },
+          {
+            description: "Set up grouping for versioned API endpoints",
+            parameters: {
+              endpoints: ["/api/v1/*", "/api/v2/*", "/graphql"],
+            },
+            expectedOutput: "Success response confirming the update",
+          },
+        ],
+        hints: [
+          "Use Get Network Grouping first to see current patterns",
+          "Patterns support wildcards (*) to match multiple endpoints",
+          "This replaces all existing patterns - include all patterns you want to keep",
+          "Well-designed patterns reduce noise in performance monitoring",
+        ],
+        readOnly: false,
+        idempotent: true,
+      },
+      async (args, _extra) => {
+        const params = setNetworkGroupingInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+        const result =
+          await this.projectApi.updateProjectNetworkGroupingRuleset(
+            project.id,
+            params.endpoints,
+          );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                success: result.status === 200 || result.status === 204,
+                projectId: project.id,
+                endpoints: params.endpoints,
+              }),
+            },
+          ],
+        };
+      },
+    );
   }
 
   registerResources(register: RegisterResourceFunction): void {
