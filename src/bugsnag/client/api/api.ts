@@ -41,7 +41,6 @@ class RequiredError extends Error {
     super(msg);
   }
 }
-
 /**
  *
  * @export
@@ -156,7 +155,7 @@ interface CoreFrameFields {
    */
   method?: string;
   /**
-   * The type of the stackframe. This may be different for each stackframe, for example when the error occures in native extension of a scripting language.
+   * The type of the stackframe. This may be different for each stackframe, for example when the error occurs in native extension of a scripting language.
    * @type {string}
    * @memberof CoreFrameFields
    */
@@ -307,6 +306,12 @@ export interface ErrorApiView extends ErrorBase {
    */
   lastSeenUnfiltered?: string;
   /**
+   * The trend in the Error's daily occurrence frequency. Only included when the `histogram` parameter is provided in the request. If set to `dynamic`, the data is scoped to the time range being requested. If set to `two_week` or not provided, it covers the last 14 days. It's represented as an array of [`date`, `count`] pairs. This trend will take non-time Filters into account.
+   * @type {Array<Array<any>>}
+   * @memberof ErrorApiView
+   */
+  trend?: Array<Array<any>>;
+  /**
    *
    * @type {ErrorReopenRules}
    * @memberof ErrorApiView
@@ -442,7 +447,7 @@ interface ErrorAssignmentRulePatternApiView {
    */
   matchValue?: string;
   /**
-   * Whether to match on any line or only the first line - required for file_path and code_method matches, unset for payload_path mathces.
+   * Whether to match on any line or only the first line - required for file_path and code_method matches, unset for payload_path matches.
    * @type {string}
    * @memberof ErrorAssignmentRulePatternApiView
    */
@@ -714,7 +719,7 @@ namespace ErrorUpdateReopenRules {
  */
 export interface ErrorUpdateRequest extends ErrorBase {
   /**
-   * The type of update operation to perform. The can be used to change the Error's workflow state (e.g. marking the Error as `fixed`). It must be one of the following: * `override_severity`   Set the Error's severity to the newly supplied `severity` parameter. * `assign`   Assign the Error to the Collaborator specified by the `assigned_collaborator_id` parameter. The error will be unassigned if `assigned_collaborator_id` is blank, the identified Collaborator has not accepted their invitation, or they do not have access to the Error's Project. * `create_issue`   Create an issue for the Error. If the `issue_title` parameter is set, the new issue will be created with this title. * `link_issue`   Link the Error to an existing issue. The url should be provided in the `issue_url` parameter. `verify_issue_url` can be set to control whether Bugsnag should attempt to verify the issue URL with any configured issue tracker integration. This is the default behaviour if `verify_issue_url` is not supplied. * `unlink_issue`   Remove the link between the Error and its current linked issue.  * `open`   Set the Error's status to open. * `snooze`   Snooze the error per the `reopen_rules` parameter. * `fix`   Set the Error's status to fixed. * `ignore`   Ignore the Error. Errors that are ignored and can only be reopened manually. Events are collected, but no notifications are sent. * `delete`   Delete the Error. The Error and all related Events will be removed from Bugsnag. If the error occurs again, it will appear as a new Error with status `Open`. * `discard`   Discard future Events for this Error. The Error and all existing Events will remain in Bugsnag, but future occurrences of the Error will not be stored by Bugsnag or count toward Event usage limits. * `undiscard`   Undiscard the Error. Future Events will be stored for this Error. This undoes the `discard` option.
+   * The type of update operation to perform. The can be used to change the Error's workflow state (e.g. marking the Error as `fixed`). It must be one of the following: * `override_severity`   Set the Error's severity to the newly supplied `severity` parameter. * `assign`   Assign the Error to the Collaborator specified by the `assigned_collaborator_id` parameter. The error will be unassigned if `assigned_collaborator_id` is blank, the identified Collaborator has not accepted their invitation, or they do not have access to the Error's Project. * `create_issue`   Create an issue for the Error. If the `issue_title` parameter is set, the new issue will be created with this title. * `link_issue`   Link the Error to an existing issue. The url should be provided in the `issue_url` parameter. `verify_issue_url` can be set to control whether Bugsnag should attempt to verify the issue URL with any configured issue tracker integration. This is the default behavior if `verify_issue_url` is not supplied. * `unlink_issue`   Remove the link between the Error and its current linked issue.  * `open`   Set the Error's status to open. * `snooze`   Snooze the error per the `reopen_rules` parameter. * `fix`   Set the Error's status to fixed. * `ignore`   Ignore the Error. Errors that are ignored and can only be reopened manually. Events are collected, but no notifications are sent. * `delete`   Delete the Error. The Error and all related Events will be removed from Bugsnag. If the error occurs again, it will appear as a new Error with status `Open`. * `discard`   Discard future Events for this Error. The Error and all existing Events will remain in Bugsnag, but future occurrences of the Error will not be stored by Bugsnag or count toward Event usage limits. * `undiscard`   Undiscard the Error. Future Events will be stored for this Error. This undoes the `discard` option.
    * @type {string}
    * @memberof ErrorUpdateRequest
    */
@@ -830,7 +835,7 @@ export interface EventApiView {
    */
   errorId?: string;
   /**
-   * The time the Bugsnag [error reporting API](https://docs.bugsnag.com/api/error-reporting/) was notified of this Event
+   * The time the [Error Reporting API](https://developer.smartbear.com/bugsnag/docs/reporting-events-and-sessions/) was notified of this Event
    * @type {string}
    * @memberof EventApiView
    */
@@ -902,7 +907,7 @@ export interface EventApiView {
    */
   unhandled?: boolean;
   /**
-   * Whether or not there's a missing dsym (only included in response if event includes a dsym_uuid).
+   * Whether or not there's a missing dSYM (only included in response if event includes a dsym_uuid).
    * @type {boolean}
    * @memberof EventApiView
    */
@@ -1670,7 +1675,7 @@ interface FilterValue {
    */
   id?: string;
   /**
-   * A human readable represenation of this value
+   * A human readable representation of this value
    * @type {string}
    * @memberof FilterValue
    */
@@ -2474,7 +2479,43 @@ interface FiltersVersionSeenIn {
    */
   value: string;
 }
-
+/**
+ *
+ * @export
+ * @interface FrameRateStatistics
+ */
+interface FrameRateStatistics {
+  /**
+   * The P50 of frames
+   * @type {number}
+   * @memberof FrameRateStatistics
+   */
+  p50: number;
+  /**
+   * The P75 of frames
+   * @type {number}
+   * @memberof FrameRateStatistics
+   */
+  p75: number;
+  /**
+   * The P90 of frames
+   * @type {number}
+   * @memberof FrameRateStatistics
+   */
+  p90: number;
+  /**
+   * The P95 of frames
+   * @type {number}
+   * @memberof FrameRateStatistics
+   */
+  p95: number;
+  /**
+   * The P99 of frames
+   * @type {number}
+   * @memberof FrameRateStatistics
+   */
+  p99: number;
+}
 /**
  *
  * @export
@@ -2488,7 +2529,6 @@ interface NetworkGroupingRulesetRequest {
    */
   endpoints: Array<string>;
 }
-
 /**
  *
  * @export
@@ -2609,6 +2649,43 @@ interface OrganizationBase {
 /**
  *
  * @export
+ * @interface PageLoadSpanGroup
+ */
+export interface PageLoadSpanGroup {
+  /**
+   * The ID of the (virtual) Span Group.
+   * @type {string}
+   * @memberof PageLoadSpanGroup
+   */
+  id: string;
+  /**
+   * The name of the (virtual) Span Group for display purposes.
+   * @type {string}
+   * @memberof PageLoadSpanGroup
+   */
+  displayName: string;
+  /**
+   * Whether the requesting user has starred the (virtual) Span Group.
+   * @type {boolean}
+   * @memberof PageLoadSpanGroup
+   */
+  isStarred?: boolean;
+  /**
+   *
+   * @type {SpanGroup}
+   * @memberof PageLoadSpanGroup
+   */
+  fullPageLoadSpanGroup: SpanGroup;
+  /**
+   *
+   * @type {SpanGroup}
+   * @memberof PageLoadSpanGroup
+   */
+  routeChangeSpanGroup: SpanGroup;
+}
+/**
+ *
+ * @export
  * @enum {string}
  */
 enum PerformanceDisplayType {
@@ -2625,7 +2702,7 @@ enum PerformanceDisplayType {
  * @export
  * @interface PerformanceFilter
  */
-interface PerformanceFilter {
+export interface PerformanceFilter {
   /**
    * Identifier that is used as the key when filtering by this field.
    * @type {string}
@@ -2676,7 +2753,161 @@ namespace PerformanceFilterValue {
     Empty = <any>"empty",
   }
 }
+/**
+ *
+ * @export
+ * @interface PerformanceScoreTimelinePoint
+ */
+interface PerformanceScoreTimelinePoint {
+  /**
+   * Timestamp representing the start point of the bucketed performance score, inclusive.
+   * @type {string}
+   * @memberof PerformanceScoreTimelinePoint
+   */
+  bucketStart: string;
+  /**
+   * Timestamp representing the end point of the bucketed performance score, exclusive.
+   * @type {string}
+   * @memberof PerformanceScoreTimelinePoint
+   */
+  bucketEnd: string;
+  /**
+   * The performance score for the time period, between 0.0 and 1.0.
+   * @type {number}
+   * @memberof PerformanceScoreTimelinePoint
+   */
+  performanceScore?: number;
+  /**
+   * The number of Spans that qualified towards the Performance Score in the bucket period
+   * @type {number}
+   * @memberof PerformanceScoreTimelinePoint
+   */
+  spanCount?: number;
+}
+/**
+ *
+ * @export
+ * @interface PerformanceTarget
+ */
+export interface PerformanceTarget {
+  /**
+   * The ID of the Performance Target.
+   * @type {string}
+   * @memberof PerformanceTarget
+   */
+  id: string;
+  /**
+   * The ID of the Project that the Performance Target belongs to.
+   * @type {string}
+   * @memberof PerformanceTarget
+   */
+  projectId: string;
+  /**
+   *
+   * @type {PerformanceTargetType}
+   * @memberof PerformanceTarget
+   */
+  type: PerformanceTargetType;
+  /**
+   *
+   * @type {PerformanceTargetSpanGroupDetails}
+   * @memberof PerformanceTarget
+   */
+  spanGroup: PerformanceTargetSpanGroupDetails;
+  /**
+   *
+   * @type {PerformanceTargetConfiguration}
+   * @memberof PerformanceTarget
+   */
+  config: PerformanceTargetConfiguration;
+}
+/**
+ *
+ * @export
+ * @interface PerformanceTargetConfiguration
+ */
+interface PerformanceTargetConfiguration {
+  /**
+   * The state of the Performance Target.
+   * @type {string}
+   * @memberof PerformanceTargetConfiguration
+   */
+  state: PerformanceTargetConfiguration.StateEnum;
+  /**
+   *
+   * @type {PerformanceTargetConfigurationThreshold}
+   * @memberof PerformanceTargetConfiguration
+   */
+  warningPerformance?: PerformanceTargetConfigurationThreshold;
+  /**
+   *
+   * @type {PerformanceTargetConfigurationThreshold}
+   * @memberof PerformanceTargetConfiguration
+   */
+  criticalPerformance?: PerformanceTargetConfigurationThreshold;
+}
 
+/**
+ * @export
+ * @namespace PerformanceTargetConfiguration
+ */
+namespace PerformanceTargetConfiguration {
+  /**
+   * @export
+   * @enum {string}
+   */
+  export enum StateEnum {
+    Enabled = <any>"enabled",
+    Disabled = <any>"disabled",
+  }
+}
+/**
+ *
+ * @export
+ * @interface PerformanceTargetConfigurationThreshold
+ */
+interface PerformanceTargetConfigurationThreshold {
+  /**
+   * The duration threshold in milliseconds.
+   * @type {number}
+   * @memberof PerformanceTargetConfigurationThreshold
+   */
+  duration: number;
+}
+/**
+ *
+ * @export
+ * @interface PerformanceTargetSpanGroupDetails
+ */
+interface PerformanceTargetSpanGroupDetails {
+  /**
+   *
+   * @type {SpanGroupCategory}
+   * @memberof PerformanceTargetSpanGroupDetails
+   */
+  category: SpanGroupCategory;
+  /**
+   * The ID of the Span Group. Required when Performance Target type is span_group.
+   * @type {string}
+   * @memberof PerformanceTargetSpanGroupDetails
+   */
+  id?: string;
+  /**
+   * The name of the Span Group for display purposes. Required when Performance Target type is span_group.
+   * @type {string}
+   * @memberof PerformanceTargetSpanGroupDetails
+   */
+  displayName?: string;
+}
+/**
+ *
+ * @export
+ * @enum {string}
+ */
+enum PerformanceTargetType {
+  Category = <any>"category",
+  SpanGroup = <any>"span_group",
+}
 /**
  *
  * @export
@@ -3083,11 +3314,55 @@ interface ProjectIdStarredFeatureFlagsBody {
   featureFlagId: string;
 }
 /**
+ *
+ * @export
+ * @interface ProjectNetworkGroupingRuleset
+ */
+export interface ProjectNetworkGroupingRuleset {
+  /**
+   * The ID of the project this is for
+   * @type {string}
+   * @memberof ProjectNetworkGroupingRuleset
+   */
+  projectId: string;
+  /**
+   * The URL patterns by which network spans are grouped.
+   * @type {Array<string>}
+   * @memberof ProjectNetworkGroupingRuleset
+   */
+  endpoints: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ProjectPerformanceScoreOverview
+ */
+export interface ProjectPerformanceScoreOverview {
+  /**
+   * The performance score for the project, between 0.0 and 1.0.
+   * @type {number}
+   * @memberof ProjectPerformanceScoreOverview
+   */
+  performanceScore?: number;
+  /**
+   * The number of Spans that qualified towards the Performance Score.
+   * @type {number}
+   * @memberof ProjectPerformanceScoreOverview
+   */
+  spanCount?: number;
+  /**
+   * The performance score timeline points for the project.
+   * @type {Array<PerformanceScoreTimelinePoint>}
+   * @memberof ProjectPerformanceScoreOverview
+   */
+  performanceScoreTimeline?: Array<PerformanceScoreTimelinePoint>;
+}
+/**
  * used for Projects that use a framework other than those listed above
  * @export
  * @enum {string}
  */
-enum ProjectType {
+export enum ProjectType {
   Android = <any>"android",
   Angular = <any>"angular",
   Asgi = <any>"asgi",
@@ -3116,6 +3391,7 @@ enum ProjectType {
   Java = <any>"java",
   JavaDesktop = <any>"java_desktop",
   Js = <any>"js",
+  Vega = <any>"vega",
   Koa = <any>"koa",
   Laravel = <any>"laravel",
   Lumen = <any>"lumen",
@@ -3527,6 +3803,107 @@ interface ReleaseSourceControl {
 /**
  *
  * @export
+ * @interface RenderingMetrics
+ */
+interface RenderingMetrics {
+  /**
+   *
+   * @type {RenderingMetricsSlowFrames}
+   * @memberof RenderingMetrics
+   */
+  slowFrames?: RenderingMetricsSlowFrames;
+  /**
+   *
+   * @type {RenderingMetricsFrozenFrames}
+   * @memberof RenderingMetrics
+   */
+  frozenFrames?: RenderingMetricsFrozenFrames;
+  /**
+   *
+   * @type {RenderingMetricsTotalFrames}
+   * @memberof RenderingMetrics
+   */
+  totalFrames?: RenderingMetricsTotalFrames;
+  /**
+   *
+   * @type {RenderingStatisticsFrameRateStatistics}
+   * @memberof RenderingMetrics
+   */
+  frameRateStatistics?: RenderingStatisticsFrameRateStatistics;
+}
+/**
+ *
+ * @export
+ * @interface RenderingMetricsFrozenFrames
+ */
+interface RenderingMetricsFrozenFrames {
+  /**
+   * The number of Spans that has at least one frozen frame
+   * @type {number}
+   * @memberof RenderingMetricsFrozenFrames
+   */
+  spanCount: number;
+}
+/**
+ *
+ * @export
+ * @interface RenderingMetricsSlowFrames
+ */
+interface RenderingMetricsSlowFrames {
+  /**
+   * The number of Spans that has at least one slow frame
+   * @type {number}
+   * @memberof RenderingMetricsSlowFrames
+   */
+  spanCount: number;
+}
+/**
+ *
+ * @export
+ * @interface RenderingMetricsTotalFrames
+ */
+interface RenderingMetricsTotalFrames {
+  /**
+   * The number of Spans that tracked at least one frame
+   * @type {number}
+   * @memberof RenderingMetricsTotalFrames
+   */
+  spanCount: number;
+}
+/**
+ *
+ * @export
+ * @interface RenderingStatisticsFrameRateStatistics
+ */
+interface RenderingStatisticsFrameRateStatistics {
+  /**
+   * The number of Spans that reported rendering metrics of this type
+   * @type {number}
+   * @memberof RenderingStatisticsFrameRateStatistics
+   */
+  spanCount: number;
+  /**
+   *
+   * @type {FrameRateStatistics}
+   * @memberof RenderingStatisticsFrameRateStatistics
+   */
+  fpsMean: FrameRateStatistics;
+  /**
+   * The lowest seen FPS for a Span Group
+   * @type {number}
+   * @memberof RenderingStatisticsFrameRateStatistics
+   */
+  fpsMinimum: number;
+  /**
+   * The highest seen FPS for a Span Group
+   * @type {number}
+   * @memberof RenderingStatisticsFrameRateStatistics
+   */
+  fpsMaximum: number;
+}
+/**
+ *
+ * @export
  * @interface SavedSearchCreateRequest
  */
 interface SavedSearchCreateRequest {
@@ -3626,7 +4003,481 @@ enum SeverityOptions {
   Warning = <any>"warning",
   Error = <any>"error",
 }
+/**
+ *
+ * @export
+ * @interface Span
+ */
+export interface Span {
+  /**
+   * The ID of the span
+   * @type {string}
+   * @memberof Span
+   */
+  id: string;
+  /**
+   * The ID of the parent span if applicable
+   * @type {string}
+   * @memberof Span
+   */
+  parentSpanId?: string;
+  /**
+   * The ID of the trace
+   * @type {string}
+   * @memberof Span
+   */
+  traceId: string;
+  /**
+   * The category of the span
+   * @type {string}
+   * @memberof Span
+   */
+  category: string;
+  /**
+   * The name of the span
+   * @type {string}
+   * @memberof Span
+   */
+  name: string;
+  /**
+   * The name of the span for display purposes
+   * @type {string}
+   * @memberof Span
+   */
+  displayName: string;
+  /**
+   * The duration of the span in milliseconds
+   * @type {number}
+   * @memberof Span
+   */
+  duration: number;
+  /**
+   * The timestamp we've attributed to the Span
+   * @type {string}
+   * @memberof Span
+   */
+  timestamp: string;
+  /**
+   * How the time was adjusted
+   * @type {string}
+   * @memberof Span
+   */
+  timeAdjustmentType: Span.TimeAdjustmentTypeEnum;
+  /**
+   * The time the span started
+   * @type {string}
+   * @memberof Span
+   */
+  startTime: string;
+  /**
+   * Whether the span is first class or just a sub-span
+   * @type {boolean}
+   * @memberof Span
+   */
+  isFirstClass: boolean;
+  /**
+   * The ID of the build that this span is associated with
+   * @type {string}
+   * @memberof Span
+   */
+  buildId?: string;
+  /**
+   * The ID of the project that this span is associated with
+   * @type {string}
+   * @memberof Span
+   */
+  projectId?: string;
+  /**
+   * The id of the span group if applicable
+   * @type {string}
+   * @memberof Span
+   */
+  spanGroupId?: string;
+  /**
+   * The raw id of the page load span group if applicable
+   * @type {string}
+   * @memberof Span
+   */
+  virtualSpanGroupId?: string;
+  /**
+   *
+   * @type {SpanStatistics}
+   * @memberof Span
+   */
+  statistics?: SpanStatistics;
+  /**
+   *
+   * @type {SpanMetadata}
+   * @memberof Span
+   */
+  metadata?: SpanMetadata;
+}
 
+/**
+ * @export
+ * @namespace Span
+ */
+namespace Span {
+  /**
+   * @export
+   * @enum {string}
+   */
+  export enum TimeAdjustmentTypeEnum {
+    Adjusted = <any>"adjusted",
+    Device = <any>"device",
+    Received = <any>"received",
+    Unadjusted = <any>"unadjusted",
+  }
+}
+/**
+ *
+ * @export
+ * @interface SpanCategoryStatistics
+ */
+interface SpanCategoryStatistics {
+  /**
+   *
+   * @type {SpanCategoryStatisticsFullPageLoad}
+   * @memberof SpanCategoryStatistics
+   */
+  fullPageLoad?: SpanCategoryStatisticsFullPageLoad;
+}
+/**
+ *
+ * @export
+ * @interface SpanCategoryStatisticsFullPageLoad
+ */
+interface SpanCategoryStatisticsFullPageLoad {
+  /**
+   * The largest contentful paint time in milliseconds
+   * @type {number}
+   * @memberof SpanCategoryStatisticsFullPageLoad
+   */
+  largestContentfulPaint?: number;
+  /**
+   * The first input delay time in milliseconds
+   * @type {number}
+   * @memberof SpanCategoryStatisticsFullPageLoad
+   */
+  firstInputDelay?: number;
+  /**
+   * The time the first input delay ended
+   * @type {string}
+   * @memberof SpanCategoryStatisticsFullPageLoad
+   */
+  firstInputDelayEndedAt?: string;
+  /**
+   * Measure of how often visible elements move unexpectedly
+   * @type {number}
+   * @memberof SpanCategoryStatisticsFullPageLoad
+   */
+  cumulativeLayoutShift?: number;
+  /**
+   * The time to first byte in milliseconds
+   * @type {number}
+   * @memberof SpanCategoryStatisticsFullPageLoad
+   */
+  timeToFirstByte?: number;
+  /**
+   * The first contentful paint time in milliseconds
+   * @type {number}
+   * @memberof SpanCategoryStatisticsFullPageLoad
+   */
+  firstContentfulPaint?: number;
+}
+/**
+ *
+ * @export
+ * @interface SpanGroup
+ */
+export interface SpanGroup {
+  /**
+   * The ID of the Span Group.
+   * @type {string}
+   * @memberof SpanGroup
+   */
+  id: string;
+  /**
+   *
+   * @type {SpanGroupCategory}
+   * @memberof SpanGroup
+   */
+  category: SpanGroupCategory;
+  /**
+   * The name of the Span Group.
+   * @type {string}
+   * @memberof SpanGroup
+   */
+  name: string;
+  /**
+   * The name of the Span Group for display purposes.
+   * @type {string}
+   * @memberof SpanGroup
+   */
+  displayName: string;
+  /**
+   * Whether the requesting user has starred the Span Group.
+   * @type {boolean}
+   * @memberof SpanGroup
+   */
+  isStarred?: boolean;
+  /**
+   *
+   * @type {SpanGroupStatistics}
+   * @memberof SpanGroup
+   */
+  statistics?: SpanGroupStatistics;
+  /**
+   *
+   * @type {PerformanceTarget}
+   * @memberof SpanGroup
+   */
+  performanceTarget?: PerformanceTarget;
+}
+/**
+ *
+ * @export
+ * @enum {string}
+ */
+enum SpanGroupCategory {
+  AppStart = <any>"app_start",
+  ViewLoad = <any>"view_load",
+  PageLoad = <any>"page_load",
+  RouteChange = <any>"route_change",
+  FullPageLoad = <any>"full_page_load",
+  Network = <any>"network",
+  Custom = <any>"custom",
+  Navigation = <any>"navigation",
+  InboundHttp = <any>"inbound_http",
+  OutboundHttp = <any>"outbound_http",
+  InboundRpc = <any>"inbound_rpc",
+  OutboundRpc = <any>"outbound_rpc",
+  CustomServer = <any>"custom_server",
+  FrozenFrame = <any>"frozen_frame",
+}
+/**
+ *
+ * @export
+ * @interface SpanGroupCategoryStatistics
+ */
+interface SpanGroupCategoryStatistics {
+  /**
+   *
+   * @type {SpanGroupCategoryStatisticsFullPageLoadStatistics}
+   * @memberof SpanGroupCategoryStatistics
+   */
+  fullPageLoad?: SpanGroupCategoryStatisticsFullPageLoadStatistics;
+}
+/**
+ *
+ * @export
+ * @interface SpanGroupCategoryStatisticsFullPageLoadStatistics
+ */
+interface SpanGroupCategoryStatisticsFullPageLoadStatistics {
+  /**
+   * P75 Time (integer, in ms) from a navigation event to the largest element on the page rendered
+   * @type {number}
+   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
+   */
+  largestContentfulPaint?: number;
+  /**
+   * P75 Time (integer, in ms) from a user interaction with the page (e.g. click) to the page becoming interactive
+   * @type {number}
+   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
+   */
+  firstInputDelay?: number;
+  /**
+   * P75 Measure (float) of how often visible elements move unexpectedly
+   * @type {number}
+   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
+   */
+  cumulativeLayoutShift?: number;
+  /**
+   * P75 Time (integer, in ms) from a navigation event starting to the first byte arriving
+   * @type {number}
+   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
+   */
+  timeToFirstByte?: number;
+  /**
+   * P75 Time (in ms) from a navigation event to the first element rendered
+   * @type {number}
+   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
+   */
+  firstContentfulPaint?: number;
+}
+/**
+ *
+ * @export
+ * @interface SpanGroupDescription
+ */
+export interface SpanGroupDescription {
+  /**
+   * The ID of the Span Group.
+   * @type {string}
+   * @memberof SpanGroupDescription
+   */
+  id: string;
+  /**
+   * The name of the Span Group being described.
+   * @type {string}
+   * @memberof SpanGroupDescription
+   */
+  name: string;
+  /**
+   * The name of the Span Group for display purposes.
+   * @type {string}
+   * @memberof SpanGroupDescription
+   */
+  displayName: string;
+}
+/**
+ *
+ * @export
+ * @interface SpanGroupDurationStatistics
+ */
+interface SpanGroupDurationStatistics {
+  /**
+   * The P50 duration (in ms).
+   * @type {number}
+   * @memberof SpanGroupDurationStatistics
+   */
+  p50: number;
+  /**
+   * The P75 duration (in ms).
+   * @type {number}
+   * @memberof SpanGroupDurationStatistics
+   */
+  p75: number;
+  /**
+   * The P90 duration (in ms).
+   * @type {number}
+   * @memberof SpanGroupDurationStatistics
+   */
+  p90: number;
+  /**
+   * The P95 duration (in ms).
+   * @type {number}
+   * @memberof SpanGroupDurationStatistics
+   */
+  p95: number;
+  /**
+   * The P99 duration (in ms).
+   * @type {number}
+   * @memberof SpanGroupDurationStatistics
+   */
+  p99: number;
+}
+/**
+ *
+ * @export
+ * @interface SpanGroupHttpResponseCodes
+ */
+interface SpanGroupHttpResponseCodes {
+  /**
+   * The total number of Spans which have a HTTP response code.
+   * @type {number}
+   * @memberof SpanGroupHttpResponseCodes
+   */
+  totalSpans: number;
+  /**
+   * The number of Spans with a 1xx response code.
+   * @type {number}
+   * @memberof SpanGroupHttpResponseCodes
+   */
+  codes1xx: number;
+  /**
+   * The number of Spans with a 2xx response code.
+   * @type {number}
+   * @memberof SpanGroupHttpResponseCodes
+   */
+  codes2xx: number;
+  /**
+   * The number of Spans with a 3xx response code.
+   * @type {number}
+   * @memberof SpanGroupHttpResponseCodes
+   */
+  codes3xx: number;
+  /**
+   * The number of Spans with a 4xx response code.
+   * @type {number}
+   * @memberof SpanGroupHttpResponseCodes
+   */
+  codes4xx: number;
+  /**
+   * The number of Spans with a 5xx response code.
+   * @type {number}
+   * @memberof SpanGroupHttpResponseCodes
+   */
+  codes5xx: number;
+}
+/**
+ *
+ * @export
+ * @interface SpanGroupHttpStatistics
+ */
+interface SpanGroupHttpStatistics {
+  /**
+   *
+   * @type {SpanGroupHttpResponseCodes}
+   * @memberof SpanGroupHttpStatistics
+   */
+  responseCodes?: SpanGroupHttpResponseCodes;
+}
+/**
+ *
+ * @export
+ * @interface SpanGroupStatistics
+ */
+interface SpanGroupStatistics {
+  /**
+   *
+   * @type {SpanGroupDurationStatistics}
+   * @memberof SpanGroupStatistics
+   */
+  durationStatistics: SpanGroupDurationStatistics;
+  /**
+   * The total number of Spans that were sampled in the bucketed time period.
+   * @type {number}
+   * @memberof SpanGroupStatistics
+   */
+  totalSpans: number;
+  /**
+   * The estimated total of Spans that were generated in the bucketed time period, before sampling was applied.
+   * @type {number}
+   * @memberof SpanGroupStatistics
+   */
+  estimatedSpans?: number;
+  /**
+   * When the last filtered Span within this Span Group was seen.
+   * @type {string}
+   * @memberof SpanGroupStatistics
+   */
+  lastSeen: string;
+  /**
+   *
+   * @type {SpanGroupCategoryStatistics}
+   * @memberof SpanGroupStatistics
+   */
+  categoryStatistics?: SpanGroupCategoryStatistics;
+  /**
+   *
+   * @type {RenderingMetrics}
+   * @memberof SpanGroupStatistics
+   */
+  renderingStatistics?: RenderingMetrics;
+  /**
+   *
+   * @type {SystemMetrics}
+   * @memberof SpanGroupStatistics
+   */
+  systemMetricsStatistics?: SystemMetrics;
+  /**
+   *
+   * @type {SpanGroupHttpStatistics}
+   * @memberof SpanGroupStatistics
+   */
+  httpStatistics?: SpanGroupHttpStatistics;
+}
 /**
  *
  * @export
@@ -3639,6 +4490,206 @@ interface SpanGroupsIdBody {
    * @memberof SpanGroupsIdBody
    */
   isStarred?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface SpanHttpStatistics
+ */
+interface SpanHttpStatistics {
+  /**
+   * The response status code for the Span
+   * @type {number}
+   * @memberof SpanHttpStatistics
+   */
+  responseCode: number;
+}
+/**
+ *
+ * @export
+ * @interface SpanMetadata
+ */
+interface SpanMetadata {
+  /**
+   * The key of the metadata
+   * @type {string}
+   * @memberof SpanMetadata
+   */
+  key: string;
+  /**
+   * The value of the metadata. May be a string or an integer.
+   * @type {string}
+   * @memberof SpanMetadata
+   */
+  value: string;
+  /**
+   *
+   * @type {SpanMetadataLevel}
+   * @memberof SpanMetadata
+   */
+  level: SpanMetadataLevel;
+}
+/**
+ *
+ * @export
+ * @enum {string}
+ */
+enum SpanMetadataLevel {
+  Unspecified = <any>"unspecified",
+  Resource = <any>"resource",
+  Span = <any>"span",
+}
+/**
+ *
+ * @export
+ * @interface SpanRenderingStatistics
+ */
+interface SpanRenderingStatistics {
+  /**
+   *
+   * @type {SpanRenderingStatisticsFrameRate}
+   * @memberof SpanRenderingStatistics
+   */
+  frameRateStatistics?: SpanRenderingStatisticsFrameRate;
+}
+/**
+ *
+ * @export
+ * @interface SpanRenderingStatisticsFrameRate
+ */
+interface SpanRenderingStatisticsFrameRate {
+  /**
+   * The average FPS for a Span
+   * @type {number}
+   * @memberof SpanRenderingStatisticsFrameRate
+   */
+  fpsMean: number;
+  /**
+   * The lowest seen FPS for a Span
+   * @type {number}
+   * @memberof SpanRenderingStatisticsFrameRate
+   */
+  fpsMinimum: number;
+  /**
+   * The highest seen FPS for a Span
+   * @type {number}
+   * @memberof SpanRenderingStatisticsFrameRate
+   */
+  fpsMaximum: number;
+}
+/**
+ *
+ * @export
+ * @interface SpanStatistics
+ */
+interface SpanStatistics {
+  /**
+   *
+   * @type {SpanCategoryStatistics}
+   * @memberof SpanStatistics
+   */
+  categoryStatistics?: SpanCategoryStatistics;
+  /**
+   *
+   * @type {SpanSystemMetrics}
+   * @memberof SpanStatistics
+   */
+  systemMetricStatistics?: SpanSystemMetrics;
+  /**
+   *
+   * @type {SpanRenderingStatistics}
+   * @memberof SpanStatistics
+   */
+  renderingStatistics?: SpanRenderingStatistics;
+  /**
+   *
+   * @type {SpanHttpStatistics}
+   * @memberof SpanStatistics
+   */
+  httpStatistics?: SpanHttpStatistics;
+}
+/**
+ *
+ * @export
+ * @interface SpanSystemMetrics
+ */
+interface SpanSystemMetrics {
+  /**
+   *
+   * @type {SpanSystemMetricsCpu}
+   * @memberof SpanSystemMetrics
+   */
+  cpu?: SpanSystemMetricsCpu;
+  /**
+   *
+   * @type {SpanSystemMetricsMemory}
+   * @memberof SpanSystemMetrics
+   */
+  memory?: SpanSystemMetricsMemory;
+}
+/**
+ *
+ * @export
+ * @interface SpanSystemMetricsCpu
+ */
+interface SpanSystemMetricsCpu {
+  /**
+   *
+   * @type {SpanSystemMetricsCpuStatistics}
+   * @memberof SpanSystemMetricsCpu
+   */
+  total: SpanSystemMetricsCpuStatistics;
+  /**
+   *
+   * @type {SpanSystemMetricsCpuStatistics}
+   * @memberof SpanSystemMetricsCpu
+   */
+  mainThread: SpanSystemMetricsCpuStatistics;
+}
+/**
+ *
+ * @export
+ * @interface SpanSystemMetricsCpuStatistics
+ */
+interface SpanSystemMetricsCpuStatistics {
+  /**
+   * The mean value of the measurements (as a percentage)
+   * @type {number}
+   * @memberof SpanSystemMetricsCpuStatistics
+   */
+  mean: number;
+}
+/**
+ *
+ * @export
+ * @interface SpanSystemMetricsMemory
+ */
+interface SpanSystemMetricsMemory {
+  /**
+   *
+   * @type {SpanSystemMetricsMemoryStatistics}
+   * @memberof SpanSystemMetricsMemory
+   */
+  device: SpanSystemMetricsMemoryStatistics;
+  /**
+   *
+   * @type {SpanSystemMetricsMemoryStatistics}
+   * @memberof SpanSystemMetricsMemory
+   */
+  androidRuntime?: SpanSystemMetricsMemoryStatistics;
+}
+/**
+ *
+ * @export
+ * @interface SpanSystemMetricsMemoryStatistics
+ */
+interface SpanSystemMetricsMemoryStatistics {
+  /**
+   * The mean value of the measurements (in bytes)
+   * @type {number}
+   * @memberof SpanSystemMetricsMemoryStatistics
+   */
+  mean: number;
 }
 /**
  *
@@ -3665,7 +4716,201 @@ interface StabilityTarget {
    */
   updatedById?: string;
 }
-
+/**
+ *
+ * @export
+ * @interface SystemMetrics
+ */
+interface SystemMetrics {
+  /**
+   *
+   * @type {SystemMetricsCpu}
+   * @memberof SystemMetrics
+   */
+  cpu?: SystemMetricsCpu;
+  /**
+   *
+   * @type {SystemMetricsMemory}
+   * @memberof SystemMetrics
+   */
+  memory?: SystemMetricsMemory;
+}
+/**
+ *
+ * @export
+ * @interface SystemMetricsCpu
+ */
+interface SystemMetricsCpu {
+  /**
+   *
+   * @type {SystemMetricsCpuTotal}
+   * @memberof SystemMetricsCpu
+   */
+  total: SystemMetricsCpuTotal;
+  /**
+   *
+   * @type {SystemMetricsCpuMainThread}
+   * @memberof SystemMetricsCpu
+   */
+  mainThread: SystemMetricsCpuMainThread;
+}
+/**
+ *
+ * @export
+ * @interface SystemMetricsCpuMainThread
+ */
+interface SystemMetricsCpuMainThread {
+  /**
+   *
+   * @type {SystemMetricsCpuStatistics}
+   * @memberof SystemMetricsCpuMainThread
+   */
+  mean: SystemMetricsCpuStatistics;
+}
+/**
+ *
+ * @export
+ * @interface SystemMetricsCpuStatistics
+ */
+interface SystemMetricsCpuStatistics {
+  /**
+   * The number of Spans that reported CPU system metric
+   * @type {number}
+   * @memberof SystemMetricsCpuStatistics
+   */
+  spanCount: number;
+  /**
+   * The P50 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsCpuStatistics
+   */
+  p50?: number;
+  /**
+   * The p75 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsCpuStatistics
+   */
+  p75?: number;
+  /**
+   * The p90 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsCpuStatistics
+   */
+  p90?: number;
+  /**
+   * The p95 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsCpuStatistics
+   */
+  p95?: number;
+  /**
+   * The p99 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsCpuStatistics
+   */
+  p99?: number;
+}
+/**
+ *
+ * @export
+ * @interface SystemMetricsCpuTotal
+ */
+interface SystemMetricsCpuTotal {
+  /**
+   *
+   * @type {SystemMetricsCpuStatistics}
+   * @memberof SystemMetricsCpuTotal
+   */
+  mean: SystemMetricsCpuStatistics;
+}
+/**
+ *
+ * @export
+ * @interface SystemMetricsMemory
+ */
+interface SystemMetricsMemory {
+  /**
+   *
+   * @type {SystemMetricsMemoryDevice}
+   * @memberof SystemMetricsMemory
+   */
+  device: SystemMetricsMemoryDevice;
+  /**
+   *
+   * @type {SystemMetricsMemoryAndroidRuntime}
+   * @memberof SystemMetricsMemory
+   */
+  androidRuntime?: SystemMetricsMemoryAndroidRuntime;
+}
+/**
+ *
+ * @export
+ * @interface SystemMetricsMemoryAndroidRuntime
+ */
+interface SystemMetricsMemoryAndroidRuntime {
+  /**
+   *
+   * @type {SystemMetricsMemoryStatistics}
+   * @memberof SystemMetricsMemoryAndroidRuntime
+   */
+  mean: SystemMetricsMemoryStatistics;
+}
+/**
+ *
+ * @export
+ * @interface SystemMetricsMemoryDevice
+ */
+interface SystemMetricsMemoryDevice {
+  /**
+   *
+   * @type {SystemMetricsMemoryStatistics}
+   * @memberof SystemMetricsMemoryDevice
+   */
+  mean: SystemMetricsMemoryStatistics;
+}
+/**
+ *
+ * @export
+ * @interface SystemMetricsMemoryStatistics
+ */
+interface SystemMetricsMemoryStatistics {
+  /**
+   * The number of Spans that reported memory system metrics of this type
+   * @type {number}
+   * @memberof SystemMetricsMemoryStatistics
+   */
+  spanCount: number;
+  /**
+   * The P50 memory usage (in bytes) - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsMemoryStatistics
+   */
+  p50?: number;
+  /**
+   * The p75 memory usage (in bytes) - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsMemoryStatistics
+   */
+  p75?: number;
+  /**
+   * The p90 memory usage (in bytes) - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsMemoryStatistics
+   */
+  p90?: number;
+  /**
+   * The p95 memory usage (in bytes) - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsMemoryStatistics
+   */
+  p95?: number;
+  /**
+   * The p99 memory usage (in bytes) - (Only present if span_count > 0)
+   * @type {number}
+   * @memberof SystemMetricsMemoryStatistics
+   */
+  p99?: number;
+}
 /**
  * CurrentUserApi - fetch parameter creator
  * @export
@@ -3962,7 +5207,7 @@ export const CurrentUserApiFetchParamCreator = (
     };
   },
   /**
-   * Returns the saved searches for a given project sorted by name in lexographic order.
+   * Returns the saved searches for a given project sorted by name in lexicographic order.
    * @summary List Saved Searches on a Project
    * @param {string} projectId
    * @param {string} [shared] Limit Saved Searches returned to only those with this &#x60;shared&#x60; property
@@ -5117,6 +6362,7 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @param {string} [direction]
    * @param {number} [perPage]
    * @param {Filters} [filters]
+   * @param {string} [histogram] The type of histogram to include in the response. Only specific values are accepted. When provided, adds trend data to each error in the response.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
@@ -5127,6 +6373,7 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     direction?: string,
     perPage?: number,
     filters?: Filters,
+    histogram?: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'projectId' is not null or undefined
@@ -5172,6 +6419,10 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
 
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (histogram !== undefined) {
+      localVarQueryParameter["histogram"] = histogram;
     }
 
     localVarUrlObj.query = Object.assign(

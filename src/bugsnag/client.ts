@@ -1080,6 +1080,425 @@ export class BugsnagClient implements Client {
         };
       },
     );
+
+    // ============================================================
+    // Performance Monitoring Tools
+    // ============================================================
+
+    const listSpanGroupsInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+      sort: z
+        .enum([
+          "total_spans",
+          "last_seen",
+          "name",
+          "display_name",
+          "network_http_method",
+          "rendering_slow_frame_span_percentage",
+          "rendering_frozen_frame_span_percentage",
+          "duration_p50",
+          "duration_p75",
+          "duration_p90",
+          "duration_p95",
+          "duration_p99",
+          "system_metrics_cpu_total_mean_p50",
+          "system_metrics_cpu_total_mean_p75",
+          "system_metrics_cpu_total_mean_p90",
+          "system_metrics_cpu_total_mean_p95",
+          "system_metrics_cpu_total_mean_p99",
+          "system_metrics_memory_device_mean_p50",
+          "system_metrics_memory_device_mean_p75",
+          "system_metrics_memory_device_mean_p90",
+          "system_metrics_memory_device_mean_p95",
+          "system_metrics_memory_device_mean_p99",
+          "rendering_metrics_fps_mean_p50",
+          "rendering_metrics_fps_mean_p75",
+          "rendering_metrics_fps_mean_p90",
+          "rendering_metrics_fps_mean_p95",
+          "rendering_metrics_fps_mean_p99",
+          "http_response_4xx_percentage",
+          "http_response_5xx_percentage",
+        ])
+        .optional()
+        .describe("Field to sort by"),
+      direction: toolInputParameters.direction,
+      perPage: toolInputParameters.perPage,
+      starredOnly: z
+        .boolean()
+        .optional()
+        .describe("Show only starred span groups"),
+      nextUrl: toolInputParameters.nextUrl,
+      filters: toolInputParameters.performanceFilters,
+    });
+
+    register(
+      {
+        title: "List Span Groups",
+        summary:
+          "List span groups (operations) tracked for performance monitoring",
+        purpose: "Discover and analyze different operations being monitored",
+        useCases: [
+          "View all operations being tracked for performance",
+          "Find slow operations by sorting by duration metrics",
+          "Filter to starred/important span groups",
+        ],
+        inputSchema: listSpanGroupsInputSchema,
+        examples: [
+          {
+            description: "List slowest operations",
+            parameters: {
+              sort: "duration_p95",
+              direction: "desc",
+              perPage: 10,
+            },
+            expectedOutput:
+              "Array of span groups sorted by 95th percentile duration",
+          },
+          {
+            description: "List starred span groups with filtering",
+            parameters: {
+              starredOnly: true,
+              filters: {
+                "span_group.category": [
+                  { type: "eq", value: "full_page_load" },
+                ],
+              },
+            },
+            expectedOutput: "Array of starred span groups filtered by category",
+          },
+        ],
+        hints: [
+          "Span groups represent different operation types (page loads, API calls, etc.)",
+          "Use sort by duration_p95 or duration_p99 to find the slowest operations",
+          "Star important span groups for quick access",
+          "Use nextUrl for pagination",
+        ],
+      },
+      async (args, _extra) => {
+        const params = listSpanGroupsInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+        const result = await this.projectApi.listProjectSpanGroups(
+          project.id,
+          params.sort,
+          params.direction,
+          params.perPage,
+          undefined,
+          params.filters,
+          params.starredOnly,
+          params.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    const getSpanGroupInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+      spanGroupId: toolInputParameters.spanGroupId,
+      filters: toolInputParameters.performanceFilters,
+    });
+
+    register(
+      {
+        title: "Get Span Group",
+        summary: "Get detailed performance metrics for a specific span group",
+        purpose: "Analyze performance characteristics of a specific operation",
+        useCases: [
+          "View detailed statistics (p50, p75, p90, p95, p99) for an operation",
+          "Check if performance targets are configured",
+          "Monitor span count to understand operation volume",
+        ],
+        inputSchema: getSpanGroupInputSchema,
+        examples: [
+          {
+            description: "Get details for an API endpoint span group",
+            parameters: { spanGroupId: "[HttpClient]GET-api.example.com" },
+            expectedOutput: "Statistics, category, and performance target info",
+          },
+          {
+            description: "Get span group details with device filtering",
+            parameters: {
+              spanGroupId: "[HttpClient]GET-api.example.com",
+              filters: {
+                "device.browser_name": [{ type: "eq", value: "Chrome" }],
+              },
+            },
+            expectedOutput: "Statistics filtered for Chrome browser only",
+          },
+        ],
+        hints: [
+          "Use List Span Groups first to discover available span group IDs",
+          "IDs are automatically URL-encoded - provide the raw ID",
+          "Statistics include p50, p75, p90, p95, p99 percentiles",
+        ],
+      },
+      async (args, _extra) => {
+        const params = getSpanGroupInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+
+        const spanGroupResults = await this.projectApi.getProjectSpanGroup(
+          project.id,
+          params.spanGroupId,
+          params.filters,
+        );
+
+        const spanGroupTimelineResult =
+          await this.projectApi.getProjectSpanGroupTimeline(
+            project.id,
+            params.spanGroupId,
+            params.filters,
+          );
+
+        const spanGroupDistributionResult =
+          await this.projectApi.getProjectSpanGroupDistribution(
+            project.id,
+            params.spanGroupId,
+            params.filters,
+          );
+
+        const result = {
+          ...spanGroupResults.body,
+          timeline: spanGroupTimelineResult.body,
+          distribution: spanGroupDistributionResult.body,
+        };
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }],
+        };
+      },
+    );
+
+    const listSpansInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+      spanGroupId: toolInputParameters.spanGroupId,
+      sort: z
+        .enum([
+          "duration",
+          "timestamp",
+          "full_page_load_lcp",
+          "full_page_load_fid",
+          "full_page_load_cls",
+          "full_page_load_ttfb",
+          "full_page_load_fcp",
+          "rendering_slow_frame_percentage",
+          "rendering_frozen_frame_percentage",
+          "system_metrics_cpu_total_mean",
+          "system_metrics_memory_device_mean",
+          "rendering_metrics_fps_mean",
+          "rendering_metrics_fps_minimum",
+          "rendering_metrics_fps_maximum",
+          "http_response_code",
+        ])
+        .optional()
+        .describe("Field to sort by"),
+      direction: toolInputParameters.direction,
+      perPage: toolInputParameters.perPage,
+      nextUrl: toolInputParameters.nextUrl,
+      filters: toolInputParameters.performanceFilters,
+    });
+
+    register(
+      {
+        title: "List Spans",
+        summary: "Get individual spans belonging to a span group",
+        purpose: "Examine individual operation instances within a span group",
+        useCases: [
+          "Analyze individual slow operations",
+          "Debug performance issues by examining specific traces",
+          "Find patterns in operation attributes",
+        ],
+        inputSchema: listSpansInputSchema,
+        examples: [
+          {
+            description: "Get slowest spans for an operation",
+            parameters: {
+              spanGroupId: "[HttpClient]GET-api.example.com",
+              sort: "duration",
+              direction: "desc",
+              perPage: 10,
+            },
+            expectedOutput: "Array of the 10 slowest span instances",
+          },
+          {
+            description: "Get spans filtered by OS with pagination",
+            parameters: {
+              spanGroupId: "[HttpClient]GET-api.example.com",
+              sort: "timestamp",
+              filters: {
+                "os.name": [{ type: "eq", value: "iOS" }],
+              },
+              nextUrl: "/projects/123/spans?offset=30&per_page=30",
+            },
+            expectedOutput:
+              "Array of spans from iOS devices with next page navigation",
+          },
+        ],
+        hints: [
+          "Sort by duration descending to find the slowest instances",
+          "Each span includes trace ID for further investigation",
+        ],
+      },
+      async (args, _extra) => {
+        const params = listSpansInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+        const result = await this.projectApi.listSpansBySpanGroupId(
+          project.id,
+          params.spanGroupId,
+          params.filters,
+          params.sort,
+          params.direction,
+          params.perPage,
+          params.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    const getTraceInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+      traceId: z.string().describe("Trace ID"),
+      from: z.string().describe("Start time (ISO 8601 format)"),
+      to: z.string().describe("End time (ISO 8601 format)"),
+      targetSpanId: z
+        .string()
+        .optional()
+        .describe("Optional target span ID to focus on"),
+      perPage: toolInputParameters.perPage,
+      nextUrl: toolInputParameters.nextUrl,
+    });
+
+    register(
+      {
+        title: "Get Trace",
+        summary: "Get all spans within a specific trace",
+        purpose:
+          "View the complete trace of operations for a request/transaction",
+        useCases: [
+          "Debug slow requests by viewing all operations in the trace",
+          "Understand the flow of a request through the system",
+          "Identify bottlenecks in distributed systems",
+        ],
+        inputSchema: getTraceInputSchema,
+        examples: [
+          {
+            description: "Get all spans for a trace",
+            parameters: {
+              traceId: "abc123",
+              from: "2024-01-01T00:00:00Z",
+              to: "2024-01-01T23:59:59Z",
+            },
+            expectedOutput:
+              "Array of all spans in the trace with timing and hierarchy",
+          },
+          {
+            description:
+              "Get spans for a trace with pagination and target span",
+            parameters: {
+              traceId: "def456",
+              from: "2024-01-01T00:00:00Z",
+              to: "2024-01-01T23:59:59Z",
+              targetSpanId: "span-789",
+              perPage: 50,
+            },
+            expectedOutput:
+              "Array of up to 50 spans focused around the target span",
+          },
+        ],
+        hints: [
+          "Traces show the complete execution path of a request",
+          "Use from/to parameters to narrow the time window",
+          "targetSpanId can be used to focus on a specific span in the trace",
+        ],
+      },
+      async (args, _extra) => {
+        const params = getTraceInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+        if (!params.traceId || !params.from || !params.to) {
+          throw new ToolError("traceId, from, and to are required");
+        }
+        const result = await this.projectApi.listSpansByTraceId(
+          project.id,
+          params.traceId,
+          params.from,
+          params.to,
+          params.targetSpanId,
+          params.perPage,
+          params.nextUrl,
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                data: result.body,
+                next_url: result.nextUrl,
+                count: result.body?.length,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    const listTraceFieldsInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+    });
+
+    // Similar to event filters, consider caching
+    register(
+      {
+        title: "List Trace Fields",
+        summary: "Get available trace fields/attributes for filtering",
+        purpose: "Discover what custom attributes are available for filtering",
+        useCases: [
+          "Find available custom attributes for performance filtering",
+          "Understand what metadata is attached to traces",
+          "Build dynamic filters based on available fields",
+        ],
+        inputSchema: listTraceFieldsInputSchema,
+        examples: [
+          {
+            description: "Get all trace fields",
+            parameters: {},
+            expectedOutput:
+              "Array of field names and types available for filtering",
+          },
+        ],
+        hints: [
+          "Trace fields are custom attributes added to spans",
+          "Use these fields for filtering other performance queries",
+        ],
+      },
+      async (args, _extra) => {
+        const params = listTraceFieldsInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+        const result = await this.projectApi.listProjectTraceFields(project.id);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result.body) }],
+        };
+      },
+    );
   }
 
   registerResources(register: RegisterResourceFunction): void {
