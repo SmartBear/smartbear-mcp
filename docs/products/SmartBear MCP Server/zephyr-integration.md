@@ -99,7 +99,7 @@ The following environment variables configure the Zephyr integration:
   - optional Test Case key (`testCase`)
   - optional Actual End Date after filter (`actualEndDateAfter`)
   - optional Actual End Date before filter (`actualEndDateBefore`)
-  - optional include execution step issue links flag (`includeStepLinks`)
+  - optional flag to include execution step issue links (`includeStepLinks`)
   - optional Jira Project Version ID (`jiraProjectVersionId`)
   - optional flag to include only last executions (`onlyLastExecutions`)
   - optional max results to return (`limit`)

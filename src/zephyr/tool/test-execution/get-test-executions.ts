@@ -29,12 +29,12 @@ export class GetTestExecutions implements ZephyrTool {
         expectedOutput: "The first 10 test executions with their details",
       },
       {
-        description: "Get test executions for a specific project",
+        description: "Get 5 test executions for the project PROJ",
         parameters: { projectKey: "PROJ", limit: 5 },
         expectedOutput: "Up to 5 test executions for project PROJ",
       },
       {
-        description: "Get test executions after a specific date",
+        description: "Get some test executions that finished after 01/Jan/2024",
         parameters: { actualEndDateAfter: "2024-01-01T00:00:00Z" },
         expectedOutput: "Test executions that ended after 2024-01-01",
       },

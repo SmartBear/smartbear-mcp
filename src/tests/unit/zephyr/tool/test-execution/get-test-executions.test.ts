@@ -3,7 +3,7 @@ import {
   listTestExecutionsNextgenQueryParams,
   listTestExecutionsNextgenResponse,
 } from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetTestExecutions } from "../../../../../zephyr/tool/testexecution/get-test-executions.js";
+import { GetTestExecutions } from "../../../../../zephyr/tool/test-execution/get-test-executions.js";
 
 describe("GetTestExecutions", () => {
   const mockApiClient = { get: vi.fn() };
