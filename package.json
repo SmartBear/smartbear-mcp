@@ -1,13 +1,13 @@
 {
   "name": "@smartbear/mcp",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "MCP server for interacting SmartBear Products",
   "keywords": [
     "smartbear",
     "mcp",
     "bugsnag",
     "reflect",
-    "api-hub",
+    "swagger",
     "pactflow",
     "zephyr"
   ],

@@ -1,4 +1,4 @@
-export interface ApiHubConfigurationParameters {
+export interface SwaggerConfigurationParameters {
   token: string; // API auth token (required)
   portalBasePath?: string; // Base path for Portal API requests
   registryBasePath?: string; // Base path for Registry API requests
@@ -6,14 +6,14 @@ export interface ApiHubConfigurationParameters {
   headers?: Record<string, string>; // Additional headers for API requests
 }
 
-export class ApiHubConfiguration {
+export class SwaggerConfiguration {
   token: string;
   portalBasePath: string;
   registryBasePath: string;
   userManagementBasePath: string;
   headers: Record<string, string>;
 
-  constructor(param: ApiHubConfigurationParameters) {
+  constructor(param: SwaggerConfigurationParameters) {
     this.token = param.token;
     this.portalBasePath =
       param.portalBasePath || "https://api.portal.swaggerhub.com/v1";

@@ -10,10 +10,6 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 
 RUN npm run build
 
-FROM builder AS tester
-
-RUN npm run test:run
-
 FROM node:22-alpine AS release
 
 COPY --from=builder /app/dist /app/dist

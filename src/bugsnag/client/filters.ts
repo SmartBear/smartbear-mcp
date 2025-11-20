@@ -4,7 +4,6 @@
  * This file provides utility functions for creating filter URL parameters
  * based on the BugSnag filtering specification described in the Filtering.md document.
  */
-import { z } from "zod";
 
 /**
  * Types of filter comparison operations
@@ -33,13 +32,6 @@ export interface FilterValue {
 export interface FilterObject extends Record<string, any> {
   [fieldName: string]: FilterValue[];
 }
-
-export const FilterValueSchema = z.object({
-  type: z.enum(["eq", "ne", "empty"]),
-  value: z.union([z.string(), z.boolean(), z.number()]),
-});
-
-export const FilterObjectSchema = z.record(z.array(FilterValueSchema));
 
 /**
  * Converts a FilterObject to URL search parameters

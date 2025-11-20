@@ -1,7 +1,7 @@
 /**
  * TOOLS
  *
- * Defines tool configurations for API Hub operations.
+ * Defines tool configurations for Swagger operations.
  * Each tool includes parameters, descriptions, and handler method names.
  * This follows the pattern established in the pactflow module.
  */
@@ -32,22 +32,22 @@ import {
 } from "./registry-types.js";
 import { OrganizationsQuerySchema } from "./user-management-types.js";
 
-export interface ApiHubToolParams extends ToolParams {
+export interface SwaggerToolParams extends ToolParams {
   handler: string;
   formatResponse?: (result: any) => any;
 }
 
-export const TOOLS: ApiHubToolParams[] = [
+export const TOOLS: SwaggerToolParams[] = [
   {
     title: "List Portals",
     summary:
-      "Search for available portals within API Hub. Only portals where you have at least a designer role, either at the product level or organization level, are returned.",
+      "Search for available portals within Swagger. Only portals where you have at least a designer role, either at the product level or organization level, are returned.",
     parameters: [],
     handler: "getPortals",
   },
   {
     title: "Create Portal",
-    summary: "Create a new portal within API Hub.",
+    summary: "Create a new portal within Swagger.",
     inputSchema: CreatePortalArgsSchema,
     handler: "createPortal",
   },
@@ -177,7 +177,7 @@ export const TOOLS: ApiHubToolParams[] = [
   {
     title: "Create or Update API",
     summary:
-      "Create a new API or update an existing API in SwaggerHub Registry for API Hub for Design. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. APIs are always created with fixed values: version 1.0.0, private visibility, and automock disabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
+      "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. APIs are always created with fixed values: version 1.0.0, private visibility, and automock disabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
     inputSchema: CreateApiParamsSchema,
     handler: "createOrUpdateApi",
   },

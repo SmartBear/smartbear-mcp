@@ -1,19 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { TOOLS } from "../../../api-hub/client/tools.js";
-import { ApiHubClient } from "../../../api-hub/client.js";
+import { TOOLS } from "../../../swagger/client/tools.js";
+import { SwaggerClient } from "../../../swagger/client.js";
 
 const fetchMock = createFetchMock(vi);
 
-describe("ApiHubClient", () => {
-  let client: ApiHubClient;
+describe("SwaggerClient", () => {
+  let client: SwaggerClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
 
-    client = new ApiHubClient("test-token");
+    client = new SwaggerClient();
+    await client.configure({} as any, { api_key: "test-token" });
   });
 
   afterEach(() => {
@@ -22,9 +23,10 @@ describe("ApiHubClient", () => {
 
   describe("constructor", () => {
     it("should initialize with correct parameters", () => {
-      expect(client).toBeInstanceOf(ApiHubClient);
-      expect(client.name).toBe("API Hub");
-      expect(client.prefix).toBe("api_hub");
+      expect(client).toBeInstanceOf(SwaggerClient);
+      expect(client.name).toBe("Swagger");
+      expect(client.toolPrefix).toBe("swagger");
+      expect(client.configPrefix).toBe("Swagger");
     });
 
     it("should create configuration and API instances", () => {
@@ -305,7 +307,7 @@ describe("ApiHubClient", () => {
         content: [
           {
             type: "text",
-            text: "Error: Handler 'nonExistentMethod' not found on ApiHubClient",
+            text: "Error: Handler 'nonExistentMethod' not found on SwaggerClient",
           },
         ],
       });

@@ -19,14 +19,18 @@ The following environment variables configure the Zephyr integration:
 ### Get Projects
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
-- **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+- **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not. Results are filtered based on the provided parameters.
+- **Use case**: Getting a list of projects and their properties.
 
 ### Get Project
 
 - **Purpose**: Retrieve a project available within your Zephyr account by either its key or id.
 - **Parameters:** Project key or ID
 - **Returns**: A project along with its properties, including information about if it has Zephyr enabled or not.
-- **Use case**: Getting a list of projects and their properties.
+- **Use case**: Getting a project with its properties.
 
 ### Get Test Cycles
 
@@ -39,3 +43,56 @@ The following environment variables configure the Zephyr integration:
   - optional starting position for pagination (`startAt`)
 -  **Returns**: A list of Test Cycles along with their properties.
 -  **Use case**: Retrieve the Test Cycles, it can be filtered by Project Key, Folder ID, Jira Project version ID.
+
+### Get Statuses
+
+- **Purpose**: Retrieve statuses related to Test Cases, Cycles, Plans or Executions from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Project key (`projectKey`)
+  - optional type of status (`statusType`)
+- **Returns**: A list of statuses along with their properties, including name and color. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr statuses based on the provided filters.
+
+### Get Priorities
+
+- **Purpose**: Retrieve priorities related to Test Cases from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Project key (`projectKey`)
+- **Returns**: A list of priorities along with their properties, including name and color. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr priorities based on the provided filters.
+
+### Get Test Cases
+
+-  **Purpose**: Retrieve Test Cases available within your Zephyr account.
+-  **Parameters**:
+- optional Project key (`projectKey`)
+- optional Folder ID (`folderId`)
+- optional max results to return (`limit`)
+- optional starting cursor position for pagination (`startAtId`)
+-  **Returns**: A list of Test Cases along with their properties.
+-  **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
+
+### Get Test Case
+
+- **Purpose**: Retrieve the test case available within your Zephyr projects by key
+- **Parameters:** Test case key
+- **Returns**: A test case along with its properties.
+- **Use case**: Retrieve detailed information about a test case.
+
+### Get Test Execution
+
+- **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
+- **Parameters:** Test Execution key or ID
+- **Returns**: A Test Execution along with its properties.
+- **Use case**: Getting a Test Execution with its properties.
+
+### Get Test Cycle
+
+- **Purpose**: Retrieve the test cycle available within your Zephyr projects by either its key or id.
+- **Parameters:** Test cycle key or ID
+- **Returns**: A Test Cycle along with its properties.
+- **Use case**: Retrieve detailed information about a test cycle.
