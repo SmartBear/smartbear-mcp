@@ -1,6 +1,7 @@
 import { type FilterObject, toUrlSearchParams } from "../filters.js";
 import type {
   EventField,
+  PerformanceFilter,
   ProjectNetworkGroupingRuleset,
   Span,
   SpanGroup,
@@ -397,11 +398,13 @@ export class ProjectAPI extends BaseAPI {
    * @param projectId The ID of the project to which the Trace Field belongs.
    * @returns A promise that resolves to an array of trace field definitions.
    */
-  async listProjectTraceFields(projectId: string): Promise<ApiResponse<any[]>> {
+  async listProjectTraceFields(
+    projectId: string,
+  ): Promise<ApiResponse<PerformanceFilter[]>> {
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
     ).listProjectTraceFields(projectId);
-    return await this.requestArray<any>(
+    return await this.requestArray<PerformanceFilter>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
       true, // No pagination

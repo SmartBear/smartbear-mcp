@@ -2518,7 +2518,12 @@ describe("BugsnagClient", () => {
           { name: "app.version", type: "string" },
         ];
 
-        mockCache.get.mockReturnValue(mockProject);
+        mockCache.get.mockImplementation((key: string) => {
+          if (key === "bugsnag_current_project") {
+            return mockProject;
+          }
+          return undefined;
+        });
         mockProjectAPI.listProjectTraceFields.mockResolvedValue({
           body: mockTraceFields,
         });
@@ -2534,11 +2539,53 @@ describe("BugsnagClient", () => {
         expect(mockProjectAPI.listProjectTraceFields).toHaveBeenCalledWith(
           "proj-1",
         );
+        expect(mockCache.set).toHaveBeenCalledWith(
+          "bugsnag_project_performance_filters",
+          { "proj-1": mockTraceFields },
+        );
         expect(result).toEqual({
           content: [
             {
               type: "text",
               text: JSON.stringify(mockTraceFields),
+            },
+          ],
+        });
+      });
+
+      it("should use cached trace fields when available", async () => {
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockPerformanceFilters = [
+          { name: "cached.field", type: "string" },
+          { name: "another.field", type: "number" },
+        ];
+        const mockCachedFilters = { "proj-1": mockPerformanceFilters };
+
+        mockCache.get.mockImplementation((key: string) => {
+          if (key === "bugsnag_project_performance_filters") {
+            return mockCachedFilters;
+          }
+          if (key === "bugsnag_current_project") {
+            return mockProject;
+          }
+          return undefined;
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+
+        const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Trace Fields",
+        )[1];
+
+        const result = await listTraceFieldsHandler({});
+
+        // Should use cache and not call API
+        expect(mockProjectAPI.listProjectTraceFields).not.toHaveBeenCalled();
+        expect(result).toEqual({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(mockPerformanceFilters),
             },
           ],
         });
@@ -2551,7 +2598,12 @@ describe("BugsnagClient", () => {
         ];
         const mockTraceFields = [{ name: "custom.field", type: "string" }];
 
-        mockCache.get.mockReturnValue(mockProjects);
+        mockCache.get.mockImplementation((key: string) => {
+          if (key === "bugsnag_projects") {
+            return mockProjects;
+          }
+          return undefined;
+        });
         mockProjectAPI.listProjectTraceFields.mockResolvedValue({
           body: mockTraceFields,
         });
@@ -2568,6 +2620,12 @@ describe("BugsnagClient", () => {
 
         expect(mockProjectAPI.listProjectTraceFields).toHaveBeenCalledWith(
           "proj-2",
+        );
+        expect(mockCache.set).toHaveBeenCalledWith(
+          "bugsnag_project_performance_filters",
+          {
+            "proj-2": mockTraceFields,
+          },
         );
         expect(result).toEqual({
           content: [

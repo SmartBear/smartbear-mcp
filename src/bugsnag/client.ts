@@ -17,6 +17,7 @@ import {
   ErrorUpdateRequest,
   type EventField,
   type Organization,
+  type PerformanceFilter,
   type Project,
   ProjectAPI,
   type Release,
@@ -32,6 +33,7 @@ const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
   PROJECT_EVENT_FILTERS: "bugsnag_project_event_filters",
+  PROJECT_PERFORMANCE_FILTERS: "bugsnag_project_performance_filters",
   CURRENT_PROJECT: "bugsnag_current_project",
 };
 
@@ -287,6 +289,31 @@ export class BugsnagClient implements Client {
       );
       projectFiltersCache[project.id] = filtersResponse;
       this.cache?.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFiltersCache);
+    }
+    return projectFiltersCache[project.id];
+  }
+
+  async getProjectPerformanceFilters(
+    project: Project,
+  ): Promise<PerformanceFilter[]> {
+    const projectFiltersCache =
+      this.cache?.get<Record<string, PerformanceFilter[]>>(
+        cacheKeys.PROJECT_PERFORMANCE_FILTERS,
+      ) || {};
+    if (!projectFiltersCache[project.id]) {
+      const filtersResponse = (
+        await this.projectApi.listProjectTraceFields(project.id)
+      ).body;
+      if (!filtersResponse || filtersResponse.length === 0) {
+        throw new ToolError(
+          `No trace fields found for project ${project.name}.`,
+        );
+      }
+      projectFiltersCache[project.id] = filtersResponse;
+      this.cache?.set(
+        cacheKeys.PROJECT_PERFORMANCE_FILTERS,
+        projectFiltersCache,
+      );
     }
     return projectFiltersCache[project.id];
   }
@@ -1493,9 +1520,10 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = listTraceFieldsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-        const result = await this.projectApi.listProjectTraceFields(project.id);
+        const traceFields = await this.getProjectPerformanceFilters(project);
+
         return {
-          content: [{ type: "text", text: JSON.stringify(result.body) }],
+          content: [{ type: "text", text: JSON.stringify(traceFields) }],
         };
       },
     );
