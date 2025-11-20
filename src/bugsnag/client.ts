@@ -17,6 +17,7 @@ import {
   ErrorUpdateRequest,
   type EventField,
   type Organization,
+  type PerformanceFilter,
   type Project,
   ProjectAPI,
   type Release,
@@ -1496,7 +1497,7 @@ export class BugsnagClient implements Client {
         const project = await this.getInputProject(params.projectId);
 
         // Check cache first
-        let traceFields = this.cache?.get<any[]>(
+        let traceFields = this.cache?.get<PerformanceFilter[]>(
           cacheKeys.PROJECT_TRACE_FIELDS,
         );
         if (!traceFields) {
