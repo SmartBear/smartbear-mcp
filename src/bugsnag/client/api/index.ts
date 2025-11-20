@@ -5,7 +5,6 @@ import type { ProjectApiView, ReleaseApiView, ReleaseGroup } from "./api.js";
 export {
   ErrorUpdateRequest,
   EventField,
-  PerformanceFilter,
   ProjectNetworkGroupingRuleset,
   TraceField,
 } from "./api.js";

@@ -5,6 +5,7 @@ import type {
   ReleaseGroup,
   Span,
   SpanGroup,
+  TraceField,
 } from "../../../../bugsnag/client/api/api.js";
 import type {
   EventField,
@@ -128,5 +129,19 @@ export function getMockSpan(
     startTime: new Date(Date.now() - 1000).toISOString(),
     timeAdjustmentType: <any>"unadjusted",
     ...extra,
+  };
+}
+
+export function getMockTrace(name: string, type: string): TraceField {
+  return {
+    displayId: name,
+    fieldType: <any>type,
+    filterOptions: {
+      name: name,
+      description: "Cached field",
+      searchable: true,
+      matchTypes: [<any>"eq"],
+    },
+    custom: true,
   };
 }
