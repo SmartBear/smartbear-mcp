@@ -34,7 +34,6 @@ const cacheKeys = {
   PROJECTS: "bugsnag_projects",
   PROJECT_EVENT_FILTERS: "bugsnag_project_event_filters",
   PROJECT_PERFORMANCE_FILTERS: "bugsnag_project_performance_filters",
-  PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
   CURRENT_PROJECT: "bugsnag_current_project",
 };
 
@@ -1521,18 +1520,7 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = listTraceFieldsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-
-        // Check cache first
-        let traceFields = this.cache?.get<PerformanceFilter[]>(
-          cacheKeys.PROJECT_TRACE_FIELDS,
-        );
-        if (!traceFields) {
-          const result = await this.projectApi.listProjectTraceFields(
-            project.id,
-          );
-          traceFields = result.body;
-          this.cache?.set(cacheKeys.PROJECT_TRACE_FIELDS, traceFields);
-        }
+        const traceFields = await this.getProjectPerformanceFilters(project);
 
         return {
           content: [{ type: "text", text: JSON.stringify(traceFields) }],

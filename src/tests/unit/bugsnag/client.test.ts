@@ -2540,8 +2540,8 @@ describe("BugsnagClient", () => {
           "proj-1",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_project_trace_fields",
-          mockTraceFields,
+          "bugsnag_project_performance_filters",
+          { "proj-1": mockTraceFields },
         );
         expect(result).toEqual({
           content: [
@@ -2555,14 +2555,15 @@ describe("BugsnagClient", () => {
 
       it("should use cached trace fields when available", async () => {
         const mockProject = { id: "proj-1", name: "Project 1" };
-        const mockCachedTraceFields = [
+        const mockPerformanceFilters = [
           { name: "cached.field", type: "string" },
           { name: "another.field", type: "number" },
         ];
+        const mockCachedFilters = { "proj-1": mockPerformanceFilters };
 
         mockCache.get.mockImplementation((key: string) => {
-          if (key === "bugsnag_project_trace_fields") {
-            return mockCachedTraceFields;
+          if (key === "bugsnag_project_performance_filters") {
+            return mockCachedFilters;
           }
           if (key === "bugsnag_current_project") {
             return mockProject;
@@ -2584,7 +2585,7 @@ describe("BugsnagClient", () => {
           content: [
             {
               type: "text",
-              text: JSON.stringify(mockCachedTraceFields),
+              text: JSON.stringify(mockPerformanceFilters),
             },
           ],
         });
@@ -2621,8 +2622,10 @@ describe("BugsnagClient", () => {
           "proj-2",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_project_trace_fields",
-          mockTraceFields,
+          "bugsnag_project_performance_filters",
+          {
+            "proj-2": mockTraceFields,
+          },
         );
         expect(result).toEqual({
           content: [
