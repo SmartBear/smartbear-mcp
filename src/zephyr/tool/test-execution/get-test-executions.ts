@@ -38,6 +38,11 @@ export class GetTestExecutions implements ZephyrTool {
         parameters: { actualEndDateAfter: "2024-01-01T00:00:00Z" },
         expectedOutput: "Test executions that ended after 2024-01-01",
       },
+      {
+        description: "Get test executions with step links included",
+        parameters: { includeStepLinks: true },
+        expectedOutput: "Test executions with step links included",
+      },
     ],
   };
 
