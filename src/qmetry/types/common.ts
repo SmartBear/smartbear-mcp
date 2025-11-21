@@ -397,6 +397,7 @@ export const CreateTestCaseStepSchema = z.object({
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
   UDF: z.record(z.string()).optional(),
+  tcStepID: z.number().optional(), // Required for updating existing steps, omit for new steps
 });
 
 export const UpdateTestCaseRemoveStepSchema = z.object({
@@ -443,9 +444,52 @@ export const UpdateTestCaseArgsSchema = z.object({
   baseUrl: CommonFields.baseUrl,
   tcID: CommonFields.tcID,
   tcVersionID: CommonFields.tcVersionID,
-  withVersion: z.boolean().optional(),
-  notrunall: z.boolean().optional(),
-  isStepUpdated: z.boolean().optional(),
+  tcVersion: z
+    .number()
+    .optional()
+    .describe(
+      "Test Case version number (required when withVersion=true for creating new version). " +
+        "This is the current version number from which a new version will be created.",
+    ),
+  withVersion: z
+    .boolean()
+    .optional()
+    .describe(
+      "Pass 'true' if you want to create a new version of the test case with incremented version number. " +
+        "When true, a new version is created (e.g., if current version is 2, new version 3 is created). " +
+        "When false or omitted, updates the existing version specified by tcVersionID. " +
+        "IMPORTANT: Always send proper tcVersionID to identify which version the request is for.",
+    ),
+  versionComment: z
+    .string()
+    .optional()
+    .describe(
+      "Comment or description for the new version (used only when withVersion=true). " +
+        "Helps track what changed in this new version. Example: 'Updated test steps for new requirements'",
+    ),
+  notruncurrent: z
+    .boolean()
+    .optional()
+    .describe(
+      "Flag to control execution behavior for current version when creating a new version. " +
+        "Used in conjunction with withVersion=true.",
+    ),
+  notrunall: z
+    .boolean()
+    .optional()
+    .describe(
+      "Flag to control execution behavior for all versions when creating a new version. " +
+        "Used in conjunction with withVersion=true.",
+    ),
+  folderPath: CommonFields.tsFolderPath,
+  scope: CommonFields.scope,
+  isStepUpdated: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set to true when steps are being added, updated, or removed. " +
+        "Required when including 'steps' or 'removeSteps' arrays.",
+    ),
   steps: z.array(CreateTestCaseStepSchema).optional(),
   removeSteps: z.array(UpdateTestCaseRemoveStepSchema).optional(),
   name: z.string().optional(),
@@ -454,10 +498,20 @@ export const UpdateTestCaseArgsSchema = z.object({
   owner: z.number().optional(),
   testCaseState: z.number().optional(),
   testCaseType: z.number().optional(),
+  estimatedTime: z
+    .number()
+    .optional()
+    .describe("Estimated execution time in seconds. Example: 7200 for 2 hours"),
   executionMinutes: z.number().optional(),
   testingType: z.number().optional(),
   description: z.string().optional(),
-  updateOnlyMetadata: z.boolean().optional(),
+  updateOnlyMetadata: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set to true to update only metadata fields without touching test steps. " +
+        "When true, steps and removeSteps are ignored.",
+    ),
 });
 
 export const TestCaseListArgsSchema = z.object({
@@ -927,5 +981,84 @@ export const LinkPlatformsToTestSuiteArgsSchema = z.object({
     .string()
     .describe(
       "Comma-separated value of PlatformId (required). To get the qmPlatformId - Call API 'Platform/List' From the response, get value of following attribute -> data[<index>].platformID",
+    ),
+});
+
+// Export for Bulk Update Test Case Execution Status tool
+export const BulkUpdateExecutionStatusArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  entityIDs: z
+    .string()
+    .describe(
+      "Comma-separated IDs of Test Case Runs to update (e.g., '66095087' for single or '66095069,66095075' for bulk). " +
+        "To get the entityIDs - Call API 'Execution/Fetch Testcase Run ID' " +
+        "From the response, get value of following attribute -> data[<index>].tcRunID",
+    ),
+  entityType: z
+    .enum(["TCR", "TCSR"])
+    .describe(
+      "Type of Entity to Execute: 'TCR' (Test Case Run) or 'TCSR' (Test Case Step Run)",
+    )
+    .default("TCR"),
+  qmTsRunId: z
+    .string()
+    .describe(
+      "Id of Test Suite Run to execute (required). " +
+        "To get the qmTsRunId - Call API 'Execution/Fetch Executions' " +
+        "From the response, get value of following attribute -> data[<index>].tsRunID",
+    ),
+  runStatusID: z
+    .number()
+    .describe(
+      "Id of the execution status to set (required). " +
+        "To get the runStatusID - Call API 'Admin/Project GET info Service' " +
+        "From the response, get value of following attribute -> allstatus[<index>].id " +
+        "Common statuses: Pass, Fail, Not Run, Blocked, WIP, etc.",
+    ),
+  dropID: z
+    .union([z.number(), z.string()])
+    .optional()
+    .describe(
+      "Unique identifier of drop/build on which execution is to be performed (optional). " +
+        "To get the dropID - Call API 'Fetch Build/List' " +
+        "From the response, get value of following attribute -> data[<index>].dropID",
+    ),
+  isAutoExecuted: z
+    .enum(["0", "1"])
+    .optional()
+    .describe("Set '1' for automated and '0' for manual Execution Type"),
+  isBulkOperation: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set true for bulk operations (multiple entityIDs), false for single execution update. " +
+        "Default: true if multiple comma-separated entityIDs, false otherwise",
+    ),
+  comments: z
+    .string()
+    .optional()
+    .describe("Optional comments for the execution status update"),
+  username: z
+    .string()
+    .optional()
+    .describe(
+      "If Part 11 Compliance is active then required for authentication",
+    ),
+  password: z
+    .string()
+    .optional()
+    .describe(
+      "If Part 11 Compliance is active then required for authentication",
+    ),
+  qmRunObj: z
+    .string()
+    .optional()
+    .describe("Internal QMetry run object (optional, usually empty string)"),
+  type: z
+    .enum(["TCR", "TCSR"])
+    .optional()
+    .describe(
+      "Type of Entity - same as entityType (for backwards compatibility)",
     ),
 });

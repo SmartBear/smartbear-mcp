@@ -184,3 +184,26 @@ export const DEFAULT_LINKED_PLATFORMS_TO_TESTSUITE_PAYLOAD: Omit<
   LinkedPlatformsToTestSuitePayload,
   "qmTsId" | "qmPlatformId"
 > = {};
+
+export interface BulkUpdateExecutionStatusPayload {
+  entityIDs: string; // required - Comma-separated Test Case Run IDs
+  entityType: "TCR" | "TCSR"; // required - Type of Entity
+  qmTsRunId: string; // required - Test Suite Run ID
+  runStatusID: number; // required - Execution status ID
+  dropID?: number | string; // optional - Build/Drop ID
+  isAutoExecuted?: "0" | "1"; // optional - Manual (0) or Automated (1)
+  isBulkOperation?: boolean; // optional - True for bulk, false for single
+  comments?: string; // optional - Execution comments
+  username?: string; // optional - For Part 11 Compliance
+  password?: string; // optional - For Part 11 Compliance
+  qmRunObj?: string; // optional - Internal run object
+  type?: "TCR" | "TCSR"; // optional - For backwards compatibility
+}
+
+export const DEFAULT_BULK_UPDATE_EXECUTION_STATUS_PAYLOAD: Omit<
+  BulkUpdateExecutionStatusPayload,
+  "entityIDs" | "qmTsRunId" | "runStatusID"
+> = {
+  entityType: "TCR",
+  qmRunObj: "",
+};

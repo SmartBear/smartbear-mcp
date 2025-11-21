@@ -1,4 +1,5 @@
 import { QMetryToolsHandlers } from "../config/constants.js";
+import { importAutomationResults } from "./automation.js";
 import {
   createIssue,
   fetchIssues,
@@ -30,6 +31,7 @@ import {
   updateTestCase,
 } from "./testcase.js";
 import {
+  bulkUpdateExecutionStatus,
   createTestSuites,
   fetchExecutionsByTestSuite,
   fetchLinkedIssuesByTestCaseRun,
@@ -101,4 +103,6 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_ISSUES]: fetchIssues,
   [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
+  [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
+  [QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS]: bulkUpdateExecutionStatus,
 };

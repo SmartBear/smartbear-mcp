@@ -38,4 +38,6 @@ export const QMetryToolsHandlers = {
   FETCH_ISSUES: "getIssues",
   LINK_ISSUES_TO_TESTCASE_RUN: "linkIssuesToTestcaseRun",
   LINK_PLATFORMS_TO_TESTSUITE: "linkPlatformsToTestSuite",
+  IMPORT_AUTOMATION_RESULTS: "importAutomationResults",
+  BULK_UPDATE_EXECUTION_STATUS: "bulkUpdateExecutionStatus",
 };

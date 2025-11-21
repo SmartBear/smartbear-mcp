@@ -31,11 +31,15 @@ export const QMETRY_PATHS = {
     GET_TESTCASE_RUNS_BY_TESTSUITE_RUN: "/rest/execution/list/viewColumns",
     GET_LINKED_ISSUES_BY_TESTCASE_RUN: "/rest/execution/issue/list/forTCRun",
     LINK_PLATFORMS_TO_TESTSUITE: "/rest/testsuites/link/platforms",
+    BULK_UPDATE_EXECUTION_STATUS: "/rest/execution/runstatus/bulkupdate",
   },
   ISSUES: {
     GET_ISSUES_LIST: "/rest/issues/list/viewColumns",
     CREATE_UPDATE_ISSUE: "/rest/issues",
     GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
     LINK_ISSUES_TO_TESTCASE_RUN: "/rest/execution/link/issue",
+  },
+  AUTOMATION: {
+    IMPORT_RESULTS: "/rest/import/createandscheduletestresults/1",
   },
 };

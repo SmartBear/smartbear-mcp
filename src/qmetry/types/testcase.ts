@@ -13,6 +13,7 @@ export interface CreateTestCaseStep {
   inputData?: string;
   expectedOutcome?: string;
   UDF?: Record<string, string>;
+  tcStepID?: number; // Required for updating existing steps, omit for new steps
 }
 export interface removeTestCaseStep {
   tcID: number;

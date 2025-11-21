@@ -1,5 +1,6 @@
 import { QMetryToolsHandlers } from "../../config/constants.js";
 import {
+  BulkUpdateExecutionStatusArgsSchema,
   CreateTestSuiteArgsSchema,
   ExecutionsByTestSuiteArgsSchema,
   LinkPlatformsToTestSuiteArgsSchema,
@@ -864,5 +865,187 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "JSON object with test case runs array containing detailed execution information, status, tester details, and run metadata",
     readOnly: true,
     idempotent: true,
+  },
+  {
+    title: "Bulk Update Test Case Execution Status",
+    summary:
+      "Update execution status for individual or multiple test case runs in bulk",
+    handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
+    inputSchema: BulkUpdateExecutionStatusArgsSchema,
+    purpose:
+      "Update the execution status (Pass, Fail, Blocked, Not Run, WIP, etc.) for one or more test case runs. " +
+      "This tool enables both single and bulk status updates for test executions, providing flexibility for " +
+      "manual test execution management, automated test result updates, and test execution tracking. " +
+      "Essential for maintaining accurate test execution records and execution status reporting.",
+    useCases: [
+      "Update single test case run status to Pass, Fail, Blocked, or Not Run",
+      "Bulk update multiple test case run statuses in a single operation",
+      "Mark all selected test case runs as Not Run for re-execution",
+      "Update execution status after manual test execution",
+      "Set execution status based on automated test results",
+      "Update test execution status across different test environments",
+      "Track test execution progress and completion",
+      "Manage test execution status for compliance and reporting",
+    ],
+    examples: [
+      {
+        description:
+          "Update single test case run status to Failed (single execution)",
+        parameters: {
+          entityIDs: "66095087",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123266,
+          isBulkOperation: false,
+        },
+        expectedOutput:
+          "Test case run 66095087 status updated to Failed successfully",
+      },
+      {
+        description:
+          "Bulk update two test case runs to Pass status (bulk execution)",
+        parameters: {
+          entityIDs: "66095069,66095075",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123268,
+          isBulkOperation: true,
+          comments: "All test cases passed successfully",
+        },
+        expectedOutput:
+          "Test case runs 66095069 and 66095075 updated to Pass status successfully",
+      },
+      {
+        description:
+          "Bulk update all selected test case runs to Not Run status",
+        parameters: {
+          entityIDs:
+            "66095069,66095075,66095081,66095087,66095093,66095099,66095105",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123269,
+          isBulkOperation: true,
+        },
+        expectedOutput:
+          "7 test case runs updated to Not Run status successfully for re-execution",
+      },
+      {
+        description: "Update test case run with build/drop information",
+        parameters: {
+          entityIDs: "66095087",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123266,
+          dropID: 947,
+          isBulkOperation: false,
+        },
+        expectedOutput:
+          "Test case run updated with execution status and build information",
+      },
+      {
+        description:
+          "Update automated test execution status with automation flag",
+        parameters: {
+          entityIDs: "66095069,66095075",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123268,
+          isAutoExecuted: "1",
+          isBulkOperation: true,
+          comments: "Automated test execution completed",
+        },
+        expectedOutput:
+          "Automated test case runs updated to Pass status with automation flag",
+      },
+      {
+        description:
+          "Update test case run status with Part 11 Compliance authentication",
+        parameters: {
+          entityIDs: "66095087",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123266,
+          username: "dhaval.mistry",
+          password: "Ispl123#",
+          isBulkOperation: false,
+        },
+        expectedOutput:
+          "Test case run status updated with Part 11 Compliance authentication",
+      },
+    ],
+    hints: [
+      "CRITICAL: entityIDs, entityType, qmTsRunId, and runStatusID are REQUIRED parameters",
+      "HOW TO GET entityIDs (Test Case Run IDs):",
+      "1. Call API 'Execution/Fetch Testcase Run ID' (FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN tool)",
+      "2. From the response, get value of following attribute -> data[<index>].tcRunID",
+      "3. Example: Single ID '66095087' or Multiple IDs '66095069,66095075,66095081'",
+      "4. For bulk operations, provide comma-separated IDs without spaces",
+      "HOW TO GET qmTsRunId (Test Suite Run ID):",
+      "1. Call API 'Execution/Fetch Executions' (FETCH_EXECUTIONS_BY_TESTSUITE tool)",
+      "2. From the response, get value of following attribute -> data[<index>].tsRunID",
+      "3. Example: Test Suite Run ID might be '2720260'",
+      "HOW TO GET runStatusID (Execution Status ID):",
+      "1. Call API 'Admin/Get info Service' (FETCH_PROJECT_INFO tool)",
+      "2. From the response, get value of following attribute -> allstatus[<index>].id",
+      "3. Match status by allstatus[<index>].name (e.g., 'Pass', 'Fail', 'Blocked', 'Not Run', 'WIP')",
+      "4. Example status IDs: Pass=123268, Fail=123266, Not Run=123269, Blocked=123267, WIP=123270",
+      "HOW TO GET dropID (Build/Drop ID) - OPTIONAL:",
+      "1. Call API 'Build/List' (FETCH_BUILDS tool)",
+      "2. From the response, get value of following attribute -> data[<index>].dropID",
+      "3. Example: Build/Drop ID might be 947",
+      "ENTITY TYPES:",
+      "- 'TCR' = Test Case Run (most common use case)",
+      "- 'TCSR' = Test Case Step Run (for step-level execution updates)",
+      "BULK OPERATION FLAG:",
+      "- isBulkOperation=false: Single test case run update (one entityID)",
+      "- isBulkOperation=true: Multiple test case runs update (comma-separated entityIDs)",
+      "- Auto-detected: If entityIDs contains comma, defaults to true; otherwise false",
+      "AUTOMATION FLAG (isAutoExecuted) - OPTIONAL:",
+      "- '1' = Automated execution (test run by automation framework)",
+      "- '0' = Manual execution (test run by human tester)",
+      "- Used for execution tracking and reporting purposes",
+      "PART 11 COMPLIANCE (username & password) - CONDITIONAL:",
+      "- Required ONLY if Part 11 Compliance is active in your QMetry instance",
+      "- Used for regulatory compliance and audit trail purposes",
+      "- Not needed for standard QMetry installations",
+      "COMMENTS FIELD - OPTIONAL:",
+      "- Add execution notes, failure reasons, or status change context",
+      "- Useful for tracking why status was changed",
+      "- Appears in execution history and audit logs",
+      "COMMON EXECUTION STATUS NAMES:",
+      "- Pass: Test case executed successfully",
+      "- Fail: Test case failed with errors",
+      "- Blocked: Test case cannot be executed due to blockers",
+      "- Not Run: Test case not yet executed or needs re-execution",
+      "- WIP: Work In Progress - test case execution in progress",
+      "WORKFLOW FOR USER PROMPTS:",
+      "1. If user says 'execute test case run by id to failed' or 'update status to fail':",
+      "   - Fetch test case runs to get tcRunID (entityIDs)",
+      "   - Fetch project info to get 'Fail' status ID (runStatusID)",
+      "   - Set isBulkOperation=false for single ID",
+      "2. If user says 'bulk update test case run status to pass' or 'update all to passed':",
+      "   - Fetch test case runs to get multiple tcRunIDs",
+      "   - Fetch project info to get 'Pass' status ID",
+      "   - Set isBulkOperation=true",
+      "   - Join multiple IDs with commas (no spaces)",
+      "3. If user says 'execute status to not run of given test case run ids':",
+      "   - Use provided IDs or fetch if needed",
+      "   - Fetch project info to get 'Not Run' status ID",
+      "   - Set isBulkOperation based on ID count",
+      "FIELD MAPPING CRITICAL NOTES:",
+      "- entityIDs must be comma-separated STRING (e.g., '66095069,66095075')",
+      "- qmTsRunId must be STRING format (e.g., '2720260')",
+      "- runStatusID must be NUMERIC (e.g., 123268)",
+      "- dropID can be numeric or string (flexible)",
+      "API ENDPOINT: PUT /rest/execution/runstatus/bulkupdate",
+      "This tool is essential for test execution management and status tracking",
+      "Critical for maintaining accurate test execution records and reporting",
+      "Use for manual test execution updates and automated test result integration",
+      "Essential for test execution audit trails and compliance requirements",
+    ],
+    outputDescription:
+      "JSON object with success status, updated execution details, and confirmation message",
+    readOnly: false,
+    idempotent: false,
   },
 ];
