@@ -104,7 +104,7 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 -   Configure URL patterns to control how network spans are grouped in performance monitoring.
 -   Uses OpenAPI path templating syntax with curly braces for path parameters (e.g., `/users/{userId}`).
 -   Supports wildcards (*) in domains to match multiple subdomains (e.g., `https://*.example.com`).
--   Convert colon-prefixed parameters from frameworks like Express/React Router (e.g., `:userId` → `{userId}`).
+-   Converts colon-prefixed parameters from frameworks like Express/React Router (e.g., `:userId` → `{userId}`).
 
 ## Available Resources
 
