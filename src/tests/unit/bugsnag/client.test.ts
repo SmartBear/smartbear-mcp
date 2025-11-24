@@ -32,6 +32,7 @@ const mockProjectAPI = {
   getReleaseGroup: vi.fn(),
   listBuildsInRelease: vi.fn(),
   getProjectNetworkGroupingRuleset: vi.fn(),
+  updateProjectNetworkGroupingRuleset: vi.fn(),
   getProjectSpanGroup: vi.fn(),
   getProjectSpanGroupDistribution: vi.fn(),
   getProjectSpanGroupTimeline: vi.fn(),
@@ -2637,6 +2638,269 @@ describe("BugsnagClient", () => {
             },
           ],
         });
+      });
+    });
+
+    describe("Get Network Endpoint Groupings tool handler", () => {
+      it("should get network grouping rules with project from cache", async () => {
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Network Endpoint Groupings",
+        )?.[1];
+
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockRuleset = {
+          projectId: "proj-1",
+          endpoints: [
+            "/api/users/{userId}",
+            "/api/products/{productId}",
+            "https://*.example.com/api/{version}",
+          ],
+        };
+
+        mockCache.get.mockReturnValueOnce(mockProject);
+        mockProjectAPI.getProjectNetworkGroupingRuleset.mockResolvedValue({
+          body: mockRuleset,
+        });
+
+        const result = await getNetworkGroupingHandler({}, {});
+
+        expect(
+          mockProjectAPI.getProjectNetworkGroupingRuleset,
+        ).toHaveBeenCalledWith("proj-1");
+        expect(JSON.parse(result.content[0].text)).toEqual(
+          mockRuleset.endpoints,
+        );
+      });
+
+      it("should get network grouping rules with explicit project ID", async () => {
+        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Network Endpoint Groupings",
+        )?.[1];
+
+        const mockProjects = [
+          { id: "proj-1", name: "Project 1" },
+          { id: "proj-2", name: "Project 2" },
+        ];
+        const mockRuleset = {
+          projectId: "proj-2",
+          endpoints: ["/api/{version}/items/{itemId}"],
+        };
+
+        mockCache.get.mockReturnValueOnce(mockProjects);
+        mockProjectAPI.getProjectNetworkGroupingRuleset.mockResolvedValue({
+          body: mockRuleset,
+        });
+
+        const result = await getNetworkGroupingHandler(
+          { projectId: "proj-2" },
+          {},
+        );
+
+        expect(
+          mockProjectAPI.getProjectNetworkGroupingRuleset,
+        ).toHaveBeenCalledWith("proj-2");
+        expect(JSON.parse(result.content[0].text)).toEqual(
+          mockRuleset.endpoints,
+        );
+      });
+
+      it("should return empty array when no endpoints configured", async () => {
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Network Endpoint Groupings",
+        )?.[1];
+
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const mockRuleset = {
+          projectId: "proj-1",
+          endpoints: [],
+        };
+
+        mockCache.get.mockReturnValueOnce(mockProject);
+        mockProjectAPI.getProjectNetworkGroupingRuleset.mockResolvedValue({
+          body: mockRuleset,
+        });
+
+        const result = await getNetworkGroupingHandler({}, {});
+
+        expect(JSON.parse(result.content[0].text)).toEqual([]);
+      });
+
+      it("should throw error when no project ID available", async () => {
+        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Network Endpoint Groupings",
+        )?.[1];
+
+        mockCache.get.mockReturnValueOnce(null);
+
+        await expect(getNetworkGroupingHandler({}, {})).rejects.toThrow(
+          "No current project found",
+        );
+      });
+    });
+
+    describe("Set Network Endpoint Groupings tool handler", () => {
+      it("should update network grouping rules with project from cache", async () => {
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Set Network Endpoint Groupings",
+        )?.[1];
+
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const endpoints = [
+          "/api/users/{userId}",
+          "/api/products/{productId}",
+          "https://*.example.com/api/{version}",
+        ];
+        const mockRuleset = {
+          projectId: "proj-1",
+          endpoints: endpoints,
+        };
+
+        mockCache.get.mockReturnValueOnce(mockProject);
+        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+          status: 200,
+          body: mockRuleset,
+        });
+
+        const result = await setNetworkGroupingHandler({ endpoints }, {});
+
+        expect(
+          mockProjectAPI.updateProjectNetworkGroupingRuleset,
+        ).toHaveBeenCalledWith("proj-1", endpoints);
+        const response = JSON.parse(result.content[0].text);
+        expect(response.success).toBe(true);
+        expect(response.projectId).toBe("proj-1");
+        expect(response.endpoints).toEqual(endpoints);
+      });
+
+      it("should update network grouping rules with explicit project ID", async () => {
+        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Set Network Endpoint Groupings",
+        )?.[1];
+
+        const mockProjects = [
+          { id: "proj-1", name: "Project 1" },
+          { id: "proj-2", name: "Project 2" },
+        ];
+        const endpoints = [
+          "/{organizationSlug}/{projectSlug}/performance/view-load",
+        ];
+        const mockRuleset = {
+          projectId: "proj-2",
+          endpoints: endpoints,
+        };
+
+        mockCache.get.mockReturnValueOnce(mockProjects);
+        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+          status: 200,
+          body: mockRuleset,
+        });
+
+        const result = await setNetworkGroupingHandler(
+          { projectId: "proj-2", endpoints },
+          {},
+        );
+
+        expect(
+          mockProjectAPI.updateProjectNetworkGroupingRuleset,
+        ).toHaveBeenCalledWith("proj-2", endpoints);
+        const response = JSON.parse(result.content[0].text);
+        expect(response.success).toBe(true);
+        expect(response.projectId).toBe("proj-2");
+        expect(response.endpoints).toEqual(endpoints);
+      });
+
+      it("should handle 204 status as success", async () => {
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Set Network Endpoint Groupings",
+        )?.[1];
+
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const endpoints = ["/api/{version}/items/{itemId}"];
+
+        mockCache.get.mockReturnValueOnce(mockProject);
+        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+          status: 204,
+          body: { projectId: "proj-1", endpoints },
+        });
+
+        const result = await setNetworkGroupingHandler({ endpoints }, {});
+
+        const response = JSON.parse(result.content[0].text);
+        expect(response.success).toBe(true);
+      });
+
+      it("should update with empty endpoints array", async () => {
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Set Network Endpoint Groupings",
+        )?.[1];
+
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const endpoints: string[] = [];
+
+        mockCache.get.mockReturnValueOnce(mockProject);
+        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+          status: 200,
+          body: { projectId: "proj-1", endpoints },
+        });
+
+        const result = await setNetworkGroupingHandler({ endpoints }, {});
+
+        expect(
+          mockProjectAPI.updateProjectNetworkGroupingRuleset,
+        ).toHaveBeenCalledWith("proj-1", []);
+        const response = JSON.parse(result.content[0].text);
+        expect(response.success).toBe(true);
+        expect(response.endpoints).toEqual([]);
+      });
+
+      it("should handle complex endpoint patterns", async () => {
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Set Network Endpoint Groupings",
+        )?.[1];
+
+        const mockProject = { id: "proj-1", name: "Project 1" };
+        const endpoints = [
+          "https://*.example.com/api/v1/{resourceId}",
+          "https://api.example.com/v2/users/{userId}",
+          "/api/orders/{orderId}/items/{itemId}",
+          "/graphql",
+        ];
+
+        mockCache.get.mockReturnValueOnce(mockProject);
+        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+          status: 200,
+          body: { projectId: "proj-1", endpoints },
+        });
+
+        const result = await setNetworkGroupingHandler({ endpoints }, {});
+
+        expect(
+          mockProjectAPI.updateProjectNetworkGroupingRuleset,
+        ).toHaveBeenCalledWith("proj-1", endpoints);
+        const response = JSON.parse(result.content[0].text);
+        expect(response.endpoints).toEqual(endpoints);
+      });
+
+      it("should throw error when no project ID available", async () => {
+        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Set Network Endpoint Groupings",
+        )?.[1];
+
+        mockCache.get.mockReturnValueOnce(null);
+
+        await expect(
+          setNetworkGroupingHandler({ endpoints: ["/api/{id}"] }, {}),
+        ).rejects.toThrow("No current project found");
       });
     });
   });
