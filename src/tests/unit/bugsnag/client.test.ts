@@ -850,7 +850,9 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("List Spans");
       expect(registeredTools).toContain("Get Trace");
       expect(registeredTools).toContain("List Trace Fields");
-      expect(registeredTools.length).toBe(15);
+      expect(registeredTools).toContain("Get Network Endpoint Groupings");
+      expect(registeredTools).toContain("Set Network Endpoint Groupings");
+      expect(registeredTools.length).toBe(17);
     });
   });
 
