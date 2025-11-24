@@ -55,6 +55,18 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 
 -   Get detailed information about a specific build, including source control information and metadata.
 
+### Get Network Endpoint Groupings
+
+-   Retrieve the current network endpoint grouping rules for a project.
+-   Shows URL patterns used to consolidate similar network requests into single span groups.
+
+### Set Network Endpoint Groupings
+
+-   Configure URL patterns to control how network spans are grouped in performance monitoring.
+-   Uses OpenAPI path templating syntax with curly braces for path parameters (e.g., `/users/{userId}`).
+-   Supports wildcards (*) in domains to match multiple subdomains (e.g., `https://*.example.com`).
+-   Convert colon-prefixed parameters from frameworks like Express/React Router (e.g., `:userId` → `{userId}`).
+
 ### Get Current Project
 
 -   Retrieve details of the currently configured project.
