@@ -1548,8 +1548,7 @@ export class BugsnagClient implements Client {
           {
             description: "Get network grouping rules for a project",
             parameters: {},
-            expectedOutput:
-              "JSON object with projectId and array of endpoint URL patterns",
+            expectedOutput: "Array of endpoint URL patterns",
           },
         ],
         hints: [
@@ -1567,7 +1566,9 @@ export class BugsnagClient implements Client {
           project.id,
         );
         return {
-          content: [{ type: "text", text: JSON.stringify(result.body) }],
+          content: [
+            { type: "text", text: JSON.stringify(result.body.endpoints || []) },
+          ],
         };
       },
     );
