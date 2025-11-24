@@ -829,12 +829,18 @@ export class SwaggerAPI {
     // 201 = new API created, 200 = existing API updated, 205 = API saved and should be reloaded
     const operation = response.status === 201 ? "create" : "update";
 
+    // Extract version from X-Version header
+    const version = response.headers.get("X-Version");
+
     // Return formatted response with the required fields
     return {
       owner: params.owner,
       apiName: params.apiName,
       specType: specType,
-      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
+      version: version || undefined,
+      url: version
+        ? `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`
+        : `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
       operation,
     };
   }

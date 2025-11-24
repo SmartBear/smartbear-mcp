@@ -19,7 +19,8 @@ export class SwaggerConfiguration {
     this.token = param.token;
     this.portalBasePath =
       param.portalBasePath || "https://api.portal.swaggerhub.com/v1";
-    this.registryBasePath = param.registryBasePath || "http://localhost:8088"; // Default for registry API
+    this.registryBasePath =
+      param.registryBasePath || "https://api.swaggerhub.com"; // Default for registry API
     this.uiBasePath = param.uiBasePath || "https://app.swaggerhub.com"; // Default for UI
     this.userManagementBasePath =
       param.userManagementBasePath ||

@@ -208,6 +208,7 @@ export interface CreateApiFromPromptResponse {
   owner: string;
   apiName: string;
   specType: string;
+  version?: string; // Version from X-Version header
   url: string;
   operation: "create" | "update";
 }
