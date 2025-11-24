@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
+- [Zephyr] Added a tool for retrieving a list of Test Executions [#213](https://github.com/SmartBear/smartbear-mcp/pull/213)
 
 ## [0.11.0] - 2025-11-20
 
