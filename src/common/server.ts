@@ -27,7 +27,8 @@ import {
 import Bugsnag from "../common/bugsnag.js";
 import { CacheService } from "./cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
-import { type Client, ToolError, type ToolParams } from "./types.js";
+import { ToolError } from "./tools.js";
+import type { Client, ToolParams } from "./types.js";
 
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
@@ -71,6 +72,11 @@ export class SmartBearMcpServer extends McpServer {
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
+            if (!client.isConfigured()) {
+              throw new ToolError(
+                `The '${toolTitle}' tool is not configured - configuration options for ${client.name} are missing or invalid.`,
+              );
+            }
             try {
               const result = await cb(args, extra);
               if (result) {

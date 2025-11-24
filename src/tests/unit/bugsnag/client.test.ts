@@ -8,7 +8,7 @@ import type {
 import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
 import { BugsnagClient } from "../../../bugsnag/client.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
-import { ToolError } from "../../../common/types.js";
+import { ToolError } from "../../../common/tools.js";
 
 // Mock the dependencies
 const mockCurrentUserAPI = {
@@ -644,7 +644,8 @@ describe("BugsnagClient", () => {
         client.configure({ getCache: () => mockCache } as any, {
           auth_token: "test-token",
         }),
-      ).resolves.toBe(true);
+      ).resolves.toBe(undefined);
+      expect(client.isConfigured()).toBe(false);
       expect(console.error).toHaveBeenCalledWith(
         "Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.",
         expect.any(Error),
@@ -676,7 +677,8 @@ describe("BugsnagClient", () => {
           auth_token: "test-token",
           project_api_key: "non-existent-key",
         }),
-      ).resolves.toBe(true);
+      ).resolves.toBe(undefined);
+      expect(clientWithApiKey.isConfigured()).toBe(true);
       expect(console.error).toHaveBeenCalledWith(
         "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. Check your configured BugSnag project API key.",
       );
@@ -702,7 +704,8 @@ describe("BugsnagClient", () => {
           auth_token: "test-token",
           project_api_key: "project-api-key",
         }),
-      ).resolves.toBe(true);
+      ).resolves.toBe(undefined);
+      expect(clientWithApiKey.isConfigured()).toBe(true);
       expect(console.error).toHaveBeenCalledWith(
         "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. Check your configured BugSnag project API key.",
       );
@@ -946,7 +949,7 @@ describe("BugsnagClient", () => {
           (call: any) => call[0].title === "List Projects",
         )[1];
 
-        expect(toolHandler({})).rejects.toThrow(
+        await expect(toolHandler({})).rejects.toThrow(
           "No BugSnag projects found for the current user.",
         );
       });

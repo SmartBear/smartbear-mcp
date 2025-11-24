@@ -66,12 +66,15 @@ export class SwaggerClient implements Client {
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.api = new SwaggerAPI(
       new SwaggerConfiguration({ token: config.api_key }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return this.api !== undefined;
   }
 
   getApi(): SwaggerAPI {

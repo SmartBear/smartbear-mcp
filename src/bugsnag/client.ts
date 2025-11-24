@@ -2,12 +2,12 @@ import { z } from "zod";
 import type { CacheService } from "../common/cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type { SmartBearMcpServer } from "../common/server.js";
-import {
-  type Client,
-  type GetInputFunction,
-  type RegisterResourceFunction,
-  type RegisterToolsFunction,
-  ToolError,
+import { ToolError } from "../common/tools.js";
+import type {
+  Client,
+  GetInputFunction,
+  RegisterResourceFunction,
+  RegisterToolsFunction,
 } from "../common/types.js";
 import {
   type Build,
@@ -69,6 +69,7 @@ export class BugsnagClient implements Client {
   private cache?: CacheService;
   private projectApiKey?: string;
   private configuredProjectApiKey?: string;
+  private _isConfigured: boolean = false;
   private _currentUserApi: CurrentUserAPI | undefined;
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
@@ -102,7 +103,7 @@ export class BugsnagClient implements Client {
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.cache = server.getCache();
     this._appEndpoint = this.getEndpoint(
       "app",
@@ -141,6 +142,7 @@ export class BugsnagClient implements Client {
         "Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.",
         error,
       );
+      return;
     }
     if (this.projectApiKey) {
       this.configuredProjectApiKey = this.projectApiKey; // Store the originally configured API key
@@ -164,7 +166,12 @@ export class BugsnagClient implements Client {
         );
       }
     }
-    return true;
+    this._isConfigured = true;
+    return;
+  }
+
+  isConfigured(): boolean {
+    return this._isConfigured;
   }
 
   getHost(apiKey: string | undefined, subdomain: string): string {
