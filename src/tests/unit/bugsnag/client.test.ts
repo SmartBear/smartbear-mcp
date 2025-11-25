@@ -654,7 +654,7 @@ describe("BugsnagClient", () => {
         (field) => field.displayId !== "search",
       );
       expect(mockCache.set).toHaveBeenCalledWith(
-        "bugsnag_project_event_filters",
+        "bugsnag_project_event_fields",
         { "proj-1": filteredFields },
       );
     });
@@ -2478,7 +2478,7 @@ describe("BugsnagClient", () => {
           "proj-1",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_project_performance_filters",
+          "bugsnag_project_trace_fields",
           { "proj-1": mockTraceFields },
         );
         expect(result).toEqual({
@@ -2500,7 +2500,7 @@ describe("BugsnagClient", () => {
         const mockCachedFilters = { "proj-1": mockPerformanceFilters };
 
         mockCache.get.mockImplementation((key: string) => {
-          if (key === "bugsnag_project_performance_filters") {
+          if (key === "bugsnag_project_trace_fields") {
             return mockCachedFilters;
           }
           if (key === "bugsnag_current_project") {
@@ -2562,7 +2562,7 @@ describe("BugsnagClient", () => {
           "proj-2",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
-          "bugsnag_project_performance_filters",
+          "bugsnag_project_trace_fields",
           {
             "proj-2": mockTraceFields,
           },

@@ -32,8 +32,8 @@ const HUB_DOMAIN = "bugsnag.smartbear.com";
 const cacheKeys = {
   ORG: "bugsnag_org",
   PROJECTS: "bugsnag_projects",
-  PROJECT_EVENT_FILTERS: "bugsnag_project_event_filters",
-  PROJECT_PERFORMANCE_FILTERS: "bugsnag_project_performance_filters",
+  PROJECT_EVENT_FIELDS: "bugsnag_project_event_fields",
+  PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
   CURRENT_PROJECT: "bugsnag_current_project",
 };
 
@@ -156,7 +156,7 @@ export class BugsnagClient implements Client {
         );
       }
       if (currentProject) {
-        await this.getProjectEventFilters(currentProject);
+        await this.getProjectEventFields(currentProject);
       } else {
         // Clear the project API key to allow tools to work across all projects
         this.projectApiKey = undefined;
@@ -269,10 +269,10 @@ export class BugsnagClient implements Client {
     return project;
   }
 
-  async getProjectEventFilters(project: Project): Promise<EventField[]> {
+  async getProjectEventFields(project: Project): Promise<EventField[]> {
     const projectFiltersCache =
       this.cache?.get<Record<string, EventField[]>>(
-        cacheKeys.PROJECT_EVENT_FILTERS,
+        cacheKeys.PROJECT_EVENT_FIELDS,
       ) || {};
     if (!projectFiltersCache[project.id]) {
       let filtersResponse = (
@@ -288,15 +288,15 @@ export class BugsnagClient implements Client {
           field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
       );
       projectFiltersCache[project.id] = filtersResponse;
-      this.cache?.set(cacheKeys.PROJECT_EVENT_FILTERS, projectFiltersCache);
+      this.cache?.set(cacheKeys.PROJECT_EVENT_FIELDS, projectFiltersCache);
     }
     return projectFiltersCache[project.id];
   }
 
-  async getProjectPerformanceFilters(project: Project): Promise<TraceField[]> {
+  async getProjectTraceFields(project: Project): Promise<TraceField[]> {
     const projectFiltersCache =
       this.cache?.get<Record<string, TraceField[]>>(
-        cacheKeys.PROJECT_PERFORMANCE_FILTERS,
+        cacheKeys.PROJECT_TRACE_FIELDS,
       ) || {};
     if (!projectFiltersCache[project.id]) {
       const filtersResponse = (
@@ -308,10 +308,7 @@ export class BugsnagClient implements Client {
         );
       }
       projectFiltersCache[project.id] = filtersResponse;
-      this.cache?.set(
-        cacheKeys.PROJECT_PERFORMANCE_FILTERS,
-        projectFiltersCache,
-      );
+      this.cache?.set(cacheKeys.PROJECT_TRACE_FIELDS, projectFiltersCache);
     }
     return projectFiltersCache[project.id];
   }
@@ -729,7 +726,7 @@ export class BugsnagClient implements Client {
 
         // Validate filter keys against cached event fields
         if (params.filters) {
-          const eventFields = await this.getProjectEventFilters(project);
+          const eventFields = await this.getProjectEventFields(project);
           const validKeys = new Set(eventFields.map((f) => f.displayId));
           for (const key of Object.keys(params.filters)) {
             if (!validKeys.has(key)) {
@@ -797,7 +794,7 @@ export class BugsnagClient implements Client {
       },
       async (args, _extra) => {
         const params = listProjectEventFiltersInputSchema.parse(args);
-        const eventFilters = await this.getProjectEventFilters(
+        const eventFilters = await this.getProjectEventFields(
           await this.getInputProject(params.projectId),
         );
         return {
@@ -1518,7 +1515,7 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = listTraceFieldsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
-        const traceFields = await this.getProjectPerformanceFilters(project);
+        const traceFields = await this.getProjectTraceFields(project);
 
         return {
           content: [{ type: "text", text: JSON.stringify(traceFields) }],
