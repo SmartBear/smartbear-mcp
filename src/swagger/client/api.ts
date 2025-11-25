@@ -948,13 +948,15 @@ export class SwaggerAPI {
     const result = await this.handleResponse<StandardizeApiResponse>(response);
 
     // Validate that we have the expected response structure
-    if (
-      !("message" in (result as any)) ||
-      !("errorsFound" in (result as any))
-    ) {
+    if (!("message" in (result as any))) {
       throw new Error(
         "Unexpected response format from standardizeApi endpoint",
       );
+    }
+
+    // If errorsFound is not present, default to 0 (no errors found)
+    if (!("errorsFound" in (result as any))) {
+      (result as any).errorsFound = 0;
     }
 
     return result as StandardizeApiResponse;
