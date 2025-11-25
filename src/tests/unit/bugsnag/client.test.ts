@@ -26,7 +26,7 @@ import {
   getMockSpan,
   getMockSpanGroup,
   getMockTrace,
-} from "./utils/generators.ts";
+} from "./utils/factories.ts";
 
 // Mock the dependencies
 const mockCurrentUserAPI = {
