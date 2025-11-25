@@ -6,6 +6,7 @@ export {
   ErrorUpdateRequest,
   EventField,
   PerformanceFilter,
+  ProjectNetworkGroupingRuleset,
 } from "./api.js";
 export { CurrentUserAPI, Organization } from "./CurrentUser.js";
 export { Configuration } from "./configuration.js";

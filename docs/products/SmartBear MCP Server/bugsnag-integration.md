@@ -94,6 +94,18 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 -   Lists the custom attributes/fields available for filtering performance data.
 -   These fields can be used in filters for List Span Groups, Get Span Group, List Spans, and Get Trace tools.
 
+### Get Network Endpoint Groupings
+
+-   Retrieve the current network endpoint grouping rules for a project.
+-   Shows URL patterns used to consolidate similar network requests into single span groups.
+
+### Set Network Endpoint Groupings
+
+-   Configure URL patterns to control how network spans are grouped in performance monitoring.
+-   Uses OpenAPI path templating syntax with curly braces for path parameters (e.g., `/users/{userId}`).
+-   Supports wildcards (*) in domains to match multiple subdomains (e.g., `https://*.example.com`).
+-   Converts colon-prefixed parameters from frameworks like Express/React Router (e.g., `:userId` → `{userId}`).
+
 ## Available Resources
 
 ### Event

@@ -428,4 +428,24 @@ export class ProjectAPI extends BaseAPI {
       localVarFetchArgs.options,
     );
   }
+
+  /**
+   * Update the network endpoint grouping rules for a project.
+   * PUT /projects/{project_id}/network_endpoint_grouping
+   * @param projectId The ID of the project to update the endpoints for.
+   * @param endpoints Array of URL patterns by which network spans are grouped.
+   * @returns A promise that resolves to the updated network grouping ruleset.
+   */
+  async updateProjectNetworkGroupingRuleset(
+    projectId: string,
+    endpoints: string[],
+  ): Promise<ApiResponse<ProjectNetworkGroupingRuleset>> {
+    const localVarFetchArgs = ProjectsApiFetchParamCreator(
+      this.configuration,
+    ).updateProjectNetworkGroupingRuleset(projectId, { endpoints });
+    return await this.requestObject<ProjectNetworkGroupingRuleset>(
+      localVarFetchArgs.url,
+      localVarFetchArgs.options,
+    );
+  }
 }
