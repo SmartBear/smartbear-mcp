@@ -8,6 +8,7 @@
  * 3. Specify if the client needs the MCP server instance or async initialization
  */
 
+import { AlertSiteClient } from "../alertsite/client.js";
 import { BugsnagClient } from "../bugsnag/client.js";
 import { CollaboratorClient } from "../collaborator/client.js";
 import { PactflowClient } from "../pactflow/client.js";
@@ -37,3 +38,6 @@ clientRegistry.register(new ZephyrClient());
 
 // Register Collaborator client
 clientRegistry.register(new CollaboratorClient());
+
+// Register AlertSite client
+clientRegistry.register(new AlertSiteClient());
