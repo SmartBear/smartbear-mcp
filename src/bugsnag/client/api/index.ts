@@ -7,6 +7,7 @@ export {
   EventField,
   PerformanceFilter,
   ProjectNetworkGroupingRuleset,
+  TraceField,
 } from "./api.js";
 export { CurrentUserAPI, Organization } from "./CurrentUser.js";
 export { Configuration } from "./configuration.js";
