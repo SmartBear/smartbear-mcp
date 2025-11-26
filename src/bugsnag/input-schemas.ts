@@ -5,6 +5,8 @@ const filterValueSchema = z.object({
   value: z.union([z.string(), z.boolean(), z.number()]),
 });
 
+const filtersSchema = z.record(z.array(filterValueSchema));
+
 /**
  * A collection of input parameter schemas for reuse between tools.
  * Add new entries when common parameters are identified.
@@ -24,8 +26,15 @@ export const toolInputParameters = {
     .enum(["asc", "desc"])
     .describe("Sort direction for ordering results")
     .default("desc"),
-  filters: z
-    .record(z.array(filterValueSchema))
+  performanceFilters: filtersSchema
+    .describe(
+      "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields. " +
+        "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+    )
+    .default({
+      "span.since": [{ type: "eq", value: "7d" }],
+    }),
+  filters: filtersSchema
     .describe(
       "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
         "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
@@ -58,4 +67,5 @@ export const toolInputParameters = {
     .enum(["first_seen", "last_seen", "events", "users", "unsorted"])
     .describe("Field to sort the errors by")
     .default("last_seen"),
+  spanGroupId: z.string().describe("ID of the span group"),
 };

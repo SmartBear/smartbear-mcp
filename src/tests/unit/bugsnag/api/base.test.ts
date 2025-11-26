@@ -382,7 +382,9 @@ describe("base.ts", () => {
     });
 
     it("should construct with minimal configuration", () => {
-      const minimalConfig = new Configuration({});
+      const minimalConfig = new Configuration({
+        basePath: "http://localhost:3000",
+      });
       const baseApi = new BaseAPI(minimalConfig);
       // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
       expect(baseApi["configuration"]).toBe(minimalConfig);

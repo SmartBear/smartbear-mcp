@@ -1,12 +1,12 @@
 import type { FilterObject } from "../filters.js";
+import { type ApiResponse, BaseAPI, getQueryParams } from "./base.js";
 import {
   type ErrorApiView,
   ErrorsApiFetchParamCreator,
   type ErrorUpdateRequest,
   type EventApiView,
   type PivotApiView,
-} from "./api.js";
-import { type ApiResponse, BaseAPI, getQueryParams } from "./base.js";
+} from "./index.js";
 
 export class ErrorAPI extends BaseAPI {
   static filterFields: string[] = ["url", "project_url", "events_url"];
@@ -109,6 +109,7 @@ export class ErrorAPI extends BaseAPI {
       sort,
       direction,
       perPage,
+      undefined,
       undefined,
       options,
     );

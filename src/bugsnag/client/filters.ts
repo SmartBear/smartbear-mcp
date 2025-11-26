@@ -8,12 +8,12 @@
 /**
  * Types of filter comparison operations
  */
-export type FilterType = "eq" | "ne" | "empty";
+type FilterType = "eq" | "ne" | "empty";
 
 /**
  * Single filter value with its comparison type
  */
-export interface FilterValue {
+interface FilterValue {
   /** The type of comparison to perform */
   type: FilterType;
   /** The value to compare against */
