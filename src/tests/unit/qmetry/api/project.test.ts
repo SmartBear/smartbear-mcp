@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createCycle,
+  createRelease,
   getBuilds,
   getPlatforms,
   getProjectInfo,
   getReleasesCycles,
+  updateCycle,
 } from "../../../../qmetry/client/project.js";
 
 describe("getProjectInfo", () => {
@@ -620,5 +623,225 @@ describe("getPlatforms", () => {
     });
 
     expect(result).toEqual(mockResponse);
+  });
+});
+
+describe("createRelease", () => {
+  const token = "fake-token";
+  const baseUrl = "https://qmetry.example";
+  const projectKey = "TEST_PROJECT";
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("should call fetch with correct URL and headers for creating a release with cycle", async () => {
+    const mockResponse = {
+      success: true,
+      releaseID: 12345,
+      message: "Release created successfully",
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const payload = {
+      release: {
+        name: "Release 2.0",
+        description: "Major release",
+        startDate: "01-01-2024",
+        targetDate: "31-03-2024",
+      },
+      cycle: {
+        name: "Sprint 1",
+        isLocked: false,
+        isArchived: false,
+      },
+    };
+
+    const result = await createRelease(token, baseUrl, projectKey, payload);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/release`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringMatching(/SmartBear MCP Server/),
+        }),
+      }),
+    );
+
+    const fetchCall = (globalThis.fetch as any).mock.calls[0];
+    const body = JSON.parse(fetchCall[1].body);
+    expect(body).toMatchObject({
+      release: {
+        name: "Release 2.0",
+        description: "Major release",
+        startDate: "01-01-2024",
+        targetDate: "31-03-2024",
+      },
+      cycle: {
+        name: "Sprint 1",
+        isLocked: false,
+        isArchived: false,
+      },
+    });
+
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("should throw error when release name is missing", async () => {
+    const payload = {
+      release: {
+        name: undefined as any,
+      },
+    };
+
+    await expect(
+      createRelease(token, baseUrl, projectKey, payload),
+    ).rejects.toThrow(
+      "[createRelease] Missing or invalid required parameter: 'release.name'",
+    );
+  });
+});
+
+describe("createCycle", () => {
+  const token = "fake-token";
+  const baseUrl = "https://qmetry.example";
+  const projectKey = "TEST_PROJECT";
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("should call fetch with correct URL and headers for creating a cycle", async () => {
+    const mockResponse = {
+      success: true,
+      cycleID: 67890,
+      message: "Cycle created successfully",
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const payload = {
+      cycle: {
+        name: "Sprint 2",
+        startDate: "01-02-2024",
+        targetDate: "15-02-2024",
+        releaseID: 12345,
+      },
+    };
+
+    const result = await createCycle(token, baseUrl, projectKey, payload);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/cycle`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringMatching(/SmartBear MCP Server/),
+        }),
+      }),
+    );
+
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("should throw error when cycle name is missing", async () => {
+    const payload = {
+      cycle: {
+        name: undefined as any,
+        releaseID: 12345,
+      },
+    };
+
+    await expect(
+      createCycle(token, baseUrl, projectKey, payload),
+    ).rejects.toThrow(
+      "[createCycle] Missing or invalid required parameter: 'cycle.name'",
+    );
+  });
+});
+
+describe("updateCycle", () => {
+  const token = "fake-token";
+  const baseUrl = "https://qmetry.example";
+  const projectKey = "TEST_PROJECT";
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("should call fetch with correct URL and headers for updating a cycle", async () => {
+    const mockResponse = {
+      success: true,
+      message: "Cycle updated successfully",
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+
+    const payload = {
+      cycle: {
+        name: "Updated Sprint 2",
+        buildID: 1494,
+        releaseID: 3729,
+      },
+    };
+
+    const result = await updateCycle(token, baseUrl, projectKey, payload);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${baseUrl}/rest/admin/cycle`,
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          apikey: token,
+          project: projectKey,
+          "Content-Type": "application/json",
+          "User-Agent": expect.stringMatching(/SmartBear MCP Server/),
+        }),
+      }),
+    );
+
+    const fetchCall = (globalThis.fetch as any).mock.calls[0];
+    const body = JSON.parse(fetchCall[1].body);
+    expect(body).toMatchObject({
+      cycle: {
+        name: "Updated Sprint 2",
+        buildID: 1494,
+        releaseID: 3729,
+      },
+    });
+
+    expect(result).toEqual(mockResponse);
+  });
+
+  it("should throw error when buildID is missing", async () => {
+    const payload = {
+      cycle: {
+        buildID: undefined as any,
+        releaseID: 3729,
+      },
+    };
+
+    await expect(
+      updateCycle(token, baseUrl, projectKey, payload),
+    ).rejects.toThrow(
+      "[updateCycle] Missing or invalid required parameter: 'cycle.buildID'",
+    );
   });
 });

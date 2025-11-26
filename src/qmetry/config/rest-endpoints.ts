@@ -5,6 +5,9 @@ export const QMETRY_PATHS = {
     GET_RELEASES_CYCLES: "/rest/admin/scope/tree",
     GET_BUILD: "/rest/admin/drop/list",
     GET_PLATFORMS: "/rest/admin/platform/list",
+    CREATE_RELEASE: "/rest/admin/release",
+    CREATE_CYCLE: "/rest/admin/cycle",
+    UPDATE_CYCLE: "/rest/admin/cycle",
   },
   TESTCASE: {
     GET_TC_LIST: "/rest/testcases/list/viewColumns",

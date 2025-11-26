@@ -41,4 +41,7 @@ export const QMetryToolsHandlers = {
   LINK_PLATFORMS_TO_TESTSUITE: "linkPlatformsToTestSuite",
   IMPORT_AUTOMATION_RESULTS: "importAutomationResults",
   FETCH_AUTOMATION_STATUS: "fetchAutomationStatus",
+  CREATE_RELEASE: "createRelease",
+  CREATE_CYCLE: "createCycle",
+  UPDATE_CYCLE: "updateCycle",
 };
