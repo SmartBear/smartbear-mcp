@@ -1,6 +1,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { clientRegistry } from "./client-registry.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
 import { SmartBearMcpServer } from "./server.js";
 import type { Client } from "./types.js";
 
@@ -28,6 +29,11 @@ function getNoConfigErrorMessage(): string[] {
  * Run server in STDIO mode (default)
  */
 export async function runStdioMode() {
+  if (process.argv.includes("--version")) {
+    console.log(`${MCP_SERVER_NAME}: v${MCP_SERVER_VERSION}`);
+    process.exit(0);
+  }
+
   const server = new SmartBearMcpServer();
 
   // Setup clients from environment variables
