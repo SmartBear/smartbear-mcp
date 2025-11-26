@@ -8,11 +8,14 @@ import {
   updateIssue,
 } from "./issues.js";
 import {
+  createCycle,
+  createRelease,
   getBuilds,
   getPlatforms,
   getProjectInfo,
   getProjects,
   getReleasesCycles,
+  updateCycle,
 } from "./project.js";
 import {
   fetchRequirementDetails,
@@ -66,6 +69,9 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_RELEASES_CYCLES]: getReleasesCycles,
   [QMetryToolsHandlers.FETCH_BUILDS]: getBuilds,
   [QMetryToolsHandlers.FETCH_PLATFORMS]: getPlatforms,
+  [QMetryToolsHandlers.CREATE_RELEASE]: createRelease,
+  [QMetryToolsHandlers.CREATE_CYCLE]: createCycle,
+  [QMetryToolsHandlers.UPDATE_CYCLE]: updateCycle,
   [QMetryToolsHandlers.CREATE_TEST_CASE]: createTestCases,
   [QMetryToolsHandlers.UPDATE_TEST_CASE]: updateTestCase,
   [QMetryToolsHandlers.FETCH_TEST_CASES]: fetchTestCases,

@@ -413,6 +413,110 @@ export const PlatformArgsSchema = z.object({
   filter: CommonFields.filter,
 });
 
+export const CreateReleaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  release: z.object({
+    name: z.string().describe("Release name (required)"),
+    description: z.string().optional().describe("Release description"),
+    startDate: z
+      .string()
+      .optional()
+      .describe(
+        "Release start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    targetDate: z
+      .string()
+      .optional()
+      .describe(
+        "Release target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    projectID: z
+      .number()
+      .optional()
+      .describe(
+        "Project ID (optional, can be auto-resolved from project key if not provided)",
+      ),
+  }),
+  cycle: z
+    .object({
+      name: z.string().describe("Cycle name (required if cycle is provided)"),
+      isLocked: z
+        .boolean()
+        .optional()
+        .describe("Whether the cycle is locked (default: false)"),
+      isArchived: z
+        .boolean()
+        .optional()
+        .describe("Whether the cycle is archived (default: false)"),
+    })
+    .optional()
+    .describe("Optional cycle to create within the release"),
+});
+
+export const CreateCycleArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  cycle: z.object({
+    name: z.string().describe("Cycle name (required)"),
+    startDate: z
+      .string()
+      .optional()
+      .describe(
+        "Cycle start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    targetDate: z
+      .string()
+      .optional()
+      .describe(
+        "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    projectID: z
+      .number()
+      .optional()
+      .describe(
+        "Project ID (optional, can be auto-resolved from project key if not provided)",
+      ),
+    releaseID: z
+      .number()
+      .describe("Release ID (required) - the release this cycle belongs to"),
+  }),
+});
+
+export const UpdateCycleArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  cycle: z.object({
+    name: z.string().optional().describe("Cycle name (optional for update)"),
+    startDate: z
+      .string()
+      .optional()
+      .describe(
+        "Cycle start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    targetDate: z
+      .string()
+      .optional()
+      .describe(
+        "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    buildID: z
+      .number()
+      .describe(
+        "Build ID (required for identifying the cycle to update). " +
+          "To get the buildID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
+          "From the response, get value of following attribute -> data[<index>].buildID",
+      ),
+    releaseID: z
+      .number()
+      .describe(
+        "Release ID (required for identifying the cycle to update). " +
+          "To get the releaseID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
+          "From the response, get value of following attribute -> data[<index>].releaseID",
+      ),
+  }),
+});
+
 export const CreateTestCaseStepSchema = z.object({
   orderId: z.number(),
   description: z.string(),
