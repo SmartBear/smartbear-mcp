@@ -909,7 +909,7 @@ export class SwaggerAPI {
         const parsedDefinition = JSON.parse(params.definition);
         requestBody = JSON.stringify(parsedDefinition);
       } catch (error) {
-        throw new Error(
+        throw new ToolError(
           `Invalid JSON format in definition: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
@@ -932,7 +932,7 @@ export class SwaggerAPI {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API scanStandardization failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
@@ -961,7 +961,7 @@ export class SwaggerAPI {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API standardizeApi failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
@@ -970,7 +970,7 @@ export class SwaggerAPI {
 
     // Validate that we have the expected response structure
     if (!hasMessage(result)) {
-      throw new Error(
+      throw new ToolError(
         "Unexpected response format from standardizeApi endpoint",
       );
     }
