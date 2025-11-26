@@ -56,6 +56,27 @@ import type {
 const SWAGGER_URL_REGEX =
   /\/(apis|domains|templates)\/([^/]+)\/([^/]+)\/([^/]+)/;
 
+/**
+ * Type guard to check if a value has an 'id' property
+ */
+function hasId(value: unknown): value is { id: string } & Record<string, unknown> {
+  return typeof value === 'object' && value !== null && 'id' in value;
+}
+
+/**
+ * Type guard to check if a value has a 'message' property
+ */
+function hasMessage(value: unknown): value is { message: string } & Record<string, unknown> {
+  return typeof value === 'object' && value !== null && 'message' in value;
+}
+
+/**
+ * Type guard to check if a value has an 'errorsFound' property
+ */
+function hasErrorsFound(value: unknown): value is { errorsFound: number } & Record<string, unknown> {
+  return typeof value === 'object' && value !== null && 'errorsFound' in value;
+}
+
 export class SwaggerAPI {
   private config: SwaggerConfiguration;
   private headers: Record<string, string>;
@@ -192,7 +213,7 @@ export class SwaggerAPI {
       body: JSON.stringify(body),
     });
     const result = await this.handleResponse<Portal>(response);
-    if (!("id" in (result as any))) {
+    if (!hasId(result)) {
       throw new Error("Unexpected empty response creating portal");
     }
     return result as Portal;
@@ -207,7 +228,7 @@ export class SwaggerAPI {
       },
     );
     const result = await this.handleResponse<Portal>(response);
-    if (!("id" in (result as any))) {
+    if (!hasId(result)) {
       throw new ToolError("Portal not found or empty response");
     }
     return result as Portal;
@@ -273,7 +294,7 @@ export class SwaggerAPI {
       },
     );
     const result = await this.handleResponse<Product>(response);
-    if (!("id" in (result as any))) {
+    if (!hasId(result)) {
       throw new Error("Unexpected empty response creating product");
     }
     return result as Product;
@@ -288,7 +309,7 @@ export class SwaggerAPI {
       },
     );
     const result = await this.handleResponse<Product>(response);
-    if (!("id" in (result as any))) {
+    if (!hasId(result)) {
       throw new ToolError("Product not found or empty response");
     }
     return result as Product;
@@ -948,15 +969,15 @@ export class SwaggerAPI {
     const result = await this.handleResponse<StandardizeApiResponse>(response);
 
     // Validate that we have the expected response structure
-    if (!("message" in (result as any))) {
+    if (!hasMessage(result)) {
       throw new Error(
         "Unexpected response format from standardizeApi endpoint",
       );
     }
 
     // If errorsFound is not present, default to 0 (no errors found)
-    if (!("errorsFound" in (result as any))) {
-      (result as any).errorsFound = 0;
+    if (!hasErrorsFound(result)) {
+      return { ...result, errorsFound: 0 } as StandardizeApiResponse;
     }
 
     return result as StandardizeApiResponse;
