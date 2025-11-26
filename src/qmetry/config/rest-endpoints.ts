@@ -41,5 +41,6 @@ export const QMETRY_PATHS = {
   },
   AUTOMATION: {
     IMPORT_RESULTS: "/rest/import/createandscheduletestresults/1",
+    GET_STATUS: "/rest/admin/status/automation/:requestID",
   },
 };

@@ -28,6 +28,7 @@ export const QMetryToolsHandlers = {
   FETCH_TESTSUITES_FOR_TESTCASE: "getTestSuitesForTestCase",
   FETCH_TESTCASES_BY_TESTSUITE: "getTestCasesByTestSuite",
   FETCH_EXECUTIONS_BY_TESTSUITE: "getExecutionsByTestSuite",
+  BULK_UPDATE_EXECUTION_STATUS: "bulkUpdateExecutionStatus",
   FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN: "getTestCaseRunsByTestSuiteRun",
   FETCH_LINKED_ISSUES_BY_TESTCASE_RUN: "getLinkedIssuesByTestCaseRun",
   FETCH_ISSUES_LINKED_TO_TESTCASE: "getIssuesLinkedToTestCase",
@@ -39,5 +40,5 @@ export const QMetryToolsHandlers = {
   LINK_ISSUES_TO_TESTCASE_RUN: "linkIssuesToTestcaseRun",
   LINK_PLATFORMS_TO_TESTSUITE: "linkPlatformsToTestSuite",
   IMPORT_AUTOMATION_RESULTS: "importAutomationResults",
-  BULK_UPDATE_EXECUTION_STATUS: "bulkUpdateExecutionStatus",
+  FETCH_AUTOMATION_STATUS: "fetchAutomationStatus",
 };

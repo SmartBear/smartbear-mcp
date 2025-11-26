@@ -3,6 +3,7 @@ import { QMETRY_DEFAULTS } from "../config/constants.js";
 import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import type { ImportAutomationResultsPayload } from "../types/automation.js";
 import { DEFAULT_IMPORT_AUTOMATION_PAYLOAD } from "../types/automation.js";
+import { qmetryRequest } from "./api/client-api.js";
 import { handleQMetryApiError } from "./api/error-handler.js";
 
 /**
@@ -165,4 +166,43 @@ export async function importAutomationResults(
   }
 
   return await res.json();
+}
+
+/**
+ * Fetches automation status by request ID from QMetry
+ * @param token - QMetry API authentication token
+ * @param baseUrl - QMetry instance base URL
+ * @param requestID - Numeric request ID from import automation response
+ * @returns Promise resolving to automation status
+ */
+export async function getAutomationStatus(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  requestID: number,
+) {
+  let numericRequestID: number;
+  if (
+    typeof requestID === "object" &&
+    requestID !== null &&
+    "requestID" in requestID &&
+    typeof (requestID as any).requestID !== "undefined"
+  ) {
+    numericRequestID = Number((requestID as any).requestID);
+  } else {
+    numericRequestID = Number(requestID);
+  }
+  if (!numericRequestID || isNaN(numericRequestID)) {
+    throw new Error("requestID must be a valid number");
+  }
+  return qmetryRequest({
+    method: "GET",
+    path: QMETRY_PATHS.AUTOMATION.GET_STATUS.replace(
+      ":requestID",
+      String(numericRequestID),
+    ),
+    token,
+    baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,
+    project: project || QMETRY_DEFAULTS.PROJECT_KEY,
+  });
 }

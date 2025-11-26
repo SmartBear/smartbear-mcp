@@ -1,5 +1,5 @@
 import { QMetryToolsHandlers } from "../config/constants.js";
-import { importAutomationResults } from "./automation.js";
+import { getAutomationStatus, importAutomationResults } from "./automation.js";
 import {
   createIssue,
   fetchIssues,
@@ -92,6 +92,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE]: fetchTestCasesByTestSuite,
   [QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE]:
     fetchExecutionsByTestSuite,
+  [QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS]: bulkUpdateExecutionStatus,
   [QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN]:
     fetchTestCaseRunsByTestSuiteRun,
   [QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN]:
@@ -104,5 +105,5 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
-  [QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS]: bulkUpdateExecutionStatus,
+  [QMetryToolsHandlers.FETCH_AUTOMATION_STATUS]: getAutomationStatus,
 };

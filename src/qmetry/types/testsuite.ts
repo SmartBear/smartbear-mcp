@@ -48,6 +48,11 @@ export interface FetchTestSuitesPayload
   scope?: string; // optional - scope filter
   getSubEntities?: boolean; // optional - whether to get sub-entities
   udfFilter?: string; // only this API uses udfFilter
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: boolean;
 }
 
 export const DEFAULT_FETCH_TESTSUITES_FOR_TESTCASE_PAYLOAD: Omit<
@@ -178,6 +183,11 @@ export const DEFAULT_FETCH_TESTSUITES_PAYLOAD: Omit<
   ...DEFAULT_SORT,
   udfFilter: "[]",
   scope: "cycle",
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: false,
 };
 
 export const DEFAULT_LINKED_PLATFORMS_TO_TESTSUITE_PAYLOAD: Omit<

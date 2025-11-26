@@ -1,5 +1,8 @@
 import { QMetryToolsHandlers } from "../../config/constants.js";
-import { ImportAutomationResultsPayloadSchema } from "../../types/automation.js";
+import {
+  FetchAutomationStatusPayloadSchema,
+  ImportAutomationResultsPayloadSchema,
+} from "../../types/common.js";
 import type { QMetryToolParams } from "./types.js";
 
 export const AUTOMATION_TOOLS: QMetryToolParams[] = [
@@ -278,6 +281,29 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       "    - For large imports, consider using ZIP files",
       "    - Reusing existing test suites is faster than creating new ones",
       "    - Use automationHierarchy wisely to control test case/suite structure",
+    ],
+  },
+  {
+    handler: QMetryToolsHandlers.FETCH_AUTOMATION_STATUS,
+    title: "Fetch Automation Status",
+    summary: "Fetches the status of an automation import job by request ID.",
+    purpose:
+      "Track the progress and result of an automation import operation in QMetry.",
+    inputSchema: FetchAutomationStatusPayloadSchema,
+    useCases: [
+      "1. Check if an automation import job is completed or still in progress.",
+      "2. Retrieve status, progress, and details for a specific automation import request.",
+      "3. Monitor automation result processing for CI/CD integrations.",
+    ],
+    examples: [
+      {
+        description: "Fetch status for request ID 12345",
+        parameters: {
+          requestID: 12345,
+        },
+        expectedOutput:
+          "Status, progress, and details of the automation import job for request ID 12345.",
+      },
     ],
   },
 ];
