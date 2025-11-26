@@ -1,13 +1,13 @@
 import { QMETRY_DEFAULTS } from "../config/constants.js";
 import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import {
+  type CreateCyclePayload,
+  type CreateReleasePayload,
   DEFAULT_CREATE_CYCLE_PAYLOAD,
   DEFAULT_CREATE_RELEASE_PAYLOAD,
   DEFAULT_FETCH_BUILD_PAYLOAD,
   DEFAULT_FETCH_PLATFORMS_PAYLOAD,
   DEFAULT_FETCH_PROJECTS_PAYLOAD,
-  type CreateCyclePayload,
-  type CreateReleasePayload,
   type FetchBuildsPayload,
   type FetchPlatformsPayload,
   type FetchProjectsPayload,
@@ -161,27 +161,26 @@ export async function createRelease(
   project: string | undefined,
   payload: CreateReleasePayload,
 ) {
-
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
-      baseUrl,
-      project,
+    baseUrl,
+    project,
+  );
+
+  const body: CreateReleasePayload = {
+    ...DEFAULT_CREATE_RELEASE_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.release.name !== "string") {
+    throw new Error(
+      "[createRelease] Missing or invalid required parameter: 'release.name'.",
     );
-  
-    const body: CreateReleasePayload = {
-      ...DEFAULT_CREATE_RELEASE_PAYLOAD,
-      ...payload,
-    };
-  
-    if (typeof body.release.name !== "string") {
-      throw new Error(
-        "[createRelease] Missing or invalid required parameter: 'release.name'.",
-      );
-    }
-    if (typeof body.cycle?.name !== "string") {
-      throw new Error(
-        "[createRelease] Missing or invalid required parameter: 'cycle.name'.",
-      );
-    }
+  }
+  if (typeof body.cycle?.name !== "string") {
+    throw new Error(
+      "[createRelease] Missing or invalid required parameter: 'cycle.name'.",
+    );
+  }
 
   return qmetryRequest({
     method: "POST",
@@ -208,26 +207,26 @@ export async function createCycle(
   project: string | undefined,
   payload: CreateCyclePayload,
 ) {
-    const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
-      baseUrl,
-      project,
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: CreateCyclePayload = {
+    ...DEFAULT_CREATE_CYCLE_PAYLOAD,
+    ...payload,
+  };
+
+  if (typeof body.cycle.name !== "string") {
+    throw new Error(
+      "[createCycle] Missing or invalid required parameter: 'cycle.name'.",
     );
-  
-    const body: CreateCyclePayload = {
-      ...DEFAULT_CREATE_CYCLE_PAYLOAD,
-      ...payload,
-    };
-  
-    if (typeof body.cycle.name !== "string") {
-      throw new Error(
-        "[createCycle] Missing or invalid required parameter: 'cycle.name'.",
-      );
-    }
-    if (typeof body.cycle.releaseID !== "number") {
-      throw new Error(
-        "[createCycle] Missing or invalid required parameter: 'cycle.releaseID'.",
-      );
-    }
+  }
+  if (typeof body.cycle.releaseID !== "number") {
+    throw new Error(
+      "[createCycle] Missing or invalid required parameter: 'cycle.releaseID'.",
+    );
+  }
 
   return qmetryRequest({
     method: "POST",

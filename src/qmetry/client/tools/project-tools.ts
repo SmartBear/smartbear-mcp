@@ -612,8 +612,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Update Cycle",
-    summary:
-      "Update an existing cycle in QMetry for test execution planning",
+    summary: "Update an existing cycle in QMetry for test execution planning",
     handler: QMetryToolsHandlers.UPDATE_CYCLE,
     inputSchema: UpdateCycleArgsSchema,
     purpose:
@@ -666,8 +665,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
             releaseID: 3729,
           },
         },
-        expectedOutput:
-          "Cycle updated with new name and dates successfully",
+        expectedOutput: "Cycle updated with new name and dates successfully",
       },
     ],
     hints: [

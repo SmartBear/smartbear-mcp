@@ -477,7 +477,9 @@ export const CreateCycleArgsSchema = z.object({
       .describe(
         "Project ID (optional, can be auto-resolved from project key if not provided)",
       ),
-    releaseID: z.number().describe("Release ID (required) - the release this cycle belongs to"),
+    releaseID: z
+      .number()
+      .describe("Release ID (required) - the release this cycle belongs to"),
   }),
 });
 
@@ -502,15 +504,15 @@ export const UpdateCycleArgsSchema = z.object({
       .number()
       .describe(
         "Build ID (required for identifying the cycle to update). " +
-        "To get the buildID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
-        "From the response, get value of following attribute -> data[<index>].buildID",
+          "To get the buildID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
+          "From the response, get value of following attribute -> data[<index>].buildID",
       ),
     releaseID: z
       .number()
       .describe(
         "Release ID (required for identifying the cycle to update). " +
-        "To get the releaseID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
-        "From the response, get value of following attribute -> data[<index>].releaseID",
+          "To get the releaseID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
+          "From the response, get value of following attribute -> data[<index>].releaseID",
       ),
   }),
 });
