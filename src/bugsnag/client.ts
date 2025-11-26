@@ -516,6 +516,7 @@ export class BugsnagClient implements Client {
         hints: [
           "Error IDs can be found using the List Project Errors tool",
           "Use this after filtering errors to get detailed information about specific errors",
+          "Use Get Event Details tool if you need detailed information about a specific event (occurrence) rather than the aggregated error",
           "If you used a filter to get this error, you can pass the same filters here to restrict the results or apply further filters",
           "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
         ],
@@ -553,6 +554,7 @@ export class BugsnagClient implements Client {
           ).body;
           if (latestEvents && latestEvents.length > 0) {
             latestEvent = latestEvents[0];
+            latestEvent.threads = undefined; // Remove threads to reduce payload size
           }
         } catch (e) {
           console.warn("Failed to fetch latest event:", e);
@@ -583,7 +585,42 @@ export class BugsnagClient implements Client {
       },
     );
 
-    const getEventDetailsInputSchema = z.object({
+    const getEventInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+      eventId: toolInputParameters.eventId,
+    });
+
+    register(
+      {
+        title: "Get Event",
+        summary: "Get detailed information about a specific event",
+        purpose: "Retrieve event details directly from its ID",
+        useCases: [
+          "Get the full details of an event, including any thread stack traces",
+        ],
+        inputSchema: getEventInputSchema,
+        examples: [
+          {
+            description: "Get event details of an event",
+            parameters: {
+              eventId: "6863e2af012caf1d5c320000",
+            },
+            expectedOutput:
+              "JSON object with complete event details including stack trace (error trace and other threads, if present), metadata, and context",
+          },
+        ],
+      },
+      async (args, _extra) => {
+        const params = getEventInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+        const response = await this.getEvent(params.eventId, project.id);
+        return {
+          content: [{ type: "text", text: JSON.stringify(response) }],
+        };
+      },
+    );
+
+    const getEventDetailsFromDashboardUrlInputSchema = z.object({
       link: z
         .string()
         .describe(
@@ -593,7 +630,7 @@ export class BugsnagClient implements Client {
 
     register(
       {
-        title: "Get Event Details",
+        title: "Get Event Details From Dashboard URL",
         summary:
           "Get detailed information about a specific event using its dashboard URL",
         purpose:
@@ -603,7 +640,7 @@ export class BugsnagClient implements Client {
           "Extract event information from shared links or browser URLs",
           "Quick lookup of event details without needing separate project and event IDs",
         ],
-        inputSchema: getEventDetailsInputSchema,
+        inputSchema: getEventDetailsFromDashboardUrlInputSchema,
         examples: [
           {
             description: "Get event details from a dashboard URL",
@@ -620,7 +657,7 @@ export class BugsnagClient implements Client {
         ],
       },
       async (args, _extra) => {
-        const params = getEventDetailsInputSchema.parse(args);
+        const params = getEventDetailsFromDashboardUrlInputSchema.parse(args);
         const url = new URL(params.link);
         const eventId = url.searchParams.get("event_id");
         const projectSlug = url.pathname.split("/")[2];
