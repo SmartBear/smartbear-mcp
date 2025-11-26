@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+- [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
+- [Zephyr] Added a tool for retrieving a list of Test Executions [#213](https://github.com/SmartBear/smartbear-mcp/pull/213)
+
+## [0.11.0] - 2025-11-20
+
+### Added
 - [Zephyr] Added a tool for retrieving Test Cycle [#210](https://github.com/SmartBear/smartbear-mcp/pull/210)
 - [Zephyr] Added a tool for retrieving statuses [#212](https://github.com/SmartBear/smartbear-mcp/pull/212)
 - [Zephyr] Added a tool for retrieving Test Cases [#230](https://github.com/SmartBear/smartbear-mcp/pull/230)
