@@ -60,6 +60,52 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 -   Retrieve details of the currently configured project.
 -   This is either set via the `BUGSNAG_PROJECT_API_KEY` environment variable or from project IDs provided to other tools.
 
+### List Span Groups
+
+-   List span groups in your project.
+-   Sort by various performance metrics including duration percentiles (p50, p75, p90, p95, p99), CPU usage, memory usage, frame rates, and HTTP error rates.
+-   Filter to starred/important span groups or apply custom filters using trace fields.
+
+### Get Span Group
+
+-   Get detailed performance metrics for a specific span group.
+-   Includes statistics across multiple percentiles (p50, p75, p90, p95, p99).
+-   Shows timeline and distribution data for performance analysis.
+-   Check registered performance targets for the operation.
+-   Filter results using trace fields to narrow analysis to specific conditions.
+
+### List Spans
+
+-   Get individual span instances belonging to a specific span group.
+-   Sort by duration, timestamp, page load metrics, frame rates, system metrics, or HTTP response codes.
+-   Analyze individual slow operations to debug performance issues.
+-   Each span includes a trace ID for further investigation.
+-   Supports pagination and filtering by trace fields.
+
+### Get Trace
+
+-   Get all spans within a specific trace to view the complete execution path of a request/transaction.
+-   View the hierarchy and timing of all operations in a distributed trace.
+-   Identify bottlenecks by examining the complete flow through your system.
+-   Supports pagination and can focus on a specific target span within the trace.
+
+### List Trace Fields
+
+-   Lists the custom attributes/fields available for filtering performance data.
+-   These fields can be used in filters for List Span Groups, Get Span Group, List Spans, and Get Trace tools.
+
+### Get Network Endpoint Groupings
+
+-   Retrieve the current network endpoint grouping rules for a project.
+-   Shows URL patterns used to consolidate similar network requests into single span groups.
+
+### Set Network Endpoint Groupings
+
+-   Configure URL patterns to control how network spans are grouped in performance monitoring.
+-   Uses OpenAPI path templating syntax with curly braces for path parameters (e.g., `/users/{userId}`).
+-   Supports wildcards (*) in domains to match multiple subdomains (e.g., `https://*.example.com`).
+-   Converts colon-prefixed parameters from frameworks like Express/React Router (e.g., `:userId` → `{userId}`).
+
 ## Available Resources
 
 ### Event
