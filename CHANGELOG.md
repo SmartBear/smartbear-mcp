@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
 - [Zephyr] Added a tool for retrieving a list of Test Executions [#213](https://github.com/SmartBear/smartbear-mcp/pull/213)
-- [Swagger] Added `create_api_from_prompt` tool for generating API definitions from natural language descriptions using SmartBear AI, with automatic organization standardization
-- [Swagger] Added `standardize_api` tool for scanning and automatically fixing API definitions to comply with organization standardization rules using SmartBear AI
+- [Swagger] Added `create_api_from_prompt` tool for generating API definitions from natural language descriptions using SmartBear AI, with automatic organization governance (formerly standardization)
+- [Swagger] Added `apply_api_governance` (formerly `standardize_api`) tool for scanning and automatically fixing API definitions to comply with organization governance rules using SmartBear AI
+- [Swagger] Terminology update: "Standardization" is now marketed as "Governance" - both terms refer to the same feature for API validation and compliance
 
 ## [0.11.0] - 2025-11-20
 
@@ -45,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [Qmetry] Added 4 New QMetry tools to enhance test management capabilities [#194](https://github.com/SmartBear/smartbear-mcp/pull/194)
 - [Qmetry] Implement comprehensive test case tooling with enhanced error handling [#193](https://github.com/SmartBear/smartbear-mcp/pull/193)
-- [API Hub] Add `scan_api_standardization` tool for validating API definitions against organization standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
+- [API Hub] Add `scan_api_governance` (formerly `scan_api_standardization`) tool for validating API definitions against organization governance rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
 
 ## [0.8.0] - 2025-10-13
 
