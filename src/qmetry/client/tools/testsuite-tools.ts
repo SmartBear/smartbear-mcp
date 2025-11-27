@@ -972,6 +972,19 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         expectedOutput:
           "Test case run status updated with Part 11 Compliance authentication",
       },
+      {
+        description:
+          "Update ALL executions of test suite VKMC-TS-20 to Failed (MULTI-CALL OPERATION)",
+        parameters: {
+          entityIDs: "66341841,66342887,66342893,66342899",
+          entityType: "TCR",
+          qmTsRunId: "2733104",
+          runStatusID: 123269,
+          isBulkOperation: true,
+        },
+        expectedOutput:
+          "Execution 1/4 updated. The MCP Agent will automatically repeat this operation for executions 2733205, 2733306, and 2733407 using their corresponding entityIDs.",
+      },
     ],
     hints: [
       "CRITICAL: entityIDs, entityType, qmTsRunId, and runStatusID are REQUIRED parameters",
@@ -1032,6 +1045,14 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "   - Use provided IDs or fetch if needed",
       "   - Fetch project info to get 'Not Run' status ID",
       "   - Set isBulkOperation based on ID count",
+      "4. If the user requests updating status for ALL executions of a test suite, the agent must:",
+      "   1. Call FETCH_EXECUTIONS_BY_TESTSUITE to get all qmTsRunIds.",
+      "   2. For each qmTsRunId:",
+      "      - Call FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN to get tcRunID (entityIDs)",
+      "      - Fetch project info to get 'Fail' status ID (runStatusID)",
+      "      - Call BULK_UPDATE_EXECUTION_STATUS with the corresponding qmTsRunId + tcRunID + desired runStatusID",
+      "   3. Repeat until all executions are updated.",
+      "   This tool is intended to be invoked multiple times in sequence for multi-execution updates.",
       "FIELD MAPPING CRITICAL NOTES:",
       "- entityIDs must be comma-separated STRING (e.g., '66095069,66095075')",
       "- qmTsRunId must be STRING format (e.g., '2720260')",

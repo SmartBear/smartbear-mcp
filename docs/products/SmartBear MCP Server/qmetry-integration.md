@@ -22,6 +22,20 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of project details, viewIds, folderPaths, and project configuration.
 -   Use case: Retrieve all projects available in your account.
 
+### `create_release`
+
+-   Purpose: "Create a new release in QMetry with optional cycle for test planning and execution tracking.
+-   Parameters: Release name (`name`), Cycle name (`name`) Optional, If not provided, a "Default Cycle" is created automatically.
+-   Returns: JSON object containing the new release ID, releaseName, and build JSON Object.
+-   Use case: Create release for better test planning.
+
+### `create_cycle`
+
+-   Purpose: Create a new cycle within an existing release in QMetry for test execution planning.
+-   Parameters: Cycle name (`name`), Release name (`name`) or Release ID.
+-   Returns: JSON object containing the new build ID, and metadata.
+-   Use case: Create a new test cycle for a sprint within an existing release for planning.
+
 ### `get_qmetry_releases_cycles`
 
 -   Purpose: Fetch QMetry releases and cycles from your account.
@@ -194,6 +208,13 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of test case runs with detailed execution information, status, tester details, and run metadata.
 -   Use case: Retrieve individual test case execution results and status within a specific test suite run.
 
+### `update_testcase_execution_status`
+
+-   Purpose: Update the execution status of test cases within a specific test suite run in QMetry.
+-   Parameters: Test Suite Run identifier (`qmTsRunId`), Test Case Run identifiers (`entityIDs`), Execution Status ID (`runStatusID`), Type of entity('TCR'/'TCSR') to execute (`entityType`).
+-   Returns: JSON object with update status and details.
+-   Use case: Update execution status for one or more test cases within a test suite run.
+
 ### `create_issue`
 
 -   Purpose: Create a new issue in QMetry for linking to test executions.
@@ -235,3 +256,17 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: Test Case Run identifier (`entityId`).
 -   Returns: Complete list of issues linked to the test case run with issue details, priorities, status, owner information, and linkage metadata.
 -   Use case: Retrieve issues associated with specific test case executions for defect tracking, traceability analysis, and test execution quality monitoring.
+
+### `import_automation_test_results`
+
+-   Purpose: Import/Publish automation test results from TestNG, JUnit, Cucumber, Robot, HPUFT, or QAF frameworks into QMetry.
+-   Parameters: file(Supported file formats: .json, .xml and .zip), entityType ( Supported values: TESTNG, CUCUMBER, JUNIT, HPUFT, QAF, ROBOT).
+-   Returns: JSON object with requestId, status and additional metadata.
+-   Use case: Import results from automated test executions for reporting and analysis.
+
+### `get_automation_status`
+
+-   Purpose: Get the status of an automation import job by request ID.
+-   Parameters: Request identifier (`requestId`).
+-   Returns: JSON object containing the automation status details (e.g., PASS, FAIL, IN_PROGRESS, etc.).
+-   Use case: Check and track the processing status of a specific automation results import job.
