@@ -49,7 +49,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `portalId`           | Portal UUID or subdomain - unique identifier for the portal instance                                                                                | string  | Yes      |
 | `name`               | Update the portal display name - shown to users and in branding (3-40 characters)                                                                   | string  | No       |
 | `subdomain`          | Update the portal subdomain - changes the portal URL. Must remain unique across all portals (3-20 characters, lowercase, alphanumeric with hyphens) | string  | No       |
-| `customDomain`       | Enable/disable custom domain for the portal - allows using your own domain instead of the default subdomain                                         | boolean | No       |
+| `customDomain`       | Set a custom domain for the portal by providing the domain name as a string. To remove the custom domain, set this value to `null`.                 | string  | No       |
 | `offline`            | Set portal visibility - true hides portal from customers (useful for maintenance or development)                                                    | boolean | No       |
 | `gtmKey`             | Google Tag Manager key for analytics tracking - format: GTM-XXXXXX (max 25 characters)                                                              | string  | No       |
 | `routing`            | Update routing strategy - 'browser' for client-side routing or 'proxy' for server-side routing                                                      | string  | No       |
