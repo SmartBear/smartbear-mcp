@@ -8,6 +8,7 @@ dsym
 Dsyms
 Eventmachine
 frankkilcommins
+HPUFT
 jailbroken
 latestby
 Magento
@@ -32,6 +33,8 @@ symbolicate
 Symfony
 testmanagement
 Tvos
+TCSR
+TESTNG
 Unbucketed
 undiscard
 undiscarded
