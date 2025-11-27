@@ -96,10 +96,6 @@ export class SwaggerClient implements Client {
     return this.getApi().getPortal(args.portalId);
   }
 
-  async deletePortal(args: { portalId: string }): Promise<void> {
-    return this.getApi().deletePortal(args.portalId);
-  }
-
   async updatePortal(
     args: UpdatePortalArgs,
   ): Promise<Portal | FallbackResponse> {

@@ -209,22 +209,6 @@ export class SwaggerAPI {
     return result as Portal;
   }
 
-  async deletePortal(portalId: string): Promise<void> {
-    const response = await fetch(
-      `${this.config.portalBasePath}/portals/${portalId}`,
-      {
-        method: "DELETE",
-        headers: this.headers,
-      },
-    );
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      throw new ToolError(
-        `Swagger deletePortal failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
-      );
-    }
-  }
-
   async updatePortal(
     portalId: string,
     body: UpdatePortalBody,

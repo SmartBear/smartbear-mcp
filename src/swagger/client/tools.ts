@@ -58,13 +58,6 @@ export const TOOLS: SwaggerToolParams[] = [
     handler: "getPortal",
   },
   {
-    title: "Delete Portal",
-    summary: "Delete a specific portal.",
-    inputSchema: PortalArgsSchema,
-    handler: "deletePortal",
-    formatResponse: () => "Portal deleted successfully.",
-  },
-  {
     title: "Update Portal",
     summary: "Update a specific portal's configuration.",
     inputSchema: UpdatePortalArgsSchema,
