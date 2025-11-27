@@ -1200,6 +1200,20 @@ export const ImportAutomationResultsPayloadSchema = z.object({
   // REQUIRED: File data as base64 string or file path
   file: z
     .string()
+    .refine(
+      (val) => {
+        // Base64 regex: matches typical base64 strings (not perfect, but covers most cases)
+        const base64Regex =
+          /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+        // File path regex: ends with .json, .xml, or .zip (case-insensitive)
+        const filePathRegex = /\.(json|xml|zip)$/i;
+        return base64Regex.test(val) || filePathRegex.test(val);
+      },
+      {
+        message:
+          "Must be a valid base64 string or a file path ending with .json, .xml, or .zip",
+      },
+    )
     .describe(
       "Base64 encoded file content or file path. User must upload result file (.json, .xml, .zip up to 30 MB)",
     ),

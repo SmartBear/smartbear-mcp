@@ -54,10 +54,7 @@ export interface CreateReleasePayload {
   };
 }
 
-export const DEFAULT_CREATE_RELEASE_PAYLOAD: Omit<
-  CreateReleasePayload,
-  "release" | "cycle"
-> = {
+export const DEFAULT_CREATE_RELEASE_PAYLOAD: Partial<CreateReleasePayload> = {
   release: {
     name: "Default Release",
   },
@@ -76,10 +73,9 @@ export interface CreateCyclePayload {
   };
 }
 
-export const DEFAULT_CREATE_CYCLE_PAYLOAD: Omit<
-  CreateCyclePayload,
-  "cycle" | "releaseID"
-> = {
+export const DEFAULT_CREATE_CYCLE_PAYLOAD: {
+  cycle?: Partial<CreateCyclePayload["cycle"]>;
+} = {
   cycle: {
     name: "Default Cycle",
   },

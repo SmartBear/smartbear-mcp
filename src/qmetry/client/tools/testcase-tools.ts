@@ -400,7 +400,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "If the user provides a test case type name, fetch project info, find the matching type in customListObjs.testCaseType[index].name, and use its ID in the payload as testCaseType. If the name is not found, skip the testCaseType field (it is not required) and show a user-friendly message: 'Test case updated without test case type, as given type is not available in the current project.'",
       "If the user provides a testing type name, fetch project info, find the matching type in customListObjs.testingType[index].name, and use its ID in the payload as testingType. If the name is not found, skip the testingType field (it is not required) and show a user-friendly message: 'Test case updated without testing type, as given testing type is not available in the current project.'",
       "Example: If user says 'Update test case with title \"High priority test case\" and set priority to \"Blocker\"', first call project info, map 'Blocker' to its ID, and use that ID for the priority field in the update payload. If user says 'set priority to \"Urgent\"' and 'Urgent' is not found, skip the priority field and show: 'Test case updated without priority, as given priority is not available in the current project.'",
-      "CRITICAL: To update test case steps WITHOUT DUPLICATION, use the following rules:",
+      "CRITICAL: To update test case steps without **Duplication**, use the following rules:",
       "- ANTI-DUPLICATION RULE: The tcStepID field is THE KEY to prevent duplication:",
       "  * WITH tcStepID = UPDATE existing step (QMetry modifies the existing step in place)",
       "  * WITHOUT tcStepID = CREATE new step (QMetry adds a brand new step)",

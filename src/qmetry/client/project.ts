@@ -176,7 +176,7 @@ export async function createRelease(
       "[createRelease] Missing or invalid required parameter: 'release.name'.",
     );
   }
-  if (typeof body.cycle?.name !== "string") {
+  if (body.cycle && typeof body.cycle.name !== "string") {
     throw new Error(
       "[createRelease] Missing or invalid required parameter: 'cycle.name'.",
     );
@@ -213,7 +213,7 @@ export async function createCycle(
   );
 
   const body: CreateCyclePayload = {
-    ...DEFAULT_CREATE_CYCLE_PAYLOAD,
+    ...DEFAULT_CREATE_CYCLE_PAYLOAD.cycle,
     ...payload,
   };
 
@@ -234,7 +234,7 @@ export async function createCycle(
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
-    body: payload,
+    body,
   });
 }
 
