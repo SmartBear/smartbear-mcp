@@ -130,6 +130,11 @@ const main = async () => {
 
   // 2. Create Release Branch
   const branchName = `release/v${newVersion}`;
+
+  console.log("Switching to main and pulling latest changes...");
+  runCommand("git checkout main");
+  runCommand("git pull origin main");
+
   console.log(`Creating branch ${branchName}...`);
   runCommand(`git checkout -b ${branchName}`);
 
