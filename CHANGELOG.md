@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool for retrieving a list of Test Executions [#213](https://github.com/SmartBear/smartbear-mcp/pull/213)
 - [Swagger] Added `create_api_from_prompt` tool for generating API definitions from natural language descriptions using SmartBear AI, with automatic organization standardization
 - [Swagger] Added `standardize_api` tool for scanning and automatically fixing API definitions to comply with organization standardization rules using SmartBear AI
+- [BugSnag] Added tools for querying performance data and managing network grouping rules: List/Get Span Groups, List Spans, Get Trace, List Trace Fields, Get/Set Network Endpoint Groupings [#253](https://github.com/SmartBear/smartbear-mcp/pull/253)
 
 ## [0.11.0] - 2025-11-20
 
