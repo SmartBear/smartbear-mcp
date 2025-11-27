@@ -22,4 +22,8 @@ WORKDIR /app
 
 RUN --mount=type=cache,target=/root/.npm-production npm ci --ignore-scripts --omit-dev
 
+LABEL org.opencontainers.image.source="https://github.com/SmartBear/smartbear-mcp"
+LABEL org.opencontainers.image.description="SmartBear's official MCP Server"
+LABEL org.opencontainers.image.licenses=MIT
+
 ENTRYPOINT ["node", "dist/index.js"]
