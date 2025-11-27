@@ -157,6 +157,25 @@ export class BaseAPI {
     return apiResponse;
   }
 
+  /**
+   * Fetches an array of resources from the API with support for pagination and field filtering.
+   *
+   * @template T - The type of objects in the response array, must extend Record<string, any>
+   * @param url - The API endpoint URL to fetch data from
+   * @param options - Optional request configuration including headers and other fetch options
+   * @param fetchAll - Whether to automatically fetch all pages of paginated results (default: false)
+   * @param fields - Optional array of field names to include in the response objects
+   * @returns A Promise resolving to an ApiResponse containing an array of type T
+   *
+   * @throws {ToolError} When the HTTP request fails with a non-ok status
+   * @throws {Error} When the response data is not an array
+   *
+   * @example
+   * ```typescript
+   * const response = await client.requestArray<User>('/users', {}, true, ['id', 'name']);
+   * console.log(response.body); // Array of User objects with only id and name fields
+   * ```
+   */
   async requestArray<T extends Record<string, any>>(
     url: string,
     options: Record<string, any> = {},
