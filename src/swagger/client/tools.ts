@@ -199,23 +199,23 @@ export const TOOLS: SwaggerToolParams[] = [
     handler: "getOrganizations",
   },
   {
-    title: "Scan API Standardization",
+    title: "Scan API Governance",
     summary:
-      "Run a standardization scan against an API definition using the organization's standardization configuration. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of standardization errors and validation issues.",
+      "Run a governance scan against an API definition using the organization's governance configuration. Validates API definitions against configured governance rules and style guides. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of governance errors and validation issues. Note: Governance was previously called 'standardization' - both terms refer to the same feature.",
     inputSchema: ScanStandardizationParamsSchema,
     handler: "scanStandardization",
   },
   {
     title: "Create API from Prompt using SmartBear AI",
     summary:
-      "Generate and save an API definition based on a prompt using SmartBear AI. This tool automatically applies organization standardization rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Use this tool when creating APIs with organization standardization rules or when generating APIs from natural language descriptions. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
+      "Generate and save an API definition based on a prompt using SmartBear AI. This tool automatically applies organization governance rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Use this tool when creating APIs with organization governance rules or when generating APIs from natural language descriptions. Note: Governance was previously called 'standardization'. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
     inputSchema: CreateApiFromPromptParamsSchema,
     handler: "createApiFromPrompt",
   },
   {
-    title: "Standardize API",
+    title: "Apply API Governance Rules",
     summary:
-      "Standardize and fix an API definition using AI. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. If errors are found, they will be sent to SmartBear AI to generate a corrected definition, which is then saved back to the registry. Returns the number of errors found and the fixed definition if successful.",
+      "Apply governance rules and fix an API definition using AI. Scans the API definition for governance violations and automatically fixes them using SmartBear AI. If violations are found, they will be sent to SmartBear AI to generate a corrected definition, which is then saved back to the registry. Returns the number of errors found and the fixed definition if successful. Note: Governance was previously called 'standardization' - both terms refer to the same feature.",
     inputSchema: StandardizeApiParamsSchema,
     handler: "standardizeApi",
   },
