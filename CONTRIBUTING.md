@@ -148,15 +148,16 @@ A release will be carried out by a member of the SmartBear team when a set of re
 
 Please follow these steps to create a new release:
 
-1. **Run release script**
-  The release script will help automate some of the steps below:
+1. **Run bump script**
+  The bump script will help automate some of the steps below:
    - Suggest a version number based on [semantic versioning](https://semver.org/)
    - Create a release branch from `main`
    - Update the version in `package.json` , `package-lock.json`, `CHANGELOG.md` and `deploy/deployment.yaml` files
    - Commit the changes
+   - Push the release branch to GitHub
 
    ```bash
-   npm run release
+   npm run bump
    ```
 1. **Create PR to main**
     - Push the changes to GitHub and create a Pull Request from your release branch into `main`

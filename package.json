@@ -44,7 +44,7 @@
     "test:coverage:ci": "vitest --coverage --reporter=verbose",
     "test:run": "vitest run",
     "coverage:check": "vitest --coverage --reporter=verbose --config vitest.config.coverage.ts",
-    "release": "node scripts/release.js"
+    "bump": "node scripts/bump.js"
   },
   "dependencies": {
     "@bugsnag/js": "^8.2.0",
