@@ -59,22 +59,28 @@ const SWAGGER_URL_REGEX =
 /**
  * Type guard to check if a value has an 'id' property
  */
-function hasId(value: unknown): value is { id: string } & Record<string, unknown> {
-  return typeof value === 'object' && value !== null && 'id' in value;
+function hasId(
+  value: unknown,
+): value is { id: string } & Record<string, unknown> {
+  return typeof value === "object" && value !== null && "id" in value;
 }
 
 /**
  * Type guard to check if a value has a 'message' property
  */
-function hasMessage(value: unknown): value is { message: string } & Record<string, unknown> {
-  return typeof value === 'object' && value !== null && 'message' in value;
+function hasMessage(
+  value: unknown,
+): value is { message: string } & Record<string, unknown> {
+  return typeof value === "object" && value !== null && "message" in value;
 }
 
 /**
  * Type guard to check if a value has an 'errorsFound' property
  */
-function hasErrorsFound(value: unknown): value is { errorsFound: number } & Record<string, unknown> {
-  return typeof value === 'object' && value !== null && 'errorsFound' in value;
+function hasErrorsFound(
+  value: unknown,
+): value is { errorsFound: number } & Record<string, unknown> {
+  return typeof value === "object" && value !== null && "errorsFound" in value;
 }
 
 export class SwaggerAPI {
