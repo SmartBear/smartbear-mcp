@@ -12,6 +12,7 @@ Thank you for your contributing to SmartBear MCP!
     - [Test Requirements](#test-requirements)
     - [Running Tests](#running-tests)
   - [Documentation](#documentation)
+    - [Previewing docs](#previewing-docs)
   - [Releases](#releases)
   - [Additional Resources](#additional-resources)
 
@@ -147,26 +148,24 @@ A release will be carried out by a member of the SmartBear team when a set of re
 
 Please follow these steps to create a new release:
 
-1. **Decide on a version number**
-    - Check the changes in `CHANGELOG.md` and using [semantic versioning](https://semver.org/), decide on a new version. i.e. `1.2.3`
+1. **Run release script**
+  The release script will help automate some of the steps below:
+   - Suggest a version number based on [semantic versioning](https://semver.org/)
+   - Create a release branch from `main`
+   - Update the version in `package.json` , `package-lock.json`, `CHANGELOG.md` and `deploy/deployment.yaml` files
+   - Commit the changes
 
-2. **Create Release Branch**
-    ```bash
-    git checkout main
-    git pull
-    git checkout -b release/v1.2.3
-    ```
-
-3. **Update the Version**
-    - Use `npm version patch|minor|major` to increment the version number
-    - Update the version number and release date in the `CHANGELOG.md` to match
+   ```bash
+   npm run release
+   ```
+1. **Create PR to main**
     - Push the changes to GitHub and create a Pull Request from your release branch into `main`
 
-4. **Release**
+1. **Release**
     - Create a new Github release with the version you decided on earlier
     - Changes will be automatically deployed once the Github release is created
 
-5. **Post-Release**
+1. **Post-Release**
     - Check the publish action to make sure all deployments succeeded
     - Check https://developer.smartbear.com/smartbear-mcp/ to ensure the docs have been updated correctly
 
