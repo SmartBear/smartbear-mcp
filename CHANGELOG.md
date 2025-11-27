@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
 - [Zephyr] Added a tool for retrieving a list of Test Executions [#213](https://github.com/SmartBear/smartbear-mcp/pull/213)
+- [BugSnag] Added tools for querying performance data and managing network grouping rules: List/Get Span Groups, List Spans, Get Trace, List Trace Fields, Get/Set Network Endpoint Groupings [#253](https://github.com/SmartBear/smartbear-mcp/pull/253)
 - Added --version command line argument to display the current version [#258](https://github.com/SmartBear/smartbear-mcp/pull/258)
 
 ## [0.11.0] - 2025-11-20
