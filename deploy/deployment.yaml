@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-production
+  namespace: mcp-server
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: mcp-production
+  template:
+    metadata:
+      labels:
+        app: mcp-production
+    spec:
+      containers:
+        - name: mcp
+          image: ghcr.io/smartbear/smartbear-mcp:v0.11.0
+          env:
+            - name: MCP_TRANSPORT
+              value: "http"
+            - name: MCP_CLIENTS
+              value: "bugsnag"
+            - name: MCP_ALLOWED_ENDPOINTS
+              valueFrom:
+                configMapKeyRef:
+                  name: mcp-production
+                  key: allowed-endpoints
+            - name: MCP_SERVER_BUGSNAG_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: mcp-production
+                  key: bugsnag-api-key
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: mcp-production
+                  key: allowed-origins
+          ports:
+            - containerPort: 3000
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "test $(($(date +%s) - $(stat -c %Y /proc/1))) -lt 86400"
+            initialDelaySeconds: 60
+            periodSeconds: 60
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
