@@ -155,10 +155,13 @@ const main = async () => {
   );
   runCommand(`git commit -m "release: v${newVersion}"`);
 
+  // 7. Push branch
+  console.log(`Pushing branch ${branchName} to origin...`);
+  runCommand(`git push -u origin ${branchName}`);
+
   console.log("\n✅ Release preparation complete!");
   console.log(`\nNext steps:`);
   console.log(`1. Review the changes: git show HEAD`);
-  console.log(`2. Push the branch:    git push origin ${branchName}`);
   console.log(`3. Create a PR to main.`);
 
   rl.close();
