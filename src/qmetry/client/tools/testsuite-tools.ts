@@ -200,19 +200,19 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get test suites with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 103097, folderPath: "" },
-        expectedOutput: "Test suites using manually specified viewId 103097",
+        parameters: { projectKey: "MAC", viewId: 103097, folderPath: "" }, // This is an example viewId, must be resolved per project TS viewId
+        expectedOutput: "Test suites using manually specified viewId 103097", // This is an example viewId, must be resolved per project TS viewId
       },
       {
         description:
           "List test suites from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
         parameters: {
           projectKey: "use specific given project key",
-          viewId: "fetch specific project given projectKey Test Suite ViewId",
+          viewId: "fetch specific project given projectKey Test Suite ViewId", // auto-resolved
           folderPath: "",
         },
         expectedOutput:
-          "Test suites using manually specified viewId 103097 or projectKey",
+          "Test suites using manually specified viewId 103097 or projectKey", // This is an example viewId, must be resolved per project TS viewId
       },
       {
         description: "Get test suites by release/cycle filter",
@@ -322,7 +322,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get test suites with custom pagination and auto-resolved viewId",
-        parameters: { tsFolderID: 113557, page: 1, limit: 20 },
+        parameters: { tsFolderID: 113557, page: 1, limit: 25 },
         expectedOutput: "Paginated list of test suites with 20 items per page",
       },
       {
@@ -368,7 +368,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Search test suites from specific sub-folder with manual viewId",
-        parameters: { tsFolderID: 42, viewId: 104316 },
+        parameters: { tsFolderID: 42, viewId: 104316 }, // This is an example viewId, must be resolved per project TS viewId
         expectedOutput:
           "Test suites available in specific folder ID 42 for test case linking",
       },
@@ -384,7 +384,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "VIEWID AUTO-RESOLUTION:",
       "1. System automatically fetches project info using the projectKey",
       "2. Extracts latestViews.TSFS.viewId automatically",
-      "3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view)",
+      "3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view)", // This is an example viewId, must be resolved per project TSFS viewId
       "4. Manual viewId only needed if you want to override the automatic resolution",
       "WORKFLOW: System automatically handles project info if tsFolderID or viewId is not provided",
       "PROJECT INFO STRUCTURE: clientData.rootFolders.TS.id contains the root test suite folder ID",
@@ -622,7 +622,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get linked test cases with custom pagination",
-        parameters: { tsID: 1497291, getLinked: true, page: 1, limit: 50 },
+        parameters: { tsID: 1497291, getLinked: true, page: 1, limit: 25 },
         expectedOutput:
           "Paginated list of linked test cases with 50 items per page",
       },
@@ -708,7 +708,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         parameters: {
           tsID: 194955,
           tsFolderID: 126554,
-          viewId: 41799,
+          viewId: 41799, // This is an example viewId, must be resolved per project TEL viewId
         },
         expectedOutput:
           "Executions filtered by test suite folder and specific view configuration",
@@ -754,6 +754,20 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "!MOST IMPORTANT HOW TO GET viewId:",
+      "CRITICAL: Always resolve and use the correct test execution viewId for the current project when calling this tool.",
+      "The viewId parameter must be fetched from the active project's info (latestViews.TEL.viewId).",
+      "Each QMetry project may have a different test execution list viewId, so using a stale or incorrect viewId will result in incomplete or invalid executions list data by test suite id.",
+      "Usage workflow:",
+      "1. Fetch project info for the current project (Admin/Get info Service).",
+      "2. Extract latestViews.TEL.viewId from the response.",
+      "3. Use this viewId in the Fetch Test Case Runs by Test Suite Run API call.",
+      "Example:",
+      "   {",
+      "     tsID: 1533730,",
+      "     viewId: 94194,", // This is an example viewId, must be resolved per project TEL viewId
+      "     gridName: 'TESTEXECUTIONLIST'",
+      "   }",
       "CRITICAL: tsID parameter is REQUIRED - this is the Test Suite numeric ID",
       "HOW TO GET tsID:",
       "1. Call API 'Testsuite/Fetch Testsuite' to get available test suites",
@@ -809,7 +823,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all test case runs for test suite run ID '107021'",
-        parameters: { tsrunID: "107021", viewId: 6887 },
+        parameters: { tsrunID: "107021", viewId: 6887 }, // This is an example viewId, must be resolved per project TE viewId
         expectedOutput:
           "List of test case runs with execution details, status, and metadata",
       },
@@ -817,7 +831,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description: "Get test case runs with linked defects",
         parameters: {
           tsrunID: "107021",
-          viewId: 6887,
+          viewId: 6887, // This is an example viewId, must be resolved per project TE viewId
           page: 1,
           limit: 25,
         },
@@ -828,10 +842,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description: "Get test case runs for test suite run ID '2362144'",
         parameters: {
           tsrunID: "2362144",
-          viewId: 104123,
+          viewId: 104123, // This is an example viewId, must be resolved per project TE viewId
           start: 0,
           page: 1,
-          limit: 10,
+          limit: 25,
         },
         expectedOutput:
           "Test case runs from the specified test suite run execution",
@@ -841,20 +855,33 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "CRITICAL: tsrunID and viewId parameters are REQUIRED",
       "tsrunID is a STRING identifier for the test suite run execution",
       "viewId is a NUMERIC identifier for the test execution view",
-      "HOW TO GET tsrunID:",
+      "!MOST IMPORTANT HOW TO GET tsrunID:",
       "1. Call API 'Execution/Fetch Executions' to get available executions",
       "2. From the response, get value of following attribute -> data[<index>].tsRunID",
       "3. Example: Test Suite Run might have ID '107021'",
-      "HOW TO GET viewId:",
-      "1. Call API 'Admin/Get info Service' to get project info",
-      "2. From the response, get value of following attribute -> latestViews.TE.viewId",
-      "3. Example: Test Execution view might have ID 6887",
+      "!MOST IMPORTANT HOW TO GET viewId:",
+      "CRITICAL: Always resolve and use the correct test execution viewId for the current project when calling this tool.",
+      "The viewId parameter must be fetched from the active project's info (latestViews.TE.viewId).",
+      "Each QMetry project may have a different test execution viewId, so using a stale or incorrect viewId will result in incomplete or invalid test case run data.",
+      "Usage workflow:",
+      "1. Fetch project info for the current project (Admin/Get info Service).",
+      "2. Extract latestViews.TE.viewId from the response.",
+      "3. Use this viewId in the Fetch Test Case Runs by Test Suite Run API call.",
+      "Example:",
+      "   {",
+      '     tsrunID: "2362144",',
+      "     viewId: 104123,", // This is an example viewId, must be resolved per project TE viewId
+      "     start: 0,",
+      "     page: 1,",
+      "     limit: 25",
+      "   }",
+      "This ensures the tool fetches the proper execution runs data for the selected project context.",
       "SIMPLIFIED PAYLOAD: API only accepts essential parameters",
       "SUPPORTED PARAMETERS: start, page, limit, tsrunID, viewId",
       "REMOVED PARAMETERS: filter, sort, showTcWithDefects, udfFilter (cause API errors)",
       "PAGINATION: Use start, page, and limit for result pagination",
       "API REQUIREMENT: Must use exact payload structure that works in Postman",
-      'PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123}',
+      'PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123}', // Example payload, must use resolved viewId per project TE viewId
       "Use pagination for large result sets (start, page, limit parameters)",
       "This tool is essential for detailed test execution analysis and reporting",
       "Critical for monitoring individual test case execution performance",

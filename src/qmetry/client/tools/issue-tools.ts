@@ -229,7 +229,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get issues with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 166065 },
+        parameters: { projectKey: "MAC", viewId: 166065 }, // This is an example viewId, must be resolved per project IS viewId
         expectedOutput: "Issues using manually specified viewId 166065",
       },
       {

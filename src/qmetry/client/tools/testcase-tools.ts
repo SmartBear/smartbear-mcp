@@ -525,7 +525,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get test cases with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 167136, folderPath: "" },
+        parameters: { projectKey: "MAC", viewId: 167136, folderPath: "" }, // This is an example viewId, must be resolved per project Test Case ViewId
         expectedOutput: "Test cases using manually specified viewId 167136",
       },
       {
@@ -533,7 +533,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
           "List test cases from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
         parameters: {
           projectKey: "use specific given project key",
-          viewId: "fetch specific project given projectKey Test Case ViewId",
+          viewId: "fetch specific project given projectKey Test Case ViewId", // This is an example viewId, must be resolved per project Test Case ViewId
           folderPath: "",
         },
         expectedOutput:
