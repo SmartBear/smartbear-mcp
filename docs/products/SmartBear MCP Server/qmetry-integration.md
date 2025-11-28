@@ -263,6 +263,7 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: file(Supported file formats: .json, .xml and .zip), entityType ( Supported values: TESTNG, CUCUMBER, JUNIT, HPUFT, QAF, ROBOT).
 -   Returns: JSON object with requestId, status and additional metadata.
 -   Use case: Import results from automated test executions for reporting and analysis.
+-   Note: 1. If the uploaded file does not include a valid entityType, you must specify the entity type explicitly in your prompt (e.g., TESTNG, JUNIT, CUCUMBER, etc.), 2. The automation test result file must be available within your workspace before publishing.
 
 ### `get_automation_status`
 
