@@ -131,7 +131,10 @@ export const CreateTableOfContentsArgsSchema = z.object({
     .refine(
       (content) => {
         if (content?.type === "apiUrl") {
-          return content.url?.endsWith("/swagger.json");
+          return (
+            content.url?.endsWith("/swagger.json") ||
+            content.url?.endsWith("/swagger.yaml")
+          );
         }
         return true;
       },
