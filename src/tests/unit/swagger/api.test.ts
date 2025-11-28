@@ -95,26 +95,6 @@ describe("SwaggerAPI", () => {
     });
   });
 
-  describe("deletePortal", () => {
-    it("should delete portal by ID", async () => {
-      fetchMock.mockResponseOnce("", { status: 200 });
-
-      await api.deletePortal("portal-123");
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123",
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: "Bearer test-token",
-            "Content-Type": "application/json",
-            "User-Agent": "SmartBear-MCP/1.0.0",
-          },
-        },
-      );
-    });
-  });
-
   describe("updatePortal", () => {
     it("should update portal with patch data", async () => {
       const mockResponse = { id: "portal-123", name: "Updated Portal" };

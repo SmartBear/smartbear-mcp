@@ -89,17 +89,6 @@ describe("SwaggerClient", () => {
       expect(result).toEqual(mockResponse);
     });
 
-    it("should delegate deletePortal to API instance", async () => {
-      fetchMock.mockResponseOnce("", { status: 200 });
-
-      await client.deletePortal({ portalId: "portal-123" });
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        "https://api.portal.swaggerhub.com/v1/portals/portal-123",
-        expect.objectContaining({ method: "DELETE" }),
-      );
-    });
-
     it("should delegate updatePortal to API instance", async () => {
       const mockResponse = { id: "portal-123", name: "Updated Portal" };
       const updateData = { name: "Updated Portal" };
@@ -210,18 +199,8 @@ describe("SwaggerClient", () => {
 
       client.registerTools(mockRegister, mockGetInput);
 
-      // Find the deletePortal tool handler
-      const deletePortalCall = mockRegister.mock.calls.find(
-        (call) => call[0].title === "Delete Portal",
-      );
-      expect(deletePortalCall).toBeDefined();
-
-      const handler = deletePortalCall?.[1];
-      const result = await handler({ portalId: "portal-123" }, {});
-
-      expect(result).toEqual({
-        content: [{ type: "text", text: "Portal deleted successfully." }],
-      });
+      // Verify that tools are registered properly
+      expect(mockRegister).toHaveBeenCalled();
     });
 
     it("should handle tool execution errors gracefully", async () => {

@@ -131,7 +131,10 @@ export const CreateTableOfContentsArgsSchema = z.object({
     .refine(
       (content) => {
         if (content?.type === "apiUrl") {
-          return content.url?.endsWith("/swagger.json");
+          return (
+            content.url?.endsWith("/swagger.json") ||
+            content.url?.endsWith("/swagger.yaml")
+          );
         }
         return true;
       },
@@ -383,12 +386,6 @@ export const UpdateDocumentArgsSchema = z.object({
     ),
 });
 
-export const DeleteDocumentArgsSchema = z.object({
-  documentId: z
-    .string()
-    .describe("Document UUID - unique identifier for the document to delete"),
-});
-
 export const DeleteTableOfContentsArgsSchema = z.object({
   tableOfContentsId: z
     .string()
@@ -406,7 +403,6 @@ export const DeleteTableOfContentsArgsSchema = z.object({
 // Infer types from document schemas
 export type GetDocumentArgs = z.infer<typeof GetDocumentArgsSchema>;
 export type UpdateDocumentArgs = z.infer<typeof UpdateDocumentArgsSchema>;
-export type DeleteDocumentArgs = z.infer<typeof DeleteDocumentArgsSchema>;
 export type DeleteTableOfContentsArgs = z.infer<
   typeof DeleteTableOfContentsArgsSchema
 >;
