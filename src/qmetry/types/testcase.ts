@@ -13,6 +13,7 @@ export interface CreateTestCaseStep {
   inputData?: string;
   expectedOutcome?: string;
   UDF?: Record<string, string>;
+  tcStepID?: number; // Required for updating existing steps, omit for new steps
 }
 export interface removeTestCaseStep {
   tcID: number;
@@ -42,6 +43,11 @@ export interface FetchTestCasesPayload
   viewId: number; // required
   folderPath: string; // required
   udfFilter?: string; // only this API uses udfFilter
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: boolean;
 }
 
 export interface CreateTestCasesPayload {
@@ -132,6 +138,11 @@ export const DEFAULT_FETCH_TESTCASES_PAYLOAD: Omit<
   ...DEFAULT_FILTER,
   ...DEFAULT_FOLDER_OPTIONS,
   udfFilter: "[]",
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: false,
 };
 
 export const DEFAULT_CREATE_TESTCASES_PAYLOAD: Omit<

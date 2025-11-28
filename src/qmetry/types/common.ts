@@ -68,6 +68,28 @@ export const DEFAULT_FOLDER_OPTIONS: Required<
   folderID: null,
 };
 
+/**
+ * Entity types supported for automation result import
+ */
+export const EntityTypeEnum = z.enum([
+  "TESTNG",
+  "CUCUMBER",
+  "JUNIT",
+  "HPUFT",
+  "QAF",
+  "ROBOT",
+]);
+
+/**
+ * Automation hierarchy options for TestNG and JUnit
+ */
+export const AutomationHierarchyEnum = z.enum(["1", "2", "3"]);
+
+/**
+ * Skip warning options
+ */
+export const SkipWarningEnum = z.enum(["0", "1"]);
+
 // Reusable Zod schema components
 export const CommonFields = {
   projectKey: z
@@ -391,12 +413,117 @@ export const PlatformArgsSchema = z.object({
   filter: CommonFields.filter,
 });
 
+export const CreateReleaseArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  release: z.object({
+    name: z.string().describe("Release name (required)"),
+    description: z.string().optional().describe("Release description"),
+    startDate: z
+      .string()
+      .optional()
+      .describe(
+        "Release start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    targetDate: z
+      .string()
+      .optional()
+      .describe(
+        "Release target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    projectID: z
+      .number()
+      .optional()
+      .describe(
+        "Project ID (optional, can be auto-resolved from project key if not provided)",
+      ),
+  }),
+  cycle: z
+    .object({
+      name: z.string().describe("Cycle name (required if cycle is provided)"),
+      isLocked: z
+        .boolean()
+        .optional()
+        .describe("Whether the cycle is locked (default: false)"),
+      isArchived: z
+        .boolean()
+        .optional()
+        .describe("Whether the cycle is archived (default: false)"),
+    })
+    .optional()
+    .describe("Optional cycle to create within the release"),
+});
+
+export const CreateCycleArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  cycle: z.object({
+    name: z.string().describe("Cycle name (required)"),
+    startDate: z
+      .string()
+      .optional()
+      .describe(
+        "Cycle start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    targetDate: z
+      .string()
+      .optional()
+      .describe(
+        "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    projectID: z
+      .number()
+      .optional()
+      .describe(
+        "Project ID (optional, can be auto-resolved from project key if not provided)",
+      ),
+    releaseID: z
+      .number()
+      .describe("Release ID (required) - the release this cycle belongs to"),
+  }),
+});
+
+export const UpdateCycleArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  cycle: z.object({
+    name: z.string().optional().describe("Cycle name (optional for update)"),
+    startDate: z
+      .string()
+      .optional()
+      .describe(
+        "Cycle start date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    targetDate: z
+      .string()
+      .optional()
+      .describe(
+        "Cycle target/end date in format DD-MM-YYYY or MM-DD-YYYY (depends on QMetry instance date format configuration)",
+      ),
+    buildID: z
+      .number()
+      .describe(
+        "Build ID (required for identifying the cycle to update). " +
+          "To get the buildID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
+          "From the response, get value of following attribute -> data[<index>].buildID",
+      ),
+    releaseID: z
+      .number()
+      .describe(
+        "Release ID (required for identifying the cycle to update). " +
+          "To get the releaseID - Call API 'Cycle/List' (FETCH_RELEASES_CYCLES tool). " +
+          "From the response, get value of following attribute -> data[<index>].releaseID",
+      ),
+  }),
+});
+
 export const CreateTestCaseStepSchema = z.object({
   orderId: z.number(),
   description: z.string(),
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
   UDF: z.record(z.string()).optional(),
+  tcStepID: z.number().optional(), // Required for updating existing steps, omit for new steps
 });
 
 export const UpdateTestCaseRemoveStepSchema = z.object({
@@ -438,14 +565,58 @@ export const CreateTestCaseArgsSchema = z.object({
     )
     .optional(),
 });
+
 export const UpdateTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
   tcID: CommonFields.tcID,
   tcVersionID: CommonFields.tcVersionID,
-  withVersion: z.boolean().optional(),
-  notrunall: z.boolean().optional(),
-  isStepUpdated: z.boolean().optional(),
+  tcVersion: z
+    .number()
+    .optional()
+    .describe(
+      "Test Case version number (required when withVersion=true for creating new version). " +
+        "This is the current version number from which a new version will be created.",
+    ),
+  withVersion: z
+    .boolean()
+    .optional()
+    .describe(
+      "Pass 'true' if you want to create a new version of the test case with incremented version number. " +
+        "When true, a new version is created (e.g., if current version is 2, new version 3 is created). " +
+        "When false or omitted, updates the existing version specified by tcVersionID. " +
+        "IMPORTANT: Always send proper tcVersionID to identify which version the request is for.",
+    ),
+  versionComment: z
+    .string()
+    .optional()
+    .describe(
+      "Comment or description for the new version (used only when withVersion=true). " +
+        "Helps track what changed in this new version. Example: 'Updated test steps for new requirements'",
+    ),
+  notruncurrent: z
+    .boolean()
+    .optional()
+    .describe(
+      "Flag to control execution behavior for current version when creating a new version. " +
+        "Used in conjunction with withVersion=true.",
+    ),
+  notrunall: z
+    .boolean()
+    .optional()
+    .describe(
+      "Flag to control execution behavior for all versions when creating a new version. " +
+        "Used in conjunction with withVersion=true.",
+    ),
+  folderPath: CommonFields.tsFolderPath,
+  scope: CommonFields.scope,
+  isStepUpdated: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set to true when steps are being added, updated, or removed. " +
+        "Required when including 'steps' or 'removeSteps' arrays.",
+    ),
   steps: z.array(CreateTestCaseStepSchema).optional(),
   removeSteps: z.array(UpdateTestCaseRemoveStepSchema).optional(),
   name: z.string().optional(),
@@ -454,10 +625,20 @@ export const UpdateTestCaseArgsSchema = z.object({
   owner: z.number().optional(),
   testCaseState: z.number().optional(),
   testCaseType: z.number().optional(),
+  estimatedTime: z
+    .number()
+    .optional()
+    .describe("Estimated execution time in seconds. Example: 7200 for 2 hours"),
   executionMinutes: z.number().optional(),
   testingType: z.number().optional(),
   description: z.string().optional(),
-  updateOnlyMetadata: z.boolean().optional(),
+  updateOnlyMetadata: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set to true to update only metadata fields without touching test steps. " +
+        "When true, steps and removeSteps are ignored.",
+    ),
 });
 
 export const TestCaseListArgsSchema = z.object({
@@ -928,4 +1109,227 @@ export const LinkPlatformsToTestSuiteArgsSchema = z.object({
     .describe(
       "Comma-separated value of PlatformId (required). To get the qmPlatformId - Call API 'Platform/List' From the response, get value of following attribute -> data[<index>].platformID",
     ),
+});
+
+// Export for Bulk Update Test Case Execution Status tool
+export const BulkUpdateExecutionStatusArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  entityIDs: z
+    .string()
+    .describe(
+      "Comma-separated IDs of Test Case Runs to update (e.g., '66095087' for single or '66095069,66095075' for bulk). " +
+        "To get the entityIDs - Call API 'Execution/Fetch Testcase Run ID' " +
+        "From the response, get value of following attribute -> data[<index>].tcRunID",
+    ),
+  entityType: z
+    .enum(["TCR", "TCSR"])
+    .describe(
+      "Type of Entity to Execute: 'TCR' (Test Case Run) or 'TCSR' (Test Case Step Run)",
+    )
+    .default("TCR"),
+  qmTsRunId: z
+    .string()
+    .describe(
+      "Id of Test Suite Run to execute (required). " +
+        "To get the qmTsRunId - Call API 'Execution/Fetch Executions' " +
+        "From the response, get value of following attribute -> data[<index>].tsRunID",
+    ),
+  runStatusID: z
+    .number()
+    .describe(
+      "Id of the execution status to set (required). " +
+        "To get the runStatusID - Call API 'Admin/Project GET info Service' " +
+        "From the response, get value of following attribute -> allstatus[<index>].id " +
+        "Common statuses: Pass, Fail, Not Run, Blocked, WIP, etc.",
+    ),
+  dropID: z
+    .union([z.number(), z.string()])
+    .optional()
+    .describe(
+      "Unique identifier of drop/build on which execution is to be performed (optional). " +
+        "To get the dropID - Call API 'Fetch Build/List' " +
+        "From the response, get value of following attribute -> data[<index>].dropID",
+    ),
+  isAutoExecuted: z
+    .enum(["0", "1"])
+    .optional()
+    .describe("Set '1' for automated and '0' for manual Execution Type"),
+  isBulkOperation: z
+    .boolean()
+    .optional()
+    .describe(
+      "Set true for bulk operations (multiple entityIDs), false for single execution update. " +
+        "Default: true if multiple comma-separated entityIDs, false otherwise",
+    ),
+  comments: z
+    .string()
+    .optional()
+    .describe("Optional comments for the execution status update"),
+  username: z
+    .string()
+    .optional()
+    .describe(
+      "If Part 11 Compliance is active then required for authentication",
+    ),
+  password: z
+    .string()
+    .optional()
+    .describe(
+      "If Part 11 Compliance is active then required for authentication",
+    ),
+  qmRunObj: z
+    .string()
+    .optional()
+    .describe("Internal QMetry run object (optional, usually empty string)"),
+  type: z
+    .enum(["TCR", "TCSR"])
+    .optional()
+    .describe(
+      "Type of Entity - same as entityType (for backwards compatibility)",
+    ),
+});
+
+/**
+ * Import automation results payload schema
+ *
+ * CRITICAL: File upload is required and must be provided by the user
+ * User should upload a valid result file (.json, .xml, or .zip up to 30 MB)
+ */
+export const ImportAutomationResultsPayloadSchema = z.object({
+  // REQUIRED: File data as base64 string or file path
+  file: z
+    .string()
+    .refine(
+      (val) => {
+        // Base64 regex: matches typical base64 strings (not perfect, but covers most cases)
+        const base64Regex =
+          /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+        // File path regex: ends with .json, .xml, or .zip (case-insensitive)
+        const filePathRegex = /\.(json|xml|zip)$/i;
+        return base64Regex.test(val) || filePathRegex.test(val);
+      },
+      {
+        message:
+          "Must be a valid base64 string or a file path ending with .json, .xml, or .zip",
+      },
+    )
+    .describe(
+      "Base64 encoded file content or file path. User must upload result file (.json, .xml, .zip up to 30 MB)",
+    ),
+
+  // REQUIRED: Original filename with extension
+  fileName: z
+    .string()
+    .describe("Original filename with extension (.json, .xml, or .zip)"),
+
+  // REQUIRED: Entity type (format of result file)
+  entityType: EntityTypeEnum.describe(
+    "Format of result file: TESTNG, CUCUMBER, JUNIT, HPUFT, QAF, or ROBOT",
+  ),
+
+  // OPTIONAL: Automation hierarchy (applies to TestNG and JUnit only)
+  automationHierarchy: AutomationHierarchyEnum.optional().describe(
+    "TestNG/JUnit hierarchy: 1=Test Case-Test Step, 2=Test Case only, 3=Test Suite-Test Case. Default: 1",
+  ),
+
+  // OPTIONAL: Test suite name
+  testsuiteName: z
+    .string()
+    .optional()
+    .describe(
+      "Custom test suite name. Ignored if automationHierarchy=3 for JUnit or =2 for ROBOT",
+    ),
+
+  // OPTIONAL: Test suite ID (reuse existing)
+  testsuiteId: z
+    .string()
+    .optional()
+    .describe(
+      "Reuse existing Test Suite by ID or Entity Key. Ignored if automationHierarchy=3 for JUnit or =2 for ROBOT",
+    ),
+
+  // OPTIONAL: Test suite folder path
+  tsFolderPath: z
+    .string()
+    .optional()
+    .describe(
+      "Test suite folder path. Creates folder if doesn't exist. Ignored if reusing test suite",
+    ),
+
+  // OPTIONAL: Test case folder path
+  tcFolderPath: z
+    .string()
+    .optional()
+    .describe(
+      "Test case folder path. Creates folder if doesn't exist. Ignored if reusing test case",
+    ),
+
+  // OPTIONAL: Platform ID or name
+  platformID: z
+    .string()
+    .optional()
+    .describe("Platform ID or Platform Name. Default: 'No Platform'"),
+
+  // OPTIONAL: Project ID or key (overrides header project)
+  projectID: z
+    .string()
+    .optional()
+    .describe(
+      "Project ID, Project Key, or Project name. Overrides project in header",
+    ),
+
+  // OPTIONAL: Release ID or name
+  releaseID: z
+    .string()
+    .optional()
+    .describe("Release ID or Release name. Requires projectID if provided"),
+
+  // OPTIONAL: Cycle ID or name
+  cycleID: z
+    .string()
+    .optional()
+    .describe(
+      "Cycle ID or Cycle name. Requires releaseID and projectID if provided",
+    ),
+
+  // OPTIONAL: Build ID or name
+  buildID: z.string().optional().describe("Build ID or Build name"),
+
+  // OPTIONAL: Test case fields (JSON format)
+  testcase_fields: z
+    .string()
+    .optional()
+    .describe(
+      'JSON string with test case system fields and UDFs. Ignored if reusing test case. Example: {"component":["com1"], "priority":"High"}',
+    ),
+
+  // OPTIONAL: Test suite fields (JSON format)
+  testsuite_fields: z
+    .string()
+    .optional()
+    .describe(
+      'JSON string with test suite system fields and UDFs. Ignored if reusing test suite. Example: {"testSuiteState":"Open", "testsuiteOwner":"user"}',
+    ),
+
+  // OPTIONAL: Skip warning about summary length
+  skipWarning: SkipWarningEnum.optional().describe(
+    "0=Fail if summary >255 chars, 1=Truncate summary to 255 chars. Default: 0",
+  ),
+
+  // OPTIONAL: Matching requirement for test cases
+  is_matching_required: z
+    .string()
+    .optional()
+    .describe(
+      "True=Create new TC if summary/steps don't match, False=Reuse linked TC. Default: True",
+    ),
+});
+
+export const FetchAutomationStatusPayloadSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  requestID: z
+    .number()
+    .describe("Numeric request ID from import automation response"),
 });

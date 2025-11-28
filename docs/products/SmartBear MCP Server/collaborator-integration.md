@@ -1,4 +1,4 @@
-![Collaborator](images/embedded/Collaborator.png)
+![Collaborator.png](./images/embedded/Collaborator.png)
 The Collaborator client enables seamless interaction with SmartBear Collaborator for code review management, automation, and reporting. Tools for Collaborator require the following environment variables to be set:
 
 - `COLLABORATOR_BASE_URL`
