@@ -1,5 +1,6 @@
 import { QMetryToolsHandlers } from "../../config/constants.js";
 import {
+  BulkUpdateExecutionStatusArgsSchema,
   CreateTestSuiteArgsSchema,
   ExecutionsByTestSuiteArgsSchema,
   LinkPlatformsToTestSuiteArgsSchema,
@@ -199,19 +200,19 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get test suites with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 103097, folderPath: "" },
-        expectedOutput: "Test suites using manually specified viewId 103097",
+        parameters: { projectKey: "MAC", viewId: 103097, folderPath: "" }, // This is an example viewId, must be resolved per project TS viewId
+        expectedOutput: "Test suites using manually specified viewId 103097", // This is an example viewId, must be resolved per project TS viewId
       },
       {
         description:
           "List test suites from specific project (ex: project key can be anything (VT, UT, PROJ1, TEST9)",
         parameters: {
           projectKey: "use specific given project key",
-          viewId: "fetch specific project given projectKey Test Suite ViewId",
+          viewId: "fetch specific project given projectKey Test Suite ViewId", // auto-resolved
           folderPath: "",
         },
         expectedOutput:
-          "Test suites using manually specified viewId 103097 or projectKey",
+          "Test suites using manually specified viewId 103097 or projectKey", // This is an example viewId, must be resolved per project TS viewId
       },
       {
         description: "Get test suites by release/cycle filter",
@@ -321,7 +322,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get test suites with custom pagination and auto-resolved viewId",
-        parameters: { tsFolderID: 113557, page: 1, limit: 20 },
+        parameters: { tsFolderID: 113557, page: 1, limit: 25 },
         expectedOutput: "Paginated list of test suites with 20 items per page",
       },
       {
@@ -367,7 +368,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Search test suites from specific sub-folder with manual viewId",
-        parameters: { tsFolderID: 42, viewId: 104316 },
+        parameters: { tsFolderID: 42, viewId: 104316 }, // This is an example viewId, must be resolved per project TS viewId
         expectedOutput:
           "Test suites available in specific folder ID 42 for test case linking",
       },
@@ -383,7 +384,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "VIEWID AUTO-RESOLUTION:",
       "1. System automatically fetches project info using the projectKey",
       "2. Extracts latestViews.TSFS.viewId automatically",
-      "3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view)",
+      "3. Example: latestViews.TSFS.viewId = 104316 (MAC project TSFS view)", // This is an example viewId, must be resolved per project TSFS viewId
       "4. Manual viewId only needed if you want to override the automatic resolution",
       "WORKFLOW: System automatically handles project info if tsFolderID or viewId is not provided",
       "PROJECT INFO STRUCTURE: clientData.rootFolders.TS.id contains the root test suite folder ID",
@@ -621,7 +622,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get linked test cases with custom pagination",
-        parameters: { tsID: 1497291, getLinked: true, page: 1, limit: 50 },
+        parameters: { tsID: 1497291, getLinked: true, page: 1, limit: 25 },
         expectedOutput:
           "Paginated list of linked test cases with 50 items per page",
       },
@@ -707,7 +708,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         parameters: {
           tsID: 194955,
           tsFolderID: 126554,
-          viewId: 41799,
+          viewId: 41799, // This is an example viewId, must be resolved per project TEL viewId
         },
         expectedOutput:
           "Executions filtered by test suite folder and specific view configuration",
@@ -753,6 +754,20 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "!MOST IMPORTANT HOW TO GET viewId:",
+      "CRITICAL: Always resolve and use the correct test execution viewId for the current project when calling this tool.",
+      "The viewId parameter must be fetched from the active project's info (latestViews.TEL.viewId).",
+      "Each QMetry project may have a different test execution list viewId, so using a stale or incorrect viewId will result in incomplete or invalid executions list data by test suite id.",
+      "Usage workflow:",
+      "1. Fetch project info for the current project (Admin/Get info Service).",
+      "2. Extract latestViews.TEL.viewId from the response.",
+      "3. Use this viewId in the Fetch Test Case Runs by Test Suite Run API call.",
+      "Example:",
+      "   {",
+      "     tsID: 1533730,",
+      "     viewId: 94194,", // This is an example viewId, must be resolved per project TEL viewId
+      "     gridName: 'TESTEXECUTIONLIST'",
+      "   }",
       "CRITICAL: tsID parameter is REQUIRED - this is the Test Suite numeric ID",
       "HOW TO GET tsID:",
       "1. Call API 'Testsuite/Fetch Testsuite' to get available test suites",
@@ -808,7 +823,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all test case runs for test suite run ID '107021'",
-        parameters: { tsrunID: "107021", viewId: 6887 },
+        parameters: { tsrunID: "107021", viewId: 6887 }, // This is an example viewId, must be resolved per project TE viewId
         expectedOutput:
           "List of test case runs with execution details, status, and metadata",
       },
@@ -816,7 +831,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description: "Get test case runs with linked defects",
         parameters: {
           tsrunID: "107021",
-          viewId: 6887,
+          viewId: 6887, // This is an example viewId, must be resolved per project TE viewId
           page: 1,
           limit: 25,
         },
@@ -827,10 +842,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description: "Get test case runs for test suite run ID '2362144'",
         parameters: {
           tsrunID: "2362144",
-          viewId: 104123,
+          viewId: 104123, // This is an example viewId, must be resolved per project TE viewId
           start: 0,
           page: 1,
-          limit: 10,
+          limit: 25,
         },
         expectedOutput:
           "Test case runs from the specified test suite run execution",
@@ -840,20 +855,33 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "CRITICAL: tsrunID and viewId parameters are REQUIRED",
       "tsrunID is a STRING identifier for the test suite run execution",
       "viewId is a NUMERIC identifier for the test execution view",
-      "HOW TO GET tsrunID:",
+      "!MOST IMPORTANT HOW TO GET tsrunID:",
       "1. Call API 'Execution/Fetch Executions' to get available executions",
       "2. From the response, get value of following attribute -> data[<index>].tsRunID",
       "3. Example: Test Suite Run might have ID '107021'",
-      "HOW TO GET viewId:",
-      "1. Call API 'Admin/Get info Service' to get project info",
-      "2. From the response, get value of following attribute -> latestViews.TE.viewId",
-      "3. Example: Test Execution view might have ID 6887",
+      "!MOST IMPORTANT HOW TO GET viewId:",
+      "CRITICAL: Always resolve and use the correct test execution viewId for the current project when calling this tool.",
+      "The viewId parameter must be fetched from the active project's info (latestViews.TE.viewId).",
+      "Each QMetry project may have a different test execution viewId, so using a stale or incorrect viewId will result in incomplete or invalid test case run data.",
+      "Usage workflow:",
+      "1. Fetch project info for the current project (Admin/Get info Service).",
+      "2. Extract latestViews.TE.viewId from the response.",
+      "3. Use this viewId in the Fetch Test Case Runs by Test Suite Run API call.",
+      "Example:",
+      "   {",
+      '     tsrunID: "2362144",',
+      "     viewId: 104123,", // This is an example viewId, must be resolved per project TE viewId
+      "     start: 0,",
+      "     page: 1,",
+      "     limit: 25",
+      "   }",
+      "This ensures the tool fetches the proper execution runs data for the selected project context.",
       "SIMPLIFIED PAYLOAD: API only accepts essential parameters",
       "SUPPORTED PARAMETERS: start, page, limit, tsrunID, viewId",
       "REMOVED PARAMETERS: filter, sort, showTcWithDefects, udfFilter (cause API errors)",
       "PAGINATION: Use start, page, and limit for result pagination",
       "API REQUIREMENT: Must use exact payload structure that works in Postman",
-      'PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123}',
+      'PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123}', // Example payload, must use resolved viewId per project TE viewId
       "Use pagination for large result sets (start, page, limit parameters)",
       "This tool is essential for detailed test execution analysis and reporting",
       "Critical for monitoring individual test case execution performance",
@@ -864,5 +892,208 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "JSON object with test case runs array containing detailed execution information, status, tester details, and run metadata",
     readOnly: true,
     idempotent: true,
+  },
+  {
+    title: "Bulk Update Test Case Execution Status",
+    summary:
+      "Update execution status for individual or multiple test case runs in bulk",
+    handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,
+    inputSchema: BulkUpdateExecutionStatusArgsSchema,
+    purpose:
+      "Update the execution status (Pass, Fail, Blocked, Not Run, WIP, etc.) for one or more test case runs. " +
+      "This tool enables both single and bulk status updates for test executions, providing flexibility for " +
+      "manual test execution management, automated test result updates, and test execution tracking. " +
+      "Essential for maintaining accurate test execution records and execution status reporting.",
+    useCases: [
+      "Update single test case run status to Pass, Fail, Blocked, or Not Run",
+      "Bulk update multiple test case run statuses in a single operation",
+      "Mark all selected test case runs as Not Run for re-execution",
+      "Update execution status after manual test execution",
+      "Set execution status based on automated test results",
+      "Update test execution status across different test environments",
+      "Track test execution progress and completion",
+      "Manage test execution status for compliance and reporting",
+    ],
+    examples: [
+      {
+        description:
+          "Update single test case run status to Failed (single execution)",
+        parameters: {
+          entityIDs: "66095087",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123266,
+          isBulkOperation: false,
+        },
+        expectedOutput:
+          "Test case run 66095087 status updated to Failed successfully",
+      },
+      {
+        description:
+          "Bulk update two test case runs to Pass status (bulk execution)",
+        parameters: {
+          entityIDs: "66095069,66095075",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123268,
+          isBulkOperation: true,
+          comments: "All test cases passed successfully",
+        },
+        expectedOutput:
+          "Test case runs 66095069 and 66095075 updated to Pass status successfully",
+      },
+      {
+        description:
+          "Bulk update all selected test case runs to Not Run status",
+        parameters: {
+          entityIDs:
+            "66095069,66095075,66095081,66095087,66095093,66095099,66095105",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123269,
+          isBulkOperation: true,
+        },
+        expectedOutput:
+          "7 test case runs updated to Not Run status successfully for re-execution",
+      },
+      {
+        description: "Update test case run with build/drop information",
+        parameters: {
+          entityIDs: "66095087",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123266,
+          dropID: 947,
+          isBulkOperation: false,
+        },
+        expectedOutput:
+          "Test case run updated with execution status and build information",
+      },
+      {
+        description:
+          "Update automated test execution status with automation flag",
+        parameters: {
+          entityIDs: "66095069,66095075",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123268,
+          isAutoExecuted: "1",
+          isBulkOperation: true,
+          comments: "Automated test execution completed",
+        },
+        expectedOutput:
+          "Automated test case runs updated to Pass status with automation flag",
+      },
+      {
+        description:
+          "Update test case run status with Part 11 Compliance authentication",
+        parameters: {
+          entityIDs: "66095087",
+          entityType: "TCR",
+          qmTsRunId: "2720260",
+          runStatusID: 123266,
+          username: "dhaval.mistry",
+          password: "Ispl123#",
+          isBulkOperation: false,
+        },
+        expectedOutput:
+          "Test case run status updated with Part 11 Compliance authentication",
+      },
+      {
+        description:
+          "Update ALL executions of test suite VKMC-TS-20 to Failed (MULTI-CALL OPERATION)",
+        parameters: {
+          entityIDs: "66341841,66342887,66342893,66342899",
+          entityType: "TCR",
+          qmTsRunId: "2733104",
+          runStatusID: 123269,
+          isBulkOperation: true,
+        },
+        expectedOutput:
+          "Execution 1/4 updated. The MCP Agent will automatically repeat this operation for executions 2733205, 2733306, and 2733407 using their corresponding entityIDs.",
+      },
+    ],
+    hints: [
+      "CRITICAL: entityIDs, entityType, qmTsRunId, and runStatusID are REQUIRED parameters",
+      "HOW TO GET entityIDs (Test Case Run IDs):",
+      "1. Call API 'Execution/Fetch Testcase Run ID' (FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN tool)",
+      "2. From the response, get value of following attribute -> data[<index>].tcRunID",
+      "3. Example: Single ID '66095087' or Multiple IDs '66095069,66095075,66095081'",
+      "4. For bulk operations, provide comma-separated IDs without spaces",
+      "HOW TO GET qmTsRunId (Test Suite Run ID):",
+      "1. Call API 'Execution/Fetch Executions' (FETCH_EXECUTIONS_BY_TESTSUITE tool)",
+      "2. From the response, get value of following attribute -> data[<index>].tsRunID",
+      "3. Example: Test Suite Run ID might be '2720260'",
+      "HOW TO GET runStatusID (Execution Status ID):",
+      "1. Call API 'Admin/Get info Service' (FETCH_PROJECT_INFO tool)",
+      "2. From the response, get value of following attribute -> allstatus[<index>].id",
+      "3. Match status by allstatus[<index>].name (e.g., 'Pass', 'Fail', 'Blocked', 'Not Run', 'WIP')",
+      "4. Example status IDs: Pass=123268, Fail=123266, Not Run=123269, Blocked=123267, WIP=123270",
+      "HOW TO GET dropID (Build/Drop ID) - OPTIONAL:",
+      "1. Call API 'Build/List' (FETCH_BUILDS tool)",
+      "2. From the response, get value of following attribute -> data[<index>].dropID",
+      "3. Example: Build/Drop ID might be 947",
+      "ENTITY TYPES:",
+      "- 'TCR' = Test Case Run (most common use case)",
+      "- 'TCSR' = Test Case Step Run (for step-level execution updates)",
+      "BULK OPERATION FLAG:",
+      "- isBulkOperation=false: Single test case run update (one entityID)",
+      "- isBulkOperation=true: Multiple test case runs update (comma-separated entityIDs)",
+      "- Auto-detected: If entityIDs contains comma, defaults to true; otherwise false",
+      "AUTOMATION FLAG (isAutoExecuted) - OPTIONAL:",
+      "- '1' = Automated execution (test run by automation framework)",
+      "- '0' = Manual execution (test run by human tester)",
+      "- Used for execution tracking and reporting purposes",
+      "PART 11 COMPLIANCE (username & password) - CONDITIONAL:",
+      "- Required ONLY if Part 11 Compliance is active in your QMetry instance",
+      "- Used for regulatory compliance and audit trail purposes",
+      "- Not needed for standard QMetry installations",
+      "COMMENTS FIELD - OPTIONAL:",
+      "- Add execution notes, failure reasons, or status change context",
+      "- Useful for tracking why status was changed",
+      "- Appears in execution history and audit logs",
+      "COMMON EXECUTION STATUS NAMES:",
+      "- Pass: Test case executed successfully",
+      "- Fail: Test case failed with errors",
+      "- Blocked: Test case cannot be executed due to blockers",
+      "- Not Run: Test case not yet executed or needs re-execution",
+      "- WIP: Work In Progress - test case execution in progress",
+      "WORKFLOW FOR USER PROMPTS:",
+      "1. If user says 'execute test case run by id to failed' or 'update status to fail':",
+      "   - Fetch test case runs to get tcRunID (entityIDs)",
+      "   - Fetch project info to get 'Fail' status ID (runStatusID)",
+      "   - Set isBulkOperation=false for single ID",
+      "2. If user says 'bulk update test case run status to pass' or 'update all to passed':",
+      "   - Fetch test case runs to get multiple tcRunIDs",
+      "   - Fetch project info to get 'Pass' status ID",
+      "   - Set isBulkOperation=true",
+      "   - Join multiple IDs with commas (no spaces)",
+      "3. If user says 'execute status to not run of given test case run ids':",
+      "   - Use provided IDs or fetch if needed",
+      "   - Fetch project info to get 'Not Run' status ID",
+      "   - Set isBulkOperation based on ID count",
+      "4. If the user requests updating status for ALL executions of a test suite, the agent must:",
+      "   1. Call FETCH_EXECUTIONS_BY_TESTSUITE to get all qmTsRunIds.",
+      "   2. For each qmTsRunId:",
+      "      - Call FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN to get tcRunID (entityIDs)",
+      "      - Fetch project info to get 'Fail' status ID (runStatusID)",
+      "      - Call BULK_UPDATE_EXECUTION_STATUS with the corresponding qmTsRunId + tcRunID + desired runStatusID",
+      "   3. Repeat until all executions are updated.",
+      "   This tool is intended to be invoked multiple times in sequence for multi-execution updates.",
+      "FIELD MAPPING CRITICAL NOTES:",
+      "- entityIDs must be comma-separated STRING (e.g., '66095069,66095075')",
+      "- qmTsRunId must be STRING format (e.g., '2720260')",
+      "- runStatusID must be NUMERIC (e.g., 123268)",
+      "- dropID can be numeric or string (flexible)",
+      "API ENDPOINT: PUT /rest/execution/runstatus/bulkupdate",
+      "This tool is essential for test execution management and status tracking",
+      "Critical for maintaining accurate test execution records and reporting",
+      "Use for manual test execution updates and automated test result integration",
+      "Essential for test execution audit trails and compliance requirements",
+    ],
+    outputDescription:
+      "JSON object with success status, updated execution details, and confirmation message",
+    readOnly: false,
+    idempotent: false,
   },
 ];

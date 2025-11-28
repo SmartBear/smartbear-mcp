@@ -45,7 +45,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
           "Get requirements with manual viewId (skip auto-resolution)",
         parameters: {
           projectKey: "MAC",
-          viewId: 7397,
+          viewId: 7397, // This is an example viewId, must be resolved per project RQ viewId
           folderPath: "/APIARY 88",
         },
         expectedOutput: "Requirements using manually specified viewId 7397",

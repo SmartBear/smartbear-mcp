@@ -38,3 +38,55 @@ export const DEFAULT_FETCH_PLATFORMS_PAYLOAD = {
   ...DEFAULT_FILTER,
   ...DEFAULT_SORT,
 };
+
+export interface CreateReleasePayload {
+  release: {
+    name: string;
+    description?: string;
+    startDate?: string;
+    targetDate?: string;
+    projectID?: number;
+  };
+  cycle?: {
+    name: string;
+    isLocked?: boolean;
+    isArchived?: boolean;
+  };
+}
+
+export const DEFAULT_CREATE_RELEASE_PAYLOAD: Partial<CreateReleasePayload> = {
+  release: {
+    name: "Default Release",
+  },
+  cycle: {
+    name: "Default Cycle",
+  },
+};
+
+export interface CreateCyclePayload {
+  cycle: {
+    name: string;
+    startDate?: string;
+    targetDate?: string;
+    projectID?: number;
+    releaseID: number;
+  };
+}
+
+export const DEFAULT_CREATE_CYCLE_PAYLOAD: {
+  cycle?: Partial<CreateCyclePayload["cycle"]>;
+} = {
+  cycle: {
+    name: "Default Cycle",
+  },
+};
+
+export interface UpdateCyclePayload {
+  cycle: {
+    name?: string;
+    startDate?: string;
+    targetDate?: string;
+    buildID: number;
+    releaseID: number;
+  };
+}

@@ -19,6 +19,11 @@ export interface FetchRequirementsPayload
   udfFilter?: string; // user-defined field filter
   isJiraFilter?: boolean; // false if using qmetry filter
   filterType?: "QMETRY" | "JIRA"; // filter type
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: boolean;
 }
 
 export interface FetchRequirementDetailsPayload {
@@ -45,6 +50,11 @@ export const DEFAULT_FETCH_REQUIREMENTS_PAYLOAD: Omit<
   udfFilter: "[]",
   isJiraFilter: false,
   filterType: "QMETRY",
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: false,
 };
 
 export const DEFAULT_FETCH_REQUIREMENT_DETAILS_PAYLOAD: Omit<

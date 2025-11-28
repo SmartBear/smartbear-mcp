@@ -1,6 +1,8 @@
 import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import {
+  type BulkUpdateExecutionStatusPayload,
   type CreateTestSuitePayload,
+  DEFAULT_BULK_UPDATE_EXECUTION_STATUS_PAYLOAD,
   DEFAULT_CREATE_TESTSUITE_PAYLOAD,
   DEFAULT_FETCH_EXECUTIONS_BY_TESTSUITE_PAYLOAD,
   DEFAULT_FETCH_LINKED_ISSUES_BY_TESTCASE_RUN_PAYLOAD,
@@ -461,6 +463,71 @@ export async function linkPlatformsToTestSuite(
   return qmetryRequest<unknown>({
     method: "PUT",
     path: QMETRY_PATHS.TESTSUITE.LINK_PLATFORMS_TO_TESTSUITE,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Bulk update execution status for test case runs.
+ * @throws If `entityIDs`, `entityType`, `qmTsRunId`, or `runStatusID` are missing/invalid.
+ */
+export async function bulkUpdateExecutionStatus(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: BulkUpdateExecutionStatusPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const body: BulkUpdateExecutionStatusPayload = {
+    ...DEFAULT_BULK_UPDATE_EXECUTION_STATUS_PAYLOAD,
+    ...payload,
+  };
+
+  if (
+    !body.entityIDs ||
+    typeof body.entityIDs !== "string" ||
+    body.entityIDs.trim().length === 0
+  ) {
+    throw new Error(
+      "[bulkUpdateExecutionStatus] Missing or invalid required parameter: 'entityIDs'. It must be a non-empty comma-separated string of Test Case Run IDs.",
+    );
+  }
+
+  if (
+    !body.entityType ||
+    (body.entityType !== "TCR" && body.entityType !== "TCSR")
+  ) {
+    throw new Error(
+      "[bulkUpdateExecutionStatus] Missing or invalid required parameter: 'entityType'. Must be 'TCR' or 'TCSR'.",
+    );
+  }
+
+  if (
+    !body.qmTsRunId ||
+    typeof body.qmTsRunId !== "string" ||
+    body.qmTsRunId.trim().length === 0
+  ) {
+    throw new Error(
+      "[bulkUpdateExecutionStatus] Missing or invalid required parameter: 'qmTsRunId'. It must be a non-empty string.",
+    );
+  }
+
+  if (typeof body.runStatusID !== "number") {
+    throw new Error(
+      "[bulkUpdateExecutionStatus] Missing or invalid required parameter: 'runStatusID'. It must be a number.",
+    );
+  }
+
+  return qmetryRequest<unknown>({
+    method: "PUT",
+    path: QMETRY_PATHS.TESTSUITE.BULK_UPDATE_EXECUTION_STATUS,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
