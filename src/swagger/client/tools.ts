@@ -11,7 +11,6 @@ import {
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   CreateTableOfContentsArgsSchema,
-  DeleteDocumentArgsSchema,
   DeleteTableOfContentsArgsSchema,
   GetDocumentArgsSchema,
   GetProductSectionsArgsSchema,
@@ -143,13 +142,6 @@ export const TOOLS: SwaggerToolParams[] = [
       "Update the content of an existing document. Supports both HTML and Markdown content types.",
     inputSchema: UpdateDocumentArgsSchema,
     handler: "updateDocument",
-  },
-  {
-    title: "Delete Document",
-    summary:
-      "Delete a document by its ID. This will permanently remove the document content.",
-    inputSchema: DeleteDocumentArgsSchema,
-    handler: "deleteDocument",
   },
 
   // Registry API tools for SwaggerHub Design functionality

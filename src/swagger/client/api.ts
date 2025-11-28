@@ -4,7 +4,6 @@ import type {
   CreatePortalArgs,
   CreateProductBody,
   CreateTableOfContentsBody,
-  DeleteDocumentArgs,
   DeleteTableOfContentsArgs,
   Document,
   FallbackResponse,
@@ -471,30 +470,6 @@ export class SwaggerAPI {
       const errorText = await response.text();
       throw new Error(
         `API Hub updateDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
-      );
-    }
-
-    return { success: true };
-  }
-
-  /**
-   * Delete document
-   * @param args - Parameters for deleting document
-   * @returns Success response
-   */
-  async deleteDocument(args: DeleteDocumentArgs): Promise<SuccessResponse> {
-    const { documentId } = args;
-    const url = `${this.config.portalBasePath}/documents/${documentId}`;
-
-    const response = await fetch(url, {
-      method: "DELETE",
-      headers: this.headers,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `API Hub deleteDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
 
