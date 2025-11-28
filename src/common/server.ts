@@ -6,6 +6,7 @@ import type {
   CallToolResult,
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
+import { trace } from "@opentelemetry/api";
 import {
   ZodAny,
   ZodArray,
@@ -71,21 +72,22 @@ export class SmartBearMcpServer extends McpServer {
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
-            try {
+            const executeTool = async () => {
               const result = await cb(args, extra);
               if (result) {
                 this.validateCallbackResult(result, params);
                 this.addStructuredContentAsText(result);
               }
               return result;
-            } catch (e) {
-              // ToolErrors should not be reported to BugSnag
+            };
+
+            const handleError = (e: unknown) => {
               if (e instanceof ToolError) {
                 return {
                   isError: true,
                   content: [
                     {
-                      type: "text",
+                      type: "text" as const,
                       text: `Error executing ${toolTitle}: ${e.message}`,
                     },
                   ],
@@ -97,6 +99,27 @@ export class SmartBearMcpServer extends McpServer {
                 });
               }
               throw e;
+            };
+
+            if (process.env.MCP_SERVER_BUGSNAG_API_KEY) {
+              const tracer = trace.getTracer("smartbear-mcp");
+              return tracer.startActiveSpan(toolName, async (span) => {
+                span.setAttribute("bugsnag.span.first_class", true);
+                try {
+                  return await executeTool();
+                } catch (e) {
+                  span.recordException(e as Error);
+                  return handleError(e);
+                } finally {
+                  span.end();
+                }
+              });
+            } else {
+              try {
+                return await executeTool();
+              } catch (e) {
+                return handleError(e);
+              }
             }
           },
         );
