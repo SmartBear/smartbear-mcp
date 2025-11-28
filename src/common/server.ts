@@ -101,26 +101,18 @@ export class SmartBearMcpServer extends McpServer {
               throw e;
             };
 
-            if (process.env.MCP_SERVER_BUGSNAG_API_KEY) {
-              const tracer = trace.getTracer("smartbear-mcp");
-              return tracer.startActiveSpan(toolName, async (span) => {
-                span.setAttribute("bugsnag.span.first_class", true);
-                try {
-                  return await executeTool();
-                } catch (e) {
-                  span.recordException(e as Error);
-                  return handleError(e);
-                } finally {
-                  span.end();
-                }
-              });
-            } else {
+            const tracer = trace.getTracer("smartbear-mcp");
+            return tracer.startActiveSpan(toolName, async (span) => {
+              span.setAttribute("bugsnag.span.first_class", true);
               try {
                 return await executeTool();
               } catch (e) {
+                span.recordException(e as Error);
                 return handleError(e);
+              } finally {
+                span.end();
               }
-            }
+            });
           },
         );
       },
