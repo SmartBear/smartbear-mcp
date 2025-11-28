@@ -60,13 +60,17 @@ The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its ow
 
   Generate an API key from the QMetry at [`testmanagement.qmetry.com`](https://testmanagement.qmetry.com/#/integration/open-api).
 
+- **Zephyr**
+
+  Generate an API token from Zephyr by following the instructions [here](https://support.smartbear.com/zephyr/docs/en/rest-api/api-access-tokens-management.html)
+
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products - tokens for unused products can be omitted.
 
 ## Configure Environment Variables
 
 The following environment variables based on which SmartBear hubs you want to access:
 
-```
+```shell
 # Required for BugSnag tools
 export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 
@@ -95,6 +99,11 @@ export QMETRY_API_KEY=your-qmetry_api_key
 
 # Optional: Set your QMetry server URL if using a self-hosted instance or region-specific endpoint
 export QMETRY_BASE_URL=https://testmanagement.qmetry.com
+
+# Required for Zephyr tools
+export ZEPHYR_API_TOKEN="your-zephyr-api-token"
+# Optional: Set your Zephyr API base URL depending on the region of your Jira instance.
+export ZEPHYR_BASE_URL="https://api.zephyrscale.smartbear.com/v2"
 
 ```
 
@@ -129,6 +138,8 @@ Create or edit `.vscode/mcp.json` in your workspace:
         // "PACT_BROKER_PASSWORD": "${input:pact_broker_password}",
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
+        "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
+        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}"
       }
     }
   },
@@ -193,6 +204,18 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed.",
       "password": false
     },
+    {
+      "id": "zephyr_api_token",
+      "type": "promptString",
+      "description": "Zephyr API Token",
+      "password": true
+    },
+    {
+      "id": "zephyr_base_url",
+      "type": "promptString",
+      "description": "By default, connects to https://api.zephyrscale.smartbear.com/v2. Change to a custom server URL if your Jira instance is pinned to a specific region.",
+      "password": false
+    }
   ]
 }
 
@@ -223,6 +246,8 @@ Add to your `mcp.json` configuration:
         // "PACT_BROKER_PASSWORD": "your-password",
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
+        "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
+        "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2"
       }
     }
   }
@@ -255,6 +280,8 @@ Edit your `claude_desktop_config.json` file:
         // "PACT_BROKER_PASSWORD": "your-password",
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
+        "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
+        "ZEPHYR_BASE_URL": "your-zephyr-base-url"
       }
     }
   }
@@ -280,13 +307,15 @@ claude mcp add --transport stdio smartbear npx mcp
 
 Then set the required environment variables:
 
-```
+```shell
 export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 export REFLECT_API_TOKEN=your-reflect-api-token
 export SWAGGER_API_KEY=your-swagger-api-key
 export QMETRY_API_KEY=your-qmetry_api_key
 export QMETRY_BASE_URL=https://testmanagement.qmetry.com
+export ZEPHYR_API_TOKEN="your-zephyr-api-token"
+export ZEPHYR_BASE_URL="https://api.zephyrscale.smartbear.com/v2"
 
 export PACT_BROKER_BASE_URL=https://your-tenant.pactflow.io
 export PACT_BROKER_TOKEN=your-pact-broker-token
@@ -349,6 +378,8 @@ To run the built server locally in VS Code, add the following configuration to 
         // "PACT_BROKER_PASSWORD": "${input:pact_broker_password}",
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
+        "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
+        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}"
       }
     }
   },
@@ -413,6 +444,18 @@ To run the built server locally in VS Code, add the following configuration to 
           "description": "By default, connects to https://testmanagement.qmetry.com. Change to a custom QMetry server URL or a region-specific endpoint if needed.",
           "password": false
       },
+      {
+          "id": "zephyr_api_token",
+          "type": "promptString",
+          "description": "Zephyr API Token",
+          "password": true
+      },
+      {
+          "id": "zephyr_base_url",
+          "type": "promptString",
+          "description": "By default, connects to https://api.zephyrscale.smartbear.com/v2. Change to a custom server URL if your Jira instance is pinned to a specific region.",
+          "password": false
+      }
   ]
 }
 
@@ -499,3 +542,5 @@ Once configured, you can interact with SmartBear tools through natural language 
 ### Zephyr Test Management
 
 -   "List all projects where Zephyr is enabled"
+-   "Get Zephyr test cases from the project with key TEST"
+-   "Get the last executions from the Zephyr Test Cycle TEST-R1"
