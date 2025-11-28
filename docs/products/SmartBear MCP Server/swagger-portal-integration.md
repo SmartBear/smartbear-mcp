@@ -188,6 +188,8 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 ### Document Management
 
+**Note**: Documents are managed as part of table of contents items. To delete a document, use `delete_table_of_contents` which will remove the table of contents entry and any associated document content.
+
 #### `get_document`
 
 - Purpose: Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.
@@ -211,17 +213,6 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `documentId` | Document UUID - unique identifier for the document                        | string | Yes      |
 | `content`    | The document content to update (HTML or Markdown based on document type)  | string | Yes      |
 | `type`       | Content type - 'html' for HTML content or 'markdown' for Markdown content | string | No       |
-
-#### `delete_document`
-
-- Purpose: Delete a document by its ID. This will permanently remove the document content.
-- Returns: No content on success.
-- Use case: Permanently remove document content from the system.
-- Parameters:
-
-| Parameter    | Description                                                  | Type   | Required |
-| ------------ | ------------------------------------------------------------ | ------ | -------- |
-| `documentId` | Document UUID - unique identifier for the document to delete | string | Yes      |
 
 ### Registry API Tools
 

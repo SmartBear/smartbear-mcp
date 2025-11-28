@@ -19,7 +19,6 @@ import {
   type CreatePortalArgs,
   type CreateProductArgs,
   type CreateTableOfContentsArgs,
-  type DeleteDocumentArgs,
   type DeleteTableOfContentsArgs,
   type Document,
   type FallbackResponse,
@@ -172,12 +171,6 @@ export class SwaggerClient implements Client {
     args: UpdateDocumentArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
     return this.getApi().updateDocument(args);
-  }
-
-  async deleteDocument(
-    args: DeleteDocumentArgs,
-  ): Promise<SuccessResponse | FallbackResponse> {
-    return this.getApi().deleteDocument(args);
   }
 
   async deleteTableOfContents(
