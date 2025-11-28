@@ -130,7 +130,12 @@ describe("SmartBearMcpServer", () => {
 
       mockClient.isConfigured.mockReturnValueOnce(false);
 
-      await expect(registerToolParams[2]()).rejects.toThrow();
+      const toolResponse = await registerToolParams[2]();
+
+      expect(toolResponse.isError).toBe(true);
+      expect(toolResponse.content?.[0].text).toBe(
+        "Error executing Test Product: Test Tool: The tool is not configured - configuration options for Test Product are missing or invalid.",
+      );
       expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
     });
 

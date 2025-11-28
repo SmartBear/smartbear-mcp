@@ -285,11 +285,6 @@ export class BugsnagClient implements Client {
       let filtersResponse = (
         await this.projectApi.listProjectEventFields(project.id)
       ).body;
-      if (!filtersResponse || filtersResponse.length === 0) {
-        throw new ToolError(
-          `No event fields found for project ${project.name}.`,
-        );
-      }
       filtersResponse = filtersResponse.filter(
         (field) =>
           field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
@@ -309,11 +304,6 @@ export class BugsnagClient implements Client {
       const filtersResponse = (
         await this.projectApi.listProjectTraceFields(project.id)
       ).body;
-      if (!filtersResponse || filtersResponse.length === 0) {
-        throw new ToolError(
-          `No trace fields found for project ${project.name}.`,
-        );
-      }
       projectFiltersCache[project.id] = filtersResponse;
       this.cache?.set(cacheKeys.PROJECT_TRACE_FIELDS, projectFiltersCache);
     }

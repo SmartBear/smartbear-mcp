@@ -76,7 +76,7 @@ export class SmartBearMcpServer extends McpServer {
             const executeTool = async () => {
               if (!client.isConfigured()) {
                 throw new ToolError(
-                  `The '${toolTitle}' tool is not configured - configuration options for ${client.name} are missing or invalid.`,
+                  `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
                 );
               }
               const result = await cb(args, extra);
