@@ -27,6 +27,11 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 
 ### Get Event Details
 
+-   Retrieve event (occurrence) details of a specific event by ID.
+-   This includes all the information about the event, including any thread traces which are trimmed in the Get Error tool.
+
+### Get Event Details From Dashboard URL
+
 -   Retrieve event (occurrence) details from a dashboard URL.
 -   This is useful if you are copying the link from your dashboard to your IDE.
 
