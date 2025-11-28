@@ -1,4 +1,5 @@
 import { QMetryToolsHandlers } from "../config/constants.js";
+import { getAutomationStatus, importAutomationResults } from "./automation.js";
 import {
   createIssue,
   fetchIssues,
@@ -7,11 +8,14 @@ import {
   updateIssue,
 } from "./issues.js";
 import {
+  createCycle,
+  createRelease,
   getBuilds,
   getPlatforms,
   getProjectInfo,
   getProjects,
   getReleasesCycles,
+  updateCycle,
 } from "./project.js";
 import {
   fetchRequirementDetails,
@@ -30,6 +34,7 @@ import {
   updateTestCase,
 } from "./testcase.js";
 import {
+  bulkUpdateExecutionStatus,
   createTestSuites,
   fetchExecutionsByTestSuite,
   fetchLinkedIssuesByTestCaseRun,
@@ -64,6 +69,9 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_RELEASES_CYCLES]: getReleasesCycles,
   [QMetryToolsHandlers.FETCH_BUILDS]: getBuilds,
   [QMetryToolsHandlers.FETCH_PLATFORMS]: getPlatforms,
+  [QMetryToolsHandlers.CREATE_RELEASE]: createRelease,
+  [QMetryToolsHandlers.CREATE_CYCLE]: createCycle,
+  [QMetryToolsHandlers.UPDATE_CYCLE]: updateCycle,
   [QMetryToolsHandlers.CREATE_TEST_CASE]: createTestCases,
   [QMetryToolsHandlers.UPDATE_TEST_CASE]: updateTestCase,
   [QMetryToolsHandlers.FETCH_TEST_CASES]: fetchTestCases,
@@ -90,6 +98,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE]: fetchTestCasesByTestSuite,
   [QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE]:
     fetchExecutionsByTestSuite,
+  [QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS]: bulkUpdateExecutionStatus,
   [QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN]:
     fetchTestCaseRunsByTestSuiteRun,
   [QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN]:
@@ -101,4 +110,6 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_ISSUES]: fetchIssues,
   [QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN]: linkIssuesToTestcaseRun,
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
+  [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
+  [QMetryToolsHandlers.FETCH_AUTOMATION_STATUS]: getAutomationStatus,
 };

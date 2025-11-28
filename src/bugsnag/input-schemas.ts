@@ -5,27 +5,37 @@ const filterValueSchema = z.object({
   value: z.union([z.string(), z.boolean(), z.number()]),
 });
 
+const filtersSchema = z.record(z.array(filterValueSchema));
+
 /**
  * A collection of input parameter schemas for reuse between tools.
  * Add new entries when common parameters are identified.
  */
 export const toolInputParameters = {
   empty: z.object({}).describe("No parameters are required for this tool"),
+  buildId: z.string().describe("Unique identifier of the app build"),
+  errorId: z.string().describe("Unique identifier of the error"),
+  eventId: z.string().describe("Unique identifier of the event"),
   projectId: z
     .string()
     .optional()
     .describe(
-      "ID of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.",
+      "Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.",
     ),
-  errorId: z.string().describe("Unique identifier of the error"),
-  releaseId: z.string().describe("ID of the release"),
-  buildId: z.string().describe("ID of the build"),
+  releaseId: z.string().describe("Unique identifier of the app release"),
   direction: z
     .enum(["asc", "desc"])
     .describe("Sort direction for ordering results")
     .default("desc"),
-  filters: z
-    .record(z.array(filterValueSchema))
+  performanceFilters: filtersSchema
+    .describe(
+      "Apply filters to narrow down the span group list. Use the List Trace Fields tool to discover available filter fields. " +
+        "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+    )
+    .default({
+      "span.since": [{ type: "eq", value: "7d" }],
+    }),
+  filters: filtersSchema
     .describe(
       "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
         "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
@@ -58,4 +68,5 @@ export const toolInputParameters = {
     .enum(["first_seen", "last_seen", "events", "users", "unsorted"])
     .describe("Field to sort the errors by")
     .default("last_seen"),
+  spanGroupId: z.string().describe("ID of the span group"),
 };

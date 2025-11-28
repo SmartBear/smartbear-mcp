@@ -3,6 +3,7 @@ name: Publish
 permissions:
   contents: read
   id-token: write
+  packages: write
 
 on:
   workflow_dispatch:
@@ -65,6 +66,13 @@ jobs:
         with:
           registries: "709825985650"
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract version from package.json
         id: extract_version
         run: |
@@ -91,10 +99,13 @@ jobs:
         env:
           IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
         run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           DEST=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}:${IMAGE_TAG}-${{ matrix.arch }}
+          GHCR_DEST=ghcr.io/${REPO_LOWER}:${IMAGE_TAG}-${{ matrix.arch }}
           docker buildx build \
             --platform ${{ matrix.platform }} \
             --tag "$DEST" \
+            --tag "$GHCR_DEST" \
             --cache-from type=gha,scope=${{ matrix.arch }} \
             --provenance=false \
             --push \
@@ -122,6 +133,13 @@ jobs:
         with:
           registries: "709825985650"
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract version from package.json
         id: extract_version
         run: |
@@ -133,6 +151,8 @@ jobs:
           IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
         run: |
           REGISTRY=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          GHCR_REGISTRY=ghcr.io/${REPO_LOWER}
 
           # Create manifest list combining both architectures
           docker manifest create "${REGISTRY}:${IMAGE_TAG}" \
@@ -148,6 +168,21 @@ jobs:
             --amend "${REGISTRY}:${IMAGE_TAG}-arm64"
 
           docker manifest push "${REGISTRY}:latest"
+
+          # Create manifest list combining both architectures for GHCR
+          docker manifest create "${GHCR_REGISTRY}:${IMAGE_TAG}" \
+            --amend "${GHCR_REGISTRY}:${IMAGE_TAG}-amd64" \
+            --amend "${GHCR_REGISTRY}:${IMAGE_TAG}-arm64"
+
+          # Push the manifest to GHCR
+          docker manifest push "${GHCR_REGISTRY}:${IMAGE_TAG}"
+
+          # Also tag as 'latest' if this is the latest release for GHCR
+          docker manifest create "${GHCR_REGISTRY}:latest" \
+            --amend "${GHCR_REGISTRY}:${IMAGE_TAG}-amd64" \
+            --amend "${GHCR_REGISTRY}:${IMAGE_TAG}-arm64"
+
+          docker manifest push "${GHCR_REGISTRY}:latest"
 
   publish:
     name: Publish package

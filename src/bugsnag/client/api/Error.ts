@@ -40,7 +40,7 @@ export class ErrorAPI extends BaseAPI {
     perPage?: number,
     filters?: FilterObject,
     fullReports?: boolean,
-  ): Promise<ApiResponse<ErrorApiView[]>> {
+  ): Promise<ApiResponse<EventApiView[]>> {
     const localVarFetchArgs = ErrorsApiFetchParamCreator(
       this.configuration,
     ).listEventsOnProject(
@@ -53,7 +53,7 @@ export class ErrorAPI extends BaseAPI {
       fullReports,
       { query: filters },
     );
-    return await this.requestArray<ErrorApiView>(
+    return await this.requestArray<EventApiView>(
       localVarFetchArgs.url,
       localVarFetchArgs.options,
       false, // Paginate results
@@ -109,6 +109,7 @@ export class ErrorAPI extends BaseAPI {
       sort,
       direction,
       perPage,
+      undefined,
       undefined,
       options,
     );

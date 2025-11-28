@@ -44,6 +44,16 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Test Suites",
   },
   {
+    handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
+    viewIdPath: "latestViews.TE.viewId",
+    moduleName: "Test Case Run By Test Suite Run",
+  },
+  {
+    handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
+    viewIdPath: "latestViews.TEL.viewId",
+    moduleName: "Executions By Test Suites",
+  },
+  {
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
     viewIdPath: "latestViews.TSFS.viewId",
     folderIdPath: "rootFolders.TS.id",

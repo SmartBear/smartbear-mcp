@@ -1,10 +1,13 @@
 import { QMetryToolsHandlers } from "../../config/constants.js";
 import {
   BuildArgsSchema,
+  CreateCycleArgsSchema,
+  CreateReleaseArgsSchema,
   PlatformArgsSchema,
   ProjectArgsSchema,
   ProjectListArgsSchema,
   ReleasesCyclesArgsSchema,
+  UpdateCycleArgsSchema,
 } from "../../types/common.js";
 import type { QMetryToolParams } from "./types.js";
 
@@ -379,5 +382,334 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
     readOnly: true,
     idempotent: true,
     openWorld: false,
+  },
+  {
+    title: "Create Release",
+    summary:
+      "Create a new release in QMetry with optional cycle for test planning and execution tracking",
+    handler: QMetryToolsHandlers.CREATE_RELEASE,
+    inputSchema: CreateReleaseArgsSchema,
+    purpose:
+      "Create a new release in QMetry to organize test execution phases. " +
+      "Releases represent major versions or milestones in your project. " +
+      "Optionally create a cycle within the release for more granular test execution planning. " +
+      "This tool helps establish the test planning hierarchy and enables better test execution tracking.",
+    useCases: [
+      "Create a new release for a major product version (e.g., v2.0, Q1 Release)",
+      "Create a release with an initial cycle for immediate test planning",
+      "Set up release dates for sprint planning and milestone tracking",
+      "Organize test execution by product versions and cycles",
+      "Create release hierarchy for better test planning and reporting",
+      "Establish test execution phases with releases and cycles",
+    ],
+    examples: [
+      {
+        description: "Create a basic release with just a name",
+        parameters: {
+          release: {
+            name: "Release 2.0",
+          },
+        },
+        expectedOutput:
+          "Release 'Release 2.0' created successfully with generated release ID",
+      },
+      {
+        description: "Create a release with description and dates",
+        parameters: {
+          release: {
+            name: "Q1 2024 Release",
+            description: "First quarter release for 2024",
+            startDate: "01-01-2024",
+            targetDate: "31-03-2024",
+          },
+        },
+        expectedOutput:
+          "Release 'Q1 2024 Release' created with start date 01-01-2024 and target date 31-03-2024",
+      },
+      {
+        description: "Create a release with an initial cycle",
+        parameters: {
+          release: {
+            name: "Release 3.0",
+            description: "Major product update",
+          },
+          cycle: {
+            name: "Sprint 1",
+            isLocked: false,
+            isArchived: false,
+          },
+        },
+        expectedOutput:
+          "Release 'Release 3.0' created with cycle 'Sprint 1' for test execution planning",
+      },
+      {
+        description: "Create a release with all details",
+        parameters: {
+          release: {
+            name: "Summer 2024 Release",
+            description: "Summer product release with new features",
+            startDate: "01-06-2024",
+            targetDate: "31-08-2024",
+          },
+          cycle: {
+            name: "Beta Testing Cycle",
+            isLocked: false,
+          },
+        },
+        expectedOutput:
+          "Release 'Summer 2024 Release' created with dates and 'Beta Testing Cycle' for test execution",
+      },
+    ],
+    hints: [
+      "CRITICAL: release.name is REQUIRED - must provide a name for the release",
+      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY",
+      "Check your QMetry instance settings to determine the correct date format",
+      "If dates are in wrong format, QMetry will return an error - verify format with admin",
+      "projectID is optional in the release object - it will be auto-resolved from the project key if not provided",
+      "To explicitly set projectID, first call FETCH_PROJECT_INFO to get the numeric project ID",
+      "cycle parameter is completely optional - omit it if you only want to create a release",
+      "If providing cycle, cycle.name is REQUIRED",
+      "cycle.isLocked defaults to false if not provided - set to true to prevent modifications",
+      "cycle.isArchived defaults to false if not provided - set to true to archive immediately (rare)",
+      "Releases can have multiple cycles added later using other tools",
+      "Use descriptive release names like 'Release 2.0', 'Q1 2024', 'Sprint 15' for better organization",
+      "startDate and targetDate help with sprint planning and milestone tracking",
+      "Creating a release with a cycle is useful for immediate test planning after release creation",
+      "Release hierarchy: Project → Release → Cycle → Test Execution",
+      "After creating a release, you can associate test suites and test cases with it",
+      "Use FETCH_RELEASES_CYCLES tool after creation to verify the release was created successfully",
+    ],
+    outputDescription:
+      "JSON object containing the created release ID, release details, and cycle information if provided",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Create Cycle",
+    summary:
+      "Create a new cycle within an existing release in QMetry for test execution planning",
+    handler: QMetryToolsHandlers.CREATE_CYCLE,
+    inputSchema: CreateCycleArgsSchema,
+    purpose:
+      "Create a new cycle within an existing release to organize test execution phases. " +
+      "Cycles represent specific testing iterations, sprints, or phases within a release. " +
+      "This tool requires an existing release and creates a cycle associated with it. " +
+      "Essential for granular test planning and sprint-based test execution tracking.",
+    useCases: [
+      "Create a new test cycle for a sprint within an existing release",
+      "Add additional testing phases to an existing release",
+      "Set up regression testing cycles for a specific release",
+      "Organize test execution by sprints, phases, or iterations",
+      "Create cycles with specific date ranges for milestone tracking",
+      "Establish test execution phases within release planning",
+    ],
+    examples: [
+      {
+        description: "Create a basic cycle with just a name in a release",
+        parameters: {
+          cycle: {
+            name: "Sprint 2",
+            releaseID: 12345,
+          },
+        },
+        expectedOutput:
+          "Cycle 'Sprint 2' created successfully in release ID 12345",
+      },
+      {
+        description: "Create a cycle with description and dates",
+        parameters: {
+          cycle: {
+            name: "Regression Testing Cycle",
+            description: "Full regression testing for release 2.0",
+            startDate: "15-01-2024",
+            targetDate: "31-01-2024",
+            releaseID: 12345,
+          },
+        },
+        expectedOutput:
+          "Cycle 'Regression Testing Cycle' created with start date 15-01-2024 and target date 31-01-2024 in release 12345",
+      },
+      {
+        description: "Create a locked cycle to prevent modifications",
+        parameters: {
+          cycle: {
+            name: "Final QA Cycle",
+            description: "Locked cycle for final QA testing",
+            isLocked: true,
+            isArchived: false,
+            releaseID: 12345,
+          },
+        },
+        expectedOutput:
+          "Locked cycle 'Final QA Cycle' created in release 12345 to prevent modifications",
+      },
+      {
+        description:
+          "Create a cycle with all details including project ID and dates",
+        parameters: {
+          cycle: {
+            name: "Sprint 3 - Feature Testing",
+            description: "Testing new features for Sprint 3",
+            startDate: "01-02-2024",
+            targetDate: "15-02-2024",
+            isLocked: false,
+            isArchived: false,
+            projectID: 67890,
+            releaseID: 12345,
+          },
+        },
+        expectedOutput:
+          "Cycle 'Sprint 3 - Feature Testing' created with dates and project context in release 12345",
+      },
+    ],
+    hints: [
+      "CRITICAL: cycle.releaseID is REQUIRED - must provide the release ID to associate this cycle with",
+      "CRITICAL: cycle.name is REQUIRED - must provide a name for the cycle",
+      "HOW TO GET releaseID:",
+      "1. Call FETCH_RELEASES_CYCLES tool to get all releases and their IDs",
+      "2. From the response, get value from projects.releases[<index>].releaseID",
+      "3. Use that numeric releaseID in the cycle.releaseID parameter",
+      "Example: Release 'Q1 2024' might have releaseID: 12345",
+      "CRITICAL WORKFLOW - IF USER PROVIDES RELEASE NAME:",
+      "1. User says: 'Create cycle Sprint 2 in release Q1 2024'",
+      "2. You MUST first call FETCH_RELEASES_CYCLES tool to get all releases",
+      "3. Search the response for release with name 'Q1 2024'",
+      "4. Extract projects.releases[<index>].releaseID from matching release",
+      "5. Use that releaseID in cycle.releaseID parameter",
+      "6. If release name not found, inform user and list available releases",
+      "Example workflow:",
+      "- User request: 'Create cycle Sprint 2 in Release 2.0'",
+      "- Step 1: Call FETCH_RELEASES_CYCLES",
+      "- Step 2: Find release where name = 'Release 2.0', get its releaseID (e.g., 12345)",
+      "- Step 3: Call CREATE_CYCLE with cycle.releaseID = 12345",
+      "RELEASE NAME RESOLUTION:",
+      "- NEVER assume or guess release IDs - always fetch from API",
+      "- Release names are user-defined strings (e.g., 'Q1 2024', 'Release 2.0', 'Sprint 15')",
+      "- Release IDs are numeric identifiers assigned by QMetry (e.g., 12345, 67890)",
+      "- Match release names case-insensitively when searching",
+      "- If multiple releases match the name, ask user to clarify or use the most recent one",
+      "- FETCH_RELEASES_CYCLES returns: projects.releases[] array with name and releaseID fields",
+      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY",
+      "Check your QMetry instance settings to determine the correct date format",
+      "If dates are in wrong format, QMetry will return an error - verify format with admin",
+      "projectID is optional in the cycle object - it will be auto-resolved from the project key if not provided",
+      "To explicitly set projectID, first call FETCH_PROJECT_INFO to get the numeric project ID",
+      "cycle.isLocked defaults to false if not provided - set to true to prevent modifications",
+      "cycle.isArchived defaults to false if not provided - set to true to archive immediately (rare)",
+      "Use descriptive cycle names like 'Sprint 2', 'Regression Cycle', 'Alpha Testing' for better organization",
+      "startDate and targetDate help with sprint planning and milestone tracking",
+      "Cycle hierarchy: Project → Release → Cycle → Test Execution",
+      "After creating a cycle, you can associate test suites and test cases with it",
+      "Use FETCH_RELEASES_CYCLES tool after creation to verify the cycle was created successfully",
+      "DIFFERENCE FROM CREATE_RELEASE: This tool creates a cycle in an EXISTING release, while CREATE_RELEASE can create a release with an optional cycle",
+      "If you need to create both a release and a cycle together, use CREATE_RELEASE tool instead",
+      "If release doesn't exist yet, create it first with CREATE_RELEASE, then add more cycles with this tool",
+    ],
+    outputDescription:
+      "JSON object containing the created cycle ID, cycle details, and association with the release",
+    readOnly: false,
+    idempotent: false,
+  },
+  {
+    title: "Update Cycle",
+    summary: "Update an existing cycle in QMetry for test execution planning",
+    handler: QMetryToolsHandlers.UPDATE_CYCLE,
+    inputSchema: UpdateCycleArgsSchema,
+    purpose:
+      "Update an existing cycle within a release to modify test execution phase details. " +
+      "Cycles represent specific testing iterations, sprints, or phases within a release. " +
+      "This tool requires buildID and releaseID to identify the cycle to update. " +
+      "Essential for maintaining accurate test planning and sprint-based test execution tracking.",
+    useCases: [
+      "Update cycle name for better organization",
+      "Modify cycle dates to reflect schedule changes",
+      "Adjust testing phase timelines within a release",
+      "Update cycle metadata for sprint tracking",
+      "Revise milestone dates for test execution planning",
+      "Rename cycles to match updated sprint naming conventions",
+    ],
+    examples: [
+      {
+        description: "Update cycle name",
+        parameters: {
+          cycle: {
+            name: "Alpha_v1_Updated",
+            buildID: 1494,
+            releaseID: 3729,
+          },
+        },
+        expectedOutput:
+          "Cycle updated successfully with new name 'Alpha_v1_Updated'",
+      },
+      {
+        description: "Update cycle dates",
+        parameters: {
+          cycle: {
+            startDate: "10-10-2018",
+            targetDate: "11-11-2018",
+            buildID: 1494,
+            releaseID: 3729,
+          },
+        },
+        expectedOutput:
+          "Cycle dates updated successfully with new start date 10-10-2018 and target date 11-11-2018",
+      },
+      {
+        description: "Update cycle name and dates together",
+        parameters: {
+          cycle: {
+            name: "Sprint 2 - Updated",
+            startDate: "15-01-2024",
+            targetDate: "31-01-2024",
+            buildID: 1494,
+            releaseID: 3729,
+          },
+        },
+        expectedOutput: "Cycle updated with new name and dates successfully",
+      },
+    ],
+    hints: [
+      "CRITICAL: cycle.buildID is REQUIRED - must provide the build ID to identify the cycle to update",
+      "CRITICAL: cycle.releaseID is REQUIRED - must provide the release ID to identify the cycle to update",
+      "HOW TO GET buildID and releaseID:",
+      "1. Call FETCH_RELEASES_CYCLES tool (API: 'Cycle/List') to get all cycles",
+      "2. From the response, get buildID from projects.releases[<index>].builds[<index>].buildID",
+      "3. From the response, get releaseID from projects.releases[<index>].releaseID",
+      "4. Use those numeric IDs in cycle.buildID and cycle.releaseID parameters",
+      "Example: Cycle 'Sprint 2' might have buildID: 1494 and releaseID: 3729",
+      "CRITICAL WORKFLOW - IF USER PROVIDES CYCLE NAME:",
+      "1. User says: 'Update cycle Sprint 2 to change dates'",
+      "2. You MUST first call FETCH_RELEASES_CYCLES tool to get all cycles",
+      "3. Search the response for cycle with matching name 'Sprint 2'",
+      "4. Extract buildID and releaseID from the matching cycle",
+      "5. Use those IDs in cycle.buildID and cycle.releaseID parameters",
+      "6. If cycle name not found, inform user and list available cycles",
+      "Example workflow:",
+      "- User request: 'Update cycle Alpha_v1 name to Alpha_v1_Updated'",
+      "- Step 1: Call FETCH_RELEASES_CYCLES",
+      "- Step 2: Find cycle where name = 'Alpha_v1', get its buildID (e.g., 1494) and releaseID (e.g., 3729)",
+      "- Step 3: Call UPDATE_CYCLE with cycle.buildID = 1494 and cycle.releaseID = 3729",
+      "CYCLE IDENTIFICATION:",
+      "- NEVER assume or guess buildID or releaseID - always fetch from API",
+      "- Cycle names are user-defined strings (e.g., 'Sprint 2', 'Alpha_v1', 'Regression Cycle')",
+      "- buildID and releaseID are numeric identifiers assigned by QMetry",
+      "- Match cycle names case-insensitively when searching",
+      "- If multiple cycles match the name, ask user to clarify or use the most recent one",
+      "- FETCH_RELEASES_CYCLES returns: projects.releases[].builds[] array with name, buildID, and releaseID",
+      "Date format depends on QMetry instance configuration: DD-MM-YYYY or MM-DD-YYYY",
+      "Check your QMetry instance settings to determine the correct date format",
+      "NOTE: To verify/update the Date Format - Go to QMetry -> User Profile",
+      "If dates are in wrong format, QMetry will return an error - verify format with admin",
+      "You can update name, startDate, or targetDate independently or together",
+      "Only include the fields you want to update - other fields will remain unchanged",
+      "startDate and targetDate help with sprint planning and milestone tracking",
+      "Cycle hierarchy: Project → Release → Cycle → Test Execution",
+      "After updating a cycle, you can verify changes using FETCH_RELEASES_CYCLES tool",
+      "DIFFERENCE FROM CREATE_CYCLE: This tool updates an EXISTING cycle, while CREATE_CYCLE creates a new one",
+    ],
+    outputDescription:
+      "JSON object containing the updated cycle details and confirmation of update",
+    readOnly: false,
+    idempotent: true,
   },
 ];
