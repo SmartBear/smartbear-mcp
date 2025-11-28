@@ -660,6 +660,47 @@ describe("BugsnagClient", () => {
       );
     });
 
+    it("should initialize without project API key", async () => {
+      const clientWithNoApiKey = new BugsnagClient();
+      const mockProjects = [
+        getMockProject("proj-1", "Project 1", "project-api-key"),
+        getMockProject("proj-2", "Project 2", "other-key"),
+      ];
+
+      mockCache.get.mockReturnValueOnce(mockProjects);
+
+      await clientWithNoApiKey.configure({ getCache: () => mockCache } as any, {
+        auth_token: "test-token",
+      });
+
+      expect(mockCache.set).not.toHaveBeenCalledWith(
+        "bugsnag_current_project",
+        mockProjects[0],
+      );
+    });
+
+    it("should set current project when one project found", async () => {
+      const clientWithNoApiKey = new BugsnagClient();
+      const mockProjects = [
+        getMockProject("proj-1", "Project 1", "project-api-key"),
+      ];
+
+      mockCache.get
+        .mockReturnValueOnce(mockProjects)
+        .mockReturnValueOnce(null) // no current project
+        .mockReturnValueOnce(mockProjects)
+        .mockReturnValueOnce({ "proj-1": getMockEventField("user.email") });
+
+      await clientWithNoApiKey.configure({ getCache: () => mockCache } as any, {
+        auth_token: "test-token",
+      });
+
+      expect(mockCache.set).toHaveBeenCalledWith(
+        "bugsnag_current_project",
+        mockProjects[0],
+      );
+    });
+
     it("should not throw error when no organizations found", async () => {
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [] });
 
