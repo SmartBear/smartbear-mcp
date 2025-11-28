@@ -129,7 +129,7 @@ describe("Prompt Utils", () => {
         }),
       } satisfies Pick<Server, "createMessage">;
 
-      expect(
+      await expect(
         getOADMatcherRecommendations(openApiSpec, mockServer),
       ).rejects.toThrowError();
     });

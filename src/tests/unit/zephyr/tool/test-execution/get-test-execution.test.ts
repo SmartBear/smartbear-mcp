@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getTestExecutionParams,
   getTestExecutionResponse,
@@ -63,8 +63,17 @@ const responseMock = {
 };
 
 describe("GetTestExecution", () => {
-  const mockApiClient = { get: vi.fn() };
-  const instance = new GetTestExecution(mockApiClient as any);
+  let mockClient: any;
+  let instance: GetTestExecution;
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        get: vi.fn(),
+      }),
+    };
+    instance = new GetTestExecution(mockClient as any);
+  });
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Test Execution");
@@ -78,23 +87,27 @@ describe("GetTestExecution", () => {
   });
 
   it("should call apiClient.get with string testExecutionIdOrKey and return formatted content", async () => {
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testExecutionIdOrKey: "SA-E10" };
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/testexecutions/SA-E10");
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/testexecutions/SA-E10",
+    );
     expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should call apiClient.get with numeric string testExecutionIdOrKey and return formatted content", async () => {
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testExecutionIdOrKey: "1" }; // Pass as string
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/testexecutions/1");
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/testexecutions/1",
+    );
     expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should handle apiClient.get throwing error", async () => {
-    mockApiClient.get.mockRejectedValueOnce(new Error("API error"));
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
       instance.handle({ testExecutionIdOrKey: "1" }, {}),
     ).rejects.toThrow("API error");

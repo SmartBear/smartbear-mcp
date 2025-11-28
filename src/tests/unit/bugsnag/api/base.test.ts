@@ -366,6 +366,8 @@ describe("base.ts", () => {
       expect(configuredObj).toBe(configuration);
       expect(configuredObj.apiKey).toBe("test-token");
       expect(configuredObj.basePath).toBe("http://localhost:3000");
+      // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
+      expect(baseApi["filterFields"]).toEqual([]);
     });
 
     it("should construct with filterFields", () => {
@@ -377,15 +379,6 @@ describe("base.ts", () => {
 
     it("should construct with empty filterFields when not provided", () => {
       const baseApi = new BaseAPI(configuration);
-      // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
-      expect(baseApi["filterFields"]).toEqual([]);
-    });
-
-    it("should construct with minimal configuration", () => {
-      const minimalConfig = new Configuration({});
-      const baseApi = new BaseAPI(minimalConfig);
-      // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
-      expect(baseApi["configuration"]).toBe(minimalConfig);
       // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
       expect(baseApi["filterFields"]).toEqual([]);
     });

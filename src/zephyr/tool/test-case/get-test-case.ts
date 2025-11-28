@@ -1,20 +1,14 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
+import { Tool } from "../../../common/tools.js";
 import type { ToolParams } from "../../../common/types.js";
-import type { ApiClient } from "../../common/api-client.js";
+import type { ZephyrClient } from "../../client.js";
 import {
   getTestCaseParams,
   getTestCaseResponse,
 } from "../../common/rest-api-schemas.js";
-import type { ZephyrTool } from "../zephyr-tool.js";
 
-export class GetTestCase implements ZephyrTool {
-  private readonly apiClient: ApiClient;
-
-  constructor(apiClient: ApiClient) {
-    this.apiClient = apiClient;
-  }
-
+export class GetTestCase extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Case",
     summary: "Get details of test case specified by key in Zephyr",
@@ -42,7 +36,9 @@ export class GetTestCase implements ZephyrTool {
 
   handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
     const { testCaseKey } = getTestCaseParams.parse(args);
-    const response = await this.apiClient.get(`/testcases/${testCaseKey}`);
+    const response = await this.client
+      .getApiClient()
+      .get(`/testcases/${testCaseKey}`);
     return {
       structuredContent: response,
       content: [],
