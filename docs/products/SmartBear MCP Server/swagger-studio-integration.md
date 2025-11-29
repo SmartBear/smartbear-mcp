@@ -76,6 +76,33 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | `orgName` | Organization name to use for standardization rules | string | Yes |
 | `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. | string | Yes |
 
+#### `create_api_from_prompt`
+
+-   Purpose: Generate and save an API definition based on a natural language prompt using SmartBear AI. This tool automatically applies organization standardization rules during API generation. The specType parameter determines the format of the generated definition.
+-   Returns: API metadata including owner, name, specType, version (from X-Version header if available), SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
+-   Use case: Rapidly create APIs from natural language descriptions (e.g., "Create a RESTful API for managing a pet store with endpoints for pets, orders, and inventory"), generate API prototypes for proof-of-concept work, or bootstrap new API projects with AI assistance while ensuring compliance with organization standards.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `owner` | API owner (organization or user, case-sensitive) | string | Yes |
+| `apiName` | API name | string | Yes |
+| `prompt` | The prompt describing the desired API functionality. Be specific about resources, operations, and data models. Examples: "Create a RESTful API for managing a pet store with endpoints for pets, orders, and inventory", "Build an API for a blog platform with posts, comments, and users" | string | Yes |
+| `specType` | Specification type for the generated API definition.<br />Options: `openapi20` (OpenAPI 2.0), `openapi30x` (OpenAPI 3.0.x, default), `openapi31x` (OpenAPI 3.1.x), `asyncapi2xx` (AsyncAPI 2.x), `asyncapi30x` (AsyncAPI 3.0.x)<br />Default: `openapi30x` | string | No |
+
+#### `standardize_api`
+
+-   Purpose: Standardize and fix an API definition using AI. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. If errors are found, they will be sent to SmartBear AI to generate a corrected definition, which is then saved back to the registry.
+-   Returns: Standardization result including a message, the number of errors found, and the fixed definition if successful. Also includes details about each error (description, line number, severity).
+-   Use case: Automatically fix API definitions that fail standardization scans, remediate governance violations in existing APIs, or clean up imported/legacy API definitions to meet current organization standards.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `owner` | API owner (organization or user, case-sensitive) | string | Yes |
+| `api` | API name (case-sensitive) | string | Yes |
+| `version` | Version identifier | string | Yes |
+
 ## Configuration
 
 To use Swagger Studio tools, you need to configure the `SWAGGER_API_KEY` environment variable with your Swagger API token.
@@ -84,5 +111,6 @@ To use Swagger Studio tools, you need to configure the `SWAGGER_API_KEY` environ
 
 1. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your Swagger Studio.
 2. **API Integration**: Retrieve specific API definitions with `get_api_definition` for development or testing purposes.
-3. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions or `create_api_from_template` using organization templates.
-4. **API Governance**: Validate API definitions against organization standards using `scan_api_standardization` to ensure compliance with governance policies.
+3. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions, `create_api_from_template` using organization templates, or `create_api_from_prompt` with natural language descriptions powered by AI.
+4. **API Governance**: Validate API definitions against organization standards using `scan_api_standardization` to ensure compliance with governance policies, then use `standardize_api` to automatically fix any violations.
+5. **AI-Powered API Development**: Leverage `create_api_from_prompt` to rapidly prototype APIs from natural language, then use `standardize_api` to ensure they meet your organization's standards.

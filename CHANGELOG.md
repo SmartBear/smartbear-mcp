@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
 - [Zephyr] Added a tool for retrieving a list of Test Executions [#213](https://github.com/SmartBear/smartbear-mcp/pull/213)
+- [Swagger] Added `create_api_from_prompt` tool for generating API definitions from natural language descriptions using SmartBear AI, with automatic organization standardization
+- [Swagger] Added `standardize_api` tool for scanning and automatically fixing API definitions to comply with organization standardization rules using SmartBear AI
 - [BugSnag] Added tools for querying performance data and managing network grouping rules: List/Get Span Groups, List Spans, Get Trace, List Trace Fields, Get/Set Network Endpoint Groupings [#253](https://github.com/SmartBear/smartbear-mcp/pull/253)
 - Added --version command line argument to display the current version [#258](https://github.com/SmartBear/smartbear-mcp/pull/258)
 
@@ -54,8 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.0] - 2025-10-13
 
 ### Added
-- [API Hub] Add `create_or_update_api` tool for creating or updating new API definitions in API Hub for Design
-- [API Hub] Add `create_api_from_template` tool for creating new API definitions from templates in API Hub for Design
+- [API Hub] Add `create_or_update_api` tool for creating or updating new API definitions in API Hub for Design [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
+- [API Hub] Add `create_api_from_template` tool for creating new API definitions from templates in API Hub for Design [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
 - [Zephyr] Add Zephyr capabilities to MCP [#171](https://github.com/SmartBear/smartbear-mcp/pull/171)
 
 ### Changed

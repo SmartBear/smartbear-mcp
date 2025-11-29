@@ -12,6 +12,8 @@ import {
   type ApiDefinitionParams,
   type ApiSearchParams,
   type ApiSearchResponse,
+  type CreateApiFromPromptParams,
+  type CreateApiFromPromptResponse,
   type CreateApiFromTemplateParams,
   type CreateApiFromTemplateResponse,
   type CreateApiParams,
@@ -34,6 +36,8 @@ import {
   type ScanStandardizationParams,
   type SectionsListResponse,
   type StandardizationResult,
+  type StandardizeApiParams,
+  type StandardizeApiResponse,
   type SuccessResponse,
   SwaggerAPI,
   SwaggerConfiguration,
@@ -223,10 +227,22 @@ export class SwaggerClient implements Client {
     return this.getApi().getOrganizations(args);
   }
 
+  async createApiFromPrompt(
+    args: CreateApiFromPromptParams,
+  ): Promise<CreateApiFromPromptResponse | FallbackResponse> {
+    return this.getApi().createApiFromPrompt(args);
+  }
+
   async scanStandardization(
     args: ScanStandardizationParams,
   ): Promise<StandardizationResult | FallbackResponse> {
     return this.getApi().scanStandardization(args);
+  }
+
+  async standardizeApi(
+    args: StandardizeApiParams,
+  ): Promise<StandardizeApiResponse | FallbackResponse> {
+    return this.getApi().standardizeApi(args);
   }
 
   registerTools(

@@ -2,6 +2,7 @@ export interface SwaggerConfigurationParameters {
   token: string; // API auth token (required)
   portalBasePath?: string; // Base path for Portal API requests
   registryBasePath?: string; // Base path for Registry API requests
+  uiBasePath?: string; // Base URL for the SwaggerHub UI
   userManagementBasePath?: string; // Base path for User Management API requests
   headers?: Record<string, string>; // Additional headers for API requests
 }
@@ -10,6 +11,7 @@ export class SwaggerConfiguration {
   token: string;
   portalBasePath: string;
   registryBasePath: string;
+  uiBasePath: string;
   userManagementBasePath: string;
   headers: Record<string, string>;
 
@@ -18,7 +20,8 @@ export class SwaggerConfiguration {
     this.portalBasePath =
       param.portalBasePath || "https://api.portal.swaggerhub.com/v1";
     this.registryBasePath =
-      param.registryBasePath || "https://api.swaggerhub.com";
+      param.registryBasePath || "https://api.swaggerhub.com"; // Default for registry API
+    this.uiBasePath = param.uiBasePath || "https://app.swaggerhub.com"; // Default for UI
     this.userManagementBasePath =
       param.userManagementBasePath ||
       "https://api.swaggerhub.com/user-management/v1";
