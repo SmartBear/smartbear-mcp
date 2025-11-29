@@ -105,10 +105,9 @@ The Swagger Portal client provides comprehensive portal and product management c
 | Parameter          |               | Description                                                                                                 | Type    | Required |
 | ------------------ | ------------- | ----------------------------------------------------------------------------------------------------------- | ------- | -------- |
 | `productId`        |               | Identifier of product to update.                                                                            | string  | Yes      |
-| `updatePortalArgs` | `name`        | The product name.<br />Must be between 3 and 40 characters.                                                 | string  | Yes      |
-|                    | `slug`        | URL component for this product. Must be unique within the portal.<br />Must be between 3 and 22 characters. | string  | Yes      |
+| `updatePortalArgs` | `name`        | The product name.<br />Must be between 3 and 40 characters.                                                 | string  | No       |
+|                    | `slug`        | URL component for this product. Must be unique within the portal.<br />Must be between 3 and 22 characters. | string  | No       |
 |                    | `description` | The product description.<br />Max length is 110 characters.                                                 | string  | No       |
-|                    | `version`     | The product version.                                                                                        | string  | No       |
 |                    | `public`      | Whether this product is available to non-members of the organization.                                       | boolean | No       |
 |                    | `hidden`      | If set to true, this product will not be displayed on the landing page.                                     | boolean | No       |
 
@@ -119,7 +118,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 - Returns: No content on success.
 - Use case: Delete an existing product from a Swagger portal.
 
-### Swagger for Design API Tools
+### Portal Publishing Tools
 
 #### `publish_portal_product`
 
