@@ -18,6 +18,41 @@ interface TokenResponse {
   token_type: string;
 }
 
+interface User {
+  email: string;
+  first_name: string;
+  last_name: string;
+  guid: string;
+  role: string;
+  user_number: number;
+  work_phone: string;
+  home_phone?: string;
+  date_joined: string;
+  last_api_access?: string;
+  last_console_access?: string;
+  is_locked_out: boolean;
+  is_sso_optional: boolean;
+}
+
+interface UsersResponse {
+  metadata: {
+    resultset: {
+      count: number;
+      limit?: number;
+      offset?: number;
+    };
+  };
+  results: User[];
+}
+
+interface ToolResponse {
+  [x: string]: unknown;
+  content: Array<{
+    type: "text";
+    text: string;
+  }>;
+}
+
 export class AlertSiteClient implements Client {
   name = "AlertSite";
   toolPrefix = "alertsite";
@@ -116,7 +151,6 @@ export class AlertSiteClient implements Client {
       requestOptions.body = JSON.stringify(body);
     }
 
-    console.log("Making AlertSite API call:", { url, method, body });
     const response = await fetch(url, requestOptions);
 
     if (!response.ok) {
@@ -134,7 +168,7 @@ export class AlertSiteClient implements Client {
           );
         }
         
-        return await retryResponse.json();
+        return retryResponse.status === 204 ? null : await retryResponse.json();
       }
 
       throw new Error(
@@ -142,17 +176,48 @@ export class AlertSiteClient implements Client {
       );
     }
     
+    // Handle 204 No Content responses (typically for DELETE operations)
     if (response.status === 204) {
-  return {
-    content: [
-      {
-        type: "text",
-        text: `User deleted successfully.`,
-      },
-    ],
-  };
-}
+      return null;
+    }
+    
     return await response.json();
+  }
+
+  /**
+   * Helper method to find a user by email address
+   * @param email The email address to search for
+   * @returns Promise<User | null> The user object if found, null if not found
+   */
+  private async findUserByEmail(email: string): Promise<User | null> {
+    const usersResponse = await this.call("/api/v3/users", "GET") as UsersResponse;
+    
+    const user = usersResponse.results?.find(
+      (u: User) => u.email.toLowerCase() === email.toLowerCase()
+    );
+    
+    return user || null;
+  }
+
+  /**
+   * Helper method to format tool responses consistently
+   * @param message The message to return
+   * @param data Optional data to include as JSON
+   * @returns Formatted tool response
+   */
+  private formatResponse(message: string, data?: any): ToolResponse {
+    const text = data 
+      ? `${message}\n${JSON.stringify(data, null, 2)}`
+      : message;
+      
+    return {
+      content: [
+        {
+          type: "text",
+          text,
+        },
+      ],
+    };
   }
 
   /**
@@ -162,136 +227,7 @@ export class AlertSiteClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): void {
-    // Tool 1: Create a URL based monitor
-    register(
-      {
-        title: "Create URL Monitor",
-        summary: "Creates a new URL-based monitor in AlertSite.",
-        inputSchema: z.object({
-          name: z.string().describe("Name of the monitor"),
-          url: z.string().url().describe("URL to monitor"),
-          interval: z
-            .number()
-            .optional()
-            .describe("Monitoring interval in minutes (default: 15)"),
-          locations: z
-            .array(z.string())
-            .optional()
-            .describe("Monitoring locations (default: all available)"),
-          alertEmail: z
-            .string()
-            .email()
-            .optional()
-            .describe("Email address for alerts"),
-        }),
-      },
-      async (args, _extra) => {
-        const monitorData = {
-          name: args.name,
-          url: args.url,
-          interval: args.interval || 15,
-          locations: args.locations || [],
-          alertEmail: args.alertEmail,
-          type: "url",
-        };
-
-        const result = await this.call("/api/monitors", "POST", monitorData);
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Successfully created URL monitor: ${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-        };
-      },
-    );
-
-    // Tool 2: Run TOD (Test On Demand) for a URL
-    register(
-      {
-        title: "Run Test On Demand",
-        summary: "Runs a Test On Demand (TOD) for a specific URL.",
-        inputSchema: z.object({
-          url: z.string().url().describe("URL to test"),
-          locations: z
-            .array(z.string())
-            .optional()
-            .describe("Test locations (default: all available)"),
-          testType: z
-            .enum(["performance", "availability", "full"])
-            .optional()
-            .describe("Type of test to run (default: availability)"),
-        }),
-      },
-      async (args, _extra) => {
-        const todData = {
-          url: args.url,
-          locations: args.locations || [],
-          testType: args.testType || "availability",
-        };
-
-        const result = await this.call("/api/tod", "POST", todData);
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Test On Demand initiated: ${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-        };
-      },
-    );
-
-    // Tool 3: Create a SLA report
-    register(
-      {
-        title: "Create SLA Report",
-        summary: "Creates a Service Level Agreement (SLA) report.",
-        inputSchema: z.object({
-          monitorIds: z
-            .array(z.string())
-            .describe("Array of monitor IDs to include in the report"),
-          startDate: z
-            .string()
-            .describe("Report start date (YYYY-MM-DD format)"),
-          endDate: z
-            .string()
-            .describe("Report end date (YYYY-MM-DD format)"),
-          reportName: z
-            .string()
-            .optional()
-            .describe("Name of the SLA report"),
-          threshold: z
-            .number()
-            .min(0)
-            .max(100)
-            .optional()
-            .describe("SLA threshold percentage (default: 99.9)"),
-        }),
-      },
-      async (args, _extra) => {
-        const reportData = {
-          monitorIds: args.monitorIds,
-          startDate: args.startDate,
-          endDate: args.endDate,
-          reportName: args.reportName || `SLA Report ${new Date().toISOString().split('T')[0]}`,
-          threshold: args.threshold || 99.9,
-        };
-
-        const result = await this.call("/api/reports/sla", "POST", reportData);
-        return {
-          content: [
-            {
-              type: "text",
-              text: `SLA report created: ${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-        };
-      },
-    );
-
-    // Tool 4: Add a role-based user
+    // Tool 1: Add a role-based user
     register(
       {
         title: "Add Role-Based User",
@@ -306,7 +242,6 @@ export class AlertSiteClient implements Client {
         }),
       },
       async (args, _extra) => {
-        // Get current date in ISO format (UTC, no milliseconds)
         const now = new Date();
         const date_joined = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
@@ -321,40 +256,74 @@ export class AlertSiteClient implements Client {
         };
 
         const result = await this.call("/api/v3/users", "POST", userData);
-        return {
-          content: [
-            {
-              type: "text",
-              text: `User created successfully: ${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-        };
+        return this.formatResponse("User created successfully:", result);
       },
     );
 
-    // Tool 5: Delete existing user
+    // Tool 2: Get all users
     register(
       {
-        title: "Delete User",
-        summary: "Deletes an existing user from AlertSite.",
+        title: "Get All Users",
+        summary: "Gets all users from AlertSite with their details.",
+        inputSchema: z.object({}),
+      },
+      async (_args, _extra) => {
+        const usersResponse = await this.call("/api/v3/users", "GET") as UsersResponse;
+        return this.formatResponse("All users:", usersResponse);
+      },
+    );
+
+    // Tool 3: Get user details by email
+    register(
+      {
+        title: "Get User Details",
+        summary: "Gets detailed information about a user from AlertSite by email address.",
         inputSchema: z.object({
-          userId: z
+          email: z
             .string()
-            .describe("User ID or username of the user to delete"),
+            .email()
+            .describe("Email address of the user to get details for"),
         }),
       },
       async (args, _extra) => {
-        const deleteUrl = `/api/v3/users/${encodeURIComponent(args.userId)}`;
-        const result = await this.call(deleteUrl, "DELETE");
+        const user = await this.findUserByEmail(args.email);
+        
+        if (!user) {
+          return this.formatResponse(`User with email ${args.email} not found.`);
+        }
+        
+        // Get detailed user information using GUID
+        const userDetailsUrl = `/api/v3/users/${encodeURIComponent(user.guid)}`;
+        const userDetails = await this.call(userDetailsUrl, "GET");
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `User deleted successfully: ${JSON.stringify(result, null, 2)}`,
-            },
-          ],
-        };
+        return this.formatResponse("User details:", userDetails);
+      },
+    );
+
+    // Tool 4: Delete existing user
+    register(
+      {
+        title: "Delete User",
+        summary: "Deletes an existing user from AlertSite by email address.",
+        inputSchema: z.object({
+          email: z
+            .string()
+            .email()
+            .describe("Email address of the user to delete"),
+        }),
+      },
+      async (args, _extra) => {
+        const user = await this.findUserByEmail(args.email);
+        
+        if (!user) {
+          return this.formatResponse(`User with email ${args.email} not found.`);
+        }
+        
+        // Delete user by GUID
+        const deleteUrl = `/api/v3/users/${encodeURIComponent(user.guid)}`;
+        await this.call(deleteUrl, "DELETE");
+
+        return this.formatResponse(`User ${args.email} deleted successfully.`);
       },
     );
   }
