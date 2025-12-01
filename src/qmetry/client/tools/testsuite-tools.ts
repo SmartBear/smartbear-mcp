@@ -853,7 +853,11 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     ],
     hints: [
       "CRITICAL WORKFLOW FOR FETCHING ALL EXECUTIONS OF A TEST SUITE:",
-      "When user asks to 'fetch all executions', 'get all test runs', 'fetch all tcRunIDs for test suite X', or 'update status for all executions of test suite X':",
+      "When user asks to:",
+      "  - 'fetch all executions'",
+      "  - 'get all test runs'",
+      "  - 'fetch all tcRunIDs for test suite X'",
+      "  - 'update status for all executions of test suite X'",
       "STEP 1: First call FETCH_EXECUTIONS_BY_TESTSUITE tool with the test suite ID (tsID, not entityKey)",
       "  - This returns ALL execution records for that test suite (could be 3, 5, 9, or any number)",
       "  - Extract ALL tsRunID values from the response data array",
