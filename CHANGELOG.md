@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 - [QMetry] Add Automation Result Import Tools, Release/Cycle Creation, and few Bug Fixes [#264](https://github.com/SmartBear/smartbear-mcp/pull/264)
+- [QMetry] Add Contextual Metadata to Tools for Better LLM Prompt Handling [#270](https://github.com/SmartBear/smartbear-mcp/pull/270)
 
 ### Added
 
