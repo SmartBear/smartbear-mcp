@@ -7,7 +7,6 @@ import type {
 } from "../common/types.js";
 
 const ConfigurationSchema = z.object({
-  base_url: z.string().url().describe("AlertSite API base URL"),
   username: z.string().min(1).describe("AlertSite username for authentication"),
   password: z.string().min(1).describe("AlertSite password for authentication"),
 });
@@ -59,7 +58,7 @@ export class AlertSiteClient implements Client {
   configPrefix = "AlertSite";
   config = ConfigurationSchema;
 
-  private baseUrl: string | undefined;
+  private baseUrl: string = "https://alert-api.dev.aws.alertsite.com"; // Static base URL
   private username: string | undefined;
   private password: string | undefined;
   private accessToken: string | undefined;
@@ -70,7 +69,6 @@ export class AlertSiteClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<boolean> {
-    this.baseUrl = config.base_url;
     this.username = config.username;
     this.password = config.password;
     return true;
@@ -81,11 +79,11 @@ export class AlertSiteClient implements Client {
    * @returns Promise<string> The access token
    */
   private async getToken(): Promise<string> {
-    if (!this.baseUrl || !this.username || !this.password) {
+    if (!this.username || !this.password) {
       throw new Error("AlertSite client not configured");
     }
 
-    // Check if token is still valid (with 5 minute buffer)
+    // Check if token is still valid (with 5-minute buffer)
     const currentTime = Date.now() / 1000;
     if (this.accessToken && this.tokenExpiry > currentTime + 300) {
       return this.accessToken;
@@ -120,20 +118,15 @@ export class AlertSiteClient implements Client {
   /**
    * Makes an authenticated API call to AlertSite
    * @param endpoint The API endpoint (relative to base URL)
-   * @param method HTTP method (GET, POST, PUT, DELETE)
-   * @param body Request body for POST/PUT requests
+   * @param method HTTP method (GET, POST, PUT, PATCH, DELETE)
+   * @param body Request body for POST/PUT/PATCH requests
    * @returns Promise<any> The API response
    */
   async call(
     endpoint: string,
-    method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" = "GET",
     body?: any,
   ): Promise<any> {
-    if (!this.baseUrl) {
-      throw new Error("AlertSite client not configured");
-    }
-
-    // Get valid token (will refresh if needed)
     const token = await this.getToken();
 
     const url = `${this.baseUrl}${endpoint}`;
@@ -147,7 +140,7 @@ export class AlertSiteClient implements Client {
       headers,
     };
 
-    if (body && (method === "POST" || method === "PUT")) {
+    if (body && (method === "POST" || method === "PUT" || method === "PATCH")) {
       requestOptions.body = JSON.stringify(body);
     }
 
@@ -160,14 +153,14 @@ export class AlertSiteClient implements Client {
         this.tokenExpiry = 0;
         const newToken = await this.getToken();
         headers.Authorization = `Bearer ${newToken}`;
-        
+
         const retryResponse = await fetch(url, { ...requestOptions, headers });
         if (!retryResponse.ok) {
           throw new Error(
             `AlertSite API call failed after token refresh: ${retryResponse.status} - ${await retryResponse.text()}`,
           );
         }
-        
+
         return retryResponse.status === 204 ? null : await retryResponse.json();
       }
 
@@ -175,12 +168,12 @@ export class AlertSiteClient implements Client {
         `AlertSite API call failed: ${response.status} - ${await response.text()}`,
       );
     }
-    
+
     // Handle 204 No Content responses (typically for DELETE operations)
     if (response.status === 204) {
       return null;
     }
-    
+
     return await response.json();
   }
 
@@ -227,17 +220,16 @@ export class AlertSiteClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): void {
-    // Tool 1: Add a role-based user
     register(
       {
-        title: "Add Role-Based User",
-        summary: "Adds a new user with specified role to AlertSite.",
+        title: "Create or Add User",
+        summary: "Creates a new user in AlertSite with the specified details.",
         inputSchema: z.object({
           email: z.string().email().describe("Email address of the user"),
           first_name: z.string().describe("First name of the user"),
           last_name: z.string().describe("Last name of the user"),
           password: z.string().min(8).describe("Password for the user"),
-          role: z.string().describe("Role to assign to the user (e.g. CO-ADMIN, POWER-USER, READONLY, REPORTONLY)"),
+          role: z.string().describe("Role to assign to the user (e.g., CO-ADMIN, POWER-USER, READONLY, REPORTONLY)"),
           work_phone: z.string().describe("Work phone number of the user"),
         }),
       },
@@ -300,7 +292,87 @@ export class AlertSiteClient implements Client {
       },
     );
 
-    // Tool 4: Delete existing user
+    // Tool 4: Modify existing user
+    register(
+      {
+        title: "Modify User",
+        summary: "Modifies an existing user's details in AlertSite by email address.",
+        inputSchema: z.object({
+          email: z
+            .string()
+            .email()
+            .describe("Email address of the user to modify"),
+          first_name: z
+            .string()
+            .optional()
+            .describe("New first name for the user"),
+          last_name: z
+            .string()
+            .optional()
+            .describe("New last name for the user"),
+          role: z
+            .string()
+            .optional()
+            .describe("New role for the user (e.g. CO-ADMIN, POWER-USER, READONLY, REPORTONLY)"),
+          work_phone: z
+            .string()
+            .optional()
+            .describe("New work phone number for the user"),
+          home_phone: z
+            .string()
+            .optional()
+            .describe("New home phone number for the user"),
+          password: z
+            .string()
+            .min(8)
+            .optional()
+            .describe("New password for the user (minimum 8 characters)"),
+          confirm_password: z
+            .string()
+            .min(8)
+            .optional()
+            .describe("Confirm new password - must match the password field"),
+        }),
+      },
+      async (args, _extra) => {
+        const user = await this.findUserByEmail(args.email);
+        
+        if (!user) {
+          return this.formatResponse(`User with email ${args.email} not found.`);
+        }
+        
+        // Validate password confirmation if password is provided
+        if (args.password !== undefined) {
+          if (args.confirm_password === undefined) {
+            return this.formatResponse("Confirm password is required when setting a new password.");
+          }
+          if (args.password !== args.confirm_password) {
+            return this.formatResponse("Password and confirm password do not match.");
+          }
+        }
+        
+        // Prepare update data - only include fields that were provided
+        const updateData: any = {};
+        if (args.first_name !== undefined) updateData.first_name = args.first_name;
+        if (args.last_name !== undefined) updateData.last_name = args.last_name;
+        if (args.role !== undefined) updateData.role = args.role;
+        if (args.work_phone !== undefined) updateData.work_phone = args.work_phone;
+        if (args.home_phone !== undefined) updateData.home_phone = args.home_phone;
+        if (args.password !== undefined) updateData.password = args.password;
+        
+        if (Object.keys(updateData).length === 0) {
+          return this.formatResponse("No fields provided to update.");
+        }
+        
+        // Update user using GUID
+        const updateUrl = `/api/v3/users/${encodeURIComponent(user.guid)}`;
+        const result = await this.call(updateUrl, "PATCH", updateData);
+
+        return this.formatResponse(`User ${args.email} updated successfully:`, result);
+      },
+    );
+
+    // Tool 5: Delete existing user
     register(
       {
         title: "Delete User",
