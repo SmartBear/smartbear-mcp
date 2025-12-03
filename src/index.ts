@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import Bugsnag from "./common/bugsnag.js";
 import "./common/register-clients.js"; // Register all available clients
-import { startTelemetry } from "./common/telemetry.js";
 import { runHttpMode } from "./common/transport-http.js";
 import { runStdioMode } from "./common/transport-stdio.js";
 
@@ -10,7 +9,6 @@ import { runStdioMode } from "./common/transport-stdio.js";
 const McpServerBugsnagAPIKey = process.env.MCP_SERVER_BUGSNAG_API_KEY;
 if (McpServerBugsnagAPIKey) {
   Bugsnag.start(McpServerBugsnagAPIKey);
-  startTelemetry(McpServerBugsnagAPIKey);
 }
 
 async function main() {
