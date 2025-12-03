@@ -66,19 +66,19 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 
 #### `scan_api_standardization`
 
--   Purpose: Run a standardization scan against an API definition using the organization's standardization configuration. Validates OpenAPI/AsyncAPI definitions against configured governance rules and style guides.
+-   Purpose: Run a standardization scan against an API definition using the organization's governance and standardization configuration. Validates OpenAPI/AsyncAPI definitions against configured rules and style guides.
 -   Returns: Standardization result with a list of validation errors and warnings. Each error includes severity level, rule name, and location information.
 -   Use case: Validate API definitions against organization standards before publishing, ensure compliance with API governance policies, and identify design inconsistencies early in the development process.
 -   Parameters:
 
 | Parameter | Description | Type | Required |
 | --- | --- | --- | --- |
-| `orgName` | Organization name to use for standardization rules | string | Yes |
+| `orgName` | Organization name to use for governance and standardization rules | string | Yes |
 | `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. | string | Yes |
 
 #### `create_api_from_prompt`
 
--   Purpose: Generate and save an API definition based on a natural language prompt using SmartBear AI. This tool automatically applies organization standardization rules during API generation. The specType parameter determines the format of the generated definition.
+-   Purpose: Generate and save an API definition based on a natural language prompt using SmartBear AI. This tool automatically applies organization governance and standardization rules during API generation. The specType parameter determines the format of the generated definition.
 -   Returns: API metadata including owner, name, specType, version (from X-Version header if available), SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
 -   Use case: Rapidly create APIs from natural language descriptions (e.g., "Create a RESTful API for managing a pet store with endpoints for pets, orders, and inventory"), generate API prototypes for proof-of-concept work, or bootstrap new API projects with AI assistance while ensuring compliance with organization standards.
 -   Parameters:
@@ -92,9 +92,9 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 
 #### `standardize_api`
 
--   Purpose: Standardize and fix an API definition using AI. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. If errors are found, they will be sent to SmartBear AI to generate a corrected definition, which is then saved back to the registry.
+-   Purpose: Standardize and fix an API definition using AI to ensure compliance with governance policies. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. If errors are found, they will be sent to SmartBear AI to generate a corrected definition, which is then saved back to the registry.
 -   Returns: Standardization result including a message, the number of errors found, and the fixed definition if successful. Also includes details about each error (description, line number, severity).
--   Use case: Automatically fix API definitions that fail standardization scans, remediate governance violations in existing APIs, or clean up imported/legacy API definitions to meet current organization standards.
+-   Use case: Automatically fix API definitions that fail standardization scans, ensure governance compliance in existing APIs, or clean up imported/legacy API definitions to meet current organization standards.
 -   Parameters:
 
 | Parameter | Description | Type | Required |

@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
 - [Zephyr] Added a tool for retrieving a list of Test Executions [#213](https://github.com/SmartBear/smartbear-mcp/pull/213)
-- [Swagger] Added `create_api_from_prompt` tool for generating API definitions from natural language descriptions using SmartBear AI, with automatic organization standardization [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
-- [Swagger] Added `standardize_api` tool for scanning and automatically fixing API definitions to comply with organization standardization rules using SmartBear AI [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
+- [Swagger] Added `create_api_from_prompt` tool for generating API definitions from natural language descriptions using SmartBear AI, with automatic governance and standardization [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
+- [Swagger] Added `standardize_api` tool for scanning and automatically fixing API definitions to comply with governance and standardization rules using SmartBear AI [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
 - [BugSnag] Added tools for querying performance data and managing network grouping rules: List/Get Span Groups, List Spans, Get Trace, List Trace Fields, Get/Set Network Endpoint Groupings [#253](https://github.com/SmartBear/smartbear-mcp/pull/253)
 - Added --version command line argument to display the current version [#258](https://github.com/SmartBear/smartbear-mcp/pull/258)
 
@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [Qmetry] Added 4 New QMetry tools to enhance test management capabilities [#194](https://github.com/SmartBear/smartbear-mcp/pull/194)
 - [Qmetry] Implement comprehensive test case tooling with enhanced error handling [#193](https://github.com/SmartBear/smartbear-mcp/pull/193)
-- [API Hub] Add `scan_api_standardization` tool for validating API definitions against organization standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
+- [API Hub] Add `scan_api_standardization` tool for validating API definitions against governance and standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
 
 ## [0.8.0] - 2025-10-13
 
