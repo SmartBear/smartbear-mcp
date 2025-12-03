@@ -37,13 +37,6 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `openapiRenderer`          | Portal level setting for the OpenAPI renderer.<br />- `SWAGGER_UI` - Use the Swagger UI renderer<br />- `ELEMENTS` - Use the Elements renderer<br />- `TOGGLE` - Switch between the two renderers with elements set as the default<br />Default: `TOGGLE` | string        | No       |
 | `pageContentFormat`        | Determines the format of the page content (`HTML` or `MARKDOWN` or `BOTH`)<br />Default: `HTML`                                                                                                                                                           | string        | No       |
 
-#### `delete_portal`
-
-- Purpose: Softly Delete a portal.
-- Parameters: Portal UUID or subdomain (`portalId`).
-- Returns: No content on success.
-- Use case: Softly Deletes an existing portal from Swagger.
-
 #### `update_portal`
 
 - Purpose: Update a specific portal's configuration.
@@ -51,18 +44,18 @@ The Swagger Portal client provides comprehensive portal and product management c
 - Use case: Update configuration settings of existing Swagger portal.
 - Parameters:
 
-| Parameter                  | Description                                                                                                                                                                                                                                               | Type          | Required |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------- |
-| `name`                     | The portal name.<br />Must be between 3 and 40 characters.                                                                                                                                                                                                | string        | No       |
-| `subdomain`                | Subdomain for this portal. Must be unique.<br />Must be between 3 and 20 characters.                                                                                                                                                                      | string        | No       |
-| `customDomain`             | Custom domain for this portal. Must be unique.<br />If the value is explicitly set to null, the custom domain will be removed.                                                                                                                            | string        | No       |
-| `offline`                  | If set to true the portal will not be visible to customers.<br />Default: `false`                                                                                                                                                                         | boolean       | No       |
-| `gtmKey`                   | The Google Tag Manager key for this portal.                                                                                                                                                                                                               | string        | No       |
-| `routing`                  | Determines the routing strategy ('`browser`' or '`proxy`').<br />Default: `browser`                                                                                                                                                                       | string        | No       |
-| `credentialsEnabled`       | Indicates if credentials are enabled for the portal.<br />Default: `true`                                                                                                                                                                                 | boolean       | No       |
-| `swaggerHubOrganizationId` | The corresponding Swagger Studio (formerly SwaggerHub) organization UUID                                                                                                                                                                                  | string (uuid) | Yes      |
-| `openapiRenderer`          | Portal level setting for the OpenAPI renderer.<br />- `SWAGGER_UI` - Use the Swagger UI renderer<br />- `ELEMENTS` - Use the Elements renderer<br />- `TOGGLE` - Switch between the two renderers with elements set as the default<br />Default: `TOGGLE` | string        | No       |
-| `pageContentFormat`        | Determines the format of the page content (`HTML` or `MARKDOWN` or `BOTH`)<br />Default: `HTML`                                                                                                                                                           | string        | No       |
+| Parameter            | Description                                                                                                                                         | Type    | Required |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
+| `portalId`           | Portal UUID or subdomain - unique identifier for the portal instance                                                                                | string  | Yes      |
+| `name`               | Update the portal display name - shown to users and in branding (3-40 characters)                                                                   | string  | No       |
+| `subdomain`          | Update the portal subdomain - changes the portal URL. Must remain unique across all portals (3-20 characters, lowercase, alphanumeric with hyphens) | string  | No       |
+| `customDomain`       | Set a custom domain for the portal by providing the domain name as a string. To remove the custom domain, set this value to `null`.                 | string  | No       |
+| `offline`            | Set portal visibility - true hides portal from customers (useful for maintenance or development)                                                    | boolean | No       |
+| `gtmKey`             | Google Tag Manager key for analytics tracking - format: GTM-XXXXXX (max 25 characters)                                                              | string  | No       |
+| `routing`            | Update routing strategy - 'browser' for client-side routing or 'proxy' for server-side routing                                                      | string  | No       |
+| `credentialsEnabled` | Enable/disable authentication credentials for portal access - controls whether users can authenticate to view private content                       | boolean | No       |
+| `openapiRenderer`    | Change OpenAPI renderer: 'SWAGGER_UI' (Swagger UI), 'ELEMENTS' (Stoplight Elements), or 'TOGGLE' (switch between both)                              | string  | No       |
+| `pageContentFormat`  | Update page content format for documentation rendering: 'HTML', 'MARKDOWN', or 'BOTH'                                                               | string  | No       |
 
 #### `list_portal_products`
 
@@ -85,15 +78,17 @@ The Swagger Portal client provides comprehensive portal and product management c
 - Use case: Add a new product to a portal.
 - Parameters:
 
-| Parameter          |               | Description                                                                                                 | Type    | Required |
-| ------------------ | ------------- | ----------------------------------------------------------------------------------------------------------- | ------- | -------- |
-| `portalId`         |               | Portal UUID or subdomain.                                                                                   | string  | Yes      |
-| `createPortalArgs` | `type`        | The mode of creation. `new` or `copy`                                                                       | string  | Yes      |
-|                    | `name`        | The product name.<br />Must be between 3 and 40 characters.                                                 | string  | Yes      |
-|                    | `slug`        | URL component for this product. Must be unique within the portal.<br />Must be between 3 and 22 characters. | string  | Yes      |
-|                    | `description` | The product description.<br />Max length is 110 characters.                                                 | string  | No       |
-|                    | `public`      | Whether this product is available to non-members of the organization.                                       | boolean | No       |
-|                    | `hidden`      | If set to true, this product will not be displayed on the landing page.                                     | boolean | No       |
+| Parameter         | Description                                                                                                                                                                                            | Type    | Required |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- | -------- |
+| `portalId`        | Portal UUID or subdomain.                                                                                                                                                                              | string  | Yes      |
+| `type`            | Product creation type - 'new' to create from scratch or 'copy' to duplicate an existing product                                                                                                        | string  | Yes      |
+| `sourceProductId` | Source product UUID to copy from when type is 'copy'. Specifies which existing product to duplicate. Omit when type is 'new'.                                                                          | string  | No       |
+| `name`            | Product display name - will be shown to users in the portal navigation and product listings (3-40 characters)                                                                                          | string  | Yes      |
+| `slug`            | URL-friendly identifier for the product - must be unique within the portal, used in URLs (e.g., 'my-api' becomes /my-api). 3-22 characters, lowercase, alphanumeric with hyphens, underscores, or dots | string  | Yes      |
+| `description`     | Product description - explains what the API/product does, shown in product listings and cards (max 110 characters)                                                                                     | string  | No       |
+| `public`          | Whether the product is publicly visible to all portal visitors - false means only authenticated users with appropriate roles can access it                                                             | boolean | No       |
+| `hidden`          | Whether the product is hidden from the portal landing page navigation menus - useful for internal or draft products                                                                                    | boolean | No       |
+| `role`            | Whether the product has role-based access restrictions - controls if specific user roles are required to access the product                                                                            | boolean | No       |
 
 #### `update_portal_product`
 
@@ -102,15 +97,14 @@ The Swagger Portal client provides comprehensive portal and product management c
 - Use case: Change information on an existing product.
 - Parameters:
 
-| Parameter          |               | Description                                                                                                 | Type    | Required |
-| ------------------ | ------------- | ----------------------------------------------------------------------------------------------------------- | ------- | -------- |
-| `productId`        |               | Identifier of product to update.                                                                            | string  | Yes      |
-| `updatePortalArgs` | `name`        | The product name.<br />Must be between 3 and 40 characters.                                                 | string  | Yes      |
-|                    | `slug`        | URL component for this product. Must be unique within the portal.<br />Must be between 3 and 22 characters. | string  | Yes      |
-|                    | `description` | The product description.<br />Max length is 110 characters.                                                 | string  | No       |
-|                    | `version`     | The product version.                                                                                        | string  | No       |
-|                    | `public`      | Whether this product is available to non-members of the organization.                                       | boolean | No       |
-|                    | `hidden`      | If set to true, this product will not be displayed on the landing page.                                     | boolean | No       |
+| Parameter     | Description                                                                                                                                                          | Type    | Required |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
+| `productId`   | Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product                                                         | string  | Yes      |
+| `name`        | Update product display name - changes how it appears to users in navigation and listings (3-40 characters)                                                           | string  | No       |
+| `slug`        | Update URL-friendly identifier - must remain unique within the portal, affects product URLs (3-22 characters, lowercase, alphanumeric with hyphens/underscores/dots) | string  | No       |
+| `description` | Update product description - explains the API/product functionality, shown in listings (max 110 characters)                                                          | string  | No       |
+| `public`      | Change product visibility - true makes it publicly accessible to all visitors, false restricts to authenticated users with roles                                     | boolean | No       |
+| `hidden`      | Change navigation visibility - true hides from portal landing page menus while keeping the product accessible via direct links                                       | boolean | No       |
 
 #### `delete_portal_product`
 
@@ -118,8 +112,6 @@ The Swagger Portal client provides comprehensive portal and product management c
 - Parameters: Product UUID (`productId`).
 - Returns: No content on success.
 - Use case: Delete an existing product from a Swagger portal.
-
-### Swagger for Design API Tools
 
 #### `publish_portal_product`
 
@@ -196,6 +188,8 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 ### Document Management
 
+**Note**: Documents are managed as part of table of contents items. To delete a document, use `delete_table_of_contents` which will remove the table of contents entry and any associated document content.
+
 #### `get_document`
 
 - Purpose: Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.
@@ -220,17 +214,6 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `content`    | The document content to update (HTML or Markdown based on document type)  | string | Yes      |
 | `type`       | Content type - 'html' for HTML content or 'markdown' for Markdown content | string | No       |
 
-#### `delete_document`
-
-- Purpose: Delete a document by its ID. This will permanently remove the document content.
-- Returns: No content on success.
-- Use case: Permanently remove document content from the system.
-- Parameters:
-
-| Parameter    | Description                                                  | Type   | Required |
-| ------------ | ------------------------------------------------------------ | ------ | -------- |
-| `documentId` | Document UUID - unique identifier for the document to delete | string | Yes      |
-
 ## Configuration
 
 To use Swagger Portal tools, you need to configure the `SWAGGER_API_KEY` environment variable with your Swagger API token.
@@ -238,7 +221,7 @@ To use Swagger Portal tools, you need to configure the `SWAGGER_API_KEY` environ
 ## Common Use Cases
 
 1. **Portal Discovery**: Use `list_portals` to find available portals you have access to.
-2. **Portal Management**: Create, update, and delete portals using the respective tools.
+2. **Portal Management**: Create and update portals using the respective tools.
 3. **Product Organization**: Manage products within portals for better API organization.
 4. **Content Publishing**: Use `publish_portal_product` to make product content live or preview changes before publishing.
 5. **Content Structure Management**: Organize product content using sections and table of contents for better navigation.

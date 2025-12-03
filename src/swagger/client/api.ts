@@ -4,7 +4,6 @@ import type {
   CreatePortalArgs,
   CreateProductBody,
   CreateTableOfContentsBody,
-  DeleteDocumentArgs,
   DeleteTableOfContentsArgs,
   Document,
   FallbackResponse,
@@ -238,22 +237,6 @@ export class SwaggerAPI {
       throw new ToolError("Portal not found or empty response");
     }
     return result as Portal;
-  }
-
-  async deletePortal(portalId: string): Promise<void> {
-    const response = await fetch(
-      `${this.config.portalBasePath}/portals/${portalId}`,
-      {
-        method: "DELETE",
-        headers: this.headers,
-      },
-    );
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      throw new ToolError(
-        `Swagger deletePortal failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}`,
-      );
-    }
   }
 
   async updatePortal(
@@ -518,30 +501,6 @@ export class SwaggerAPI {
       const errorText = await response.text();
       throw new Error(
         `API Hub updateDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
-      );
-    }
-
-    return { success: true };
-  }
-
-  /**
-   * Delete document
-   * @param args - Parameters for deleting document
-   * @returns Success response
-   */
-  async deleteDocument(args: DeleteDocumentArgs): Promise<SuccessResponse> {
-    const { documentId } = args;
-    const url = `${this.config.portalBasePath}/documents/${documentId}`;
-
-    const response = await fetch(url, {
-      method: "DELETE",
-      headers: this.headers,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `API Hub deleteDocument failed - status: ${response.status} ${response.statusText}. Response: ${errorText}`,
       );
     }
 

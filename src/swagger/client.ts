@@ -21,7 +21,6 @@ import {
   type CreatePortalArgs,
   type CreateProductArgs,
   type CreateTableOfContentsArgs,
-  type DeleteDocumentArgs,
   type DeleteTableOfContentsArgs,
   type Document,
   type FallbackResponse,
@@ -100,10 +99,6 @@ export class SwaggerClient implements Client {
     return this.getApi().getPortal(args.portalId);
   }
 
-  async deletePortal(args: { portalId: string }): Promise<void> {
-    return this.getApi().deletePortal(args.portalId);
-  }
-
   async updatePortal(
     args: UpdatePortalArgs,
   ): Promise<Portal | FallbackResponse> {
@@ -180,12 +175,6 @@ export class SwaggerClient implements Client {
     args: UpdateDocumentArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
     return this.getApi().updateDocument(args);
-  }
-
-  async deleteDocument(
-    args: DeleteDocumentArgs,
-  ): Promise<SuccessResponse | FallbackResponse> {
-    return this.getApi().deleteDocument(args);
   }
 
   async deleteTableOfContents(
