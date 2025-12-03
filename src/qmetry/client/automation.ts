@@ -75,7 +75,7 @@ export async function importAutomationResults(
         bytes[i] = binaryData.charCodeAt(i);
       }
       fileBlob = new Blob([bytes]);
-    } catch (error) {
+    } catch (_error) {
       throw new Error(
         "Invalid file format. Please provide base64 encoded file content or file path.",
       );
@@ -192,7 +192,7 @@ export async function getAutomationStatus(
   } else {
     numericRequestID = Number(requestID);
   }
-  if (!numericRequestID || isNaN(numericRequestID)) {
+  if (!numericRequestID || Number.isNaN(numericRequestID)) {
     throw new Error("requestID must be a valid number");
   }
   return qmetryRequest({

@@ -84,11 +84,11 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `type`            | Product creation type - 'new' to create from scratch or 'copy' to duplicate an existing product                                                                                                        | string  | Yes      |
 | `sourceProductId` | Source product UUID to copy from when type is 'copy'. Specifies which existing product to duplicate. Omit when type is 'new'.                                                                          | string  | No       |
 | `name`            | Product display name - will be shown to users in the portal navigation and product listings (3-40 characters)                                                                                          | string  | Yes      |
-| `slug`        | URL-friendly identifier for the product - must be unique within the portal, used in URLs (e.g., 'my-api' becomes /my-api). 3-22 characters, lowercase, alphanumeric with hyphens, underscores, or dots | string  | Yes      |
-| `description` | Product description - explains what the API/product does, shown in product listings and cards (max 110 characters)                                                                                     | string  | No       |
-| `public`      | Whether the product is publicly visible to all portal visitors - false means only authenticated users with appropriate roles can access it                                                             | boolean | No       |
-| `hidden`      | Whether the product is hidden from the portal landing page navigation menus - useful for internal or draft products                                                                                    | boolean | No       |
-| `role`        | Whether the product has role-based access restrictions - controls if specific user roles are required to access the product                                                                            | boolean | No       |
+| `slug`            | URL-friendly identifier for the product - must be unique within the portal, used in URLs (e.g., 'my-api' becomes /my-api). 3-22 characters, lowercase, alphanumeric with hyphens, underscores, or dots | string  | Yes      |
+| `description`     | Product description - explains what the API/product does, shown in product listings and cards (max 110 characters)                                                                                     | string  | No       |
+| `public`          | Whether the product is publicly visible to all portal visitors - false means only authenticated users with appropriate roles can access it                                                             | boolean | No       |
+| `hidden`          | Whether the product is hidden from the portal landing page navigation menus - useful for internal or draft products                                                                                    | boolean | No       |
+| `role`            | Whether the product has role-based access restrictions - controls if specific user roles are required to access the product                                                                            | boolean | No       |
 
 #### `update_portal_product`
 
@@ -214,124 +214,16 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `content`    | The document content to update (HTML or Markdown based on document type)  | string | Yes      |
 | `type`       | Content type - 'html' for HTML content or 'markdown' for Markdown content | string | No       |
 
-### Registry API Tools
-
-#### `search_apis_and_domains`
-
-- Purpose: Search for APIs and Domains in SwaggerHub Registry and retrieve metadata including owner, name, description, summary, version, and specification.
-- Returns: Paginated list of APIs and domains with comprehensive metadata.
-- Use case: Discover and browse available APIs and domains in SwaggerHub Registry.
-- Parameters:
-
-| Parameter  | Description                                                                 | Type   | Required |
-| ---------- | --------------------------------------------------------------------------- | ------ | -------- |
-| `query`    | Search query to filter APIs by name, description, or content                | string | No       |
-| `state`    | Filter APIs by publication state - ALL (default), PUBLISHED, or UNPUBLISHED | string | No       |
-| `tag`      | Filter APIs by tag                                                          | string | No       |
-| `offset`   | Offset for pagination (0-based, default 0)                                  | number | No       |
-| `limit`    | Number of results per page (1-100, default 20)                              | number | No       |
-| `sort`     | Sort field - NAME, UPDATED, or CREATED (default NAME)                       | string | No       |
-| `order`    | Sort order - ASC or DESC (default ASC)                                      | string | No       |
-| `owner`    | Filter APIs by owner (organization or user)                                 | string | No       |
-| `specType` | Filter by specification type - API or DOMAIN (default all types)            | string | No       |
-
-#### `get_api_definition`
-
-- Purpose: Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.
-- Returns: API definition content in JSON or YAML format.
-- Use case: Retrieve API specifications for integration, documentation, or analysis.
-- Parameters:
-
-| Parameter  | Description                                                              | Type    | Required |
-| ---------- | ------------------------------------------------------------------------ | ------- | -------- |
-| `owner`    | API owner (organization or user, case-sensitive)                         | string  | Yes      |
-| `api`      | API name (case-sensitive)                                                | string  | Yes      |
-| `version`  | Version identifier                                                       | string  | Yes      |
-| `resolved` | Set to true to get the resolved version with all external $refs included | boolean | No       |
-| `flatten`  | Set to true to create models from inline schemas in OpenAPI definition   | boolean | No       |
-
-#### `create_or_update_api`
-
-- Purpose: Create a new API or update an existing API in SwaggerHub Registry. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content.
-- Returns: API details with SwaggerHub URL and operation type (create/update).
-- Use case: Programmatically manage API definitions in SwaggerHub Registry.
-- Parameters:
-
-| Parameter    | Description                                                                    | Type   | Required |
-| ------------ | ------------------------------------------------------------------------------ | ------ | -------- |
-| `owner`      | Organization name (owner of the API)                                           | string | Yes      |
-| `apiName`    | API name                                                                       | string | Yes      |
-| `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format) | string | Yes      |
-
-#### `create_api_from_template`
-
-- Purpose: Create a new API in SwaggerHub Registry using a predefined template without requiring manual definition content.
-- Returns: API details with SwaggerHub URL and operation status.
-- Use case: Quickly create APIs based on existing templates for standardization and rapid development.
-- Parameters:
-
-| Parameter  | Description                                                                                        | Type   | Required |
-| ---------- | -------------------------------------------------------------------------------------------------- | ------ | -------- |
-| `owner`    | Organization name (owner of the API)                                                               | string | Yes      |
-| `apiName`  | API name                                                                                           | string | Yes      |
-| `template` | Template name in format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0') | string | Yes      |
-
-#### `scan_api_standardization`
-
-- Purpose: Run a standardization scan against an API definition using the organization's standardization configuration.
-- Returns: List of standardization errors and validation issues.
-- Use case: Ensure API definitions comply with organizational standards and best practices.
-- Parameters:
-
-| Parameter    | Description                                                             | Type   | Required |
-| ------------ | ----------------------------------------------------------------------- | ------ | -------- |
-| `orgName`    | The organization name to use for standardization rules                  | string | Yes      |
-| `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML) | string | Yes      |
-
-### User Management Tools
-
-#### `list_organizations`
-
-- Purpose: Get organizations for a user. Returns a list of organizations that the authenticating user is a member of.
-- Returns: Paginated list of organizations with member counts and metadata.
-- Use case: Discover available organizations and understand user permissions.
-- Parameters:
-
-| Parameter  | Description                                   | Type   | Required |
-| ---------- | --------------------------------------------- | ------ | -------- |
-| `q`        | Search organizations by partial or full name  | string | No       |
-| `sortBy`   | The property to sort results by (NAME, EMAIL) | string | No       |
-| `order`    | Sort order (ASC, DESC)                        | string | No       |
-| `page`     | 0-based index of the page to return           | number | No       |
-| `pageSize` | Number of results per page to return (1-1000) | number | No       |
-
 ## Configuration
 
-To use Swagger tools, you need to configure the `SWAGGER_API_KEY` environment variable with your Swagger API token. This provides access to:
-
-- **Portal API**: Portal and product management features
-- **Registry API**: API definition management and standardization
-- **User Management API**: Organization and user information
+To use Swagger Portal tools, you need to configure the `SWAGGER_API_KEY` environment variable with your Swagger API token.
 
 ## Common Use Cases
 
-### Portal Management
-
 1. **Portal Discovery**: Use `list_portals` to find available portals you have access to.
-2. **Portal Management**: Create, update portals using the respective tools.
+2. **Portal Management**: Create and update portals using the respective tools.
 3. **Product Organization**: Manage products within portals for better API organization.
 4. **Content Publishing**: Use `publish_portal_product` to make product content live or preview changes before publishing.
 5. **Content Structure Management**: Organize product content using sections and table of contents for better navigation.
 6. **Document Management**: Create, update, and manage documentation content within portal products.
-
-### API Registry Management
-
-7. **API Discovery**: Use `search_apis_and_domains` to find existing APIs and domains in your registry.
-8. **API Definition Management**: Retrieve, create, and update API definitions programmatically.
-9. **Template-Based Development**: Use `create_api_from_template` for rapid API creation from standardized templates.
-10. **Quality Assurance**: Use `scan_api_standardization` to ensure API definitions meet organizational standards.
-
-### Organization Management
-
-11. **Organization Discovery**: Use `list_organizations` to understand your access permissions and available organizations.
-12. **Cross-Platform Integration**: Combine portal, registry, and organization data for comprehensive API lifecycle management.
+7. **Portal Content Architecture**: Build comprehensive documentation portals with nested content structures and API references.
