@@ -29,12 +29,16 @@ import type {
   ApiSearchResponse,
   ApiSpecification,
   ApisJsonResponse,
+  CreateApiFromPromptParams,
+  CreateApiFromPromptResponse,
   CreateApiFromTemplateParams,
   CreateApiFromTemplateResponse,
   CreateApiParams,
   CreateApiResponse,
   ScanStandardizationParams,
   StandardizationResult,
+  StandardizeApiParams,
+  StandardizeApiResponse,
 } from "./registry-types.js";
 import type {
   OrganizationsListResponse,
@@ -50,6 +54,33 @@ import type {
 //   - group 4: version
 const SWAGGER_URL_REGEX =
   /\/(apis|domains|templates)\/([^/]+)\/([^/]+)\/([^/]+)/;
+
+/**
+ * Type guard to check if a value has an 'id' property
+ */
+function hasId(
+  value: unknown,
+): value is { id: string } & Record<string, unknown> {
+  return typeof value === "object" && value !== null && "id" in value;
+}
+
+/**
+ * Type guard to check if a value has a 'message' property
+ */
+function hasMessage(
+  value: unknown,
+): value is { message: string } & Record<string, unknown> {
+  return typeof value === "object" && value !== null && "message" in value;
+}
+
+/**
+ * Type guard to check if a value has an 'errorsFound' property
+ */
+function hasErrorsFound(
+  value: unknown,
+): value is { errorsFound: number } & Record<string, unknown> {
+  return typeof value === "object" && value !== null && "errorsFound" in value;
+}
 
 export class SwaggerAPI {
   private config: SwaggerConfiguration;
@@ -187,7 +218,7 @@ export class SwaggerAPI {
       body: JSON.stringify(body),
     });
     const result = await this.handleResponse<Portal>(response);
-    if (!("id" in (result as any))) {
+    if (!hasId(result)) {
       throw new Error("Unexpected empty response creating portal");
     }
     return result as Portal;
@@ -202,7 +233,7 @@ export class SwaggerAPI {
       },
     );
     const result = await this.handleResponse<Portal>(response);
-    if (!("id" in (result as any))) {
+    if (!hasId(result)) {
       throw new ToolError("Portal not found or empty response");
     }
     return result as Portal;
@@ -252,7 +283,7 @@ export class SwaggerAPI {
       },
     );
     const result = await this.handleResponse<Product>(response);
-    if (!("id" in (result as any))) {
+    if (!hasId(result)) {
       throw new Error("Unexpected empty response creating product");
     }
     return result as Product;
@@ -267,7 +298,7 @@ export class SwaggerAPI {
       },
     );
     const result = await this.handleResponse<Product>(response);
-    if (!("id" in (result as any))) {
+    if (!hasId(result)) {
       throw new ToolError("Product not found or empty response");
     }
     return result as Product;
@@ -697,7 +728,7 @@ export class SwaggerAPI {
       owner: params.owner,
       apiName: params.apiName,
       version: "1.0.0",
-      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}/1.0.0`,
+      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/1.0.0`,
       operation,
     };
   }
@@ -741,7 +772,61 @@ export class SwaggerAPI {
       owner: params.owner,
       apiName: params.apiName,
       template: params.template,
-      url: `https://app.swaggerhub.com/apis/${params.owner}/${params.apiName}`,
+      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
+      operation,
+    };
+  }
+
+  /**
+   * Create API from Prompt using SmartBear AI
+   * @param params Parameters for creating API from prompt including owner, api name, prompt, and specification type
+   * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 for update, HTTP 205 for reload
+   */
+  async createApiFromPrompt(
+    params: CreateApiFromPromptParams,
+  ): Promise<CreateApiFromPromptResponse> {
+    // Construct the URL with query parameters
+    const searchParams = new URLSearchParams();
+    const specType = params.specType ?? "openapi30x";
+    searchParams.append("specType", specType);
+
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
+      params.owner,
+    )}/${encodeURIComponent(params.apiName)}/.ai?${searchParams.toString()}`;
+
+    // Use POST method with JSON body containing the prompt
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(params.prompt),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API createApiFromPrompt failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    // Determine operation type based on HTTP status code
+    // 201 = new API created, 200 = existing API updated, 205 = API saved and should be reloaded
+    const operation = response.status === 201 ? "create" : "update";
+
+    // Extract version from X-Version header
+    const version = response.headers.get("X-Version");
+
+    // Return formatted response with the required fields
+    return {
+      owner: params.owner,
+      apiName: params.apiName,
+      specType: specType,
+      version: version || undefined,
+      url: version
+        ? `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`
+        : `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
       operation,
     };
   }
@@ -789,7 +874,7 @@ export class SwaggerAPI {
         const parsedDefinition = JSON.parse(params.definition);
         requestBody = JSON.stringify(parsedDefinition);
       } catch (error) {
-        throw new Error(
+        throw new ToolError(
           `Invalid JSON format in definition: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
@@ -812,11 +897,54 @@ export class SwaggerAPI {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(
+      throw new ToolError(
         `SwaggerHub Registry API scanStandardization failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
       );
     }
 
     return await this.handleResponse<StandardizationResult>(response);
+  }
+
+  /**
+   * Standardize and fix an API definition using AI
+   * @param params Parameters including owner, API name, and version
+   * @returns Standardization response with status and fixed definition
+   */
+  async standardizeApi(
+    params: StandardizeApiParams,
+  ): Promise<StandardizeApiResponse> {
+    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
+      params.owner,
+    )}/${encodeURIComponent(params.api)}/${encodeURIComponent(
+      params.version,
+    )}/standardize`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new ToolError(
+        `SwaggerHub Registry API standardizeApi failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
+      );
+    }
+
+    const result = await this.handleResponse<StandardizeApiResponse>(response);
+
+    // Validate that we have the expected response structure
+    if (!hasMessage(result)) {
+      throw new ToolError(
+        "Unexpected response format from standardizeApi endpoint",
+      );
+    }
+
+    // If errorsFound is not present, default to 0 (no errors found)
+    if (!hasErrorsFound(result)) {
+      return { ...result, errorsFound: 0 } as StandardizeApiResponse;
+    }
+
+    return result as StandardizeApiResponse;
   }
 }
