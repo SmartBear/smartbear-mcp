@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-- [QMetry] Add Automation Result Import Tools, Release/Cycle Creation, and few Bug Fixes [#264](https://github.com/SmartBear/smartbear-mcp/pull/264)
-- [QMetry] Add Contextual Metadata to Tools for Better LLM Prompt Handling [#270](https://github.com/SmartBear/smartbear-mcp/pull/270)
+## [0.12.0] - 2025-12-03
+
+
 
 ### Added
 
@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Added `standardize_api` tool for scanning and automatically fixing API definitions to comply with governance and standardization rules using SmartBear AI [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
 - [BugSnag] Added tools for querying performance data and managing network grouping rules: List/Get Span Groups, List Spans, Get Trace, List Trace Fields, Get/Set Network Endpoint Groupings [#253](https://github.com/SmartBear/smartbear-mcp/pull/253)
 - Added --version command line argument to display the current version [#258](https://github.com/SmartBear/smartbear-mcp/pull/258)
+- [QMetry] Add Automation Result Import Tools, Release/Cycle Creation, and few Bug Fixes [#264](https://github.com/SmartBear/smartbear-mcp/pull/264)
+- [QMetry] Add Contextual Metadata to Tools for Better LLM Prompt Handling [#270](https://github.com/SmartBear/smartbear-mcp/pull/270)
 
 ### Changed
 - [BugSnag] Removed event threads from Get Error response and introduced Get Event (by ID) [#263](https://github.com/SmartBear/smartbear-mcp/pull/263)
