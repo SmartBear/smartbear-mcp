@@ -13,15 +13,16 @@ const filtersSchema = z.record(z.array(filterValueSchema));
  */
 export const toolInputParameters = {
   empty: z.object({}).describe("No parameters are required for this tool"),
+  buildId: z.string().describe("Unique identifier of the app build"),
+  errorId: z.string().describe("Unique identifier of the error"),
+  eventId: z.string().describe("Unique identifier of the event"),
   projectId: z
     .string()
     .optional()
     .describe(
-      "ID of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.",
+      "Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.",
     ),
-  errorId: z.string().describe("Unique identifier of the error"),
-  releaseId: z.string().describe("ID of the release"),
-  buildId: z.string().describe("ID of the build"),
+  releaseId: z.string().describe("Unique identifier of the app release"),
   direction: z
     .enum(["asc", "desc"])
     .describe("Sort direction for ordering results")

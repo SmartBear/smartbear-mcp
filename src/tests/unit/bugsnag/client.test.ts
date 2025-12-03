@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ErrorApiView,
+  EventApiView,
   EventField,
   PivotApiView,
   Span,
@@ -840,7 +841,8 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("Get Current Project");
       expect(registeredTools).toContain("List Projects");
       expect(registeredTools).toContain("Get Error");
-      expect(registeredTools).toContain("Get Event Details");
+      expect(registeredTools).toContain("Get Event");
+      expect(registeredTools).toContain("Get Event Details From Dashboard URL");
       expect(registeredTools).toContain("List Project Errors");
       expect(registeredTools).toContain("List Project Event Filters");
       expect(registeredTools).toContain("Update Error");
@@ -854,7 +856,7 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("List Trace Fields");
       expect(registeredTools).toContain("Get Network Endpoint Groupings");
       expect(registeredTools).toContain("Set Network Endpoint Groupings");
-      expect(registeredTools.length).toBe(17);
+      expect(registeredTools.length).toBe(18);
     });
   });
 
@@ -1012,7 +1014,12 @@ describe("BugsnagClient", () => {
       const mockError = getMockError("error-1");
 
       it("should get error details with project from cache", async () => {
-        const mockEvents = [getMockEvent("event-1")];
+        const mockEvents: EventApiView[] = [
+          {
+            ...getMockEvent("event-1"),
+            threads: [{ name: "thread-1" }], // Threads should be removed in response
+          },
+        ];
         const mockPivots: PivotApiView[] = [
           { name: "test-pivot", eventFieldDisplayId: "test" },
         ];
@@ -1047,7 +1054,7 @@ describe("BugsnagClient", () => {
         expect(result.content[0].text).toBe(
           JSON.stringify({
             error_details: mockError,
-            latest_event: mockEvents[0],
+            latest_event: getMockEvent("event-1"),
             pivots: mockPivots,
             url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1${encodedQueryString}`,
           }),
@@ -1110,6 +1117,37 @@ describe("BugsnagClient", () => {
     });
 
     describe("Get Event Details tool handler", () => {
+      it("should get event details from ID", async () => {
+        const mockProjects = [
+          getMockProject("proj-1", "My Project", undefined, {
+            slug: "my-project",
+          }),
+        ];
+        const mockEvent = getMockEvent("event-1");
+
+        mockCache.get.mockReturnValue(mockProjects);
+
+        mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Event",
+        )[1];
+
+        const result = await toolHandler({
+          projectId: "proj-1",
+          eventId: "event-1",
+        });
+
+        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith(
+          "proj-1",
+          "event-1",
+        );
+        expect(result.content[0].text).toBe(JSON.stringify(mockEvent));
+      });
+    });
+
+    describe("Get Event Details From Dashboard URL tool handler", () => {
       it("should get event details from dashboard URL", async () => {
         const mockProjects = [
           getMockProject("proj-1", "My Project", undefined, {
@@ -1124,7 +1162,8 @@ describe("BugsnagClient", () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Event Details",
+          (call: any) =>
+            call[0].title === "Get Event Details From Dashboard URL",
         )[1];
 
         const result = await toolHandler({
@@ -1141,7 +1180,8 @@ describe("BugsnagClient", () => {
       it("should throw error when link is invalid", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Event Details",
+          (call: any) =>
+            call[0].title === "Get Event Details From Dashboard URL",
         )[1];
 
         await expect(toolHandler({ link: "invalid-url" })).rejects.toThrow();
@@ -1154,7 +1194,8 @@ describe("BugsnagClient", () => {
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Event Details",
+          (call: any) =>
+            call[0].title === "Get Event Details From Dashboard URL",
         )[1];
 
         await expect(
@@ -1167,7 +1208,8 @@ describe("BugsnagClient", () => {
       it("should throw error when URL is missing required parameters", async () => {
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Event Details",
+          (call: any) =>
+            call[0].title === "Get Event Details From Dashboard URL",
         )[1];
 
         await expect(

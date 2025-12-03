@@ -89,6 +89,11 @@ export interface FetchIssuesPayload
   viewId: number; // required
   isJiraIntegated?: boolean; // optional - default false
   udfFilter?: string; // only this API uses udfFilter
+  /**
+   * Prevents filter persistence in the QMetry web application UI.
+   * Always set to false to ensure filters are not saved when fetching test cases via API.
+   */
+  isFilterSaveRequired: boolean;
 }
 
 export const DEFAULT_FETCH_ISSUES_PAYLOAD: Omit<FetchIssuesPayload, "viewId"> =
@@ -98,4 +103,9 @@ export const DEFAULT_FETCH_ISSUES_PAYLOAD: Omit<FetchIssuesPayload, "viewId"> =
     ...DEFAULT_SORT,
     udfFilter: "[]",
     isJiraIntegated: false,
+    /**
+     * Prevents filter persistence in the QMetry web application UI.
+     * Always set to false to ensure filters are not saved when fetching test cases via API.
+     */
+    isFilterSaveRequired: false,
   };
