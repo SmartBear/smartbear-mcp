@@ -12,6 +12,8 @@ import {
   type ApiDefinitionParams,
   type ApiSearchParams,
   type ApiSearchResponse,
+  type CreateApiFromPromptParams,
+  type CreateApiFromPromptResponse,
   type CreateApiFromTemplateParams,
   type CreateApiFromTemplateResponse,
   type CreateApiParams,
@@ -19,7 +21,6 @@ import {
   type CreatePortalArgs,
   type CreateProductArgs,
   type CreateTableOfContentsArgs,
-  type DeleteDocumentArgs,
   type DeleteTableOfContentsArgs,
   type Document,
   type FallbackResponse,
@@ -34,6 +35,8 @@ import {
   type ScanStandardizationParams,
   type SectionsListResponse,
   type StandardizationResult,
+  type StandardizeApiParams,
+  type StandardizeApiResponse,
   type SuccessResponse,
   SwaggerAPI,
   SwaggerConfiguration,
@@ -97,10 +100,6 @@ export class SwaggerClient implements Client {
     portalId: string;
   }): Promise<Portal | FallbackResponse> {
     return this.getApi().getPortal(args.portalId);
-  }
-
-  async deletePortal(args: { portalId: string }): Promise<void> {
-    return this.getApi().deletePortal(args.portalId);
   }
 
   async updatePortal(
@@ -181,12 +180,6 @@ export class SwaggerClient implements Client {
     return this.getApi().updateDocument(args);
   }
 
-  async deleteDocument(
-    args: DeleteDocumentArgs,
-  ): Promise<SuccessResponse | FallbackResponse> {
-    return this.getApi().deleteDocument(args);
-  }
-
   async deleteTableOfContents(
     args: DeleteTableOfContentsArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
@@ -226,10 +219,22 @@ export class SwaggerClient implements Client {
     return this.getApi().getOrganizations(args);
   }
 
+  async createApiFromPrompt(
+    args: CreateApiFromPromptParams,
+  ): Promise<CreateApiFromPromptResponse | FallbackResponse> {
+    return this.getApi().createApiFromPrompt(args);
+  }
+
   async scanStandardization(
     args: ScanStandardizationParams,
   ): Promise<StandardizationResult | FallbackResponse> {
     return this.getApi().scanStandardization(args);
+  }
+
+  async standardizeApi(
+    args: StandardizeApiParams,
+  ): Promise<StandardizeApiResponse | FallbackResponse> {
+    return this.getApi().standardizeApi(args);
   }
 
   registerTools(

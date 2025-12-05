@@ -6,21 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- [QMetry] Add Automation Result Import Tools, Release/Cycle Creation, and few Bug Fixes [#264](https://github.com/SmartBear/smartbear-mcp/pull/264)
+
+### Changed
+
+- [Swagger] Removed delete document functionality as this operation is not supported by the Portal API
+- [Swagger] Removed delete portal functionality as this operation is not allowed via MCP
+
+## [0.12.0] - 2025-12-03
 
 ### Added
 
 - [Zephyr] Added a tool for retrieving Environments [#243](https://github.com/SmartBear/smartbear-mcp/pull/243)
 - [Zephyr] Added a tool for retrieving a list of Test Executions [#213](https://github.com/SmartBear/smartbear-mcp/pull/213)
+- [Swagger] Added `create_api_from_prompt` tool for generating API definitions from natural language descriptions using SmartBear AI, with automatic governance and standardization [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
+- [Swagger] Added `standardize_api` tool for scanning and automatically fixing API definitions to comply with governance and standardization rules using SmartBear AI [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
 - [BugSnag] Added tools for querying performance data and managing network grouping rules: List/Get Span Groups, List Spans, Get Trace, List Trace Fields, Get/Set Network Endpoint Groupings [#253](https://github.com/SmartBear/smartbear-mcp/pull/253)
 - Added --version command line argument to display the current version [#258](https://github.com/SmartBear/smartbear-mcp/pull/258)
+- [QMetry] Add Automation Result Import Tools, Release/Cycle Creation, and few Bug Fixes [#264](https://github.com/SmartBear/smartbear-mcp/pull/264)
+- [QMetry] Add Contextual Metadata to Tools for Better LLM Prompt Handling [#270](https://github.com/SmartBear/smartbear-mcp/pull/270)
 
 ### Changed
+
 - [BugSnag] Removed event threads from Get Error response and introduced Get Event (by ID) [#263](https://github.com/SmartBear/smartbear-mcp/pull/263)
 
 ## [0.11.0] - 2025-11-20
 
 ### Added
+
 - [Zephyr] Added a tool for retrieving Test Cycle [#210](https://github.com/SmartBear/smartbear-mcp/pull/210)
 - [Zephyr] Added a tool for retrieving statuses [#212](https://github.com/SmartBear/smartbear-mcp/pull/212)
 - [Zephyr] Added a tool for retrieving Test Cases [#230](https://github.com/SmartBear/smartbear-mcp/pull/230)
@@ -30,16 +42,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool for retrieving a Test Execution [#239](https://github.com/SmartBear/smartbear-mcp/pull/239)
 
 ### Changed
+
 - [API Hub / Swagger] Rebranding from API Hub to Swagger [#233](https://github.com/SmartBear/smartbear-mcp/pull/233). **Note:** The environment variable `API_HUB_API_KEY` has been replaced with `SWAGGER_API_KEY`. The old variable name will still be supported for some time for backward compatibility.
 
 ## [0.10.0] - 2025-11-11
 
 ### Added
+
 - [Common] Add HTTP transport support (StreamableHTTP & legacy SSE) [#196](https://github.com/SmartBear/smartbear-mcp/pull/196)
 - [Common] Add centralized client registry system [#196](https://github.com/SmartBear/smartbear-mcp/pull/196)
 - [Common] Add common cache service [#196](https://github.com/SmartBear/smartbear-mcp/pull/196)
 
 ### Changed
+
 - [Common] Refactor client authentication [#196](https://github.com/SmartBear/smartbear-mcp/pull/196)
 - [Qmetry] New QMetry MCP Server Tools Added, Refactored the existing tools structure [#217](https://github.com/SmartBear/smartbear-mcp/pull/217)
 - [Collaborator] Initial Collaborator client implementation [#223](https://github.com/SmartBear/smartbear-mcp/pull/223)
@@ -47,15 +62,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.0] - 2025-10-22
 
 ### Added
+
 - [Qmetry] Added 4 New QMetry tools to enhance test management capabilities [#194](https://github.com/SmartBear/smartbear-mcp/pull/194)
 - [Qmetry] Implement comprehensive test case tooling with enhanced error handling [#193](https://github.com/SmartBear/smartbear-mcp/pull/193)
-- [API Hub] Add `scan_api_standardization` tool for validating API definitions against organization standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
+- [API Hub] Add `scan_api_standardization` tool for validating API definitions against governance and standardization rules [#176](https://github.com/SmartBear/smartbear-mcp/pull/176)
 
 ## [0.8.0] - 2025-10-13
 
 ### Added
-- [API Hub] Add `create_or_update_api` tool for creating or updating new API definitions in API Hub for Design
-- [API Hub] Add `create_api_from_template` tool for creating new API definitions from templates in API Hub for Design
+
+- [API Hub] Add `create_or_update_api` tool for creating or updating new API definitions in API Hub for Design [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
+- [API Hub] Add `create_api_from_template` tool for creating new API definitions from templates in API Hub for Design [#257](https://github.com/SmartBear/smartbear-mcp/pull/257)
 - [Zephyr] Add Zephyr capabilities to MCP [#171](https://github.com/SmartBear/smartbear-mcp/pull/171)
 
 ### Changed
@@ -65,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.0] - 2025-10-02
 
 ### Added
+
 - [Qmetry] Add QMetry Test Management capabilities to MCP [#152](https://github.com/SmartBear/smartbear-mcp/pull/152)
 - [API Hub] Add `search_apis_and_domains` tool for discovering APIs and Domains in API Hub for Design [#154](https://github.com/SmartBear/smartbear-mcp/pull/154)
 - [API Hub] Add `get_api_definition` tool for fetching resolved API definitions from API Hub for Design [#154](https://github.com/SmartBear/smartbear-mcp/pull/154)

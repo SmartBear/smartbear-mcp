@@ -6,7 +6,6 @@ import type {
   CallToolResult,
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
-import { trace } from "@opentelemetry/api";
 import {
   ZodAny,
   ZodArray,
@@ -73,7 +72,7 @@ export class SmartBearMcpServer extends McpServer {
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
-            const executeTool = async () => {
+            try {
               if (!client.isConfigured()) {
                 throw new ToolError(
                   `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
@@ -85,15 +84,14 @@ export class SmartBearMcpServer extends McpServer {
                 this.addStructuredContentAsText(result);
               }
               return result;
-            };
-
-            const handleError = (e: unknown) => {
+            } catch (e) {
+              // ToolErrors should not be reported to BugSnag
               if (e instanceof ToolError) {
                 return {
                   isError: true,
                   content: [
                     {
-                      type: "text" as const,
+                      type: "text",
                       text: `Error executing ${toolTitle}: ${e.message}`,
                     },
                   ],
@@ -105,20 +103,7 @@ export class SmartBearMcpServer extends McpServer {
                 });
               }
               throw e;
-            };
-
-            const tracer = trace.getTracer("smartbear-mcp");
-            return tracer.startActiveSpan(toolName, async (span) => {
-              span.setAttribute("bugsnag.span.first_class", true);
-              try {
-                return await executeTool();
-              } catch (e) {
-                span.recordException(e as Error);
-                return handleError(e);
-              } finally {
-                span.end();
-              }
-            });
+            }
           },
         );
       },
