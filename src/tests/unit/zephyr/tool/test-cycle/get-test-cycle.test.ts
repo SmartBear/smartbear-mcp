@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getTestCycleParams,
   getTestCycleResponse,
@@ -6,8 +6,17 @@ import {
 import { GetTestCycle } from "../../../../../zephyr/tool/test-cycle/get-test-cycle.js";
 
 describe("GetTestCycle", () => {
-  const mockApiClient = { get: vi.fn() };
-  const instance = new GetTestCycle(mockApiClient as any);
+  let mockClient: any;
+  let instance: GetTestCycle;
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        get: vi.fn(),
+      }),
+    };
+    instance = new GetTestCycle(mockClient as any);
+  });
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Test Cycle");
@@ -83,22 +92,24 @@ describe("GetTestCycle", () => {
         ],
       },
     };
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCycleIdOrKey: "TEST-R1" };
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/testcycles/TEST-R1");
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/testcycles/TEST-R1",
+    );
     expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should handle apiClient.get throwing error", async () => {
-    mockApiClient.get.mockRejectedValueOnce(new Error("API error"));
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
       instance.handle({ testCycleIdOrKey: "1" }, {}),
     ).rejects.toThrow("API error");
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
-    mockApiClient.get.mockResolvedValueOnce(undefined);
+    mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
     const result = await instance.handle({ testCycleIdOrKey: "1" }, {});
     expect(result.structuredContent).toBeUndefined();
   });

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getProjectParams,
   getProjectResponse,
@@ -6,8 +6,17 @@ import {
 import { GetProject } from "../../../../../zephyr/tool/project/get-project.js";
 
 describe("GetProject", () => {
-  const mockApiClient = { get: vi.fn() };
-  const instance = new GetProject(mockApiClient as any);
+  let mockClient: any;
+  let instance: GetProject;
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        get: vi.fn(),
+      }),
+    };
+    instance = new GetProject(mockClient as any);
+  });
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Project");
@@ -27,10 +36,12 @@ describe("GetProject", () => {
       key: "PROJ",
       enabled: true,
     };
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { projectIdOrKey: "PROJ" };
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/projects/PROJ");
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/projects/PROJ",
+    );
     expect(result.structuredContent).toBe(responseMock);
   });
 
@@ -41,15 +52,15 @@ describe("GetProject", () => {
       key: "PRIV",
       enabled: true,
     };
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { projectIdOrKey: "39" }; // Pass as string
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/projects/39");
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/projects/39");
     expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should handle apiClient.get throwing error", async () => {
-    mockApiClient.get.mockRejectedValueOnce(new Error("API error"));
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
       instance.handle({ projectIdOrKey: "PROJ" }, {}),
     ).rejects.toThrow("API error");

@@ -8,7 +8,7 @@ import type { Client } from "./types.js";
 /**
  * Generate a dynamic error message listing all available clients and their required env vars
  */
-function getNoConfigErrorMessage(): string[] {
+function getNoConfigMessage(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
     messages.push(` - ${entry.name}:`);
@@ -45,13 +45,16 @@ export async function runStdioMode() {
     },
   );
   if (configuredCount === 0) {
-    const errorMessage = getNoConfigErrorMessage();
-    console.error(
-      errorMessage.length > 0
-        ? `No clients configured. Please provide valid environment variables for at least one client:\n${errorMessage.join("\n")}`
+    const message = getNoConfigMessage();
+    console.warn(
+      message.length > 0
+        ? `No clients configured. Please provide valid environment variables for at least one client:\n${message.join("\n")}`
         : "No clients support environment variable configuration.",
     );
-    process.exit(1);
+    // Add non-configured clients to server to allow listing available tools
+    for (const entry of clientRegistry.getAll()) {
+      server.addClient(entry);
+    }
   }
 
   const transport = new StdioServerTransport();

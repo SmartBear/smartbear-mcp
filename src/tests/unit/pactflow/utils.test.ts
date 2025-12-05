@@ -138,7 +138,7 @@ describe("Utility tests", () => {
     });
 
     it("Throws an error if remote spec file doesn't have a url", async () => {
-      expect(getRemoteSpecContents({})).rejects.toThrowError();
+      await expect(getRemoteSpecContents({})).rejects.toThrowError();
     });
   });
 
@@ -169,7 +169,7 @@ describe("Utility tests", () => {
     });
 
     it("Throws an error if passed invalid remoteOpenAPI document", async () => {
-      expect(
+      await expect(
         resolveOpenAPISpec({ url: "www.example.com" }),
       ).rejects.toThrowError();
     });
@@ -210,7 +210,7 @@ describe("Utility tests", () => {
       };
 
       fetchMocker.mockOnce(JSON.stringify(mockResponse));
-      expect(
+      await expect(
         resolveOpenAPISpec({
           url: "https://api.example.com/openapi.json",
           authToken: "Bearer token",

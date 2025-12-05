@@ -1,4 +1,4 @@
-import { ToolError } from "../../common/types.js";
+import { ToolError } from "../../common/tools.js";
 import type { SwaggerConfiguration } from "./configuration.js";
 import type {
   CreatePortalArgs,

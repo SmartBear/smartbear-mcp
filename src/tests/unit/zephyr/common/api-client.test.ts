@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../../common/types";
+import { ToolError } from "../../../../common/tools";
 import { ApiClient } from "../../../../zephyr/common/api-client";
 import { AuthService } from "../../../../zephyr/common/auth-service";
 

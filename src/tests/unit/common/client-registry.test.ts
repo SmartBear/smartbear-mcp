@@ -42,9 +42,67 @@ describe("ClientRegistry", () => {
       configPrefix: name,
       config: configSchema,
       configure: vi.fn().mockResolvedValue(true),
+      isConfigured: vi.fn().mockReturnValue(true),
       registerTools: vi.fn(),
     };
   }
+
+  describe("configure", () => {
+    it("configures and counts multiple clients correctly", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({ keyA: z.string() }),
+      );
+      const clientB = createMockClient(
+        "client-b",
+        z.object({ keyB: z.string() }),
+      );
+      clientRegistry.register(clientA);
+      clientRegistry.register(clientB);
+      await expect(
+        clientRegistry.configure(mockServer, () => "https://example.com"),
+      ).resolves.toBe(2);
+    });
+
+    it("doesn't count non-configured clients", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({ keyA: z.string() }),
+      );
+      const clientB = createMockClient(
+        "client-b",
+        z.object({ keyB: z.string() }),
+      );
+      clientB.isConfigured = vi.fn().mockReturnValue(false);
+      clientRegistry.register(clientA);
+      clientRegistry.register(clientB);
+      await expect(
+        clientRegistry.configure(mockServer, () => "https://example.com"),
+      ).resolves.toBe(1);
+    });
+
+    it("skips clients missing required config", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({ keyA: z.string() }),
+      );
+      clientRegistry.register(clientA);
+      await expect(
+        clientRegistry.configure(mockServer, (_, __) => null),
+      ).resolves.toBe(0);
+    });
+
+    it("doesn't skip clients missing optional config", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({ keyA: z.string().optional(), keyB: z.number().default(42) }),
+      );
+      clientRegistry.register(clientA);
+      await expect(
+        clientRegistry.configure(mockServer, (_, __) => null),
+      ).resolves.toBe(1);
+    });
+  });
 
   describe("validateAllowedEndpoint", () => {
     describe("with no MCP_ALLOWED_ENDPOINTS set", () => {

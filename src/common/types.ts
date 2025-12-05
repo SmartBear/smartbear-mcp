@@ -42,12 +42,6 @@ export interface ToolParams {
   openWorld?: boolean;
 }
 
-/**
- * Error class for tool-specific errors – these result in a response to the LLM with `isError: true`
- * and are not reported to BugSnag
- */
-export class ToolError extends Error {}
-
 export interface PromptParams {
   name: string;
   callback: any;
@@ -109,7 +103,8 @@ export interface Client {
   /**
    * Configure the client with the given server and configuration
    */
-  configure: (server: SmartBearMcpServer, config: any) => Promise<boolean>;
+  configure: (server: SmartBearMcpServer, config: any) => Promise<void>;
+  isConfigured: () => boolean;
   registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
