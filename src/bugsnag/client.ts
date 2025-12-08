@@ -325,6 +325,18 @@ export class BugsnagClient implements Client {
     return projectEvents.find((event) => event && !!event.body)?.body || null;
   }
 
+  async validateEventFields(project: Project, fields?: FilterObject) {
+    if (fields) {
+      const eventFields = await this.getProjectEventFields(project);
+      const validKeys = new Set(eventFields.map((f) => f.displayId));
+      for (const key of Object.keys(fields)) {
+        if (!validKeys.has(key)) {
+          throw new ToolError(`Invalid filter key: ${key}`);
+        }
+      }
+    }
+  }
+
   private async getInputProject(
     projectId?: unknown | string,
   ): Promise<Project> {
@@ -537,6 +549,8 @@ export class BugsnagClient implements Client {
           error: [{ type: "eq", value: params.errorId }],
           ...args.filters,
         };
+
+        await this.validateEventFields(project, filters);
 
         // Get the latest event for this error using the events endpoint with filters
         let latestEvent = null;
@@ -761,22 +775,14 @@ export class BugsnagClient implements Client {
         const params = listProjectErrorsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
 
-        // Validate filter keys against cached event fields
-        if (params.filters) {
-          const eventFields = await this.getProjectEventFields(project);
-          const validKeys = new Set(eventFields.map((f) => f.displayId));
-          for (const key of Object.keys(params.filters)) {
-            if (!validKeys.has(key)) {
-              throw new ToolError(`Invalid filter key: ${key}`);
-            }
-          }
-        }
-
         const filters: FilterObject = {
           "event.since": [{ type: "eq", value: "30d" }],
           "error.status": [{ type: "eq", value: "open" }],
           ...params.filters,
         };
+
+        // Validate filter keys against cached event fields
+        await this.validateEventFields(project, filters);
 
         const response = await this.errorsApi.listProjectErrors(
           project.id,
