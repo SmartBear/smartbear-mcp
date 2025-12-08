@@ -1,6 +1,6 @@
 {
   "name": "@smartbear/mcp",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "MCP server for interacting SmartBear Products",
   "keywords": [
     "smartbear",
@@ -49,11 +49,6 @@
   "dependencies": {
     "@bugsnag/js": "^8.2.0",
     "@modelcontextprotocol/sdk": "^1.15.0",
-    "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/auto-instrumentations-node": "^0.67.2",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.208.0",
-    "@opentelemetry/resources": "^2.2.0",
-    "@opentelemetry/sdk-node": "^0.208.0",
     "node-cache": "^5.1.2",
     "swagger-client": "^3.35.6",
     "zod": "^3",
