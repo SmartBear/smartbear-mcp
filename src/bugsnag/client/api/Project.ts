@@ -98,7 +98,11 @@ export class ProjectAPI extends BaseAPI {
    * Lists releases for a specific project.
    * GET /projects/{project_id}/release_groups
    * @param projectId The ID of the project.
-   * @param opts Options for listing releases, including filtering by release stage and visibility.
+   * @param releaseStageName The name of the release stage to filter by.
+   * @param topOnly Whether to only include top-level releases.
+   * @param visibleOnly Whether to only include visible releases.
+   * @param perPage The number of results per page.
+   * @param nextUrl Optional URL for next page (overrides other pagination params).
    * @returns A promise that resolves to an array of `ReleaseSummaryResponse` objects.
    */
   async listProjectReleaseGroups(
@@ -109,11 +113,7 @@ export class ProjectAPI extends BaseAPI {
     perPage?: number,
     nextUrl?: string,
   ): Promise<ApiResponse<Release[]>> {
-    const options = getQueryParams(nextUrl);
-    // Next links need to be used as-is to ensure results are consistent, so only the page size can be modified
-    // the others will get overridden
     if (nextUrl) {
-      options.query.per_page = perPage ? perPage.toString() : undefined;
       topOnly = undefined;
       visibleOnly = undefined;
     }
@@ -125,11 +125,20 @@ export class ProjectAPI extends BaseAPI {
       topOnly,
       visibleOnly,
       perPage,
-      undefined, // pageToken passed in through options
-      options,
+      undefined,
+      undefined,
     );
+
+    const url = new URL(
+      nextUrl ?? localVarFetchArgs.url,
+      this.configuration.basePath,
+    );
+    if (perPage) {
+      // Allow override of per page, even with nextUrl
+      url.searchParams.set("per_page", perPage.toString());
+    }
     return await this.requestArray<Release>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
       false, // Paginate results
       ProjectAPI.releaseFields,
@@ -198,13 +207,10 @@ export class ProjectAPI extends BaseAPI {
     starredOnly?: boolean,
     nextUrl?: string,
   ): Promise<ApiResponse<SpanGroup[]>> {
-    const options = getQueryParams(nextUrl);
     if (nextUrl) {
-      options.query.per_page = perPage ? perPage.toString() : undefined;
-    }
-    // Serialize filters if provided
-    if (filters) {
-      Object.assign(options.query, toUrlSearchParams(filters));
+      sort = undefined;
+      direction = undefined;
+      offset = undefined;
     }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
@@ -214,12 +220,26 @@ export class ProjectAPI extends BaseAPI {
       direction,
       perPage,
       offset,
-      undefined, // Don't pass filters to API - already serialized in options
+      undefined, // Filters are encoded separately below
       starredOnly,
-      options,
+      undefined,
     );
+    const url = new URL(
+      nextUrl ?? localVarFetchArgs.url,
+      this.configuration.basePath,
+    );
+    if (perPage) {
+      // Allow override of per page, even with nextUrl
+      url.searchParams.set("per_page", perPage.toString());
+    }
+    if (!nextUrl && filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
     return await this.requestArray<SpanGroup>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
       false, // Paginate results
     );
@@ -238,15 +258,19 @@ export class ProjectAPI extends BaseAPI {
     id: string,
     filters?: FilterObject,
   ): Promise<ApiResponse<SpanGroup>> {
-    const options: any = {};
-    if (filters) {
-      options.query = toUrlSearchParams(filters);
-    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).getProjectSpanGroup(projectId, id, undefined, options);
+    ).getProjectSpanGroup(projectId, id, undefined, undefined);
+
+    const url = new URL(localVarFetchArgs.url, this.configuration.basePath);
+    if (filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
     return await this.requestObject<SpanGroup>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
     );
   }
@@ -264,15 +288,19 @@ export class ProjectAPI extends BaseAPI {
     id: string,
     filters?: FilterObject,
   ): Promise<ApiResponse<any>> {
-    const options: any = {};
-    if (filters) {
-      options.query = toUrlSearchParams(filters);
-    }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).getProjectSpanGroupTimeline(projectId, id, undefined, options);
+    ).getProjectSpanGroupTimeline(projectId, id, undefined, undefined);
+
+    const url = new URL(localVarFetchArgs.url, this.configuration.basePath);
+    if (filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
     return await this.requestObject<any>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
     );
   }
@@ -296,9 +324,17 @@ export class ProjectAPI extends BaseAPI {
     }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
-    ).getProjectSpanGroupDistribution(projectId, id, undefined, options);
+    ).getProjectSpanGroupDistribution(projectId, id, undefined, undefined);
+
+    const url = new URL(localVarFetchArgs.url, this.configuration.basePath);
+    if (filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
     return await this.requestObject<any>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
     );
   }
@@ -324,12 +360,9 @@ export class ProjectAPI extends BaseAPI {
     perPage?: number,
     nextUrl?: string,
   ): Promise<ApiResponse<Span[]>> {
-    const options = getQueryParams(nextUrl);
     if (nextUrl) {
-      options.query.per_page = perPage ? perPage.toString() : undefined;
-    }
-    if (filters) {
-      Object.assign(options.query, toUrlSearchParams(filters));
+      sort = undefined;
+      direction = undefined;
     }
     const localVarFetchArgs = ProjectsApiFetchParamCreator(
       this.configuration,
@@ -340,10 +373,25 @@ export class ProjectAPI extends BaseAPI {
       sort,
       direction,
       perPage,
-      options,
+      undefined,
     );
+
+    const url = new URL(
+      nextUrl ?? localVarFetchArgs.url,
+      this.configuration.basePath,
+    );
+    if (perPage) {
+      // Allow override of per page, even with nextUrl
+      url.searchParams.set("per_page", perPage.toString());
+    }
+    if (!nextUrl && filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
     return await this.requestArray<Span>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
       false, // Paginate results
     );
