@@ -5,12 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
 
 ### Changed
 
 - [Swagger] Removed delete document functionality as this operation is not supported by the Portal API
 - [Swagger] Removed delete portal functionality as this operation is not allowed via MCP
+
+### Fixed
+
+- [BugSnag] Fixed an issue with filter query formatting [#277](https://github.com/SmartBear/smartbear-mcp/pull/277)
 
 ## [0.12.0] - 2025-12-03
 

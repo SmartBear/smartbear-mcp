@@ -1027,6 +1027,14 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
+        mockProjectAPI.listProjectEventFields.mockResolvedValue({
+          body: [
+            getMockEventField("error"),
+            getMockEventField("error.status"),
+            getMockEventField("user.email"),
+            getMockEventField("event.since"),
+          ],
+        });
         mockErrorAPI.viewErrorOnProject.mockResolvedValue({
           body: mockError,
         });
@@ -1065,6 +1073,14 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
+        mockProjectAPI.listProjectEventFields.mockResolvedValue({
+          body: [
+            getMockEventField("error"),
+            getMockEventField("error.status"),
+            getMockEventField("user.email"),
+            getMockEventField("event.since"),
+          ],
+        });
         mockErrorAPI.viewErrorOnProject.mockResolvedValue({
           body: mockError,
         });
@@ -1334,7 +1350,10 @@ describe("BugsnagClient", () => {
 
       it("should validate filter keys against cached event fields", async () => {
         const mockEventFields: Record<string, EventField[]> = {
-          "proj-1": [getMockEventField("error.status")],
+          "proj-1": [
+            getMockEventField("error.status"),
+            getMockEventField("event.since"),
+          ],
         };
         const filters = {
           "invalid.field": [{ type: "eq" as const, value: "test" }],
@@ -1398,6 +1417,9 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(null);
+        mockProjectAPI.listProjectEventFields.mockResolvedValue({
+          body: [],
+        });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
