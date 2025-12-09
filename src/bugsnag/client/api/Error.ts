@@ -187,14 +187,26 @@ export class ErrorAPI extends BaseAPI {
     ).listPivotsOnAnError(
       projectId,
       errorId,
-      undefined,
+      undefined, // filters are encoded separately below
       summarySize,
       pivots,
-      perPage,
-      { query: filters },
+      undefined, // perPage handled in url search params below
     );
+
+    const url = new URL(localVarFetchArgs.url, this.configuration.basePath);
+    if (perPage) {
+      // Allow override of per page, even with nextUrl
+      url.searchParams.set("per_page", perPage.toString());
+    }
+    if (filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
+
     return await this.requestArray<PivotApiView>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
       false, // Paginate results
     );
