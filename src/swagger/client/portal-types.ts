@@ -140,7 +140,7 @@ export const CreateTableOfContentsArgsSchema = z.object({
       },
       {
         message:
-          "URL must end with '/swagger.json' when content type is 'apiUrl'",
+          "URL must end with '/swagger.json' or '/swagger.yaml' when content type is 'apiUrl'",
         path: ["url"],
       },
     ),
