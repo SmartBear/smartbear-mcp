@@ -8,7 +8,7 @@ COPY package.json package-lock.json tsconfig.json ./
 
 RUN --mount=type=cache,target=/root/.npm npm ci
 
-RUN npm run build
+RUN npm run build:production
 
 FROM node:22-alpine AS release
 

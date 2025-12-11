@@ -25,7 +25,6 @@ export default defineConfig({
         "src/reflect/client.ts",
         // Utility modules
         "src/common/bugsnag.ts",
-        "src/common/telemetry.ts",
         "src/common/types.ts",
         "src/pactflow/client/prompts.ts",
         "src/pactflow/client/ai.ts",
