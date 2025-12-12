@@ -1,7 +1,8 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Span } from "@opentelemetry/api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
-import Bugsnag from "../../../common/bugsnag.js";
+import Bugsnag, { getTracer } from "../../../common/bugsnag.js";
 import { SmartBearMcpServer } from "../../../common/server.js";
 import { ToolError } from "../../../common/tools.js";
 
@@ -10,6 +11,18 @@ vi.mock("../../../common/bugsnag.js", () => ({
   default: {
     notify: vi.fn(),
   },
+  getTracer: vi.fn(() => {
+    return {
+      startActiveSpan: vi.fn((_name, callback) => {
+        const mockSpan = {
+          end: vi.fn(),
+          setAttribute: vi.fn(),
+          recordException: vi.fn(),
+        } as unknown as Span;
+        return callback(mockSpan);
+      }),
+    };
+  }),
 }));
 
 describe("SmartBearMcpServer", () => {
@@ -65,7 +78,10 @@ describe("SmartBearMcpServer", () => {
 
       // Get the register function passed from the server and execute it with test tool details
       const registerFn = mockClient.registerTools.mock.calls[0][0];
-      const registerCbMock = vi.fn();
+      const registerCbMock = vi.fn().mockResolvedValue({
+        isError: false,
+        structuredContent: {},
+      });
       registerFn(
         {
           title: "Test Tool",
@@ -105,7 +121,7 @@ describe("SmartBearMcpServer", () => {
       });
 
       // Get the wrapper function that will execute the tool and call it
-      registerToolParams[2]();
+      await registerToolParams[2]();
 
       expect(registerCbMock).toHaveBeenCalledOnce();
       expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
@@ -134,7 +150,7 @@ describe("SmartBearMcpServer", () => {
 
       expect(toolResponse.isError).toBe(true);
       expect(toolResponse.content?.[0].text).toBe(
-        "Error executing Test Product: Test Tool: The tool is not configured - configuration options for Test Product are missing or invalid.",
+        "Error executing test_product_test_tool: The tool is not configured - configuration options for Test Product are missing or invalid.",
       );
       expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
     });
@@ -310,7 +326,7 @@ describe("SmartBearMcpServer", () => {
         content: [
           {
             type: "text",
-            text: "Error executing Test Product: Test Tool: Tool error from registerCbMock",
+            text: "Error executing test_product_test_tool: Tool error from registerCbMock",
           },
         ],
       });
@@ -407,7 +423,7 @@ describe("SmartBearMcpServer", () => {
 
       // Assert some of the details
       const registerResourceParams = superRegisterResourceMock.mock.calls[0];
-      expect(registerResourceParams[0]).toBe("test_resource");
+      expect(registerResourceParams[0]).toBe("test_product_test_resource");
       expect(registerResourceParams[1].uriTemplate.template).toBe(
         "test_product://test_resource/{identifier}",
       );
@@ -452,15 +468,19 @@ describe("SmartBearMcpServer", () => {
 
       // Get the wrapper function that will execute the resource and call it
       const registerResourceParams = superRegisterResourceMock.mock.calls[0];
-      await expect(registerResourceParams[3]()).rejects.toThrow(
-        "Test error from registerCbMock",
-      );
+
+      expect(await registerResourceParams[3]()).toEqual({
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: "Error executing test_product_test_resource: Test error from registerCbMock",
+          },
+        ],
+      });
 
       expect(registerCbMock).toHaveBeenCalledOnce();
-      expect(vi.mocked(Bugsnag.notify)).toHaveBeenCalledExactlyOnceWith(
-        expect.any(Error),
-        expect.any(Function),
-      );
+      expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
     });
 
     it("should register tool with inputSchema and outputSchema, and handle structuredContent", async () => {

@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import { getUserAgent } from "../common/config.js";
 import type { SmartBearMcpServer } from "../common/server.js";
 import { ToolError } from "../common/tools.js";
 import type {
@@ -50,7 +49,7 @@ export class ReflectClient implements Client {
     this.headers = {
       "X-API-KEY": `${config.api_token}`,
       "Content-Type": "application/json",
-      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      "User-Agent": getUserAgent(),
     };
   }
 

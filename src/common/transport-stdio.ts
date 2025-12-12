@@ -1,7 +1,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { clientRegistry } from "./client-registry.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
+import { getServerName, getServerVersion } from "./config.js";
 import { SmartBearMcpServer } from "./server.js";
 import type { Client } from "./types.js";
 
@@ -30,7 +30,7 @@ function getNoConfigMessage(): string[] {
  */
 export async function runStdioMode() {
   if (process.argv.includes("--version")) {
-    console.log(`${MCP_SERVER_NAME}: v${MCP_SERVER_VERSION}`);
+    console.log(`${getServerName()}: v${getServerVersion()}`);
     process.exit(0);
   }
 

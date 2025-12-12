@@ -1,4 +1,6 @@
 import { ZodOptional, ZodString, type ZodType } from "zod";
+import { getTracer } from "./bugsnag.js";
+import { getAllowedEndpoints, getEnabledClients } from "./config.js";
 import type { SmartBearMcpServer } from "./server.js";
 import type { Client } from "./types.js";
 
@@ -16,21 +18,7 @@ class ClientRegistry {
    * If set, should be comma-separated list of client names (case-insensitive)
    */
   constructor() {
-    const enabledClientsEnv = process.env.MCP_CLIENTS?.trim();
-
-    if (!enabledClientsEnv) {
-      // Empty or not set = all clients enabled
-      this.enabledClients = null;
-      return;
-    }
-
-    // Parse comma-separated list and normalize to lowercase for comparison
-    this.enabledClients = new Set(
-      enabledClientsEnv
-        .split(",")
-        .map((name) => name.trim().toLowerCase())
-        .filter((name) => name.length > 0),
-    );
+    this.enabledClients = getEnabledClients();
   }
 
   /**
@@ -56,7 +44,7 @@ class ClientRegistry {
     }
     if (zodType instanceof ZodString) {
       if ((zodType as ZodString).isURL) {
-        const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
+        const allowedEndpoints = getAllowedEndpoints();
         if (allowedEndpoints) {
           for (const endpoint of allowedEndpoints) {
             const trimmedEndpoint = endpoint.trim();
@@ -116,7 +104,9 @@ class ClientRegistry {
     getConfigValue: (client: Client, key: string) => string | null,
   ): Promise<number> {
     let configuredCount = 0;
+    const tracer = getTracer();
     entryLoop: for (const entry of this.getAll()) {
+      const span = tracer.startSpan(`configure client - ${entry.name}`);
       const config: Record<string, string> = {};
       for (const configKey of Object.keys(entry.config.shape)) {
         const value = getConfigValue(entry, configKey);
@@ -133,6 +123,7 @@ class ClientRegistry {
         server.addClient(entry);
         configuredCount++;
       }
+      span.end();
     }
     return configuredCount;
   }

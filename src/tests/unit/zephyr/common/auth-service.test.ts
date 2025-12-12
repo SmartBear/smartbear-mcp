@@ -1,6 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../../common/info";
+import { describe, expect, it, vi } from "vitest";
 import { AuthService } from "../../../../zephyr/common/auth-service";
+
+vi.mock("../../../../common/config.js", async () => {
+  const actual = await vi.importActual("../../../../common/config.js");
+  return {
+    ...actual,
+    getUserAgent: vi.fn().mockReturnValue("smartbear-mcp-server/1.0.0"),
+  };
+});
 
 describe("AuthService", () => {
   it("should trim and store the bearer token", () => {
@@ -15,7 +22,7 @@ describe("AuthService", () => {
     expect(headers).toEqual({
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      "User-Agent": `smartbear-mcp-server/1.0.0`,
       "zscale-source": "smartbear-mcp",
     });
   });

@@ -1,4 +1,4 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info.js";
+import { getUserAgent } from "../../common/config.js";
 import { QMETRY_DEFAULTS } from "../config/constants.js";
 import { QMETRY_PATHS } from "../config/rest-endpoints.js";
 import type { ImportAutomationResultsPayload } from "../types/automation.js";
@@ -138,7 +138,7 @@ export async function importAutomationResults(
   const headers: Record<string, string> = {
     apikey: token,
     project: finalPayload.projectID || project || QMETRY_DEFAULTS.PROJECT_KEY,
-    "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+    "User-Agent": getUserAgent(),
     // Note: Content-Type will be set automatically by fetch for FormData
   };
 

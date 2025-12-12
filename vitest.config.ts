@@ -30,6 +30,7 @@ export default defineConfig({
         "src/pactflow/client/ai.ts",
         "src/pactflow/client/base.ts",
         "scripts/post-coverage-comment.js",
+        "scripts/bump.js",
       ],
       // Coverage thresholds for business logic only
       thresholds: {

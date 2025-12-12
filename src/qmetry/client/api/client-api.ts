@@ -1,4 +1,4 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
+import { getUserAgent } from "../../../common/config.js";
 import { QMETRY_DEFAULTS } from "../../config/constants.js";
 import type { RequestOptions } from "../../types/common.js";
 import {
@@ -28,7 +28,7 @@ export async function qmetryRequest<T>({
   const headers: Record<string, string> = {
     apikey: token,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
-    "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+    "User-Agent": getUserAgent(),
   };
   if (body) {
     headers["Content-Type"] = "application/json";

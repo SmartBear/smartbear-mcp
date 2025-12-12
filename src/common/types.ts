@@ -105,6 +105,10 @@ export interface Client {
    */
   configure: (server: SmartBearMcpServer, config: any) => Promise<void>;
   isConfigured: () => boolean;
+  /**
+   * @returns an identifier for the user/customer for use in telemetry
+   */
+  getUserId?: () => string | null;
   registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,

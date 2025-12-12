@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { CacheService } from "../common/cache.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import { getUserAgent } from "../common/config.js";
 import type { SmartBearMcpServer } from "../common/server.js";
 import { ToolError } from "../common/tools.js";
 import type {
@@ -115,7 +115,7 @@ export class BugsnagClient implements Client {
     const apiConfig = new Configuration({
       apiKey: `token ${config.auth_token}`,
       headers: {
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": getUserAgent(),
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",
@@ -384,6 +384,10 @@ export class BugsnagClient implements Client {
       meetsTargetStability,
       meetsCriticalStability,
     };
+  }
+
+  getUserId(): string | null {
+    return this.cache?.get<Organization>(cacheKeys.ORG)?.id || null;
   }
 
   registerTools(
