@@ -1,4 +1,4 @@
-import { ToolError } from "../../common/types.js";
+import { ToolError } from "../../common/tools.js";
 import { AuthService } from "./auth-service.js";
 
 export class ApiClient {

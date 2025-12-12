@@ -128,7 +128,8 @@ class ClientRegistry {
           continue entryLoop; // Skip configuring this client - missing required config
         }
       }
-      if (await entry.configure(server, config)) {
+      await entry.configure(server, config);
+      if (entry.isConfigured()) {
         server.addClient(entry);
         configuredCount++;
       }
