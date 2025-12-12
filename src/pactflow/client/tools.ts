@@ -49,7 +49,7 @@ export const TOOLS: PactflowToolParams[] = [
     title: "Get Provider States",
     summary: "Retrieve the states of a specific provider",
     purpose:
-      "A provider state in Pact defines the specific preconditions that must be met on the provider side before a consumer–provider interaction can be tested. It sets up the provider in the right context—such as ensuring a particular user or record exists—so that the provider can return the response the consumer expects. This makes contract tests reliable, repeatable, and isolated by injecting or configuring the necessary data and conditions directly into the provider before each test runs.",
+      "A provider state in Pact defines the specific preconditions that must be met on the provider side before a consumer-provider interaction can be tested. It sets up the provider in the right context—such as ensuring a particular user or record exists—so that the provider can return the response the consumer expects. This makes contract tests reliable, repeatable, and isolated by injecting or configuring the necessary data and conditions directly into the provider before each test runs.",
     parameters: [
       {
         name: "provider",
@@ -103,6 +103,24 @@ export const TOOLS: PactflowToolParams[] = [
       "Provide detailed error context when PactFlow AI features are unavailable due to account limitations",
     ],
     handler: "checkAIEntitlements",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Get Metrics",
+    summary: "Fetch metrics across the entire workspace",
+    purpose:
+      "Fetch metrics across the workspace. Use this to get an overview of contract testing usage, resource consumption and account-wide statistics.",
+    inputSchema: z.object({}),
+    handler: "getMetrics",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Get Team Metrics",
+    summary: "Fetch metrics for all teams",
+    purpose:
+      "Fetch metrics for all teams within PactFlow. Use this to get an overview of team-specific contract testing usage, resource consumption and usage statistics.",
+    inputSchema: z.object({}),
+    handler: "getTeamMetrics",
     clients: ["pactflow"],
   },
 ];
