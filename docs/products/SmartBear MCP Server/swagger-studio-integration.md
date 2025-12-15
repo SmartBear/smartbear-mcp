@@ -94,6 +94,15 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 
 To use Swagger Studio tools, you need to configure the `SWAGGER_API_KEY` environment variable with your Swagger API token.
 
+### On-Premise Installations
+
+If you're using an on-premise Swagger Studio installation, you also need to configure the following environment variables to point to your custom API endpoints:
+
+-   `SWAGGER_PORTAL_BASE_PATH` - Base path for Portal API requests (e.g., `https://your-domain/portal-api/v1`)
+-   `SWAGGER_REGISTRY_BASE_PATH` - Base path for Registry API requests (e.g., `https://your-domain/registry-api`)
+
+These variables are optional for cloud-based Swagger Studio users, as the default values point to the public Swagger cloud endpoints.
+
 ## Common Use Cases
 
 1. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your Swagger Studio.

@@ -75,6 +75,8 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
         "SWAGGER_API_KEY": "${input:swagger_api_key}",
+        "SWAGGER_PORTAL_BASE_PATH": "${input:swagger_portal_base_path}",
+        "SWAGGER_REGISTRY_BASE_PATH": "${input:swagger_registry_base_path}",
         "PACT_BROKER_BASE_URL": "${input:pact_broker_base_url}",
         "PACT_BROKER_TOKEN": "${input:pact_broker_token}",
         "PACT_BROKER_USERNAME": "${input:pact_broker_username}",
@@ -113,6 +115,18 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
          "type": "promptString",
          "description": "Swagger API Key - leave blank to disable Swagger tools",
          "password": true
+      },
+      {
+         "id": "swagger_portal_base_path",
+         "type": "promptString",
+         "description": "Swagger Portal API base path - only needed for on-premise installations (leave blank for cloud)",
+         "password": false
+      },
+      {
+         "id": "swagger_registry_base_path",
+         "type": "promptString",
+         "description": "Swagger Registry API base path - only needed for on-premise installations (leave blank for cloud)",
+         "password": false
       },
       {
          "id": "pact_broker_base_url",
@@ -203,6 +217,8 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "BUGSNAG_PROJECT_API_KEY": "your_project_api_key",
         "REFLECT_API_TOKEN": "your_reflect_token",
         "SWAGGER_API_KEY": "your_swagger_key",
+        "SWAGGER_PORTAL_BASE_PATH": "https://your-onprem-portal-api/v1",
+        "SWAGGER_REGISTRY_BASE_PATH": "https://your-onprem-registry-api",
         "PACT_BROKER_BASE_URL": "your_pactflow_or_pactbroker_base_url",
         "PACT_BROKER_TOKEN": "your_pactflow_token",
         "PACT_BROKER_USERNAME": "your_pact_broker_username",

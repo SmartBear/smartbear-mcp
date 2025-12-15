@@ -53,6 +53,14 @@ import type {
 
 const ConfigurationSchema = z.object({
   api_key: z.string().describe("Swagger API key for authentication"),
+  portal_base_path: z
+    .string()
+    .optional()
+    .describe("Base path for Portal API requests (optional)"),
+  registry_base_path: z
+    .string()
+    .optional()
+    .describe("Base path for Registry API requests (optional)"),
 });
 
 // Tool definitions for API Hub API client
@@ -70,7 +78,11 @@ export class SwaggerClient implements Client {
     _cache?: any,
   ): Promise<void> {
     this.api = new SwaggerAPI(
-      new SwaggerConfiguration({ token: config.api_key }),
+      new SwaggerConfiguration({
+        token: config.api_key,
+        portalBasePath: config.portal_base_path,
+        registryBasePath: config.registry_base_path,
+      }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
   }
