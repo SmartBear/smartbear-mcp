@@ -24,9 +24,9 @@ import {
   type ZodTypeAny,
   ZodUnion,
 } from "zod";
-import Bugsnag from "../common/bugsnag.js";
+import Bugsnag, { getTracer } from "../common/bugsnag.js";
 import { CacheService } from "./cache.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
+import { getServerName, getServerVersion } from "./config.js";
 import { ToolError } from "./tools.js";
 import type { Client, ToolParams } from "./types.js";
 
@@ -36,8 +36,8 @@ export class SmartBearMcpServer extends McpServer {
   constructor() {
     super(
       {
-        name: MCP_SERVER_NAME,
-        version: MCP_SERVER_VERSION,
+        name: getServerName(),
+        version: getServerVersion(),
       },
       {
         capabilities: {
@@ -58,52 +58,72 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   addClient(client: Client): void {
+    const executeWithInstrumentation = async (name: string, tool: any) => {
+      return await getTracer().startActiveSpan(name, async (span) => {
+        span.setAttribute("bugsnag.span.first_class", true);
+        span.setAttribute("mcp.client", client.name);
+        span.setAttribute("mcp.tool", name);
+        span.setAttribute(
+          "mcp.organization",
+          client.getUserId?.() || "unknown",
+        );
+        try {
+          if (!client.isConfigured()) {
+            throw new ToolError(
+              `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
+            );
+          }
+          return await tool();
+        } catch (e) {
+          span.recordException(e as Error);
+          // ToolErrors are expected errors from tool execution - return these to the user
+          // Otherwise report to Bugsnag as unhandled exceptions
+          if (e instanceof ToolError) {
+            return {
+              isError: true,
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Error executing ${name}: ${e.message}`,
+                },
+              ],
+            };
+          } else {
+            Bugsnag.notify(e as unknown as Error, (event) => {
+              event.addMetadata("app", {
+                tool: name,
+                client: client.name,
+              });
+              event.unhandled = true;
+              event.setUser(client.getUserId?.() || undefined);
+            });
+            throw e;
+          }
+        } finally {
+          span.end();
+        }
+      });
+    };
+
     client.registerTools(
       (params, cb) => {
-        const toolName = `${client.toolPrefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
-        const toolTitle = `${client.name}: ${params.title}`;
+        const toolName = this.getToolName(client, params.title);
         return super.registerTool(
           toolName,
           {
-            title: toolTitle,
-            description: this.getDescription(params),
+            title: `${client.name}: ${params.title}`,
+            description: this.getToolDescription(params),
             inputSchema: this.getInputSchema(params),
             outputSchema: this.getOutputSchema(params),
-            annotations: this.getAnnotations(toolTitle, params),
+            annotations: this.getAnnotations(client, params),
           },
           async (args: any, extra: any) => {
-            try {
-              if (!client.isConfigured()) {
-                throw new ToolError(
-                  `The tool is not configured - configuration options for ${client.name} are missing or invalid.`,
-                );
-              }
+            return await executeWithInstrumentation(toolName, async () => {
               const result = await cb(args, extra);
-              if (result) {
-                this.validateCallbackResult(result, params);
-                this.addStructuredContentAsText(result);
-              }
+              this.validateCallbackResult(result, params);
+              this.addStructuredContentAsText(result);
               return result;
-            } catch (e) {
-              // ToolErrors should not be reported to BugSnag
-              if (e instanceof ToolError) {
-                return {
-                  isError: true,
-                  content: [
-                    {
-                      type: "text",
-                      text: `Error executing ${toolTitle}: ${e.message}`,
-                    },
-                  ],
-                };
-              } else {
-                Bugsnag.notify(e as unknown as Error, (event) => {
-                  event.addMetadata("app", { tool: toolName });
-                  event.unhandled = true;
-                });
-              }
-              throw e;
-            }
+            });
           },
         );
       },
@@ -114,23 +134,20 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       client.registerResources((name, path, cb) => {
-        const url = `${client.toolPrefix}://${name}/${path}`;
+        const templateUrl = `${client.toolPrefix}://${name}/${path}`;
         return super.registerResource(
-          name,
-          new ResourceTemplate(url, {
-            list: undefined,
-          }),
-          {},
+          this.getToolName(client, name),
+          new ResourceTemplate(templateUrl, { list: undefined }),
+          {
+            title: name,
+          },
           async (url: any, variables: any, extra: any) => {
-            try {
-              return await cb(url, variables, extra);
-            } catch (e) {
-              Bugsnag.notify(e as unknown as Error, (event) => {
-                event.addMetadata("app", { resource: name, url: url });
-                event.unhandled = true;
-              });
-              throw e;
-            }
+            return await executeWithInstrumentation(
+              this.getToolName(client, name),
+              async () => {
+                return await cb(url, variables, extra);
+              },
+            );
           },
         );
       });
@@ -165,12 +182,9 @@ export class SmartBearMcpServer extends McpServer {
     }
   }
 
-  private getAnnotations(
-    toolTitle: string,
-    params: ToolParams,
-  ): ToolAnnotations {
+  private getAnnotations(client: Client, params: ToolParams): ToolAnnotations {
     const annotations = {
-      title: toolTitle,
+      title: `${client.name}: ${params.title}`,
       readOnlyHint: params.readOnly ?? true,
       destructiveHint: params.destructive ?? false,
       idempotentHint: params.idempotent ?? true,
@@ -214,7 +228,11 @@ export class SmartBearMcpServer extends McpServer {
     return this.schemaToRawShape(params.outputSchema);
   }
 
-  private getDescription(params: ToolParams): string {
+  private getToolName(client: Client, name: string): string {
+    return `${client.toolPrefix}_${name.replace(/\s+/g, "_").toLowerCase()}`;
+  }
+
+  private getToolDescription(params: ToolParams): string {
     const {
       summary,
       useCases,

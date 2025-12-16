@@ -15,7 +15,6 @@ import type {
 } from "../../../bugsnag/client/api/index.js";
 import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
 import { BugsnagClient } from "../../../bugsnag/client.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
 import { ToolError } from "../../../common/tools.js";
 import {
   getMockError,
@@ -90,6 +89,14 @@ vi.mock("../../../common/bugsnag.js", () => ({
     notify: vi.fn(),
   },
 }));
+
+vi.mock("../../../common/config.js", async () => {
+  const actual = await vi.importActual("../../../common/config.js");
+  return {
+    ...actual,
+    getUserAgent: vi.fn().mockReturnValue("smartbear-mcp-server/1.0.0"),
+  };
+});
 
 // Mock console methods to prevent noisy test output and allow verification
 const mockConsole = {
@@ -188,7 +195,7 @@ describe("BugsnagClient", () => {
           basePath: "https://api.bugsnag.smartbear.com",
           apiKey: "token test-token",
           headers: expect.objectContaining({
-            "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+            "User-Agent": "smartbear-mcp-server/1.0.0",
             "Content-Type": "application/json",
             "X-Bugsnag-API": "true",
             "X-Version": "2",
@@ -514,7 +521,7 @@ describe("BugsnagClient", () => {
 
       const configCall = MockedConfiguration.mock.calls[0][0];
       expect(configCall?.headers).toEqual({
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": "smartbear-mcp-server/1.0.0",
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",

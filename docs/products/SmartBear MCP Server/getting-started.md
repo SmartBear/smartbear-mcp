@@ -68,7 +68,7 @@ The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its ow
 
 ## Configure Environment Variables
 
-The following environment variables based on which SmartBear hubs you want to access:
+The following environment variables based on which SmartBear products you want to access:
 
 ```shell
 # Required for BugSnag tools
@@ -91,9 +91,6 @@ export PACT_BROKER_TOKEN=your-pactflow-api-token
 export PACT_BROKER_USERNAME=your-username
 export PACT_BROKER_PASSWORD=your-password
 
-# Optional: Enable error reporting for the MCP server itself
-export MCP_SERVER_BUGSNAG_API_KEY=your-monitoring-api-key
-
 # Required for QMetry tools
 export QMETRY_API_KEY=your-qmetry_api_key
 
@@ -106,8 +103,6 @@ export ZEPHYR_API_TOKEN="your-zephyr-api-token"
 export ZEPHYR_BASE_URL="https://api.zephyrscale.smartbear.com/v2"
 
 ```
-
-> ⚠️ The `MCP_SERVER_BUGSNAG_API_KEY` is used for monitoring the MCP server itself and should be different from your main application's API key.
 
 ## MCP Host Configuration
 
@@ -460,6 +455,10 @@ To run the built server locally in VS Code, add the following configuration to 
 }
 
 ```
+
+### BugSnag instrumentation
+
+The MCP server includes built-in BugSnag instrumentation to monitor its own health and performance. To disable this, or send it to your own dashboard, set the `MCP_SERVER_BUGSNAG_API_KEY` environment variable to an empty string or a different BugSnag API key. This key should be different from the one used for your main application to avoid mixing error reports.
 
 ### Testing with MCP Inspector
 

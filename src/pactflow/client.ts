@@ -1,7 +1,7 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import z from "zod";
 
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import { getUserAgent } from "../common/config.js";
 import type { SmartBearMcpServer } from "../common/server.js";
 import { ToolError } from "../common/tools.js";
 import type {
@@ -77,7 +77,7 @@ export class PactflowClient implements Client {
       this.headers = {
         Authorization: `Bearer ${config.token}`,
         "Content-Type": "application/json",
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": getUserAgent(),
       };
       this._clientType = "pactflow";
     } else if (
@@ -88,7 +88,7 @@ export class PactflowClient implements Client {
       this.headers = {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
         "Content-Type": "application/json",
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": getUserAgent(),
       };
       this._clientType = "pact_broker";
     } else {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
+import { getUserAgent } from "../common/config.js";
 import type { SmartBearMcpServer } from "../common/server.js";
 import type {
   Client,
@@ -72,7 +72,7 @@ export class SwaggerClient implements Client {
   ): Promise<void> {
     this.api = new SwaggerAPI(
       new SwaggerConfiguration({ token: config.api_key }),
-      `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      getUserAgent(),
     );
   }
 
