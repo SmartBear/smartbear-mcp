@@ -5,6 +5,7 @@ WORKDIR /app
 
 COPY src/ ./src/
 COPY package.json package-lock.json tsconfig.json ./
+COPY scripts/set-release-stage.js ./scripts/set-release-stage.js
 
 RUN --mount=type=cache,target=/root/.npm npm ci
 
