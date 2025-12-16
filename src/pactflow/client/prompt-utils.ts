@@ -1,5 +1,6 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { type GetInputFunction, ToolError } from "../../common/types.js";
+import { ToolError } from "../../common/tools.js";
+import type { GetInputFunction } from "../../common/types.js";
 import {
   type EndpointMatcher,
   EndpointMatcherSchema,

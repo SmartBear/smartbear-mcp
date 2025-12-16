@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag.js";
 import { SmartBearMcpServer } from "../../../common/server.js";
-import { ToolError } from "../../../common/types.js";
+import { ToolError } from "../../../common/tools.js";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({
@@ -46,8 +46,11 @@ describe("SmartBearMcpServer", () => {
         name: "Test Product",
         toolPrefix: "test_product",
         configPrefix: "test-product",
+        config: z.object({}),
         registerTools: vi.fn(),
         registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
       };
     });
 
@@ -105,6 +108,34 @@ describe("SmartBearMcpServer", () => {
       registerToolParams[2]();
 
       expect(registerCbMock).toHaveBeenCalledOnce();
+      expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
+    });
+
+    it("should throw error when asked to call non-configured tool", async () => {
+      server.addClient(mockClient);
+
+      // Get the register function passed from the server and execute it with test tool details
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const registerCbMock = vi.fn();
+      registerFn(
+        {
+          title: "Test Tool",
+          summary: "An non-configured tool",
+        },
+        registerCbMock,
+      );
+
+      // Get the wrapper function that will execute the tool and call it
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      mockClient.isConfigured.mockReturnValueOnce(false);
+
+      const toolResponse = await registerToolParams[2]();
+
+      expect(toolResponse.isError).toBe(true);
+      expect(toolResponse.content?.[0].text).toBe(
+        "Error executing Test Product: Test Tool: The tool is not configured - configuration options for Test Product are missing or invalid.",
+      );
       expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
     });
 
@@ -350,6 +381,9 @@ describe("SmartBearMcpServer", () => {
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: vi.fn(),
+        config: z.object({}),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
       };
 
       server.addClient(mockClient);
@@ -392,6 +426,9 @@ describe("SmartBearMcpServer", () => {
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: undefined,
+        config: z.object({}),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
       };
 
       server.addClient(mockClient);

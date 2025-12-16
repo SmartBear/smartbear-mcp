@@ -15,6 +15,9 @@ export default defineConfig({
         "**/*.d.ts",
         // Auto-generated API client files
         "src/bugsnag/client/api/api.ts",
+        "src/bugsnag/client/api/CurrentUser.ts",
+        "src/bugsnag/client/api/Error.ts",
+        "src/bugsnag/client/api/Project.ts",
         // Main entry point (tested via integration)
         "src/index.ts",
         // Other client implementations (not currently tested)

@@ -38,12 +38,15 @@ export class QmetryClient implements Client {
     _server: any,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.token = config.api_key;
     if (config.base_url) {
       this.endpoint = config.base_url;
     }
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return this.token !== undefined;
   }
 
   getToken() {

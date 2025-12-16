@@ -1,7 +1,7 @@
 import yaml from "js-yaml";
 // @ts-expect-error missing type declarations
 import Swagger from "swagger-client";
-import { ToolError } from "../../common/types.js";
+import { ToolError } from "../../common/tools.js";
 import {
   type OpenAPI,
   type RemoteOpenAPIDocument,

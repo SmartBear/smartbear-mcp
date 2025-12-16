@@ -28,11 +28,18 @@ export class CollaboratorClient implements Client {
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.baseUrl = config.base_url;
     this.username = config.username;
     this.loginTicket = config.login_ticket;
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return (
+      this.baseUrl !== undefined &&
+      this.username !== undefined &&
+      this.loginTicket !== undefined
+    );
   }
 
   /**
@@ -41,10 +48,6 @@ export class CollaboratorClient implements Client {
    * @returns Raw Collaborator API response
    */
   async call(commands: any[]): Promise<any> {
-    if (!this.baseUrl || !this.username || !this.loginTicket) {
-      throw new Error("Collaborator client not configured");
-    }
-
     const url = `${this.baseUrl}/services/json/v1`;
     // Always prepend authentication command automatically
     const body = [

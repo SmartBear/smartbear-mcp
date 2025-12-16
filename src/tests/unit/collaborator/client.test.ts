@@ -41,7 +41,8 @@ describe("CollaboratorClient", () => {
         username: "admin",
         login_ticket: "ticket123",
       });
-      expect(result).toBe(true);
+      expect(result).toBe(undefined);
+      expect(newClient.isConfigured()).toBe(true);
       expect(newClient).toBeInstanceOf(CollaboratorClient);
     });
 
@@ -75,15 +76,6 @@ describe("CollaboratorClient", () => {
           { command: "ReviewService.findReviewById", args: { reviewId: "1" } },
         ]),
       ).rejects.toThrow("Collaborator API call failed: 401 - Unauthorized");
-    });
-
-    it("throws error when client not configured", async () => {
-      const unconfiguredClient = new CollaboratorClient();
-      await expect(
-        unconfiguredClient.call([
-          { command: "ReviewService.findReviewById", args: { reviewId: "1" } },
-        ]),
-      ).rejects.toThrow("Collaborator client not configured");
     });
   });
 

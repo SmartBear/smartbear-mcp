@@ -16,7 +16,7 @@ import type {
 import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
 import { BugsnagClient } from "../../../bugsnag/client.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
-import { ToolError } from "../../../common/types.js";
+import { ToolError } from "../../../common/tools.js";
 import {
   getMockError,
   getMockEvent,
@@ -660,6 +660,47 @@ describe("BugsnagClient", () => {
       );
     });
 
+    it("should initialize without project API key", async () => {
+      const clientWithNoApiKey = new BugsnagClient();
+      const mockProjects = [
+        getMockProject("proj-1", "Project 1", "project-api-key"),
+        getMockProject("proj-2", "Project 2", "other-key"),
+      ];
+
+      mockCache.get.mockReturnValueOnce(mockProjects);
+
+      await clientWithNoApiKey.configure({ getCache: () => mockCache } as any, {
+        auth_token: "test-token",
+      });
+
+      expect(mockCache.set).not.toHaveBeenCalledWith(
+        "bugsnag_current_project",
+        mockProjects[0],
+      );
+    });
+
+    it("should set current project when one project found", async () => {
+      const clientWithNoApiKey = new BugsnagClient();
+      const mockProjects = [
+        getMockProject("proj-1", "Project 1", "project-api-key"),
+      ];
+
+      mockCache.get
+        .mockReturnValueOnce(mockProjects)
+        .mockReturnValueOnce(null) // no current project
+        .mockReturnValueOnce(mockProjects)
+        .mockReturnValueOnce({ "proj-1": getMockEventField("user.email") });
+
+      await clientWithNoApiKey.configure({ getCache: () => mockCache } as any, {
+        auth_token: "test-token",
+      });
+
+      expect(mockCache.set).toHaveBeenCalledWith(
+        "bugsnag_current_project",
+        mockProjects[0],
+      );
+    });
+
     it("should not throw error when no organizations found", async () => {
       mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [] });
 
@@ -668,7 +709,8 @@ describe("BugsnagClient", () => {
         client.configure({ getCache: () => mockCache } as any, {
           auth_token: "test-token",
         }),
-      ).resolves.toBe(true);
+      ).resolves.toBe(undefined);
+      expect(client.isConfigured()).toBe(false);
       expect(console.error).toHaveBeenCalledWith(
         "Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.",
         expect.any(Error),
@@ -696,13 +738,14 @@ describe("BugsnagClient", () => {
           auth_token: "test-token",
           project_api_key: "non-existent-key",
         }),
-      ).resolves.toBe(true);
+      ).resolves.toBe(undefined);
+      expect(clientWithApiKey.isConfigured()).toBe(true);
       expect(console.error).toHaveBeenCalledWith(
         "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. Check your configured BugSnag project API key.",
       );
     });
 
-    it("should throw error when no event fields found for project", async () => {
+    it("should not throw error when no event fields found for project", async () => {
       const clientWithApiKey = new BugsnagClient();
       const mockOrg = getMockOrganization("org-1", "Test Org");
       const mockProjects = [
@@ -717,12 +760,13 @@ describe("BugsnagClient", () => {
       });
       mockProjectAPI.listProjectEventFields.mockResolvedValue({ body: [] });
 
-      expect(
+      await expect(
         clientWithApiKey.configure({ getCache: () => mockCache } as any, {
           auth_token: "test-token",
           project_api_key: "project-api-key",
         }),
-      ).rejects.toThrow("No event fields found for project Project 1");
+      ).resolves.toBe(undefined);
+      expect(clientWithApiKey.isConfigured()).toBe(true);
     });
   });
 
@@ -965,7 +1009,7 @@ describe("BugsnagClient", () => {
           (call: any) => call[0].title === "List Projects",
         )[1];
 
-        expect(toolHandler({})).rejects.toThrow(
+        await expect(toolHandler({})).rejects.toThrow(
           "No BugSnag projects found for the current user.",
         );
       });
@@ -1410,24 +1454,6 @@ describe("BugsnagClient", () => {
 
         expect(result.content[0].text).toBe(
           JSON.stringify(mockEventFields["proj-1"]),
-        );
-      });
-
-      it("should throw error when no event filters in cache", async () => {
-        mockCache.get
-          .mockReturnValueOnce(mockProject)
-          .mockReturnValueOnce(null);
-        mockProjectAPI.listProjectEventFields.mockResolvedValue({
-          body: [],
-        });
-
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
-        const toolHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Project Event Filters",
-        )[1];
-
-        await expect(toolHandler({})).rejects.toThrow(
-          "No event fields found for project Project 1",
         );
       });
     });
