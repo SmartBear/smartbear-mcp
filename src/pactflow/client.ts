@@ -38,7 +38,7 @@ const ConfigurationSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Bearer token for PactFlow authentication (use this OR username/password)",
+      "Bearer token for PactFlow authentication (use this OR username/password)"
     ),
   username: z.string().optional().describe("Username for Pact Broker"),
   password: z.string().optional().describe("Password for Pact Broker"),
@@ -70,7 +70,7 @@ export class PactflowClient implements Client {
 
   async configure(
     server: SmartBearMcpServer,
-    config: z.infer<typeof ConfigurationSchema>,
+    config: z.infer<typeof ConfigurationSchema>
   ): Promise<void> {
     // Set headers based on the type of auth provided
     if (typeof config.token === "string") {
@@ -115,7 +115,7 @@ export class PactflowClient implements Client {
    */
   async generate(
     toolInput: GenerationInput,
-    getInput: GetInputFunction,
+    getInput: GetInputFunction
   ): Promise<GenerationResponse> {
     if (
       toolInput.openapi?.document &&
@@ -124,32 +124,23 @@ export class PactflowClient implements Client {
     ) {
       const matcherResponse = await getOADMatcherRecommendations(
         toolInput.openapi.document,
-        this.server,
+        this.server
       );
       const userSelection = await getUserMatcherSelection(
         matcherResponse,
-        getInput,
+        getInput
       );
       toolInput.openapi.matcher = userSelection;
     }
 
     // Submit the generation request
-    const response = await fetch(`${this.aiBaseUrl}/generate`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify(toolInput),
-    });
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    const status_response: StatusResponse = await response.json();
+    const status_response = await this.submitAsyncOperation(
+      "/generate",
+      toolInput
+    );
     return await this.pollForCompletion<GenerationResponse>(
       status_response,
-      "Generation",
+      "Generation"
     );
   }
 
@@ -163,7 +154,7 @@ export class PactflowClient implements Client {
    */
   async review(
     toolInput: RefineInput,
-    getInput: GetInputFunction,
+    getInput: GetInputFunction
   ): Promise<RefineResponse> {
     if (
       toolInput.openapi?.document &&
@@ -172,32 +163,23 @@ export class PactflowClient implements Client {
     ) {
       const matcherResponse = await getOADMatcherRecommendations(
         toolInput.openapi.document,
-        this.server,
+        this.server
       );
       const userSelection = await getUserMatcherSelection(
         matcherResponse,
-        getInput,
+        getInput
       );
       toolInput.openapi.matcher = userSelection;
     }
 
     // Submit review request
-    const response = await fetch(`${this.aiBaseUrl}/review`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify(toolInput),
-    });
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    const status_response: StatusResponse = await response.json();
+    const status_response = await this.submitAsyncOperation(
+      "/review",
+      toolInput
+    );
     return await this.pollForCompletion<RefineResponse>(
       status_response,
-      "Review Pacts",
+      "Review Pacts"
     );
   }
 
@@ -211,34 +193,14 @@ export class PactflowClient implements Client {
    * @throws Error if the request fails or returns a non-OK response.
    */
   async checkAIEntitlements(): Promise<Entitlement> {
-    const url = `${this.aiBaseUrl}/entitlement`;
-
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new ToolError(
-          `PactFlow AI Entitlements Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
-          }`,
-        );
-      }
-
-      return (await response.json()) as Entitlement;
-    } catch (error) {
-      process.stderr.write(
-        `[CheckAIEntitlements] Unexpected error: ${error}\n`,
-      );
-      throw error;
-    }
+    return await this.fetchJson<Entitlement>(`${this.aiBaseUrl}/entitlement`, {
+      method: "GET",
+      errorContext: "PactFlow AI Entitlements Request",
+    });
   }
 
   async getStatus(
-    statusUrl: string,
+    statusUrl: string
   ): Promise<{ status: number; isComplete: boolean }> {
     const response = await fetch(statusUrl, {
       method: "HEAD",
@@ -270,7 +232,7 @@ export class PactflowClient implements Client {
 
   private async pollForCompletion<T>(
     status_response: StatusResponse,
-    operationName: string,
+    operationName: string
   ): Promise<T> {
     // Polling for completion
     const startTime = Date.now();
@@ -287,7 +249,7 @@ export class PactflowClient implements Client {
 
       if (statusCheck.status !== 202) {
         throw new ToolError(
-          `${operationName} failed with status: ${statusCheck.status}`,
+          `${operationName} failed with status: ${statusCheck.status}`
         );
       }
 
@@ -296,7 +258,73 @@ export class PactflowClient implements Client {
     }
 
     throw new ToolError(
-      `${operationName} timed out after ${timeout / 1000} seconds`,
+      `${operationName} timed out after ${timeout / 1000} seconds`
+    );
+  }
+
+  /**
+   * Helper method to fetch JSON data from an API endpoint.
+   *
+   * @param url The full URL to fetch from.
+   * @param options Options including method, body, and error context.
+   * @returns The parsed JSON response.
+   * @throws ToolError if the request fails.
+   */
+  private async fetchJson<T>(
+    url: string,
+    options: {
+      method: "GET" | "POST";
+      body?: any;
+      errorContext?: string;
+    }
+  ): Promise<T> {
+    const { method, body, errorContext = "Request" } = options;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: this.headers,
+        ...(body && { body: JSON.stringify(body) }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new ToolError(
+          `${errorContext} Failed - status: ${response.status} ${
+            response.statusText
+          }${errorText ? ` - ${errorText}` : ""}`
+        );
+      }
+
+      return (await response.json()) as T;
+    } catch (error) {
+      if (error instanceof ToolError) {
+        throw error;
+      }
+      console.error(`[${errorContext}] Unexpected error: ${error}\n`);
+      throw error;
+    }
+  }
+
+  /**
+   * Helper method to submit an async operation and return the status response.
+   *
+   * @param endpoint The API endpoint (relative to aiBaseUrl).
+   * @param body The request body.
+   * @returns The status response containing status_url and result_url.
+   * @throws ToolError if the request fails.
+   */
+  private async submitAsyncOperation(
+    endpoint: string,
+    body: any
+  ): Promise<StatusResponse> {
+    return await this.fetchJson<StatusResponse>(
+      `${this.aiBaseUrl}${endpoint}`,
+      {
+        method: "POST",
+        body,
+        errorContext: `Async operation submission to ${endpoint}`,
+      }
     );
   }
 
@@ -308,21 +336,13 @@ export class PactflowClient implements Client {
     provider: string;
   }): Promise<ProviderStatesResponse> {
     const uri_encoded_provider_name = encodeURIComponent(provider);
-    const response = await fetch(
+    return await this.fetchJson<ProviderStatesResponse>(
       `${this.baseUrl}/pacts/provider/${uri_encoded_provider_name}/provider-states`,
       {
         method: "GET",
-        headers: this.headers,
-      },
+        errorContext: "Get Provider States",
+      }
     );
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    return response.json();
   }
 
   /**
@@ -345,26 +365,10 @@ export class PactflowClient implements Client {
     });
     const url = `${this.baseUrl}/can-i-deploy?${queryParams.toString()}`;
 
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new ToolError(
-          `Can-I-Deploy Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
-          }`,
-        );
-      }
-
-      return (await response.json()) as CanIDeployResponse;
-    } catch (error) {
-      console.error(`[CanIDeploy] Unexpected error: ${error}\n`);
-      throw error;
-    }
+    return await this.fetchJson<CanIDeployResponse>(url, {
+      method: "GET",
+      errorContext: "Can-I-Deploy Request",
+    });
   }
 
   /**
@@ -393,7 +397,7 @@ export class PactflowClient implements Client {
     // Add the q parameters (pacticipant selectors)
     q.forEach((selector) => {
       queryParts.push(
-        `q[]pacticipant=${encodeURIComponent(selector.pacticipant)}`,
+        `q[]pacticipant=${encodeURIComponent(selector.pacticipant)}`
       );
 
       if (selector.version) {
@@ -405,7 +409,7 @@ export class PactflowClient implements Client {
       }
       if (selector.environment) {
         queryParts.push(
-          `q[]environment=${encodeURIComponent(selector.environment)}`,
+          `q[]environment=${encodeURIComponent(selector.environment)}`
         );
       }
       if (selector.latest !== undefined) {
@@ -421,26 +425,10 @@ export class PactflowClient implements Client {
 
     const url = `${this.baseUrl}/matrix?${queryParts.join("&")}`;
 
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new ToolError(
-          `Matrix Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
-          }`,
-        );
-      }
-
-      return (await response.json()) as MatrixResponse;
-    } catch (error) {
-      console.error("[GetMatrix] Unexpected error:", error);
-      throw error;
-    }
+    return await this.fetchJson<MatrixResponse>(url, {
+      method: "GET",
+      errorContext: "Matrix Request",
+    });
   }
 
   /**
@@ -451,10 +439,10 @@ export class PactflowClient implements Client {
    */
   registerTools(
     register: RegisterToolsFunction,
-    getInput: GetInputFunction,
+    getInput: GetInputFunction
   ): void {
     for (const tool of TOOLS.filter(
-      (t) => !this._clientType || t.clients.includes(this._clientType),
+      (t) => !this._clientType || t.clients.includes(this._clientType)
     )) {
       const { handler, clients: _, formatResponse, ...toolparams } = tool;
       register(toolparams, async (args, _extra) => {
