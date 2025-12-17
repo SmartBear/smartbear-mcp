@@ -722,13 +722,15 @@ export class SwaggerAPI {
     // Determine operation type based on HTTP status code
     const operation = response.status === 201 ? "create" : "update";
 
+    // Extract version from X-Version header
+    const version = response.headers.get("X-Version") || "1.0.0";
+
     // Return formatted response with the required fields
-    // Fixed version is always 1.0.0
     return {
       owner: params.owner,
       apiName: params.apiName,
-      version: "1.0.0",
-      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/1.0.0`,
+      version: version,
+      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`,
       operation,
     };
   }
@@ -767,12 +769,16 @@ export class SwaggerAPI {
     // Determine operation type based on HTTP status code
     const operation = response.status === 201 ? "create" : "update";
 
+    // Extract version from X-Version header
+    const version = response.headers.get("X-Version") || "1.0.0";
+
     // Return formatted response with the required fields
     return {
       owner: params.owner,
       apiName: params.apiName,
       template: params.template,
-      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
+      version: version,
+      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`,
       operation,
     };
   }
