@@ -38,7 +38,7 @@ const ConfigurationSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Bearer token for PactFlow authentication (use this OR username/password)"
+      "Bearer token for PactFlow authentication (use this OR username/password)",
     ),
   username: z.string().optional().describe("Username for Pact Broker"),
   password: z.string().optional().describe("Password for Pact Broker"),
@@ -70,7 +70,7 @@ export class PactflowClient implements Client {
 
   async configure(
     server: SmartBearMcpServer,
-    config: z.infer<typeof ConfigurationSchema>
+    config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
     // Set headers based on the type of auth provided
     if (typeof config.token === "string") {
@@ -115,7 +115,7 @@ export class PactflowClient implements Client {
    */
   async generate(
     toolInput: GenerationInput,
-    getInput: GetInputFunction
+    getInput: GetInputFunction,
   ): Promise<GenerationResponse> {
     if (
       toolInput.openapi?.document &&
@@ -124,11 +124,11 @@ export class PactflowClient implements Client {
     ) {
       const matcherResponse = await getOADMatcherRecommendations(
         toolInput.openapi.document,
-        this.server
+        this.server,
       );
       const userSelection = await getUserMatcherSelection(
         matcherResponse,
-        getInput
+        getInput,
       );
       toolInput.openapi.matcher = userSelection;
     }
@@ -136,11 +136,11 @@ export class PactflowClient implements Client {
     // Submit the generation request
     const status_response = await this.submitAsyncOperation(
       "/generate",
-      toolInput
+      toolInput,
     );
     return await this.pollForCompletion<GenerationResponse>(
       status_response,
-      "Generation"
+      "Generation",
     );
   }
 
@@ -154,7 +154,7 @@ export class PactflowClient implements Client {
    */
   async review(
     toolInput: RefineInput,
-    getInput: GetInputFunction
+    getInput: GetInputFunction,
   ): Promise<RefineResponse> {
     if (
       toolInput.openapi?.document &&
@@ -163,11 +163,11 @@ export class PactflowClient implements Client {
     ) {
       const matcherResponse = await getOADMatcherRecommendations(
         toolInput.openapi.document,
-        this.server
+        this.server,
       );
       const userSelection = await getUserMatcherSelection(
         matcherResponse,
-        getInput
+        getInput,
       );
       toolInput.openapi.matcher = userSelection;
     }
@@ -175,11 +175,11 @@ export class PactflowClient implements Client {
     // Submit review request
     const status_response = await this.submitAsyncOperation(
       "/review",
-      toolInput
+      toolInput,
     );
     return await this.pollForCompletion<RefineResponse>(
       status_response,
-      "Review Pacts"
+      "Review Pacts",
     );
   }
 
@@ -200,7 +200,7 @@ export class PactflowClient implements Client {
   }
 
   async getStatus(
-    statusUrl: string
+    statusUrl: string,
   ): Promise<{ status: number; isComplete: boolean }> {
     const response = await fetch(statusUrl, {
       method: "HEAD",
@@ -232,7 +232,7 @@ export class PactflowClient implements Client {
 
   private async pollForCompletion<T>(
     status_response: StatusResponse,
-    operationName: string
+    operationName: string,
   ): Promise<T> {
     // Polling for completion
     const startTime = Date.now();
@@ -249,7 +249,7 @@ export class PactflowClient implements Client {
 
       if (statusCheck.status !== 202) {
         throw new ToolError(
-          `${operationName} failed with status: ${statusCheck.status}`
+          `${operationName} failed with status: ${statusCheck.status}`,
         );
       }
 
@@ -258,7 +258,7 @@ export class PactflowClient implements Client {
     }
 
     throw new ToolError(
-      `${operationName} timed out after ${timeout / 1000} seconds`
+      `${operationName} timed out after ${timeout / 1000} seconds`,
     );
   }
 
@@ -276,7 +276,7 @@ export class PactflowClient implements Client {
       method: "GET" | "POST";
       body?: any;
       errorContext?: string;
-    }
+    },
   ): Promise<T> {
     const { method, body, errorContext = "Request" } = options;
 
@@ -292,7 +292,7 @@ export class PactflowClient implements Client {
         throw new ToolError(
           `${errorContext} Failed - status: ${response.status} ${
             response.statusText
-          }${errorText ? ` - ${errorText}` : ""}`
+          }${errorText ? ` - ${errorText}` : ""}`,
         );
       }
 
@@ -316,7 +316,7 @@ export class PactflowClient implements Client {
    */
   private async submitAsyncOperation(
     endpoint: string,
-    body: any
+    body: any,
   ): Promise<StatusResponse> {
     return await this.fetchJson<StatusResponse>(
       `${this.aiBaseUrl}${endpoint}`,
@@ -324,7 +324,7 @@ export class PactflowClient implements Client {
         method: "POST",
         body,
         errorContext: `Async operation submission to ${endpoint}`,
-      }
+      },
     );
   }
 
@@ -341,7 +341,7 @@ export class PactflowClient implements Client {
       {
         method: "GET",
         errorContext: "Get Provider States",
-      }
+      },
     );
   }
 
@@ -397,7 +397,7 @@ export class PactflowClient implements Client {
     // Add the q parameters (pacticipant selectors)
     q.forEach((selector) => {
       queryParts.push(
-        `q[]pacticipant=${encodeURIComponent(selector.pacticipant)}`
+        `q[]pacticipant=${encodeURIComponent(selector.pacticipant)}`,
       );
 
       if (selector.version) {
@@ -409,7 +409,7 @@ export class PactflowClient implements Client {
       }
       if (selector.environment) {
         queryParts.push(
-          `q[]environment=${encodeURIComponent(selector.environment)}`
+          `q[]environment=${encodeURIComponent(selector.environment)}`,
         );
       }
       if (selector.latest !== undefined) {
@@ -439,10 +439,10 @@ export class PactflowClient implements Client {
    */
   registerTools(
     register: RegisterToolsFunction,
-    getInput: GetInputFunction
+    getInput: GetInputFunction,
   ): void {
     for (const tool of TOOLS.filter(
-      (t) => !this._clientType || t.clients.includes(this._clientType)
+      (t) => !this._clientType || t.clients.includes(this._clientType),
     )) {
       const { handler, clients: _, formatResponse, ...toolparams } = tool;
       register(toolparams, async (args, _extra) => {

@@ -400,7 +400,7 @@ describe("PactFlowClient", () => {
         });
 
         await expect(client.review(mockReviewInput, vi.fn())).rejects.toThrow(
-          "HTTP error! status: 400 - Invalid review parameters",
+          "Async operation submission to /review Failed - status: 400 Bad Request - Invalid review parameters",
         );
       });
 
@@ -870,7 +870,7 @@ describe("PactFlowClient", () => {
             vi.fn(),
           ),
         ).rejects.toThrow(
-          "HTTP error! status: 400 - Invalid generation parameters",
+          "Async operation submission to /generate Failed - status: 400 Bad Request - Invalid generation parameters",
         );
       });
 
@@ -886,7 +886,9 @@ describe("PactFlowClient", () => {
             await GenerationInputSchema.parseAsync(mockGenerationInput),
             vi.fn(),
           ),
-        ).rejects.toThrow("HTTP error! status: 401 - Unauthorized access");
+        ).rejects.toThrow(
+          "Async operation submission to /generate Failed - status: 401 Unauthorized - Unauthorized access",
+        );
       });
 
       it("should handle network errors during generation request", async () => {
@@ -1095,7 +1097,9 @@ describe("PactFlowClient", () => {
         fetchMock.mockResponseOnce("Provider not found", { status: 404 });
         await expect(
           client.getProviderStates({ provider: "UnknownService" }),
-        ).rejects.toThrow("HTTP error! status: 404 - Provider not found");
+        ).rejects.toThrow(
+          "Get Provider States Failed - status: 404  - Provider not found",
+        );
       });
     });
 
