@@ -61,6 +61,10 @@ const ConfigurationSchema = z.object({
     .string()
     .optional()
     .describe("Base path for Registry API requests (optional)"),
+  ui_base_path: z
+    .string()
+    .optional()
+    .describe("Base URL for the SwaggerHub UI (optional)"),
 });
 
 // Tool definitions for API Hub API client
@@ -82,6 +86,7 @@ export class SwaggerClient implements Client {
         token: config.api_key,
         portalBasePath: config.portal_base_path,
         registryBasePath: config.registry_base_path,
+        uiBasePath: config.ui_base_path,
       }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );

@@ -100,6 +100,7 @@ If you're using an on-premise Swagger Studio installation, you also need to conf
 
 -   `SWAGGER_PORTAL_BASE_PATH` - Base path for Portal API requests (e.g., `https://your-domain/portal-api/v1`)
 -   `SWAGGER_REGISTRY_BASE_PATH` - Base path for Registry API requests (e.g., `https://your-domain/registry-api`)
+-   `SWAGGER_UI_BASE_PATH` - Base URL for the SwaggerHub UI (e.g., `https://your-domain/swaggerhub`)
 
 These variables are optional for cloud-based Swagger Studio users, as the default values point to the public Swagger cloud endpoints.
 

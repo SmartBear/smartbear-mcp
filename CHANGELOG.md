@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Swagger] Added `SWAGGER_PORTAL_BASE_PATH` and `SWAGGER_REGISTRY_BASE_PATH` environment variables for configuring custom API endpoints, useful for on-premise Swagger Studio installations [#283](https://github.com/SmartBear/smartbear-mcp/pull/283)
+- [Swagger] Added `SWAGGER_PORTAL_BASE_PATH`, `SWAGGER_REGISTRY_BASE_PATH` and `SWAGGER_UI_BASE_PATH` environment variables for configuring custom API endpoints, useful for on-premise Swagger Studio installations [#283](https://github.com/SmartBear/smartbear-mcp/pull/283)
 
 ### Fixed
 
