@@ -17,7 +17,6 @@ import { GetTestCycle } from "./tool/test-cycle/get-test-cycle.js";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
 import { GetTestExecution } from "./tool/test-execution/get-test-execution.js";
 import { GetTestExecutions } from "./tool/test-execution/get-test-executions.js";
-import type { ZephyrTool } from "./tool/zephyr-tool.js";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
 
@@ -43,12 +42,15 @@ export class ZephyrClient implements Client {
     _server: any,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.apiClient = new ApiClient(
       config.api_token,
       config.base_url || BASE_URL_DEFAULT,
     );
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return this.apiClient !== undefined;
   }
 
   getApiClient() {
@@ -60,19 +62,18 @@ export class ZephyrClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): void {
-    const apiClient = this.getApiClient();
-    const tools: ZephyrTool[] = [
-      new GetProjects(apiClient),
-      new GetProject(apiClient),
-      new GetTestCycles(apiClient),
-      new GetTestCycle(apiClient),
-      new GetPriorities(apiClient),
-      new GetStatuses(apiClient),
-      new GetTestCases(apiClient),
-      new GetEnvironments(apiClient),
-      new GetTestCase(apiClient),
-      new GetTestExecution(apiClient),
-      new GetTestExecutions(apiClient),
+    const tools = [
+      new GetProjects(this),
+      new GetProject(this),
+      new GetTestCycles(this),
+      new GetTestCycle(this),
+      new GetPriorities(this),
+      new GetStatuses(this),
+      new GetTestCases(this),
+      new GetEnvironments(this),
+      new GetTestCase(this),
+      new GetTestExecution(this),
+      new GetTestExecutions(this),
     ];
 
     for (const tool of tools) {

@@ -2,11 +2,11 @@ import { z } from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type { SmartBearMcpServer } from "../common/server.js";
-import {
-  type Client,
-  type GetInputFunction,
-  type RegisterToolsFunction,
-  ToolError,
+import { ToolError } from "../common/tools.js";
+import type {
+  Client,
+  GetInputFunction,
+  RegisterToolsFunction,
 } from "../common/types.js";
 
 // Type definitions for tool arguments
@@ -46,13 +46,16 @@ export class ReflectClient implements Client {
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.headers = {
       "X-API-KEY": `${config.api_token}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return Object.keys(this.headers).length !== 0;
   }
 
   async listReflectSuites(): Promise<any> {

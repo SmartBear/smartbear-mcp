@@ -1,4 +1,4 @@
-import { ToolError } from "../../../common/types.js";
+import { ToolError } from "../../../common/tools.js";
 import type { Configuration } from "./configuration.js";
 
 export interface ApiResponse<T> {

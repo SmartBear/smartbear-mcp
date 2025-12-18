@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [BugSnag] Remove misleading warning for event fields if no API is provided in configuration [#284](https://github.com/SmartBear/smartbear-mcp/pull/284)
+
 ## [0.12.1] - 2025-12-09
 
 ### Changed

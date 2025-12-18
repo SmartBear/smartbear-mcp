@@ -2,12 +2,12 @@ import { z } from "zod";
 import type { CacheService } from "../common/cache.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type { SmartBearMcpServer } from "../common/server.js";
-import {
-  type Client,
-  type GetInputFunction,
-  type RegisterResourceFunction,
-  type RegisterToolsFunction,
-  ToolError,
+import { ToolError } from "../common/tools.js";
+import type {
+  Client,
+  GetInputFunction,
+  RegisterResourceFunction,
+  RegisterToolsFunction,
 } from "../common/types.js";
 import {
   type Build,
@@ -71,6 +71,7 @@ export class BugsnagClient implements Client {
   private cache?: CacheService;
   private projectApiKey?: string;
   private configuredProjectApiKey?: string;
+  private _isConfigured: boolean = false;
   private _currentUserApi: CurrentUserAPI | undefined;
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
@@ -104,7 +105,7 @@ export class BugsnagClient implements Client {
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.cache = server.getCache();
     this._appEndpoint = this.getEndpoint(
       "app",
@@ -137,44 +138,34 @@ export class BugsnagClient implements Client {
       if (projects.length === 1 && !this.projectApiKey) {
         this.projectApiKey = projects[0].apiKey;
       }
+      if (this.projectApiKey) {
+        this.configuredProjectApiKey = this.projectApiKey; // Store the originally configured API key
+        const currentProject = await this.getCurrentProject();
+        if (currentProject) {
+          await this.getProjectEventFields(currentProject);
+        } else {
+          // Clear the project API key to allow tools to work across all projects
+          this.projectApiKey = undefined;
+          console.error(
+            "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
+              "Check your configured BugSnag project API key.",
+          );
+        }
+      }
     } catch (error) {
       // Swallow auth errors here to allow the tools to be registered for visibility, even if the token is invalid
       console.error(
         "Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.",
         error,
       );
+      return;
     }
-    if (this.projectApiKey) {
-      this.configuredProjectApiKey = this.projectApiKey; // Store the originally configured API key
-      let currentProject = null;
-      try {
-        currentProject = await this.getCurrentProject();
-      } catch (error) {
-        console.error(
-          "An error occurred while fetching project information",
-          error,
-        );
-      }
-      if (currentProject) {
-        await this.getProjectEventFields(currentProject);
-      } else {
-        // Clear the project API key to allow tools to work across all projects
-        this.projectApiKey = undefined;
-        console.error(
-          "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
-            "Check your configured BugSnag project API key.",
-        );
-      }
-    }
-    return true;
+    this._isConfigured = true;
+    return;
   }
 
-  getHost(apiKey: string | undefined, subdomain: string): string {
-    if (apiKey?.startsWith(HUB_PREFIX)) {
-      return `https://${subdomain}.${HUB_DOMAIN}`;
-    } else {
-      return `https://${subdomain}.${DEFAULT_DOMAIN}`;
-    }
+  isConfigured(): boolean {
+    return this._isConfigured;
   }
 
   // If the endpoint is not provided, it will use the default API endpoint based on the project API key.
@@ -278,11 +269,6 @@ export class BugsnagClient implements Client {
       let filtersResponse = (
         await this.projectApi.listProjectEventFields(project.id)
       ).body;
-      if (!filtersResponse || filtersResponse.length === 0) {
-        throw new ToolError(
-          `No event fields found for project ${project.name}.`,
-        );
-      }
       filtersResponse = filtersResponse.filter(
         (field) =>
           field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
@@ -302,11 +288,6 @@ export class BugsnagClient implements Client {
       const filtersResponse = (
         await this.projectApi.listProjectTraceFields(project.id)
       ).body;
-      if (!filtersResponse || filtersResponse.length === 0) {
-        throw new ToolError(
-          `No trace fields found for project ${project.name}.`,
-        );
-      }
       projectFiltersCache[project.id] = filtersResponse;
       this.cache?.set(cacheKeys.PROJECT_TRACE_FIELDS, projectFiltersCache);
     }

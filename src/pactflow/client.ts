@@ -3,12 +3,12 @@ import z from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
 import type { SmartBearMcpServer } from "../common/server.js";
-import {
-  type Client,
-  type GetInputFunction,
-  type RegisterPromptFunction,
-  type RegisterToolsFunction,
-  ToolError,
+import { ToolError } from "../common/tools.js";
+import type {
+  Client,
+  GetInputFunction,
+  RegisterPromptFunction,
+  RegisterToolsFunction,
 } from "../common/types.js";
 import type {
   Entitlement,
@@ -70,15 +70,10 @@ export class PactflowClient implements Client {
     return this._server;
   }
 
-  get clientType(): ClientType {
-    if (!this._clientType) throw new Error("Client not configured");
-    return this._clientType;
-  }
-
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-  ): Promise<boolean> {
+  ): Promise<void> {
     // Set headers based on the type of auth provided
     if (typeof config.token === "string") {
       this.headers = {
@@ -99,12 +94,15 @@ export class PactflowClient implements Client {
       };
       this._clientType = "pact_broker";
     } else {
-      return false; // Don't configure the client if no auth is provided
+      return; // Don't configure the client if no auth is provided
     }
     this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;
     this._server = server.server;
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return this.baseUrl !== undefined;
   }
 
   // PactFlow AI client methods
@@ -519,8 +517,8 @@ export class PactflowClient implements Client {
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): void {
-    for (const tool of TOOLS.filter((t) =>
-      t.clients.includes(this.clientType),
+    for (const tool of TOOLS.filter(
+      (t) => !this._clientType || t.clients.includes(this._clientType),
     )) {
       const { handler, clients: _, formatResponse, ...toolparams } = tool;
       register(toolparams, async (args, _extra) => {
