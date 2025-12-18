@@ -165,7 +165,7 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
 - **Use Cases:**
   - Understand usage and activity on Contract Testing workspace.
   - Monitor and stimulate team-level adoption (e.g. through leaderboards and gamification).
-  - Connect the data to your observability tools such as grafana, splunk or ELK stack. 
+  - Connect the data to your observability tools such as grafana, splunk or ELK stack.
   - Create widgets for use in ChatGPT (https://developers.openai.com/apps-sdk/quickstart/).
 
 ## Configuration Notes
