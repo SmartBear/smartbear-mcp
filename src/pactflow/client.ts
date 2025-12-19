@@ -23,7 +23,9 @@ import type {
   CanIDeployResponse,
   MatrixInput,
   MatrixResponse,
+  MetricsResponse,
   ProviderStatesResponse,
+  TeamMetricsResponse,
 } from "./client/base.js";
 import {
   getOADMatcherRecommendations,
@@ -439,6 +441,68 @@ export class PactflowClient implements Client {
       return (await response.json()) as MatrixResponse;
     } catch (error) {
       console.error("[GetMatrix] Unexpected error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves metrics across the workspace.
+   *
+   * @returns MetricsResponse containing workspace-wide metrics
+   * @throws Error if the request fails or returns a non-OK response
+   */
+  async getMetrics(): Promise<MetricsResponse> {
+    const url = `${this.baseUrl}/metrics`;
+
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.headers,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new ToolError(
+          `Metrics Request Failed - status: ${response.status} ${response.statusText}${
+            errorText ? ` - ${errorText}` : ""
+          }`,
+        );
+      }
+
+      return (await response.json()) as MetricsResponse;
+    } catch (error) {
+      console.error("[GetMetrics] Unexpected error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves metrics for all teams.
+   *
+   * @returns TeamMetricsResponse containing metrics for all teams
+   * @throws Error if the request fails or returns a non-OK response
+   */
+  async getTeamMetrics(): Promise<TeamMetricsResponse> {
+    const url = `${this.baseUrl}/metrics/teams`;
+
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.headers,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new ToolError(
+          `Team Metrics Request Failed - status: ${response.status} ${response.statusText}${
+            errorText ? ` - ${errorText}` : ""
+          }`,
+        );
+      }
+
+      return (await response.json()) as TeamMetricsResponse;
+    } catch (error) {
+      console.error("[GetTeamMetrics] Unexpected error:", error);
       throw error;
     }
   }
