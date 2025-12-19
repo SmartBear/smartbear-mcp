@@ -25,11 +25,17 @@ export default defineConfig({
         "src/reflect/client.ts",
         // Utility modules
         "src/common/bugsnag.ts",
+        "src/common/cache.ts",
+        "src/common/info.ts",
+        "src/common/register-clients.ts",
+        "src/common/tools.ts",
+        "src/common/transport-http.ts",
+        "src/common/transport-stdio.ts",
         "src/common/types.ts",
         "src/pactflow/client/prompts.ts",
         "src/pactflow/client/ai.ts",
         "src/pactflow/client/base.ts",
-        "scripts/post-coverage-comment.js",
+        "scripts/*.js",
       ],
       // Coverage thresholds for business logic only
       thresholds: {
