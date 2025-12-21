@@ -199,6 +199,7 @@ export interface CreateApiFromTemplateResponse {
   owner: string;
   apiName: string;
   template: string;
+  version: string;
   url: string;
   operation: "create" | "update";
 }
