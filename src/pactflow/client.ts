@@ -298,8 +298,10 @@ export class PactflowClient implements Client {
       if (error instanceof ToolError) {
         throw error;
       }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error(`[${errorContext}] Unexpected error: ${error}\n`);
-      throw error;
+      throw new ToolError(`${errorContext} Failed - ${errorMessage}`);
     }
   }
 
