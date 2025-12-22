@@ -31,8 +31,6 @@ import type {
   ApisJsonResponse,
   CreateApiFromPromptParams,
   CreateApiFromPromptResponse,
-  CreateApiFromTemplateParams,
-  CreateApiFromTemplateResponse,
   CreateApiParams,
   CreateApiResponse,
   ScanStandardizationParams,
@@ -40,6 +38,7 @@ import type {
   StandardizeApiParams,
   StandardizeApiResponse,
 } from "./registry-types.js";
+
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
@@ -729,54 +728,6 @@ export class SwaggerAPI {
     return {
       owner: params.owner,
       apiName: params.apiName,
-      version: version,
-      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`,
-      operation,
-    };
-  }
-
-  /**
-   * Create API from Template in SwaggerHub Registry
-   * @param params Parameters for creating API from template including owner, api name, and template
-   * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
-   */
-  async createApiFromTemplate(
-    params: CreateApiFromTemplateParams,
-  ): Promise<CreateApiFromTemplateResponse> {
-    // Construct the URL with query parameters
-    // Fixed values: visibility=private, no project, noReconcile=false
-    const searchParams = new URLSearchParams();
-    searchParams.append("isPrivate", "true");
-    searchParams.append("template", params.template);
-
-    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
-      params.owner,
-    )}/${encodeURIComponent(params.apiName)}/.template?${searchParams.toString()}`;
-
-    // Use POST method for template creation
-    const response = await fetch(url, {
-      method: "POST",
-      headers: this.headers,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      throw new ToolError(
-        `SwaggerHub Registry API createApiFromTemplate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
-      );
-    }
-
-    // Determine operation type based on HTTP status code
-    const operation = response.status === 201 ? "create" : "update";
-
-    // Extract version from X-Version header
-    const version = response.headers.get("X-Version") || "1.0.0";
-
-    // Return formatted response with the required fields
-    return {
-      owner: params.owner,
-      apiName: params.apiName,
-      template: params.template,
       version: version,
       url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`,
       operation,

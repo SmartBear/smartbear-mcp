@@ -74,16 +74,6 @@ export const CreateApiParamsSchema = z.object({
     ),
 });
 
-export const CreateApiFromTemplateParamsSchema = z.object({
-  owner: z.string().describe("Organization name (owner of the API)"),
-  apiName: z.string().describe("API name"),
-  template: z
-    .string()
-    .describe(
-      "Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0'). API is created with fixed values: private visibility, no project assignment, and reconciliation enabled.",
-    ),
-});
-
 export const ScanStandardizationParamsSchema = z.object({
   orgName: z
     .string()
@@ -131,9 +121,6 @@ export const StandardizeApiParamsSchema = z.object({
 export type ApiSearchParams = z.infer<typeof ApiSearchParamsSchema>;
 export type ApiDefinitionParams = z.infer<typeof ApiDefinitionParamsSchema>;
 export type CreateApiParams = z.infer<typeof CreateApiParamsSchema>;
-export type CreateApiFromTemplateParams = z.infer<
-  typeof CreateApiFromTemplateParamsSchema
->;
 export type ScanStandardizationParams = z.infer<
   typeof ScanStandardizationParamsSchema
 >;
@@ -189,16 +176,6 @@ export type ApiSearchResponse = ApiMetadata[];
 export interface CreateApiResponse {
   owner: string;
   apiName: string;
-  version: string;
-  url: string;
-  operation: "create" | "update";
-}
-
-// Response type for API created from template
-export interface CreateApiFromTemplateResponse {
-  owner: string;
-  apiName: string;
-  template: string;
   version: string;
   url: string;
   operation: "create" | "update";

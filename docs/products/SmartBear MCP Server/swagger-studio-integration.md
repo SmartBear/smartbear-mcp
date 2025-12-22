@@ -51,19 +51,6 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | `apiName` | API name. If an API with this name already exists under the specified owner, it will be updated. | string | Yes |
 | `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment. | string | Yes |
 
-#### `create_api_from_template`
-
--   Purpose: Create a new API in SwaggerHub Registry using a predefined template. This endpoint creates APIs based on existing templates without requiring manual definition content.
--   Returns: API metadata including owner, name, template used, SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
--   Use case: Quickly bootstrap new APIs from organization templates, ensure consistency across API projects, or start new API development with pre-configured standards.
--   Parameters:
-
-| Parameter | Description | Type | Required |
-| --- | --- | --- | --- |
-| `owner` | Organization name (owner of the API) | string | Yes |
-| `apiName` | API name | string | Yes |
-| `template` | Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0'). API is created with fixed values: private visibility, no project assignment, and reconciliation enabled.<br />**Note**: Available templates can be found in your organization's SwaggerHub template library or by checking the SwaggerHub public templates (e.g. via search_apis_and_domains). | string | Yes |
-
 #### `scan_api_standardization`
 
 -   Purpose: Run a standardization scan against an API definition using the organization's governance and standardization configuration. Validates OpenAPI/AsyncAPI definitions against configured rules and style guides.
@@ -111,6 +98,6 @@ To use Swagger Studio tools, you need to configure the `SWAGGER_API_KEY` environ
 
 1. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your Swagger Studio.
 2. **API Integration**: Retrieve specific API definitions with `get_api_definition` for development or testing purposes.
-3. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions, `create_api_from_template` using organization templates, or `create_api_from_prompt` with natural language descriptions powered by AI.
+3. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions or `create_api_from_prompt` with natural language descriptions powered by AI.
 4. **API Governance**: Validate API definitions against organization standards using `scan_api_standardization` to ensure compliance with governance policies, then use `standardize_api` to automatically fix any violations.
 5. **AI-Powered API Development**: Leverage `create_api_from_prompt` to rapidly prototype APIs from natural language, then use `standardize_api` to ensure they meet your organization's standards.
