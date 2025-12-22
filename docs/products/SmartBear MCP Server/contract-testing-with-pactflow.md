@@ -44,10 +44,22 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
   - **`test_template`** (optional)
 
     If provided, this field allows the system to use the provided template as a basis for the generated Pact tests. This can be useful for ensuring that the generated tests follow a specific structure, format, framework, and best practices.
+- Availability: Cloud
+
+- **Use Cases:**
+  - Create new Pact tests for a project from your IDE.
+  - Update Pact tests when your API client changes from your IDE.
+  - Integrate with agents like GitHub Copilot or Claude Code to automatically create and maintain contract tests.
 
 ### Fetch Provider States
 
 - Purpose: Retrieve the states of a specific provider.
+- Availability: Cloud, On-Premises, Pact Broker
+
+- **Use Cases:**
+  - Reuse existing states when creating new Pact tests to streamline cross team collaboration.
+  - Generate boilerplate code (state handlers) for your provider tests.
+  - Gain a deeper understanding of consumer needs.
 
 ### Review Pact Tests
 
@@ -78,6 +90,11 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
   - **`error_messages`** (optional)
 
     Optional error output from failed contract test runs. These can be used to better understand the context or failures observed and guide the recommendations toward resolving specific issues.
+- Availability: Cloud
+
+- **Use Cases:**
+  - Review existing Pact tests for alignment with the latest contract testing best practices.
+  - Particularly useful when reviewing older tests, as teams generally get better at writing pact tests over time.
 
 ### Can I Deploy
 
@@ -89,6 +106,12 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
   The version of the pacticipant being evaluated for deployment.
   - **`environment`**
   The target environment (e.g., staging, production).
+- Availability: Cloud, On-Premises, Pact Broker
+
+- **Use Cases:**
+  - Support informed deployment decisions by answering "can I deploy version X of this service to Y environment?".
+  - Quickly understand if an application is mergeable to avoid breaking other applications in pre-production environments.
+  - Diagnose what's require to bring the system into a mergeable or deployable state.
 
 ### Matrix
 
@@ -113,17 +136,37 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
   - **`limit`** (optional)
 
     The limit on the number of results to return (1-1000, default: 100)
+- Availability: Cloud, On-Premises, Pact Broker
 
 - **Use Cases:**
-  - Quickly identify which consumer and provider version combinations have passed or failed verification
-  - Diagnose and investigate why a particular consumer-provider verification failed
-  - Visualize the overall contract compatibility across services
-  - Perform advanced queries using selectors to understand compatibility within specific branches or environments
-  - Support informed deployment decisions by answering "can I deploy version X of this service to production?"
+  - Quickly identify which consumer and provider version combinations have passed or failed verification.
+  - Diagnose and investigate why a particular consumer-provider verification failed.
+  - Visualize the overall contract compatibility across services.
+  - Perform advanced queries using selectors to understand compatibility within specific branches or environments.
+  - Support informed deployment decisions by answering "can I deploy version X of this service to production?".
 
 ### PactFlow AI Status
 
 - Purpose: Retrieve the status of AI features for the PactFlow workspace, including whether AI features are enabled, the number of remaining and consumed AI credits, and user-level permissions issues preventing usage.
+- Availability: Cloud
+
+### Metrics
+
+#### All
+
+- Purpose: Fetch metrics across the workspace. Use this to get an overview of contract testing usage, resource consumption and account-wide statistics.
+- Availability: Cloud, On-Premises, Pact Broker
+
+#### Team
+
+- Purpose: Fetch metrics for all teams within PactFlow. Use this to get an overview of team-specific contract testing usage, resource consumption and usage statistics.
+- Availability: Cloud
+
+- **Use Cases:**
+  - Understand usage and activity on Contract Testing workspace.
+  - Monitor and stimulate team-level adoption (e.g. through leaderboards and gamification).
+  - Connect the data to your observability tools such as grafana, splunk or ELK stack.
+  - Create widgets for use in ChatGPT (https://developers.openai.com/apps-sdk/quickstart/).
 
 ## Configuration Notes
 

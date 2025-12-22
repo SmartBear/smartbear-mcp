@@ -91,7 +91,7 @@ export class SmartBearMcpServer extends McpServer {
                   isError: true,
                   content: [
                     {
-                      type: "text",
+                      type: "text" as const,
                       text: `Error executing ${toolTitle}: ${e.message}`,
                     },
                   ],

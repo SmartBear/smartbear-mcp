@@ -127,3 +127,123 @@ export interface MatrixResponse {
 
 export type CanIDeployInput = z.infer<typeof CanIDeploySchema>;
 export type MatrixInput = z.infer<typeof MatrixSchema>;
+
+export const MetricsSchema = z.object({});
+
+interface CountMetric {
+  count: number;
+}
+
+interface CountWithDateRangeMetric {
+  count: number;
+  first: string | null;
+  last: string | null;
+}
+
+interface CountWithSuccessFailureMetric extends CountWithDateRangeMetric {
+  successCount: number;
+  failureCount: number;
+}
+
+interface DeployedVersionsMetric {
+  count: number;
+  currentlyDeployedCount: number;
+}
+
+interface ReleasedVersionsMetric {
+  count: number;
+  currentlySupportedCount: number;
+}
+
+interface UsersMetric {
+  activeRegularCount: number;
+  activeSystemCount: number;
+}
+
+// Team-specific metrics
+export interface TeamMetrics {
+  users: UsersMetric;
+  interactions: {
+    latestInteractionsCount: number;
+    latestMessagesCount: number;
+  };
+  pacticipants: CountMetric;
+  integrations: CountMetric;
+  pactPublications: CountWithDateRangeMetric;
+  pactVersions: CountMetric;
+  verificationResults: CountWithSuccessFailureMetric;
+  webhooks: CountMetric;
+  webhookExecutions: CountMetric;
+  triggeredWebhooks: CountMetric;
+  secrets: CountMetric;
+  environments: CountMetric;
+  providerContractPublications: CountMetric;
+  providerContractVersions: CountMetric;
+  providerContractSelfVerifications: CountMetric;
+  deployedVersions: DeployedVersionsMetric;
+  releasedVersions: ReleasedVersionsMetric;
+}
+
+export interface TeamMetricsItem {
+  name: string;
+  metrics: TeamMetrics;
+}
+
+export interface TeamMetricsResponse {
+  teams: TeamMetricsItem[];
+}
+
+// Account-wide metrics response
+export interface MetricsResponse {
+  interactions: {
+    latestInteractionsCount: number;
+    latestMessagesCount: number;
+    latestInteractionsAndMessagesCount: number;
+  };
+  pacticipants: {
+    count: number;
+    withMainBranchSetCount: number;
+  };
+  integrations: CountMetric;
+  pactPublications: CountWithDateRangeMetric;
+  pactVersions: CountMetric;
+  pactRevisionsPerConsumerVersion: {
+    distribution: Record<string, number>;
+  };
+  verificationResults: CountWithSuccessFailureMetric & {
+    distinctCount: number;
+  };
+  verificationResultsPerPactVersion: {
+    distribution: Record<string, number>;
+  };
+  pacticipantVersions: {
+    count: number;
+    withUserCreatedBranchCount: number;
+    withBranchCount: number;
+    withBranchSetCount: number;
+  };
+  webhooks: CountMetric;
+  tags: {
+    count: number;
+    distinctCount: number;
+    distinctWithPacticipantCount: number;
+  };
+  triggeredWebhooks: CountMetric;
+  webhookExecutions: CountMetric;
+  matrix: CountMetric;
+  environments: CountMetric;
+  deployedVersions: DeployedVersionsMetric & {
+    userCreatedCount: number;
+  };
+  releasedVersions: ReleasedVersionsMetric;
+  users: UsersMetric;
+  teams: CountMetric;
+  providerContractPublications: CountMetric;
+  providerContractVersions: CountMetric;
+  providerContractSelfVerifications: CountMetric;
+  crossContractComparisons: CountMetric;
+  secrets: {
+    count: number;
+    countsByTeam: number[];
+  };
+}
