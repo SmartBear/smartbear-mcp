@@ -134,7 +134,7 @@ export class PactflowClient implements Client {
     }
 
     // Submit the generation request
-    const status_response = await this.submitAsyncOperation(
+    const status_response = await this.submitHttpCallback(
       "/generate",
       toolInput,
     );
@@ -173,10 +173,7 @@ export class PactflowClient implements Client {
     }
 
     // Submit review request
-    const status_response = await this.submitAsyncOperation(
-      "/review",
-      toolInput,
-    );
+    const status_response = await this.submitHttpCallback("/review", toolInput);
     return await this.pollForCompletion<RefineResponse>(
       status_response,
       "Review Pacts",
@@ -307,14 +304,13 @@ export class PactflowClient implements Client {
   }
 
   /**
-   * Helper method to submit an async operation and return the status response.
-   *
-   * @param endpoint The API endpoint (relative to aiBaseUrl).
-   * @param body The request body.
-   * @returns The status response containing status_url and result_url.
+   * Submits an HTTP callback request to the PactFlow AI API.
+   * @param endpoint The AI API endpoint (relative to aiBaseUrl), e.g., '/generate' or '/review'.
+   * @param body The request body specific to the AI operation.
+   * @returns StatusResponse with status_url for polling and result_url for fetching results.
    * @throws ToolError if the request fails.
    */
-  private async submitAsyncOperation(
+  private async submitHttpCallback(
     endpoint: string,
     body: any,
   ): Promise<StatusResponse> {
@@ -323,7 +319,7 @@ export class PactflowClient implements Client {
       {
         method: "POST",
         body,
-        errorContext: `Async operation submission to ${endpoint}`,
+        errorContext: `HTTP callback submission to ${endpoint}`,
       },
     );
   }

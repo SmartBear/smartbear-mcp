@@ -400,7 +400,7 @@ describe("PactFlowClient", () => {
         });
 
         await expect(client.review(mockReviewInput, vi.fn())).rejects.toThrow(
-          "Async operation submission to /review Failed - status: 400 Bad Request - Invalid review parameters",
+          "HTTP callback submission to /review Failed - status: 400 Bad Request - Invalid review parameters",
         );
       });
 
@@ -870,7 +870,7 @@ describe("PactFlowClient", () => {
             vi.fn(),
           ),
         ).rejects.toThrow(
-          "Async operation submission to /generate Failed - status: 400 Bad Request - Invalid generation parameters",
+          "HTTP callback submission to /generate Failed - status: 400 Bad Request - Invalid generation parameters",
         );
       });
 
@@ -887,7 +887,7 @@ describe("PactFlowClient", () => {
             vi.fn(),
           ),
         ).rejects.toThrow(
-          "Async operation submission to /generate Failed - status: 401 Unauthorized - Unauthorized access",
+          "HTTP callback submission to /generate Failed - status: 401 Unauthorized - Unauthorized access",
         );
       });
 
