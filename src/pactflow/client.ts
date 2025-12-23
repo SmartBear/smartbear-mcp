@@ -136,19 +136,10 @@ export class PactflowClient implements Client {
     }
 
     // Submit the generation request
-    const response = await fetch(`${this.aiBaseUrl}/generate`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify(toolInput),
-    });
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    const status_response: StatusResponse = await response.json();
+    const status_response = await this.submitHttpCallback(
+      "/generate",
+      toolInput,
+    );
     return await this.pollForCompletion<GenerationResponse>(
       status_response,
       "Generation",
@@ -184,19 +175,7 @@ export class PactflowClient implements Client {
     }
 
     // Submit review request
-    const response = await fetch(`${this.aiBaseUrl}/review`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify(toolInput),
-    });
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    const status_response: StatusResponse = await response.json();
+    const status_response = await this.submitHttpCallback("/review", toolInput);
     return await this.pollForCompletion<RefineResponse>(
       status_response,
       "Review Pacts",
@@ -213,30 +192,10 @@ export class PactflowClient implements Client {
    * @throws Error if the request fails or returns a non-OK response.
    */
   async checkAIEntitlements(): Promise<Entitlement> {
-    const url = `${this.aiBaseUrl}/entitlement`;
-
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new ToolError(
-          `PactFlow AI Entitlements Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
-          }`,
-        );
-      }
-
-      return (await response.json()) as Entitlement;
-    } catch (error) {
-      process.stderr.write(
-        `[CheckAIEntitlements] Unexpected error: ${error}\n`,
-      );
-      throw error;
-    }
+    return await this.fetchJson<Entitlement>(`${this.aiBaseUrl}/entitlement`, {
+      method: "GET",
+      errorContext: "PactFlow AI Entitlements Request",
+    });
   }
 
   async getStatus(
@@ -302,6 +261,73 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Helper method to fetch JSON data from an API endpoint.
+   *
+   * @param url The full URL to fetch from.
+   * @param options Options including method, body, and error context.
+   * @returns The parsed JSON response.
+   * @throws ToolError if the request fails.
+   */
+  private async fetchJson<T>(
+    url: string,
+    options: {
+      method: "GET" | "POST";
+      body?: any;
+      errorContext?: string;
+    },
+  ): Promise<T> {
+    const { method, body, errorContext = "Request" } = options;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: this.headers,
+        ...(body && { body: JSON.stringify(body) }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new ToolError(
+          `${errorContext} Failed - status: ${response.status} ${
+            response.statusText
+          }${errorText ? ` - ${errorText}` : ""}`,
+        );
+      }
+
+      return (await response.json()) as T;
+    } catch (error) {
+      if (error instanceof ToolError) {
+        throw error;
+      }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(`[${errorContext}] Unexpected error: ${error}\n`);
+      throw new ToolError(`${errorContext} Failed - ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Submits an HTTP callback request to the PactFlow AI API.
+   * @param endpoint The AI API endpoint (relative to aiBaseUrl), e.g., '/generate' or '/review'.
+   * @param body The request body specific to the AI operation.
+   * @returns StatusResponse with status_url for polling and result_url for fetching results.
+   * @throws ToolError if the request fails.
+   */
+  private async submitHttpCallback(
+    endpoint: string,
+    body: any,
+  ): Promise<StatusResponse> {
+    return await this.fetchJson<StatusResponse>(
+      `${this.aiBaseUrl}${endpoint}`,
+      {
+        method: "POST",
+        body,
+        errorContext: `HTTP callback submission to ${endpoint}`,
+      },
+    );
+  }
+
   // PactFlow / Pact_Broker client methods
 
   async getProviderStates({
@@ -310,21 +336,13 @@ export class PactflowClient implements Client {
     provider: string;
   }): Promise<ProviderStatesResponse> {
     const uri_encoded_provider_name = encodeURIComponent(provider);
-    const response = await fetch(
+    return await this.fetchJson<ProviderStatesResponse>(
       `${this.baseUrl}/pacts/provider/${uri_encoded_provider_name}/provider-states`,
       {
         method: "GET",
-        headers: this.headers,
+        errorContext: "Get Provider States",
       },
     );
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    return response.json();
   }
 
   /**
@@ -347,26 +365,10 @@ export class PactflowClient implements Client {
     });
     const url = `${this.baseUrl}/can-i-deploy?${queryParams.toString()}`;
 
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new ToolError(
-          `Can-I-Deploy Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
-          }`,
-        );
-      }
-
-      return (await response.json()) as CanIDeployResponse;
-    } catch (error) {
-      console.error(`[CanIDeploy] Unexpected error: ${error}\n`);
-      throw error;
-    }
+    return await this.fetchJson<CanIDeployResponse>(url, {
+      method: "GET",
+      errorContext: "Can-I-Deploy Request",
+    });
   }
 
   /**
@@ -423,26 +425,10 @@ export class PactflowClient implements Client {
 
     const url = `${this.baseUrl}/matrix?${queryParts.join("&")}`;
 
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new ToolError(
-          `Matrix Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
-          }`,
-        );
-      }
-
-      return (await response.json()) as MatrixResponse;
-    } catch (error) {
-      console.error("[GetMatrix] Unexpected error:", error);
-      throw error;
-    }
+    return await this.fetchJson<MatrixResponse>(url, {
+      method: "GET",
+      errorContext: "Matrix Request",
+    });
   }
 
   /**
