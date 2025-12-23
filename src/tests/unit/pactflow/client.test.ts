@@ -32,6 +32,8 @@ describe("PactFlowClient", () => {
     vi.clearAllMocks();
     fetchMock.enableMocks();
     fetchMock.resetMocks();
+    // Suppress console.error for error test cases
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -400,7 +402,7 @@ describe("PactFlowClient", () => {
         });
 
         await expect(client.review(mockReviewInput, vi.fn())).rejects.toThrow(
-          "HTTP error! status: 400 - Invalid review parameters",
+          "HTTP callback submission to /review Failed - status: 400 Bad Request - Invalid review parameters",
         );
       });
 
@@ -870,7 +872,7 @@ describe("PactFlowClient", () => {
             vi.fn(),
           ),
         ).rejects.toThrow(
-          "HTTP error! status: 400 - Invalid generation parameters",
+          "HTTP callback submission to /generate Failed - status: 400 Bad Request - Invalid generation parameters",
         );
       });
 
@@ -886,7 +888,9 @@ describe("PactFlowClient", () => {
             await GenerationInputSchema.parseAsync(mockGenerationInput),
             vi.fn(),
           ),
-        ).rejects.toThrow("HTTP error! status: 401 - Unauthorized access");
+        ).rejects.toThrow(
+          "HTTP callback submission to /generate Failed - status: 401 Unauthorized - Unauthorized access",
+        );
       });
 
       it("should handle network errors during generation request", async () => {
@@ -1095,7 +1099,222 @@ describe("PactFlowClient", () => {
         fetchMock.mockResponseOnce("Provider not found", { status: 404 });
         await expect(
           client.getProviderStates({ provider: "UnknownService" }),
-        ).rejects.toThrow("HTTP error! status: 404 - Provider not found");
+        ).rejects.toThrow(
+          "Get Provider States Failed - status: 404  - Provider not found",
+        );
+      });
+    });
+
+    describe("getMetrics", () => {
+      const mockMetricsResponse = {
+        interactions: {
+          latestInteractionsCount: 42,
+          latestMessagesCount: 8,
+          latestInteractionsAndMessagesCount: 50,
+        },
+        pacticipants: {
+          count: 15,
+          withMainBranchSetCount: 12,
+        },
+        integrations: { count: 7 },
+        pactPublications: { count: 42, last30DaysCount: 15 },
+        pactVersions: { count: 38 },
+        pactRevisionsPerConsumerVersion: {
+          distribution: { "1": 20, "2": 10, "3": 5 },
+        },
+        verificationResults: {
+          count: 1250,
+          distinctCount: 1200,
+          successCount: 1200,
+          failureCount: 50,
+        },
+        verificationResultsPerPactVersion: {
+          distribution: { "1": 800, "2": 300, "3": 150 },
+        },
+        pacticipantVersions: {
+          count: 320,
+          withUserCreatedBranchCount: 145,
+          withBranchCount: 280,
+          withBranchSetCount: 300,
+        },
+        webhooks: { count: 12 },
+        tags: { count: 100, distinctCount: 50 },
+        webhookExecutions: { count: 5000 },
+        triggeredWebhooks: { count: 4500 },
+        secrets: { count: 8 },
+        environments: { count: 3 },
+        providerContractPublications: { count: 25 },
+        providerContractVersions: { count: 22 },
+        providerContractSelfVerifications: { count: 200 },
+        deployedVersions: { last30DaysCount: 320 },
+        releasedVersions: { last30DaysCount: 145 },
+      };
+
+      it("should successfully retrieve account-wide metrics", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify(mockMetricsResponse));
+
+        const result = await client.getMetrics();
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/metrics", {
+          method: "GET",
+          headers: client.requestHeaders,
+        });
+        expect(result.interactions.latestInteractionsCount).toBe(42);
+        expect(result.pacticipants.count).toBe(15);
+        expect(result.verificationResults.count).toBe(1250);
+      });
+
+      it("should handle HTTP 401 error when not authenticated", async () => {
+        const errorText = "Unauthorized";
+        fetchMock.mockResponseOnce(errorText, {
+          status: 401,
+          statusText: "Unauthorized",
+        });
+
+        await expect(client.getMetrics()).rejects.toThrow(
+          "Metrics Request Failed - status: 401 Unauthorized - Unauthorized",
+        );
+      });
+
+      it("should handle HTTP 500 error gracefully", async () => {
+        const errorText = "Internal server error";
+        fetchMock.mockResponseOnce(errorText, {
+          status: 500,
+          statusText: "Internal Server Error",
+        });
+
+        await expect(client.getMetrics()).rejects.toThrow(
+          "Metrics Request Failed - status: 500 Internal Server Error",
+        );
+      });
+
+      it("should handle network errors", async () => {
+        fetchMock.mockRejectOnce(new Error("Network timeout"));
+
+        await expect(client.getMetrics()).rejects.toThrow("Network timeout");
+      });
+    });
+
+    describe("getTeamMetrics", () => {
+      const mockTeamMetricsResponse = {
+        teams: [
+          {
+            name: "Platform Team",
+            metrics: {
+              users: {
+                activeRegularCount: 8,
+                activeSystemCount: 2,
+              },
+              interactions: {
+                latestInteractionsCount: 12,
+                latestMessagesCount: 3,
+              },
+              pacticipants: { count: 10 },
+              integrations: { count: 5 },
+              pactPublications: { count: 150, last30DaysCount: 45 },
+              pactVersions: { count: 140 },
+              verificationResults: {
+                count: 450,
+                successCount: 430,
+                failureCount: 20,
+              },
+              webhooks: { count: 8 },
+              webhookExecutions: { count: 1500 },
+              triggeredWebhooks: { count: 1400 },
+              secrets: { count: 3 },
+              environments: { count: 3 },
+              providerContractPublications: { count: 10 },
+              providerContractVersions: { count: 9 },
+              providerContractSelfVerifications: { count: 85 },
+              deployedVersions: { last30DaysCount: 85 },
+              releasedVersions: { last30DaysCount: 32 },
+            },
+          },
+          {
+            name: "API Team",
+            metrics: {
+              users: {
+                activeRegularCount: 6,
+                activeSystemCount: 1,
+              },
+              interactions: {
+                latestInteractionsCount: 6,
+                latestMessagesCount: 2,
+              },
+              pacticipants: { count: 5 },
+              integrations: { count: 2 },
+              pactPublications: { count: 80, last30DaysCount: 20 },
+              pactVersions: { count: 75 },
+              verificationResults: {
+                count: 200,
+                successCount: 190,
+                failureCount: 10,
+              },
+              webhooks: { count: 4 },
+              webhookExecutions: { count: 800 },
+              triggeredWebhooks: { count: 750 },
+              secrets: { count: 2 },
+              environments: { count: 2 },
+              providerContractPublications: { count: 5 },
+              providerContractVersions: { count: 4 },
+              providerContractSelfVerifications: { count: 40 },
+              deployedVersions: { last30DaysCount: 40 },
+              releasedVersions: { last30DaysCount: 12 },
+            },
+          },
+        ],
+      };
+
+      it("should successfully retrieve metrics for all teams", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify(mockTeamMetricsResponse));
+
+        const result = await client.getTeamMetrics();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/metrics/teams",
+          {
+            method: "GET",
+            headers: client.requestHeaders,
+          },
+        );
+        expect(result.teams).toBeDefined();
+        expect(Array.isArray(result.teams)).toBe(true);
+        expect(result.teams.length).toBe(2);
+        expect(result.teams[0].name).toBe("Platform Team");
+        expect(result.teams[0].metrics.users.activeRegularCount).toBe(8);
+        expect(result.teams[0].metrics.integrations.count).toBe(5);
+      });
+
+      it("should handle HTTP 403 error when user lacks access to teams", async () => {
+        const errorText = "Forbidden - You do not have access to these teams";
+        fetchMock.mockResponseOnce(errorText, {
+          status: 403,
+          statusText: "Forbidden",
+        });
+
+        await expect(client.getTeamMetrics()).rejects.toThrow(
+          "Team Metrics Request Failed - status: 403 Forbidden",
+        );
+      });
+
+      it("should handle HTTP 500 error gracefully", async () => {
+        const errorText = "Internal server error";
+        fetchMock.mockResponseOnce(errorText, {
+          status: 500,
+          statusText: "Internal Server Error",
+        });
+
+        await expect(client.getTeamMetrics()).rejects.toThrow(
+          "Team Metrics Request Failed - status: 500 Internal Server Error",
+        );
+      });
+
+      it("should handle network errors", async () => {
+        fetchMock.mockRejectOnce(new Error("Network timeout"));
+
+        await expect(client.getTeamMetrics()).rejects.toThrow(
+          "Network timeout",
+        );
       });
     });
 

@@ -14,8 +14,6 @@ import {
   type ApiSearchResponse,
   type CreateApiFromPromptParams,
   type CreateApiFromPromptResponse,
-  type CreateApiFromTemplateParams,
-  type CreateApiFromTemplateResponse,
   type CreateApiParams,
   type CreateApiResponse,
   type CreatePortalArgs,
@@ -47,6 +45,7 @@ import {
   type UpdatePortalArgs,
   type UpdateProductArgs,
 } from "./client/index.js";
+
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
@@ -204,12 +203,6 @@ export class SwaggerClient implements Client {
     args: CreateApiParams,
   ): Promise<CreateApiResponse | FallbackResponse> {
     return this.getApi().createOrUpdateApi(args);
-  }
-
-  async createApiFromTemplate(
-    args: CreateApiFromTemplateParams,
-  ): Promise<CreateApiFromTemplateResponse | FallbackResponse> {
-    return this.getApi().createApiFromTemplate(args);
   }
 
   // User Management API methods
