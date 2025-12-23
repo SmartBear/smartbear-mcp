@@ -398,5 +398,131 @@ export class AlertSiteClient implements Client {
         return this.formatResponse(`User ${args.email} deleted successfully.`);
       },
     );
+
+    // Tool 6: Monitor list
+    register(
+      {
+        title: "Monitor List",
+        summary: "Returns the list of monitors from AlertSite.",
+        inputSchema: z.object({}),
+      },
+      async (_args, _extra) => {
+        const monitors = await this.call("/api/v3/monitors", "GET");
+        return this.formatResponse("Monitor list:", monitors);
+      },
+    );
+
+    // Tool 7: Get monitor by ID only
+    register(
+      {
+        title: "Get Monitor",
+        summary: "Fetches a monitor from AlertSite by its ID.",
+        inputSchema: z.object({
+          id: z.union([z.string(), z.number()]).describe("Monitor ID to fetch"),
+        }),
+      },
+      async (args, _extra) => {
+        const monitorId = args.id;
+        if (!monitorId) {
+          return this.formatResponse("You must provide a monitor ID.");
+        }
+        const monitor = await this.call(`/api/v3/monitors/${monitorId}`, "GET");
+        return this.formatResponse(`Monitor details for ID ${monitorId}:`, monitor);
+      },
+    );
+
+    // Tool 8: Create DejaClick Monitor
+    register(
+      {
+        title: "Create DejaClick Monitor",
+        summary: "Creates a new DejaClick monitor in AlertSite with the specified details.",
+        inputSchema: z.object({
+          billing_plancode: z.string().describe("Billing plan code, e.g. 'UBP'"),
+          interval: z.number().describe("Interval in minutes"),
+          name: z.string().describe("Monitor name"),
+          url: z.string().url().describe("Monitor URL"),
+          type: z.literal("dejaclick").describe("Monitor type (must be 'dejaclick')"),
+          browser_type: z.string().describe("Browser type, e.g. 'Google Chrome'"),
+          transaction_steps: z.number().describe("Number of transaction steps"),
+          step_timeout: z.number().describe("Step timeout in seconds"),
+        }),
+      },
+      async (args, _extra) => {
+        // Check for missing required fields
+        const requiredFields = [
+          "billing_plancode",
+          "interval",
+          "name",
+          "url",
+          "type",
+          "browser_type",
+          "transaction_steps",
+          "step_timeout",
+        ];
+        const missing = requiredFields.filter((field) => args[field] === undefined || args[field] === null || args[field] === "");
+        if (missing.length > 0) {
+          return this.formatResponse(
+            `Missing required fields: ${missing.join(", ")}.\nPlease provide all of the following fields: {\n  billing_plancode: string,\n  interval: number,\n  name: string,\n  url: string (URL),\n  type: 'dejaclick',\n  browser_type: string,\n  transaction_steps: number,\n  step_timeout: number\n}`
+          );
+        }
+        const payload = {
+          billing_plancode: args.billing_plancode,
+          interval: args.interval,
+          name: args.name,
+          url: args.url,
+          type: args.type,
+          browser_type: args.browser_type,
+          transaction_steps: args.transaction_steps,
+          step_timeout: args.step_timeout,
+        };
+        const result = await this.call("/api/v3/monitors/dejaclick", "POST", payload);
+        return this.formatResponse("DejaClick monitor created successfully:", result);
+      },
+    );
+      // Tool 9: Delete Monitor by ID or Name
+      register(
+        {
+          title: "Delete Monitor",
+          summary: "Deletes a monitor from AlertSite by ID only. Returns an error if the ID does not exist.",
+          inputSchema: z.object({
+            id: z.union([z.string(), z.number()]).describe("Monitor ID to delete (required)"),
+          }),
+        },
+        async (args, _extra) => {
+          const monitorId = args.id;
+          if (!monitorId) {
+            return this.formatResponse("You must provide a monitor ID.");
+          }
+          // Check if monitor exists
+          try {
+            await this.call(`/api/v3/monitors/${monitorId}`, "GET");
+          } catch (e) {
+            return this.formatResponse(`Monitor ID ${monitorId} does not exist.`);
+          }
+          // Delete monitor by ID
+          await this.call(`/api/v3/monitors/${monitorId}`, "DELETE");
+          return this.formatResponse(`Monitor deleted successfully (ID: ${monitorId}).`);
+        },
+      );
+      // Tool 10: Clone a Monitor
+      register(
+        {
+          title: "Clone a Monitor",
+          summary: "Clones an existing monitor by ID, requiring a new monitor name.",
+          inputSchema: z.object({
+            id: z.union([z.string(), z.number()]).describe("Monitor ID to clone"),
+            name: z.string().min(1).describe("New monitor name (required)"),
+          }),
+        },
+        async (args, _extra) => {
+          if (!args.id || !args.name) {
+            return this.formatResponse("Both monitor ID and new monitor name are required.");
+          }
+          const endpoint = `/api/v3/monitors/${args.id}/clone`;
+          const payload = { name: args.name };
+          const result = await this.call(endpoint, "POST", payload);
+          return this.formatResponse(`Monitor cloned successfully as '${args.name}':`, result);
+        },
+      );
   }
 }
