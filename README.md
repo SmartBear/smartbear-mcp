@@ -83,9 +83,9 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
-        "COLLAB_BASE_URL": "${input:collab_base_url}",
-        "COLLAB_USERNAME": "${input:collab_username}",
-        "COLLAB_LOGIN_TICKET": "${input:collab_login_ticket}"
+        "COLLABORATOR_BASE_URL": "${input:collab_base_url}",
+        "COLLABORATOR_USERNAME": "${input:collab_username}",
+        "COLLABORATOR_LOGIN_TICKET": "${input:collab_login_ticket}"
       }
     }
   },
@@ -211,9 +211,9 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "QMETRY_BASE_URL": "https://testmanagement.qmetry.com",
         "ZEPHYR_API_TOKEN": "your_zephyr_api_token",
         "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
-        "COLLAB_BASE_URL": "your collab base url",
-        "COLLAB_USERNAME": "your collab user name",
-        "COLLAB_LOGIN_TICKET": "your collab login ticket"
+        "COLLABORATOR_BASE_URL": "your collab base url",
+        "COLLABORATOR_USERNAME": "your collab user name",
+        "COLLABORATOR_LOGIN_TICKET": "your collab login ticket"
       }
     }
   }
