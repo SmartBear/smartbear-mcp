@@ -226,8 +226,8 @@ export class AlertSiteClient implements Client {
         summary: "Creates a new user in AlertSite with the specified details.",
         inputSchema: z.object({
           email: z.string().email().describe("Email address of the user"),
-          first_name: z.string().describe("First name of the user"),
-          last_name: z.string().describe("Last name of the user"),
+          first_name: z.string().regex(/^[A-Za-z\s'-]+$/, "First name must contain only letters, spaces, hyphens, and apostrophes").describe("First name of the user"),
+          last_name: z.string().regex(/^[A-Za-z\s'-]+$/, "Last name must contain only letters, spaces, hyphens, and apostrophes").describe("Last name of the user"),
           password: z.string().min(8).describe("Password for the user"),
           role: z.string().describe("Role to assign to the user (e.g., CO-ADMIN, POWER-USER, READONLY, REPORTONLY)"),
           work_phone: z.string().describe("Work phone number of the user"),
@@ -304,10 +304,12 @@ export class AlertSiteClient implements Client {
             .describe("Email address of the user to modify"),
           first_name: z
             .string()
+            .regex(/^[A-Za-z\s'-]+$/, "First name must contain only letters, spaces, hyphens, and apostrophes")
             .optional()
             .describe("New first name for the user"),
           last_name: z
             .string()
+            .regex(/^[A-Za-z\s'-]+$/, "Last name must contain only letters, spaces, hyphens, and apostrophes")
             .optional()
             .describe("New last name for the user"),
           role: z
