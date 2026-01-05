@@ -413,8 +413,8 @@ describe("base.ts", () => {
         );
         expect(result.status).toBe(200);
         expect(result.body).toEqual({
-          errorId: "123",
-          errorClass: "TestError",
+          error_id: "123",
+          error_class: "TestError",
         });
       });
 
@@ -505,8 +505,8 @@ describe("base.ts", () => {
           },
         );
         expect(result.body).toEqual([
-          { errorId: "123", errorClass: "TestError" },
-          { errorId: "456", errorClass: "AnotherError" },
+          { error_id: "123", error_class: "TestError" },
+          { error_id: "456", error_class: "AnotherError" },
         ]);
         expect(result.status).toBe(200);
         expect(result.totalCount).toBeNull();
