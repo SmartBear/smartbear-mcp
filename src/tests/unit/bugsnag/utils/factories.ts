@@ -23,10 +23,10 @@ export function getMockOrganization(
     id,
     name,
     slug: slug ?? name.toLowerCase().replace(/\s+/g, "-"),
-    updatedAt: new Date(),
-    createdAt: new Date(),
-    autoUpgrade: false,
-    managedByPlatformServices: false,
+    updated_at: new Date(),
+    created_at: new Date(),
+    auto_upgrade: false,
+    managed_by_platform_services: false,
     ...extra,
   };
 }
@@ -37,7 +37,12 @@ export function getMockProject(
   apiKey?: string,
   extra: Partial<Project> = {},
 ): Project {
-  return { id, name, apiKey, ...extra };
+  return {
+    id,
+    name,
+    api_key: apiKey,
+    ...extra,
+  };
 }
 
 export function getMockEventField(
@@ -45,10 +50,10 @@ export function getMockEventField(
   extra: Partial<EventField> = {},
 ): EventField {
   return {
-    displayId: displayId,
+    display_id: displayId,
     custom: false,
-    filterOptions: { name: "filter" },
-    pivotOptions: {},
+    filter_options: { name: "filter" },
+    pivot_options: {},
     ...extra,
   };
 }
@@ -73,15 +78,15 @@ export function getMockReleaseGroup(
 ): ReleaseGroup {
   return {
     id,
-    projectId: "proj-1",
-    releaseStageName: "production",
-    appVersion: "1.0.0",
-    firstReleasedAt: new Date().toISOString(),
-    firstReleaseId: "release-1",
-    releasesCount: 1,
-    hasSecondaryVersions: false,
-    totalSessionsCount: 0,
-    topReleaseGroup: false,
+    project_id: "proj-1",
+    release_stage_name: "production",
+    app_version: "1.0.0",
+    first_released_at: new Date().toISOString(),
+    first_release_id: "release-1",
+    releases_count: 1,
+    has_secondary_versions: false,
+    total_sessions_count: 0,
+    top_release_group: false,
     visible: true,
     ...extra,
   };
@@ -103,7 +108,7 @@ export function getMockSpanGroup(
   return {
     id: `span-group-${id}`,
     name: `span-name-${name}`,
-    displayName: name,
+    display_name: name,
     category: <any>category,
     ...extra,
   };
@@ -118,29 +123,29 @@ export function getMockSpan(
   extra: Partial<Span> = {},
 ): Span {
   return {
-    traceId,
+    trace_id: traceId,
     id: `span-${id}`,
     name: `span-name-${name}`,
-    displayName: name,
+    display_name: name,
     category: <any>category,
-    isFirstClass: isFirstClass,
+    is_first_class: isFirstClass,
     duration: Math.round(Math.random() * 1000),
     timestamp: new Date(Date.now()).toISOString(),
-    startTime: new Date(Date.now() - 1000).toISOString(),
-    timeAdjustmentType: <any>"unadjusted",
+    start_time: new Date(Date.now() - 1000).toISOString(),
+    time_adjustment_type: <any>"unadjusted",
     ...extra,
   };
 }
 
 export function getMockTrace(name: string, type: string): TraceField {
   return {
-    displayId: name,
-    fieldType: <any>type,
-    filterOptions: {
+    display_id: name,
+    field_type: <any>type,
+    filter_options: {
       name: name,
       description: "Cached field",
       searchable: true,
-      matchTypes: [<any>"eq"],
+      match_types: [<any>"eq"],
     },
     custom: true,
   };
