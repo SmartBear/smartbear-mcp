@@ -52,13 +52,13 @@ const PERMITTED_UPDATE_OPERATIONS = [
 ] as const;
 
 interface StabilityData {
-  userStability: number;
-  sessionStability: number;
-  stabilityTargetType: string;
-  targetStability: number;
-  criticalStability: number;
-  meetsTargetStability: boolean;
-  meetsCriticalStability: boolean;
+  user_stability: number;
+  session_stability: number;
+  stability_target_type: string;
+  target_stability: number;
+  critical_stability: number;
+  meets_target_stability: boolean;
+  meets_critical_stability: boolean;
 }
 
 const ConfigurationSchema = z.object({
@@ -136,7 +136,7 @@ export class BugsnagClient implements Client {
       const projects = await this.getProjects();
       // If there's just one project, make this the current project
       if (projects.length === 1 && !this.projectApiKey) {
-        this.projectApiKey = projects[0].apiKey;
+        this.projectApiKey = projects[0].api_key;
       }
       if (this.projectApiKey) {
         this.configuredProjectApiKey = this.projectApiKey; // Store the originally configured API key
@@ -254,7 +254,7 @@ export class BugsnagClient implements Client {
     if (!project && this.projectApiKey) {
       const projects = await this.getProjects();
       project =
-        projects.find((p: Project) => p.apiKey === this.projectApiKey) ?? null;
+        projects.find((p: Project) => p.api_key === this.projectApiKey) ?? null;
       this.cache?.set(cacheKeys.CURRENT_PROJECT, project);
     }
     return project;
@@ -271,7 +271,7 @@ export class BugsnagClient implements Client {
       ).body;
       filtersResponse = filtersResponse.filter(
         (field) =>
-          field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
+          field.display_id && !EXCLUDED_EVENT_FIELDS.has(field.display_id),
       );
       projectFiltersCache[project.id] = filtersResponse;
       this.cache?.set(cacheKeys.PROJECT_EVENT_FIELDS, projectFiltersCache);
@@ -309,7 +309,7 @@ export class BugsnagClient implements Client {
   async validateEventFields(project: Project, fields?: FilterObject) {
     if (fields) {
       const eventFields = await this.getProjectEventFields(project);
-      const validKeys = new Set(eventFields.map((f) => f.displayId));
+      const validKeys = new Set(eventFields.map((f) => f.display_id));
       for (const key of Object.keys(fields)) {
         if (!validKeys.has(key)) {
           throw new ToolError(`Invalid filter key: ${key}`);
@@ -346,9 +346,10 @@ export class BugsnagClient implements Client {
     source: T,
     project: Project,
   ): T & StabilityData {
-    const accumulativeDailyUsersSeen = source.accumulativeDailyUsersSeen || 0;
+    const accumulativeDailyUsersSeen =
+      source.accumulative_daily_users_seen || 0;
     const accumulativeDailyUsersWithUnhandled =
-      source.accumulativeDailyUsersWithUnhandled || 0;
+      source.accumulative_daily_users_with_unhandled || 0;
 
     const userStability =
       accumulativeDailyUsersSeen === 0 // avoid division by zero
@@ -356,8 +357,8 @@ export class BugsnagClient implements Client {
         : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
           accumulativeDailyUsersSeen;
 
-    const totalSessionsCount = source.totalSessionsCount || 0;
-    const unhandledSessionsCount = source.unhandledSessionsCount || 0;
+    const totalSessionsCount = source.total_sessions_count || 0;
+    const unhandledSessionsCount = source.unhandled_sessions_count || 0;
 
     const sessionStability =
       totalSessionsCount === 0 // avoid division by zero
@@ -365,23 +366,25 @@ export class BugsnagClient implements Client {
         : (totalSessionsCount - unhandledSessionsCount) / totalSessionsCount;
 
     const stabilityMetric =
-      project.stabilityTargetType === "user" ? userStability : sessionStability;
+      project.stability_target_type === "user"
+        ? userStability
+        : sessionStability;
 
-    const targetStability = project.targetStability?.value || 0;
-    const criticalStability = project.criticalStability?.value || 0;
+    const targetStability = project.target_stability?.value || 0;
+    const criticalStability = project.critical_stability?.value || 0;
 
     const meetsTargetStability = stabilityMetric >= targetStability;
     const meetsCriticalStability = stabilityMetric >= criticalStability;
 
     return {
       ...source,
-      userStability,
-      sessionStability,
-      stabilityTargetType: project.stabilityTargetType || "user",
-      targetStability,
-      criticalStability,
-      meetsTargetStability,
-      meetsCriticalStability,
+      user_stability: userStability,
+      session_stability: sessionStability,
+      stability_target_type: project.stability_target_type || "user",
+      target_stability: targetStability,
+      critical_stability: criticalStability,
+      meets_target_stability: meetsTargetStability,
+      meets_critical_stability: meetsCriticalStability,
     };
   }
 
@@ -451,7 +454,7 @@ export class BugsnagClient implements Client {
         }
         if (params.apiKey) {
           const matchedProject = projects.find(
-            (p: Project) => p.apiKey === params.apiKey,
+            (p: Project) => p.api_key === params.apiKey,
           );
           projects = matchedProject ? [matchedProject] : [];
         }

@@ -48,30 +48,6 @@ function getTotalCountFromHeader(headers: Headers): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-// Utility to recursively convert object keys from snake_case to camelCase
-function convertKeysToCamelCase(obj: any): any {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(convertKeysToCamelCase);
-  }
-
-  if (typeof obj === "object" && obj.constructor === Object) {
-    const converted: any = {};
-    for (const [key, value] of Object.entries(obj)) {
-      const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
-        letter.toUpperCase(),
-      );
-      converted[camelKey] = convertKeysToCamelCase(value);
-    }
-    return converted;
-  }
-
-  return obj;
-}
-
 // Ensure URL is absolute
 // The MCP tools exposed use only the path for pagination
 // For making requests, we need to ensure the URL is absolute
@@ -143,7 +119,7 @@ export class BaseAPI {
     const apiResponse = {
       status: response.status,
       headers: response.headers,
-      body: convertKeysToCamelCase(await response.json()),
+      body: await response.json(),
     };
 
     if (fields) {
@@ -201,7 +177,7 @@ export class BaseAPI {
         );
       }
 
-      const data: T = convertKeysToCamelCase(await response.json());
+      const data: T = await response.json();
       nextUrl = getNextUrlPathFromHeader(
         response.headers,
         this.configuration.basePath,
