@@ -110,7 +110,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            api_url: z.string().url(),
+            api_url: z.url(),
           }),
         );
 
@@ -135,7 +135,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            base_url: z.string().url(),
+            base_url: z.url(),
           }),
         );
 
@@ -159,7 +159,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            endpoint: z.string().url(),
+            endpoint: z.url(),
           }),
         );
 
@@ -181,7 +181,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            api_url: z.string().url(),
+            api_url: z.url(),
           }),
         );
 
@@ -202,7 +202,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            base_url: z.string().url(),
+            base_url: z.url(),
           }),
         );
 
@@ -224,7 +224,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            api_url: z.string().url(),
+            api_url: z.url(),
           }),
         );
 
@@ -246,7 +246,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            endpoint: z.string().url(),
+            endpoint: z.url(),
           }),
         );
 
@@ -268,7 +268,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            base_url: z.string().url(),
+            base_url: z.url(),
           }),
         );
 
@@ -290,7 +290,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            api_url: z.string().url(),
+            api_url: z.url(),
           }),
         );
 
@@ -313,7 +313,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            endpoint: z.string().url(),
+            endpoint: z.url(),
           }),
         );
 
@@ -334,7 +334,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            endpoint: z.string().url(),
+            endpoint: z.url(),
           }),
         );
 
@@ -353,7 +353,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            api_url: z.string().url(),
+            api_url: z.url(),
           }),
         );
 
@@ -380,7 +380,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            api_url: z.string().url(),
+            api_url: z.url(),
           }),
         );
 
@@ -412,7 +412,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            endpoint: z.string().url(),
+            endpoint: z.url(),
           }),
         );
 
@@ -431,7 +431,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            api_url: z.string().url().optional(),
+            api_url: z.url().optional(),
             api_key: z.string(),
           }),
         );
@@ -455,7 +455,7 @@ describe("ClientRegistry", () => {
         mockClient = createMockClient(
           "test-client",
           z.object({
-            api_url: z.string().url().optional(),
+            api_url: z.url().optional(),
           }),
         );
 
@@ -503,14 +503,14 @@ describe("ClientRegistry", () => {
         const validClient = createMockClient(
           "valid-client",
           z.object({
-            api_url: z.string().url(),
+            api_url: z.url(),
           }),
         );
 
         const invalidClient = createMockClient(
           "invalid-client",
           z.object({
-            base_url: z.string().url(),
+            base_url: z.url(),
           }),
         );
 

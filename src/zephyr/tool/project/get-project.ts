@@ -34,7 +34,7 @@ export class GetProject extends Tool<ZephyrClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
+  handle: ToolCallback<ZodRawShape> = async (args) => {
     const { projectIdOrKey } = getProjectParams.parse(args);
     const response = await this.client
       .getApiClient()

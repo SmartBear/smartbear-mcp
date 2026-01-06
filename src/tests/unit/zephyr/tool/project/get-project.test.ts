@@ -38,7 +38,7 @@ describe("GetProject", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { projectIdOrKey: "PROJ" };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/projects/PROJ",
     );
@@ -54,7 +54,7 @@ describe("GetProject", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { projectIdOrKey: "39" }; // Pass as string
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/projects/39");
     expect(result.structuredContent).toBe(responseMock);
   });
@@ -62,11 +62,11 @@ describe("GetProject", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ projectIdOrKey: "PROJ" }, {}),
+      instance.handle({ projectIdOrKey: "PROJ" }, {} as any),
     ).rejects.toThrow("API error");
   });
 
   it("should throw validation error if projectIdOrKey is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow();
+    await expect(instance.handle({}, {} as any)).rejects.toThrow();
   });
 });

@@ -189,7 +189,7 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.suiteId) throw new ToolError("suiteId argument is required");
-        const response = await this.listSuiteExecutions(args.suiteId);
+        const response = await this.listSuiteExecutions(args.suiteId as string);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
@@ -220,8 +220,8 @@ export class ReflectClient implements Client {
             "Both suiteId and executionId arguments are required",
           );
         const response = await this.getSuiteExecutionStatus(
-          args.suiteId,
-          args.executionId,
+          args.suiteId as string,
+          args.executionId as string,
         );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
@@ -243,7 +243,7 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.suiteId) throw new ToolError("suiteId argument is required");
-        const response = await this.executeSuite(args.suiteId);
+        const response = await this.executeSuite(args.suiteId as string);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
@@ -274,8 +274,8 @@ export class ReflectClient implements Client {
             "Both suiteId and executionId arguments are required",
           );
         const response = await this.cancelSuiteExecution(
-          args.suiteId,
-          args.executionId,
+          args.suiteId as string,
+          args.executionId as string,
         );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
@@ -310,7 +310,7 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.testId) throw new ToolError("testId argument is required");
-        const response = await this.runReflectTest(args.testId);
+        const response = await this.runReflectTest(args.testId as string);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
@@ -341,8 +341,8 @@ export class ReflectClient implements Client {
             "Both testId and executionId arguments are required",
           );
         const response = await this.getReflectTestStatus(
-          args.testId,
-          args.executionId,
+          args.testId as string,
+          args.executionId as string,
         );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],

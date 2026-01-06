@@ -37,7 +37,7 @@ export class GetPriorities extends Tool<ZephyrClient> {
       },
     ],
   };
-  handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
+  handle: ToolCallback<ZodRawShape> = async (args) => {
     const getPrioritiesInput = listPrioritiesQueryParams.parse(args);
     const response = await this.client
       .getApiClient()

@@ -35,7 +35,7 @@ import { PROMPTS } from "./client/prompts.js";
 import { type ClientType, TOOLS } from "./client/tools.js";
 
 const ConfigurationSchema = z.object({
-  base_url: z.string().url().describe("Pact Broker or PactFlow base URL"),
+  base_url: z.url().describe("Pact Broker or PactFlow base URL"),
   token: z
     .string()
     .optional()
