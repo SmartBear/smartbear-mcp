@@ -35,7 +35,7 @@ export const TOOLS: PactflowToolParams[] = [
     handler: "generate",
     clients: ["pactflow"], // ONLY pactflow
     enableElicitation: true,
-    tags: ["pactflow-ai"]
+    tags: ["pactflow-ai"],
   },
   {
     title: "Review Pact Tests",
@@ -46,7 +46,7 @@ export const TOOLS: PactflowToolParams[] = [
     handler: "review",
     clients: ["pactflow"],
     enableElicitation: true,
-    tags: ["pactflow-ai"]
+    tags: ["pactflow-ai"],
   },
   {
     title: "Get Provider States",
