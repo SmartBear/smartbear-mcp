@@ -73,10 +73,10 @@ export class CollaboratorClient implements Client {
   /**
    * Registers the Collaborator API tool with the MCP server. Accepts commands (excluding authentication).
    */
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     // findReviewById tool
     register(
       {

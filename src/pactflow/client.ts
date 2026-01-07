@@ -292,6 +292,8 @@ export class PactflowClient implements Client {
           `${errorContext} Failed - status: ${response.status} ${
             response.statusText
           }${errorText ? ` - ${errorText}` : ""}`,
+          undefined,
+          new Map<string, number>([["responseStatus", response.status]]),
         );
       }
 
@@ -303,7 +305,11 @@ export class PactflowClient implements Client {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       console.error(`[${errorContext}] Unexpected error: ${error}\n`);
-      throw new ToolError(`${errorContext} Failed - ${errorMessage}`);
+      throw new ToolError(
+        `${errorContext} Failed - ${errorMessage}`,
+        undefined,
+        new Map<string, number>([["responseStatus", 500]]),
+      );
     }
   }
 
@@ -499,13 +505,36 @@ export class PactflowClient implements Client {
    * @param register - The function used to register tools.
    * @param getInput - The function used to get input for tools.
    */
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
+    let disablePactflowAItools = false;
+    try {
+      const entitlement = await this.checkAIEntitlements();
+      if (!entitlement.aiEnabled) {
+        disablePactflowAItools = true;
+      }
+    } catch (error) {
+      if (
+        error instanceof ToolError &&
+        error.metadata?.get("responseStatus") === 404
+      ) {
+        disablePactflowAItools = true;
+      }
+    }
+
     for (const tool of TOOLS.filter(
       (t) => !this._clientType || t.clients.includes(this._clientType),
     )) {
+      if (
+        tool.tags &&
+        disablePactflowAItools &&
+        tool.tags.includes("pactflow-ai")
+      ) {
+        continue;
+      }
+
       const { handler, clients: _, formatResponse, ...toolparams } = tool;
       register(toolparams, async (args, _extra) => {
         const handler_fn = (this as any)[handler];

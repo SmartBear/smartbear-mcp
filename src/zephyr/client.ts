@@ -58,10 +58,10 @@ export class ZephyrClient implements Client {
     return this.apiClient;
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     const tools = [
       new GetProjects(this),
       new GetProject(this),

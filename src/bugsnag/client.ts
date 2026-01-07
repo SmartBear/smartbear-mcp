@@ -388,10 +388,10 @@ export class BugsnagClient implements Client {
     };
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     register(
       {
         title: "Get Current Project",

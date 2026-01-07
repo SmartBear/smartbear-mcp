@@ -108,7 +108,7 @@ export interface Client {
   registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
-  ): void;
+  ): Promise<void>;
   registerResources?(register: RegisterResourceFunction): void;
   registerPrompts?(register: RegisterPromptFunction): void;
 }

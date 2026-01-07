@@ -157,10 +157,10 @@ export class ReflectClient implements Client {
     return response.json();
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     register(
       {
         title: "List Suites",

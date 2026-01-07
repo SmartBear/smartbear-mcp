@@ -22,6 +22,7 @@ export interface PactflowToolParams extends ToolParams {
   clients: ClientType[];
   formatResponse?: (result: any) => any;
   enableElicitation?: boolean;
+  tags?: Array<string>;
 }
 
 export const TOOLS: PactflowToolParams[] = [
@@ -34,6 +35,7 @@ export const TOOLS: PactflowToolParams[] = [
     handler: "generate",
     clients: ["pactflow"], // ONLY pactflow
     enableElicitation: true,
+    tags: ["pactflow-ai"]
   },
   {
     title: "Review Pact Tests",
@@ -44,6 +46,7 @@ export const TOOLS: PactflowToolParams[] = [
     handler: "review",
     clients: ["pactflow"],
     enableElicitation: true,
+    tags: ["pactflow-ai"]
   },
   {
     title: "Get Provider States",

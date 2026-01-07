@@ -130,7 +130,7 @@ class ClientRegistry {
       }
       await entry.configure(server, config);
       if (entry.isConfigured()) {
-        server.addClient(entry);
+        await server.addClient(entry);
         configuredCount++;
       }
     }
