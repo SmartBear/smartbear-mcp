@@ -1,9 +1,9 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-import { clientRegistry } from "./client-registry.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
-import { SmartBearMcpServer } from "./server.js";
-import type { Client } from "./types.js";
+import { clientRegistry } from "./client-registry";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
+import { SmartBearMcpServer } from "./server";
+import type { Client } from "./types";
 
 /**
  * Generate a dynamic error message listing all available clients and their required env vars

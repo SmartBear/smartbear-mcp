@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getTestCaseParams,
   getTestCaseResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetTestCase } from "../../../../../zephyr/tool/test-case/get-test-case.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetTestCase } from "../../../../../zephyr/tool/test-case/get-test-case";
 
 describe("GetTestCase", () => {
   let mockClient: any;

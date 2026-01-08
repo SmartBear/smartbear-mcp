@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getProjectParams,
   getProjectResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetProject } from "../../../../../zephyr/tool/project/get-project.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetProject } from "../../../../../zephyr/tool/project/get-project";
 
 describe("GetProject", () => {
   let mockClient: any;

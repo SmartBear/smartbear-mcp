@@ -1,14 +1,14 @@
 import { z } from "zod";
-import type { CacheService } from "../common/cache.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type { SmartBearMcpServer } from "../common/server.js";
-import { ToolError } from "../common/tools.js";
+import type { CacheService } from "../common/cache";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
 import type {
   Client,
   GetInputFunction,
   RegisterResourceFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 import {
   type Build,
   Configuration,
@@ -21,9 +21,9 @@ import {
   ProjectAPI,
   type Release,
   type TraceField,
-} from "./client/api/index.js";
-import { type FilterObject, toUrlSearchParams } from "./client/filters.js";
-import { toolInputParameters } from "./input-schemas.js";
+} from "./client/api/index";
+import { type FilterObject, toUrlSearchParams } from "./client/filters";
+import { toolInputParameters } from "./input-schemas";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";

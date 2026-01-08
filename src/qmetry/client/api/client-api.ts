@@ -1,10 +1,10 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
-import { QMETRY_DEFAULTS } from "../../config/constants.js";
-import type { RequestOptions } from "../../types/common.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info";
+import { QMETRY_DEFAULTS } from "../../config/constants";
+import type { RequestOptions } from "../../types/common";
 import {
   handleQMetryApiError,
   handleQMetryFetchError,
-} from "./error-handler.js";
+} from "./error-handler";
 
 /**
  * QMetry API request function with centralized error handling.

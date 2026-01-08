@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { QMETRY_DEFAULTS } from "../config/constants.js";
+import { QMETRY_DEFAULTS } from "../config/constants";
 
 /**
  * QMetry API Request Configuration

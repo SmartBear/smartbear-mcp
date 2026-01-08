@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { SwaggerAPI } from "../../../swagger/client/api.js";
-import { SwaggerConfiguration } from "../../../swagger/client/configuration.js";
+import { SwaggerAPI } from "../../../swagger/client/api";
+import { SwaggerConfiguration } from "../../../swagger/client/configuration";
 
 const fetchMock = createFetchMock(vi);
 

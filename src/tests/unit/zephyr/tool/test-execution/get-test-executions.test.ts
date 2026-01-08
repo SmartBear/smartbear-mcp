@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listTestExecutionsNextgenQueryParams,
   listTestExecutionsNextgenResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetTestExecutions } from "../../../../../zephyr/tool/test-execution/get-test-executions.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetTestExecutions } from "../../../../../zephyr/tool/test-execution/get-test-executions";
 
 describe("GetTestExecutions", () => {
   let mockClient: any;

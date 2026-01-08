@@ -1,10 +1,10 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info.js";
-import { QMETRY_DEFAULTS } from "../config/constants.js";
-import { QMETRY_PATHS } from "../config/rest-endpoints.js";
-import type { ImportAutomationResultsPayload } from "../types/automation.js";
-import { DEFAULT_IMPORT_AUTOMATION_PAYLOAD } from "../types/automation.js";
-import { qmetryRequest } from "./api/client-api.js";
-import { handleQMetryApiError } from "./api/error-handler.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info";
+import { QMETRY_DEFAULTS } from "../config/constants";
+import { QMETRY_PATHS } from "../config/rest-endpoints";
+import type { ImportAutomationResultsPayload } from "../types/automation";
+import { DEFAULT_IMPORT_AUTOMATION_PAYLOAD } from "../types/automation";
+import { qmetryRequest } from "./api/client-api";
+import { handleQMetryApiError } from "./api/error-handler";
 
 /**
  * Imports automation test results into QMetry

@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type { SmartBearMcpServer } from "../common/server.js";
-import { ToolError } from "../common/tools.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 
 // Type definitions for tool arguments
 export interface suiteArgs {

@@ -28,7 +28,7 @@
  */
 
 import * as url from "node:url";
-import type { Configuration } from "./configuration.js";
+import type { Configuration } from "./configuration";
 
 /**
  *

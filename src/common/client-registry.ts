@@ -1,6 +1,6 @@
 import { ZodOptional, ZodString, type ZodType } from "zod";
-import type { SmartBearMcpServer } from "./server.js";
-import type { Client } from "./types.js";
+import type { SmartBearMcpServer } from "./server";
+import type { Client } from "./types";
 
 /**
  * Central registry for all MCP clients

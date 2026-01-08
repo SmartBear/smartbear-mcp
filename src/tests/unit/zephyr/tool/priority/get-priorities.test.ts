@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listPrioritiesQueryParams,
   listPrioritiesResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetPriorities } from "../../../../../zephyr/tool/priority/get-priorities.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetPriorities } from "../../../../../zephyr/tool/priority/get-priorities";
 
 describe("GetProjectPriorities", () => {
   let mockClient: any;

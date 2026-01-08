@@ -3,15 +3,15 @@ import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 import {
   autoResolveViewIdAndFolderPath,
   findAutoResolveConfig,
-} from "./client/auto-resolve.js";
-import { QMETRY_HANDLER_MAP } from "./client/handlers.js";
-import { getProjectInfo } from "./client/project.js";
-import { TOOLS } from "./client/tools/index.js";
-import { QMETRY_DEFAULTS } from "./config/constants.js";
+} from "./client/auto-resolve";
+import { QMETRY_HANDLER_MAP } from "./client/handlers";
+import { getProjectInfo } from "./client/project";
+import { TOOLS } from "./client/tools/index";
+import { QMETRY_DEFAULTS } from "./config/constants";
 
 const ConfigurationSchema = z.object({
   api_key: z.string().describe("QMetry API key for authentication"),

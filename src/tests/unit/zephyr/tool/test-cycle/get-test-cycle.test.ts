@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getTestCycleParams,
   getTestCycleResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetTestCycle } from "../../../../../zephyr/tool/test-cycle/get-test-cycle.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetTestCycle } from "../../../../../zephyr/tool/test-cycle/get-test-cycle";
 
 describe("GetTestCycle", () => {
   let mockClient: any;

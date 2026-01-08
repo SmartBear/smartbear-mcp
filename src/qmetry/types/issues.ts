@@ -5,7 +5,7 @@ import {
   type FilterPayload,
   type PaginationPayload,
   type SortPayload,
-} from "./common.js";
+} from "./common";
 
 /**
  * Payload for fetching issues linked to a test case.
