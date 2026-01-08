@@ -4,7 +4,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY src/ ./src/
-COPY package.json package-lock.json tsconfig.json ./
+COPY package.json package-lock.json tsconfig.json vite.config.ts ./
 
 RUN --mount=type=cache,target=/root/.npm npm ci
 
