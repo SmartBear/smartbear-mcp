@@ -1,6 +1,6 @@
+import { builtinModules } from "node:module";
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
-import { builtinModules } from "node:module";
 
 export default defineConfig({
   build: {
