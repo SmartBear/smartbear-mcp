@@ -7,7 +7,7 @@ import type {
 } from "../common/types.js";
 
 const ConfigurationSchema = z.object({
-  base_url: z.string().url().describe("Collaborator server base URL"),
+  base_url: z.url().describe("Collaborator server base URL"),
   username: z.string().describe("Collaborator username for authentication"),
   login_ticket: z
     .string()
@@ -196,7 +196,7 @@ export class CollaboratorClient implements Client {
             "reopen",
             "uncancel",
           ]),
-          args: z.record(z.any()),
+          args: z.record(z.string(), z.any()),
         }),
       },
       async (params, _extra) => {

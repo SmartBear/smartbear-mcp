@@ -64,7 +64,7 @@ interface StabilityData {
 const ConfigurationSchema = z.object({
   auth_token: z.string().describe("BugSnag personal authentication token"),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
-  endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
+  endpoint: z.url().describe("BugSnag endpoint URL").optional(),
 });
 
 export class BugsnagClient implements Client {
@@ -531,7 +531,7 @@ export class BugsnagClient implements Client {
 
         const filters: FilterObject = {
           error: [{ type: "eq", value: params.errorId }],
-          ...args.filters,
+          ...params.filters,
         };
 
         await this.validateEventFields(project, filters);
@@ -566,14 +566,14 @@ export class BugsnagClient implements Client {
             (
               await this.errorsApi.getPivotValuesOnAnError(
                 project.id,
-                args.errorId,
+                params.errorId,
                 filters,
                 5,
               )
             ).body || [],
           url: await this.getErrorUrl(
             project,
-            args.errorId,
+            params.errorId,
             toUrlSearchParams(filters).toString(),
           ),
         };
@@ -886,8 +886,8 @@ export class BugsnagClient implements Client {
                   description: "The new severity level for the error",
                 },
               },
+              required: ["severity"],
             },
-            required: ["severity"],
           });
 
           if (result.action === "accept" && result.content?.severity) {

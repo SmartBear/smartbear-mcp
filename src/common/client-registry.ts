@@ -1,6 +1,7 @@
-import { ZodOptional, ZodString, type ZodType } from "zod";
+import { type ZodType, ZodURL } from "zod";
 import type { SmartBearMcpServer } from "./server.js";
 import type { Client } from "./types.js";
+import { isOptionalType, unwrapZodType } from "./zod-utils.js";
 
 /**
  * Central registry for all MCP clients
@@ -51,41 +52,36 @@ class ClientRegistry {
    * @param value The actual config value to validate
    */
   private validateAllowedEndpoint(zodType: ZodType, value: string): void {
-    if (zodType instanceof ZodOptional) {
-      zodType = zodType._def.innerType;
-    }
-    if (zodType instanceof ZodString) {
-      if ((zodType as ZodString).isURL) {
-        const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
-        if (allowedEndpoints) {
-          for (const endpoint of allowedEndpoints) {
-            const trimmedEndpoint = endpoint.trim();
+    if (unwrapZodType(zodType) instanceof ZodURL) {
+      const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
+      if (allowedEndpoints) {
+        for (const endpoint of allowedEndpoints) {
+          const trimmedEndpoint = endpoint.trim();
 
-            // Check if this is a regex pattern (wrapped in /)
-            if (
-              trimmedEndpoint.startsWith("/") &&
-              trimmedEndpoint.endsWith("/")
-            ) {
-              try {
-                const pattern = trimmedEndpoint.slice(1, -1); // Remove leading/trailing /
-                const regex = new RegExp(pattern);
-                if (regex.test(value)) {
-                  return;
-                }
-              } catch (error) {
-                console.warn(
-                  `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}, error: ${error}`,
-                );
-              }
-            } else {
-              // Exact match
-              if (value === trimmedEndpoint) {
+          // Check if this is a regex pattern (wrapped in /)
+          if (
+            trimmedEndpoint.startsWith("/") &&
+            trimmedEndpoint.endsWith("/")
+          ) {
+            try {
+              const pattern = trimmedEndpoint.slice(1, -1); // Remove leading/trailing /
+              const regex = new RegExp(pattern);
+              if (regex.test(value)) {
                 return;
               }
+            } catch (error) {
+              console.warn(
+                `Invalid regex pattern in MCP_ALLOWED_ENDPOINTS: ${trimmedEndpoint}, error: ${error}`,
+              );
+            }
+          } else {
+            // Exact match
+            if (value === trimmedEndpoint) {
+              return;
             }
           }
-          throw new Error(`URL ${value} is not allowed`);
         }
+        throw new Error(`URL ${value} is not allowed`);
       }
     }
   }
@@ -124,7 +120,7 @@ class ClientRegistry {
           // validate if a config option is an Allowed Endpoint URL
           this.validateAllowedEndpoint(entry.config.shape[configKey], value);
           config[configKey] = value;
-        } else if (!entry.config.shape[configKey].isOptional()) {
+        } else if (!isOptionalType(entry.config.shape[configKey])) {
           continue entryLoop; // Skip configuring this client - missing required config
         }
       }
