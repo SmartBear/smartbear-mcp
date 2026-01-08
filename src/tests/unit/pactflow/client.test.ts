@@ -95,7 +95,7 @@ describe("PactFlowClient", () => {
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
       const client = await createConfiguredClient({ token: "token" });
-      client.registerTools(mockRegister, mockGetInput);
+      await client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(1);
       expect(mockRegister.mock.calls[0][0].title).toBe("tool1");
@@ -116,7 +116,7 @@ describe("PactFlowClient", () => {
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
       const client = await createConfiguredClient({ token: "token" });
-      client.registerTools(mockRegister, mockGetInput);
+      await client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).not.toHaveBeenCalled();
     });

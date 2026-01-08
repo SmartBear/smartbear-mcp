@@ -58,10 +58,10 @@ export class QmetryClient implements Client {
     return this.endpoint;
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     const resolveContext = (args: Record<string, any>) => ({
       baseUrl: args.baseUrl ?? this.endpoint,
       projectKey: args.projectKey ?? this.projectApiKey,

@@ -53,7 +53,7 @@ export async function runStdioMode() {
     );
     // Add non-configured clients to server to allow listing available tools
     for (const entry of clientRegistry.getAll()) {
-      server.addClient(entry);
+      await server.addClient(entry);
     }
   }
 

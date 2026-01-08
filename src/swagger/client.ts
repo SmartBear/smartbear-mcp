@@ -247,10 +247,10 @@ export class SwaggerClient implements Client {
     return this.getApi().standardizeApi(args);
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     TOOLS.forEach((tool) => {
       const { handler, formatResponse, ...toolParams } = tool;
       register(toolParams, async (args, _extra) => {

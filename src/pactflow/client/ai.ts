@@ -265,6 +265,7 @@ export const EntitlementsSchema = z
     userEntitlements: UserEntitlementsSchema.describe(
       "User entitlements information.",
     ),
+    aiEnabled: z.boolean(),
   })
   .describe("Entitlements information.");
 

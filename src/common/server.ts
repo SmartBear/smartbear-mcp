@@ -57,8 +57,8 @@ export class SmartBearMcpServer extends McpServer {
     return this.cache;
   }
 
-  addClient(client: Client): void {
-    client.registerTools(
+  async addClient(client: Client): Promise<void> {
+    await client.registerTools(
       (params, cb) => {
         const toolName = `${client.toolPrefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
         const toolTitle = `${client.name}: ${params.title}`;
