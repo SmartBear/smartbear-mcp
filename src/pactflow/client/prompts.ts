@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import type { PromptParams } from "../../common/types";
 import { EndpointMatcherSchema } from "./ai";
 
@@ -83,7 +82,7 @@ Generate a list of recommendations(maximum of 5) in JSON to use with an OpenAPI 
 Zod Schema for the matcher to be generated is provided below in the markdown block of javascript use this to generate the recommendations for the matcher. Recommendations should contain all the fields from the schema and only output the JSON in a markdown formatted block.
 
 \`\`\`javascript
-const EndpointMatcherSchema = ${JSON.stringify(zodToJsonSchema(EndpointMatcherSchema))};
+const EndpointMatcherSchema = ${JSON.stringify(EndpointMatcherSchema.toJSONSchema())};
 \`\`\`
 
 Example OpenAPI document:-

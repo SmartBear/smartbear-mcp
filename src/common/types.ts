@@ -11,14 +11,14 @@ import type {
   ElicitRequest,
   ElicitResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { ZodObject, ZodRawShape, ZodType, ZodTypeAny } from "zod";
+import type { ZodObject, ZodRawShape, ZodType } from "zod";
 import type { SmartBearMcpServer } from "./server";
 
 export interface ToolParams {
   title: string;
   summary: string;
   parameters?: Parameters; // either 'parameters' or an 'inputSchema' should be present
-  inputSchema?: ZodTypeAny;
+  inputSchema?: ZodType;
   /**
    * Specifies the type of object returned by the tool. <br>
    * When `outputSchema` is specified, make sure the tool returns `structuredContent` in its callback. <br>
@@ -26,7 +26,7 @@ export interface ToolParams {
    *
    * https://modelcontextprotocol.io/specification/2025-06-18/server/tools#output-schema
    */
-  outputSchema?: ZodTypeAny;
+  outputSchema?: ZodType;
   purpose?: string;
   useCases?: string[];
   examples?: Array<{
@@ -99,7 +99,9 @@ export interface Client {
    * Field names must use snake case to ensure they are mapped to environment variables and HTTP headers correctly.
    * e.g., `config.my_property` would refer to the environment variable `TOOL_MY_PROPERTY`, http header `Tool-My-Property`
    */
-  config: ZodObject<ZodRawShape>;
+  config: ZodObject<{
+    [key: string]: ZodType;
+  }>;
   /**
    * Configure the client with the given server and configuration
    */

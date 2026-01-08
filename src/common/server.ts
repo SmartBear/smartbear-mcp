@@ -21,7 +21,6 @@ import {
   ZodRecord,
   ZodString,
   type ZodType,
-  type ZodTypeAny,
   ZodUnion,
 } from "zod";
 import Bugsnag from "../common/bugsnag";
@@ -29,6 +28,7 @@ import { CacheService } from "./cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import { ToolError } from "./tools";
 import type { Client, ToolParams } from "./types";
+import { unwrapZodType } from "./zod-utils";
 
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
@@ -43,8 +43,6 @@ export class SmartBearMcpServer extends McpServer {
         capabilities: {
           resources: { listChanged: true }, // Server supports dynamic resource lists
           tools: { listChanged: true }, // Server supports dynamic tool lists
-          sampling: {}, // Server supports sampling requests to Host
-          elicitation: {}, // Server supports eliciting input from the user
           logging: {}, // Server supports logging messages
           prompts: {}, // Server supports sending prompts to Host
         },
@@ -180,7 +178,7 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   private getInputSchema(params: ToolParams): any {
-    const args: ZodRawShape = {};
+    const args: Record<string, ZodType> = {};
     for (const param of params.parameters ?? []) {
       args[param.name] = param.type;
       if (param.description) {
@@ -195,15 +193,19 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   private schemaToRawShape(
-    schema: ZodTypeAny | undefined,
+    schema: ZodType | undefined,
   ): ZodRawShape | undefined {
     if (schema) {
       if (schema instanceof ZodObject) {
         return schema.shape;
       }
       if (schema instanceof ZodIntersection) {
-        const leftShape = this.schemaToRawShape(schema._def.left);
-        const rightShape = this.schemaToRawShape(schema._def.right);
+        const leftShape = this.schemaToRawShape(
+          (schema as ZodIntersection<ZodType, ZodType>).def.left,
+        );
+        const rightShape = this.schemaToRawShape(
+          (schema as ZodIntersection<ZodType, ZodType>).def.right,
+        );
         return { ...leftShape, ...rightShape };
       }
     }
@@ -287,7 +289,7 @@ export class SmartBearMcpServer extends McpServer {
   ): string {
     description = description ?? (field.description || null);
     if (field instanceof ZodOptional) {
-      field = (field as ZodOptional<ZodTypeAny>).unwrap();
+      field = (field as ZodOptional<ZodType>).unwrap();
       return this.formatParameterDescription(
         key,
         field,
@@ -298,9 +300,9 @@ export class SmartBearMcpServer extends McpServer {
     }
     if (field instanceof ZodDefault) {
       defaultValue = JSON.stringify(
-        (field as ZodDefault<ZodTypeAny>)._def.defaultValue(),
+        (field as ZodDefault<ZodType>).def.defaultValue,
       );
-      field = (field as ZodDefault<ZodTypeAny>).removeDefault();
+      field = (field as ZodDefault<ZodType>).unwrap();
       return this.formatParameterDescription(
         key,
         field,
@@ -318,18 +320,10 @@ export class SmartBearMcpServer extends McpServer {
   }
 
   private getReadableTypeName(zodType: ZodType): string {
-    if (zodType instanceof ZodOptional) {
-      return this.getReadableTypeName(
-        (zodType as ZodOptional<ZodTypeAny>).unwrap(),
-      );
-    }
-    if (zodType instanceof ZodDefault) {
-      return this.getReadableTypeName(
-        (zodType as ZodDefault<ZodTypeAny>).removeDefault(),
-      );
-    }
+    zodType = unwrapZodType(zodType);
     if (zodType instanceof ZodRecord) {
-      return `record<${this.getReadableTypeName((zodType as ZodRecord).keySchema)}, ${this.getReadableTypeName((zodType as ZodRecord).valueSchema)}>`;
+      const record = zodType as ZodRecord;
+      return `record<${this.getReadableTypeName(record.def.keyType as ZodType)}, ${this.getReadableTypeName(record.def.valueType as ZodType)}>`;
     }
     if (zodType instanceof ZodString) return "string";
     if (zodType instanceof ZodNumber) return "number";

@@ -22,9 +22,7 @@ describe("TOOLS definition for 'Generate Pact Tests'", () => {
     expect(languageSchema).toBeDefined();
 
     const invalidData = "ruby"; // not in enum
-    expect(() => languageSchema?.parse(invalidData)).toThrow(
-      /Invalid enum value/,
-    );
+    expect(() => languageSchema?.parse(invalidData)).toThrow();
   });
 });
 

@@ -61,7 +61,7 @@ export class GetTestCases extends Tool<ZephyrClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
+  handle: ToolCallback<ZodRawShape> = async (args) => {
     const parsedArgs = listTestCasesCursorPaginatedQueryParams.parse(args);
     const response = await this.client
       .getApiClient()

@@ -9,6 +9,7 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { clientRegistry } from "./client-registry";
 import { SmartBearMcpServer } from "./server";
 import type { Client } from "./types";
+import { isOptionalType } from "./zod-utils";
 
 /**
  * Run server in HTTP mode with Streamable HTTP transport
@@ -505,7 +506,7 @@ function getHttpHeadersHelp(): string[] {
     messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
       const headerName = getHeaderName(entry, configKey);
-      const requiredTag = requirement.isOptional()
+      const requiredTag = isOptionalType(requirement)
         ? " (optional)"
         : " (required)";
       messages.push(

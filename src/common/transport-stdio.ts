@@ -4,6 +4,7 @@ import { clientRegistry } from "./client-registry";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import { SmartBearMcpServer } from "./server";
 import type { Client } from "./types";
+import { isOptionalType } from "./zod-utils";
 
 /**
  * Generate a dynamic error message listing all available clients and their required env vars
@@ -14,7 +15,7 @@ function getNoConfigMessage(): string[] {
     messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
       const envVarName = getEnvVarName(entry, configKey);
-      const requiredTag = requirement.isOptional()
+      const requiredTag = isOptionalType(requirement)
         ? " (optional)"
         : " (required)";
       messages.push(

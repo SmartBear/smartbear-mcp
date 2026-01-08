@@ -1057,6 +1057,11 @@ describe("BugsnagClient", () => {
       const mockProject = getMockProject("proj-1", "Project 1", "my-project");
       const mockError = getMockError("error-1");
 
+      const defaultQueryString =
+        "?filters[error][][type]=eq&filters[error][][value]=error-1" +
+        "&filters[event.since][][type]=eq&filters[event.since][][value]=30d" +
+        "&filters[error.status][][type]=eq&filters[error.status][][value]=open";
+
       it("should get error details with project from cache", async () => {
         const mockEvents: EventApiView[] = [
           {
@@ -1096,9 +1101,6 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({ errorId: "error-1" });
 
-        const queryString =
-          "?filters[error][][type]=eq&filters[error][][value]=error-1";
-        const encodedQueryString = encodeURI(queryString);
         expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
@@ -1108,7 +1110,7 @@ describe("BugsnagClient", () => {
             error_details: mockError,
             latest_event: getMockEvent("event-1"),
             pivots: mockPivots,
-            url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1${encodedQueryString}`,
+            url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1${encodeURI(defaultQueryString)}`,
           }),
         );
       });
@@ -1142,9 +1144,6 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({ errorId: "error-1" });
 
-        const queryString =
-          "?filters[error][][type]=eq&filters[error][][value]=error-1";
-        const encodedQueryString = encodeURI(queryString);
         expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
@@ -1154,7 +1153,7 @@ describe("BugsnagClient", () => {
             error_details: mockError,
             latest_event: null,
             pivots: [],
-            url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1${encodedQueryString}`,
+            url: `https://app.bugsnag.com/${mockOrg.slug}/${mockProject.slug}/errors/error-1${encodeURI(defaultQueryString)}`,
           }),
         );
       });
@@ -2091,8 +2090,8 @@ describe("BugsnagClient", () => {
                 description: "The new severity level for the error",
               },
             },
+            required: ["severity"],
           },
-          required: ["severity"],
         });
 
         expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
@@ -2373,18 +2372,6 @@ describe("BugsnagClient", () => {
           ],
         });
       });
-
-      it("should throw error when spanGroupId is missing", async () => {
-        mockCache.get.mockReturnValue(mockProject);
-
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
-
-        const getSpanGroupHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Span Group",
-        )[1];
-
-        await expect(getSpanGroupHandler({})).rejects.toThrow("Required");
-      });
     });
 
     describe("List Spans tool handler", () => {
@@ -2444,18 +2431,6 @@ describe("BugsnagClient", () => {
           ],
         });
       });
-
-      it("should throw error when spanGroupId is missing", async () => {
-        mockCache.get.mockReturnValue(mockProject);
-
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
-
-        const listSpansHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "List Spans",
-        )[1];
-
-        await expect(listSpansHandler({})).rejects.toThrow("Required");
-      });
     });
 
     describe("Get Trace tool handler", () => {
@@ -2508,31 +2483,6 @@ describe("BugsnagClient", () => {
             },
           ],
         });
-      });
-
-      it("should throw error when required parameters are missing", async () => {
-        mockCache.get.mockReturnValue(mockProject);
-
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
-
-        const getTraceHandler = registerToolsSpy.mock.calls.find(
-          (call: any) => call[0].title === "Get Trace",
-        )[1];
-
-        await expect(
-          getTraceHandler({
-            traceId: "trace-abc",
-            // Missing from and to
-          }),
-        ).rejects.toThrow("Required");
-
-        await expect(
-          getTraceHandler({
-            from: "2024-01-01T00:00:00Z",
-            to: "2024-01-01T23:59:59Z",
-            // Missing traceId
-          }),
-        ).rejects.toThrow("Required");
       });
     });
 

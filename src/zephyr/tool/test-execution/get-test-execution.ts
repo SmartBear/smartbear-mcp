@@ -34,7 +34,7 @@ export class GetTestExecution extends Tool<ZephyrClient> {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
+  handle: ToolCallback<ZodRawShape> = async (args) => {
     const { testExecutionIdOrKey } = getTestExecutionParams.parse(args);
     const response = await this.client
       .getApiClient()
