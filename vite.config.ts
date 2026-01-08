@@ -1,8 +1,10 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
+import { builtinModules } from "node:module";
 
 export default defineConfig({
   build: {
+    ssr: true,
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       formats: ["es"],
@@ -11,13 +13,14 @@ export default defineConfig({
     outDir: "dist",
     rollupOptions: {
       external: [
+        ...builtinModules,
+        ...builtinModules.map((m) => `node:${m}`),
         "@modelcontextprotocol/sdk",
         "@bugsnag/js",
         "node-cache",
         "swagger-client",
         "zod",
         "zod-to-json-schema",
-        /^node:.*/,
       ],
       output: {
         preserveModules: true,
