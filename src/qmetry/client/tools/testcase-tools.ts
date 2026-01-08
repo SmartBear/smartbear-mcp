@@ -1,4 +1,4 @@
-import { QMetryToolsHandlers } from "../../config/constants.js";
+import { QMetryToolsHandlers } from "../../config/constants";
 import {
   CreateTestCaseArgsSchema,
   TestCaseDetailsArgsSchema,
@@ -7,8 +7,8 @@ import {
   TestCaseStepsArgsSchema,
   TestCaseVersionDetailsArgsSchema,
   UpdateTestCaseArgsSchema,
-} from "../../types/common.js";
-import type { QMetryToolParams } from "./types.js";
+} from "../../types/common";
+import type { QMetryToolParams } from "./types";
 
 export const TESTCASE_TOOLS: QMetryToolParams[] = [
   {

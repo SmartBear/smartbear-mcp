@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listTestCasesCursorPaginatedQueryParams,
   listTestCasesCursorPaginatedResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetTestCases } from "../../../../../zephyr/tool/test-case/get-test-cases.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetTestCases } from "../../../../../zephyr/tool/test-case/get-test-cases";
 
 describe("GetTestCases", () => {
   let mockClient: any;

@@ -7,7 +7,7 @@ import {
   type FolderPayload,
   type PaginationPayload,
   type SortPayload,
-} from "./common.js";
+} from "./common";
 
 export interface FetchRequirementsPayload
   extends PaginationPayload,

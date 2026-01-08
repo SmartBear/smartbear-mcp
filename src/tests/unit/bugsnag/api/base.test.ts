@@ -7,7 +7,7 @@ import {
   pickFields,
   pickFieldsFromArray,
 } from "../../../../bugsnag/client/api/base";
-import { Configuration } from "../../../../bugsnag/client/api/configuration.js";
+import { Configuration } from "../../../../bugsnag/client/api/configuration";
 
 describe("base.ts", () => {
   describe("pickFields", () => {

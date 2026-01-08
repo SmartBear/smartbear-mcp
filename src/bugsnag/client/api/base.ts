@@ -1,5 +1,5 @@
-import { ToolError } from "../../../common/tools.js";
-import type { Configuration } from "./configuration.js";
+import { ToolError } from "../../../common/tools";
+import type { Configuration } from "./configuration";
 
 export interface ApiResponse<T> {
   status: number;

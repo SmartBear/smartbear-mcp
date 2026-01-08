@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listStatusesQueryParams,
   listStatusesResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetStatuses } from "../../../../../zephyr/tool/status/get-statuses.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetStatuses } from "../../../../../zephyr/tool/status/get-statuses";
 
 const responseMock = {
   next: null,

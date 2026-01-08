@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listEnvironmentsQueryParams,
   listEnvironmentsResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetEnvironments } from "../../../../../zephyr/tool/environment/get-environments.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetEnvironments } from "../../../../../zephyr/tool/environment/get-environments";
 
 const responseFromSpecificProjectMock = {
   next: null,

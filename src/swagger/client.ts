@@ -1,13 +1,13 @@
 import { z } from "zod";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type { SmartBearMcpServer } from "../common/server.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 // Apply backward compatibility for API_HUB_API_KEY
-import "./config-utils.js";
+import "./config-utils";
 import {
   type ApiDefinitionParams,
   type ApiSearchParams,
@@ -44,12 +44,12 @@ import {
   type UpdateDocumentArgs,
   type UpdatePortalArgs,
   type UpdateProductArgs,
-} from "./client/index.js";
+} from "./client/index";
 
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
-} from "./client/user-management-types.js";
+} from "./client/user-management-types";
 
 const ConfigurationSchema = z.object({
   api_key: z.string().describe("Swagger API key for authentication"),

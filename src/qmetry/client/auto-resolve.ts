@@ -1,4 +1,4 @@
-import { QMetryToolsHandlers } from "../config/constants.js";
+import { QMetryToolsHandlers } from "../config/constants";
 
 /**
  * Configuration for auto-resolving viewId and folderPath for different QMetry modules

@@ -1,6 +1,6 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import type { Client, ToolParams } from "./types.js";
+import type { Client, ToolParams } from "./types";
 
 /**
  * Error class for tool-specific errors – these result in a response to the LLM with `isError: true`

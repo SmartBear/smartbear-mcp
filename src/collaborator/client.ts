@@ -1,10 +1,10 @@
 import { z } from "zod";
-import type { SmartBearMcpServer } from "../common/server.js";
+import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Collaborator server base URL"),

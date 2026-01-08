@@ -6,7 +6,7 @@
  * This follows the pattern established in the pactflow module.
  */
 
-import type { ToolParams } from "../../common/types.js";
+import type { ToolParams } from "../../common/types";
 import {
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
@@ -21,7 +21,7 @@ import {
   UpdateDocumentArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
-} from "./portal-types.js";
+} from "./portal-types";
 import {
   ApiDefinitionParamsSchema,
   ApiSearchParamsSchema,
@@ -29,8 +29,8 @@ import {
   CreateApiParamsSchema,
   ScanStandardizationParamsSchema,
   StandardizeApiParamsSchema,
-} from "./registry-types.js";
-import { OrganizationsQuerySchema } from "./user-management-types.js";
+} from "./registry-types";
+import { OrganizationsQuerySchema } from "./user-management-types";
 
 export interface SwaggerToolParams extends ToolParams {
   handler: string;

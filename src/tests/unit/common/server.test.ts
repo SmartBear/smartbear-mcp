@@ -1,9 +1,9 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
-import Bugsnag from "../../../common/bugsnag.js";
-import { SmartBearMcpServer } from "../../../common/server.js";
-import { ToolError } from "../../../common/tools.js";
+import Bugsnag from "../../../common/bugsnag";
+import { SmartBearMcpServer } from "../../../common/server";
+import { ToolError } from "../../../common/tools";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({

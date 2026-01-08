@@ -23,12 +23,12 @@ import {
   type ZodType,
   ZodUnion,
 } from "zod";
-import Bugsnag from "../common/bugsnag.js";
-import { CacheService } from "./cache.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
-import { ToolError } from "./tools.js";
-import type { Client, ToolParams } from "./types.js";
-import { unwrapZodType } from "./zod-utils.js";
+import Bugsnag from "../common/bugsnag";
+import { CacheService } from "./cache";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
+import { ToolError } from "./tools";
+import type { Client, ToolParams } from "./types";
+import { unwrapZodType } from "./zod-utils";
 
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;

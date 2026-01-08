@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { clientRegistry } from "../../../common/client-registry.js";
-import type { SmartBearMcpServer } from "../../../common/server.js";
-import type { Client } from "../../../common/types.js";
+import { clientRegistry } from "../../../common/client-registry";
+import type { SmartBearMcpServer } from "../../../common/server";
+import type { Client } from "../../../common/types";
 
 describe("ClientRegistry", () => {
   let mockServer: SmartBearMcpServer;

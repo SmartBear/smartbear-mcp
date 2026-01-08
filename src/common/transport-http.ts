@@ -6,10 +6,10 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
-import { clientRegistry } from "./client-registry.js";
-import { SmartBearMcpServer } from "./server.js";
-import type { Client } from "./types.js";
-import { isOptionalType } from "./zod-utils.js";
+import { clientRegistry } from "./client-registry";
+import { SmartBearMcpServer } from "./server";
+import type { Client } from "./types";
+import { isOptionalType } from "./zod-utils";
 
 /**
  * Run server in HTTP mode with Streamable HTTP transport

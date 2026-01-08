@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { PromptParams } from "../../common/types.js";
-import { EndpointMatcherSchema } from "./ai.js";
+import type { PromptParams } from "../../common/types";
+import { EndpointMatcherSchema } from "./ai";
 
 const OADMatcherPromptOpenAPIDocExample = {
   openapi: "3.1.0",

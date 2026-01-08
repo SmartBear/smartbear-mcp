@@ -31,13 +31,13 @@
     "mcpServerName": "SmartBear MCP Server"
   },
   "scripts": {
-    "build": "tsc && shx chmod +x dist/*.js",
+    "build": "vite build && shx chmod +x dist/*.js",
     "lint": "biome lint .",
     "lint:fix": "biome lint . --fix",
     "format": "biome format . --write",
     "format:check": "biome format .",
     "prepare": "npm run build",
-    "watch": "tsc --watch",
+    "watch": "vite build --watch",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
@@ -51,6 +51,7 @@
     "@modelcontextprotocol/sdk": "^1.15.0",
     "node-cache": "^5.1.2",
     "swagger-client": "^3.35.6",
+    "vite": "^7.3.1",
     "zod": "^4"
   },
   "devDependencies": {

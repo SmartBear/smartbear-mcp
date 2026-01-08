@@ -1,14 +1,14 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { ToolError } from "../../common/tools.js";
-import type { GetInputFunction } from "../../common/types.js";
+import { ToolError } from "../../common/tools";
+import type { GetInputFunction } from "../../common/types";
 import {
   type EndpointMatcher,
   EndpointMatcherSchema,
   MatcherRecommendationInputSchema,
   type MatcherRecommendations,
   type OpenAPI,
-} from "./ai.js";
-import { OADMatcherPrompt } from "./prompts.js";
+} from "./ai";
+import { OADMatcherPrompt } from "./prompts";
 
 /**
  * Get OpenAPI matcher recommendations using sampling.

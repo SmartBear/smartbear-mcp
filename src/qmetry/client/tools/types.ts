@@ -1,4 +1,4 @@
-import type { ToolParams } from "../../../common/types.js";
+import type { ToolParams } from "../../../common/types";
 
 export interface QMetryToolParams extends ToolParams {
   handler: string;

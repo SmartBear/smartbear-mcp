@@ -1,15 +1,15 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import z from "zod";
 
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type { SmartBearMcpServer } from "../common/server.js";
-import { ToolError } from "../common/tools.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
 import type {
   Client,
   GetInputFunction,
   RegisterPromptFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 import type {
   Entitlement,
   GenerationInput,
@@ -17,7 +17,7 @@ import type {
   RefineInput,
   RefineResponse,
   StatusResponse,
-} from "./client/ai.js";
+} from "./client/ai";
 import type {
   CanIDeployInput,
   CanIDeployResponse,
@@ -26,13 +26,13 @@ import type {
   MetricsResponse,
   ProviderStatesResponse,
   TeamMetricsResponse,
-} from "./client/base.js";
+} from "./client/base";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
-} from "./client/prompt-utils.js";
-import { PROMPTS } from "./client/prompts.js";
-import { type ClientType, TOOLS } from "./client/tools.js";
+} from "./client/prompt-utils";
+import { PROMPTS } from "./client/prompts";
+import { type ClientType, TOOLS } from "./client/tools";
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Pact Broker or PactFlow base URL"),
