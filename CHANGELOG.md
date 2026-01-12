@@ -7,13 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.13.0] - 2026-01-09
+
 ### Added
 
 - [Swagger] Added `SWAGGER_PORTAL_BASE_PATH`, `SWAGGER_REGISTRY_BASE_PATH` and `SWAGGER_UI_BASE_PATH` environment variables for configuring custom API endpoints, useful for on-premise Swagger Studio installations [#283](https://github.com/SmartBear/smartbear-mcp/pull/283)
+- [PactFlow] Add metrics tools [#281](https://github.com/SmartBear/smartbear-mcp/pull/281)
+- [Swagger] Extract version from X-Version header and update response structure [#287](https://github.com/SmartBear/smartbear-mcp/pull/287)
+- [PactFlow] Disable AI tools for on-prem and OSS broker. [#295](https://github.com/SmartBear/smartbear-mcp/pull/295)
 
 ### Fixed
 
 - [BugSnag] Remove misleading warning for event fields if no API is provided in configuration [#284](https://github.com/SmartBear/smartbear-mcp/pull/284)
+- [Common] Allow all tools to be registered if stdio unconfigured. [#256](https://github.com/SmartBear/smartbear-mcp/pull/256)
+- [BugSnag] Avoid a warning message for no projects found if no API key is configured. [#284](https://github.com/SmartBear/smartbear-mcp/pull/256)
+- [BugSnag] Regenerate api client with original field name casing. [#292](https://github.com/SmartBear/smartbear-mcp/pull/292)
 
 ### Removed
 
