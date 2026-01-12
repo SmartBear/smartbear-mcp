@@ -1,13 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listTestCyclesQueryParams,
   listTestCyclesResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetTestCycles } from "../../../../../zephyr/tool/test-cycle/get-test-cycles.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetTestCycles } from "../../../../../zephyr/tool/test-cycle/get-test-cycles";
 
 describe("GetTestCycles", () => {
-  const mockApiClient = { get: vi.fn() };
-  const instance = new GetTestCycles(mockApiClient as any);
+  let mockClient: any;
+  let instance: GetTestCycles;
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        get: vi.fn(),
+      }),
+    };
+    instance = new GetTestCycles(mockClient as any);
+  });
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Test Cycles");
@@ -97,10 +106,13 @@ describe("GetTestCycles", () => {
         },
       ],
     };
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { maxResults: 10, startAt: 0 };
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/testcycles", args);
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/testcycles",
+      args,
+    );
     expect(result.structuredContent).toBe(responseMock);
   });
 
@@ -181,9 +193,9 @@ describe("GetTestCycles", () => {
         },
       ],
     };
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const result = await instance.handle({}, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/testcycles", {
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/testcycles", {
       maxResults: 10,
       startAt: undefined,
     });
@@ -191,14 +203,14 @@ describe("GetTestCycles", () => {
   });
 
   it("should handle apiClient.get throwing error", async () => {
-    mockApiClient.get.mockRejectedValueOnce(new Error("API error"));
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(instance.handle({ maxResults: 1 }, {})).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
-    mockApiClient.get.mockResolvedValueOnce(undefined);
+    mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
     const result = await instance.handle({ maxResults: 1 }, {});
     expect(result.structuredContent).toBeUndefined();
   });

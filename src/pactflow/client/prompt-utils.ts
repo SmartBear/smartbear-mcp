@@ -1,13 +1,14 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { type GetInputFunction, ToolError } from "../../common/types.js";
+import { ToolError } from "../../common/tools";
+import type { GetInputFunction } from "../../common/types";
 import {
   type EndpointMatcher,
   EndpointMatcherSchema,
   MatcherRecommendationInputSchema,
   type MatcherRecommendations,
   type OpenAPI,
-} from "./ai.js";
-import { OADMatcherPrompt } from "./prompts.js";
+} from "./ai";
+import { OADMatcherPrompt } from "./prompts";
 
 /**
  * Get OpenAPI matcher recommendations using sampling.
@@ -35,7 +36,13 @@ export async function getOADMatcherRecommendations(
   });
 
   const regex = /```json[c5]?([\s\S]*?)```/i;
-  const match = regex.exec(matcherResponse.content.text as string);
+  const content = matcherResponse.content;
+  if (content.type !== "text") {
+    throw new Error(
+      `Received unexpected response type from matcher recommendations: ${content.type}`,
+    );
+  }
+  const match = regex.exec(content.text);
 
   if (match) {
     const jsonText = match[1].trim();

@@ -3,15 +3,15 @@ import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 import {
   autoResolveViewIdAndFolderPath,
   findAutoResolveConfig,
-} from "./client/auto-resolve.js";
-import { QMETRY_HANDLER_MAP } from "./client/handlers.js";
-import { getProjectInfo } from "./client/project.js";
-import { TOOLS } from "./client/tools/index.js";
-import { QMETRY_DEFAULTS } from "./config/constants.js";
+} from "./client/auto-resolve";
+import { QMETRY_HANDLER_MAP } from "./client/handlers";
+import { getProjectInfo } from "./client/project";
+import { TOOLS } from "./client/tools/index";
+import { QMETRY_DEFAULTS } from "./config/constants";
 
 const ConfigurationSchema = z.object({
   api_key: z.string().describe("QMetry API key for authentication"),
@@ -38,12 +38,15 @@ export class QmetryClient implements Client {
     _server: any,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.token = config.api_key;
     if (config.base_url) {
       this.endpoint = config.base_url;
     }
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return this.token !== undefined;
   }
 
   getToken() {
@@ -55,10 +58,10 @@ export class QmetryClient implements Client {
     return this.endpoint;
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     const resolveContext = (args: Record<string, any>) => ({
       baseUrl: args.baseUrl ?? this.endpoint,
       projectKey: args.projectKey ?? this.projectApiKey,

@@ -32,6 +32,7 @@ describe("Prompt Utils", () => {
         createMessage: vi.fn().mockResolvedValue({
           action: "accept",
           content: {
+            type: "text",
             text: `
             Generated recommendations are:-
             \`\`\`json
@@ -129,7 +130,7 @@ describe("Prompt Utils", () => {
         }),
       } satisfies Pick<Server, "createMessage">;
 
-      expect(
+      await expect(
         getOADMatcherRecommendations(openApiSpec, mockServer),
       ).rejects.toThrowError();
     });

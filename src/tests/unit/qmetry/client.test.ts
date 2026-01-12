@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { QmetryClient } from "../../../qmetry/client";
-import { TOOLS } from "../../../qmetry/client/tools/index.js";
+import { TOOLS } from "../../../qmetry/client/tools/index";
 
 const fetchMock = createFetchMock(vi);
 
@@ -57,8 +57,8 @@ describe("QmetryClient", () => {
       vi.clearAllMocks();
     });
 
-    it("registers all QMetry tools", () => {
-      client.registerTools(mockRegister, mockGetInput);
+    it("registers all QMetry tools", async () => {
+      await client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(TOOLS.length);
       expect(mockRegister.mock.calls[0][0].title).toBe(
@@ -69,8 +69,8 @@ describe("QmetryClient", () => {
       );
     });
 
-    it("registers tools with correct structure", () => {
-      client.registerTools(mockRegister, mockGetInput);
+    it("registers tools with correct structure", async () => {
+      await client.registerTools(mockRegister, mockGetInput);
 
       // Check that all registered tools have the expected structure
       const toolCalls = mockRegister.mock.calls;
@@ -85,9 +85,11 @@ describe("QmetryClient", () => {
       });
     });
 
-    it("should throw if register function is missing", () => {
+    it("should throw if register function is missing", async () => {
       // @ts-expect-error testing bad input
-      expect(() => client.registerTools(null, mockGetInput)).toThrow();
+      await expect(client.registerTools(null, mockGetInput)).rejects.toThrow(
+        "register is not a function",
+      );
     });
   });
 

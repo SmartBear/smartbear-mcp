@@ -1,4 +1,4 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info";
 
 export class AuthService {
   private readonly bearerToken: string;

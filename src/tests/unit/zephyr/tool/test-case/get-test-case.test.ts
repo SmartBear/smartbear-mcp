@@ -1,13 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getTestCaseParams,
   getTestCaseResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetTestCase } from "../../../../../zephyr/tool/test-case/get-test-case.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetTestCase } from "../../../../../zephyr/tool/test-case/get-test-case";
 
 describe("GetTestCase", () => {
-  const mockApiClient = { get: vi.fn() };
-  const instance = new GetTestCase(mockApiClient as any);
+  let mockClient: any;
+  let instance: GetTestCase;
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        get: vi.fn(),
+      }),
+    };
+    instance = new GetTestCase(mockClient as any);
+  });
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Test Case");
@@ -89,22 +98,24 @@ describe("GetTestCase", () => {
         ],
       },
     };
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCaseKey: "SA-T10" };
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/testcases/SA-T10");
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/testcases/SA-T10",
+    );
     expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should handle apiClient.get throwing error", async () => {
-    mockApiClient.get.mockRejectedValueOnce(new Error("API error"));
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
       instance.handle({ testCaseKey: "SA-T10" }, {}),
     ).rejects.toThrow("API error");
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
-    mockApiClient.get.mockResolvedValueOnce(undefined);
+    mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
     const result = await instance.handle({ testCaseKey: "SA-T10" }, {});
     expect(result.structuredContent).toBeUndefined();
   });

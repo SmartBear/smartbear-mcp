@@ -5,7 +5,7 @@ const filterValueSchema = z.object({
   value: z.union([z.string(), z.boolean(), z.number()]),
 });
 
-const filtersSchema = z.record(z.array(filterValueSchema));
+const filtersSchema = z.record(z.string(), z.array(filterValueSchema));
 
 /**
  * A collection of input parameter schemas for reuse between tools.

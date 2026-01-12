@@ -1,12 +1,12 @@
-import { QMetryToolsHandlers } from "../config/constants.js";
-import { getAutomationStatus, importAutomationResults } from "./automation.js";
+import { QMetryToolsHandlers } from "../config/constants";
+import { getAutomationStatus, importAutomationResults } from "./automation";
 import {
   createIssue,
   fetchIssues,
   fetchIssuesLinkedToTestCase,
   linkIssuesToTestcaseRun,
   updateIssue,
-} from "./issues.js";
+} from "./issues";
 import {
   createCycle,
   createRelease,
@@ -16,12 +16,12 @@ import {
   getProjects,
   getReleasesCycles,
   updateCycle,
-} from "./project.js";
+} from "./project";
 import {
   fetchRequirementDetails,
   fetchRequirements,
   fetchRequirementsLinkedToTestCase,
-} from "./requirement.js";
+} from "./requirement";
 import {
   createTestCases,
   fetchTestCaseDetails,
@@ -32,7 +32,7 @@ import {
   fetchTestCaseVersionDetails,
   linkRequirementToTestCase,
   updateTestCase,
-} from "./testcase.js";
+} from "./testcase";
 import {
   bulkUpdateExecutionStatus,
   createTestSuites,
@@ -46,7 +46,7 @@ import {
   linkTestCasesToTestSuite,
   reqLinkedTestCasesToTestSuite,
   updateTestSuite,
-} from "./testsuite.js";
+} from "./testsuite";
 
 /**
  * Mapping of QMetry tool handlers to their implementation functions

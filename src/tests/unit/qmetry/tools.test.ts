@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QmetryClient } from "../../../qmetry/client";
-import * as issues from "../../../qmetry/client/issues.js";
+import * as issues from "../../../qmetry/client/issues";
 // Mock API clients
-import * as project from "../../../qmetry/client/project.js";
-import * as requirement from "../../../qmetry/client/requirement.js";
-import * as testcase from "../../../qmetry/client/testcase.js";
-import * as testsuite from "../../../qmetry/client/testsuite.js";
+import * as project from "../../../qmetry/client/project";
+import * as requirement from "../../../qmetry/client/requirement";
+import * as testcase from "../../../qmetry/client/testcase";
+import * as testsuite from "../../../qmetry/client/testsuite";
 
-vi.mock("../../../qmetry/client/project.js");
-vi.mock("../../../qmetry/client/testcase.js");
-vi.mock("../../../qmetry/client/requirement.js");
-vi.mock("../../../qmetry/client/issues.js");
-vi.mock("../../../qmetry/client/testsuite.js");
+vi.mock("../../../qmetry/client/project");
+vi.mock("../../../qmetry/client/testcase");
+vi.mock("../../../qmetry/client/requirement");
+vi.mock("../../../qmetry/client/issues");
+vi.mock("../../../qmetry/client/testsuite");
 
 // Helper to create and configure a client
 async function createConfiguredClient(

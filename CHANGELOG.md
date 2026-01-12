@@ -7,10 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Added `SWAGGER_PORTAL_BASE_PATH`, `SWAGGER_REGISTRY_BASE_PATH` and `SWAGGER_UI_BASE_PATH` environment variables for configuring custom API endpoints, useful for on-premise Swagger Studio installations [#283](https://github.com/SmartBear/smartbear-mcp/pull/283)
+
+### Fixed
+
+- [BugSnag] Remove misleading warning for event fields if no API is provided in configuration [#284](https://github.com/SmartBear/smartbear-mcp/pull/284)
+
+### Removed
+
+- [Swagger] Remove `create_api_from_template` tool for as a non-useful for LLM [#288](https://github.com/SmartBear/smartbear-mcp/pull/288)
+
+## [0.12.1] - 2025-12-09
+
 ### Changed
 
 - [Swagger] Removed delete document functionality as this operation is not supported by the Portal API
 - [Swagger] Removed delete portal functionality as this operation is not allowed via MCP
+
+### Fixed
+
+- [BugSnag] Fixed an issue with filter query formatting [#277](https://github.com/SmartBear/smartbear-mcp/pull/277)
 
 ## [0.12.0] - 2025-12-03
 

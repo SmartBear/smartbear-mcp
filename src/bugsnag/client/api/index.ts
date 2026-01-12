@@ -1,18 +1,35 @@
-import type { ProjectApiView, ReleaseApiView, ReleaseGroup } from "./api.js";
+import type {
+  OrganizationApiView,
+  ProjectApiView,
+  ReleaseApiView,
+  ReleaseGroup,
+} from "./api";
 
 // Exporting all the types required outside of the api module - all imports from the tool should come from here
 
 export {
+  CurrentUserApiFetchParamCreator,
+  ErrorApiView,
+  ErrorsApiFetchParamCreator,
   ErrorUpdateRequest,
+  EventApiView,
   EventField,
-  PerformanceFilter,
+  OrganizationApiView,
+  PivotApiView,
   ProjectNetworkGroupingRuleset,
+  ProjectsApiFetchParamCreator,
+  Span,
+  SpanGroup,
   TraceField,
-} from "./api.js";
-export { CurrentUserAPI, Organization } from "./CurrentUser.js";
-export { Configuration } from "./configuration.js";
-export { ErrorAPI } from "./Error.js";
-export { ProjectAPI } from "./Project.js";
+} from "./api";
+export { CurrentUserAPI } from "./CurrentUser";
+export { Configuration } from "./configuration";
+export { ErrorAPI } from "./Error";
+export { ProjectAPI } from "./Project";
+
+export interface Organization extends OrganizationApiView {
+  id: string; // ID is always present
+}
 
 export interface Project extends ProjectApiView {
   id: string; // ID is always present

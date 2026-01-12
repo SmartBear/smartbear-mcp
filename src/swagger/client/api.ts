@@ -1,5 +1,5 @@
-import { ToolError } from "../../common/types.js";
-import type { SwaggerConfiguration } from "./configuration.js";
+import { ToolError } from "../../common/tools";
+import type { SwaggerConfiguration } from "./configuration";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -21,7 +21,7 @@ import type {
   UpdateDocumentArgs,
   UpdatePortalBody,
   UpdateProductBody,
-} from "./portal-types.js";
+} from "./portal-types";
 import type {
   ApiDefinitionParams,
   ApiProperty,
@@ -31,19 +31,18 @@ import type {
   ApisJsonResponse,
   CreateApiFromPromptParams,
   CreateApiFromPromptResponse,
-  CreateApiFromTemplateParams,
-  CreateApiFromTemplateResponse,
   CreateApiParams,
   CreateApiResponse,
   ScanStandardizationParams,
   StandardizationResult,
   StandardizeApiParams,
   StandardizeApiResponse,
-} from "./registry-types.js";
+} from "./registry-types";
+
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
-} from "./user-management-types.js";
+} from "./user-management-types";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
@@ -722,57 +721,15 @@ export class SwaggerAPI {
     // Determine operation type based on HTTP status code
     const operation = response.status === 201 ? "create" : "update";
 
-    // Return formatted response with the required fields
-    // Fixed version is always 1.0.0
-    return {
-      owner: params.owner,
-      apiName: params.apiName,
-      version: "1.0.0",
-      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/1.0.0`,
-      operation,
-    };
-  }
-
-  /**
-   * Create API from Template in SwaggerHub Registry
-   * @param params Parameters for creating API from template including owner, api name, and template
-   * @returns Created API metadata with URL. HTTP 201 indicates creation, HTTP 200 indicates update
-   */
-  async createApiFromTemplate(
-    params: CreateApiFromTemplateParams,
-  ): Promise<CreateApiFromTemplateResponse> {
-    // Construct the URL with query parameters
-    // Fixed values: visibility=private, no project, noReconcile=false
-    const searchParams = new URLSearchParams();
-    searchParams.append("isPrivate", "true");
-    searchParams.append("template", params.template);
-
-    const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
-      params.owner,
-    )}/${encodeURIComponent(params.apiName)}/.template?${searchParams.toString()}`;
-
-    // Use POST method for template creation
-    const response = await fetch(url, {
-      method: "POST",
-      headers: this.headers,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      throw new ToolError(
-        `SwaggerHub Registry API createApiFromTemplate failed - status: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ""}. URL: ${url}`,
-      );
-    }
-
-    // Determine operation type based on HTTP status code
-    const operation = response.status === 201 ? "create" : "update";
+    // Extract version from X-Version header
+    const version = response.headers.get("X-Version") || "1.0.0";
 
     // Return formatted response with the required fields
     return {
       owner: params.owner,
       apiName: params.apiName,
-      template: params.template,
-      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}`,
+      version: version,
+      url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`,
       operation,
     };
   }

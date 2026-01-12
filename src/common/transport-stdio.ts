@@ -1,20 +1,21 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-import { clientRegistry } from "./client-registry.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.js";
-import { SmartBearMcpServer } from "./server.js";
-import type { Client } from "./types.js";
+import { clientRegistry } from "./client-registry";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
+import { SmartBearMcpServer } from "./server";
+import type { Client } from "./types";
+import { isOptionalType } from "./zod-utils";
 
 /**
  * Generate a dynamic error message listing all available clients and their required env vars
  */
-function getNoConfigErrorMessage(): string[] {
+function getNoConfigMessage(): string[] {
   const messages: string[] = [];
   for (const entry of clientRegistry.getAll()) {
     messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
       const envVarName = getEnvVarName(entry, configKey);
-      const requiredTag = requirement.isOptional()
+      const requiredTag = isOptionalType(requirement)
         ? " (optional)"
         : " (required)";
       messages.push(
@@ -45,13 +46,16 @@ export async function runStdioMode() {
     },
   );
   if (configuredCount === 0) {
-    const errorMessage = getNoConfigErrorMessage();
-    console.error(
-      errorMessage.length > 0
-        ? `No clients configured. Please provide valid environment variables for at least one client:\n${errorMessage.join("\n")}`
+    const message = getNoConfigMessage();
+    console.warn(
+      message.length > 0
+        ? `No clients configured. Please provide valid environment variables for at least one client:\n${message.join("\n")}`
         : "No clients support environment variable configuration.",
     );
-    process.exit(1);
+    // Add non-configured clients to server to allow listing available tools
+    for (const entry of clientRegistry.getAll()) {
+      await server.addClient(entry);
+    }
   }
 
   const transport = new StdioServerTransport();

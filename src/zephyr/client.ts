@@ -3,21 +3,20 @@ import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
-import { ApiClient } from "./common/api-client.js";
+} from "../common/types";
+import { ApiClient } from "./common/api-client";
 
-import { GetEnvironments } from "./tool/environment/get-environments.js";
-import { GetPriorities } from "./tool/priority/get-priorities.js";
-import { GetProject } from "./tool/project/get-project.js";
-import { GetProjects } from "./tool/project/get-projects.js";
-import { GetStatuses } from "./tool/status/get-statuses.js";
-import { GetTestCase } from "./tool/test-case/get-test-case.js";
-import { GetTestCases } from "./tool/test-case/get-test-cases.js";
-import { GetTestCycle } from "./tool/test-cycle/get-test-cycle.js";
-import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.js";
-import { GetTestExecution } from "./tool/test-execution/get-test-execution.js";
-import { GetTestExecutions } from "./tool/test-execution/get-test-executions.js";
-import type { ZephyrTool } from "./tool/zephyr-tool.js";
+import { GetEnvironments } from "./tool/environment/get-environments";
+import { GetPriorities } from "./tool/priority/get-priorities";
+import { GetProject } from "./tool/project/get-project";
+import { GetProjects } from "./tool/project/get-projects";
+import { GetStatuses } from "./tool/status/get-statuses";
+import { GetTestCase } from "./tool/test-case/get-test-case";
+import { GetTestCases } from "./tool/test-case/get-test-cases";
+import { GetTestCycle } from "./tool/test-cycle/get-test-cycle";
+import { GetTestCycles } from "./tool/test-cycle/get-test-cycles";
+import { GetTestExecution } from "./tool/test-execution/get-test-execution";
+import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
 
@@ -43,12 +42,15 @@ export class ZephyrClient implements Client {
     _server: any,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.apiClient = new ApiClient(
       config.api_token,
       config.base_url || BASE_URL_DEFAULT,
     );
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return this.apiClient !== undefined;
   }
 
   getApiClient() {
@@ -56,23 +58,22 @@ export class ZephyrClient implements Client {
     return this.apiClient;
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
-    const apiClient = this.getApiClient();
-    const tools: ZephyrTool[] = [
-      new GetProjects(apiClient),
-      new GetProject(apiClient),
-      new GetTestCycles(apiClient),
-      new GetTestCycle(apiClient),
-      new GetPriorities(apiClient),
-      new GetStatuses(apiClient),
-      new GetTestCases(apiClient),
-      new GetEnvironments(apiClient),
-      new GetTestCase(apiClient),
-      new GetTestExecution(apiClient),
-      new GetTestExecutions(apiClient),
+  ): Promise<void> {
+    const tools = [
+      new GetProjects(this),
+      new GetProject(this),
+      new GetTestCycles(this),
+      new GetTestCycle(this),
+      new GetPriorities(this),
+      new GetStatuses(this),
+      new GetTestCases(this),
+      new GetEnvironments(this),
+      new GetTestCase(this),
+      new GetTestExecution(this),
+      new GetTestExecutions(this),
     ];
 
     for (const tool of tools) {

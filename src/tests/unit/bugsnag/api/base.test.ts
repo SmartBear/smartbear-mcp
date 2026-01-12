@@ -7,7 +7,7 @@ import {
   pickFields,
   pickFieldsFromArray,
 } from "../../../../bugsnag/client/api/base";
-import { Configuration } from "../../../../bugsnag/client/api/configuration.js";
+import { Configuration } from "../../../../bugsnag/client/api/configuration";
 
 describe("base.ts", () => {
   describe("pickFields", () => {
@@ -366,6 +366,8 @@ describe("base.ts", () => {
       expect(configuredObj).toBe(configuration);
       expect(configuredObj.apiKey).toBe("test-token");
       expect(configuredObj.basePath).toBe("http://localhost:3000");
+      // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
+      expect(baseApi["filterFields"]).toEqual([]);
     });
 
     it("should construct with filterFields", () => {
@@ -377,15 +379,6 @@ describe("base.ts", () => {
 
     it("should construct with empty filterFields when not provided", () => {
       const baseApi = new BaseAPI(configuration);
-      // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
-      expect(baseApi["filterFields"]).toEqual([]);
-    });
-
-    it("should construct with minimal configuration", () => {
-      const minimalConfig = new Configuration({});
-      const baseApi = new BaseAPI(minimalConfig);
-      // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
-      expect(baseApi["configuration"]).toBe(minimalConfig);
       // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
       expect(baseApi["filterFields"]).toEqual([]);
     });
@@ -420,8 +413,8 @@ describe("base.ts", () => {
         );
         expect(result.status).toBe(200);
         expect(result.body).toEqual({
-          errorId: "123",
-          errorClass: "TestError",
+          error_id: "123",
+          error_class: "TestError",
         });
       });
 
@@ -512,8 +505,8 @@ describe("base.ts", () => {
           },
         );
         expect(result.body).toEqual([
-          { errorId: "123", errorClass: "TestError" },
-          { errorId: "456", errorClass: "AnotherError" },
+          { error_id: "123", error_class: "TestError" },
+          { error_id: "456", error_class: "AnotherError" },
         ]);
         expect(result.status).toBe(200);
         expect(result.totalCount).toBeNull();

@@ -15,6 +15,9 @@ export default defineConfig({
         "**/*.d.ts",
         // Auto-generated API client files
         "src/bugsnag/client/api/api.ts",
+        "src/bugsnag/client/api/CurrentUser.ts",
+        "src/bugsnag/client/api/Error.ts",
+        "src/bugsnag/client/api/Project.ts",
         // Main entry point (tested via integration)
         "src/index.ts",
         // Other client implementations (not currently tested)
@@ -22,11 +25,17 @@ export default defineConfig({
         "src/reflect/client.ts",
         // Utility modules
         "src/common/bugsnag.ts",
+        "src/common/cache.ts",
+        "src/common/info.ts",
+        "src/common/register-clients.ts",
+        "src/common/tools.ts",
+        "src/common/transport-http.ts",
+        "src/common/transport-stdio.ts",
         "src/common/types.ts",
         "src/pactflow/client/prompts.ts",
         "src/pactflow/client/ai.ts",
         "src/pactflow/client/base.ts",
-        "scripts/post-coverage-comment.js",
+        "scripts/*.js",
       ],
       // Coverage thresholds for business logic only
       thresholds: {

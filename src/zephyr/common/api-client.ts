@@ -1,5 +1,5 @@
-import { ToolError } from "../../common/types.js";
-import { AuthService } from "./auth-service.js";
+import { ToolError } from "../../common/tools";
+import { AuthService } from "./auth-service";
 
 export class ApiClient {
   private readonly baseUrl: string;

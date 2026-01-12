@@ -1,13 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listPrioritiesQueryParams,
   listPrioritiesResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetPriorities } from "../../../../../zephyr/tool/priority/get-priorities.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetPriorities } from "../../../../../zephyr/tool/priority/get-priorities";
 
 describe("GetProjectPriorities", () => {
-  const mockApiClient = { get: vi.fn() };
-  const instance = new GetPriorities(mockApiClient as any);
+  let mockClient: any;
+  let instance: GetPriorities;
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        get: vi.fn(),
+      }),
+    };
+    instance = new GetPriorities(mockClient as any);
+  });
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get priorities");
@@ -66,10 +75,10 @@ describe("GetProjectPriorities", () => {
         },
       ],
     };
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { maxResults: 10, startAt: 0, projectKey: "PROJ" };
     const result = await instance.handle(args, {} as any);
-    expect(mockApiClient.get).toHaveBeenCalledWith("/priorities", {
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/priorities", {
       maxResults: 10,
       startAt: 0,
       projectKey: "PROJ",
@@ -99,23 +108,23 @@ describe("GetProjectPriorities", () => {
         },
       ],
     };
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const result = await instance.handle({}, {} as any);
-    expect(mockApiClient.get).toHaveBeenCalledWith("/priorities", {
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/priorities", {
       maxResults: 10, // default value from schema
     });
     expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should handle apiClient.get throwing error", async () => {
-    mockApiClient.get.mockRejectedValueOnce(new Error("API error"));
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(instance.handle({ maxResults: 1 }, {} as any)).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
-    mockApiClient.get.mockResolvedValueOnce(undefined);
+    mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
     const result = await instance.handle({ maxResults: 1 }, {} as any);
     expect(result.structuredContent).toBeUndefined();
   });

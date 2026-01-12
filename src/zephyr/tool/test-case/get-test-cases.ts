@@ -1,20 +1,14 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import type { ToolParams } from "../../../common/types.js";
-import type { ApiClient } from "../../common/api-client.js";
+import { Tool } from "../../../common/tools";
+import type { ToolParams } from "../../../common/types";
+import type { ZephyrClient } from "../../client";
 import {
   listTestCasesCursorPaginatedQueryParams,
   listTestCasesCursorPaginatedResponse,
-} from "../../common/rest-api-schemas.js";
-import type { ZephyrTool } from "../zephyr-tool.js";
+} from "../../common/rest-api-schemas";
 
-export class GetTestCases implements ZephyrTool {
-  private readonly apiClient: ApiClient;
-
-  constructor(apiClient: ApiClient) {
-    this.apiClient = apiClient;
-  }
-
+export class GetTestCases extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Cases",
     summary: "Get details of test cases in Zephyr",
@@ -67,9 +61,11 @@ export class GetTestCases implements ZephyrTool {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
+  handle: ToolCallback<ZodRawShape> = async (args) => {
     const parsedArgs = listTestCasesCursorPaginatedQueryParams.parse(args);
-    const response = await this.apiClient.get("/testcases/nextgen", parsedArgs);
+    const response = await this.client
+      .getApiClient()
+      .get("/testcases/nextgen", parsedArgs);
     return {
       structuredContent: response,
       content: [],

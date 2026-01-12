@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type { SmartBearMcpServer } from "../common/server.js";
-import {
-  type Client,
-  type GetInputFunction,
-  type RegisterToolsFunction,
-  ToolError,
-} from "../common/types.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
+import type {
+  Client,
+  GetInputFunction,
+  RegisterToolsFunction,
+} from "../common/types";
 
 // Type definitions for tool arguments
 export interface suiteArgs {
@@ -46,13 +46,16 @@ export class ReflectClient implements Client {
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.headers = {
       "X-API-KEY": `${config.api_token}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return Object.keys(this.headers).length !== 0;
   }
 
   async listReflectSuites(): Promise<any> {
@@ -154,10 +157,10 @@ export class ReflectClient implements Client {
     return response.json();
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     register(
       {
         title: "List Suites",
@@ -186,7 +189,7 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.suiteId) throw new ToolError("suiteId argument is required");
-        const response = await this.listSuiteExecutions(args.suiteId);
+        const response = await this.listSuiteExecutions(args.suiteId as string);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
@@ -217,8 +220,8 @@ export class ReflectClient implements Client {
             "Both suiteId and executionId arguments are required",
           );
         const response = await this.getSuiteExecutionStatus(
-          args.suiteId,
-          args.executionId,
+          args.suiteId as string,
+          args.executionId as string,
         );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
@@ -240,7 +243,7 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.suiteId) throw new ToolError("suiteId argument is required");
-        const response = await this.executeSuite(args.suiteId);
+        const response = await this.executeSuite(args.suiteId as string);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
@@ -271,8 +274,8 @@ export class ReflectClient implements Client {
             "Both suiteId and executionId arguments are required",
           );
         const response = await this.cancelSuiteExecution(
-          args.suiteId,
-          args.executionId,
+          args.suiteId as string,
+          args.executionId as string,
         );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
@@ -307,7 +310,7 @@ export class ReflectClient implements Client {
       },
       async (args, _extra) => {
         if (!args.testId) throw new ToolError("testId argument is required");
-        const response = await this.runReflectTest(args.testId);
+        const response = await this.runReflectTest(args.testId as string);
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],
         };
@@ -338,8 +341,8 @@ export class ReflectClient implements Client {
             "Both testId and executionId arguments are required",
           );
         const response = await this.getReflectTestStatus(
-          args.testId,
-          args.executionId,
+          args.testId as string,
+          args.executionId as string,
         );
         return {
           content: [{ type: "text", text: JSON.stringify(response) }],

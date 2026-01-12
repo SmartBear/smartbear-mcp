@@ -1,20 +1,14 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import type { ToolParams } from "../../../common/types.js";
-import type { ApiClient } from "../../common/api-client.js";
+import { Tool } from "../../../common/tools";
+import type { ToolParams } from "../../../common/types";
+import type { ZephyrClient } from "../../client";
 import {
   listProjectsQueryParams,
   listProjectsResponse,
-} from "../../common/rest-api-schemas.js";
-import type { ZephyrTool } from "../zephyr-tool.js";
+} from "../../common/rest-api-schemas";
 
-export class GetProjects implements ZephyrTool {
-  private readonly apiClient: ApiClient;
-
-  constructor(apiClient: ApiClient) {
-    this.apiClient = apiClient;
-  }
-
+export class GetProjects extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Projects",
     summary: "Get details of projects in Zephyr",
@@ -52,7 +46,9 @@ export class GetProjects implements ZephyrTool {
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const parsedArgs = listProjectsQueryParams.parse(args);
-    const response = await this.apiClient.get("/projects", parsedArgs);
+    const response = await this.client
+      .getApiClient()
+      .get("/projects", parsedArgs);
     return {
       structuredContent: response,
       content: [],

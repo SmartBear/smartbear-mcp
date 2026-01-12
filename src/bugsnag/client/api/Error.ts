@@ -1,12 +1,12 @@
-import type { FilterObject } from "../filters.js";
+import { type FilterObject, toUrlSearchParams } from "../filters";
+import { type ApiResponse, BaseAPI } from "./base";
 import {
   type ErrorApiView,
   ErrorsApiFetchParamCreator,
   type ErrorUpdateRequest,
   type EventApiView,
   type PivotApiView,
-} from "./api.js";
-import { type ApiResponse, BaseAPI, getQueryParams } from "./base.js";
+} from "./index";
 
 export class ErrorAPI extends BaseAPI {
   static filterFields: string[] = ["url", "project_url", "events_url"];
@@ -40,7 +40,14 @@ export class ErrorAPI extends BaseAPI {
     perPage?: number,
     filters?: FilterObject,
     fullReports?: boolean,
+    nextUrl?: string,
   ): Promise<ApiResponse<EventApiView[]>> {
+    if (nextUrl) {
+      // Don't allow override of these params when using nextUrl
+      direction = undefined;
+      sort = undefined;
+      base = undefined;
+    }
     const localVarFetchArgs = ErrorsApiFetchParamCreator(
       this.configuration,
     ).listEventsOnProject(
@@ -49,12 +56,27 @@ export class ErrorAPI extends BaseAPI {
       sort,
       direction,
       perPage,
-      undefined,
+      undefined, // Filters are encoded separately below
       fullReports,
-      { query: filters },
+      undefined,
     );
+
+    const url = new URL(
+      nextUrl ?? localVarFetchArgs.url,
+      this.configuration.basePath,
+    );
+    if (perPage) {
+      // Allow override of per page, even with nextUrl
+      url.searchParams.set("per_page", perPage.toString());
+    }
+    if (!nextUrl && filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
     return await this.requestArray<EventApiView>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
       false, // Paginate results
     );
@@ -90,13 +112,8 @@ export class ErrorAPI extends BaseAPI {
     filters?: FilterObject,
     nextUrl?: string,
   ): Promise<ApiResponse<ErrorApiView[]>> {
-    const options = getQueryParams(nextUrl, nextUrl ? undefined : filters);
     if (nextUrl) {
-      if (perPage) {
-        // Next links need to be used as-is to ensure results are consistent, so only the page size can be modified
-        // the others will get overridden
-        options.query.per_page = perPage.toString();
-      }
+      // Don't allow override of these params when using nextUrl
       direction = undefined;
       sort = undefined;
       base = undefined;
@@ -108,13 +125,28 @@ export class ErrorAPI extends BaseAPI {
       base ?? undefined,
       sort,
       direction,
-      perPage,
+      undefined,
+      undefined, // Filters are encoded separately below
       undefined,
       undefined,
-      options,
     );
+
+    const url = new URL(
+      nextUrl ?? localVarFetchArgs.url,
+      this.configuration.basePath,
+    );
+    if (perPage) {
+      // Allow override of per page, even with nextUrl
+      url.searchParams.set("per_page", perPage.toString());
+    }
+    if (!nextUrl && filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
     return await this.requestArray<ErrorApiView>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
       false, // Paginate results
     );
@@ -155,14 +187,26 @@ export class ErrorAPI extends BaseAPI {
     ).listPivotsOnAnError(
       projectId,
       errorId,
-      undefined,
+      undefined, // filters are encoded separately below
       summarySize,
       pivots,
-      perPage,
-      { query: filters },
+      undefined, // perPage handled in url search params below
     );
+
+    const url = new URL(localVarFetchArgs.url, this.configuration.basePath);
+    if (perPage) {
+      // Allow override of per page, even with nextUrl
+      url.searchParams.set("per_page", perPage.toString());
+    }
+    if (filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
+
     return await this.requestArray<PivotApiView>(
-      localVarFetchArgs.url,
+      url.toString(),
       localVarFetchArgs.options,
       false, // Paginate results
     );

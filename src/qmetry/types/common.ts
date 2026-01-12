@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { QMETRY_DEFAULTS } from "../config/constants.js";
+import { QMETRY_DEFAULTS } from "../config/constants";
 
 /**
  * QMetry API Request Configuration
@@ -522,7 +522,7 @@ export const CreateTestCaseStepSchema = z.object({
   description: z.string(),
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
-  UDF: z.record(z.string()).optional(),
+  UDF: z.record(z.string(), z.string()).optional(),
   tcStepID: z.number().optional(), // Required for updating existing steps, omit for new steps
 });
 
@@ -537,7 +537,7 @@ export const UpdateTestCaseRemoveStepSchema = z.object({
   description: z.string(),
   inputData: z.string().optional(),
   expectedOutcome: z.string().optional(),
-  UDF: z.record(z.string()).optional(),
+  UDF: z.record(z.string(), z.string()).optional(),
   tcsIsShared: z.boolean(),
   tcsIsParameterized: z.boolean(),
 });

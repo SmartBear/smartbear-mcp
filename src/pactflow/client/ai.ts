@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { addOpenAPISpecToSchema } from "./utils.js";
+import { addOpenAPISpecToSchema } from "./utils";
 
 // Type definitions for PactFlow AI API
 export const GenerationLanguages = [
@@ -265,6 +265,7 @@ export const EntitlementsSchema = z
     userEntitlements: UserEntitlementsSchema.describe(
       "User entitlements information.",
     ),
+    aiEnabled: z.boolean(),
   })
   .describe("Entitlements information.");
 

@@ -1,9 +1,9 @@
-import { QMetryToolsHandlers } from "../../config/constants.js";
+import { QMetryToolsHandlers } from "../../config/constants";
 import {
   FetchAutomationStatusPayloadSchema,
   ImportAutomationResultsPayloadSchema,
-} from "../../types/common.js";
-import type { QMetryToolParams } from "./types.js";
+} from "../../types/common";
+import type { QMetryToolParams } from "./types";
 
 export const AUTOMATION_TOOLS: QMetryToolParams[] = [
   {

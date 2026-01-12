@@ -1,20 +1,14 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import type { ToolParams } from "../../../common/types.js";
-import type { ApiClient } from "../../common/api-client.js";
+import { Tool } from "../../../common/tools";
+import type { ToolParams } from "../../../common/types";
+import type { ZephyrClient } from "../../client";
 import {
   listTestCyclesQueryParams,
   listTestCyclesResponse,
-} from "../../common/rest-api-schemas.js";
-import type { ZephyrTool } from "../zephyr-tool.js";
+} from "../../common/rest-api-schemas";
 
-export class GetTestCycles implements ZephyrTool {
-  private readonly apiClient: ApiClient;
-
-  constructor(apiClient: ApiClient) {
-    this.apiClient = apiClient;
-  }
-
+export class GetTestCycles extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Cycles",
     summary: "Get details of Test Cycles in Zephyr",
@@ -77,7 +71,9 @@ export class GetTestCycles implements ZephyrTool {
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const parsedArgs = listTestCyclesQueryParams.parse(args);
-    const response = await this.apiClient.get("/testcycles", parsedArgs);
+    const response = await this.client
+      .getApiClient()
+      .get("/testcycles", parsedArgs);
     return {
       structuredContent: response,
       content: [],

@@ -1,20 +1,14 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import type { ToolParams } from "../../../common/types.js";
-import type { ApiClient } from "../../common/api-client.js";
+import { Tool } from "../../../common/tools";
+import type { ToolParams } from "../../../common/types";
+import type { ZephyrClient } from "../../client";
 import {
   getTestCycleParams,
   getTestCycleResponse,
 } from "../../common/rest-api-schemas.js";
-import type { ZephyrTool } from "../zephyr-tool.js";
 
-export class GetTestCycle implements ZephyrTool {
-  private readonly apiClient: ApiClient;
-
-  constructor(apiClient: ApiClient) {
-    this.apiClient = apiClient;
-  }
-
+export class GetTestCycle extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Cycle",
     summary: "Get details of test cycle specified by id or key in Zephyr",
@@ -40,11 +34,11 @@ export class GetTestCycle implements ZephyrTool {
     ],
   };
 
-  handle: ToolCallback<ZodRawShape> = async (args: ZodRawShape) => {
+  handle: ToolCallback<ZodRawShape> = async (args) => {
     const { testCycleIdOrKey } = getTestCycleParams.parse(args);
-    const response = await this.apiClient.get(
-      `/testcycles/${testCycleIdOrKey}`,
-    );
+    const response = await this.client
+      .getApiClient()
+      .get(`/testcycles/${testCycleIdOrKey}`);
     return {
       structuredContent: response,
       content: [],

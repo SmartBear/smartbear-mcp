@@ -1,13 +1,13 @@
 import { z } from "zod";
-import type { SmartBearMcpServer } from "../common/server.js";
+import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 
 const ConfigurationSchema = z.object({
-  base_url: z.string().url().describe("Collaborator server base URL"),
+  base_url: z.url().describe("Collaborator server base URL"),
   username: z.string().describe("Collaborator username for authentication"),
   login_ticket: z
     .string()
@@ -28,11 +28,18 @@ export class CollaboratorClient implements Client {
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.baseUrl = config.base_url;
     this.username = config.username;
     this.loginTicket = config.login_ticket;
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return (
+      this.baseUrl !== undefined &&
+      this.username !== undefined &&
+      this.loginTicket !== undefined
+    );
   }
 
   /**
@@ -41,10 +48,6 @@ export class CollaboratorClient implements Client {
    * @returns Raw Collaborator API response
    */
   async call(commands: any[]): Promise<any> {
-    if (!this.baseUrl || !this.username || !this.loginTicket) {
-      throw new Error("Collaborator client not configured");
-    }
-
     const url = `${this.baseUrl}/services/json/v1`;
     // Always prepend authentication command automatically
     const body = [
@@ -70,10 +73,10 @@ export class CollaboratorClient implements Client {
   /**
    * Registers the Collaborator API tool with the MCP server. Accepts commands (excluding authentication).
    */
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     // findReviewById tool
     register(
       {
@@ -193,7 +196,7 @@ export class CollaboratorClient implements Client {
             "reopen",
             "uncancel",
           ]),
-          args: z.record(z.any()),
+          args: z.record(z.string(), z.any()),
         }),
       },
       async (params, _extra) => {

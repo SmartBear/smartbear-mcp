@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { ImportAutomationResultsPayloadSchema } from "./common.js";
+import type { ImportAutomationResultsPayloadSchema } from "./common";
 
 export type ImportAutomationResultsPayload = z.infer<
   typeof ImportAutomationResultsPayloadSchema

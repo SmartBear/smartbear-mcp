@@ -1,14 +1,14 @@
 import { z } from "zod";
-import type { CacheService } from "../common/cache.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type { SmartBearMcpServer } from "../common/server.js";
-import {
-  type Client,
-  type GetInputFunction,
-  type RegisterResourceFunction,
-  type RegisterToolsFunction,
-  ToolError,
-} from "../common/types.js";
+import type { CacheService } from "../common/cache";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
+import type {
+  Client,
+  GetInputFunction,
+  RegisterResourceFunction,
+  RegisterToolsFunction,
+} from "../common/types";
 import {
   type Build,
   Configuration,
@@ -21,9 +21,9 @@ import {
   ProjectAPI,
   type Release,
   type TraceField,
-} from "./client/api/index.js";
-import { type FilterObject, toUrlSearchParams } from "./client/filters.js";
-import { toolInputParameters } from "./input-schemas.js";
+} from "./client/api/index";
+import { type FilterObject, toUrlSearchParams } from "./client/filters";
+import { toolInputParameters } from "./input-schemas";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -52,25 +52,26 @@ const PERMITTED_UPDATE_OPERATIONS = [
 ] as const;
 
 interface StabilityData {
-  userStability: number;
-  sessionStability: number;
-  stabilityTargetType: string;
-  targetStability: number;
-  criticalStability: number;
-  meetsTargetStability: boolean;
-  meetsCriticalStability: boolean;
+  user_stability: number;
+  session_stability: number;
+  stability_target_type: string;
+  target_stability: number;
+  critical_stability: number;
+  meets_target_stability: boolean;
+  meets_critical_stability: boolean;
 }
 
 const ConfigurationSchema = z.object({
   auth_token: z.string().describe("BugSnag personal authentication token"),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
-  endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
+  endpoint: z.url().describe("BugSnag endpoint URL").optional(),
 });
 
 export class BugsnagClient implements Client {
   private cache?: CacheService;
   private projectApiKey?: string;
   private configuredProjectApiKey?: string;
+  private _isConfigured: boolean = false;
   private _currentUserApi: CurrentUserAPI | undefined;
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
@@ -104,7 +105,7 @@ export class BugsnagClient implements Client {
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.cache = server.getCache();
     this._appEndpoint = this.getEndpoint(
       "app",
@@ -135,7 +136,21 @@ export class BugsnagClient implements Client {
       const projects = await this.getProjects();
       // If there's just one project, make this the current project
       if (projects.length === 1 && !this.projectApiKey) {
-        this.projectApiKey = projects[0].apiKey;
+        this.projectApiKey = projects[0].api_key;
+      }
+      if (this.projectApiKey) {
+        this.configuredProjectApiKey = this.projectApiKey; // Store the originally configured API key
+        const currentProject = await this.getCurrentProject();
+        if (currentProject) {
+          await this.getProjectEventFields(currentProject);
+        } else {
+          // Clear the project API key to allow tools to work across all projects
+          this.projectApiKey = undefined;
+          console.error(
+            "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
+              "Check your configured BugSnag project API key.",
+          );
+        }
       }
     } catch (error) {
       // Swallow auth errors here to allow the tools to be registered for visibility, even if the token is invalid
@@ -143,38 +158,14 @@ export class BugsnagClient implements Client {
         "Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.",
         error,
       );
+      return;
     }
-    if (this.projectApiKey) {
-      this.configuredProjectApiKey = this.projectApiKey; // Store the originally configured API key
-      let currentProject = null;
-      try {
-        currentProject = await this.getCurrentProject();
-      } catch (error) {
-        console.error(
-          "An error occurred while fetching project information",
-          error,
-        );
-      }
-      if (currentProject) {
-        await this.getProjectEventFields(currentProject);
-      } else {
-        // Clear the project API key to allow tools to work across all projects
-        this.projectApiKey = undefined;
-        console.error(
-          "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
-            "Check your configured BugSnag project API key.",
-        );
-      }
-    }
-    return true;
+    this._isConfigured = true;
+    return;
   }
 
-  getHost(apiKey: string | undefined, subdomain: string): string {
-    if (apiKey?.startsWith(HUB_PREFIX)) {
-      return `https://${subdomain}.${HUB_DOMAIN}`;
-    } else {
-      return `https://${subdomain}.${DEFAULT_DOMAIN}`;
-    }
+  isConfigured(): boolean {
+    return this._isConfigured;
   }
 
   // If the endpoint is not provided, it will use the default API endpoint based on the project API key.
@@ -263,7 +254,7 @@ export class BugsnagClient implements Client {
     if (!project && this.projectApiKey) {
       const projects = await this.getProjects();
       project =
-        projects.find((p: Project) => p.apiKey === this.projectApiKey) ?? null;
+        projects.find((p: Project) => p.api_key === this.projectApiKey) ?? null;
       this.cache?.set(cacheKeys.CURRENT_PROJECT, project);
     }
     return project;
@@ -278,14 +269,9 @@ export class BugsnagClient implements Client {
       let filtersResponse = (
         await this.projectApi.listProjectEventFields(project.id)
       ).body;
-      if (!filtersResponse || filtersResponse.length === 0) {
-        throw new ToolError(
-          `No event fields found for project ${project.name}.`,
-        );
-      }
       filtersResponse = filtersResponse.filter(
         (field) =>
-          field.displayId && !EXCLUDED_EVENT_FIELDS.has(field.displayId),
+          field.display_id && !EXCLUDED_EVENT_FIELDS.has(field.display_id),
       );
       projectFiltersCache[project.id] = filtersResponse;
       this.cache?.set(cacheKeys.PROJECT_EVENT_FIELDS, projectFiltersCache);
@@ -302,11 +288,6 @@ export class BugsnagClient implements Client {
       const filtersResponse = (
         await this.projectApi.listProjectTraceFields(project.id)
       ).body;
-      if (!filtersResponse || filtersResponse.length === 0) {
-        throw new ToolError(
-          `No trace fields found for project ${project.name}.`,
-        );
-      }
       projectFiltersCache[project.id] = filtersResponse;
       this.cache?.set(cacheKeys.PROJECT_TRACE_FIELDS, projectFiltersCache);
     }
@@ -323,6 +304,18 @@ export class BugsnagClient implements Client {
       ),
     );
     return projectEvents.find((event) => event && !!event.body)?.body || null;
+  }
+
+  async validateEventFields(project: Project, fields?: FilterObject) {
+    if (fields) {
+      const eventFields = await this.getProjectEventFields(project);
+      const validKeys = new Set(eventFields.map((f) => f.display_id));
+      for (const key of Object.keys(fields)) {
+        if (!validKeys.has(key)) {
+          throw new ToolError(`Invalid filter key: ${key}`);
+        }
+      }
+    }
   }
 
   private async getInputProject(
@@ -353,9 +346,10 @@ export class BugsnagClient implements Client {
     source: T,
     project: Project,
   ): T & StabilityData {
-    const accumulativeDailyUsersSeen = source.accumulativeDailyUsersSeen || 0;
+    const accumulativeDailyUsersSeen =
+      source.accumulative_daily_users_seen || 0;
     const accumulativeDailyUsersWithUnhandled =
-      source.accumulativeDailyUsersWithUnhandled || 0;
+      source.accumulative_daily_users_with_unhandled || 0;
 
     const userStability =
       accumulativeDailyUsersSeen === 0 // avoid division by zero
@@ -363,8 +357,8 @@ export class BugsnagClient implements Client {
         : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
           accumulativeDailyUsersSeen;
 
-    const totalSessionsCount = source.totalSessionsCount || 0;
-    const unhandledSessionsCount = source.unhandledSessionsCount || 0;
+    const totalSessionsCount = source.total_sessions_count || 0;
+    const unhandledSessionsCount = source.unhandled_sessions_count || 0;
 
     const sessionStability =
       totalSessionsCount === 0 // avoid division by zero
@@ -372,30 +366,32 @@ export class BugsnagClient implements Client {
         : (totalSessionsCount - unhandledSessionsCount) / totalSessionsCount;
 
     const stabilityMetric =
-      project.stabilityTargetType === "user" ? userStability : sessionStability;
+      project.stability_target_type === "user"
+        ? userStability
+        : sessionStability;
 
-    const targetStability = project.targetStability?.value || 0;
-    const criticalStability = project.criticalStability?.value || 0;
+    const targetStability = project.target_stability?.value || 0;
+    const criticalStability = project.critical_stability?.value || 0;
 
     const meetsTargetStability = stabilityMetric >= targetStability;
     const meetsCriticalStability = stabilityMetric >= criticalStability;
 
     return {
       ...source,
-      userStability,
-      sessionStability,
-      stabilityTargetType: project.stabilityTargetType || "user",
-      targetStability,
-      criticalStability,
-      meetsTargetStability,
-      meetsCriticalStability,
+      user_stability: userStability,
+      session_stability: sessionStability,
+      stability_target_type: project.stability_target_type || "user",
+      target_stability: targetStability,
+      critical_stability: criticalStability,
+      meets_target_stability: meetsTargetStability,
+      meets_critical_stability: meetsCriticalStability,
     };
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     register(
       {
         title: "Get Current Project",
@@ -458,7 +454,7 @@ export class BugsnagClient implements Client {
         }
         if (params.apiKey) {
           const matchedProject = projects.find(
-            (p: Project) => p.apiKey === params.apiKey,
+            (p: Project) => p.api_key === params.apiKey,
           );
           projects = matchedProject ? [matchedProject] : [];
         }
@@ -535,8 +531,10 @@ export class BugsnagClient implements Client {
 
         const filters: FilterObject = {
           error: [{ type: "eq", value: params.errorId }],
-          ...args.filters,
+          ...params.filters,
         };
+
+        await this.validateEventFields(project, filters);
 
         // Get the latest event for this error using the events endpoint with filters
         let latestEvent = null;
@@ -568,14 +566,14 @@ export class BugsnagClient implements Client {
             (
               await this.errorsApi.getPivotValuesOnAnError(
                 project.id,
-                args.errorId,
+                params.errorId,
                 filters,
                 5,
               )
             ).body || [],
           url: await this.getErrorUrl(
             project,
-            args.errorId,
+            params.errorId,
             toUrlSearchParams(filters).toString(),
           ),
         };
@@ -761,22 +759,14 @@ export class BugsnagClient implements Client {
         const params = listProjectErrorsInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
 
-        // Validate filter keys against cached event fields
-        if (params.filters) {
-          const eventFields = await this.getProjectEventFields(project);
-          const validKeys = new Set(eventFields.map((f) => f.displayId));
-          for (const key of Object.keys(params.filters)) {
-            if (!validKeys.has(key)) {
-              throw new ToolError(`Invalid filter key: ${key}`);
-            }
-          }
-        }
-
         const filters: FilterObject = {
           "event.since": [{ type: "eq", value: "30d" }],
           "error.status": [{ type: "eq", value: "open" }],
           ...params.filters,
         };
+
+        // Validate filter keys against cached event fields
+        await this.validateEventFields(project, filters);
 
         const response = await this.errorsApi.listProjectErrors(
           project.id,
@@ -896,8 +886,8 @@ export class BugsnagClient implements Client {
                   description: "The new severity level for the error",
                 },
               },
+              required: ["severity"],
             },
-            required: ["severity"],
           });
 
           if (result.action === "accept" && result.content?.severity) {

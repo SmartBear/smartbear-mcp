@@ -1,21 +1,19 @@
 import { z } from "zod";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type { SmartBearMcpServer } from "../common/server.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types.js";
+} from "../common/types";
 // Apply backward compatibility for API_HUB_API_KEY
-import "./config-utils.js";
+import "./config-utils";
 import {
   type ApiDefinitionParams,
   type ApiSearchParams,
   type ApiSearchResponse,
   type CreateApiFromPromptParams,
   type CreateApiFromPromptResponse,
-  type CreateApiFromTemplateParams,
-  type CreateApiFromTemplateResponse,
   type CreateApiParams,
   type CreateApiResponse,
   type CreatePortalArgs,
@@ -46,14 +44,27 @@ import {
   type UpdateDocumentArgs,
   type UpdatePortalArgs,
   type UpdateProductArgs,
-} from "./client/index.js";
+} from "./client/index";
+
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
-} from "./client/user-management-types.js";
+} from "./client/user-management-types";
 
 const ConfigurationSchema = z.object({
   api_key: z.string().describe("Swagger API key for authentication"),
+  portal_base_path: z
+    .string()
+    .optional()
+    .describe("Base path for Portal API requests (optional)"),
+  registry_base_path: z
+    .string()
+    .optional()
+    .describe("Base path for Registry API requests (optional)"),
+  ui_base_path: z
+    .string()
+    .optional()
+    .describe("Base URL for the SwaggerHub UI (optional)"),
 });
 
 // Tool definitions for API Hub API client
@@ -69,12 +80,20 @@ export class SwaggerClient implements Client {
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
-  ): Promise<boolean> {
+  ): Promise<void> {
     this.api = new SwaggerAPI(
-      new SwaggerConfiguration({ token: config.api_key }),
+      new SwaggerConfiguration({
+        token: config.api_key,
+        portalBasePath: config.portal_base_path,
+        registryBasePath: config.registry_base_path,
+        uiBasePath: config.ui_base_path,
+      }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return this.api !== undefined;
   }
 
   getApi(): SwaggerAPI {
@@ -203,12 +222,6 @@ export class SwaggerClient implements Client {
     return this.getApi().createOrUpdateApi(args);
   }
 
-  async createApiFromTemplate(
-    args: CreateApiFromTemplateParams,
-  ): Promise<CreateApiFromTemplateResponse | FallbackResponse> {
-    return this.getApi().createApiFromTemplate(args);
-  }
-
   // User Management API methods
   async getOrganizations(
     args?: OrganizationsQueryParams,
@@ -234,10 +247,10 @@ export class SwaggerClient implements Client {
     return this.getApi().standardizeApi(args);
   }
 
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
-  ): void {
+  ): Promise<void> {
     TOOLS.forEach((tool) => {
       const { handler, formatResponse, ...toolParams } = tool;
       register(toolParams, async (args, _extra) => {

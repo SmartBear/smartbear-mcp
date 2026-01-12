@@ -8,14 +8,14 @@
  * 3. Specify if the client needs the MCP server instance or async initialization
  */
 
-import { BugsnagClient } from "../bugsnag/client.js";
-import { CollaboratorClient } from "../collaborator/client.js";
-import { PactflowClient } from "../pactflow/client.js";
-import { QmetryClient } from "../qmetry/client.js";
-import { ReflectClient } from "../reflect/client.js";
-import { SwaggerClient } from "../swagger/client.js";
-import { ZephyrClient } from "../zephyr/client.js";
-import { clientRegistry } from "./client-registry.js";
+import { BugsnagClient } from "../bugsnag/client";
+import { CollaboratorClient } from "../collaborator/client";
+import { PactflowClient } from "../pactflow/client";
+import { QmetryClient } from "../qmetry/client";
+import { ReflectClient } from "../reflect/client";
+import { SwaggerClient } from "../swagger/client";
+import { ZephyrClient } from "../zephyr/client";
+import { clientRegistry } from "./client-registry";
 
 // Register Reflect client
 clientRegistry.register(new ReflectClient());

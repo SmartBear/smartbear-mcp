@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listStatusesQueryParams,
   listStatusesResponse,
-} from "../../../../../zephyr/common/rest-api-schemas.js";
-import { GetStatuses } from "../../../../../zephyr/tool/status/get-statuses.js";
+} from "../../../../../zephyr/common/rest-api-schemas";
+import { GetStatuses } from "../../../../../zephyr/tool/status/get-statuses";
 
 const responseMock = {
   next: null,
@@ -26,8 +26,17 @@ const responseMock = {
 };
 
 describe("GetStatuses", () => {
-  const mockApiClient = { get: vi.fn() };
-  const instance = new GetStatuses(mockApiClient as any);
+  let mockClient: any;
+  let instance: GetStatuses;
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        get: vi.fn(),
+      }),
+    };
+    instance = new GetStatuses(mockClient as any);
+  });
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Statuses");
@@ -41,7 +50,7 @@ describe("GetStatuses", () => {
   });
 
   it("should call apiClient.get with all params including statusType and projectKey", async () => {
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = {
       maxResults: 10,
       startAt: 0,
@@ -49,15 +58,18 @@ describe("GetStatuses", () => {
       projectKey: "PROJ",
     } as const;
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", args);
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/statuses",
+      args,
+    );
     expect(result.structuredContent).toEqual(responseMock);
   });
 
   it("should call apiClient.get with only statusType", async () => {
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { statusType: "TEST_PLAN" } as const;
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", {
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       ...args,
       maxResults: 10,
     });
@@ -65,10 +77,10 @@ describe("GetStatuses", () => {
   });
 
   it("should call apiClient.get with only projectKey", async () => {
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { projectKey: "PROJ" } as const;
     const result = await instance.handle(args, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", {
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       ...args,
       maxResults: 10,
     });
@@ -76,23 +88,23 @@ describe("GetStatuses", () => {
   });
 
   it("should handle empty args (all undefined optional params)", async () => {
-    mockApiClient.get.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const result = await instance.handle({}, {});
-    expect(mockApiClient.get).toHaveBeenCalledWith("/statuses", {
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       maxResults: 10,
     });
     expect(result.structuredContent).toEqual(responseMock);
   });
 
   it("should propagate errors from apiClient.get", async () => {
-    mockApiClient.get.mockRejectedValueOnce(new Error("API error"));
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(instance.handle({ maxResults: 1 }, {})).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected undefined data", async () => {
-    mockApiClient.get.mockResolvedValueOnce(undefined);
+    mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
     const result = await instance.handle({ maxResults: 1 }, {});
     expect(result.structuredContent).toBeUndefined();
   });

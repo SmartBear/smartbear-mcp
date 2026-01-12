@@ -1,4 +1,4 @@
-import { QMetryToolsHandlers } from "../../config/constants.js";
+import { QMetryToolsHandlers } from "../../config/constants";
 import {
   BuildArgsSchema,
   CreateCycleArgsSchema,
@@ -8,8 +8,8 @@ import {
   ProjectListArgsSchema,
   ReleasesCyclesArgsSchema,
   UpdateCycleArgsSchema,
-} from "../../types/common.js";
-import type { QMetryToolParams } from "./types.js";
+} from "../../types/common";
+import type { QMetryToolParams } from "./types";
 
 export const PROJECT_TOOLS: QMetryToolParams[] = [
   {

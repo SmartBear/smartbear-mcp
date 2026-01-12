@@ -41,7 +41,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 #### `create_or_update_api`
 
 -   Purpose: Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. If an API with the same owner and name already exists, it will be updated; otherwise, a new API will be created.
--   Returns: API metadata including owner, name, version (always 1.0.0), SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
+-   Returns: API metadata including owner, name, version, SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
 -   Use case: Programmatically create new APIs from OpenAPI/AsyncAPI specifications, update existing API definitions with new versions of the specification, or migrate APIs into Swagger Studio.
 -   Parameters:
 
@@ -50,19 +50,6 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | `owner` | Organization name (owner of the API) | string | Yes |
 | `apiName` | API name. If an API with this name already exists under the specified owner, it will be updated. | string | Yes |
 | `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. API is created with fixed values: version 1.0.0, private visibility, automock disabled, and no project assignment. | string | Yes |
-
-#### `create_api_from_template`
-
--   Purpose: Create a new API in SwaggerHub Registry using a predefined template. This endpoint creates APIs based on existing templates without requiring manual definition content.
--   Returns: API metadata including owner, name, template used, SwaggerHub URL, and operation type ('create' or 'update'). HTTP 201 indicates creation, HTTP 200 indicates update.
--   Use case: Quickly bootstrap new APIs from organization templates, ensure consistency across API projects, or start new API development with pre-configured standards.
--   Parameters:
-
-| Parameter | Description | Type | Required |
-| --- | --- | --- | --- |
-| `owner` | Organization name (owner of the API) | string | Yes |
-| `apiName` | API name | string | Yes |
-| `template` | Template name to use for creating the API. Format: owner/template-name/version (e.g., 'swagger-hub/petstore-template/1.0.0'). API is created with fixed values: private visibility, no project assignment, and reconciliation enabled.<br />**Note**: Available templates can be found in your organization's SwaggerHub template library or by checking the SwaggerHub public templates (e.g. via search_apis_and_domains). | string | Yes |
 
 #### `scan_api_standardization`
 
@@ -107,10 +94,20 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 
 To use Swagger Studio tools, you need to configure the `SWAGGER_API_KEY` environment variable with your Swagger API token.
 
+### On-Premise Installations
+
+If you're using an on-premise Swagger Studio installation, you also need to configure the following environment variables to point to your custom API endpoints:
+
+-   `SWAGGER_PORTAL_BASE_PATH` - Base path for Portal API requests (e.g., `https://your-domain/portal-api/v1`)
+-   `SWAGGER_REGISTRY_BASE_PATH` - Base path for Registry API requests (e.g., `https://your-domain/registry-api`)
+-   `SWAGGER_UI_BASE_PATH` - Base URL for the SwaggerHub UI (e.g., `https://your-domain/swaggerhub`)
+
+These variables are optional for cloud-based Swagger Studio users, as the default values point to the public Swagger cloud endpoints.
+
 ## Common Use Cases
 
 1. **API Discovery**: Use `search_apis_and_domains` to find existing APIs in your Swagger Studio.
 2. **API Integration**: Retrieve specific API definitions with `get_api_definition` for development or testing purposes.
-3. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions, `create_api_from_template` using organization templates, or `create_api_from_prompt` with natural language descriptions powered by AI.
+3. **API Creation**: Create new APIs using `create_or_update_api` with custom definitions or `create_api_from_prompt` with natural language descriptions powered by AI.
 4. **API Governance**: Validate API definitions against organization standards using `scan_api_standardization` to ensure compliance with governance policies, then use `standardize_api` to automatically fix any violations.
 5. **AI-Powered API Development**: Leverage `create_api_from_prompt` to rapidly prototype APIs from natural language, then use `standardize_api` to ensure they meet your organization's standards.

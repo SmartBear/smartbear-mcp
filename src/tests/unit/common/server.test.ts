@@ -1,9 +1,9 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
-import Bugsnag from "../../../common/bugsnag.js";
-import { SmartBearMcpServer } from "../../../common/server.js";
-import { ToolError } from "../../../common/types.js";
+import Bugsnag from "../../../common/bugsnag";
+import { SmartBearMcpServer } from "../../../common/server";
+import { ToolError } from "../../../common/tools";
 
 // Mock Bugsnag
 vi.mock("../../../common/bugsnag.js", () => ({
@@ -46,13 +46,16 @@ describe("SmartBearMcpServer", () => {
         name: "Test Product",
         toolPrefix: "test_product",
         configPrefix: "test-product",
+        config: z.object({}),
         registerTools: vi.fn(),
         registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
       };
     });
 
     it("should register tools when client provides them", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
 
       // The server should call the client's registerTools function
       expect(mockClient.registerTools).toHaveBeenCalledWith(
@@ -108,8 +111,36 @@ describe("SmartBearMcpServer", () => {
       expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
     });
 
+    it("should throw error when asked to call non-configured tool", async () => {
+      await server.addClient(mockClient);
+
+      // Get the register function passed from the server and execute it with test tool details
+      const registerFn = mockClient.registerTools.mock.calls[0][0];
+      const registerCbMock = vi.fn();
+      registerFn(
+        {
+          title: "Test Tool",
+          summary: "An non-configured tool",
+        },
+        registerCbMock,
+      );
+
+      // Get the wrapper function that will execute the tool and call it
+      const registerToolParams = superRegisterToolMock.mock.calls[0];
+
+      mockClient.isConfigured.mockReturnValueOnce(false);
+
+      const toolResponse = await registerToolParams[2]();
+
+      expect(toolResponse.isError).toBe(true);
+      expect(toolResponse.content?.[0].text).toBe(
+        "Error executing Test Product: Test Tool: The tool is not configured - configuration options for Test Product are missing or invalid.",
+      );
+      expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
+    });
+
     it("should register tools with complex parameters", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test tool details
       const registerFn = mockClient.registerTools.mock.calls[0][0];
@@ -252,7 +283,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should handle tool errors when registering tools", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test tool details
       const registerFn = mockClient.registerTools.mock.calls[0][0];
@@ -289,7 +320,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should handle unexpected errors when registering tools", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test tool details
       const registerFn = mockClient.registerTools.mock.calls[0][0];
@@ -323,7 +354,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should elicit input when client requires it", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
 
       // The server should call the client's registerTools function
       expect(mockClient.registerTools).toHaveBeenCalledWith(
@@ -350,9 +381,12 @@ describe("SmartBearMcpServer", () => {
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: vi.fn(),
+        config: z.object({}),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
       };
 
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
 
       // The server should call the client's registerResources function
       expect(mockClient.registerResources).toHaveBeenCalledWith(
@@ -392,16 +426,19 @@ describe("SmartBearMcpServer", () => {
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: undefined,
+        config: z.object({}),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
       };
 
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
 
       // It should not crash with undefined registerResources function
       expect(vi.mocked(Bugsnag.notify)).not.toHaveBeenCalled();
     });
 
     it("should handle errors when registering resources", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
 
       // Get the register function passed from the server and execute it with test resource details
       const registerFn = mockClient.registerResources.mock.calls[0][0];
@@ -427,7 +464,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should register tool with inputSchema and outputSchema, and handle structuredContent", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
       const registerCbMock = vi.fn().mockResolvedValue({
         isError: false,
         structuredContent: {
@@ -512,7 +549,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should register tool with outputSchema and throw error if structuredContent is missing", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
       const registerCbMock = vi.fn().mockResolvedValue({
         isError: false,
       });
@@ -551,7 +588,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should register tool with outputSchema and not throw error if structuredContent is missing but isError", async () => {
-      server.addClient(mockClient);
+      await server.addClient(mockClient);
       const registerCbMock = vi.fn().mockResolvedValue({
         isError: true,
       });

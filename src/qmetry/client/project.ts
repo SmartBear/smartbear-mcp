@@ -1,5 +1,5 @@
-import { QMETRY_DEFAULTS } from "../config/constants.js";
-import { QMETRY_PATHS } from "../config/rest-endpoints.js";
+import { QMETRY_DEFAULTS } from "../config/constants";
+import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
   type CreateCyclePayload,
   type CreateReleasePayload,
@@ -12,9 +12,9 @@ import {
   type FetchPlatformsPayload,
   type FetchProjectsPayload,
   type UpdateCyclePayload,
-} from "../types/project.js";
-import { qmetryRequest } from "./api/client-api.js";
-import { resolveDefaults } from "./utils.js";
+} from "../types/project";
+import { qmetryRequest } from "./api/client-api";
+import { resolveDefaults } from "./utils";
 
 /**
  * Retrieves project information from QMetry

@@ -348,7 +348,7 @@ export const listTestCasesResponse = zod
                             .string()
                             .optional()
                             .describe("The web link description"),
-                          url: zod.string().url().describe("The web link URL"),
+                          url: zod.url().describe("The web link URL"),
                         })
                         .and(
                           zod.object({
@@ -511,7 +511,7 @@ export const listTestCasesCursorPaginatedResponseValuesItemOwnerAccountIdRegExp 
 
 export const listTestCasesCursorPaginatedResponse = zod
   .object({
-    next: zod.string().url().nullish(),
+    next: zod.url().nullish(),
     nextStartAtId: zod
       .number()
       .min(listTestCasesCursorPaginatedResponseNextStartAtIdMin)
@@ -736,7 +736,7 @@ export const listTestCasesCursorPaginatedResponse = zod
                             .string()
                             .optional()
                             .describe("The web link description"),
-                          url: zod.string().url().describe("The web link URL"),
+                          url: zod.url().describe("The web link URL"),
                         })
                         .and(
                           zod.object({
@@ -977,7 +977,7 @@ export const getTestCaseResponse = zod.object({
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.url().describe("The web link URL"),
               })
               .and(
                 zod.object({
@@ -1215,7 +1215,7 @@ export const updateTestCaseBody = zod.object({
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.url().describe("The web link URL"),
               })
               .and(
                 zod.object({
@@ -1313,7 +1313,7 @@ export const getTestCaseLinksResponse = zod
                 .string()
                 .optional()
                 .describe("The web link description"),
-              url: zod.string().url().describe("The web link URL"),
+              url: zod.url().describe("The web link URL"),
             })
             .and(
               zod.object({
@@ -1374,7 +1374,7 @@ export const createTestCaseWebLinkParams = zod.object({
 
 export const createTestCaseWebLinkBody = zod.object({
   description: zod.string().optional().describe("The web link description"),
-  url: zod.string().url().describe("The web link URL"),
+  url: zod.url().describe("The web link URL"),
 });
 
 /**
@@ -1690,7 +1690,7 @@ export const getTestCaseVersionResponse = zod.object({
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.url().describe("The web link URL"),
               })
               .and(
                 zod.object({
@@ -2669,7 +2669,7 @@ export const getTestCycleResponse = zod
                     .string()
                     .optional()
                     .describe("The web link description"),
-                  url: zod.string().url().describe("The web link URL"),
+                  url: zod.url().describe("The web link URL"),
                 })
                 .and(
                   zod.object({
@@ -2924,7 +2924,7 @@ export const updateTestCycleBody = zod
                     .string()
                     .optional()
                     .describe("The web link description"),
-                  url: zod.string().url().describe("The web link URL"),
+                  url: zod.url().describe("The web link URL"),
                 })
                 .and(
                   zod.object({
@@ -3060,7 +3060,7 @@ export const getTestCycleLinksResponse = zod
                 .string()
                 .optional()
                 .describe("The web link description"),
-              url: zod.string().url().describe("The web link URL"),
+              url: zod.url().describe("The web link URL"),
             })
             .and(
               zod.object({
@@ -3157,7 +3157,7 @@ export const createTestCycleWebLinkParams = zod.object({
 
 export const createTestCycleWebLinkBody = zod.object({
   description: zod.string().optional().describe("The web link description"),
-  url: zod.string().url().describe("The web link URL"),
+  url: zod.url().describe("The web link URL"),
 });
 
 /**
@@ -3338,7 +3338,7 @@ export const listTestPlansResponse = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.url().describe("The web link URL"),
                       })
                       .and(
                         zod.object({
@@ -3596,7 +3596,7 @@ export const getTestPlanResponse = zod.object({
                 .string()
                 .optional()
                 .describe("The web link description"),
-              url: zod.string().url().describe("The web link URL"),
+              url: zod.url().describe("The web link URL"),
             })
             .and(
               zod.object({
@@ -3712,7 +3712,7 @@ export const createTestPlanWebLinkParams = zod.object({
 export const createTestPlanWebLinkBody = zod
   .object({
     description: zod.string().optional().describe("The web link description"),
-    url: zod.string().url().describe("The web link URL"),
+    url: zod.url().describe("The web link URL"),
   })
   .and(zod.unknown());
 
@@ -4319,7 +4319,7 @@ export const listTestExecutionsNextgenResponseValuesItemAssignedToIdRegExp =
 
 export const listTestExecutionsNextgenResponse = zod
   .object({
-    next: zod.string().url().nullish(),
+    next: zod.url().nullish(),
     nextStartAtId: zod
       .number()
       .min(listTestExecutionsNextgenResponseNextStartAtIdMin)

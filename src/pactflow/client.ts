@@ -1,15 +1,15 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import z from "zod";
 
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info.js";
-import type { SmartBearMcpServer } from "../common/server.js";
-import {
-  type Client,
-  type GetInputFunction,
-  type RegisterPromptFunction,
-  type RegisterToolsFunction,
-  ToolError,
-} from "../common/types.js";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
+import type {
+  Client,
+  GetInputFunction,
+  RegisterPromptFunction,
+  RegisterToolsFunction,
+} from "../common/types";
 import type {
   Entitlement,
   GenerationInput,
@@ -17,23 +17,25 @@ import type {
   RefineInput,
   RefineResponse,
   StatusResponse,
-} from "./client/ai.js";
+} from "./client/ai";
 import type {
   CanIDeployInput,
   CanIDeployResponse,
   MatrixInput,
   MatrixResponse,
+  MetricsResponse,
   ProviderStatesResponse,
-} from "./client/base.js";
+  TeamMetricsResponse,
+} from "./client/base";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
-} from "./client/prompt-utils.js";
-import { PROMPTS } from "./client/prompts.js";
-import { type ClientType, TOOLS } from "./client/tools.js";
+} from "./client/prompt-utils";
+import { PROMPTS } from "./client/prompts";
+import { type ClientType, TOOLS } from "./client/tools";
 
 const ConfigurationSchema = z.object({
-  base_url: z.string().url().describe("Pact Broker or PactFlow base URL"),
+  base_url: z.url().describe("Pact Broker or PactFlow base URL"),
   token: z
     .string()
     .optional()
@@ -68,15 +70,10 @@ export class PactflowClient implements Client {
     return this._server;
   }
 
-  get clientType(): ClientType {
-    if (!this._clientType) throw new Error("Client not configured");
-    return this._clientType;
-  }
-
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-  ): Promise<boolean> {
+  ): Promise<void> {
     // Set headers based on the type of auth provided
     if (typeof config.token === "string") {
       this.headers = {
@@ -97,12 +94,15 @@ export class PactflowClient implements Client {
       };
       this._clientType = "pact_broker";
     } else {
-      return false; // Don't configure the client if no auth is provided
+      return; // Don't configure the client if no auth is provided
     }
     this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;
     this._server = server.server;
-    return true;
+  }
+
+  isConfigured(): boolean {
+    return this.baseUrl !== undefined;
   }
 
   // PactFlow AI client methods
@@ -136,19 +136,10 @@ export class PactflowClient implements Client {
     }
 
     // Submit the generation request
-    const response = await fetch(`${this.aiBaseUrl}/generate`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify(toolInput),
-    });
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    const status_response: StatusResponse = await response.json();
+    const status_response = await this.submitHttpCallback(
+      "/generate",
+      toolInput,
+    );
     return await this.pollForCompletion<GenerationResponse>(
       status_response,
       "Generation",
@@ -184,19 +175,7 @@ export class PactflowClient implements Client {
     }
 
     // Submit review request
-    const response = await fetch(`${this.aiBaseUrl}/review`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify(toolInput),
-    });
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    const status_response: StatusResponse = await response.json();
+    const status_response = await this.submitHttpCallback("/review", toolInput);
     return await this.pollForCompletion<RefineResponse>(
       status_response,
       "Review Pacts",
@@ -213,30 +192,10 @@ export class PactflowClient implements Client {
    * @throws Error if the request fails or returns a non-OK response.
    */
   async checkAIEntitlements(): Promise<Entitlement> {
-    const url = `${this.aiBaseUrl}/entitlement`;
-
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new ToolError(
-          `PactFlow AI Entitlements Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
-          }`,
-        );
-      }
-
-      return (await response.json()) as Entitlement;
-    } catch (error) {
-      process.stderr.write(
-        `[CheckAIEntitlements] Unexpected error: ${error}\n`,
-      );
-      throw error;
-    }
+    return await this.fetchJson<Entitlement>(`${this.aiBaseUrl}/entitlement`, {
+      method: "GET",
+      errorContext: "PactFlow AI Entitlements Request",
+    });
   }
 
   async getStatus(
@@ -302,6 +261,79 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Helper method to fetch JSON data from an API endpoint.
+   *
+   * @param url The full URL to fetch from.
+   * @param options Options including method, body, and error context.
+   * @returns The parsed JSON response.
+   * @throws ToolError if the request fails.
+   */
+  private async fetchJson<T>(
+    url: string,
+    options: {
+      method: "GET" | "POST";
+      body?: any;
+      errorContext?: string;
+    },
+  ): Promise<T> {
+    const { method, body, errorContext = "Request" } = options;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: this.headers,
+        ...(body && { body: JSON.stringify(body) }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new ToolError(
+          `${errorContext} Failed - status: ${response.status} ${
+            response.statusText
+          }${errorText ? ` - ${errorText}` : ""}`,
+          undefined,
+          new Map<string, number>([["responseStatus", response.status]]),
+        );
+      }
+
+      return (await response.json()) as T;
+    } catch (error) {
+      if (error instanceof ToolError) {
+        throw error;
+      }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(`[${errorContext}] Unexpected error: ${error}\n`);
+      throw new ToolError(
+        `${errorContext} Failed - ${errorMessage}`,
+        undefined,
+        new Map<string, number>([["responseStatus", 500]]),
+      );
+    }
+  }
+
+  /**
+   * Submits an HTTP callback request to the PactFlow AI API.
+   * @param endpoint The AI API endpoint (relative to aiBaseUrl), e.g., '/generate' or '/review'.
+   * @param body The request body specific to the AI operation.
+   * @returns StatusResponse with status_url for polling and result_url for fetching results.
+   * @throws ToolError if the request fails.
+   */
+  private async submitHttpCallback(
+    endpoint: string,
+    body: any,
+  ): Promise<StatusResponse> {
+    return await this.fetchJson<StatusResponse>(
+      `${this.aiBaseUrl}${endpoint}`,
+      {
+        method: "POST",
+        body,
+        errorContext: `HTTP callback submission to ${endpoint}`,
+      },
+    );
+  }
+
   // PactFlow / Pact_Broker client methods
 
   async getProviderStates({
@@ -310,21 +342,13 @@ export class PactflowClient implements Client {
     provider: string;
   }): Promise<ProviderStatesResponse> {
     const uri_encoded_provider_name = encodeURIComponent(provider);
-    const response = await fetch(
+    return await this.fetchJson<ProviderStatesResponse>(
       `${this.baseUrl}/pacts/provider/${uri_encoded_provider_name}/provider-states`,
       {
         method: "GET",
-        headers: this.headers,
+        errorContext: "Get Provider States",
       },
     );
-
-    if (!response.ok) {
-      throw new ToolError(
-        `HTTP error! status: ${response.status} - ${await response.text()}`,
-      );
-    }
-
-    return response.json();
   }
 
   /**
@@ -347,26 +371,10 @@ export class PactflowClient implements Client {
     });
     const url = `${this.baseUrl}/can-i-deploy?${queryParams.toString()}`;
 
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new ToolError(
-          `Can-I-Deploy Request Failed - status: ${response.status} ${response.statusText}${
-            errorText ? ` - ${errorText}` : ""
-          }`,
-        );
-      }
-
-      return (await response.json()) as CanIDeployResponse;
-    } catch (error) {
-      console.error(`[CanIDeploy] Unexpected error: ${error}\n`);
-      throw error;
-    }
+    return await this.fetchJson<CanIDeployResponse>(url, {
+      method: "GET",
+      errorContext: "Can-I-Deploy Request",
+    });
   }
 
   /**
@@ -423,6 +431,21 @@ export class PactflowClient implements Client {
 
     const url = `${this.baseUrl}/matrix?${queryParts.join("&")}`;
 
+    return await this.fetchJson<MatrixResponse>(url, {
+      method: "GET",
+      errorContext: "Matrix Request",
+    });
+  }
+
+  /**
+   * Retrieves metrics across the workspace.
+   *
+   * @returns MetricsResponse containing workspace-wide metrics
+   * @throws Error if the request fails or returns a non-OK response
+   */
+  async getMetrics(): Promise<MetricsResponse> {
+    const url = `${this.baseUrl}/metrics`;
+
     try {
       const response = await fetch(url, {
         method: "GET",
@@ -432,15 +455,46 @@ export class PactflowClient implements Client {
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
         throw new ToolError(
-          `Matrix Request Failed - status: ${response.status} ${response.statusText}${
+          `Metrics Request Failed - status: ${response.status} ${response.statusText}${
             errorText ? ` - ${errorText}` : ""
           }`,
         );
       }
 
-      return (await response.json()) as MatrixResponse;
+      return (await response.json()) as MetricsResponse;
     } catch (error) {
-      console.error("[GetMatrix] Unexpected error:", error);
+      console.error("[GetMetrics] Unexpected error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves metrics for all teams.
+   *
+   * @returns TeamMetricsResponse containing metrics for all teams
+   * @throws Error if the request fails or returns a non-OK response
+   */
+  async getTeamMetrics(): Promise<TeamMetricsResponse> {
+    const url = `${this.baseUrl}/metrics/teams`;
+
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.headers,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new ToolError(
+          `Team Metrics Request Failed - status: ${response.status} ${response.statusText}${
+            errorText ? ` - ${errorText}` : ""
+          }`,
+        );
+      }
+
+      return (await response.json()) as TeamMetricsResponse;
+    } catch (error) {
+      console.error("[GetTeamMetrics] Unexpected error:", error);
       throw error;
     }
   }
@@ -451,13 +505,36 @@ export class PactflowClient implements Client {
    * @param register - The function used to register tools.
    * @param getInput - The function used to get input for tools.
    */
-  registerTools(
+  async registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
-  ): void {
-    for (const tool of TOOLS.filter((t) =>
-      t.clients.includes(this.clientType),
+  ): Promise<void> {
+    let disablePactflowAItools = false;
+    try {
+      const entitlement = await this.checkAIEntitlements();
+      if (!entitlement.aiEnabled) {
+        disablePactflowAItools = true;
+      }
+    } catch (error) {
+      if (
+        error instanceof ToolError &&
+        error.metadata?.get("responseStatus") === 404
+      ) {
+        disablePactflowAItools = true;
+      }
+    }
+
+    for (const tool of TOOLS.filter(
+      (t) => !this._clientType || t.clients.includes(this._clientType),
     )) {
+      if (
+        tool.tags &&
+        disablePactflowAItools &&
+        tool.tags.includes("pactflow-ai")
+      ) {
+        continue;
+      }
+
       const { handler, clients: _, formatResponse, ...toolparams } = tool;
       register(toolparams, async (args, _extra) => {
         const handler_fn = (this as any)[handler];
