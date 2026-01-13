@@ -227,7 +227,7 @@ Add to your `mcp.json` configuration:
 
 ```
 {
-  "servers": {
+  "mcpServers": {
     "smartbear": {
       "command": "npx",
       "args": [
