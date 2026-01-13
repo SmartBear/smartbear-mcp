@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: mcp
-          image: ghcr.io/smartbear/smartbear-mcp:v0.13.0
+          image: ghcr.io/smartbear/smartbear-mcp:v0.13.1
           env:
             - name: MCP_TRANSPORT
               value: "http"
