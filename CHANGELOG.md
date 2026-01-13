@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.2] - 2026-01-13
 
+### Fixed
+
+- [common] update to latest mcp server.json from the previous deprecated schema
+
 ## [0.13.1] - 2026-01-13
 
 ### Fixed
