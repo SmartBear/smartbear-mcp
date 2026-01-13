@@ -1,5 +1,5 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json#/definitions/ServerDetail",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/ServerDetail",
   "title": "SmartBear MCP",
   "name": "com.smartbear/smartbear-mcp",
   "description": "MCP server for AI access to SmartBear tools, including BugSnag, Reflect, Swagger, PactFlow.",
