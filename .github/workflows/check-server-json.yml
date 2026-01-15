@@ -1,0 +1,62 @@
+name: Validate server.json Schema
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-server-json:
+    name: Validate server.json schema
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate schema version
+        run: |
+          echo "Validating server.json schema version..."
+
+          # Fetch the schema JSON to get the current schema URL from ServerDetail.properties.$schema.example
+          SCHEMA_JSON_URL="https://raw.githubusercontent.com/modelcontextprotocol/registry/refs/heads/main/docs/reference/server-json/server.schema.json"
+          CURRENT_SCHEMA_URL=$(curl -sSL "$SCHEMA_JSON_URL" | jq -r '.definitions.ServerDetail.properties."$schema".example')
+
+          if [ -z "$CURRENT_SCHEMA_URL" ] || [ "$CURRENT_SCHEMA_URL" = "null" ]; then
+            echo "⚠️  WARNING: Could not determine current schema URL from schema.json"
+            echo "Skipping validation - unable to fetch schema information"
+            exit 0
+          fi
+
+          echo "Current schema URL from registry: $CURRENT_SCHEMA_URL"
+
+          # Read the schema URL from server.json
+          SCHEMA_URL=$(jq -r '."$schema"' server.json)
+
+          echo "Schema in server.json: $SCHEMA_URL"
+
+          # Extract version date (e.g., 2025-12-11) from both URLs using regex
+          CURRENT_VERSION=$(echo "$CURRENT_SCHEMA_URL" | grep -oP '\d{4}-\d{2}-\d{2}')
+          SCHEMA_VERSION=$(echo "$SCHEMA_URL" | grep -oP '\d{4}-\d{2}-\d{2}')
+
+          echo "Current schema version: $CURRENT_VERSION"
+          echo "Schema version in server.json: $SCHEMA_VERSION"
+
+          # Verify the schema versions match
+          if [ "$SCHEMA_VERSION" != "$CURRENT_VERSION" ]; then
+            echo ""
+            echo "❌ ERROR: deprecated schema detected: $SCHEMA_URL."
+            echo ""
+            echo "Migrate to the current schema format for new servers."
+            echo "📋 Migration checklist: https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/CHANGELOG.md#migration-checklist-for-publishers"
+            echo "📖 Full changelog with examples: https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/CHANGELOG.md"
+            echo ""
+            echo "Expected schema: $CURRENT_SCHEMA_URL"
+            exit 1
+          fi
+
+          echo "✅ Schema validation passed - using current schema version"
+        shell: bash
