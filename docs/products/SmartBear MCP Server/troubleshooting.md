@@ -27,12 +27,23 @@
 
 ### Npx cache issues for local MCP server
 
-- There can be issues when npx can cache some of the dependencies and this can result in your MCP server not running correctly
-- To fix this you will have to clear your local npx cache
-- Steps for clearing cache on MacOS/Linux(To be executed in a terminal)
-  - `cd ~/.npm`
-  - `rm -rf _npx/`
-- After doing the above you can reinstall the MCP server.
+Github issue link - [4108](https://github.com/npm/cli/issues/4108).
+
+There can be issues when `npx` can cache some of the dependencies and this can result in your MCP server not running correctly. To fix this you will have to clear your local `npx` cache.
+
+On Unix and Unix-Like systems (macOS and Linux):
+
+```bash
+rm -rvf "${NPM_CONFIG_CACHE:-$HOME/.npm}/_npx"
+```
+
+On Windows:
+
+```pwsh
+Remove-Item -Path $(if ($env:NPM_CONFIG_CACHE) { "$env:NPM_CONFIG_CACHE\_npx" } else { "$env:APPDATA\npm-cache\_npx" }) -Recurse -Force -Verbose
+```
+
+After doing the above you can reinstall the MCP server.
 
 ## Getting help
 
