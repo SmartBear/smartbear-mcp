@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.13.3] - 2026-01-21
+
+### Fixed
+
+- [common] added pollyfills for sampling and elicitation to enable these mcp features to be used in ai apps like claude code [#306](https://github.com/SmartBear/smartbear-mcp/pull/306)
+
 ## [0.13.2] - 2026-01-13
 
 ### Fixed
