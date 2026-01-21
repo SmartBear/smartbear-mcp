@@ -1,7 +1,10 @@
-import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import z from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import {
+  isSamplingPolyfillResult,
+  type SamplingPolyfillResult,
+} from "../common/pollyfills";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -63,9 +66,9 @@ export class PactflowClient implements Client {
   private aiBaseUrl: string | undefined;
   private baseUrl: string | undefined;
   private _clientType: ClientType | undefined;
-  private _server: Server | undefined;
+  private _server: SmartBearMcpServer | undefined;
 
-  get server(): Server {
+  get server(): SmartBearMcpServer {
     if (!this._server) throw new Error("Server not configured");
     return this._server;
   }
@@ -98,7 +101,7 @@ export class PactflowClient implements Client {
     }
     this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;
-    this._server = server.server;
+    this._server = server;
   }
 
   isConfigured(): boolean {
@@ -112,13 +115,13 @@ export class PactflowClient implements Client {
    *
    * @param toolInput The input data for the generation process.
    * @param getInput Function to get additional input from the user if needed.
-   * @returns The result of the generation process.
+   * @returns The result of the generation process or a polyfill result requiring prompt execution.
    * @throws Error if the HTTP request fails or the operation times out.
    */
   async generate(
     toolInput: GenerationInput,
     getInput: GetInputFunction,
-  ): Promise<GenerationResponse> {
+  ): Promise<GenerationResponse | SamplingPolyfillResult> {
     if (
       toolInput.openapi?.document &&
       (!toolInput.openapi?.matcher ||
@@ -128,10 +131,22 @@ export class PactflowClient implements Client {
         toolInput.openapi.document,
         this.server,
       );
+
+      // Check if we got a polyfill result
+      if (isSamplingPolyfillResult(matcherResponse)) {
+        return matcherResponse;
+      }
+
       const userSelection = await getUserMatcherSelection(
         matcherResponse,
         getInput,
       );
+
+      // Check if user selection is a polyfill result
+      if (isSamplingPolyfillResult(userSelection)) {
+        return userSelection;
+      }
+
       toolInput.openapi.matcher = userSelection;
     }
 
@@ -151,13 +166,13 @@ export class PactflowClient implements Client {
    *
    * @param toolInput The input data for the review process.
    * @param getInput Function to get additional input from the user if needed.
-   * @returns The result of the review process.
+   * @returns The result of the review process or a polyfill result requiring prompt execution.
    * @throws Error if the HTTP request fails or the operation times out.
    */
   async review(
     toolInput: RefineInput,
     getInput: GetInputFunction,
-  ): Promise<RefineResponse> {
+  ): Promise<RefineResponse | SamplingPolyfillResult> {
     if (
       toolInput.openapi?.document &&
       (!toolInput.openapi?.matcher ||
@@ -167,10 +182,22 @@ export class PactflowClient implements Client {
         toolInput.openapi.document,
         this.server,
       );
+
+      // Check if we got a polyfill result
+      if (isSamplingPolyfillResult(matcherResponse)) {
+        return matcherResponse;
+      }
+
       const userSelection = await getUserMatcherSelection(
         matcherResponse,
         getInput,
       );
+
+      // Check if user selection is a polyfill result
+      if (isSamplingPolyfillResult(userSelection)) {
+        return userSelection;
+      }
+
       toolInput.openapi.matcher = userSelection;
     }
 

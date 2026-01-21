@@ -59,6 +59,27 @@ export async function runStdioMode() {
   }
 
   const transport = new StdioServerTransport();
+  transport.onmessage = (message) => {
+    if ("method" in message && message.method === "initialize") {
+      if (message.params?.protocolVersion === "2025-11-25") {
+        const clientCapabilities = message.params?.capabilities as Record<
+          string,
+          unknown
+        >;
+
+        if (Object.hasOwn(clientCapabilities, "sampling")) {
+          server.setSamplingSupported(true);
+        }
+
+        if (Object.hasOwn(clientCapabilities, "elicitation")) {
+          server.setElicitationSupported(true);
+        }
+      }
+
+      // Other protocolVersion handling can be added below
+      // to maintain backwards compatibility.
+    }
+  };
   await server.connect(transport);
 }
 

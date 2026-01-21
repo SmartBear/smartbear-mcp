@@ -1,5 +1,6 @@
-import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { describe, expect, it, vi } from "vitest";
+import { isSamplingPolyfillResult } from "../../../common/pollyfills";
+import type { SmartBearMcpServer } from "../../../common/server";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
@@ -29,11 +30,14 @@ describe("Prompt Utils", () => {
       };
 
       const mockServer = {
-        createMessage: vi.fn().mockResolvedValue({
-          action: "accept",
-          content: {
-            type: "text",
-            text: `
+        isSamplingSupported: vi.fn().mockReturnValue(true),
+        server: {
+          createMessage: vi.fn().mockResolvedValue({
+            model: "test-model",
+            role: "assistant",
+            content: {
+              type: "text",
+              text: `
             Generated recommendations are:-
             \`\`\`json
             [
@@ -64,9 +68,10 @@ describe("Prompt Utils", () => {
             ]
             \`\`\`
             `.trim(),
-          },
-        }),
-      } satisfies Pick<Server, "createMessage">;
+            },
+          }),
+        },
+      } as unknown as SmartBearMcpServer;
 
       const result = await getOADMatcherRecommendations(
         openApiSpec,
@@ -122,17 +127,115 @@ describe("Prompt Utils", () => {
       };
 
       const mockServer = {
-        createMessage: vi.fn().mockResolvedValue({
-          action: "accept",
-          content: {
-            text: "No recommendations",
-          },
-        }),
-      } satisfies Pick<Server, "createMessage">;
+        isSamplingSupported: vi.fn().mockReturnValue(true),
+        server: {
+          createMessage: vi.fn().mockResolvedValue({
+            model: "test-model",
+            role: "assistant",
+            content: {
+              type: "text",
+              text: "No recommendations",
+            },
+          }),
+        },
+      } as unknown as SmartBearMcpServer;
 
       await expect(
         getOADMatcherRecommendations(openApiSpec, mockServer),
       ).rejects.toThrowError();
+    });
+
+    it("returns polyfill result when sampling is not supported", async () => {
+      const openApiSpec = {
+        openapi: "3.0.0",
+        info: {
+          title: "Test API",
+          version: "1.0.0",
+        },
+        paths: {
+          "/users": {
+            get: {
+              responses: {
+                "200": {
+                  description: "A list of users",
+                },
+              },
+            },
+          },
+        },
+        $$normalized: true,
+      };
+
+      const mockServer = {
+        isSamplingSupported: vi.fn().mockReturnValue(false),
+        server: {
+          createMessage: vi.fn(),
+        },
+      } as unknown as SmartBearMcpServer;
+
+      const result = await getOADMatcherRecommendations(
+        openApiSpec,
+        mockServer,
+      );
+
+      expect(isSamplingPolyfillResult(result)).toBe(true);
+      if (isSamplingPolyfillResult(result)) {
+        expect(result.requiresPromptExecution).toBe(true);
+        expect(result.prompt).toContain("Test API");
+        expect(result.instructions).toContain(
+          "Please execute the above prompt using your AI capabilities",
+        );
+      }
+      expect(mockServer.server.createMessage).not.toHaveBeenCalled();
+    });
+
+    it("returns polyfill result when sampling fails", async () => {
+      const openApiSpec = {
+        openapi: "3.0.0",
+        info: {
+          title: "Test API",
+          version: "1.0.0",
+        },
+        paths: {
+          "/users": {
+            get: {
+              responses: {
+                "200": {
+                  description: "A list of users",
+                },
+              },
+            },
+          },
+        },
+        $$normalized: true,
+      };
+
+      const mockServer = {
+        isSamplingSupported: vi.fn().mockReturnValue(true),
+        server: {
+          createMessage: vi
+            .fn()
+            .mockRejectedValue(new Error("Sampling failed")),
+        },
+      } as unknown as SmartBearMcpServer;
+
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const result = await getOADMatcherRecommendations(
+        openApiSpec,
+        mockServer,
+      );
+
+      expect(isSamplingPolyfillResult(result)).toBe(true);
+      if (isSamplingPolyfillResult(result)) {
+        expect(result.requiresPromptExecution).toBe(true);
+        expect(result.prompt).toContain("Test API");
+      }
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -217,6 +320,25 @@ describe("Prompt Utils", () => {
         mockGetInput,
       );
       expect(result).toEqual({});
+    });
+
+    it("returns polyfill result when recommendations is a polyfill", async () => {
+      const polyfillRecommendations = {
+        requiresPromptExecution: true as const,
+        prompt: "Test prompt",
+        instructions: "Execute this prompt",
+      };
+
+      const mockGetInput = vi.fn();
+
+      const result = await getUserMatcherSelection(
+        polyfillRecommendations,
+        mockGetInput,
+      );
+
+      expect(isSamplingPolyfillResult(result)).toBe(true);
+      expect(result).toEqual(polyfillRecommendations);
+      expect(mockGetInput).not.toHaveBeenCalled();
     });
   });
 });
