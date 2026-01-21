@@ -26,12 +26,18 @@ import {
 import Bugsnag from "../common/bugsnag";
 import { CacheService } from "./cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
+import {
+  executeElicitationOrPolyfill,
+  isElicitationPolyfillResult,
+} from "./pollyfills";
 import { ToolError } from "./tools";
 import type { Client, ToolParams } from "./types";
 import { unwrapZodType } from "./zod-utils";
 
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
+  private samplingSupported = false;
+  private elicitationSupported = false;
 
   constructor() {
     super(
@@ -53,6 +59,22 @@ export class SmartBearMcpServer extends McpServer {
 
   getCache(): CacheService {
     return this.cache;
+  }
+
+  setSamplingSupported(supported: boolean): void {
+    this.samplingSupported = supported;
+  }
+
+  isSamplingSupported(): boolean {
+    return this.samplingSupported;
+  }
+
+  setElicitationSupported(supported: boolean): void {
+    this.elicitationSupported = supported;
+  }
+
+  isElicitationSupported(): boolean {
+    return this.elicitationSupported;
   }
 
   async addClient(client: Client): Promise<void> {
@@ -95,18 +117,40 @@ export class SmartBearMcpServer extends McpServer {
                   ],
                 };
               } else {
-                Bugsnag.notify(e as unknown as Error, (event) => {
-                  event.addMetadata("app", { tool: toolName });
-                  event.unhandled = true;
-                });
+                Bugsnag.notify(
+                  e as unknown as Error,
+                  (event: {
+                    addMetadata: (arg0: string, arg1: { tool: string }) => void;
+                    unhandled: boolean;
+                  }) => {
+                    event.addMetadata("app", { tool: toolName });
+                    event.unhandled = true;
+                  },
+                );
               }
               throw e;
             }
           },
         );
       },
-      (params, options) => {
-        return this.server.elicitInput(params, options);
+      async (params, options) => {
+        const result = await executeElicitationOrPolyfill(
+          this,
+          params,
+          options,
+        );
+
+        if (isElicitationPolyfillResult(result)) {
+          const schemaStr =
+            "requestedSchema" in result.inputRequest
+              ? `\n\nSchema: ${JSON.stringify(result.inputRequest.requestedSchema, null, 2)}`
+              : "";
+          throw new ToolError(
+            `Input collection required: ${result.inputRequest.message}${schemaStr}\n\n${result.instructions}`,
+          );
+        }
+
+        return result;
       },
     );
 
@@ -123,10 +167,19 @@ export class SmartBearMcpServer extends McpServer {
             try {
               return await cb(url, variables, extra);
             } catch (e) {
-              Bugsnag.notify(e as unknown as Error, (event) => {
-                event.addMetadata("app", { resource: name, url: url });
-                event.unhandled = true;
-              });
+              Bugsnag.notify(
+                e as unknown as Error,
+                (event: {
+                  addMetadata: (
+                    arg0: string,
+                    arg1: { resource: string; url: any },
+                  ) => void;
+                  unhandled: boolean;
+                }) => {
+                  event.addMetadata("app", { resource: name, url: url });
+                  event.unhandled = true;
+                },
+              );
               throw e;
             }
           },
