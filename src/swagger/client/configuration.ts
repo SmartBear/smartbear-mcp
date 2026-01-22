@@ -23,7 +23,8 @@ export class SwaggerConfiguration {
       param.registryBasePath || "https://api.swaggerhub.com"; // Default for registry API
     this.uiBasePath = param.uiBasePath || "https://app.swaggerhub.com"; // Default for UI
     this.userManagementBasePath =
-      param.userManagementBasePath || `${this.registryBasePath}/user-management/v1`;
+      param.userManagementBasePath ||
+      `${this.registryBasePath}/user-management/v1`;
     // Use Bearer token format consistently across all APIs
     this.headers = {
       Authorization: `Bearer ${this.token}`,
