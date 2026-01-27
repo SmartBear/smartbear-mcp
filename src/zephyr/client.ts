@@ -11,6 +11,7 @@ import { GetPriorities } from "./tool/priority/get-priorities";
 import { GetProject } from "./tool/project/get-project";
 import { GetProjects } from "./tool/project/get-projects";
 import { GetStatuses } from "./tool/status/get-statuses";
+import { CreateTestCase } from "./tool/test-case/create-test-case";
 import { GetTestCase } from "./tool/test-case/get-test-case";
 import { GetTestCases } from "./tool/test-case/get-test-cases";
 import { GetTestCycle } from "./tool/test-cycle/get-test-cycle";
@@ -74,6 +75,7 @@ export class ZephyrClient implements Client {
       new GetTestCase(this),
       new GetTestExecution(this),
       new GetTestExecutions(this),
+      new CreateTestCase(this),
     ];
 
     for (const tool of tools) {

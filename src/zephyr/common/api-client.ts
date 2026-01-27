@@ -36,6 +36,18 @@ export class ApiClient {
     return await this.validateAndGetResponseBody(response);
   }
 
+  async post(endpoint: string, body: Object): Promise<any> {
+    const response = await fetch(this.getUrl(endpoint), {
+      method: "POST",
+      headers: {
+        ...this.defaultHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    return await this.validateAndGetResponseBody(response);
+  }
+
   private async validateAndGetResponseBody(response: Response) {
     if (!response.ok) {
       const errorText = await response.text();
