@@ -140,7 +140,7 @@ export const TOOLS: SwaggerToolParams[] = [
   {
     title: "Update Document",
     summary:
-      "Update the content of an existing document. Supports both HTML and Markdown content types.",
+      "Update the content or source of an existing document. Supports both HTML and Markdown content types.",
     inputSchema: UpdateDocumentArgsSchema,
     handler: "updateDocument",
   },
