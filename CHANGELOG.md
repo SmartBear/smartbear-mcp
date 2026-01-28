@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.4] - 2026-01-28
 
+### Fixed
+
+- [Swagger] Default URI to the UserManagementApi updated [#308](https://github.com/SmartBear/smartbear-mcp/pull/308)
+
 ## [0.13.3] - 2026-01-21
 
 ### Fixed
