@@ -1,6 +1,6 @@
 The SmartBear MCP Server provides access to multiple capabilities across our Swagger, Test Hub, QMetry, Zephyr, and BugSnag, all through dedicated tools and resources.
 
-<!-- ![hubs.png](./images/embedded/hubs.png) -->
+![mcp-docs.jpg](./images/embedded/mcp-docs.jpg)
 
 ### Available Tools, Resources, and Prompts
 
