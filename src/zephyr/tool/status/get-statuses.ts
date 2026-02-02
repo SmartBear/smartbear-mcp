@@ -5,7 +5,7 @@ import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
   listStatusesQueryParams,
-  listStatusesResponse,
+  listStatuses200Response as listStatusesResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetStatuses extends Tool<ZephyrClient> {

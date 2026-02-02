@@ -5,7 +5,7 @@ import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
   listTestExecutionsNextgenQueryParams,
-  listTestExecutionsNextgenResponse,
+  listTestExecutionsNextgen200Response as listTestExecutionsNextgenResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetTestExecutions extends Tool<ZephyrClient> {
