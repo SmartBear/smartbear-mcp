@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.13.5] - 2026-02-02
+
+### Fixed
+
+- [Swagger] Shorten tool name for API creation prompt [#317](https://github.com/SmartBear/smartbear-mcp/pull/317)
+- [Common] Update images in docs [#316](https://github.com/SmartBear/smartbear-mcp/pull/316)
+
 ## [0.13.4] - 2026-01-28
 
 ### Fixed
