@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getTestCaseParams,
-  getTestCaseResponse,
+  getTestCase200Response as getTestCaseResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetTestCase } from "../../../../../zephyr/tool/test-case/get-test-case";
 

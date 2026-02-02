@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getTestExecutionParams,
-  getTestExecutionResponse,
+  getTestExecution200Response as getTestExecutionResponse,
 } from "../../../../../zephyr/common/rest-api-schemas.js";
 import { GetTestExecution } from "../../../../../zephyr/tool/test-execution/get-test-execution.js";
 

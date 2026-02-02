@@ -5,7 +5,7 @@ import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
   listTestCasesCursorPaginatedQueryParams,
-  listTestCasesCursorPaginatedResponse,
+  listTestCasesCursorPaginated200Response as listTestCasesCursorPaginatedResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetTestCases extends Tool<ZephyrClient> {

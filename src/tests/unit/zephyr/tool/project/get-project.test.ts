@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getProjectParams,
-  getProjectResponse,
+  getProject200Response as getProjectResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetProject } from "../../../../../zephyr/tool/project/get-project";
 

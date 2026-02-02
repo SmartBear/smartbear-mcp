@@ -5,7 +5,7 @@ import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
   listPrioritiesQueryParams,
-  listPrioritiesResponse,
+  listPriorities200Response as listPrioritiesResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetPriorities extends Tool<ZephyrClient> {

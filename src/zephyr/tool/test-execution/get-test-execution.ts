@@ -5,7 +5,7 @@ import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
   getTestExecutionParams,
-  getTestExecutionResponse,
+  getTestExecution200Response as getTestExecutionResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetTestExecution extends Tool<ZephyrClient> {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listPrioritiesQueryParams,
-  listPrioritiesResponse,
+  listPriorities200Response as listPrioritiesResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetPriorities } from "../../../../../zephyr/tool/priority/get-priorities";
 
