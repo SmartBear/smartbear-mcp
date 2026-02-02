@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listStatusesQueryParams,
-  listStatusesResponse,
+  listStatuses200Response as listStatusesResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetStatuses } from "../../../../../zephyr/tool/status/get-statuses";
 

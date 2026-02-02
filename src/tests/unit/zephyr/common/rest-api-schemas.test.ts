@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  getProjectResponse,
-  listProjectsResponse,
+  getProject200Response as getProjectResponse,
+  listProjects200Response as listProjectsResponse,
 } from "../../../../zephyr/common/rest-api-schemas";
 
 describe("listProjectsResponse", () => {

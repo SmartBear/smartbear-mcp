@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listTestCasesCursorPaginatedQueryParams,
-  listTestCasesCursorPaginatedResponse,
+  listTestCasesCursorPaginated200Response as listTestCasesCursorPaginatedResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetTestCases } from "../../../../../zephyr/tool/test-case/get-test-cases";
 
