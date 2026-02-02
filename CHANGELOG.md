@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.4] - 2026-01-28
 
+### Added
+
+- [Swagger] Added `source` property to Portal create TOC and update Document schemas [#314](https://github.com/SmartBear/smartbear-mcp/pull/314)
+
 ### Fixed
 
 - [Swagger] Default URI to the UserManagementApi updated [#308](https://github.com/SmartBear/smartbear-mcp/pull/308)
