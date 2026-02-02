@@ -140,7 +140,7 @@ export const TOOLS: SwaggerToolParams[] = [
   {
     title: "Update Document",
     summary:
-      "Update the content of an existing document. Supports both HTML and Markdown content types.",
+      "Update the content or source of an existing document. Supports both HTML and Markdown content types.",
     inputSchema: UpdateDocumentArgsSchema,
     handler: "updateDocument",
   },
@@ -183,7 +183,7 @@ export const TOOLS: SwaggerToolParams[] = [
     handler: "scanStandardization",
   },
   {
-    title: "Create API from Prompt using SmartBear AI",
+    title: "Create API from Prompt",
     summary:
       "Generate and save an API definition based on a prompt using SmartBear AI. This tool automatically applies organization governance and standardization rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Use this tool when creating APIs that comply with governance policies or when generating APIs from natural language descriptions. Use this tool when users ask to create, generate, or design APIs with governance or standardization requirements. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.",
     inputSchema: CreateApiFromPromptParamsSchema,

@@ -2,7 +2,7 @@
 
 The SmartBear MCP Server enables a secure and intelligent bridge between SmartBear platform data and AI-powered development workflows. By leveraging the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction), it allows developers to access rich context and capabilities---such as API definitions, governance rules, portal documents, test outcomes, error reports, monitoring insights, and debugging diagnostics---directly within their preferred AI assistants and IDEs.
 
-![mcp-concept.png](./images/embedded/mcp-concept.png)
+![mcp-server.jpg](./images/embedded/mcp-server.jpg)
 
 By surfacing actionable context from across Swagger, Test Hub, QMetry, Zephyr, and BugSnag into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients, the MCP Server empowers teams to accelerate design, testing, and troubleshooting workflows---all while keeping developers within their natural flow of work.
 
