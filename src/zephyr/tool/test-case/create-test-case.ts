@@ -18,21 +18,21 @@ export class CreateTestCase extends Tool<ZephyrClient> {
     outputSchema: createTestCaseResponse,
     examples: [
       {
-        description: "Create a new Test Case with sample data in project SA",
+        description: "Create a Test Case in project SA to ensure that the axial pump can be enabled",
         parameters: {
           projectKey: "SA",
-          name: "New Test Case",
-          objective: "This is a new test case created via the API",
+          name: "Check axial pump",
+          objective: "Ensure the axial pump can be enabled",
         },
         expectedOutput: "The newly created Test Case with its details and key",
       },
       {
         description:
-          "Create a TestCase with labels 'automated' and 'mcp', and priority 'High' in project MM2",
+          "Create a Test Case to ensure that the axial pump can be enabled. The test should be in project MM2, have labels 'automated' and 'mcp', and priority 'High'",
         parameters: {
           projectKey: "MM2",
-          name: "Automated Test Case",
-          objective: "This test case is automated and created via MCP",
+          name: "Check axial pump",
+          objective: "Ensure the axial pump can be enabled",
           labels: ["automated", "mcp"],
           priorityName: "High",
         },
