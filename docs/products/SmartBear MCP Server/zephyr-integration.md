@@ -87,18 +87,18 @@ The following environment variables configure the Zephyr integration:
 
 - **Purpose**: Create a new Test Case within the Zephyr project specified by key
 - **Parameters:**
-- Project key (`projectKey`)
-- Name (`name`)
-- optional objective (`objective`)
-- optional precondition (`precondition`)
-- optional estimated time (`estimatedTime`)
-- optional Jira Component ID (`componentId`)
-- optional Priority name (`priorityName`)
-- optional Status name (`statusName`)
-- optional Folder ID (`folderId`)
-- optional owner ID (`ownedId`)
-- optional Labels (`labels`)
-- optional Custom Field names with associated values (`customFields`)
+    - Project key (`projectKey`)
+    - Name (`name`)
+    - optional objective (`objective`)
+    - optional precondition (`precondition`)
+    - optional estimated time (`estimatedTime`)
+    - optional Jira Component ID (`componentId`)
+    - optional Priority name (`priorityName`)
+    - optional Status name (`statusName`)
+    - optional Folder ID (`folderId`)
+    - optional owner ID (`ownerId `)
+    - optional Labels (`labels`)
+    - optional Custom Field names with associated values (`customFields`)
 - **Returns**: The created Test Case ID, with the API URL to access it and the Test Case key.
 - **Use case**: Creating a Test Case with its properties.
 
