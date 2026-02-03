@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listTestCyclesQueryParams,
-  listTestCyclesResponse,
+  listTestCycles200Response as listTestCyclesResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetTestCycles } from "../../../../../zephyr/tool/test-cycle/get-test-cycles";
 

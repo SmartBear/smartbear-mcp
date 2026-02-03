@@ -203,7 +203,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 #### `update_document`
 
-- Purpose: Update the content of an existing document. Supports both HTML and Markdown content types.
+- Purpose: Update the content or source of an existing document. Supports both HTML and Markdown content types.
 - Returns: Updated document metadata.
 - Use case: Modify existing documentation content within portal products.
 - Parameters:
@@ -211,8 +211,9 @@ The Swagger Portal client provides comprehensive portal and product management c
 | Parameter    | Description                                                               | Type   | Required |
 | ------------ | ------------------------------------------------------------------------- | ------ | -------- |
 | `documentId` | Document UUID - unique identifier for the document                        | string | Yes      |
-| `content`    | The document content to update (HTML or Markdown based on document type)  | string | Yes      |
+| `content`    | The document content to update (HTML or Markdown based on document type)  | string | No       |
 | `type`       | Content type - 'html' for HTML content or 'markdown' for Markdown content | string | No       |
+| `source`     | Source - 'external' to manage document only in the API or 'internal' for API and UI | string | No       |
 
 ## Configuration
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listEnvironmentsQueryParams,
-  listEnvironmentsResponse,
+  listEnvironments200Response as listEnvironmentsResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetEnvironments } from "../../../../../zephyr/tool/environment/get-environments";
 

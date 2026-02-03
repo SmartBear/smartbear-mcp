@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   listTestExecutionsNextgenQueryParams,
-  listTestExecutionsNextgenResponse,
+  listTestExecutionsNextgen200Response as listTestExecutionsNextgenResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetTestExecutions } from "../../../../../zephyr/tool/test-execution/get-test-executions";
 

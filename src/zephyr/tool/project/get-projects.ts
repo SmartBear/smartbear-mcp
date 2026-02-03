@@ -5,7 +5,7 @@ import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
   listProjectsQueryParams,
-  listProjectsResponse,
+  listProjects200Response as listProjectsResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetProjects extends Tool<ZephyrClient> {

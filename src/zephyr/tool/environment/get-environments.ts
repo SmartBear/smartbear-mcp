@@ -5,7 +5,7 @@ import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
   listEnvironmentsQueryParams,
-  listEnvironmentsResponse,
+  listEnvironments200Response as listEnvironmentsResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetEnvironments extends Tool<ZephyrClient> {
