@@ -22,7 +22,7 @@ export class CreateTestCase extends Tool<ZephyrClient> {
         parameters: {
           projectKey: "SA",
           name: "New Test Case",
-          description: "This is a new test case created via the API",
+          objective: "This is a new test case created via the API",
         },
         expectedOutput: "The newly created Test Case with its details and key",
       },
@@ -32,7 +32,7 @@ export class CreateTestCase extends Tool<ZephyrClient> {
         parameters: {
           projectKey: "MM2",
           name: "Automated Test Case",
-          description: "This test case is automated and created via MCP",
+          objective: "This test case is automated and created via MCP",
           labels: ["automated", "mcp"],
           priorityName: "High",
         },
