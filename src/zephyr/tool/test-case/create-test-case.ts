@@ -3,7 +3,10 @@ import type { ZodRawShape } from "zod";
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
-import { createTestCaseBody } from "../../common/rest-api-schemas";
+import {
+  createTestCaseBody,
+  createTestCase201Response as createTestCaseResponse,
+} from "../../common/rest-api-schemas";
 
 export class CreateTestCase extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -12,6 +15,7 @@ export class CreateTestCase extends Tool<ZephyrClient> {
     readOnly: false,
     idempotent: false,
     inputSchema: createTestCaseBody,
+    outputSchema: createTestCaseResponse,
     examples: [
       {
         description: "Create a new Test Case with sample data in project SA",
