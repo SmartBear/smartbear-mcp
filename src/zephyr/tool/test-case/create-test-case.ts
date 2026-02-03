@@ -18,7 +18,8 @@ export class CreateTestCase extends Tool<ZephyrClient> {
     outputSchema: createTestCaseResponse,
     examples: [
       {
-        description: "Create a Test Case in project SA to ensure that the axial pump can be enabled",
+        description:
+          "Create a Test Case in project SA to ensure that the axial pump can be enabled",
         parameters: {
           projectKey: "SA",
           name: "Check axial pump",
@@ -49,6 +50,19 @@ export class CreateTestCase extends Tool<ZephyrClient> {
           customFields: {
             "Axial pump strength": 5,
           },
+        },
+        expectedOutput: "The newly created Test Case with its details and key",
+      },
+      {
+        description:
+          "Create a Test Case in project MM2 to verify the performance of the axial pump with Jira component having ID 10001, Jira owner having ID 10057 in folder 'Pumps'",
+        parameters: {
+          projectKey: "MM2",
+          name: "Check axial pump performance",
+          objective: "Ensure the axial pump performs within acceptable limits",
+          componentId: 10001,
+          ownerJiraUserId: 10057,
+          folderId: 18,
         },
         expectedOutput: "The newly created Test Case with its details and key",
       },
