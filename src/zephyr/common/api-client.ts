@@ -36,7 +36,7 @@ export class ApiClient {
     return await this.validateAndGetResponseBody(response);
   }
 
-  async post(endpoint: string, body: Object): Promise<any> {
+  async post(endpoint: string, body: object): Promise<any> {
     const response = await fetch(this.getUrl(endpoint), {
       method: "POST",
       headers: {
