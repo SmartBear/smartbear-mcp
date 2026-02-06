@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { CacheService } from "../common/cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import type { SmartBearMcpServer } from "../common/server";
+import { TokenStore } from "../common/token-store";
 import { ToolError } from "../common/tools";
 import type {
   Client,
@@ -9,21 +10,22 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import {
-  type Build,
-  Configuration,
-  CurrentUserAPI,
-  ErrorAPI,
-  ErrorUpdateRequest,
-  type EventField,
-  type Organization,
-  type Project,
-  ProjectAPI,
-  type Release,
-  type TraceField,
+import { ErrorUpdateRequest } from "./client/api/api";
+import { CurrentUserAPI } from "./client/api/CurrentUser";
+import { Configuration } from "./client/api/configuration";
+import { ErrorAPI } from "./client/api/Error";
+import type {
+  Build,
+  EventField,
+  Organization,
+  Project,
+  Release,
+  TraceField,
 } from "./client/api/index";
+import { ProjectAPI } from "./client/api/Project";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
+import { OAuthService } from "./oauth";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -62,9 +64,12 @@ interface StabilityData {
 }
 
 const ConfigurationSchema = z.object({
-  auth_token: z.string().describe("BugSnag personal authentication token"),
+  auth_token: z
+    .string()
+    .describe("BugSnag personal authentication token")
+    .optional(),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
-  endpoint: z.url().describe("BugSnag endpoint URL").optional(),
+  endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
 });
 
 export class BugsnagClient implements Client {
@@ -76,6 +81,7 @@ export class BugsnagClient implements Client {
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
   private _appEndpoint: string | undefined;
+  private _config: z.infer<typeof ConfigurationSchema> | undefined;
 
   get currentUserApi(): CurrentUserAPI {
     if (!this._currentUserApi) throw new Error("Client not configured");
@@ -106,14 +112,101 @@ export class BugsnagClient implements Client {
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
+    this._config = config;
     this.cache = server.getCache();
     this._appEndpoint = this.getEndpoint(
       "app",
       config.project_api_key,
       config.endpoint,
     );
+
+    let authToken = config.auth_token;
+
+    if (!authToken) {
+      // Try to load from store
+      const tokenData = await TokenStore.load("bugsnag");
+      if (tokenData && tokenData.accessToken) {
+        // Check expiry if needed, but for now just use it
+        authToken = tokenData.accessToken;
+      }
+    }
+
+    if (!authToken) {
+      console.error(
+        "No authentication token provided for BugSnag. Starting automated authentication flow...",
+      );
+      this.authenticate();
+      // We still mark as configured to allow tools to be registered, but they will fail until auth completes
+      this._isConfigured = true;
+      return;
+    }
+
+    await this.initializeApis(authToken, config);
+  }
+
+  private async authenticate() {
+    const authority =
+      process.env.BUGSNAG_OAUTH_AUTHORITY || "http://localhost:8080";
+    const clientId = process.env.BUGSNAG_OAUTH_CLIENT_ID || "mcp-client";
+
+    try {
+      const response = await OAuthService.startDeviceAuth(
+        authority,
+        clientId,
+        "api",
+      );
+
+      console.error(`\n\n[BugSnag] Authentication Required`);
+      console.error(`Please visit: ${response.verification_uri}`);
+      console.error(`And enter code: ${response.user_code}`);
+      console.error(`\nWaiting for approval...`);
+
+      // Polling loop
+      const intervalMs = (response.interval || 5) * 1000;
+      let accessToken: string | undefined;
+
+      while (!accessToken) {
+        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        try {
+          const tokenParams = await OAuthService.pollToken(
+            authority,
+            clientId,
+            response.device_code,
+          );
+          accessToken = tokenParams.access_token;
+
+          // Save and init
+          await TokenStore.save("bugsnag", {
+            accessToken,
+            expiresAt: Math.floor(Date.now() / 1000) + tokenParams.expires_in,
+          });
+
+          if (this._config) {
+            await this.initializeApis(accessToken, this._config);
+          }
+          console.error("\n[BugSnag] Successfully authenticated!\n");
+        } catch (e: any) {
+          if (
+            e.message !== "authorization_pending" &&
+            e.message !== "slow_down"
+          ) {
+            console.error("[BugSnag] Authentication failed:", e.message);
+            break; // Stop polling on fatal error
+          }
+          // If slow_down, maybe increase interval? For now stick to default.
+        }
+      }
+    } catch (e) {
+      console.error("Failed to start authentication flow:", e);
+    }
+  }
+
+  private async initializeApis(
+    authToken: string,
+    config: z.infer<typeof ConfigurationSchema>,
+  ) {
     const apiConfig = new Configuration({
-      apiKey: `token ${config.auth_token}`,
+      apiKey: `token ${authToken}`,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
@@ -161,7 +254,6 @@ export class BugsnagClient implements Client {
       return;
     }
     this._isConfigured = true;
-    return;
   }
 
   isConfigured(): boolean {
