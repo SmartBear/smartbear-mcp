@@ -131,6 +131,7 @@ export class BugsnagClient implements Client {
       }
     }
 
+    console.log("authToken after checking store:", authToken);
     if (!authToken) {
       console.error(
         "No authentication token provided for BugSnag. Starting automated authentication flow...",
@@ -146,7 +147,7 @@ export class BugsnagClient implements Client {
 
   private async authenticate() {
     const authority =
-      process.env.BUGSNAG_OAUTH_AUTHORITY || "http://localhost:8080";
+      process.env.BUGSNAG_OAUTH_AUTHORITY || "http://localhost:7070";
     const clientId = process.env.BUGSNAG_OAUTH_CLIENT_ID || "mcp-client";
 
     try {

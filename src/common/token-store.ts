@@ -21,6 +21,7 @@ export class TokenStore {
   }
 
   static async save(service: string, data: TokenData): Promise<void> {
+    console.log(`Saving token for service: ${service}`);
     await TokenStore.ensureDir();
     const filePath = TokenStore.getFilePath();
     let tokens: Record<string, TokenData> = {};

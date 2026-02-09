@@ -21,17 +21,23 @@ export class OAuthService {
     clientId: string,
     scope: string,
   ): Promise<DeviceAuthResponse> {
-    const params = new URLSearchParams({
+    const params = JSON.stringify({
       client_id: clientId,
       scope: scope,
     });
 
+    console.log(
+      "Starting device auth with url:",
+      `${authorityUrl}/device/authorize`,
+      "and params:",
+      params,
+    );
     const response = await fetch(`${authorityUrl}/device/authorize`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
       },
-      body: params.toString(),
+      body: params,
     });
 
     if (!response.ok) {
@@ -48,7 +54,7 @@ export class OAuthService {
     clientId: string,
     deviceCode: string,
   ): Promise<TokenResponse> {
-    const params = new URLSearchParams({
+    const params = JSON.stringify({
       grant_type: "urn:ietf:params:oauth:grant-type:device_code",
       client_id: clientId,
       device_code: deviceCode,
@@ -57,9 +63,9 @@ export class OAuthService {
     const response = await fetch(`${authorityUrl}/device/token`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
       },
-      body: params.toString(),
+      body: params,
     });
 
     const data = await response.json();
