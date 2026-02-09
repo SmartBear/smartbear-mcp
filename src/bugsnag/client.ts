@@ -147,58 +147,34 @@ export class BugsnagClient implements Client {
 
   private async authenticate() {
     const authority =
-      process.env.BUGSNAG_OAUTH_AUTHORITY || "http://localhost:7070";
+      process.env.BUGSNAG_OAUTH_AUTHORITY || "http://localhost:8080";
     const clientId = process.env.BUGSNAG_OAUTH_CLIENT_ID || "mcp-client";
+    const redirectUri =
+      process.env.BUGSNAG_REDIRECT_URI || "http://localhost:8080/callback";
 
     try {
-      const response = await OAuthService.startDeviceAuth(
+      console.error(`\n\n[BugSnag] Authentication Required`);
+      console.error(`Starting Authorization Code Flow with PKCE...`);
+
+      const tokenParams = await OAuthService.startAuthCodeFlow(
         authority,
         clientId,
+        redirectUri,
         "api",
       );
 
-      console.error(`\n\n[BugSnag] Authentication Required`);
-      console.error(`Please visit: ${response.verification_uri}`);
-      console.error(`And enter code: ${response.user_code}`);
-      console.error(`\nWaiting for approval...`);
+      // Save and init
+      await TokenStore.save("bugsnag", {
+        accessToken: tokenParams.access_token,
+        expiresAt: Math.floor(Date.now() / 1000) + tokenParams.expires_in,
+      });
 
-      // Polling loop
-      const intervalMs = (response.interval || 5) * 1000;
-      let accessToken: string | undefined;
-
-      while (!accessToken) {
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
-        try {
-          const tokenParams = await OAuthService.pollToken(
-            authority,
-            clientId,
-            response.device_code,
-          );
-          accessToken = tokenParams.access_token;
-
-          // Save and init
-          await TokenStore.save("bugsnag", {
-            accessToken,
-            expiresAt: Math.floor(Date.now() / 1000) + tokenParams.expires_in,
-          });
-
-          if (this._config) {
-            await this.initializeApis(accessToken, this._config);
-          }
-          console.error("\n[BugSnag] Successfully authenticated!\n");
-        } catch (e: any) {
-          if (
-            e.message !== "authorization_pending" &&
-            e.message !== "slow_down"
-          ) {
-            console.error("[BugSnag] Authentication failed:", e.message);
-            break; // Stop polling on fatal error
-          }
-          // If slow_down, maybe increase interval? For now stick to default.
-        }
+      if (this._config) {
+        await this.initializeApis(tokenParams.access_token, this._config);
       }
-    } catch (e) {
-      console.error("Failed to start authentication flow:", e);
+      console.error("\n[BugSnag] Successfully authenticated!\n");
+    } catch (e: any) {
+      console.error("[BugSnag] Authentication failed:", e.message);
     }
   }
 
