@@ -158,6 +158,9 @@ describe("BugsnagClient", () => {
     mockConsole.log.mockClear();
     mockConsole.info.mockClear();
     mockConsole.debug.mockClear();
+
+    client = await createConfiguredClient("test-token", "test-project-key");
+    clientWithNoApiKey = await createConfiguredClient("test-token");
   });
 
   afterEach(() => {
@@ -771,10 +774,6 @@ describe("BugsnagClient", () => {
   });
 
   describe("API methods", async () => {
-    beforeEach(async () => {
-      client = await createConfiguredClient("test-token", "test-project-key");
-    });
-
     describe("getProjects", () => {
       const mockOrg = getMockOrganization("org-1", "Test Org");
       const mockProjects = [getMockProject("proj-1", "Project 1")];
@@ -929,9 +928,6 @@ describe("BugsnagClient", () => {
     beforeEach(async () => {
       registerToolsSpy = vi.fn();
       getInputFunctionSpy = vi.fn();
-
-      client = await createConfiguredClient("test-token", "test-project-key");
-      clientWithNoApiKey = await createConfiguredClient("test-token");
     });
 
     describe("Setting the current project", () => {
@@ -2907,6 +2903,27 @@ describe("BugsnagClient", () => {
 
         expect(result.contents[0].uri).toBe("bugsnag://event/event-1");
         expect(result.contents[0].text).toBe(JSON.stringify(mockEvent));
+      });
+    });
+
+    describe("List projects UI", () => {
+      it("should return the resource html", async () => {
+        const mockEvent = getMockEvent("event-1");
+        const mockProjects = [getMockProject("proj-1", "Project 1")];
+
+        mockCache.get.mockReturnValueOnce(mockProjects);
+        mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
+
+        client.registerResources(registerResourcesSpy);
+        const resourceHandler = registerResourcesSpy.mock.calls[1][2];
+
+        const result = await resourceHandler(
+          { href: "ui://bugsnag/list-projects" },
+          {},
+        );
+
+        expect(result.contents[0].uri).toBe("ui://bugsnag/list-projects");
+        expect(result.contents[0].text).toMatch(/<!DOCTYPE html>/);
       });
     });
   });

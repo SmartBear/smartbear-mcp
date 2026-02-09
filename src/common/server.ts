@@ -90,6 +90,7 @@ export class SmartBearMcpServer extends McpServer {
             inputSchema: this.getInputSchema(params),
             outputSchema: this.getOutputSchema(params),
             annotations: this.getAnnotations(toolTitle, params),
+            ...(params._meta && { _meta: params._meta }),
           },
           async (args: any, extra: any) => {
             try {
@@ -156,7 +157,7 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       client.registerResources((name, path, cb) => {
-        const url = `${client.toolPrefix}://${name}/${path}`;
+        const url = typeof path === 'string' ? `${client.toolPrefix}://${name}/${path}` : path.uri;
         return super.registerResource(
           name,
           new ResourceTemplate(url, {

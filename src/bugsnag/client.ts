@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import type { CacheService } from "../common/cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
@@ -24,6 +27,7 @@ import {
 } from "./client/api/index";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
+import { RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -36,6 +40,13 @@ const cacheKeys = {
   PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
   CURRENT_PROJECT: "bugsnag_current_project",
 };
+
+interface UIResource {
+  name: string;
+  uri: string;
+  content: string;
+  meta: any;
+}
 
 // Exclude certain event fields from the project event filters to improve agent usage
 const EXCLUDED_EVENT_FIELDS = new Set([
@@ -101,6 +112,27 @@ export class BugsnagClient implements Client {
   toolPrefix = "bugsnag";
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
+
+  createUiResource = (name: string): UIResource => {
+    const uri = `ui://${this.toolPrefix}/${name}`;
+    return {
+      name,
+      uri,
+      content: readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), "ui", `${name}.html`),
+        "utf-8",
+      ),
+      meta: {
+        ui: {
+          resourceUri: uri,
+        },
+      },
+    };
+  };
+
+  uiResource = {
+    listProjects: this.createUiResource("list-projects"),
+  };
 
   async configure(
     server: SmartBearMcpServer,
@@ -443,6 +475,7 @@ export class BugsnagClient implements Client {
         hints: [
           "Project IDs from this list can be used with other tools when no project API key is configured",
         ],
+        _meta: { ...this.uiResource.listProjects.meta },
       },
       async (args, _extra) => {
         const params = listProjectsInputSchema.parse(args);
@@ -1698,6 +1731,28 @@ export class BugsnagClient implements Client {
           {
             uri: uri.href,
             text: JSON.stringify(await this.getEvent(variables.id as string)),
+          },
+        ],
+      };
+    });
+
+    this.registerUIResources(register, this.uiResource.listProjects);
+  }
+
+  private registerUIResources(
+    register: RegisterResourceFunction,
+    resource: UIResource,
+  ): void {
+    register(resource.name, resource, async (_uri, _variables, _extra) => {
+      return {
+        contents: [
+          {
+            uri: resource.uri,
+            mimeType: RESOURCE_MIME_TYPE,
+            text: resource.content,
+            _meta: {
+              something: "true",
+            },
           },
         ],
       };
