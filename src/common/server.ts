@@ -157,7 +157,10 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       client.registerResources((name, path, cb) => {
-        const url = typeof path === 'string' ? `${client.toolPrefix}://${name}/${path}` : path.uri;
+        const url =
+          typeof path === "string"
+            ? `${client.toolPrefix}://${name}/${path}`
+            : path.uri;
         return super.registerResource(
           name,
           new ResourceTemplate(url, {
