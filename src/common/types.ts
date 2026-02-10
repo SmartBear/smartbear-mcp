@@ -1,3 +1,4 @@
+import type { McpUiToolMeta } from "@modelcontextprotocol/ext-apps";
 import type {
   PromptCallback,
   ReadResourceTemplateCallback,
@@ -6,7 +7,6 @@ import type {
   RegisteredTool,
   ToolCallback,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { McpUiToolMeta } from "@modelcontextprotocol/ext-apps";
 import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
   ElicitRequest,
@@ -63,7 +63,11 @@ export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
 
 export type RegisterResourceFunction = (
   name: string,
-  path: string | { uri: string },
+  path:
+    | string
+    | {
+        uri: string;
+      } /* replace the default uri construction with a full uri string (may include template variables) */,
   cb: ReadResourceTemplateCallback,
 ) => RegisteredResourceTemplate;
 

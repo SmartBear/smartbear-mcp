@@ -2908,22 +2908,23 @@ describe("BugsnagClient", () => {
 
     describe("List projects UI", () => {
       it("should return the resource html", async () => {
-        const mockEvent = getMockEvent("event-1");
         const mockProjects = [getMockProject("proj-1", "Project 1")];
 
         mockCache.get.mockReturnValueOnce(mockProjects);
-        mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
         client.registerResources(registerResourcesSpy);
         const resourceHandler = registerResourcesSpy.mock.calls[1][2];
 
         const result = await resourceHandler(
-          { href: "ui://bugsnag/list-projects" },
-          {},
+          { href: "ui://bugsnag/app/list-projects" },
+          { tool: "list-projects" },
         );
 
-        expect(result.contents[0].uri).toBe("ui://bugsnag/list-projects");
+        expect(result.contents[0].uri).toBe("ui://bugsnag/app/list-projects");
         expect(result.contents[0].text).toMatch(/<!DOCTYPE html>/);
+        expect(result.contents[0].text).toContain(
+          '<meta name="mcp-tool-id" content="list-projects">',
+        );
       });
     });
   });

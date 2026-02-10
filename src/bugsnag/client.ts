@@ -1,6 +1,10 @@
-import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  type McpUiResourceMeta,
+  RESOURCE_MIME_TYPE,
+} from "@modelcontextprotocol/ext-apps";
 import { z } from "zod";
 import type { CacheService } from "../common/cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
@@ -24,10 +28,9 @@ import {
   ProjectAPI,
   type Release,
   type TraceField,
-} from "./client/api/index";
+} from "./client/api";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
-import { RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -40,13 +43,6 @@ const cacheKeys = {
   PROJECT_TRACE_FIELDS: "bugsnag_project_trace_fields",
   CURRENT_PROJECT: "bugsnag_current_project",
 };
-
-interface UIResource {
-  name: string;
-  uri: string;
-  content: string;
-  meta: any;
-}
 
 // Exclude certain event fields from the project event filters to improve agent usage
 const EXCLUDED_EVENT_FIELDS = new Set([
@@ -113,26 +109,9 @@ export class BugsnagClient implements Client {
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
 
-  createUiResource = (name: string): UIResource => {
-    const uri = `ui://${this.toolPrefix}/${name}`;
-    return {
-      name,
-      uri,
-      content: readFileSync(
-        join(dirname(fileURLToPath(import.meta.url)), "ui", `${name}.html`),
-        "utf-8",
-      ),
-      meta: {
-        ui: {
-          resourceUri: uri,
-        },
-      },
-    };
-  };
-
-  uiResource = {
-    listProjects: this.createUiResource("list-projects"),
-  };
+  createAppUri(tool: string = "{tool}") {
+    return `ui://${this.toolPrefix}/app/${tool}`;
+  }
 
   async configure(
     server: SmartBearMcpServer,
@@ -475,7 +454,11 @@ export class BugsnagClient implements Client {
         hints: [
           "Project IDs from this list can be used with other tools when no project API key is configured",
         ],
-        _meta: { ...this.uiResource.listProjects.meta },
+        _meta: {
+          ui: {
+            resourceUri: this.createAppUri("list-projects"),
+          },
+        },
       },
       async (args, _extra) => {
         const params = listProjectsInputSchema.parse(args);
@@ -1736,26 +1719,56 @@ export class BugsnagClient implements Client {
       };
     });
 
-    this.registerUIResources(register, this.uiResource.listProjects);
-  }
+    let appHtml: string;
 
-  private registerUIResources(
-    register: RegisterResourceFunction,
-    resource: UIResource,
-  ): void {
-    register(resource.name, resource, async (_uri, _variables, _extra) => {
-      return {
-        contents: [
-          {
-            uri: resource.uri,
-            mimeType: RESOURCE_MIME_TYPE,
-            text: resource.content,
-            _meta: {
-              something: "true",
+    register(
+      "bugsnag-ui",
+      { uri: this.createAppUri() },
+      async (uri, variables, _extra) => {
+        const toolPlaceholder = "{{tool}}";
+
+        const isDev = process.env.UI_DEV;
+        if (isDev || !appHtml) {
+          appHtml = await (isDev
+            ? // always re-fetch from the vite dev server
+              fetch("http://localhost:3001/bugsnag/ui/app.html").then((res) =>
+                res.text(),
+              )
+            : // only read the file once when served from the dist folder rather than the vite dev server
+              readFile(
+                join(dirname(fileURLToPath(import.meta.url)), "ui", "app.html"),
+                "utf-8",
+              ));
+
+          if (!appHtml.includes(toolPlaceholder)) {
+            throw new Error(
+              `expected meta tool placeholder ${toolPlaceholder} not found`,
+            );
+          }
+        }
+
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: RESOURCE_MIME_TYPE,
+              text: appHtml.replace(toolPlaceholder, variables.tool as string),
+              _meta: {
+                ui: {
+                  csp: {
+                    resourceDomains: isDev
+                      ? ["http://localhost:3001"]
+                      : ["http://localhost:3000"],
+                    connectDomains: isDev
+                      ? ["http://localhost:3001", "ws://localhost:3001"]
+                      : [],
+                  },
+                } satisfies McpUiResourceMeta,
+              },
             },
-          },
-        ],
-      };
-    });
+          ],
+        };
+      },
+    );
   }
 }

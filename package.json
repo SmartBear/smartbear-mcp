@@ -31,7 +31,9 @@
     "mcpServerName": "SmartBear MCP Server"
   },
   "scripts": {
-    "build": "vite build && vite build --config vite.config.ui.ts && shx chmod +x dist/*.js",
+    "build": "vite build && npm run ui && shx chmod +x dist/*.js",
+    "ui": "vite build --config vite.config.ui.ts",
+    "ui:dev": "vite --config vite.config.ui.ts",
     "lint": "biome lint .",
     "lint:fix": "biome lint . --fix",
     "format": "biome format . --write",
@@ -43,7 +45,6 @@
     "test:coverage": "vitest --coverage",
     "test:coverage:ci": "vitest --coverage --reporter=verbose",
     "test:run": "vitest run",
-    "ts": "tsc",
     "coverage:check": "vitest --coverage --reporter=verbose --config vitest.config.coverage.ts",
     "bump": "node scripts/bump.js"
   },
