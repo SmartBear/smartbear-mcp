@@ -1,9 +1,9 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { Suspense, use, useMemo, useState } from "react";
+import { getToolResult } from "../../commonUi/util";
 import type { ErrorApiView, Project } from "../client/api";
 import "./ListProjects.css";
-import { useApp } from "./appContext";
-import { getToolResult } from "./util";
+import { useApp } from "./AppContext";
 
 export default function ListProjects(props: { data: CallToolResult }) {
   const { data } = props;
@@ -43,23 +43,27 @@ function ProjectListItem(props: { project: Project }) {
   const app = useApp();
   const [projectErrorsResource, setProjectErrorsResource] = useState(null);
 
+  /**
+   * When expanded, load the top project errors
+   * When collapsed, clear the errors
+   */
+  const handleToggle = (event: React.ToggleEvent) => {
+    const detail = event.target as HTMLDetailsElement;
+    if (detail.open) {
+      setProjectErrorsResource(
+        app.callServerTool({
+          name: "bugsnag_list_project_errors",
+          arguments: { projectId: id },
+        }),
+      );
+    } else {
+      setProjectErrorsResource(null);
+    }
+  };
+
   return (
     <li>
-      <details
-        onToggle={(event) => {
-          const detail = event.target as HTMLDetailsElement;
-          if (detail.open) {
-            setProjectErrorsResource(
-              app.callServerTool({
-                name: "bugsnag_list_project_errors",
-                arguments: { projectId: id },
-              }),
-            );
-          } else {
-            setProjectErrorsResource(null);
-          }
-        }}
-      >
+      <details onToggle={handleToggle}>
         <summary>{name}</summary>
         <Suspense fallback={<div className="message">Loading...</div>}>
           {projectErrorsResource && (

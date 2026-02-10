@@ -1,20 +1,13 @@
-import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import {
-  type McpUiResourceMeta,
-  RESOURCE_MIME_TYPE,
-} from "@modelcontextprotocol/ext-apps";
 import { z } from "zod";
 import type { CacheService } from "../common/cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
-import type {
+import {
   Client,
-  GetInputFunction,
-  RegisterResourceFunction,
-  RegisterToolsFunction,
+  type GetInputFunction,
+  type RegisterResourceFunction,
+  type RegisterToolsFunction,
 } from "../common/types";
 import {
   type Build,
@@ -74,7 +67,7 @@ const ConfigurationSchema = z.object({
   endpoint: z.url().describe("BugSnag endpoint URL").optional(),
 });
 
-export class BugsnagClient implements Client {
+export class BugsnagClient extends Client {
   private cache?: CacheService;
   private projectApiKey?: string;
   private configuredProjectApiKey?: string;
@@ -108,10 +101,6 @@ export class BugsnagClient implements Client {
   toolPrefix = "bugsnag";
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
-
-  createAppUri(tool: string = "{tool}") {
-    return `ui://${this.toolPrefix}/app/${tool}`;
-  }
 
   async configure(
     server: SmartBearMcpServer,
@@ -1719,56 +1708,6 @@ export class BugsnagClient implements Client {
       };
     });
 
-    let appHtml: string;
-
-    register(
-      "bugsnag-ui",
-      { uri: this.createAppUri() },
-      async (uri, variables, _extra) => {
-        const toolPlaceholder = "{{tool}}";
-
-        const isDev = process.env.UI_DEV;
-        if (isDev || !appHtml) {
-          appHtml = await (isDev
-            ? // always re-fetch from the vite dev server
-              fetch("http://localhost:3001/bugsnag/ui/app.html").then((res) =>
-                res.text(),
-              )
-            : // only read the file once when served from the dist folder rather than the vite dev server
-              readFile(
-                join(dirname(fileURLToPath(import.meta.url)), "ui", "app.html"),
-                "utf-8",
-              ));
-
-          if (!appHtml.includes(toolPlaceholder)) {
-            throw new Error(
-              `expected meta tool placeholder ${toolPlaceholder} not found`,
-            );
-          }
-        }
-
-        return {
-          contents: [
-            {
-              uri: uri.href,
-              mimeType: RESOURCE_MIME_TYPE,
-              text: appHtml.replace(toolPlaceholder, variables.tool as string),
-              _meta: {
-                ui: {
-                  csp: {
-                    resourceDomains: isDev
-                      ? ["http://localhost:3001"]
-                      : ["http://localhost:3000"],
-                    connectDomains: isDev
-                      ? ["http://localhost:3001", "ws://localhost:3001"]
-                      : [],
-                  },
-                } satisfies McpUiResourceMeta,
-              },
-            },
-          ],
-        };
-      },
-    );
+    this.registerUIResource(register);
   }
 }

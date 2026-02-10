@@ -3,7 +3,7 @@ import Bugsnag from "./common/bugsnag";
 import "./common/register-clients"; // Register all available clients
 import { spawn } from "node:child_process";
 import { runHttpMode } from "./common/transport-http";
-import { runStdioMode } from "./common/transport-stdio.ts";
+import { runStdioMode } from "./common/transport-stdio";
 
 // This is used to report errors in the MCP server itself
 // If you want to use your own BugSnag API key, set the MCP_SERVER_BUGSNAG_API_KEY environment variable
