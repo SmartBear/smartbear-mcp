@@ -27,7 +27,9 @@ export default function ListProjects(props: { data: CallToolResult }) {
       <ul className="project-list">
         {projects.data
           .filter((p) =>
-            p.name.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase()),
+            p.name
+              ?.toLocaleLowerCase()
+              .includes(searchTerm.toLocaleLowerCase()),
           )
           .map((p) => (
             <ProjectListItem key={p.id} project={p} />
@@ -37,27 +39,36 @@ export default function ListProjects(props: { data: CallToolResult }) {
   );
 }
 
+interface ErrorResult {
+  data: ErrorApiView[];
+  next_url?: string;
+  data_count?: number;
+  total_count?: number;
+}
+
 function ProjectListItem(props: { project: Project }) {
   const { id, name } = props.project;
 
   const app = useApp();
-  const [projectErrorsResource, setProjectErrorsResource] = useState(null);
+  const [projectErrorsResource, setProjectErrorsResource] =
+    useState<Promise<ErrorResult>>();
 
   /**
    * When expanded, load the top project errors
    * When collapsed, clear the errors
    */
   const handleToggle = (event: React.ToggleEvent) => {
-    const detail = event.target as HTMLDetailsElement;
-    if (detail.open) {
+    if (event.newState === "open") {
       setProjectErrorsResource(
-        app.callServerTool({
-          name: "bugsnag_list_project_errors",
-          arguments: { projectId: id },
-        }),
+        app
+          .callServerTool({
+            name: "bugsnag_list_project_errors",
+            arguments: { projectId: id },
+          })
+          .then((result) => getToolResult(result)),
       );
     } else {
-      setProjectErrorsResource(null);
+      setProjectErrorsResource(undefined);
     }
   };
 
@@ -75,15 +86,8 @@ function ProjectListItem(props: { project: Project }) {
   );
 }
 
-function ProjectErrors(props: { resource: Promise<CallToolResult> }) {
-  const result = use(props.resource);
-  const data = getToolResult<{
-    data: ErrorApiView[];
-    next_url?: string;
-    data_count?: number;
-    total_count?: number;
-  }>(result);
-  const errors = data.data;
+function ProjectErrors(props: { resource: Promise<ErrorResult> }) {
+  const errors = use(props.resource).data;
 
   if (errors.length === 0) {
     return <div className="message">No errors found for this project.</div>;
