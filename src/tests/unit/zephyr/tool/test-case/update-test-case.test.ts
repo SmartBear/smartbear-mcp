@@ -4,11 +4,6 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  updateTestCaseBody,
-  updateTestCaseDefaultResponse,
-  updateTestCaseParams,
-} from "../../../../../zephyr/common/rest-api-schemas";
 import { UpdateTestCase } from "../../../../../zephyr/tool/test-case/update-test-case";
 
 describe("UpdateTestCase", () => {
@@ -46,29 +41,41 @@ describe("UpdateTestCase", () => {
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(true);
 
-    // Input schema should be an intersection (and) of updateTestCaseParams and updateTestCaseBody
+    // Input schema should accept partial updates (only testCaseKey is required)
     expect(instance.specification.inputSchema).toBeDefined();
-    expect(instance.specification.inputSchema._def.type).toBe("intersection");
 
-    // Verify the intersection has the correct left and right schemas
-    const intersection = instance.specification.inputSchema._def;
-    expect(intersection.left).toBe(updateTestCaseParams);
-    expect(intersection.right).toBe(updateTestCaseBody);
+    // Test that the schema accepts partial body updates
+    const partialInput = {
+      testCaseKey: "TEST-T123",
+      name: "Updated Name",
+    };
+    const partialResult =
+      instance.specification.inputSchema?.safeParse(partialInput);
+    expect(partialResult?.success).toBe(true);
 
-    // Output schema should be a union of empty object and updateTestCaseDefaultResponse
+    // Test that testCaseKey is required
+    const missingKeyInput = { name: "Updated Name" };
+    const missingKeyResult =
+      instance.specification.inputSchema?.safeParse(missingKeyInput);
+    expect(missingKeyResult?.success).toBe(false);
+
+    // Output schema should accept both empty object and response with data
     expect(instance.specification.outputSchema).toBeDefined();
-    expect(instance.specification.outputSchema._def.type).toBe("union");
 
-    // Verify the union contains exactly 2 options
-    const unionOptions = instance.specification.outputSchema._def.options;
-    expect(unionOptions).toHaveLength(2);
+    // Test that empty object is valid
+    const emptyOutput = {};
+    const emptyResult =
+      instance.specification.outputSchema?.safeParse(emptyOutput);
+    expect(emptyResult?.success).toBe(true);
 
-    // First option should be an empty object
-    expect(unionOptions[0]._def.type).toBe("object");
-    expect(Object.keys(unionOptions[0]._def.shape)).toHaveLength(0);
-
-    // Second option should be updateTestCaseDefaultResponse
-    expect(unionOptions[1]).toBe(updateTestCaseDefaultResponse);
+    // Test that a default response structure (error object) is valid
+    const validErrorOutput = {
+      errorCode: 404,
+      message: "Test Case not found",
+    };
+    const validResult =
+      instance.specification.outputSchema?.safeParse(validErrorOutput);
+    expect(validResult?.success).toBe(true);
   });
 
   describe("handle method", () => {
@@ -179,15 +186,15 @@ describe("UpdateTestCase", () => {
       expect(mergedBody.project).toEqual({
         id: 100,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/100",
-      }); // Preserved with self link
+      }); // Self link is preserved and not replaced, because we ignore it during Test Case update anyway
       expect(mergedBody.priority).toEqual({
         id: 1,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/priorities/7467",
-      }); // Preserved with self link
+      }); // Self link is preserved and not replaced, because we ignore it during Test Case update anyway
       expect(mergedBody.status).toEqual({
         id: 1,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/7463",
-      }); // Preserved with self link
+      }); // Self link is preserved and not replaced, because we ignore it during Test Case update anyway
     });
 
     it("should handle API errors when fetching existing test case", async () => {
@@ -299,7 +306,8 @@ describe("UpdateTestCase", () => {
         project: { id: 100 },
         priority: { id: 1 },
         status: { id: 1 },
-        labels: ["new-label", "another-label"], // Should replace, not merge
+        // Should replace, not merge. Realistically, when customer asks the MCP client to add a label, the client always uses preceding get_test_case call to create a new array with the new label added
+        labels: ["new-label", "another-label"],
       };
 
       await instance.handle(args, EXTRA_REQUEST_HANDLER);
@@ -452,7 +460,6 @@ describe("UpdateTestCase", () => {
       const mergedBody = putCall[1];
 
       expect(mergedBody.name).toBe("Completely New Name");
-      // Deep merge preserves the self link from existing when merging objects
       expect(mergedBody.project).toEqual({
         id: 200,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/100",
@@ -515,8 +522,7 @@ describe("UpdateTestCase", () => {
       expect(mergedBody.project).toEqual({
         id: 100,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/100",
-      }); // Preserves self link since object is merged
-      // Deep merge preserves the self link even when id changes
+      });
       expect(mergedBody.priority).toEqual({
         id: 2,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/priorities/7467",
@@ -524,7 +530,7 @@ describe("UpdateTestCase", () => {
       expect(mergedBody.status).toEqual({
         id: 1,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/7463",
-      }); // Preserves self link since object is merged
+      });
       expect(mergedBody.labels).toEqual(["regression", "automated"]);
       expect(mergedBody.customFields).toEqual({
         Environment: "Dev", // Preserved

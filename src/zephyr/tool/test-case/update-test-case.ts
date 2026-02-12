@@ -18,7 +18,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       "Update an existing Test Case in Zephyr. This operation fetches the current test case and merges your updates with it to prevent accidental property deletion.",
     readOnly: false,
     idempotent: true,
-    inputSchema: updateTestCaseParams.and(updateTestCaseBody),
+    inputSchema: updateTestCaseParams.and(updateTestCaseBody.partial()),
     // Accept either empty object (200 response) or updateTestCaseDefaultResponse (other responses)
     outputSchema: zod.union([
       zod.object({}), // Empty object for 200 response
@@ -30,9 +30,6 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
         parameters: {
           testCaseKey: "SA-T10",
           name: "Updated test case name",
-          project: { id: 100 },
-          priority: { id: 1 },
-          status: { id: 1 },
           objective: "Updated objective for the test case",
         },
         expectedOutput: "The updated Test Case with its details",
@@ -42,12 +39,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
           "Update test case 'MM2-T1' to add labels and change priority",
         parameters: {
           testCaseKey: "MM2-T1",
-          id: 12346,
-          key: "MM2-T1",
-          name: "Existing test case name",
-          project: { id: 101 },
           priority: { id: 2 },
-          status: { id: 1 },
           labels: ["automated", "regression"],
         },
         expectedOutput: "The updated Test Case with new labels and priority",
@@ -57,13 +49,6 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
           "Update test case 'SA-T5' with custom fields and estimated time",
         parameters: {
           testCaseKey: "SA-T5",
-          id: 12347,
-          key: "SA-T5",
-          name: "Performance test case",
-          project: { id: 100 },
-          priority: { id: 1 },
-          status: { id: 1 },
-          objective: "Verify system performance under load",
           estimatedTime: 3600000,
           customFields: {
             "Test Environment": "Production",
@@ -78,12 +63,6 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
           "Remove the component from test case 'SA-T20' by setting it to null. Note: To remove a property, we need to set it to null explicitly.",
         parameters: {
           testCaseKey: "SA-T20",
-          id: 12348,
-          key: "SA-T20",
-          name: "Test case without component",
-          project: { id: 100 },
-          priority: { id: 1 },
-          status: { id: 1 },
           component: null,
         },
         expectedOutput:
@@ -94,12 +73,6 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
           "Remove a specific custom field Test Environment from test case 'SA-T15' while keeping other custom fields intact",
         parameters: {
           testCaseKey: "SA-T15",
-          id: 12349,
-          key: "SA-T15",
-          name: "Test case with selective custom field removal",
-          project: { id: 100 },
-          priority: { id: 1 },
-          status: { id: 1 },
           customFields: {
             "Test Environment": null,
             Browser: "Chrome",
@@ -112,7 +85,9 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsed = updateTestCaseParams.and(updateTestCaseBody).parse(args);
+    const parsed = updateTestCaseParams
+      .and(updateTestCaseBody.partial())
+      .parse(args);
     const { testCaseKey, ...updates } = parsed;
 
     // Fetch the existing test case to ensure we have all properties
@@ -130,13 +105,8 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       .getApiClient()
       .put(`/testcases/${testCaseKey}`, mergedBody);
 
-    // If the API returns an empty response (common with PUT requests),
-    // return the merged body which contains the complete updated test case
-    const result =
-      response && Object.keys(response).length > 0 ? response : mergedBody;
-
     return {
-      structuredContent: result,
+      structuredContent: response,
       content: [],
     };
   };
