@@ -44,6 +44,22 @@ The following environment variables configure the Zephyr integration:
 -  **Returns**: A list of Test Cycles along with their properties.
 -  **Use case**: Retrieve the Test Cycles, it can be filtered by Project Key, Folder ID, Jira Project version ID.
 
+### Create Test Cycles
+- **Purpose**: Create a new Test Cycle within the Zephyr project specified by key
+- **Parameters:**
+    - Project key (`projectKey`)
+    - Name (`name`)
+    - optional description (`description`)
+    - optional planned Start Date (`plannedStartDate`)
+    - optional planned End Date (`plannedEndDate`)
+    - optional Jira Project Version (`jiraProjectVersion`)
+    - optional Status name (`statusName`)
+    - optional Folder ID (`folderId`)
+    - optional owner ID (`ownerId`)
+    - optional Custom Field names with associated values (`customFields`)
+- **Returns**: The created Test Cycle ID, with the API URL to access it and the Test Cycle key.
+- **Use case**: Creating a Test Cycle with its properties.
+
 ### Get Statuses
 
 - **Purpose**: Retrieve statuses related to Test Cases, Cycles, Plans or Executions from your Zephyr account.
