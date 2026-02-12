@@ -3,11 +3,11 @@ import type { CacheService } from "../common/cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
-import type {
+import {
   Client,
-  GetInputFunction,
-  RegisterResourceFunction,
-  RegisterToolsFunction,
+  type GetInputFunction,
+  type RegisterResourceFunction,
+  type RegisterToolsFunction,
 } from "../common/types";
 import {
   type Build,
@@ -21,7 +21,7 @@ import {
   ProjectAPI,
   type Release,
   type TraceField,
-} from "./client/api/index";
+} from "./client/api";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
 
@@ -67,7 +67,7 @@ const ConfigurationSchema = z.object({
   endpoint: z.url().describe("BugSnag endpoint URL").optional(),
 });
 
-export class BugsnagClient implements Client {
+export class BugsnagClient extends Client {
   private cache?: CacheService;
   private projectApiKey?: string;
   private configuredProjectApiKey?: string;
@@ -443,6 +443,11 @@ export class BugsnagClient implements Client {
         hints: [
           "Project IDs from this list can be used with other tools when no project API key is configured",
         ],
+        _meta: {
+          ui: {
+            resourceUri: this.createAppUri("list-projects"),
+          },
+        },
       },
       async (args, _extra) => {
         const params = listProjectsInputSchema.parse(args);
@@ -1702,5 +1707,7 @@ export class BugsnagClient implements Client {
         ],
       };
     });
+
+    this.registerUIResource(register);
   }
 }

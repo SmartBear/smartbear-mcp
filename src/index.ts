@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import Bugsnag from "./common/bugsnag";
 import "./common/register-clients"; // Register all available clients
+import { spawn } from "node:child_process";
 import { runHttpMode } from "./common/transport-http";
 import { runStdioMode } from "./common/transport-stdio";
 
@@ -26,6 +27,14 @@ async function main() {
       `[MCP] Invalid transport mode: ${transportMode}. Use "stdio" or "http".`,
     );
     process.exit(1);
+  }
+
+  if (process.env.UI_DEV) {
+    // Run the vite dev server alongside the MCP server
+    spawn("npm", ["run", "ui:dev", "--", "--clearScreen=false"], {
+      stdio: "inherit",
+      shell: true,
+    });
   }
 }
 

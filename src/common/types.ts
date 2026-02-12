@@ -1,3 +1,11 @@
+import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  type McpUiResourceMeta,
+  type McpUiToolMeta,
+  RESOURCE_MIME_TYPE,
+} from "@modelcontextprotocol/ext-apps";
 import type {
   PromptCallback,
   ReadResourceTemplateCallback,
@@ -40,6 +48,9 @@ export interface ToolParams {
   destructive?: boolean;
   idempotent?: boolean;
   openWorld?: boolean;
+  _meta?: {
+    ui?: McpUiToolMeta;
+  };
 }
 
 export interface PromptParams {
@@ -59,7 +70,11 @@ export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
 
 export type RegisterResourceFunction = (
   name: string,
-  path: string,
+  path:
+    | string
+    | {
+        uri: string;
+      } /* replace the default uri construction with a full uri string (may include template variables) */,
   cb: ReadResourceTemplateCallback,
 ) => RegisteredResourceTemplate;
 
@@ -87,30 +102,105 @@ export type Parameters = Array<{
   constraints?: string[];
 }>;
 
-export interface Client {
+export abstract class Client {
   /** Human-readable name for the client - usually the product name - used to prefix tool names */
-  name: string;
+  abstract name: string;
   /** Prefix for tool IDs */
-  toolPrefix: string;
+  abstract toolPrefix: string;
   /** Prefix for configuration (environment variables and http headers) */
-  configPrefix: string;
+  abstract configPrefix: string;
   /**
    * Zod schema defining configuration fields for this client
    * Field names must use snake case to ensure they are mapped to environment variables and HTTP headers correctly.
    * e.g., `config.my_property` would refer to the environment variable `TOOL_MY_PROPERTY`, http header `Tool-My-Property`
    */
-  config: ZodObject<{
+  abstract config: ZodObject<{
     [key: string]: ZodType;
   }>;
   /**
    * Configure the client with the given server and configuration
    */
-  configure: (server: SmartBearMcpServer, config: any) => Promise<void>;
-  isConfigured: () => boolean;
-  registerTools(
+  abstract configure(server: SmartBearMcpServer, config: any): Promise<void>;
+  abstract isConfigured(): boolean;
+  abstract registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void>;
   registerResources?(register: RegisterResourceFunction): void;
   registerPrompts?(register: RegisterPromptFunction): void;
+
+  protected createAppUri(tool: string = "{tool}") {
+    return `ui://${this.toolPrefix}/app/${tool}`;
+  }
+
+  protected registerUIResource(
+    register: RegisterResourceFunction,
+    config?: {
+      name?: string;
+      uri?: string;
+      /**
+       * Path to html entry relative to the src directory
+       * @default `${toolPrefix}/ui/app.html`
+       * @example "bugsnag/ui/app.html"
+       */
+      filePath?: string;
+      /**
+       * Not required if filePath is provided
+       * @default "app.html"
+       */
+      htmlFile?: string;
+    },
+  ) {
+    const {
+      name = `${this.toolPrefix}-ui`,
+      uri = this.createAppUri(),
+      htmlFile = "app.html",
+      filePath = `${this.toolPrefix}/ui/${htmlFile}`,
+    } = config || {};
+
+    let html: string;
+    const isDev = process.env.UI_DEV;
+    const toolPlaceholder = "{{tool}}";
+
+    register(name, { uri }, async (uri, variables, _extra) => {
+      if (isDev || !html) {
+        html = await (isDev
+          ? // always re-fetch from the vite dev server
+            fetch(`http://localhost:3001/${filePath}`).then((res) => res.text())
+          : // only read the file once when served from the dist folder rather than the vite dev server
+            readFile(
+              join(dirname(fileURLToPath(import.meta.url)), "..", filePath),
+              "utf-8",
+            ));
+
+        if (!html.includes(toolPlaceholder)) {
+          throw new Error(
+            `expected meta tag mcp-tool-id with content placeholder ${toolPlaceholder} but was not found`,
+          );
+        }
+      }
+
+      return {
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: RESOURCE_MIME_TYPE,
+            text: html.replace(toolPlaceholder, variables.tool as string),
+            _meta: {
+              ui: {
+                csp: {
+                  resourceDomains: isDev
+                    ? ["http://localhost:3001"]
+                    : ["http://localhost:3000"],
+                  connectDomains: isDev
+                    ? ["http://localhost:3001", "ws://localhost:3001"]
+                    : [],
+                },
+              } satisfies McpUiResourceMeta,
+            },
+          },
+        ],
+      };
+    });
+  }
 }
