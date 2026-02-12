@@ -9,10 +9,6 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import { ErrorUpdateRequest } from "./client/api/api";
-import { CurrentUserAPI } from "./client/api/CurrentUser";
-import { Configuration } from "./client/api/configuration";
-import { ErrorAPI } from "./client/api/Error";
 import type {
   Build,
   EventField,
@@ -21,7 +17,13 @@ import type {
   Release,
   TraceField,
 } from "./client/api/index";
-import { ProjectAPI } from "./client/api/Project";
+import {
+  Configuration,
+  CurrentUserAPI,
+  ErrorAPI,
+  ErrorUpdateRequest,
+  ProjectAPI,
+} from "./client/api/index";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
 
