@@ -41,6 +41,12 @@ export async function runStdioMode() {
   const configuredCount = await clientRegistry.configure(
     server,
     (client, key) => {
+      // Force enable allow_unauthenticated for BugSnag in stdio mode
+      // This ensures tools are listed even if the user hasn't provided a token yet
+      if (client.name === "BugSnag" && key === "allow_unauthenticated") {
+        return "true";
+      }
+
       const envVarName = getEnvVarName(client, key);
       return process.env[envVarName] || null;
     },

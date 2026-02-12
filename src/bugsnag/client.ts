@@ -2,7 +2,6 @@ import { z } from "zod";
 import type { CacheService } from "../common/cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import type { SmartBearMcpServer } from "../common/server";
-import { TokenStore } from "../common/token-store";
 import { ToolError } from "../common/tools";
 import type {
   Client,
@@ -25,7 +24,6 @@ import type {
 import { ProjectAPI } from "./client/api/Project";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
-import { OAuthService } from "./oauth";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -66,10 +64,18 @@ interface StabilityData {
 const ConfigurationSchema = z.object({
   auth_token: z
     .string()
-    .describe("BugSnag personal authentication token")
+    .describe(
+      "BugSnag authentication token (personal access token or OAuth token)",
+    )
     .optional(),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
-  endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
+  endpoint: z.url().describe("BugSnag endpoint URL").optional(),
+  allow_unauthenticated: z.coerce
+    .boolean()
+    .describe(
+      "Allow the client to be configured without an auth token (tools will be listed but may fail)",
+    )
+    .default(false),
 });
 
 export class BugsnagClient implements Client {
@@ -81,7 +87,6 @@ export class BugsnagClient implements Client {
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
   private _appEndpoint: string | undefined;
-  private _config: z.infer<typeof ConfigurationSchema> | undefined;
 
   get currentUserApi(): CurrentUserAPI {
     if (!this._currentUserApi) throw new Error("Client not configured");
@@ -112,7 +117,6 @@ export class BugsnagClient implements Client {
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
-    this._config = config;
     this.cache = server.getCache();
     this._appEndpoint = this.getEndpoint(
       "app",
@@ -120,62 +124,25 @@ export class BugsnagClient implements Client {
       config.endpoint,
     );
 
-    let authToken = config.auth_token;
+    const authToken = config.auth_token;
+
+    // Parse config to check for allow_unauthenticated (coerce handles string "true" -> boolean true)
+    const parsedConfig = ConfigurationSchema.safeParse(config);
+    const allowUnauthenticated =
+      parsedConfig.success && parsedConfig.data.allow_unauthenticated;
 
     if (!authToken) {
-      // Try to load from store
-      const tokenData = await TokenStore.load("bugsnag");
-      if (tokenData && tokenData.accessToken) {
-        // Check expiry if needed, but for now just use it
-        authToken = tokenData.accessToken;
+      if (allowUnauthenticated) {
+        console.error(
+          "No authentication token provided for BugSnag client. Tools will be listed but may fail when invoked.",
+        );
+        this._isConfigured = true;
+        return;
       }
-    }
-
-    console.log("authToken after checking store:", authToken);
-    if (!authToken) {
-      console.error(
-        "No authentication token provided for BugSnag. Starting automated authentication flow...",
-      );
-      this.authenticate();
-      // We still mark as configured to allow tools to be registered, but they will fail until auth completes
-      this._isConfigured = true;
       return;
     }
 
     await this.initializeApis(authToken, config);
-  }
-
-  private async authenticate() {
-    const authority =
-      process.env.BUGSNAG_OAUTH_AUTHORITY || "http://localhost:8080";
-    const clientId = process.env.BUGSNAG_OAUTH_CLIENT_ID || "mcp-client";
-    const redirectUri =
-      process.env.BUGSNAG_REDIRECT_URI || "http://localhost:8080/callback";
-
-    try {
-      console.error(`\n\n[BugSnag] Authentication Required`);
-      console.error(`Starting Authorization Code Flow with PKCE...`);
-
-      const tokenParams = await OAuthService.startAuthCodeFlow(
-        authority,
-        clientId,
-        redirectUri,
-        "api",
-      );
-
-      // Save and init
-      await TokenStore.save("bugsnag", {
-        accessToken: tokenParams.access_token,
-        expiresAt: Math.floor(Date.now() / 1000) + tokenParams.expires_in,
-      });
-
-      if (this._config) {
-        await this.initializeApis(tokenParams.access_token, this._config);
-      }
-      console.error("\n[BugSnag] Successfully authenticated!\n");
-    } catch (e: any) {
-      console.error("[BugSnag] Authentication failed:", e.message);
-    }
   }
 
   private async initializeApis(
