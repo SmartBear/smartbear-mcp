@@ -9,18 +9,20 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types";
+import type {
+  Build,
+  EventField,
+  Organization,
+  Project,
+  Release,
+  TraceField,
+} from "./client/api/index";
 import {
-  type Build,
   Configuration,
   CurrentUserAPI,
   ErrorAPI,
   ErrorUpdateRequest,
-  type EventField,
-  type Organization,
-  type Project,
   ProjectAPI,
-  type Release,
-  type TraceField,
 } from "./client/api/index";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
@@ -62,9 +64,20 @@ interface StabilityData {
 }
 
 const ConfigurationSchema = z.object({
-  auth_token: z.string().describe("BugSnag personal authentication token"),
+  auth_token: z
+    .string()
+    .describe(
+      "BugSnag authentication token (personal access token or OAuth token)",
+    )
+    .optional(),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
   endpoint: z.url().describe("BugSnag endpoint URL").optional(),
+  allow_unauthenticated: z.coerce
+    .boolean()
+    .describe(
+      "Allow the client to be configured without an auth token (tools will be listed but may fail)",
+    )
+    .default(false),
 });
 
 export class BugsnagClient implements Client {
@@ -112,8 +125,34 @@ export class BugsnagClient implements Client {
       config.project_api_key,
       config.endpoint,
     );
+
+    const authToken = config.auth_token;
+
+    // Parse config to check for allow_unauthenticated (coerce handles string "true" -> boolean true)
+    const parsedConfig = ConfigurationSchema.safeParse(config);
+    const allowUnauthenticated =
+      parsedConfig.success && parsedConfig.data.allow_unauthenticated;
+
+    if (!authToken) {
+      if (allowUnauthenticated) {
+        console.error(
+          "No authentication token provided for BugSnag client. Tools will be listed but may fail when invoked.",
+        );
+        this._isConfigured = true;
+        return;
+      }
+      return;
+    }
+
+    await this.initializeApis(authToken, config);
+  }
+
+  private async initializeApis(
+    authToken: string,
+    config: z.infer<typeof ConfigurationSchema>,
+  ) {
     const apiConfig = new Configuration({
-      apiKey: `token ${config.auth_token}`,
+      apiKey: `token ${authToken}`,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
@@ -161,7 +200,6 @@ export class BugsnagClient implements Client {
       return;
     }
     this._isConfigured = true;
-    return;
   }
 
   isConfigured(): boolean {

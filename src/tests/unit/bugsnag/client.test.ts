@@ -67,23 +67,29 @@ const mockCache = {
   del: vi.fn(),
 };
 
-vi.mock("../../../bugsnag/client/api/index.js", () => ({
-  ...vi.importActual("../../../bugsnag/client/api/index.js"),
-  CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserAPI),
-  ErrorAPI: vi.fn().mockImplementation(() => mockErrorAPI),
-  ProjectAPI: vi.fn().mockImplementation(() => mockProjectAPI),
-  Configuration: vi.fn().mockImplementation((config) => config),
-  ErrorUpdateRequest: {
-    OperationEnum: {
-      Fix: "fix",
-      Ignore: "ignore",
-      OverrideSeverity: "override_severity",
-      Open: "open",
-      Discard: "discard",
-      Undiscard: "undiscard",
+vi.mock("../../../bugsnag/client/api/index.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("../../../bugsnag/client/api/index.js")
+    >();
+  return {
+    ...actual,
+    CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserAPI),
+    ErrorAPI: vi.fn().mockImplementation(() => mockErrorAPI),
+    ProjectAPI: vi.fn().mockImplementation(() => mockProjectAPI),
+    Configuration: vi.fn().mockImplementation((config) => config),
+    ErrorUpdateRequest: {
+      OperationEnum: {
+        Fix: "fix",
+        Ignore: "ignore",
+        OverrideSeverity: "override_severity",
+        Open: "open",
+        Discard: "discard",
+        Undiscard: "undiscard",
+      },
     },
-  },
-}));
+  };
+});
 
 vi.mock("../../../common/bugsnag.js", () => ({
   default: {
@@ -129,6 +135,7 @@ async function createConfiguredClient(
     auth_token: authToken,
     project_api_key: projectApiKey,
     endpoint,
+    allow_unauthenticated: false,
   });
   mockCache.get.mockClear();
   return client;
@@ -550,7 +557,10 @@ describe("BugsnagClient", () => {
         getCache: vi.fn().mockReturnValue(mockCache),
       } as any;
 
-      await client.configure(mockServer, { auth_token: "test-token" });
+      await client.configure(mockServer, {
+        auth_token: "test-token",
+        allow_unauthenticated: false,
+      });
 
       // Cache should be used in getProjects
       mockCache.get.mockReturnValueOnce(null); // No cached org
@@ -604,6 +614,7 @@ describe("BugsnagClient", () => {
 
       await testClient.configure({ getCache: () => mockCache } as any, {
         auth_token: "test-token",
+        allow_unauthenticated: false,
       });
 
       expect(mockCurrentUserAPI.listUserOrganizations).toHaveBeenCalledOnce();
@@ -641,6 +652,7 @@ describe("BugsnagClient", () => {
       await clientWithApiKey.configure({ getCache: () => mockCache } as any, {
         auth_token: "test-token",
         project_api_key: "project-api-key",
+        allow_unauthenticated: false,
       });
 
       expect(mockCache.set).toHaveBeenCalledWith(
@@ -671,6 +683,7 @@ describe("BugsnagClient", () => {
 
       await clientWithNoApiKey.configure({ getCache: () => mockCache } as any, {
         auth_token: "test-token",
+        allow_unauthenticated: false,
       });
 
       expect(mockCache.set).not.toHaveBeenCalledWith(
@@ -693,6 +706,7 @@ describe("BugsnagClient", () => {
 
       await clientWithNoApiKey.configure({ getCache: () => mockCache } as any, {
         auth_token: "test-token",
+        allow_unauthenticated: false,
       });
 
       expect(mockCache.set).toHaveBeenCalledWith(
@@ -708,6 +722,7 @@ describe("BugsnagClient", () => {
       await expect(
         client.configure({ getCache: () => mockCache } as any, {
           auth_token: "test-token",
+          allow_unauthenticated: false,
         }),
       ).resolves.toBe(undefined);
       expect(client.isConfigured()).toBe(false);
@@ -722,6 +737,7 @@ describe("BugsnagClient", () => {
       await clientWithApiKey.configure({ getCache: () => mockCache } as any, {
         auth_token: "test-token",
         project_api_key: "non-existent-key",
+        allow_unauthenticated: false,
       });
       const mockOrg = getMockOrganization("org-1", "Test Org");
       const mockProject = getMockProject("proj-1", "Project 1", "other-key");
@@ -737,6 +753,7 @@ describe("BugsnagClient", () => {
         clientWithApiKey.configure({ getCache: () => mockCache } as any, {
           auth_token: "test-token",
           project_api_key: "non-existent-key",
+          allow_unauthenticated: false,
         }),
       ).resolves.toBe(undefined);
       expect(clientWithApiKey.isConfigured()).toBe(true);
@@ -764,6 +781,7 @@ describe("BugsnagClient", () => {
         clientWithApiKey.configure({ getCache: () => mockCache } as any, {
           auth_token: "test-token",
           project_api_key: "project-api-key",
+          allow_unauthenticated: false,
         }),
       ).resolves.toBe(undefined);
       expect(clientWithApiKey.isConfigured()).toBe(true);

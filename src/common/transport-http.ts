@@ -12,6 +12,16 @@ import type { Client } from "./types";
 import { isOptionalType } from "./zod-utils";
 
 /**
+ * Helper to construct the base URL from the request, respecting proxy headers.
+ * This is critical for cloud deployments where SSL termination happens at the load balancer.
+ */
+function getBaseUrl(req: IncomingMessage): string {
+  const protocol = (req.headers["x-forwarded-proto"] as string) || "http";
+  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
+  return `${protocol}://${host}`;
+}
+
+/**
  * Run server in HTTP mode with Streamable HTTP transport
  * Supports both SSE (legacy) and StreamableHTTP transports for backwards compatibility
  */
@@ -20,6 +30,7 @@ export async function runHttpMode() {
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
     "http://localhost:3000",
   ];
+  const baseUrlOverride = process.env.BASE_URL; // Allow explicit override if headers are unreliable
 
   // Store transports by session ID
   const transports = new Map<
@@ -37,6 +48,7 @@ export async function runHttpMode() {
     "Authorization",
     "MCP-Session-Id", // Required for StreamableHTTP
     "x-custom-auth-headers", // used by mcp-inspector
+    "mcp-protocol-version",
     ...allowedAuthHeaders,
   ].join(", ");
 
@@ -60,7 +72,10 @@ export async function runHttpMode() {
         return;
       }
 
-      const url = new URL(req.url || "/", `http://${req.headers.host}`);
+      // Determine the public URL of this server
+      // Use env override if set, otherwise detect from request headers
+      const baseUrl = baseUrlOverride || getBaseUrl(req);
+      const url = new URL(req.url || "/", baseUrl);
 
       // HEALTH CHECK ENDPOINT
       if (req.method === "GET" && url.pathname === "/health") {
@@ -68,6 +83,131 @@ export async function runHttpMode() {
         res.end(
           JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
         );
+        return;
+      }
+
+      // OAUTH DISCOVERY ENDPOINT (RFC 8414)
+      if (
+        req.method === "GET" &&
+        (url.pathname === "/.well-known/oauth-authorization-server" ||
+          url.pathname === "/.well-known/oauth-authorization-server/mcp")
+      ) {
+        const issuer =
+          process.env.OAUTH_ISSUER || "https://oauth.smartbear.com";
+        const authEndpoint =
+          process.env.OAUTH_AUTHORIZATION_ENDPOINT || `${issuer}/authorize`;
+        const tokenEndpoint =
+          process.env.OAUTH_TOKEN_ENDPOINT || `${issuer}/token`;
+        const jwksUri =
+          process.env.OAUTH_JWKS_URI || `${issuer}/.well-known/jwks.json`;
+
+        // We provide a local registration endpoint to satisfy MCP Inspector
+        // which returns a pre-configured client ID
+        const registrationEndpoint = `${baseUrl}/oauth/register`;
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            issuer: issuer,
+            authorization_endpoint: authEndpoint,
+            token_endpoint: tokenEndpoint,
+            jwks_uri: jwksUri,
+            registration_endpoint: registrationEndpoint,
+            response_types_supported: ["code"],
+            grant_types_supported: ["authorization_code", "refresh_token"],
+            code_challenge_methods_supported: ["S256"],
+            token_endpoint_auth_methods_supported: ["none"],
+            scopes_supported: process.env.OAUTH_SCOPES
+              ? process.env.OAUTH_SCOPES.split(",")
+              : ["api"],
+          }),
+        );
+        return;
+      }
+
+      // PROTECTED RESOURCE METADATA ENDPOINT (RFC 9293)
+      // This endpoint tells the client where to find the Authorization Server.
+      // The Inspector hits this first to find the Auth Server, then hits /.well-known/oauth-authorization-server.
+      // We point to ourselves (or the configured issuer) so the client can find the metadata above.
+      if (
+        req.method === "GET" &&
+        (url.pathname === "/.well-known/oauth-protected-resource" ||
+          url.pathname === "/.well-known/oauth-protected-resource/mcp")
+      ) {
+        // In this architecture, the MCP server acts as the discovery gateway for the Auth Server.
+        // We point the client to this server's host to fetch the authorization server metadata.
+        // Note: The 'issuer' in the metadata above might be different (external), but we want
+        // the client to discover the metadata *here* first to get our registration_endpoint.
+        // If we pointed directly to an external issuer, we'd lose the ability to inject the
+        // mock registration endpoint.
+        const authServerUrl = baseUrl;
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            resource: `${baseUrl}/mcp`,
+            authorization_servers: [authServerUrl],
+          }),
+        );
+        return;
+      }
+
+      // DYNAMIC CLIENT REGISTRATION ENDPOINT
+      // This endpoint implements a stateless version of RFC 7591 dynamic client registration.
+      // It allows clients (like MCP Inspector) to register themselves to obtain a client_id.
+      // Since this server is stateless, we return a deterministic or configured client_id
+      // rather than persisting client records in a database.
+      // The Inspector calls this to get the client_id before constructing the authorization URL.
+      if (req.method === "POST" && url.pathname === "/oauth/register") {
+        try {
+          // Consume the body
+          const body = (await parseRequestBody(req)) as Record<string, unknown>;
+          const redirectUris = body?.redirect_uris as string[] | undefined;
+
+          // RFC 7591: redirect_uris is required for web clients
+          if (
+            !redirectUris ||
+            !Array.isArray(redirectUris) ||
+            redirectUris.length === 0
+          ) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({
+                error: "invalid_redirect_uri",
+                error_description: "redirect_uris parameter is required",
+              }),
+            );
+            return;
+          }
+
+          // Use configured client ID or default to a static one for stateless operation
+          const clientId = process.env.OAUTH_CLIENT_ID || "mcp-client";
+
+          // Determine scopes: Use requested scopes if valid, or default to all supported
+          const supportedScopes = process.env.OAUTH_SCOPES
+            ? process.env.OAUTH_SCOPES.split(",")
+            : ["api", "offline_access"];
+
+          res.writeHead(201, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              client_id: clientId,
+              client_name: body.client_name || "MCP Client",
+              redirect_uris: redirectUris,
+              scope: supportedScopes.join(" "),
+              client_secret_expires_at: 0,
+              client_id_issued_at: Math.floor(Date.now() / 1000),
+              grant_types: ["authorization_code", "refresh_token"],
+              response_types: ["code"],
+              token_endpoint_auth_method: "none",
+              application_type: "web",
+            }),
+          );
+        } catch (error) {
+          console.error("Error handling registration request:", error);
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "invalid_request" }));
+        }
         return;
       }
 
@@ -450,17 +590,50 @@ async function newServer(
   const server = new SmartBearMcpServer();
   try {
     // Configure server with values from HTTP headers
-    await clientRegistry.configure(server, (client, key) => {
-      const headerName = getHeaderName(client, key);
-      // Check both original case and lower-case headers for compatibility
-      // (HTTP headers are case-insensitive, but Node.js lowercases them)
-      const value =
-        req.headers[headerName] || req.headers[headerName.toLowerCase()];
-      if (typeof value === "string") {
-        return value;
-      }
-      return null;
-    });
+    const configuredCount = await clientRegistry.configure(
+      server,
+      (client, key) => {
+        const headerName = getHeaderName(client, key);
+        // Check both original case and lower-case headers for compatibility
+        // (HTTP headers are case-insensitive, but Node.js lowercases them)
+        const value =
+          req.headers[headerName] || req.headers[headerName.toLowerCase()];
+        if (typeof value === "string") {
+          return value;
+        }
+
+        // Check standard Authorization header as fallback
+        // This supports the MCP Inspector which sends the obtained OAuth token in the Authorization header
+        // We map this token to the primary authentication config key of the client
+        const isAuthKey = [
+          "auth_token",
+          "api_token",
+          "api_key",
+          "token",
+          "login_ticket",
+        ].includes(key);
+
+        if (isAuthKey && req.headers.authorization) {
+          const authHeader = req.headers.authorization;
+          if (authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+          }
+          return authHeader;
+        }
+
+        return null;
+      },
+    );
+
+    console.log(
+      `Configured ${configuredCount} clients for new server instance`,
+    );
+
+    if (configuredCount === 0) {
+      throw new Error(
+        "No clients successfully configured. Missing authentication headers.",
+      );
+    }
   } catch (error: any) {
     // Configuration failed - provide helpful error message
     const headerHelp = getHttpHeadersHelp();
@@ -469,7 +642,18 @@ async function newServer(
         ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
         : "No clients support HTTP header configuration.";
 
-    res.writeHead(401, { "Content-Type": "text/plain" });
+    const headers: Record<string, string> = {
+      "Content-Type": "text/plain",
+    };
+
+    // Add WWW-Authenticate header to support OAuth discovery flow
+    // This points the client to the Protected Resource Metadata endpoint
+    if (req.headers.host) {
+      headers["WWW-Authenticate"] =
+        `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+    }
+
+    res.writeHead(401, headers);
     res.end(errorMessage);
     return null;
   }
