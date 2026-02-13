@@ -40,6 +40,17 @@ describe("deepMerge", () => {
     expect(result).toEqual({ a: 1, component: null });
   });
 
+  it("should set a value that was previously null", () => {
+    const target = {
+      a: 1,
+      component: null as { id?: number; self?: string } | null,
+    };
+    const updates = { component: { id: 1 } };
+    const result = deepMerge(target, updates);
+
+    expect(result).toEqual({ a: 1, component: { id: 1 } });
+  });
+
   it("should replace arrays rather than merge them", () => {
     const target = { labels: ["old", "label"] };
     const updates = { labels: ["new", "labels"] };

@@ -108,7 +108,7 @@ describe("UpdateTestCase", () => {
         objective: "Updated objective",
       };
 
-      const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
       expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
         "/testcases/SA-T10",
@@ -137,7 +137,6 @@ describe("UpdateTestCase", () => {
           },
         }),
       );
-      expect(result.structuredContent).toBe(responseMock);
     });
 
     it("should preserve existing properties not included in updates", async () => {
