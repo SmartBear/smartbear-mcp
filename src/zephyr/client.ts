@@ -14,6 +14,7 @@ import { GetStatuses } from "./tool/status/get-statuses";
 import { CreateTestCase } from "./tool/test-case/create-test-case";
 import { GetTestCase } from "./tool/test-case/get-test-case";
 import { GetTestCases } from "./tool/test-case/get-test-cases";
+import { UpdateTestCase } from "./tool/test-case/update-test-case.ts";
 import { CreateTestCycle } from "./tool/test-cycle/create-test-cycle";
 import { GetTestCycle } from "./tool/test-cycle/get-test-cycle";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles";
@@ -78,6 +79,7 @@ export class ZephyrClient implements Client {
       new GetTestExecutions(this),
       new CreateTestCase(this),
       new CreateTestCycle(this),
+      new UpdateTestCase(this),
     ];
 
     for (const tool of tools) {
