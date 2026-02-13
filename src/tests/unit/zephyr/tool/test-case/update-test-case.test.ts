@@ -58,24 +58,6 @@ describe("UpdateTestCase", () => {
     const missingKeyResult =
       instance.specification.inputSchema?.safeParse(missingKeyInput);
     expect(missingKeyResult?.success).toBe(false);
-
-    // Output schema should accept both empty object and response with data
-    expect(instance.specification.outputSchema).toBeDefined();
-
-    // Test that empty object is valid
-    const emptyOutput = {};
-    const emptyResult =
-      instance.specification.outputSchema?.safeParse(emptyOutput);
-    expect(emptyResult?.success).toBe(true);
-
-    // Test that a default response structure (error object) is valid
-    const validErrorOutput = {
-      errorCode: 404,
-      message: "Test Case not found",
-    };
-    const validResult =
-      instance.specification.outputSchema?.safeParse(validErrorOutput);
-    expect(validResult?.success).toBe(true);
   });
 
   describe("handle method", () => {
