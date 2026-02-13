@@ -158,3 +158,14 @@ The following environment variables configure the Zephyr integration:
   - optional starting cursor position for pagination (`startAtId`)
 - **Returns**: A list of Test Executions along with their properties. Results are filtered based on the provided parameters.
 - **Use case**: Retrieve Test Executions, filtered by various criteria such as project, test cycle, test case, or execution dates.
+
+### Create folder
+
+- **Purpose**: Create a new Folder within the specified Zephyr project to organize Test Cases, Test Plans, or Test Cycles.
+- **Parameters:**
+    - Project key (`projectKey`)
+    - Name (`name`)
+    - Folder Type (`folderType`)
+    - optional parent Folder Id (`parentFolderId`)
+- **Returns**: The created Folder ID and the API self URL to access it.
+- **Use case**: Creating a root or sub-folder in a Zephyr project to structure and organize Test Cases, Test Plans, or Test Cycles.
