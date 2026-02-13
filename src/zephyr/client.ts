@@ -7,6 +7,7 @@ import type {
 import { ApiClient } from "./common/api-client";
 
 import { GetEnvironments } from "./tool/environment/get-environments";
+import { CreateFolder } from "./tool/folder/create-folder";
 import { GetPriorities } from "./tool/priority/get-priorities";
 import { GetProject } from "./tool/project/get-project";
 import { GetProjects } from "./tool/project/get-projects";
@@ -78,6 +79,7 @@ export class ZephyrClient implements Client {
       new GetTestExecutions(this),
       new CreateTestCase(this),
       new CreateTestCycle(this),
+      new CreateFolder(this),
     ];
 
     for (const tool of tools) {
