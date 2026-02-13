@@ -118,14 +118,14 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Case ID, with the API URL to access it and the Test Case key.
 - **Use case**: Creating a Test Case with its properties.
 
-### Create Test Case Script
+### Create Test Script
 
 - **Purpose**: Create a new Test Script for an existing Test Case within the Zephyr project specified by the test case key
 - **Parameters:**
     - Test Case key (`testCaseKey`)
     - Type (`type`)
     - text  (`text`)
-- **Returns**: The created Test Case Script ID, with the API URL to access it
+- **Returns**: The created Test Script ID, with the API URL to access it
 - **Use case**: Adding execution steps (plain or BDD format) to an existing Test Case.
 
 ### Get Test Execution
