@@ -1,11 +1,3 @@
-type DeepPartial<T> = T extends object
-  ? {
-      [P in keyof T]?: T[P] extends object
-        ? DeepPartial<T[P]> | null
-        : T[P] | null;
-    }
-  : T;
-
 /**
  * Deep merge two objects, with properties from 'updates' taking precedence.
  * For nested objects, this merges rather than replaces them entirely.
@@ -14,10 +6,10 @@ type DeepPartial<T> = T extends object
  * @param objectWithUpdates - The object with updates to apply
  * @returns The merged object
  */
-export function deepMerge<T extends Record<string, any>>(
-  baseObject: T,
-  objectWithUpdates: DeepPartial<T>,
-): T {
+export function deepMerge<
+  T extends Record<string, any>,
+  U extends Record<string, any>,
+>(baseObject: T, objectWithUpdates: U): T {
   const result: Record<string, any> = { ...baseObject };
 
   for (const key in objectWithUpdates) {
@@ -38,11 +30,10 @@ export function deepMerge<T extends Record<string, any>>(
   return result as T;
 }
 
-function objectsCanBeMerged<T extends Record<string, any>>(
-  baseObject: T,
-  objectWithUpdates: DeepPartial<T>,
-  key: Extract<keyof DeepPartial<T>, string>,
-): boolean {
+function objectsCanBeMerged<
+  T extends Record<string, any>,
+  U extends Record<string, any>,
+>(baseObject: T, objectWithUpdates: U, key: Extract<keyof U, string>): boolean {
   return (
     objectWithUpdates[key] &&
     typeof objectWithUpdates[key] === "object" &&
