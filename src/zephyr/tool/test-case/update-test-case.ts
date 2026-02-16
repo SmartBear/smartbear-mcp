@@ -32,7 +32,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Update the test case 'MM2-T1' by adding labels 'Regression','Performance' and 'Automated' and changing the priority to the one with id 2.",
+          "Update the test case 'MM2-T1' by setting labels 'Regression','Performance' and 'Automated' and changing the priority to the one with id 2.",
         parameters: {
           testCaseKey: "MM2-T1",
           priority: { id: 2 },
@@ -56,8 +56,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
           "The test case should be updated, but no output is expected.",
       },
       {
-        description:
-          "Remove the component from test case 'SA-T20' by setting it to null. Note: To remove a property, we need to set it to null explicitly.",
+        description: "Remove the component from test case 'SA-T20'.",
         parameters: {
           testCaseKey: "SA-T20",
           component: null,

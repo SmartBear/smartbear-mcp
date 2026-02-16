@@ -135,11 +135,6 @@ The following environment variables configure the Zephyr integration:
     - optional Custom Field names with associated values (`customFields`)
 - **Returns**: Empty object if the update is successful.
 - **Use case**: Updating a Test Case with its properties.
-- **Notes**:
-    - The update operation is partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` are provided, only those fields will be updated while the rest of the Test Case properties will remain unchanged.
-    - For fields that accept multiple values, such as `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
-        - If you want to add a label, you would need to specify in the prompt the intention to add a label, and the MCP would internally call the tool to retrieve the current labels, add the new label to the list and then call the update tool with the complete list of labels.
-    - If a field is provided with a null value, it will clear the value of that field. For example, if `component` is provided with a null value, the component of the Test Case will be cleared.
 
 ### Get Test Execution
 
@@ -181,3 +176,9 @@ The following environment variables configure the Zephyr integration:
   - optional starting cursor position for pagination (`startAtId`)
 - **Returns**: A list of Test Executions along with their properties. Results are filtered based on the provided parameters.
 - **Use case**: Retrieve Test Executions, filtered by various criteria such as project, test cycle, test case, or execution dates.
+
+## Notes regarding **Update** operations
+- The update operations are partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` of the Test Case are provided to the tool, only those fields will be updated while the rest of the Test Case properties will remain unchanged.
+- For fields that accept multiple values, such as Test Case `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
+  - If you want to add a label, you would need to specify in the prompt the intention to _add a label_, and the MCP would internally call the tool to retrieve the current labels, add the new label to the list and then call the update tool with the complete list of labels.
+- If a field is provided with a `null` value, it will clear the value of that field. For example, if `component` is provided with a `null` value, the component of the Test Case will be cleared. This is usually achieved by prompting for _Removal of the component_, or something similar, to indicate that the value should be removed.
