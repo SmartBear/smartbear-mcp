@@ -49,6 +49,14 @@ const PERMITTED_UPDATE_OPERATIONS = [
   "ignore",
   "discard",
   "undiscard",
+  "snooze",
+] as const;
+
+const PERMITTED_REOPEN_CONDITIONS = [
+  "occurs_after",
+  "n_occurrences_in_m_hours",
+  "n_additional_occurrences",
+  "n_additional_users",
 ] as const;
 
 interface StabilityData {
@@ -148,7 +156,7 @@ export class BugsnagClient implements Client {
           this.projectApiKey = undefined;
           console.error(
             "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
-              "Check your configured BugSnag project API key.",
+            "Check your configured BugSnag project API key.",
           );
         }
       }
@@ -355,7 +363,7 @@ export class BugsnagClient implements Client {
       accumulativeDailyUsersSeen === 0 // avoid division by zero
         ? 0
         : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
-          accumulativeDailyUsersSeen;
+        accumulativeDailyUsersSeen;
 
     const totalSessionsCount = source.total_sessions_count || 0;
     const unhandledSessionsCount = source.unhandled_sessions_count || 0;
@@ -475,7 +483,7 @@ export class BugsnagClient implements Client {
       ),
       filters: toolInputParameters.filters.describe(
         "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+        "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
       ),
     });
 
@@ -682,7 +690,7 @@ export class BugsnagClient implements Client {
       projectId: toolInputParameters.projectId,
       filters: toolInputParameters.filters.describe(
         "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+        "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
       ),
       sort: toolInputParameters.sort,
       direction: toolInputParameters.direction,
@@ -836,6 +844,40 @@ export class BugsnagClient implements Client {
       operation: z
         .enum(PERMITTED_UPDATE_OPERATIONS)
         .describe("The operation to apply to the error"),
+      reopenRules: z
+        .object({
+          reopenIf: z
+            .enum(PERMITTED_REOPEN_CONDITIONS)
+            .describe("Condition for when the error should be reopened"),
+          additionalUsers: z
+            .number()
+            .min(1)
+            .max(100000)
+            .optional()
+            .describe("for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened. Value cannot exceed 100,000."),
+          seconds: z
+            .number()
+            .min(1)
+            .optional()
+            .describe("for occurs_after reopen rules, the number of seconds that the Error should be snoozed for."),
+          occurrences: z
+            .number()
+            .min(1)
+            .optional()
+            .describe("for n_occurrences_in_m_hours reopen rules, the number of occurrences to allow in the number of hours indicated by the hours field, before the Error is automatically reopened."),
+          hours: z
+            .number()
+            .min(1)
+            .optional()
+            .describe("for n_occurrences_in_m_hours reopen rules, the number of hours."),
+          additionalOccurrences: z
+            .number()
+            .min(1)
+            .optional()
+            .describe("or n_additional_occurrences reopen rules, the number of additional occurrences allowed before reopening."),
+        })
+        .optional()
+        .describe("Reopen rules for snooze operation - required when operation is 'snooze'"),
     });
 
     register(
@@ -848,6 +890,7 @@ export class BugsnagClient implements Client {
           "Mark an error as open, fixed or ignored",
           "Discard or un-discard an error",
           "Update the severity of an error",
+          "Snooze an error with defined conditions for when it should be reopened",
         ],
         inputSchema: updateErrorInputSchema,
         examples: [
@@ -860,9 +903,55 @@ export class BugsnagClient implements Client {
             expectedOutput:
               "Success response indicating the error was marked as fixed",
           },
+          {
+            description: "Snooze an error for 1 hour",
+            parameters: {
+              errorId: "6863e2af8c857c0a5023b411",
+              operation: "snooze",
+              reopenRules: {
+                reopenIf: "occurs_after",
+                seconds: 3600,
+              },
+            },
+            expectedOutput:
+              "Success response indicating the error was snoozed for 1 hour",
+          },
+          {
+            description: "Snooze an error until 5 additional users are affected",
+            parameters: {
+              errorId: "6863e2af8c857c0a5023b411",
+              operation: "snooze",
+              reopenRules: {
+                reopenIf: "n_additional_users",
+                additionalUsers: 5,
+              },
+            },
+            expectedOutput:
+              "Success response indicating the error was snoozed until 5 additional users are affected",
+          },
+          {
+            description: "Snooze an error until 10 occurrences in 24 hours",
+            parameters: {
+              errorId: "6863e2af8c857c0a5023b411",
+              operation: "snooze",
+              reopenRules: {
+                reopenIf: "n_occurrences_in_m_hours",
+                occurrences: 10,
+                hours: 24,
+              },
+            },
+            expectedOutput:
+              "Success response indicating the error was snoozed until 10 occurrences in 24 hours",
+          },
         ],
         hints: [
           "Only use valid operations - BugSnag may reject invalid values",
+          "When using 'snooze' operation, reopenRules parameter is required",
+          "For 'occurs_after' reopen rules, specify 'seconds' parameter",
+          "For 'n_additional_users' reopen rules, specify 'additionalUsers' parameter (max 100,000)",
+          "For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters",
+          "For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter",
+          "Snoozing temporarily silences an error until the specified reopen condition is met",
         ],
         readOnly: false,
         idempotent: false,
@@ -870,6 +959,38 @@ export class BugsnagClient implements Client {
       async (args, _extra) => {
         const params = updateErrorInputSchema.parse(args);
         const project = await this.getInputProject(params.projectId);
+
+        // Validate snooze operation requirements
+        if (params.operation === "snooze" && !params.reopenRules) {
+          throw new ToolError(
+            "reopenRules parameter is required when using 'snooze' operation"
+          );
+        }
+
+        // Validate reopen rule parameters based on reopenIf type
+        if (params.reopenRules) {
+          const { reopenIf } = params.reopenRules;
+          if (reopenIf === "occurs_after" && !params.reopenRules.seconds) {
+            throw new ToolError(
+              "'seconds' parameter is required for 'occurs_after' reopen rules"
+            );
+          }
+          if (reopenIf === "n_additional_users" && !params.reopenRules.additionalUsers) {
+            throw new ToolError(
+              "'additionalUsers' parameter is required for 'n_additional_users' reopen rules"
+            );
+          }
+          if (reopenIf === "n_occurrences_in_m_hours" && (!params.reopenRules.occurrences || !params.reopenRules.hours)) {
+            throw new ToolError(
+              "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules"
+            );
+          }
+          if (reopenIf === "n_additional_occurrences" && !params.reopenRules.additionalOccurrences) {
+            throw new ToolError(
+              "'additionalOccurrences' parameter is required for 'n_additional_occurrences' reopen rules"
+            );
+          }
+        }
 
         let severity: any;
         if (params.operation === "override_severity") {
@@ -895,6 +1016,19 @@ export class BugsnagClient implements Client {
           }
         }
 
+        // Prepare reopen rules for API call
+        let reopenRules: any;
+        if (params.reopenRules) {
+          reopenRules = {
+            reopen_if: params.reopenRules.reopenIf,
+            additional_users: params.reopenRules.additionalUsers || 0,
+            seconds: params.reopenRules.seconds || 0,
+            occurrences: params.reopenRules.occurrences || 0,
+            hours: params.reopenRules.hours || 0,
+            additional_occurrences: params.reopenRules.additionalOccurrences || 0,
+          };
+        }
+
         const result = await this.errorsApi.updateErrorOnProject(
           project.id,
           params.errorId,
@@ -903,6 +1037,7 @@ export class BugsnagClient implements Client {
               (value) => value === params.operation,
             ) as ErrorUpdateRequest.OperationEnum,
             severity: severity,
+            reopen_rules: reopenRules,
           },
         );
         return {
@@ -911,6 +1046,10 @@ export class BugsnagClient implements Client {
               type: "text",
               text: JSON.stringify({
                 success: result.status === 200 || result.status === 204,
+                operation: params.operation,
+                errorId: params.errorId,
+                projectId: project.id,
+                ...(params.reopenRules && { reopenRules: params.reopenRules }),
               }),
             },
           ],
@@ -1601,9 +1740,9 @@ export class BugsnagClient implements Client {
         .array(z.string())
         .describe(
           "Array of URL patterns by which network spans are grouped. " +
-            "Endpoints follow OpenAPI path templating syntax (https://swagger.io/specification/#path-templating) where path parameters use curly braces (e.g., /users/{id}). " +
-            "If you encounter colon-prefixed parameters (e.g., :userId from Express/React Router), convert them to curly braces (e.g., {userId}). " +
-            "Wildcards (*) can be used in domains (e.g., https://*.example.com) to match multiple subdomains.",
+          "Endpoints follow OpenAPI path templating syntax (https://swagger.io/specification/#path-templating) where path parameters use curly braces (e.g., /users/{id}). " +
+          "If you encounter colon-prefixed parameters (e.g., :userId from Express/React Router), convert them to curly braces (e.g., {userId}). " +
+          "Wildcards (*) can be used in domains (e.g., https://*.example.com) to match multiple subdomains.",
         ),
     });
 
