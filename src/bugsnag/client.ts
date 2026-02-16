@@ -114,6 +114,7 @@ export class BugsnagClient implements Client {
     );
     const apiConfig = new Configuration({
       apiKey: `token ${config.auth_token}`,
+      authToken: config.auth_token,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
@@ -911,6 +912,81 @@ export class BugsnagClient implements Client {
               type: "text",
               text: JSON.stringify({
                 success: result.status === 200 || result.status === 204,
+              }),
+            },
+          ],
+        };
+      },
+    );
+
+    const createCommentOnErrorInputSchema = z.object({
+      projectId: toolInputParameters.projectId,
+      errorId: toolInputParameters.errorId,
+      message: z
+        .string()
+        .describe("The comment message to add to the error"),
+    });
+
+    register(
+      {
+        title: "Create Comment on Error",
+        summary: "Add a comment to an error for collaboration and documentation",
+        purpose:
+          "Create a comment on a specific error to provide context, updates, or notes for team collaboration",
+        useCases: [
+          "Document investigation findings on an error",
+          "Add notes about workarounds or fixes in progress",
+          "Communicate with team members about error status",
+          "Record decisions made regarding error handling",
+        ],
+        inputSchema: createCommentOnErrorInputSchema,
+        examples: [
+          {
+            description: "Add a comment to document a temporary fix",
+            parameters: {
+              errorId: "6863e2af8c857c0a5023b411",
+              message: "Applied temporary fix in hotfix branch. Monitoring for 24 hours before marking as resolved.",
+            },
+            expectedOutput:
+              "Success response confirming the comment was created",
+          },
+          {
+            description: "Add a comment with investigation details",
+            parameters: {
+              errorId: "6863e2af8c857c0a5023b411",
+              message: "Root cause identified: API timeout due to database query performance. Working on optimization.",
+            },
+            expectedOutput:
+              "Success response confirming the comment was created",
+          },
+        ],
+        hints: [
+          "Comments are visible to all team members with access to the project",
+          "Use comments to maintain a history of actions taken on an error",
+          "Comments can include technical details, links to PRs, or status updates",
+        ],
+        readOnly: false,
+        idempotent: false,
+      },
+      async (args, _extra) => {
+        const params = createCommentOnErrorInputSchema.parse(args);
+        const project = await this.getInputProject(params.projectId);
+
+        const result = await this.errorsApi.createCommentOnError(
+          project.id,
+          params.errorId,
+          params.message,
+        );
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                success: result.status === 200 || result.status === 201,
+                errorId: params.errorId,
+                projectId: project.id,
+                message: params.message,
               }),
             },
           ],

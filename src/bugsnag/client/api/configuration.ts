@@ -1,5 +1,6 @@
 interface ConfigurationParameters {
   apiKey?: string | ((name: string) => string);
+  authToken?: string; // Raw auth token for query parameter usage
   basePath: string;
   headers?: Record<string, string>; // Additional headers for API requests
 }
@@ -11,6 +12,12 @@ export class Configuration {
    * @memberof Configuration
    */
   apiKey?: string | ((name: string) => string);
+  /**
+   * Raw auth token for query parameter usage
+   * @type {string}
+   * @memberof Configuration
+   */
+  authToken?: string;
   /**
    * override base path
    *
@@ -27,6 +34,7 @@ export class Configuration {
 
   constructor(param: ConfigurationParameters) {
     this.apiKey = param.apiKey;
+    this.authToken = param.authToken;
     this.basePath = param.basePath;
     this.headers = param.headers;
   }
