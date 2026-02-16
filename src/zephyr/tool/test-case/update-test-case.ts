@@ -101,6 +101,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       .put(`/testcases/${testCaseKey}`, mergedBody);
 
     return {
+      structuredContent: {},
       content: [],
     };
   };
