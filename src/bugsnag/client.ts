@@ -854,7 +854,7 @@ export class BugsnagClient implements Client {
             .min(1)
             .max(100000)
             .optional()
-            .describe("for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened. Value cannot exceed 100,000."),
+            .describe("for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened."),
           seconds: z
             .number()
             .min(1)
