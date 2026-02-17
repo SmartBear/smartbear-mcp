@@ -190,7 +190,7 @@ The following environment variables configure the Zephyr integration:
   - optional Actual End Date (`actualEndDate`)
   - optional Execution Time (`executionTime`)
   - optional Executed by (`executedById`)
-  - optional assigneted To  (`assignetedToId`)
+  - optional assigned To  (`assignedToId`)
   - optional comment (`comment`)
   - optional Custom Field names with associated values (`customFields`)
 - **Returns**:  The created Test execution ID and the API self URL to access it.
