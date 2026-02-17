@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Zephyr] Added a tool `create-test-case` for creating Test Case [#320](https://github.com/SmartBear/smartbear-mcp/pull/320)
-- [Zephyr] Added a tool `create-test-cycle` for creating Test Cycle [#323](https://github.com/SmartBear/smartbear-mcp/pull/323)
+- [Zephyr] Added a tool `create-test-case` for creating a Test Case [#320](https://github.com/SmartBear/smartbear-mcp/pull/320)
+- [Zephyr] Added a tool `create-test-cycle` for creating a Test Cycle [#323](https://github.com/SmartBear/smartbear-mcp/pull/323)
+- [Zephyr] Added a tool `update-test-case` for updating a Test Case [#325](https://github.com/SmartBear/smartbear-mcp/pull/325)
 
 ## [0.13.5] - 2026-02-02
 
