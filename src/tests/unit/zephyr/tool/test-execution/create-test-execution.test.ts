@@ -54,8 +54,7 @@ describe("CreateTestExecution", () => {
   it("should call apiClient.post with correct params and return created content information", async () => {
     const responseMock = {
       id: 53,
-      self: "https://<api-base-url>/testexecutions/SA-E10",
-      key: "SA-E10",
+      self: "https://<api-base-url>/testexecutions/53",
     };
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
