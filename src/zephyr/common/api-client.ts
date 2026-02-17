@@ -48,6 +48,18 @@ export class ApiClient {
     return await this.validateAndGetResponseBody(response);
   }
 
+  async put(endpoint: string, body: object): Promise<any> {
+    const response = await fetch(this.getUrl(endpoint), {
+      method: "PUT",
+      headers: {
+        ...this.defaultHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    return await this.validateAndGetResponseBody(response);
+  }
+
   private async validateAndGetResponseBody(response: Response) {
     if (!response.ok) {
       const errorText = await response.text();
@@ -55,6 +67,25 @@ export class ApiClient {
         `Request failed with status ${response.status}: ${errorText}`,
       );
     }
-    return response.json();
+
+    // Check if response has content before parsing JSON
+    const contentLength = response.headers.get("content-length");
+    // If content-length is 0 or response is 204 No Content, return empty object
+    if (response.status === 204 || contentLength === "0") {
+      return {};
+    }
+    const text = await response.text();
+    // If text is empty, return empty object
+    if (!text?.trim()) {
+      return {};
+    }
+
+    // Try to parse as JSON
+    try {
+      return JSON.parse(text);
+    } catch {
+      // If it's not JSON, return the text wrapped in an object
+      return { data: text };
+    }
   }
 }
