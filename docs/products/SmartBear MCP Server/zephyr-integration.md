@@ -177,6 +177,25 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of Test Executions along with their properties. Results are filtered based on the provided parameters.
 - **Use case**: Retrieve Test Executions, filtered by various criteria such as project, test cycle, test case, or execution dates.
 
+### Create Test Executions
+
+- **Purpose**: Retrieve Test Executions available within your Zephyr account
+- **Parameters:**
+  - Jira Project key (`projectKey`)
+  - Test Cycle key (`testCycle`)
+  - Test Case key (`testCase`)
+  - Status name (`statusName`)
+  - optional test Script Results (`testScriptResults`)
+  - optional Environment Name (`environmentName`)
+  - optional Actual End Date (`actualEndDate`)
+  - optional Execution Time (`executionTime`)
+  - optional Executed by (`executedById`)
+  - optional assigneted To  (`assignetedToId`)
+  - optional comment (`comment`)
+  - optional Custom Field names with associated values (`customFields`)
+- **Returns**:  The created Test execution ID and the API self URL to access it.
+- **Use case**: Creating Test Executions, with it's properties
+
 ## Notes regarding **Update** operations
 - The update operations are partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` of the Test Case are provided to the tool, only those fields will be updated while the rest of the Test Case properties will remain unchanged.
 - For fields that accept multiple values, such as Test Case `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
