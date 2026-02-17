@@ -1021,24 +1021,40 @@ export class BugsnagClient implements Client {
         if (params.reopenRules) {
           reopenRules = {
             reopen_if: params.reopenRules.reopenIf,
-            additional_users: params.reopenRules.additionalUsers || 0,
-            seconds: params.reopenRules.seconds || 0,
-            occurrences: params.reopenRules.occurrences || 0,
-            hours: params.reopenRules.hours || 0,
-            additional_occurrences: params.reopenRules.additionalOccurrences || 0,
           };
+          if (params.reopenRules.additionalUsers !== undefined) {
+            reopenRules.additional_users = params.reopenRules.additionalUsers;
+          }
+          if (params.reopenRules.seconds !== undefined) {
+            reopenRules.seconds = params.reopenRules.seconds;
+          }
+          if (params.reopenRules.occurrences !== undefined) {
+            reopenRules.occurrences = params.reopenRules.occurrences;
+          }
+          if (params.reopenRules.hours !== undefined) {
+            reopenRules.hours = params.reopenRules.hours;
+          }
+          if (params.reopenRules.additionalOccurrences !== undefined) {
+            reopenRules.additional_occurrences = params.reopenRules.additionalOccurrences;
+          }
+        }
+
+        const errorUpdateRequestBody: any = {
+          operation: Object.values(ErrorUpdateRequest.OperationEnum).find(
+            (value) => value === params.operation,
+          ) as ErrorUpdateRequest.OperationEnum,
+        };
+        if (severity !== undefined) {
+          errorUpdateRequestBody.severity = severity;
+        }
+        if (reopenRules !== undefined) {
+          errorUpdateRequestBody.reopen_rules = reopenRules;
         }
 
         const result = await this.errorsApi.updateErrorOnProject(
           project.id,
           params.errorId,
-          {
-            operation: Object.values(ErrorUpdateRequest.OperationEnum).find(
-              (value) => value === params.operation,
-            ) as ErrorUpdateRequest.OperationEnum,
-            severity: severity,
-            reopen_rules: reopenRules,
-          },
+          errorUpdateRequestBody,
         );
         return {
           content: [
@@ -1046,10 +1062,6 @@ export class BugsnagClient implements Client {
               type: "text",
               text: JSON.stringify({
                 success: result.status === 200 || result.status === 204,
-                operation: params.operation,
-                errorId: params.errorId,
-                projectId: project.id,
-                ...(params.reopenRules && { reopenRules: params.reopenRules }),
               }),
             },
           ],

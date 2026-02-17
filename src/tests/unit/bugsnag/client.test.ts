@@ -81,6 +81,7 @@ vi.mock("../../../bugsnag/client/api/index.js", () => ({
       Open: "open",
       Discard: "discard",
       Undiscard: "undiscard",
+      Snooze: "snooze",
     },
   },
 }));
@@ -1979,6 +1980,136 @@ describe("BugsnagClient", () => {
 
     describe("Update Error tool handler", () => {
       const mockProject = getMockProject("proj-1", "Project 1");
+
+      it("should update error status to snooze for 1 hour with project from cache", async () => {
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Update Error",
+        )[1];
+
+        const result = await toolHandler({
+          errorId: "error-1",
+          operation: "snooze",
+          reopenRules: {
+            reopenIf: "occurs_after",
+            seconds: 3600
+          }
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          "proj-1",
+          "error-1",
+          {
+            operation: "snooze",
+            reopen_rules: {
+              "reopen_if": "occurs_after",
+              "seconds": 3600,
+            },
+          },
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
+
+      it("should update error status to snooze until 10 additional users affected", async () => {
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Update Error",
+        )[1];
+
+        const result = await toolHandler({
+          errorId: "error-1",
+          operation: "snooze",
+          reopenRules: {
+            reopenIf: "n_additional_users",
+            additionalUsers: 10
+          }
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          "proj-1",
+          "error-1",
+          {
+            operation: "snooze",
+            reopen_rules: {
+              "reopen_if": "n_additional_users",
+              "additional_users": 10,
+            },
+          },
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
+
+      it("should update error status to snooze until 10 additional occurrences", async () => {
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Update Error",
+        )[1];
+
+        const result = await toolHandler({
+          errorId: "error-1",
+          operation: "snooze",
+          reopenRules: {
+            reopenIf: "n_additional_occurrences",
+            additionalOccurrences: 10
+          }
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          "proj-1",
+          "error-1",
+          {
+            operation: "snooze",
+            reopen_rules: {
+              "reopen_if": "n_additional_occurrences",
+              "additional_occurrences": 10,
+            },
+          },
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
+
+      it("should update error status to snooze until 10 occurrences in 2 hours", async () => {
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Update Error",
+        )[1];
+
+        const result = await toolHandler({
+          errorId: "error-1",
+          operation: "snooze",
+          reopenRules: {
+            reopenIf: "n_occurrences_in_m_hours",
+            occurrences: 10,
+            hours: 2
+          }
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          "proj-1",
+          "error-1",
+          {
+            operation: "snooze",
+            reopen_rules: {
+              "reopen_if": "n_occurrences_in_m_hours",
+              "occurrences": 10,
+              "hours": 2,
+            },
+          },
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
 
       it("should update error successfully with project from cache", async () => {
         mockCache.get.mockReturnValue(mockProject);
