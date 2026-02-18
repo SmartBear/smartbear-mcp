@@ -921,15 +921,14 @@ export class BugsnagClient implements Client {
     const createCommentOnErrorInputSchema = z.object({
       projectId: toolInputParameters.projectId,
       errorId: toolInputParameters.errorId,
-      message: z
-        .string()
-        .describe("The comment message to add to the error"),
+      message: z.string().describe("The comment message to add to the error"),
     });
 
     register(
       {
         title: "Create Comment on Error",
-        summary: "Add a comment to an error for collaboration and documentation",
+        summary:
+          "Add a comment to an error for collaboration and documentation",
         purpose:
           "Create a comment on a specific error to provide context, updates, or notes for team collaboration",
         useCases: [
@@ -944,7 +943,8 @@ export class BugsnagClient implements Client {
             description: "Add a comment to document a temporary fix",
             parameters: {
               errorId: "6863e2af8c857c0a5023b411",
-              message: "Applied temporary fix in hotfix branch. Monitoring for 24 hours before marking as resolved.",
+              message:
+                "Applied temporary fix in hotfix branch. Monitoring for 24 hours before marking as resolved.",
             },
             expectedOutput:
               "Success response confirming the comment was created",
@@ -953,7 +953,8 @@ export class BugsnagClient implements Client {
             description: "Add a comment with investigation details",
             parameters: {
               errorId: "6863e2af8c857c0a5023b411",
-              message: "Root cause identified: API timeout due to database query performance. Working on optimization.",
+              message:
+                "Root cause identified: API timeout due to database query performance. Working on optimization.",
             },
             expectedOutput:
               "Success response confirming the comment was created",
@@ -976,7 +977,7 @@ export class BugsnagClient implements Client {
           params.errorId,
           params.message,
         );
-        
+
         return {
           content: [
             {

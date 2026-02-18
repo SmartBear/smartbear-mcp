@@ -231,7 +231,7 @@ export class ErrorAPI extends BaseAPI {
       headers: {
         "Content-Type": "application/json",
         "X-Bugsnag-Api": "true",
-        "Authorization": this.configuration.apiKey,
+        Authorization: this.configuration.apiKey,
       },
       body: JSON.stringify({ message }),
     };
