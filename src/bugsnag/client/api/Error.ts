@@ -225,17 +225,13 @@ export class ErrorAPI extends BaseAPI {
       `/projects/${projectId}/errors/${errorId}/comments`,
       this.configuration.basePath,
     );
-    
-    // Add auth_token as query parameter
-    if (this.configuration.authToken) {
-      url.searchParams.set("auth_token", this.configuration.authToken);
-    }
 
     const options = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Bugsnag-Api": "true",
+        "Authorization": this.configuration.apiKey,
       },
       body: JSON.stringify({ message }),
     };

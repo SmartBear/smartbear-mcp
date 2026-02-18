@@ -114,7 +114,6 @@ export class BugsnagClient implements Client {
     );
     const apiConfig = new Configuration({
       apiKey: `token ${config.auth_token}`,
-      authToken: config.auth_token,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
