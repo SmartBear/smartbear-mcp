@@ -69,12 +69,12 @@ The following environment variables configure the Zephyr integration:
 
 ### Update Test Cycle
 
-- **Purpose**: Update an existing Test Cycle within the Zephyr project specified by key
+- **Purpose**: Update an existing Test Cycle within the Zephyr project specified by ID or KEY
 - **Parameters:**
   - Test Cycle ID or KEY (`testCycleIdOrKey`)
   - optional name (`name`)
   - optional jiraProjectVersion (`jiraProjectVersion`)
-  - optional Status Name (`statusName`)
+  - optional Status ID (`statusId`)
   - optional Folder ID (`folderId`)
   - optional description (`description`)
   - optional planned Start Date (`plannedStartDate`)
