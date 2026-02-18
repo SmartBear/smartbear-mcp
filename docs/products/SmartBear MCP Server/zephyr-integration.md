@@ -136,6 +136,16 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: Empty object if the update is successful.
 - **Use case**: Updating a Test Case with its properties.
 
+### Create Test Case Web Link
+
+- **Purpose**: Creates a web link that associates a test case with a specified generic URL.
+ **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - optional description (`description`)
+    - url (`url`)
+- **Returns**: The created Test Case Web Link ID and the API self URL to access it.
+- **Use case**: Creates a link between a test case and a generic URL.
+
 ### Get Test Execution
 
 - **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
