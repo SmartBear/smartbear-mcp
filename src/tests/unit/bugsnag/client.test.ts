@@ -2926,10 +2926,18 @@ describe("BugsnagClient", () => {
       });
 
       // Call the method
-      const result = await mockErrorAPI.createCommentOnError(projectId, errorId, message);
+      const result = await mockErrorAPI.createCommentOnError(
+        projectId,
+        errorId,
+        message,
+      );
 
       // Assert
-      expect(mockErrorAPI.createCommentOnError).toHaveBeenCalledWith(projectId, errorId, message);
+      expect(mockErrorAPI.createCommentOnError).toHaveBeenCalledWith(
+        projectId,
+        errorId,
+        message,
+      );
       expect(result).toEqual({
         success: true,
         errorId,
