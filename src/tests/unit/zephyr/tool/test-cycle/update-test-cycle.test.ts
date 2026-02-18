@@ -88,7 +88,7 @@ describe("UpdateTestCycle", () => {
       customFields: {
         Environment: "Dev",
         Browser: "Chrome",
-        Implemented: false
+        Implemented: false,
       },
       links: {
         self: "http://example.com",
@@ -132,7 +132,7 @@ describe("UpdateTestCycle", () => {
           customFields: {
             Environment: "Dev",
             Browser: "Chrome",
-            Implemented: false
+            Implemented: false,
           },
           project: {
             id: 10005,
@@ -166,7 +166,7 @@ describe("UpdateTestCycle", () => {
       expect(mergedBody.customFields).toEqual({
         Environment: "Dev",
         Browser: "Chrome",
-        Implemented: false
+        Implemented: false,
       });
       expect(mergedBody.links).toEqual(existingTestCycle.links);
     });
@@ -187,7 +187,9 @@ describe("UpdateTestCycle", () => {
     });
 
     it("should handle API errors when updating test cycle", async () => {
-      mockClient.getApiClient().put.mockRejectedValueOnce(new Error("Update failed"));
+      mockClient
+        .getApiClient()
+        .put.mockRejectedValueOnce(new Error("Update failed"));
 
       const args = {
         testCycleIdOrKey: "SA-R40",
@@ -406,16 +408,16 @@ describe("UpdateTestCycle", () => {
         testCycleIdOrKey: "SA-R40",
         name: "Updated Test Cycle",
         project: {
-          id: 10006
+          id: 10006,
         },
         jiraProjectVersion: {
-          id: 10006
+          id: 10006,
         },
         status: {
-          id: 10006
+          id: 10006,
         },
         folder: {
-          id: 10006
+          id: 10006,
         },
         description: "Updated description",
         plannedStartDate: "2035-03-19T13:15:13Z",
@@ -427,54 +429,43 @@ describe("UpdateTestCycle", () => {
           Browser: "Safari",
           Implemented: true,
           Region: "US",
-          MultiOptionField: [
-            "Option1",
-            "Option2"
-          ]
-        }
+          MultiOptionField: ["Option1", "Option2"],
+        },
       };
 
       await instance.handle(args, EXTRA_REQUEST_HANDLER);
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
 
       expect(mergedBody.name).toEqual("Updated Test Cycle");
-      expect(mergedBody.project)
-        .toEqual({
-          id: 10006,
-          self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/10005",
-        });
-      expect(mergedBody.jiraProjectVersion)
-        .toEqual({
-          id: 10006,
-          self: "https://jira.example/rest/api/2/version/10000",
-        });
-      expect(mergedBody.status)
-        .toEqual({
-          id: 10006,
-          self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/10000",
-        });
-      expect(mergedBody.folder)
-        .toEqual({
-          id: 10006,
-          self: "https://api.zephyrscale-dev.smartbear.com/v2/folders/10006",
-        });
-      expect(mergedBody.description).toEqual("Updated description")
+      expect(mergedBody.project).toEqual({
+        id: 10006,
+        self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/10005",
+      });
+      expect(mergedBody.jiraProjectVersion).toEqual({
+        id: 10006,
+        self: "https://jira.example/rest/api/2/version/10000",
+      });
+      expect(mergedBody.status).toEqual({
+        id: 10006,
+        self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/10000",
+      });
+      expect(mergedBody.folder).toEqual({
+        id: 10006,
+        self: "https://api.zephyrscale-dev.smartbear.com/v2/folders/10006",
+      });
+      expect(mergedBody.description).toEqual("Updated description");
       expect(mergedBody.plannedStartDate).toEqual("2035-03-19T13:15:13Z");
       expect(mergedBody.plannedEndDate).toEqual("2035-05-20T13:15:13Z");
       expect(mergedBody.owner).toEqual({
-            self: "https://jira.example/rest/api/2/user?accountId=9isdyh",
-            accountId: "9",
-        }
-      );
+        self: "https://jira.example/rest/api/2/user?accountId=9isdyh",
+        accountId: "9",
+      });
       expect(mergedBody.customFields).toEqual({
         Environment: "Dev",
         Browser: "Safari",
         Implemented: true,
         Region: "US",
-        MultiOptionField: [
-          "Option1",
-          "Option2"
-        ]
+        MultiOptionField: ["Option1", "Option2"],
       });
     });
   });

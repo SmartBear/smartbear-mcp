@@ -98,10 +98,8 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
     const { testCycleIdOrKey, ...updatesRaw } = parsed;
     const updates: Record<string, unknown> = { ...updatesRaw };
 
-    if (updates.plannedStartDate === null)
-      delete updates.plannedStartDate;
-    if (updates.plannedEndDate === null)
-      delete updates.plannedEndDate;
+    if (updates.plannedStartDate === null) delete updates.plannedStartDate;
+    if (updates.plannedEndDate === null) delete updates.plannedEndDate;
 
     // Fetch the existing test cycle to ensure we have all properties.
     // Zephyr's PUT endpoints require the complete resource and clear unspecified fields.
