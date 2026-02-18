@@ -179,7 +179,7 @@ The following environment variables configure the Zephyr integration:
 
 ### Create Test Executions
 
-- **Purpose**: Retrieve Test Executions available within your Zephyr account
+- **Purpose**: Creates a test execution. All required test execution custom fields should be present in the request
 - **Parameters:**
   - Jira Project key (`projectKey`)
   - Test Cycle key (`testCycle`)

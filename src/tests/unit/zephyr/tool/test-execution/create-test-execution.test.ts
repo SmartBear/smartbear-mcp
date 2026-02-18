@@ -76,11 +76,54 @@ describe("CreateTestExecution", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
+  it("should create test execution with all possible fields filled", async () => {
+    const responseMock = {
+      id: 53,
+      self: "https://<api-base-url>/testexecutions/53",
+    };
+
+    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
+    const fullArgs = {
+      projectKey: "SA",
+      testCaseKey: "SA-T1",
+      testCycleKey: "SA-R1",
+      statusName: "Fail",
+
+      // Optional
+      testScriptResults: [
+        {
+          actualEndDate: "2024-02-01T10:00:00Z",
+          statusName: "Pass",
+          actualResult: "Step executed successfully",
+        },
+      ],
+      environmentName: "Staging",
+      actualEndDate: "2024-01-01T10:00:00Z",
+      executionTime: 120,
+      executedById: "account-id-123",
+      assignedToId: "account-id-456",
+      comment: "Execution completed with one failure",
+      customFields: {
+        Browser: "Chrome",
+        "Build Number": "1.0.3",
+      },
+    };
+
+    const result = await instance.handle(fullArgs, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testexecutions/",
+      fullArgs,
+    );
+
+    expect(result.structuredContent).toEqual(responseMock);
+  });
+
   it("should ignore extra parameters not in the schema", async () => {
     const responseMock = {
       id: 54,
-      self: "https://<api-base-url>/testexecutions/SA-E11",
-      key: "SA-E11",
+      self: "https://<api-base-url>/testexecutions/54",
     };
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
