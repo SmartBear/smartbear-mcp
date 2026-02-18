@@ -602,6 +602,16 @@ async function newServer(
           return value;
         }
 
+        // For BugSnag client, allow reading endpoint from environment variable
+        // This is useful for On-Premise installations where the endpoint is fixed
+        if (client.name === "BugSnag" && key === "endpoint") {
+          const envEndpoint =
+            process.env.BUGSNAG_API_URL || process.env.BUGSNAG_ENDPOINT;
+          if (envEndpoint) {
+            return envEndpoint;
+          }
+        }
+
         // Check standard Authorization header as fallback
         // This supports the MCP Inspector which sends the obtained OAuth token in the Authorization header
         // We map this token to the primary authentication config key of the client
