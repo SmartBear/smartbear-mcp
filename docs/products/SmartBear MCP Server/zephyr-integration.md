@@ -44,6 +44,13 @@ The following environment variables configure the Zephyr integration:
 -  **Returns**: A list of Test Cycles along with their properties.
 -  **Use case**: Retrieve the Test Cycles, it can be filtered by Project Key, Folder ID, Jira Project version ID.
 
+### Get Test Cycle
+
+- **Purpose**: Retrieve the test cycle available within your Zephyr projects by either its key or id.
+- **Parameters:** Test cycle key or ID
+- **Returns**: A Test Cycle along with its properties.
+- **Use case**: Retrieve detailed information about a test cycle.
+
 ### Create Test Cycles
 - **Purpose**: Create a new Test Cycle within the Zephyr project specified by key
 - **Parameters:**
@@ -59,6 +66,23 @@ The following environment variables configure the Zephyr integration:
     - optional Custom Field names with associated values (`customFields`)
 - **Returns**: The created Test Cycle ID, with the API URL to access it and the Test Cycle key.
 - **Use case**: Creating a Test Cycle with its properties.
+
+### Update Test Cycle
+
+- **Purpose**: Update an existing Test Cycle within the Zephyr project specified by key
+- **Parameters:**
+  - Test Cycle ID or KEY (`testCycleIdOrKey`)
+  - optional name (`name`)
+  - optional jiraProjectVersion (`jiraProjectVersion`)
+  - optional Status Name (`statusName`)
+  - optional Folder ID (`folderId`)
+  - optional description (`description`)
+  - optional planned Start Date (`plannedStartDate`)
+  - optional planned End Date (`plannedEndDate`)
+  - optional owner ID (`ownerId`)
+  - optional Custom Field names with associated values (`customFields`)
+- **Returns**: Empty object if the update is successful.
+- **Use case**: Updating a Test Cycle with its properties.
 
 ### Get Statuses
 
@@ -142,13 +166,6 @@ The following environment variables configure the Zephyr integration:
 - **Parameters:** Test Execution key or ID
 - **Returns**: A Test Execution along with its properties.
 - **Use case**: Getting a Test Execution with its properties.
-
-### Get Test Cycle
-
-- **Purpose**: Retrieve the test cycle available within your Zephyr projects by either its key or id.
-- **Parameters:** Test cycle key or ID
-- **Returns**: A Test Cycle along with its properties.
-- **Use case**: Retrieve detailed information about a test cycle.
 
 ### Get Environments
 
