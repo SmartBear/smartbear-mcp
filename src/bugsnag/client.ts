@@ -156,7 +156,7 @@ export class BugsnagClient implements Client {
           this.projectApiKey = undefined;
           console.error(
             "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
-            "Check your configured BugSnag project API key.",
+              "Check your configured BugSnag project API key.",
           );
         }
       }
@@ -363,7 +363,7 @@ export class BugsnagClient implements Client {
       accumulativeDailyUsersSeen === 0 // avoid division by zero
         ? 0
         : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
-        accumulativeDailyUsersSeen;
+          accumulativeDailyUsersSeen;
 
     const totalSessionsCount = source.total_sessions_count || 0;
     const unhandledSessionsCount = source.unhandled_sessions_count || 0;
@@ -483,7 +483,7 @@ export class BugsnagClient implements Client {
       ),
       filters: toolInputParameters.filters.describe(
         "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-        "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
       ),
     });
 
@@ -690,7 +690,7 @@ export class BugsnagClient implements Client {
       projectId: toolInputParameters.projectId,
       filters: toolInputParameters.filters.describe(
         "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-        "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
       ),
       sort: toolInputParameters.sort,
       direction: toolInputParameters.direction,
@@ -854,30 +854,42 @@ export class BugsnagClient implements Client {
             .min(1)
             .max(100000)
             .optional()
-            .describe("for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened."),
+            .describe(
+              "for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened.",
+            ),
           seconds: z
             .number()
             .min(1)
             .optional()
-            .describe("for occurs_after reopen rules, the number of seconds that the Error should be snoozed for."),
+            .describe(
+              "for occurs_after reopen rules, the number of seconds that the Error should be snoozed for.",
+            ),
           occurrences: z
             .number()
             .min(1)
             .optional()
-            .describe("for n_occurrences_in_m_hours reopen rules, the number of occurrences to allow in the number of hours indicated by the hours field, before the Error is automatically reopened."),
+            .describe(
+              "for n_occurrences_in_m_hours reopen rules, the number of occurrences to allow in the number of hours indicated by the hours field, before the Error is automatically reopened.",
+            ),
           hours: z
             .number()
             .min(1)
             .optional()
-            .describe("for n_occurrences_in_m_hours reopen rules, the number of hours."),
+            .describe(
+              "for n_occurrences_in_m_hours reopen rules, the number of hours.",
+            ),
           additionalOccurrences: z
             .number()
             .min(1)
             .optional()
-            .describe("or n_additional_occurrences reopen rules, the number of additional occurrences allowed before reopening."),
+            .describe(
+              "or n_additional_occurrences reopen rules, the number of additional occurrences allowed before reopening.",
+            ),
         })
         .optional()
-        .describe("Reopen rules for snooze operation - required when operation is 'snooze'"),
+        .describe(
+          "Reopen rules for snooze operation - required when operation is 'snooze'",
+        ),
     });
 
     register(
@@ -917,7 +929,8 @@ export class BugsnagClient implements Client {
               "Success response indicating the error was snoozed for 1 hour",
           },
           {
-            description: "Snooze an error until 5 additional users are affected",
+            description:
+              "Snooze an error until 5 additional users are affected",
             parameters: {
               errorId: "6863e2af8c857c0a5023b411",
               operation: "snooze",
@@ -963,7 +976,7 @@ export class BugsnagClient implements Client {
         // Validate snooze operation requirements
         if (params.operation === "snooze" && !params.reopenRules) {
           throw new ToolError(
-            "reopenRules parameter is required when using 'snooze' operation"
+            "reopenRules parameter is required when using 'snooze' operation",
           );
         }
 
@@ -972,22 +985,31 @@ export class BugsnagClient implements Client {
           const { reopenIf } = params.reopenRules;
           if (reopenIf === "occurs_after" && !params.reopenRules.seconds) {
             throw new ToolError(
-              "'seconds' parameter is required for 'occurs_after' reopen rules"
+              "'seconds' parameter is required for 'occurs_after' reopen rules",
             );
           }
-          if (reopenIf === "n_additional_users" && !params.reopenRules.additionalUsers) {
+          if (
+            reopenIf === "n_additional_users" &&
+            !params.reopenRules.additionalUsers
+          ) {
             throw new ToolError(
-              "'additionalUsers' parameter is required for 'n_additional_users' reopen rules"
+              "'additionalUsers' parameter is required for 'n_additional_users' reopen rules",
             );
           }
-          if (reopenIf === "n_occurrences_in_m_hours" && (!params.reopenRules.occurrences || !params.reopenRules.hours)) {
+          if (
+            reopenIf === "n_occurrences_in_m_hours" &&
+            (!params.reopenRules.occurrences || !params.reopenRules.hours)
+          ) {
             throw new ToolError(
-              "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules"
+              "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules",
             );
           }
-          if (reopenIf === "n_additional_occurrences" && !params.reopenRules.additionalOccurrences) {
+          if (
+            reopenIf === "n_additional_occurrences" &&
+            !params.reopenRules.additionalOccurrences
+          ) {
             throw new ToolError(
-              "'additionalOccurrences' parameter is required for 'n_additional_occurrences' reopen rules"
+              "'additionalOccurrences' parameter is required for 'n_additional_occurrences' reopen rules",
             );
           }
         }
@@ -1035,7 +1057,8 @@ export class BugsnagClient implements Client {
             reopenRules.hours = params.reopenRules.hours;
           }
           if (params.reopenRules.additionalOccurrences !== undefined) {
-            reopenRules.additional_occurrences = params.reopenRules.additionalOccurrences;
+            reopenRules.additional_occurrences =
+              params.reopenRules.additionalOccurrences;
           }
         }
 
@@ -1752,9 +1775,9 @@ export class BugsnagClient implements Client {
         .array(z.string())
         .describe(
           "Array of URL patterns by which network spans are grouped. " +
-          "Endpoints follow OpenAPI path templating syntax (https://swagger.io/specification/#path-templating) where path parameters use curly braces (e.g., /users/{id}). " +
-          "If you encounter colon-prefixed parameters (e.g., :userId from Express/React Router), convert them to curly braces (e.g., {userId}). " +
-          "Wildcards (*) can be used in domains (e.g., https://*.example.com) to match multiple subdomains.",
+            "Endpoints follow OpenAPI path templating syntax (https://swagger.io/specification/#path-templating) where path parameters use curly braces (e.g., /users/{id}). " +
+            "If you encounter colon-prefixed parameters (e.g., :userId from Express/React Router), convert them to curly braces (e.g., {userId}). " +
+            "Wildcards (*) can be used in domains (e.g., https://*.example.com) to match multiple subdomains.",
         ),
     });
 

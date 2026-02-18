@@ -1995,8 +1995,8 @@ describe("BugsnagClient", () => {
           operation: "snooze",
           reopenRules: {
             reopenIf: "occurs_after",
-            seconds: 3600
-          }
+            seconds: 3600,
+          },
         });
 
         expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
@@ -2005,8 +2005,8 @@ describe("BugsnagClient", () => {
           {
             operation: "snooze",
             reopen_rules: {
-              "reopen_if": "occurs_after",
-              "seconds": 3600,
+              reopen_if: "occurs_after",
+              seconds: 3600,
             },
           },
         );
@@ -2027,8 +2027,8 @@ describe("BugsnagClient", () => {
           operation: "snooze",
           reopenRules: {
             reopenIf: "n_additional_users",
-            additionalUsers: 10
-          }
+            additionalUsers: 10,
+          },
         });
 
         expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
@@ -2037,8 +2037,8 @@ describe("BugsnagClient", () => {
           {
             operation: "snooze",
             reopen_rules: {
-              "reopen_if": "n_additional_users",
-              "additional_users": 10,
+              reopen_if: "n_additional_users",
+              additional_users: 10,
             },
           },
         );
@@ -2059,8 +2059,8 @@ describe("BugsnagClient", () => {
           operation: "snooze",
           reopenRules: {
             reopenIf: "n_additional_occurrences",
-            additionalOccurrences: 10
-          }
+            additionalOccurrences: 10,
+          },
         });
 
         expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
@@ -2069,8 +2069,8 @@ describe("BugsnagClient", () => {
           {
             operation: "snooze",
             reopen_rules: {
-              "reopen_if": "n_additional_occurrences",
-              "additional_occurrences": 10,
+              reopen_if: "n_additional_occurrences",
+              additional_occurrences: 10,
             },
           },
         );
@@ -2092,8 +2092,8 @@ describe("BugsnagClient", () => {
           reopenRules: {
             reopenIf: "n_occurrences_in_m_hours",
             occurrences: 10,
-            hours: 2
-          }
+            hours: 2,
+          },
         });
 
         expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
@@ -2102,9 +2102,9 @@ describe("BugsnagClient", () => {
           {
             operation: "snooze",
             reopen_rules: {
-              "reopen_if": "n_occurrences_in_m_hours",
-              "occurrences": 10,
-              "hours": 2,
+              reopen_if: "n_occurrences_in_m_hours",
+              occurrences: 10,
+              hours: 2,
             },
           },
         );
