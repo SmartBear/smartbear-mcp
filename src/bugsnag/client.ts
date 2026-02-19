@@ -965,23 +965,23 @@ export class BugsnagClient implements Client {
               "Success response indicating the error was snoozed until 10 occurrences in 24 hours",
           },
           {
-            description: "Link an error to a Jira issue",
+            description: "Link a Jira issue to an error",
             parameters: {
               errorId: "6863e2af8c857c0a5023b411",
               operation: "link_issue",
               issue_url: "https://smartbear.atlassian.net/browse/PIPE-9547",
             },
             expectedOutput:
-              "Success response indicating the error was linked to the Jira issue",
+              "Success response indicating the Jira issue was linked to the error",
           },
           {
-            description: "Unlink an error from a Jira issue",
+            description: "Unlink a Jira issue from an error",
             parameters: {
               errorId: "6863e2af8c857c0a5023b411",
               operation: "unlink_issue",
             },
             expectedOutput:
-              "Success response indicating the error was unlinked from the Jira issue",
+              "Success response indicating the Jira issue was unlinked from the error",
           },
         ],
         hints: [
