@@ -42,7 +42,7 @@ If you wish to interact with only one BugSnag project, we also recommend setting
 
 ### Update Error
 
--   Allows you to update the status of the specified error to mark it as Open, Fixed, Ignored, Discarded or Undiscarded.
+-   Allows you to update the status of the specified error to mark it as Open, Fixed, Ignored, Snoozed, Discarded or Undiscarded.
 -   The severity can also be overridden from the default calculated value.
 
 ### List Releases
