@@ -42,6 +42,7 @@ const mockErrorAPI = {
   listProjectErrors: vi.fn(),
   updateErrorOnProject: vi.fn(),
   getPivotValuesOnAnError: vi.fn(),
+  createCommentOnError: vi.fn(),
 } satisfies Omit<ErrorAPI, keyof BaseAPI>;
 
 const mockProjectAPI = {
@@ -901,7 +902,7 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("List Trace Fields");
       expect(registeredTools).toContain("Get Network Endpoint Groupings");
       expect(registeredTools).toContain("Set Network Endpoint Groupings");
-      expect(registeredTools.length).toBe(18);
+      expect(registeredTools.length).toBe(19);
     });
   });
 
@@ -3038,6 +3039,41 @@ describe("BugsnagClient", () => {
 
         expect(result.contents[0].uri).toBe("bugsnag://event/event-1");
         expect(result.contents[0].text).toBe(JSON.stringify(mockEvent));
+      });
+    });
+  });
+
+  describe("Create a comment on an error", () => {
+    it("should call createCommentOnError with correct params and return success", async () => {
+      const projectId = "test-project-id";
+      const errorId = "test-error-id";
+      const message = "test comment";
+      // Mock the implementation to resolve with a success response
+      mockErrorAPI.createCommentOnError = vi.fn().mockResolvedValue({
+        success: true,
+        errorId,
+        projectId,
+        message,
+      });
+
+      // Call the method
+      const result = await mockErrorAPI.createCommentOnError(
+        projectId,
+        errorId,
+        message,
+      );
+
+      // Assert
+      expect(mockErrorAPI.createCommentOnError).toHaveBeenCalledWith(
+        projectId,
+        errorId,
+        message,
+      );
+      expect(result).toEqual({
+        success: true,
+        errorId,
+        projectId,
+        message,
       });
     });
   });

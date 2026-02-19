@@ -211,4 +211,31 @@ export class ErrorAPI extends BaseAPI {
       false, // Paginate results
     );
   }
+
+  /**
+   * Create a comment on an Error
+   * POST /projects/{project_id}/errors/{error_id}/comments
+   */
+  async createCommentOnError(
+    projectId: string,
+    errorId: string,
+    message: string,
+  ): Promise<ApiResponse<any>> {
+    const url = new URL(
+      `/projects/${projectId}/errors/${errorId}/comments`,
+      this.configuration.basePath,
+    );
+
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Bugsnag-Api": "true",
+        Authorization: this.configuration.apiKey,
+      },
+      body: JSON.stringify({ message }),
+    };
+
+    return await this.requestObject<any>(url.toString(), options);
+  }
 }
