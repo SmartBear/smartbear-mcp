@@ -1111,6 +1111,7 @@ export class BugsnagClient implements Client {
         }
         if (params.operation === "link_issue" && params.issue_url) {
           errorUpdateRequestBody.issue_url = params.issue_url;
+          errorUpdateRequestBody.verify_issue_url = true;
         }
 
         const result = await this.errorsApi.updateErrorOnProject(
