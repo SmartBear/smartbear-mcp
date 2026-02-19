@@ -50,6 +50,8 @@ const PERMITTED_UPDATE_OPERATIONS = [
   "discard",
   "undiscard",
   "snooze",
+  "link_issue",
+  "unlink_issue",
 ] as const;
 
 const PERMITTED_REOPEN_CONDITIONS = [
@@ -844,6 +846,12 @@ export class BugsnagClient implements Client {
       operation: z
         .enum(PERMITTED_UPDATE_OPERATIONS)
         .describe("The operation to apply to the error"),
+      issue_url: z
+        .string()
+        .optional()
+        .describe(
+          "The URL of the issue to link to the error - required when operation is 'link_issue'",
+        ),
       reopenRules: z
         .object({
           reopenIf: z
@@ -956,10 +964,31 @@ export class BugsnagClient implements Client {
             expectedOutput:
               "Success response indicating the error was snoozed until 10 occurrences in 24 hours",
           },
+          {
+            description: "Link an error to a Jira issue",
+            parameters: {
+              errorId: "6863e2af8c857c0a5023b411",
+              operation: "link_issue",
+              issue_url: "https://smartbear.atlassian.net/browse/PIPE-9547",
+            },
+            expectedOutput:
+              "Success response indicating the error was linked to the Jira issue",
+          },
+          {
+            description: "Unlink an error from a Jira issue",
+            parameters: {
+              errorId: "6863e2af8c857c0a5023b411",
+              operation: "unlink_issue",
+            },
+            expectedOutput:
+              "Success response indicating the error was unlinked from the Jira issue",
+          },
         ],
         hints: [
           "Only use valid operations - BugSnag may reject invalid values",
           "When using 'snooze' operation, reopenRules parameter is required",
+          "When using 'link_issue' operation, issue_url parameter is required",
+          "Use 'unlink_issue' to remove the link between an error and its issue",
           "For 'occurs_after' reopen rules, specify 'seconds' parameter",
           "For 'n_additional_users' reopen rules, specify 'additionalUsers' parameter (max 100,000)",
           "For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters",
@@ -977,6 +1006,13 @@ export class BugsnagClient implements Client {
         if (params.operation === "snooze" && !params.reopenRules) {
           throw new ToolError(
             "reopenRules parameter is required when using 'snooze' operation",
+          );
+        }
+
+        // Validate link_issue operation requirements
+        if (params.operation === "link_issue" && !params.issue_url) {
+          throw new ToolError(
+            "'issue_url' parameter is required for 'link_issue' operation",
           );
         }
 
@@ -1072,6 +1108,9 @@ export class BugsnagClient implements Client {
         }
         if (reopenRules !== undefined) {
           errorUpdateRequestBody.reopen_rules = reopenRules;
+        }
+        if (params.operation === "link_issue" && params.issue_url) {
+          errorUpdateRequestBody.issue_url = params.issue_url;
         }
 
         const result = await this.errorsApi.updateErrorOnProject(
