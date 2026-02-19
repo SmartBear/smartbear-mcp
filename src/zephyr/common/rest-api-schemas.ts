@@ -4505,6 +4505,11 @@ export const createTestExecutionBody = zod.object({
     ),
 });
 
+export const createTestExecution201Response = zod.object({
+  id: zod.number().min(1).optional(),
+  self: zod.string().optional(),
+});
+
 export const createTestExecutionDefaultResponse = zod.object({
   errorCode: zod.number(),
   message: zod.string(),
