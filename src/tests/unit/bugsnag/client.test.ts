@@ -1983,7 +1983,7 @@ describe("BugsnagClient", () => {
     describe("Update Error tool handler", () => {
       const mockProject = getMockProject("proj-1", "Project 1");
 
-      it("should link an error to a Jira issue (link_issue)", async () => {
+      it("should link a Jira issue to an error (link_issue)", async () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
@@ -2010,7 +2010,7 @@ describe("BugsnagClient", () => {
         expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
       });
 
-      it("should unlink an error from a Jira issue (unlink_issue)", async () => {
+      it("should unlink a Jira issue from an error (unlink_issue)", async () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
