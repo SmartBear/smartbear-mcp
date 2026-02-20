@@ -82,6 +82,8 @@ vi.mock("../../../bugsnag/client/api/index.js", () => ({
       Discard: "discard",
       Undiscard: "undiscard",
       Snooze: "snooze",
+      LinkIssue: "link_issue",
+      UnlinkIssue: "unlink_issue",
     },
   },
 }));
@@ -1980,6 +1982,57 @@ describe("BugsnagClient", () => {
 
     describe("Update Error tool handler", () => {
       const mockProject = getMockProject("proj-1", "Project 1");
+
+      it("should link a Jira issue to an error (link_issue)", async () => {
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Update Error",
+        )[1];
+
+        const result = await toolHandler({
+          errorId: "error-1",
+          operation: "link_issue",
+          issue_url: "https://jira.example.com/browse/ISSUE-123",
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          "proj-1",
+          "error-1",
+          {
+            operation: "link_issue",
+            issue_url: "https://jira.example.com/browse/ISSUE-123",
+            verify_issue_url: true,
+          },
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
+
+      it("should unlink a Jira issue from an error (unlink_issue)", async () => {
+        mockCache.get.mockReturnValue(mockProject);
+        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Update Error",
+        )[1];
+
+        const result = await toolHandler({
+          errorId: "error-1",
+          operation: "unlink_issue",
+        });
+
+        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          "proj-1",
+          "error-1",
+          {
+            operation: "unlink_issue",
+          },
+        );
+        expect(result.content[0].text).toBe(JSON.stringify({ success: true }));
+      });
 
       it("should update error status to snooze for 1 hour with project from cache", async () => {
         mockCache.get.mockReturnValue(mockProject);

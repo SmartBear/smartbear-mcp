@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool `create-test-execution` for creating a Test Execution [#335](https://github.com/SmartBear/smartbear-mcp/pull/335)
 - [BugSnag] Updated the update errors tool to include functionality for snoozing BugSnag errors [#333](https://github.com/SmartBear/smartbear-mcp/pull/333)
 - [Zephyr] Added a tool `create-web-link` for creating a Web link for a Test Case [#337](https://github.com/SmartBear/smartbear-mcp/pull/337)
+- [BugSnag] Update the update errors tool to include functionality for linking and unlinking issues for BugSnag errors [#339](https://github.com/SmartBear/smartbear-mcp/pull/339)
 
 ## [0.13.5] - 2026-02-02
 
