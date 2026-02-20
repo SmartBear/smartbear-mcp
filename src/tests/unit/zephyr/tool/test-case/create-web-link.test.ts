@@ -4,11 +4,7 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createTestCaseWebLinkBody,
-  createTestCaseWebLinkParams,
-  createTestCaseWebLink201Response as createTestCaseWebLinkResponse,
-} from "../../../../../zephyr/common/rest-api-schemas";
+import { createTestCaseWebLink201Response as createTestCaseWebLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestCaseWebLink } from "../../../../../zephyr/tool/test-case/create-web-link";
 
 describe("CreateTestCaseWebLink", () => {
