@@ -77,10 +77,19 @@ export async function getRemoteSpecContents(
     try {
       return yaml.load(specRawBody);
     } catch (yamlError) {
+      const isStdioTransport =
+        process.env.MCP_TRANSPORT?.toLowerCase() === "stdio";
+
+      if (isStdioTransport) {
+        throw new ToolError(
+          `Unsupported Content-Type: ${remoteSpec.headers.get(
+            "Content-Type",
+          )} for remote OpenAPI document. Found following parse errors:-\nJSON parse error: ${jsonError}\nYAML parse error: ${yamlError}`,
+        );
+      }
+
       throw new ToolError(
-        `Unsupported Content-Type: ${remoteSpec.headers.get(
-          "Content-Type",
-        )} for remote OpenAPI document. Found following parse errors:-\nJSON parse error: ${jsonError}\nYAML parse error: ${yamlError}`,
+        `Failed to parse remote OpenAPI document. Ensure the URL returns valid JSON or YAML content.`,
       );
     }
   }
