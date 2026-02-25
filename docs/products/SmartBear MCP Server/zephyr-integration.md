@@ -223,6 +223,21 @@ The following environment variables configure the Zephyr integration:
 - **Returns**:  The created Test execution ID and the API self URL to access it.
 - **Use case**: Creating Test Executions, with it's properties
 
+### Update Test Execution
+
+- **Purpose**: Update an existing Test execution within the Zephyr project specified by key or an id.
+- **Parameters:**
+  - Test execution key or id (`testExecutionIdOrKey`)
+  - Status name (`statusName`)
+  - optional Environment Name (`environmentName`)
+  - optional Actual End Date (`actualEndDate`)
+  - optional Execution Time (`executionTime`)
+  - optional Executed by (`executedById`)
+  - optional assigned To  (`assignedToId`)
+  - optional comment (`comment`)
+- **Returns**:  Empty object if the update is successful.
+- **Use case**: Updating a Test Execution with its properties.
+
 ## Notes regarding **Update** operations
 - The update operations are partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` of the Test Case are provided to the tool, only those fields will be updated while the rest of the Test Case properties will remain unchanged.
 - For fields that accept multiple values, such as Test Case `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
