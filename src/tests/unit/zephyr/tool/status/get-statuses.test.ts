@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  listStatusesQueryParams,
-  listStatuses200Response as listStatusesResponse,
+  ListStatusesQueryParams,
+  ListStatuses200Response as ListStatusesResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetStatuses } from "../../../../../zephyr/tool/status/get-statuses";
 
@@ -45,8 +45,8 @@ describe("GetStatuses", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(listStatusesQueryParams);
-    expect(instance.specification.outputSchema).toBe(listStatusesResponse);
+    expect(instance.specification.inputSchema).toBe(ListStatusesQueryParams);
+    expect(instance.specification.outputSchema).toBe(ListStatusesResponse);
   });
 
   it("should call apiClient.get with all params including statusType and projectKey", async () => {
@@ -72,6 +72,7 @@ describe("GetStatuses", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       ...args,
       maxResults: 10,
+      startAt: 0,
     });
     expect(result.structuredContent).toEqual(responseMock);
   });
@@ -83,6 +84,7 @@ describe("GetStatuses", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       ...args,
       maxResults: 10,
+      startAt: 0,
     });
     expect(result.structuredContent).toEqual(responseMock);
   });
@@ -92,6 +94,7 @@ describe("GetStatuses", () => {
     const result = await instance.handle({}, {});
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/statuses", {
       maxResults: 10,
+      startAt: 0,
     });
     expect(result.structuredContent).toEqual(responseMock);
   });

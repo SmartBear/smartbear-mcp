@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  listProjectsQueryParams,
-  listProjects200Response as listProjectsResponse,
+  ListProjectsQueryParams,
+  ListProjects200Response as ListProjectsResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetProjects } from "../../../../../zephyr/tool/project/get-projects";
 
@@ -25,8 +25,8 @@ describe("GetProjects", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(listProjectsQueryParams);
-    expect(instance.specification.outputSchema).toBe(listProjectsResponse);
+    expect(instance.specification.inputSchema).toBe(ListProjectsQueryParams);
+    expect(instance.specification.outputSchema).toBe(ListProjectsResponse);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
@@ -55,7 +55,7 @@ describe("GetProjects", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
-  it("should handle empty args and call apiClient.get with undefined params", async () => {
+  it("should handle empty args and call apiClient.get with default param values", async () => {
     const responseMock = {
       next: null,
       startAt: 0,
@@ -75,7 +75,7 @@ describe("GetProjects", () => {
     const result = await instance.handle({}, {});
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/projects", {
       maxResults: 10, // default value
-      startAt: undefined,
+      startAt: 0, // default value
     });
     expect(result.structuredContent).toBe(responseMock);
   });
