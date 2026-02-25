@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  listPrioritiesQueryParams,
-  listPriorities200Response as listPrioritiesResponse,
+  ListPrioritiesQueryParams,
+  ListPriorities200Response as ListPrioritiesResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetPriorities extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class GetPriorities extends Tool<ZephyrClient> {
     summary: "Get Zephyr Test Case priorities with optional filters",
     readOnly: true,
     idempotent: true,
-    inputSchema: listPrioritiesQueryParams,
-    outputSchema: listPrioritiesResponse,
+    inputSchema: ListPrioritiesQueryParams,
+    outputSchema: ListPrioritiesResponse,
     examples: [
       {
         description: "Get the first 10 priorities",
@@ -38,7 +38,7 @@ export class GetPriorities extends Tool<ZephyrClient> {
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const getPrioritiesInput = listPrioritiesQueryParams.parse(args);
+    const getPrioritiesInput = ListPrioritiesQueryParams.parse(args);
     const response = await this.client
       .getApiClient()
       .get("/priorities", getPrioritiesInput);

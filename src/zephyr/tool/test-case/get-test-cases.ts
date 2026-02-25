@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  listTestCasesCursorPaginatedQueryParams,
-  listTestCasesCursorPaginated200Response as listTestCasesCursorPaginatedResponse,
+  ListTestCasesCursorPaginatedQueryParams,
+  ListTestCasesCursorPaginated200Response as ListTestCasesCursorPaginatedResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetTestCases extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class GetTestCases extends Tool<ZephyrClient> {
     summary: "Get details of test cases in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: listTestCasesCursorPaginatedQueryParams,
-    outputSchema: listTestCasesCursorPaginatedResponse,
+    inputSchema: ListTestCasesCursorPaginatedQueryParams,
+    outputSchema: ListTestCasesCursorPaginatedResponse,
     examples: [
       {
         description: "Get the first 10 Test Cases",
@@ -62,7 +62,7 @@ export class GetTestCases extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsedArgs = listTestCasesCursorPaginatedQueryParams.parse(args);
+    const parsedArgs = ListTestCasesCursorPaginatedQueryParams.parse(args);
     const response = await this.client
       .getApiClient()
       .get("/testcases/nextgen", parsedArgs);
