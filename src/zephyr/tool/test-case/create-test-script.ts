@@ -4,20 +4,21 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  createTestCaseTestScript201Response as createTestCaseScriptResponse,
-  createTestCaseTestScriptBody,
-  createTestCaseTestScriptParams,
+  CreateTestCaseTestScriptBody,
+  CreateTestCaseTestScriptParams,
+  CreateTestCaseTestScript201Response as createTestCaseScriptResponse,
 } from "../../common/rest-api-schemas";
 
 export class CreateTestScript extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Script",
-    summary: "Create a new Test Script in Zephyr specified project",
+    summary:
+      "Create a new Test Script of the types Plain Text or BDD in a Zephyr Test Case.",
     readOnly: false,
     idempotent: false,
-    inputSchema: createTestCaseTestScriptBody.extend({
-      testCaseKey: createTestCaseTestScriptParams.shape.testCaseKey,
-    }),
+    inputSchema: CreateTestCaseTestScriptParams.and(
+      CreateTestCaseTestScriptBody.partial(),
+    ),
     outputSchema: createTestCaseScriptResponse,
     examples: [
       {
@@ -26,7 +27,7 @@ export class CreateTestScript extends Tool<ZephyrClient> {
         parameters: {
           testCaseKey: "SA-T1",
           type: "plain",
-          text: "1. Navigate to Pump Settings\n2. Enable Axial Pump\n3. Verify pump status is 'Active'",
+          text: "1. Navigate to Pump Settings</br>2. Enable Axial Pump</br>3. Verify pump status is 'Active'",
         },
         expectedOutput:
           "The created test script metadata including its id and self link",
@@ -44,11 +45,11 @@ export class CreateTestScript extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Create a BDD test script for test case QA-T100 for performance validation",
+          "Create a BDD test script for test case QA-T100 for axial pump performance validation",
         parameters: {
           testCaseKey: "QA-T100",
           type: "bdd",
-          text: "Feature: Axial Pump Performance\nScenario: Pump operates within acceptable limits\nGiven the system is running\nWhen the axial pump operates under load\nThen performance metrics should remain within thresholds",
+          text: "Given the system is running\nWhen the axial pump operates under load\nThen performance metrics should remain within thresholds",
         },
         expectedOutput:
           "The created test script metadata including its id and self link",
@@ -57,8 +58,8 @@ export class CreateTestScript extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCaseKey } = createTestCaseTestScriptParams.parse(args);
-    const body = createTestCaseTestScriptBody.parse(args);
+    const { testCaseKey } = CreateTestCaseTestScriptParams.parse(args);
+    const body = CreateTestCaseTestScriptBody.parse(args);
     const response = await this.client
       .getApiClient()
       .post(`/testcases/${testCaseKey}/testscript`, body);

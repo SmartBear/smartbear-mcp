@@ -4,7 +4,7 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createTestCaseTestScript201Response as createTestCaseScriptResponse } from "../../../../../zephyr/common/rest-api-schemas";
+import { CreateTestCaseTestScript201Response as createTestCaseScriptResponse } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestScript } from "../../../../../zephyr/tool/test-case/create-test-script";
 
 describe("CreateTestScript", () => {
@@ -37,7 +37,7 @@ describe("CreateTestScript", () => {
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Create Test Script");
     expect(instance.specification.summary).toBe(
-      "Create a new Test Script in Zephyr specified project",
+      "Create a new Test Script of the types Plain Text or BDD in a Zephyr Test Case.",
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
