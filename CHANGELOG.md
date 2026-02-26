@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- [Zephyr] Added a tool `create-folder` for creating folder [#329] (https://github.com/SmartBear/smartbear-mcp/pull/329)
+- [Zephyr] Added a tool `create-folder` for creating folder [#329](https://github.com/SmartBear/smartbear-mcp/pull/329)
 
 ### Fixed
 

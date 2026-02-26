@@ -4,17 +4,18 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  createFolderBody,
-  createFolder201Response as createFolderResponse,
+  CreateFolderBody,
+  CreateFolder201Response as createFolderResponse,
 } from "../../common/rest-api-schemas";
 
 export class CreateFolder extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Folder",
-    summary: "Create a new Folder in Zephyr specified project",
+    summary:
+      "Create a folder called 'Axial Pump Tests' in the project SA for organizing test cases",
     readOnly: false,
     idempotent: false,
-    inputSchema: createFolderBody,
+    inputSchema: CreateFolderBody,
     outputSchema: createFolderResponse,
     examples: [
       {
@@ -30,10 +31,10 @@ export class CreateFolder extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Create a sub-folder under folder ID 5 in project MM2 for test plans related to pumps",
+          "Create a sub-folder under folder ID 5 in the project MM2 for test plans related to pumps",
         parameters: {
           parentId: 5,
-          name: "Pump Test Plans",
+          name: "Pump-related Test Plans",
           projectKey: "MM2",
           folderType: "TEST_PLAN",
         },
@@ -41,7 +42,7 @@ export class CreateFolder extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Create a root Folder in project TIS for organizing test cycles",
+          "Create a Folder called 'Regression Cycles' in project TIS for organizing test cycles",
         parameters: {
           parentId: null,
           name: "Regression Cycles",
@@ -50,23 +51,12 @@ export class CreateFolder extends Tool<ZephyrClient> {
         },
         expectedOutput: "The newly created Folder with its ID and self link",
       },
-      {
-        description:
-          "Create a sub-folder under folder ID 12 in project SA for axial pump automation tests",
-        parameters: {
-          parentId: 12,
-          name: "Axial Pump Automation",
-          projectKey: "SA",
-          folderType: "TEST_CASE",
-        },
-        expectedOutput: "The newly created Folder with its ID and self link",
-      },
     ],
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const body = createFolderBody.parse(args);
-    const response = await this.client.getApiClient().post(`/folders/`, body);
+    const body = CreateFolderBody.parse(args);
+    const response = await this.client.getApiClient().post(`/folders`, body);
     return {
       structuredContent: response,
       content: [],

@@ -232,7 +232,7 @@ The following environment variables configure the Zephyr integration:
   - Folder Type (`folderType`)
   - optional parent Folder Id (`parentFolderId`)
 - **Returns**: The created Folder ID and the API self URL to access it.
-- **Use case**: Creating a root or sub-folder in a Zephyr project to structure and organize Test Cases, Test Plans, or Test Cycles.
+- **Use case**: Creating a folder in a Zephyr project to structure and organize Test Cases, Test Plans, or Test Cycles.
 
 ## Notes regarding **Update** operations
 - The update operations are partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` of the Test Case are provided to the tool, only those fields will be updated while the rest of the Test Case properties will remain unchanged.

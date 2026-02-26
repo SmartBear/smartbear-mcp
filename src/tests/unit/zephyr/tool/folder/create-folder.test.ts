@@ -5,8 +5,8 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  createFolderBody,
-  createFolder201Response as createFolderResponse,
+  CreateFolderBody,
+  CreateFolder201Response as createFolderResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateFolder } from "../../../../../zephyr/tool/folder/create-folder";
 
@@ -40,11 +40,11 @@ describe("CreateFolder", () => {
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Create Folder");
     expect(instance.specification.summary).toBe(
-      "Create a new Folder in Zephyr specified project",
+      "Create a folder called 'Axial Pump Tests' in the project SA for organizing test cases",
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
-    expect(instance.specification.inputSchema).toBe(createFolderBody);
+    expect(instance.specification.inputSchema).toBe(CreateFolderBody);
     expect(instance.specification.outputSchema).toBe(createFolderResponse);
   });
 
@@ -66,7 +66,7 @@ describe("CreateFolder", () => {
     const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
-      "/folders/",
+      "/folders",
       args,
     );
     expect(result.structuredContent).toBe(responseMock);
@@ -90,7 +90,7 @@ describe("CreateFolder", () => {
 
     const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
-    expect(mockClient.getApiClient().post).toHaveBeenCalledWith("/folders/", {
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith("/folders", {
       parentId: args.parentId,
       name: args.name,
       projectKey: args.projectKey,
