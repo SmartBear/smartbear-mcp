@@ -4,9 +4,9 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  createTestCaseWebLinkBody,
-  createTestCaseWebLinkParams,
-  createTestCaseWebLink201Response as createTestCaseWebLinkResponse,
+  CreateTestCaseWebLinkBody,
+  CreateTestCaseWebLinkParams,
+  CreateTestCaseWebLink201Response as CreateTestCaseWebLinkResponse,
 } from "../../common/rest-api-schemas";
 export class CreateTestCaseWebLink extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -14,10 +14,10 @@ export class CreateTestCaseWebLink extends Tool<ZephyrClient> {
     summary: "Create a new Web Link for a Test Case in Zephyr",
     readOnly: false,
     idempotent: false,
-    inputSchema: createTestCaseWebLinkBody.extend({
-      testCaseKey: createTestCaseWebLinkParams.shape.testCaseKey,
+    inputSchema: CreateTestCaseWebLinkBody.extend({
+      testCaseKey: CreateTestCaseWebLinkParams.shape.testCaseKey,
     }),
-    outputSchema: createTestCaseWebLinkResponse,
+    outputSchema: CreateTestCaseWebLinkResponse,
     examples: [
       {
         description:
@@ -42,8 +42,8 @@ export class CreateTestCaseWebLink extends Tool<ZephyrClient> {
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCaseKey } = createTestCaseWebLinkParams.parse(args);
-    const body = createTestCaseWebLinkBody.parse(args);
+    const { testCaseKey } = CreateTestCaseWebLinkParams.parse(args);
+    const body = CreateTestCaseWebLinkBody.parse(args);
     const response = await this.client
       .getApiClient()
       .post(`/testcases/${testCaseKey}/links/weblinks`, body);

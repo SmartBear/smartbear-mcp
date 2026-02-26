@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  getTestCaseParams,
-  getTestCase200Response as getTestCaseResponse,
+  GetTestCaseParams,
+  GetTestCase200Response as GetTestCaseResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetTestCase } from "../../../../../zephyr/tool/test-case/get-test-case";
 
@@ -25,8 +25,8 @@ describe("GetTestCase", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(getTestCaseParams);
-    expect(instance.specification.outputSchema).toBe(getTestCaseResponse);
+    expect(instance.specification.inputSchema).toBe(GetTestCaseParams);
+    expect(instance.specification.outputSchema).toBe(GetTestCaseResponse);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
