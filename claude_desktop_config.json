@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "smartbear": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smartbear/mcp@latest"
+      ],
+      "env": {
+        "BUGSNAG_AUTH_TOKEN": "your_personal_auth_token",
+        "BUGSNAG_PROJECT_API_KEY": "your_project_api_key",
+        "REFLECT_API_TOKEN": "your_reflect_token",
+        "SWAGGER_API_KEY": "your_swagger_key",
+        "SWAGGER_PORTAL_BASE_PATH": "https://api.portal.swaggerhub.com/v1",
+        "SWAGGER_REGISTRY_BASE_PATH": "https://api.swaggerhub.com",
+        "SWAGGER_UI_BASE_PATH": "https://app.swaggerhub.com",
+        "PACT_BROKER_BASE_URL": "your_pactflow_or_pactbroker_base_url",
+        "PACT_BROKER_TOKEN": "your_pactflow_token",
+        "PACT_BROKER_USERNAME": "your_pact_broker_username",
+        "PACT_BROKER_PASSWORD": "your_pact_broker_password",
+        "QMETRY_API_KEY": "your_qmetry_api_key",
+        "QMETRY_BASE_URL": "https://testmanagement.qmetry.com",
+        "ZEPHYR_API_TOKEN": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjb250ZXh0Ijp7ImJhc2VVcmwiOiJodHRwczovL2FkYW0tbWFsZWotamlyYS5hdGxhc3NpYW4ubmV0IiwidXNlciI6eyJhY2NvdW50SWQiOiI3MTIwMjA6ZDAyM2I5MzEtOWNkOS00NGNkLTg3ZWQtNWIwMTc2ZmQ4YjI5IiwidG9rZW5JZCI6ImZhYmFlZmFjLWEzMzQtNDdkYy05NjFmLTRkN2U4OWU5MzUwMiJ9fSwiaXNzIjoiY29tLmthbm9haC50ZXN0LW1hbmFnZXIiLCJzdWIiOiI1MWZkOGMyNy0xMjlhLTM1MmYtOTUyNC01NDUyNTllMWNiYmUiLCJleHAiOjE4MDM0NjUyMjIsImlhdCI6MTc3MTkyOTIyMn0.1TssFpARCtSll-Js1YASO6heGt0VR3T-i_BWqk652LI",
+        "ZEPHYR_BASE_URL": "http://localhost:5051/public/v2/",
+        "COLLABORATOR_BASE_URL": "your collab base url",
+        "COLLABORATOR_USERNAME": "your collab user name",
+        "COLLABORATOR_LOGIN_TICKET": "your collab login ticket"
+      }
+    }
+  }
+}
