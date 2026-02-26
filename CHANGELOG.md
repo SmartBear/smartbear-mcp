@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.14.1] - 2026-02-26
+
 ### Fixed
 
 - [Zephyr] Fix issue with tools output schema validation
