@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  createTestExecutionBody,
-  createTestExecution201Response as createTestExecutionResponse,
+  CreateTestExecutionBody,
+  CreateTestExecution201Response as CreateTestExecutionResponse,
 } from "../../common/rest-api-schemas";
 
 export class CreateTestExecution extends Tool<ZephyrClient> {
@@ -15,8 +15,8 @@ export class CreateTestExecution extends Tool<ZephyrClient> {
       "Create a new Test Execution for a Test Case within a specific Test Cycle",
     readOnly: false,
     idempotent: false,
-    inputSchema: createTestExecutionBody,
-    outputSchema: createTestExecutionResponse,
+    inputSchema: CreateTestExecutionBody,
+    outputSchema: CreateTestExecutionResponse,
     examples: [
       {
         description:
@@ -68,7 +68,7 @@ export class CreateTestExecution extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const body = createTestExecutionBody.parse(args);
+    const body = CreateTestExecutionBody.parse(args);
 
     const response = await this.client
       .getApiClient()

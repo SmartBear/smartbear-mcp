@@ -4,7 +4,7 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createTestCaseWebLink201Response as createTestCaseWebLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
+import { CreateTestCaseWebLink201Response as CreateTestCaseWebLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestCaseWebLink } from "../../../../../zephyr/tool/test-case/create-web-link";
 
 describe("CreateTestCaseWebLink", () => {
@@ -43,7 +43,7 @@ describe("CreateTestCaseWebLink", () => {
     expect(instance.specification.idempotent).toBe(false);
     expect(instance.specification.inputSchema).toBeDefined();
     expect(instance.specification.outputSchema).toBe(
-      createTestCaseWebLinkResponse,
+      CreateTestCaseWebLinkResponse,
     );
   });
 

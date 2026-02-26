@@ -4,9 +4,9 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  type getTestCycle200Response,
-  updateTestCycleBody,
-  updateTestCycleParams,
+  type GetTestCycle200Response,
+  UpdateTestCycleBody,
+  UpdateTestCycleParams,
 } from "../../common/rest-api-schemas";
 import { deepMerge } from "../../common/utils";
 
@@ -17,7 +17,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
       "Update an existing Test Cycle in Zephyr. This operation fetches the current test cycle and merges your updates with it to prevent accidental property deletion. To remove a property, set it to null explicitly. The plannedStartDate and plannedEndDate fields cannot be cleared",
     readOnly: false,
     idempotent: true,
-    inputSchema: updateTestCycleParams.and(updateTestCycleBody.partial()),
+    inputSchema: UpdateTestCycleParams.and(UpdateTestCycleBody.partial()),
     examples: [
       {
         description:
@@ -91,9 +91,9 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsed = updateTestCycleParams
-      .and(updateTestCycleBody.partial())
-      .parse(args);
+    const parsed = UpdateTestCycleParams.and(
+      UpdateTestCycleBody.partial(),
+    ).parse(args);
 
     const { testCycleIdOrKey, ...updatesRaw } = parsed;
     const updates: Record<string, unknown> = { ...updatesRaw };
@@ -103,7 +103,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
 
     // Fetch the existing test cycle to ensure we have all properties.
     // Zephyr's PUT endpoints require the complete resource and clear unspecified fields.
-    const existingTestCycle: zod.infer<typeof getTestCycle200Response> =
+    const existingTestCycle: zod.infer<typeof GetTestCycle200Response> =
       await this.client.getApiClient().get(`/testcycles/${testCycleIdOrKey}`);
 
     // Merge updates into the existing resource so unspecified fields remain unchanged.
