@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  listTestExecutionsNextgenQueryParams,
-  listTestExecutionsNextgen200Response as listTestExecutionsNextgenResponse,
+  ListTestExecutionsNextgenQueryParams,
+  ListTestExecutionsNextgen200Response as ListTestExecutionsNextgenResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetTestExecutions extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class GetTestExecutions extends Tool<ZephyrClient> {
     summary: "Get test executions with optional filters",
     readOnly: true,
     idempotent: true,
-    inputSchema: listTestExecutionsNextgenQueryParams,
-    outputSchema: listTestExecutionsNextgenResponse,
+    inputSchema: ListTestExecutionsNextgenQueryParams,
+    outputSchema: ListTestExecutionsNextgenResponse,
     examples: [
       {
         description: "Get the first 10 test executions",
@@ -41,7 +41,7 @@ export class GetTestExecutions extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsedArgs = listTestExecutionsNextgenQueryParams.parse(args);
+    const parsedArgs = ListTestExecutionsNextgenQueryParams.parse(args);
     const response = await this.client
       .getApiClient()
       .get("/testexecutions/nextgen", parsedArgs);

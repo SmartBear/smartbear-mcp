@@ -4,9 +4,9 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  type getTestCase200Response,
-  updateTestCaseBody,
-  updateTestCaseParams,
+  type GetTestCase200Response,
+  UpdateTestCaseBody,
+  UpdateTestCaseParams,
 } from "../../common/rest-api-schemas";
 import { deepMerge } from "../../common/utils";
 
@@ -17,7 +17,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       'Update an existing Test Case in Zephyr. This operation fetches the current test case and merges your updates with it to prevent accidental property deletion. Properties which are not included in the tool call will be left unchanged. To remove a property, set it to null explicitly. For fields that accept multiple values, such as `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed. If you want to add a label, you would need to specify in the prompt the intention to add a label.',
     readOnly: false,
     idempotent: true,
-    inputSchema: updateTestCaseParams.and(updateTestCaseBody.partial()),
+    inputSchema: UpdateTestCaseParams.and(UpdateTestCaseBody.partial()),
     examples: [
       {
         description:
@@ -81,15 +81,15 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsed = updateTestCaseParams
-      .and(updateTestCaseBody.partial())
-      .parse(args);
+    const parsed = UpdateTestCaseParams.and(UpdateTestCaseBody.partial()).parse(
+      args,
+    );
     const { testCaseKey, ...updates } = parsed;
 
     // Fetch the existing test case to ensure we have all properties
     // This is necessary because Zephyr's PUT endpoints requires the complete resource
     // and will delete any properties that are not included in the request
-    const existingTestCase: zod.infer<typeof getTestCase200Response> =
+    const existingTestCase: zod.infer<typeof GetTestCase200Response> =
       await this.client.getApiClient().get(`/testcases/${testCaseKey}`);
 
     // Deep merge the updates with the existing test case
