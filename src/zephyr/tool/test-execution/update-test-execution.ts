@@ -15,10 +15,9 @@ export class UpdateTestExecution extends Tool<ZephyrClient> {
       "Update an existing Test Execution in Zephyr. This operation only updates specified fields in the payload and ignores `null` or `undefined` values.",
     readOnly: false,
     idempotent: true,
-    inputSchema: UpdateTestExecutionBody.extend({
-      testExecutionIdOrKey:
-        UpdateTestExecutionParams.shape.testExecutionIdOrKey,
-    }),
+    inputSchema: UpdateTestExecutionParams.and(
+      UpdateTestExecutionBody.partial(),
+    ),
     examples: [
       {
         description:
