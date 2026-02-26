@@ -4,7 +4,7 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createTestCaseIssueLink201Response as createTestCaseIssueLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
+import { CreateTestCaseIssueLink201Response as createTestCaseIssueLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestCaseIssueLink } from "../../../../../zephyr/tool/test-case/create-issue-link";
 
 describe("CreateTestCaseIssueLink", () => {
@@ -37,7 +37,7 @@ describe("CreateTestCaseIssueLink", () => {
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Create Test Case Issue Link");
     expect(instance.specification.summary).toBe(
-      "Create a new Issue Link for a Test Case in Zephyr",
+      "Create a new link between an issue in Jira and a Test Case in Zephyr",
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Zephyr] Added a tool `create-issue-link` for creating a Issue link for a Test Case [#340](https://github.com/SmartBear/smartbear-mcp/pull/340)
+- [Zephyr] Added a tool `create-issue-link` for creating a link between a Jira issue and a Test Case [#340](https://github.com/SmartBear/smartbear-mcp/pull/340)
 
 ### Fixed
 
