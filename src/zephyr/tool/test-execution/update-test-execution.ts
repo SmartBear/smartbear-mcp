@@ -1,29 +1,28 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape, z as zod } from "zod";
+import type { ZodRawShape } from "zod";
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  type getTestExecution200Response,
-  updateTestExecutionBody,
-  updateTestExecutionParams,
+  UpdateTestExecutionBody,
+  UpdateTestExecutionParams,
 } from "../../common/rest-api-schemas";
-import { deepMerge } from "../../common/utils";
 
 export class UpdateTestExecution extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Update Test Execution",
     summary:
-      "Update an existing Test Execution in Zephyr. This operation fetches the current test execution and merges your updates with it to prevent accidental property deletion. To remove a property, set it to null explicitly.",
+      "Update an existing Test Execution in Zephyr. This operation only updates specified fields in the payload and ignores `null` or `undefined` values.",
     readOnly: false,
     idempotent: true,
-    inputSchema: updateTestExecutionParams.and(
-      updateTestExecutionBody.partial(),
-    ),
+    inputSchema: UpdateTestExecutionBody.extend({
+      testExecutionIdOrKey:
+        UpdateTestExecutionParams.shape.testExecutionIdOrKey,
+    }),
     examples: [
       {
         description:
-          "Update the status name and environment name of the test execution 'SA-E40'.",
+          "Update the status name to 'PASS' and the environment name to 'ENV-1' in the test execution 'SA-E40'.",
         parameters: {
           testExecutionIdOrKey: "SA-E40",
           statusName: "PASS",
@@ -45,7 +44,7 @@ export class UpdateTestExecution extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Change ExecutedById and AssignedToId for test execution 'SA-E40' by setting executedById and assignedToId.",
+          "For test execution 'SA-E40', update the test executor and assignee to be the user with ID 10000.",
         parameters: {
           testExecutionIdOrKey: "SA-E40",
           executedById: "10000",
@@ -56,10 +55,10 @@ export class UpdateTestExecution extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Update comment on test execution 'SA-E40' while keeping other custom fields intact.",
+          "In test execution 'SA-E40', add a comment saying that this execution was updated via API.",
         parameters: {
           testExecutionIdOrKey: "SA-E40",
-          Comment: "Comment updated via API",
+          comment: "execution updated via API",
         },
         expectedOutput:
           "The test execution should be updated, but no output is expected.",
@@ -77,26 +76,12 @@ export class UpdateTestExecution extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsed = updateTestExecutionParams
-      .and(updateTestExecutionBody.partial())
-      .parse(args);
-
-    const { testExecutionIdOrKey, ...updatesRaw } = parsed;
-    const updates: Record<string, unknown> = { ...updatesRaw };
-
-    // Fetch the existing test cycle to ensure we have all properties.
-    // Zephyr's PUT endpoints require the complete resource and clear unspecified fields.
-    const existingTestExecution: zod.infer<typeof getTestExecution200Response> =
-      await this.client
-        .getApiClient()
-        .get(`/testexecutions/${testExecutionIdOrKey}`);
-
-    // Merge updates into the existing resource so unspecified fields remain unchanged.
-    const mergedBody = deepMerge(existingTestExecution, updates);
+    const { testExecutionIdOrKey } = UpdateTestExecutionParams.parse(args);
+    const body = UpdateTestExecutionBody.partial().parse(args);
 
     await this.client
       .getApiClient()
-      .put(`/testexecutions/${testExecutionIdOrKey}`, mergedBody);
+      .put(`/testexecutions/${testExecutionIdOrKey}`, body);
 
     return {
       structuredContent: {},

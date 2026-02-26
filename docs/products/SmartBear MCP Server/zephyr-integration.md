@@ -225,7 +225,7 @@ The following environment variables configure the Zephyr integration:
 
 ### Update Test Execution
 
-- **Purpose**: Update an existing Test execution within the Zephyr project specified by key or an id.
+- **Purpose**: Update an existing Test execution.
 - **Parameters:**
   - Test execution key or id (`testExecutionIdOrKey`)
   - Status name (`statusName`)
