@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  createTestCaseBody,
-  createTestCase201Response as createTestCaseResponse,
+  CreateTestCaseBody,
+  CreateTestCase201Response as CreateTestCaseResponse,
 } from "../../common/rest-api-schemas";
 
 export class CreateTestCase extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class CreateTestCase extends Tool<ZephyrClient> {
     summary: "Create a new Test Case in Zephyr specified project",
     readOnly: false,
     idempotent: false,
-    inputSchema: createTestCaseBody,
-    outputSchema: createTestCaseResponse,
+    inputSchema: CreateTestCaseBody,
+    outputSchema: CreateTestCaseResponse,
     examples: [
       {
         description:
@@ -70,7 +70,7 @@ export class CreateTestCase extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const body = createTestCaseBody.parse(args);
+    const body = CreateTestCaseBody.parse(args);
     const response = await this.client.getApiClient().post(`/testcases/`, body);
     return {
       structuredContent: response,

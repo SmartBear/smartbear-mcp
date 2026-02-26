@@ -4,15 +4,13 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  CreateTestCycleBody,
-  CreateTestCycle201Response as CreateTestCycleResponse,
-} from "../../../../../zephyr/common/rest-api-schemas";
-import { CreateTestCycle } from "../../../../../zephyr/tool/test-cycle/create-test-cycle";
+import { CreateTestCaseWebLink201Response as CreateTestCaseWebLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
+import { CreateTestCaseWebLink } from "../../../../../zephyr/tool/test-case/create-web-link";
 
-describe("CreateTestCyCle", () => {
+describe("CreateTestCaseWebLink", () => {
   let mockClient: any;
-  let instance: CreateTestCycle;
+  let instance: CreateTestCaseWebLink;
+
   const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
@@ -33,62 +31,74 @@ describe("CreateTestCyCle", () => {
         post: vi.fn(),
       }),
     };
-    instance = new CreateTestCycle(mockClient as any);
+    instance = new CreateTestCaseWebLink(mockClient as any);
   });
 
   it("should set specification correctly", () => {
-    expect(instance.specification.title).toBe("Create Test Cycle");
+    expect(instance.specification.title).toBe("Create Test Case Web Link");
     expect(instance.specification.summary).toBe(
-      "Create a new Test Cycle in Zephyr specified project",
+      "Create a new Web Link for a Test Case in Zephyr",
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
-    expect(instance.specification.inputSchema).toBe(CreateTestCycleBody);
-    expect(instance.specification.outputSchema).toBe(CreateTestCycleResponse);
+    expect(instance.specification.inputSchema).toBeDefined();
+    expect(instance.specification.outputSchema).toBe(
+      CreateTestCaseWebLinkResponse,
+    );
   });
 
-  it("should call apiClient.post with correct params and return created content information", async () => {
+  it("should call apiClient.post with correct params and return created web link information", async () => {
     const responseMock = {
       id: 53,
-      self: "https://<api-base-url>/testcycles/SA-R1",
-      key: "SA-R1",
+      self: "https://<api-base-url>/weblinks/53",
     };
+
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
     const args = {
-      projectKey: "SA",
-      name: "New Test Cycle",
-      description: "This is a new test cycle created via the API for testing",
+      testCaseKey: "SA-T1",
+      url: "https://example.com",
+      description: "Link to documentation",
     };
+
     const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
-      "/testcycles/",
-      args,
+      "/testcases/SA-T1/links/weblinks",
+      {
+        url: args.url,
+        description: args.description,
+      },
     );
+
     expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should ignore extra parameters not in the schema", async () => {
     const responseMock = {
       id: 54,
-      self: "https://<api-base-url>/testcycles/SA-R2",
-      key: "SA-R2",
+      self: "https://<api-base-url>/weblinks/54",
     };
+
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
     const args = {
-      projectKey: "SA",
-      name: "New Test Cycles with Extra",
-      description: "This is a new test cycle created via the API for testing",
-      extraParam: "This should be ignored",
+      testCaseKey: "SA-T1",
+      url: "https://example.com",
+      description: "Link to documentation",
+      extraField: "should be ignored",
     };
+
     const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
-      "/testcycles/",
+      "/testcases/SA-T1/links/weblinks",
       {
-        projectKey: args.projectKey,
-        name: args.name,
+        url: args.url,
         description: args.description,
       },
     );
+
     expect(result.structuredContent).toBe(responseMock);
   });
 
@@ -96,42 +106,35 @@ describe("CreateTestCyCle", () => {
     mockClient
       .getApiClient()
       .post.mockRejectedValueOnce(new Error("API error"));
+
     const args = {
-      projectKey: "SA",
-      name: "New Test Cycle",
-      description: "This is a new test cycle created via the API for testing",
+      testCaseKey: "SA-T1",
+      url: "https://example.com",
+      description: "Link to documentation",
     };
+
     await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
       "API error",
     );
   });
 
-  it("should handle apiClient.post returning unexpected data", async () => {
-    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
+  it("should throw validation error if url is missing", async () => {
     const args = {
-      projectKey: "SA",
-      name: "New Test Cycle",
-      description: "This is a new test cycle created via the API for testing",
+      testCaseKey: "SA-T1",
+      description: "Link to documentation",
     };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
-    expect(result.structuredContent).toBeUndefined();
-  });
 
-  it("should throw validation error if projectKey is missing", async () => {
-    const args = {
-      name: "New Test Cycle",
-      description: "This is a new test cycle created via the API for testing",
-    };
     await expect(
       instance.handle(args, EXTRA_REQUEST_HANDLER),
     ).rejects.toThrow();
   });
 
-  it("should throw validation error if name is missing", async () => {
+  it("should throw validation error if testCaseKey is missing", async () => {
     const args = {
-      projectKey: "SA",
-      precondition: "Name should have been provided",
+      url: "https://example.com",
+      description: "Link to documentation",
     };
+
     await expect(
       instance.handle(args, EXTRA_REQUEST_HANDLER),
     ).rejects.toThrow();

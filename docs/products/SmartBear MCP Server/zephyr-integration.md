@@ -44,6 +44,13 @@ The following environment variables configure the Zephyr integration:
 -  **Returns**: A list of Test Cycles along with their properties.
 -  **Use case**: Retrieve the Test Cycles, it can be filtered by Project Key, Folder ID, Jira Project version ID.
 
+### Get Test Cycle
+
+- **Purpose**: Retrieve the test cycle available within your Zephyr projects by either its key or id.
+- **Parameters:** Test cycle key or ID
+- **Returns**: A Test Cycle along with its properties.
+- **Use case**: Retrieve detailed information about a test cycle.
+
 ### Create Test Cycles
 - **Purpose**: Create a new Test Cycle within the Zephyr project specified by key
 - **Parameters:**
@@ -59,6 +66,23 @@ The following environment variables configure the Zephyr integration:
     - optional Custom Field names with associated values (`customFields`)
 - **Returns**: The created Test Cycle ID, with the API URL to access it and the Test Cycle key.
 - **Use case**: Creating a Test Cycle with its properties.
+
+### Update Test Cycle
+
+- **Purpose**: Update an existing Test Cycle within the Zephyr project specified by ID or KEY
+- **Parameters:**
+  - Test Cycle ID or KEY (`testCycleIdOrKey`)
+  - optional name (`name`)
+  - optional jiraProjectVersion (`jiraProjectVersion`)
+  - optional Status ID (`statusId`)
+  - optional Folder ID (`folderId`)
+  - optional description (`description`)
+  - optional planned Start Date (`plannedStartDate`)
+  - optional planned End Date (`plannedEndDate`)
+  - optional owner ID (`ownerId`)
+  - optional Custom Field names with associated values (`customFields`)
+- **Returns**: Empty object if the update is successful.
+- **Use case**: Updating a Test Cycle with its properties.
 
 ### Get Statuses
 
@@ -118,6 +142,34 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Case ID, with the API URL to access it and the Test Case key.
 - **Use case**: Creating a Test Case with its properties.
 
+### Update Test Case
+- **Purpose**: Update an existing Test Case within the Zephyr project specified by key
+- **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - optional name (`name`)
+    - optional objective (`objective`)
+    - optional precondition (`precondition`)
+    - optional estimated time (`estimatedTime`)
+    - optional Jira Component ID (`componentId`)
+    - optional Priority name (`priorityName`)
+    - optional Status name (`statusName`)
+    - optional Folder ID (`folderId`)
+    - optional owner ID (`ownerId `)
+    - optional Labels (`labels`)
+    - optional Custom Field names with associated values (`customFields`)
+- **Returns**: Empty object if the update is successful.
+- **Use case**: Updating a Test Case with its properties.
+
+### Create Test Case Web Link
+
+- **Purpose**: Creates a web link that associates a test case with a specified generic URL.
+ **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - optional description (`description`)
+    - url (`url`)
+- **Returns**: The created Test Case Web Link ID and the API self URL to access it.
+- **Use case**: Creates a link between a test case and a generic URL.
+
 ### Create Test Script
 
 - **Purpose**: Create a new Test Script for an existing Test Case within the Zephyr project specified by the test case key
@@ -134,13 +186,6 @@ The following environment variables configure the Zephyr integration:
 - **Parameters:** Test Execution key or ID
 - **Returns**: A Test Execution along with its properties.
 - **Use case**: Getting a Test Execution with its properties.
-
-### Get Test Cycle
-
-- **Purpose**: Retrieve the test cycle available within your Zephyr projects by either its key or id.
-- **Parameters:** Test cycle key or ID
-- **Returns**: A Test Cycle along with its properties.
-- **Use case**: Retrieve detailed information about a test cycle.
 
 ### Get Environments
 
@@ -168,3 +213,28 @@ The following environment variables configure the Zephyr integration:
   - optional starting cursor position for pagination (`startAtId`)
 - **Returns**: A list of Test Executions along with their properties. Results are filtered based on the provided parameters.
 - **Use case**: Retrieve Test Executions, filtered by various criteria such as project, test cycle, test case, or execution dates.
+
+### Create Test Executions
+
+- **Purpose**: Creates a test execution. All required test execution custom fields should be present in the request
+- **Parameters:**
+  - Jira Project key (`projectKey`)
+  - Test Cycle key (`testCycle`)
+  - Test Case key (`testCase`)
+  - Status name (`statusName`)
+  - optional test Script Results (`testScriptResults`)
+  - optional Environment Name (`environmentName`)
+  - optional Actual End Date (`actualEndDate`)
+  - optional Execution Time (`executionTime`)
+  - optional Executed by (`executedById`)
+  - optional assigned To  (`assignedToId`)
+  - optional comment (`comment`)
+  - optional Custom Field names with associated values (`customFields`)
+- **Returns**:  The created Test execution ID and the API self URL to access it.
+- **Use case**: Creating Test Executions, with it's properties
+
+## Notes regarding **Update** operations
+- The update operations are partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` of the Test Case are provided to the tool, only those fields will be updated while the rest of the Test Case properties will remain unchanged.
+- For fields that accept multiple values, such as Test Case `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
+  - If you want to add a label, you would need to specify in the prompt the intention to _add a label_, and the MCP would internally call the tool to retrieve the current labels, add the new label to the list and then call the update tool with the complete list of labels.
+- If a field is provided with a `null` value, it will clear the value of that field. For example, if `component` is provided with a `null` value, the component of the Test Case will be cleared. This is usually achieved by prompting for _Removal of the component_, or something similar, to indicate that the value should be removed.
