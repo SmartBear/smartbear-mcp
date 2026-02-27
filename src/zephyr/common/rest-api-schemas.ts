@@ -4868,7 +4868,7 @@ export const GetTestExecutionDefaultResponse = zod
   .strict();
 
 /**
- * Update the test execution.
+ * Update the test execution. This operation only updates specified fields in the payload and ignores `null` or `undefined` values.
  * @summary Update test execution
  */
 export const updateTestExecutionPathTestExecutionIdOrKeyRegExp =
