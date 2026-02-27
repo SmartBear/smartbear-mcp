@@ -89,12 +89,9 @@ export class ZephyrClient implements Client {
       new UpdateTestCycle(this),
       new CreateTestExecution(this),
       new CreateTestCaseWebLink(this),
-<<<<<<< HEAD
       new CreateTestSteps(this),
-=======
       new CreateTestCaseIssueLink(this),
       new CreateFolder(this),
->>>>>>> main
     ];
 
     for (const tool of tools) {
