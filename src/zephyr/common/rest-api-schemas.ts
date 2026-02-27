@@ -1807,7 +1807,7 @@ export const CreateTestCaseTestScriptBody = zod
     type: zod
       .enum(["plain", "bdd"])
       .describe(
-        "Test scripts can be written in plain text or BDD format. The BDD type supportsremote execution on a build system via API plugin. Supported Keywords for BDD: Given, When, Then, And, But. For more information about BDD and Gherkin syntax, see: https://support.smartbear.com/zephyr/docs/en/test-cases/gherkin-behavior-driven-development--bdd-.html?sbsearch=bdd .To create a step-by-step test script, you should first create a plain text test script, then use the POST /testcases/{testCaseKey}/teststeps endpoint.",
+        "Test scripts can be written in plain text or BDD format. The BDD type supports remote execution on a build system via API plugin. Supported Keywords for BDD: Given, When, Then, And, But. For more information about BDD and Gherkin syntax, see: https://support.smartbear.com/zephyr/docs/en/test-cases/gherkin-behavior-driven-development--bdd-.html . For Plain Text scripts, we support HTML fragments.To create a step-by-step test script, you should use the POST /testcases/{testCaseKey}/teststeps endpoint.",
       ),
     text: zod.string().min(1),
   })
