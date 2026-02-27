@@ -233,6 +233,17 @@ The following environment variables configure the Zephyr integration:
 - **Returns**:  The created Test execution ID and the API self URL to access it.
 - **Use case**: Creating Test Executions, with it's properties
 
+### Create folder
+
+- **Purpose**: Create a new Folder within the specified Zephyr project to organize Test Cases, Test Plans, or Test Cycles.
+- **Parameters:**
+  - Project key (`projectKey`)
+  - Name (`name`)
+  - Folder Type (`folderType`)
+  - optional parent Folder Id (`parentFolderId`)
+- **Returns**: The created Folder ID and the API self URL to access it.
+- **Use case**: Creating a folder in a Zephyr project to structure and organize Test Cases, Test Plans, or Test Cycles.
+
 ## Notes regarding **Update** operations
 - The update operations are partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` of the Test Case are provided to the tool, only those fields will be updated while the rest of the Test Case properties will remain unchanged.
 - For fields that accept multiple values, such as Test Case `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
