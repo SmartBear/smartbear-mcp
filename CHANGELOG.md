@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Zephyr] Added a tool `create-issue-link` for creating a link between a Jira issue and a Test Case [#340](https://github.com/SmartBear/smartbear-mcp/pull/340)
+- [Zephyr] Added a tool `create-folder` for creating folder [#329](https://github.com/SmartBear/smartbear-mcp/pull/329)
+
+## [0.14.1] - 2026-02-26
+
 ### Fixed
 
 - [Zephyr] Fix issue with tools output schema validation
