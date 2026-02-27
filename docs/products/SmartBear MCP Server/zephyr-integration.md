@@ -168,24 +168,25 @@ The following environment variables configure the Zephyr integration:
     - optional description (`description`)
     - url (`url`)
 - **Returns**: The created Test Case Web Link ID and the API self URL to access it.
-- **Use case**: Creates a link between a test case and a generic URL.
 
+<<<<<<< HEAD
 ### Create Test Case Test Steps
-- **Purpose**: Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.
-- **Parameters:**
     - Test Case key (`testCaseKey`)
     - Mode (`mode`) - "APPEND" to add steps, "OVERWRITE" to replace all steps
     - Items (`items`) - array of test steps, each containing either:
       - `inline`: step with description, optional testData, expectedResult, customFields
       - `testCase`: delegation to another test case by key, with optional parameters
-- **Returns**: The created Test Step ID and the API self URL to access it.
-- **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
+=======
+### Create Test Case Issue Link
+
+  **Parameters:**
+  - Test Case key (`testCaseKey`)
+  - Jira Issue Id (`issueId`)
+
+>>>>>>> main
 
 ### Get Test Execution
 
-- **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
-- **Parameters:** Test Execution key or ID
-- **Returns**: A Test Execution along with its properties.
 - **Use case**: Getting a Test Execution with its properties.
 
 ### Get Environments
@@ -233,6 +234,17 @@ The following environment variables configure the Zephyr integration:
   - optional Custom Field names with associated values (`customFields`)
 - **Returns**:  The created Test execution ID and the API self URL to access it.
 - **Use case**: Creating Test Executions, with it's properties
+
+### Create folder
+
+- **Purpose**: Create a new Folder within the specified Zephyr project to organize Test Cases, Test Plans, or Test Cycles.
+- **Parameters:**
+  - Project key (`projectKey`)
+  - Name (`name`)
+  - Folder Type (`folderType`)
+  - optional parent Folder Id (`parentFolderId`)
+- **Returns**: The created Folder ID and the API self URL to access it.
+- **Use case**: Creating a folder in a Zephyr project to structure and organize Test Cases, Test Plans, or Test Cycles.
 
 ## Notes regarding **Update** operations
 - The update operations are partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` of the Test Case are provided to the tool, only those fields will be updated while the rest of the Test Case properties will remain unchanged.

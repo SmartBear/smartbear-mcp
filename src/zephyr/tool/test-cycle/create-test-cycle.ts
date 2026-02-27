@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  createTestCycleBody,
-  createTestCycle201Response as createTestCycleResponse,
+  CreateTestCycleBody,
+  CreateTestCycle201Response as CreateTestCycleResponse,
 } from "../../common/rest-api-schemas";
 
 export class CreateTestCycle extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class CreateTestCycle extends Tool<ZephyrClient> {
     summary: "Create a new Test Cycle in Zephyr specified project",
     readOnly: false,
     idempotent: false,
-    inputSchema: createTestCycleBody,
-    outputSchema: createTestCycleResponse,
+    inputSchema: CreateTestCycleBody,
+    outputSchema: CreateTestCycleResponse,
     examples: [
       {
         description:
@@ -72,7 +72,7 @@ export class CreateTestCycle extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const body = createTestCycleBody.parse(args);
+    const body = CreateTestCycleBody.parse(args);
     const response = await this.client
       .getApiClient()
       .post(`/testcycles/`, body);

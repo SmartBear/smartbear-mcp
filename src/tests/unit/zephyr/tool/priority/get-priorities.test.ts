@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  listPrioritiesQueryParams,
-  listPriorities200Response as listPrioritiesResponse,
+  ListPrioritiesQueryParams,
+  ListPriorities200Response as ListPrioritiesResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetPriorities } from "../../../../../zephyr/tool/priority/get-priorities";
 
@@ -25,8 +25,8 @@ describe("GetProjectPriorities", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(listPrioritiesQueryParams);
-    expect(instance.specification.outputSchema).toBe(listPrioritiesResponse);
+    expect(instance.specification.inputSchema).toBe(ListPrioritiesQueryParams);
+    expect(instance.specification.outputSchema).toBe(ListPrioritiesResponse);
   });
 
   it("should call apiClient.get with correct params and return formatted content", async () => {
@@ -112,6 +112,7 @@ describe("GetProjectPriorities", () => {
     const result = await instance.handle({}, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/priorities", {
       maxResults: 10, // default value from schema
+      startAt: 0, // default value from schema
     });
     expect(result.structuredContent).toBe(responseMock);
   });

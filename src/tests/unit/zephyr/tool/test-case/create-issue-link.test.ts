@@ -4,12 +4,12 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestCaseWebLink201Response as CreateTestCaseWebLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
-import { CreateTestCaseWebLink } from "../../../../../zephyr/tool/test-case/create-web-link";
+import { CreateTestCaseIssueLink201Response as createTestCaseIssueLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
+import { CreateTestCaseIssueLink } from "../../../../../zephyr/tool/test-case/create-issue-link";
 
-describe("CreateTestCaseWebLink", () => {
+describe("CreateTestCaseIssueLink", () => {
   let mockClient: any;
-  let instance: CreateTestCaseWebLink;
+  let instance: CreateTestCaseIssueLink;
 
   const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
     ServerRequest,
@@ -31,43 +31,41 @@ describe("CreateTestCaseWebLink", () => {
         post: vi.fn(),
       }),
     };
-    instance = new CreateTestCaseWebLink(mockClient as any);
+    instance = new CreateTestCaseIssueLink(mockClient as any);
   });
 
   it("should set specification correctly", () => {
-    expect(instance.specification.title).toBe("Create Test Case Web Link");
+    expect(instance.specification.title).toBe("Create Test Case Issue Link");
     expect(instance.specification.summary).toBe(
-      "Create a new Web Link for a Test Case in Zephyr",
+      "Create a new link between an issue in Jira and a Test Case in Zephyr",
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
     expect(instance.specification.inputSchema).toBeDefined();
     expect(instance.specification.outputSchema).toBe(
-      CreateTestCaseWebLinkResponse,
+      createTestCaseIssueLinkResponse,
     );
   });
 
-  it("should call apiClient.post with correct params and return created web link information", async () => {
+  it("should call apiClient.post with correct params and return created issue link information", async () => {
     const responseMock = {
       id: 53,
-      self: "https://<api-base-url>/weblinks/53",
+      self: "https://<api-base-url>/issuelinks/53",
     };
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
 
     const args = {
       testCaseKey: "SA-T1",
-      url: "https://example.com",
-      description: "Link to documentation",
+      issueId: 53,
     };
 
     const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
-      "/testcases/SA-T1/links/weblinks",
+      "/testcases/SA-T1/links/issues",
       {
-        url: args.url,
-        description: args.description,
+        issueId: args.issueId,
       },
     );
 
@@ -84,18 +82,16 @@ describe("CreateTestCaseWebLink", () => {
 
     const args = {
       testCaseKey: "SA-T1",
-      url: "https://example.com",
-      description: "Link to documentation",
+      issueId: 54,
       extraField: "should be ignored",
     };
 
     const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
-      "/testcases/SA-T1/links/weblinks",
+      "/testcases/SA-T1/links/issues",
       {
-        url: args.url,
-        description: args.description,
+        issueId: args.issueId,
       },
     );
 
@@ -109,7 +105,7 @@ describe("CreateTestCaseWebLink", () => {
 
     const args = {
       testCaseKey: "SA-T1",
-      url: "https://example.com",
+      issueId: 53,
       description: "Link to documentation",
     };
 
@@ -118,21 +114,9 @@ describe("CreateTestCaseWebLink", () => {
     );
   });
 
-  it("should throw validation error if url is missing", async () => {
+  it("should throw validation error if id is missing", async () => {
     const args = {
       testCaseKey: "SA-T1",
-      description: "Link to documentation",
-    };
-
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
-  });
-
-  it("should throw validation error if testCaseKey is missing", async () => {
-    const args = {
-      url: "https://example.com",
-      description: "Link to documentation",
     };
 
     await expect(

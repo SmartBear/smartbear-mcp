@@ -5,8 +5,8 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  createTestExecutionBody,
-  createTestExecution201Response as createTestExecutionResponse,
+  CreateTestExecutionBody,
+  CreateTestExecution201Response as CreateTestExecutionResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestExecution } from "../../../../../zephyr/tool/test-execution/create-test-execution";
 
@@ -45,9 +45,9 @@ describe("CreateTestExecution", () => {
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
-    expect(instance.specification.inputSchema).toBe(createTestExecutionBody);
+    expect(instance.specification.inputSchema).toBe(CreateTestExecutionBody);
     expect(instance.specification.outputSchema).toBe(
-      createTestExecutionResponse,
+      CreateTestExecutionResponse,
     );
   });
 
