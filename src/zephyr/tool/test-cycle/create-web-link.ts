@@ -4,9 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  createTestCycleWebLinkBody,
-  createTestCycleWebLinkParams,
-  createTestCycleWebLink201Response as createTestCycleWebLinkResponse,
+  CreateTestCycleWebLinkBody,
+  CreateTestCycleWebLinkParams,
 } from "../../common/rest-api-schemas";
 export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -14,14 +13,13 @@ export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
     summary: "Create a new Web Link for a Test Cycle in Zephyr",
     readOnly: false,
     idempotent: false,
-    inputSchema: createTestCycleWebLinkBody.extend({
-      testCycleIdOrKey: createTestCycleWebLinkParams.shape.testCycleIdOrKey,
-    }),
-    outputSchema: createTestCycleWebLinkResponse,
+    inputSchema: CreateTestCycleWebLinkParams.and(
+      CreateTestCycleWebLinkBody.partial(),
+    ),
     examples: [
       {
         description:
-          "Create a web link for test cycle SA-R1 pointing to Atlassian's homepage",
+          "Create a link between the test cycle and generic URL for reference",
         parameters: {
           testCycleIdOrKey: "SA-R1",
           url: "https://www.atlassian.com",
@@ -42,8 +40,8 @@ export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCycleIdOrKey } = createTestCycleWebLinkParams.parse(args);
-    const body = createTestCycleWebLinkBody.parse(args);
+    const { testCycleIdOrKey } = CreateTestCycleWebLinkParams.parse(args);
+    const body = CreateTestCycleWebLinkBody.parse(args);
     const response = await this.client
       .getApiClient()
       .post(`/testcycles/${testCycleIdOrKey}/links/weblinks`, body);
