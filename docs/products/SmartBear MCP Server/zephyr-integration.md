@@ -188,6 +188,18 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Case Issue Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test case and a Jira Issue.
 
+
+### Create Test Script
+
+- **Purpose**: Create a new Test Script, of the types Plain text or BDD - Gherkin syntax, for an existing Test Case.
+- **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - Type (`type`). Options are PLAIN_TEXT and BDD
+    - text  (`text`). For PLAIN_TEXT, this supports HTML fragments. For BDD, you should use `\n` for line breaks.
+- **Returns**: The created Test Script ID, with the API URL to access it
+- **Use case**: Adding test case scripts (plain or BDD format) to an existing Test Case.
+
+
 ### Get Test Execution
 
 - **Use case**: Getting a Test Execution with its properties.
