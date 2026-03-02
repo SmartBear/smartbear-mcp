@@ -4,9 +4,9 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  createTestCaseTestStepsBody,
-  createTestCaseTestStepsParams,
-  createTestCaseTestSteps201Response as createTestCaseTestStepsResponse,
+  CreateTestCaseTestStepsBody,
+  CreateTestCaseTestStepsParams,
+  CreateTestCaseTestSteps201Response as createTestCaseTestStepsResponse,
 } from "../../common/rest-api-schemas";
 export class CreateTestSteps extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -15,8 +15,8 @@ export class CreateTestSteps extends Tool<ZephyrClient> {
       "Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.",
     readOnly: false,
     idempotent: false,
-    inputSchema: createTestCaseTestStepsBody.extend({
-      testCaseKey: createTestCaseTestStepsParams.shape.testCaseKey,
+    inputSchema: CreateTestCaseTestStepsBody.extend({
+      testCaseKey: CreateTestCaseTestStepsParams.shape.testCaseKey,
     }),
     outputSchema: createTestCaseTestStepsResponse,
     examples: [
@@ -91,8 +91,8 @@ export class CreateTestSteps extends Tool<ZephyrClient> {
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCaseKey } = createTestCaseTestStepsParams.parse(args);
-    const body = createTestCaseTestStepsBody.parse(args);
+    const { testCaseKey } = CreateTestCaseTestStepsParams.parse(args);
+    const body = CreateTestCaseTestStepsBody.parse(args);
     const response = await this.client
       .getApiClient()
       .post(`/testcases/${testCaseKey}/teststeps`, body);
