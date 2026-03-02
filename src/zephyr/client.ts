@@ -7,11 +7,14 @@ import type {
 import { ApiClient } from "./common/api-client";
 
 import { GetEnvironments } from "./tool/environment/get-environments";
+import { CreateFolder } from "./tool/folder/create-folder";
 import { GetPriorities } from "./tool/priority/get-priorities";
 import { GetProject } from "./tool/project/get-project";
 import { GetProjects } from "./tool/project/get-projects";
 import { GetStatuses } from "./tool/status/get-statuses";
+import { CreateTestCaseIssueLink } from "./tool/test-case/create-issue-link";
 import { CreateTestCase } from "./tool/test-case/create-test-case";
+import { CreateTestScript } from "./tool/test-case/create-test-script";
 import { CreateTestCaseWebLink } from "./tool/test-case/create-web-link.ts";
 import { GetTestCase } from "./tool/test-case/get-test-case";
 import { GetTestCases } from "./tool/test-case/get-test-cases";
@@ -87,6 +90,9 @@ export class ZephyrClient implements Client {
       new UpdateTestCycle(this),
       new CreateTestExecution(this),
       new CreateTestCaseWebLink(this),
+      new CreateTestCaseIssueLink(this),
+      new CreateFolder(this),
+      new CreateTestScript(this),
       new UpdateTestExecution(this),
     ];
 

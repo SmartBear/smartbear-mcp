@@ -170,6 +170,26 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Case Web Link ID and the API self URL to access it.
 - **Use case**: Creates a link between a test case and a generic URL.
 
+### Create Test Case Issue Link
+
+- **Purpose**: Creates a Issue link that associates a test case with Jira Issue
+  **Parameters:**
+  - Test Case key (`testCaseKey`)
+  - Jira Issue Id (`issueId`)
+- **Returns**: The created Test Case Issue Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creates a link between a test case and a Jira Issue.
+
+
+### Create Test Script
+
+- **Purpose**: Create a new Test Script, of the types Plain text or BDD - Gherkin syntax, for an existing Test Case.
+- **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - Type (`type`). Options are PLAIN_TEXT and BDD
+    - text  (`text`). For PLAIN_TEXT, this supports HTML fragments. For BDD, you should use `\n` for line breaks.
+- **Returns**: The created Test Script ID, with the API URL to access it
+- **Use case**: Adding test case scripts (plain or BDD format) to an existing Test Case.
+
 ### Get Test Execution
 
 - **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
@@ -237,6 +257,17 @@ The following environment variables configure the Zephyr integration:
   - optional comment (`comment`)
 - **Returns**:  Empty object if the update is successful.
 - **Use case**: Updating a Test Execution with its properties.
+
+### Create folder
+
+- **Purpose**: Create a new Folder within the specified Zephyr project to organize Test Cases, Test Plans, or Test Cycles.
+- **Parameters:**
+  - Project key (`projectKey`)
+  - Name (`name`)
+  - Folder Type (`folderType`)
+  - optional parent Folder Id (`parentFolderId`)
+- **Returns**: The created Folder ID and the API self URL to access it.
+- **Use case**: Creating a folder in a Zephyr project to structure and organize Test Cases, Test Plans, or Test Cycles.
 
 ## Notes regarding **Update** operations
 - The update operations are partial, meaning that only the provided fields will be updated. For example, if only the `name` and `objective` of the Test Case are provided to the tool, only those fields will be updated while the rest of the Test Case properties will remain unchanged.
