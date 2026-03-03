@@ -190,6 +190,16 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Script ID, with the API URL to access it
 - **Use case**: Adding test case scripts (plain or BDD format) to an existing Test Case.
 
+### Get Test Case Steps
+
+- **Purpose**: Retrieve the test case steps for the given test case, available within your Zephyr account by test Case key.
+- **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - optional starting position for pagination (`startAt`)
+    - optional max results to return (`maxResults`)
+- **Returns**: A list of Test Case Steps along with their properties.
+- **Use case**: Getting a list of Test Case Steps and their properties.
+
 ### Get Test Execution
 
 - **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
