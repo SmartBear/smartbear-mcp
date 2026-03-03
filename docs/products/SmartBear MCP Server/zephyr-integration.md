@@ -168,26 +168,15 @@ The following environment variables configure the Zephyr integration:
     - optional description (`description`)
     - url (`url`)
 - **Returns**: The created Test Case Web Link ID and the API self URL to access it.
-
-### Create Test Case Test Steps
-- **Purpose**: Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.
-- **Parameters:**
-    - Test Case key (`testCaseKey`)
-    - Mode (`mode`) - "APPEND" to add steps, "OVERWRITE" to replace all steps
-    - Items (`items`) - array of test steps, each containing either:
-      - `inline`: step with description, optional testData, expectedResult, customFields
-      - `testCase`: delegation to another test case by key, with optional parameters
-- **Returns**: The created Test Step ID and the API self URL to access it.
-- **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
+- **Use case**: Creates a link between a test case and a generic URL.
 
 ### Create Test Case Issue Link
 - **Purpose**: Creates a Issue link that associates a test case with Jira Issue
-- **Parameters:**
+  **Parameters:**
   - Test Case key (`testCaseKey`)
   - Jira Issue Id (`issueId`)
 - **Returns**: The created Test Case Issue Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test case and a Jira Issue.
-
 
 ### Create Test Script
 
@@ -199,6 +188,16 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Script ID, with the API URL to access it
 - **Use case**: Adding test case scripts (plain or BDD format) to an existing Test Case.
 
+### Create Test Case Test Steps
+- **Purpose**: Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.
+- **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - Mode (`mode`) - "APPEND" to add steps, "OVERWRITE" to replace all steps
+    - Items (`items`) - array of test steps, each containing either:
+      - `inline`: step with description, optional testData, expectedResult, customFields
+      - `testCase`: delegation to another test case by key, with optional parameters
+- **Returns**: The created Test Step ID and the API self URL to access it.
+- **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
 
 ### Get Test Execution
 
