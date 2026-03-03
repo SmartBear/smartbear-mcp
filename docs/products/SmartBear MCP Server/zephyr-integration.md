@@ -253,6 +253,21 @@ The following environment variables configure the Zephyr integration:
 - **Returns**:  The created Test execution ID and the API self URL to access it.
 - **Use case**: Creating Test Executions, with it's properties
 
+### Update Test Execution
+
+- **Purpose**: Update an existing Test execution.
+- **Parameters:**
+  - Test execution key or id (`testExecutionIdOrKey`)
+  - Status name (`statusName`)
+  - optional Environment Name (`environmentName`)
+  - optional Actual End Date (`actualEndDate`)
+  - optional Execution Time (`executionTime`)
+  - optional Executed by (`executedById`)
+  - optional assigned To  (`assignedToId`)
+  - optional comment (`comment`)
+- **Returns**:  Empty object if the update is successful.
+- **Use case**: Updating a Test Execution with its properties.
+
 ### Create folder
 
 - **Purpose**: Create a new Folder within the specified Zephyr project to organize Test Cases, Test Plans, or Test Cycles.
