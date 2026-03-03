@@ -198,7 +198,7 @@ The following environment variables configure the Zephyr integration:
     - Items (`items`) - array of test steps, each containing either:
       - `inline`: step with description, optional testData, expectedResult, customFields
       - `testCase`: delegation to another test case by key, with optional parameters
-- **Returns**: The created Test Step ID and the API self URL to access it.
+- **Returns**: The ID of the Test Steps resource and the API self URL to fetch it
 - **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
 ### Get Test Execution
 
