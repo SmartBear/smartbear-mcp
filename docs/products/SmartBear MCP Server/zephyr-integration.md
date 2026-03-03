@@ -171,12 +171,14 @@ The following environment variables configure the Zephyr integration:
 - **Use case**: Creates a link between a test case and a generic URL.
 
 ### Create Test Case Issue Link
+
 - **Purpose**: Creates a Issue link that associates a test case with Jira Issue
   **Parameters:**
   - Test Case key (`testCaseKey`)
   - Jira Issue Id (`issueId`)
 - **Returns**: The created Test Case Issue Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test case and a Jira Issue.
+
 
 ### Create Test Script
 
