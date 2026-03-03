@@ -10,19 +10,17 @@ import {
 } from "../../common/rest-api-schemas";
 export class CreateTestSteps extends Tool<ZephyrClient> {
   specification: ToolParams = {
-    title: "Create Test Case Test Steps",
+    title: "Create Test Case Steps",
     summary:
-      "Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.",
+      "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI).",
     readOnly: false,
     idempotent: false,
-    inputSchema: CreateTestCaseTestStepsBody.extend({
-      testCaseKey: CreateTestCaseTestStepsParams.shape.testCaseKey,
-    }),
+    inputSchema: CreateTestCaseTestStepsParams.and(CreateTestCaseTestStepsBody.partial()),
     outputSchema: createTestCaseTestStepsResponse,
     examples: [
       {
         description:
-          "Append simple inline test steps with description and expected result to test case SA-T1",
+          "To the Test Case SA-T1, add steps that will test a login page.",
         parameters: {
           testCaseKey: "SA-T1",
           mode: "APPEND",
@@ -42,11 +40,11 @@ export class CreateTestSteps extends Tool<ZephyrClient> {
           ],
         },
         expectedOutput:
-          "The created Test Step ID and the API self URL to access it",
+          "The ID of the Test Steps resource and the API self URL to fetch it",
       },
       {
         description:
-          "Overwrite all test steps for test case MM2-T15 with steps that include test data",
+          "To the Test Case MM2-T15, replace all existing steps with new ones that test the settings page for an Admin user.",
         parameters: {
           testCaseKey: "MM2-T15",
           mode: "OVERWRITE",
@@ -69,11 +67,11 @@ export class CreateTestSteps extends Tool<ZephyrClient> {
           ],
         },
         expectedOutput:
-          "The created Test Step ID and the API self URL to access it",
+          "The ID of the Test Steps resource and the API self URL to fetch it",
       },
       {
         description:
-          "Add a step that delegates execution to another test case PRJ-T42",
+          "To the Test Case SA-T1, add a step that reuses the steps from the Test Case PRJ-T42",
         parameters: {
           testCaseKey: "SA-T1",
           mode: "APPEND",
@@ -86,7 +84,7 @@ export class CreateTestSteps extends Tool<ZephyrClient> {
           ],
         },
         expectedOutput:
-          "The created Test Step ID and the API self URL to access it",
+          "The ID of the Test Steps resource and the API self URL to fetch it",
       },
     ],
   };

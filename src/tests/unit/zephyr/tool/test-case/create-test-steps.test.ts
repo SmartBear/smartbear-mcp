@@ -39,9 +39,9 @@ describe("CreateTestSteps", () => {
   });
 
   it("should set specification correctly", () => {
-    expect(instance.specification.title).toBe("Create Test Case Test Steps");
+    expect(instance.specification.title).toBe("Create Test Case Steps");
     expect(instance.specification.summary).toBe(
-      "Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.",
+      "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI).",
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
