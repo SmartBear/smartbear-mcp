@@ -198,7 +198,6 @@ The following environment variables configure the Zephyr integration:
       - `testCase`: delegation to another test case by key, with optional parameters
 - **Returns**: The created Test Step ID and the API self URL to access it.
 - **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
-
 ### Get Test Execution
 
 - **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
