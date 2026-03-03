@@ -4,9 +4,7 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  CreateTestCaseTestSteps201Response as createTestCaseTestStepsResponse,
-} from "../../../../../zephyr/common/rest-api-schemas";
+import { CreateTestCaseTestSteps201Response as createTestCaseTestStepsResponse } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestSteps } from "../../../../../zephyr/tool/test-case/create-test-steps";
 
 describe("CreateTestSteps", () => {

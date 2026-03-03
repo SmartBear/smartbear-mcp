@@ -15,7 +15,9 @@ export class CreateTestSteps extends Tool<ZephyrClient> {
       "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI).",
     readOnly: false,
     idempotent: false,
-    inputSchema: CreateTestCaseTestStepsParams.and(CreateTestCaseTestStepsBody.partial()),
+    inputSchema: CreateTestCaseTestStepsParams.and(
+      CreateTestCaseTestStepsBody.partial(),
+    ),
     outputSchema: createTestCaseTestStepsResponse,
     examples: [
       {
