@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool `create-folder` for creating folder [#329](https://github.com/SmartBear/smartbear-mcp/pull/329)
 - [Zephyr] Added a tool `create-test-script` for creating Test Script [#328](https://github.com/SmartBear/smartbear-mcp/pull/328)
 - [Zephyr] Added a tool `update-test-execution` for updating a test execution [#345](https://github.com/SmartBear/smartbear-mcp/pull/345)
-- [Zephyr] Added a tool `get-test-cases` for fetching test cases linked to a Jira issue
+- [Zephyr] Added a tool `get-test-cases` for fetching test cases linked to a Jira issue[358](https://github.com/SmartBear/smartbear-mcp/pull/358)
 
 ## [0.14.1] - 2026-02-26
 
