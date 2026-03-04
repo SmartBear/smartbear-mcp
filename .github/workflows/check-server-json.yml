@@ -22,7 +22,7 @@ jobs:
           echo "Validating server.json schema version..."
 
           # Fetch the schema JSON to get the current schema URL from ServerDetail.properties.$schema.example
-          SCHEMA_JSON_URL="https://raw.githubusercontent.com/modelcontextprotocol/registry/refs/heads/main/docs/reference/server-json/server.schema.json"
+          SCHEMA_JSON_URL="https://raw.githubusercontent.com/modelcontextprotocol/registry/refs/heads/main/docs/reference/server-json/draft/server.schema.json"
           CURRENT_SCHEMA_URL=$(curl -sSL "$SCHEMA_JSON_URL" | jq -r '.definitions.ServerDetail.properties."$schema".example')
 
           if [ -z "$CURRENT_SCHEMA_URL" ] || [ "$CURRENT_SCHEMA_URL" = "null" ]; then

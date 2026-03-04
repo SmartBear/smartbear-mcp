@@ -7,17 +7,28 @@ import type {
 import { ApiClient } from "./common/api-client";
 
 import { GetEnvironments } from "./tool/environment/get-environments";
+import { CreateFolder } from "./tool/folder/create-folder";
 import { GetPriorities } from "./tool/priority/get-priorities";
 import { GetProject } from "./tool/project/get-project";
 import { GetProjects } from "./tool/project/get-projects";
 import { GetStatuses } from "./tool/status/get-statuses";
+import { CreateTestCaseIssueLink } from "./tool/test-case/create-issue-link";
 import { CreateTestCase } from "./tool/test-case/create-test-case";
+import { CreateTestScript } from "./tool/test-case/create-test-script";
+import { CreateTestSteps } from "./tool/test-case/create-test-steps.ts";
+import { CreateTestCaseWebLink } from "./tool/test-case/create-web-link.ts";
 import { GetTestCase } from "./tool/test-case/get-test-case";
 import { GetTestCases } from "./tool/test-case/get-test-cases";
+import { GetTestCaseSteps } from "./tool/test-case/get-test-steps.ts";
+import { UpdateTestCase } from "./tool/test-case/update-test-case.ts";
+import { CreateTestCycle } from "./tool/test-cycle/create-test-cycle";
 import { GetTestCycle } from "./tool/test-cycle/get-test-cycle";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles";
+import { UpdateTestCycle } from "./tool/test-cycle/update-test-cycle.ts";
+import { CreateTestExecution } from "./tool/test-execution/create-test-execution";
 import { GetTestExecution } from "./tool/test-execution/get-test-execution";
 import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
+import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
 
@@ -76,6 +87,17 @@ export class ZephyrClient implements Client {
       new GetTestExecution(this),
       new GetTestExecutions(this),
       new CreateTestCase(this),
+      new CreateTestCycle(this),
+      new UpdateTestCase(this),
+      new UpdateTestCycle(this),
+      new CreateTestExecution(this),
+      new CreateTestCaseWebLink(this),
+      new CreateTestSteps(this),
+      new CreateTestCaseIssueLink(this),
+      new CreateFolder(this),
+      new CreateTestScript(this),
+      new UpdateTestExecution(this),
+      new GetTestCaseSteps(this),
     ];
 
     for (const tool of tools) {

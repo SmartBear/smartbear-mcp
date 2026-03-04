@@ -9,7 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Zephyr] Added a tool `create-test-case` for creating Test Case [#320](https://github.com/SmartBear/smartbear-mcp/pull/320)
+- [Zephyr] Added a tool `create-issue-link` for creating a link between a Jira issue and a Test Case [#340](https://github.com/SmartBear/smartbear-mcp/pull/340)
+- [Zephyr] Added a tool `create-folder` for creating folder [#329](https://github.com/SmartBear/smartbear-mcp/pull/329)
+- [Zephyr] Added a tool `create-test-script` for creating Test Script [#328](https://github.com/SmartBear/smartbear-mcp/pull/328)
+- [Zephyr] Added a tool `create-test-steps` for creating Test Steps for a Test Case [#353](https://github.com/SmartBear/smartbear-mcp/pull/353)
+- [Zephyr] Added a tool `update-test-execution` for updating a test execution [#345](https://github.com/SmartBear/smartbear-mcp/pull/345)
+- [Zephyr] Added a tool `get-test-steps` for getting a list of test steps for test case [#355](https://github.com/SmartBear/smartbear-mcp/pull/355)
+
+### Changed
+
+- [BugSnag] Remove eager caching during client configuration at startup - this is now lazy-loaded, but still cached as before for future requests [#356](https://github.com/SmartBear/smartbear-mcp/pull/356)
+
+## [0.14.1] - 2026-02-26
+
+### Fixed
+
+- [Zephyr] Fix issue with tools output schema validation
+
+## [0.14.0] - 2026-02-25
+
+### Added
+
+- [Zephyr] Added a tool `create-test-case` for creating a Test Case [#320](https://github.com/SmartBear/smartbear-mcp/pull/320)
+- [Zephyr] Added a tool `create-test-cycle` for creating a Test Cycle [#323](https://github.com/SmartBear/smartbear-mcp/pull/323)
+- [Zephyr] Added a tool `update-test-case` for updating a Test Case [#325](https://github.com/SmartBear/smartbear-mcp/pull/325)
+- [Zephyr] Added a tool `update-test-cycle` for updating a Test Cycle [#336](https://github.com/SmartBear/smartbear-mcp/pull/336)
+- [Zephyr] Added a tool `create-test-execution` for creating a Test Execution [#335](https://github.com/SmartBear/smartbear-mcp/pull/335)
+- [BugSnag] Updated the update errors tool to include functionality for snoozing BugSnag errors [#333](https://github.com/SmartBear/smartbear-mcp/pull/333)
+- [Zephyr] Added a tool `create-web-link` for creating a Web link for a Test Case [#337](https://github.com/SmartBear/smartbear-mcp/pull/337)
+- [BugSnag] Update the update errors tool to include functionality for linking and unlinking issues for BugSnag errors [#339](https://github.com/SmartBear/smartbear-mcp/pull/339)
 
 ## [0.13.5] - 2026-02-02
 
