@@ -6,6 +6,7 @@ import type { ZephyrClient } from "../../client";
 import {
   CreateTestCycleWebLinkBody,
   CreateTestCycleWebLinkParams,
+  CreateTestCycleWebLink201Response as createTestCycleResponse,
 } from "../../common/rest-api-schemas";
 export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -16,20 +17,31 @@ export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
     inputSchema: CreateTestCycleWebLinkParams.and(
       CreateTestCycleWebLinkBody.partial(),
     ),
+    outputSchema: createTestCycleResponse,
     examples: [
       {
         description:
-          "Create a link between the test cycle and generic URL for reference",
+          "Create a link between the specified test cycle by Id '100001' and generic URL 'https://www.atlassian.com' with description 'Atlassian homepage'",
         parameters: {
-          testCycleIdOrKey: "SA-R1",
+          testCycleIdOrKey: "100001",
           url: "https://www.atlassian.com",
-          description: "Link to Atlassian's homepage",
+          description: "Atlassian homepage",
         },
         expectedOutput: "The newly created Web Link with its ID and self link",
       },
       {
         description:
-          "Attach a documentation link to test cycle MM2-R15 for pump specifications",
+          "Create a web link for test cycle 'SA-R15' pointing to url: 'https://atlassian.com' with description 'Atlassian homepage'",
+        parameters: {
+          testCycleIdOrKey: "SA-R15",
+          url: "https://atlassian.com",
+          description: "Documentation for pump specifications",
+        },
+        expectedOutput: "The newly created Web Link with its ID and self link",
+      },
+      {
+        description:
+          "Attach a documentation link 'https://docs.atlassian.com'  to test cycle MM2-R15 for pump specifications",
         parameters: {
           testCycleIdOrKey: "10001",
           url: "https://docs.atlassian.com",

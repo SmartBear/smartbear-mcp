@@ -4,6 +4,7 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { CreateTestCycleWebLink201Response as createTestCycleWebLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestCycleWebLink } from "../../../../../zephyr/tool/test-cycle/create-web-link";
 
 describe("CreateTestCycleWebLink", () => {
@@ -41,9 +42,12 @@ describe("CreateTestCycleWebLink", () => {
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
     expect(instance.specification.inputSchema).toBeDefined();
+    expect(instance.specification.outputSchema).toBe(
+      createTestCycleWebLinkResponse,
+    );
   });
 
-  it("should call apiClient.post with correct params and return created web link information", async () => {
+  it("should call apiClient.post with correct params (Test Cycle Key) and return created web link information", async () => {
     const responseMock = {
       id: 53,
       self: "https://<api-base-url>/weblinks/53",
@@ -61,6 +65,33 @@ describe("CreateTestCycleWebLink", () => {
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/SA-R1/links/weblinks",
+      {
+        url: args.url,
+        description: args.description,
+      },
+    );
+
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
+  it("should call apiClient.post with correct params (Test Cycle Id) and return created web link information", async () => {
+    const responseMock = {
+      id: 53,
+      self: "https://<api-base-url>/weblinks/53",
+    };
+
+    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
+    const args = {
+      testCycleIdOrKey: "10001",
+      url: "https://example.com",
+      description: "Link to documentation",
+    };
+
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testcycles/10001/links/weblinks",
       {
         url: args.url,
         description: args.description,
