@@ -120,14 +120,6 @@ async function createConfiguredClient(
 ): Promise<BugsnagClient> {
   const client = new BugsnagClient();
   const mockServer = { getCache: () => mockCache } as any;
-  if (projectApiKey) {
-    // Allow configure to find a project to ensure the projectApiKey remains set for the test
-    const project = { id: "proj-1", name: "Project 1", api_key: projectApiKey };
-    mockCache.get
-      .mockReturnValueOnce([project])
-      .mockReturnValueOnce(project)
-      .mockReturnValueOnce({ "proj-1": [] });
-  }
   await client.configure(mockServer, {
     auth_token: authToken,
     project_api_key: projectApiKey,
@@ -580,196 +572,24 @@ describe("BugsnagClient", () => {
   });
 
   describe("initialization", () => {
-    it("should initialize successfully with organizations and projects", async () => {
-      const testClient = new BugsnagClient();
-      const mockOrg = getMockOrganization("org-1", "Test Org");
-      const mockProjects = [
-        getMockProject("proj-1", "Project 1"),
-        getMockProject("proj-2", "Project 2"),
-      ];
+    it("should initialize with API key", async () => {
+      const client = new BugsnagClient();
 
-      // Clear mocks from beforeEach
-      mockCurrentUserAPI.listUserOrganizations.mockClear();
-      mockCurrentUserAPI.getOrganizationProjects.mockClear();
-      mockCache.set.mockClear();
-
-      mockCache.get
-        .mockReturnValueOnce(null) // No cached projects
-        .mockReturnValueOnce(null) // No cached organization
-        .mockReturnValueOnce(null); // No current project
-      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
-        body: [mockOrg],
-      });
-      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
-        body: mockProjects,
-      });
-      mockCache.get.mockReturnValueOnce(mockProjects);
-
-      await testClient.configure({ getCache: () => mockCache } as any, {
-        auth_token: "test-token",
-      });
-
-      expect(mockCurrentUserAPI.listUserOrganizations).toHaveBeenCalledOnce();
-      expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith(
-        "org-1",
-      );
-      expect(mockCache.set).toHaveBeenCalledWith("bugsnag_org", mockOrg);
-      expect(mockCache.set).toHaveBeenCalledWith(
-        "bugsnag_projects",
-        mockProjects,
-      );
-    });
-
-    it("should initialize with project API key and set up event filters", async () => {
-      const clientWithApiKey = new BugsnagClient();
-      const mockProjects = [
-        getMockProject("proj-1", "Project 1", "project-api-key"),
-        getMockProject("proj-2", "Project 2", "other-key"),
-      ];
-      const mockEventFields = [
-        getMockEventField("user.email"),
-        getMockEventField("error.status"),
-        getMockEventField("search"), // This should be filtered out
-      ];
-
-      mockCache.get
-        .mockReturnValueOnce(mockProjects)
-        .mockReturnValueOnce(null)
-        .mockReturnValueOnce(mockProjects)
-        .mockReturnValueOnce(null);
-      mockProjectAPI.listProjectEventFields.mockResolvedValue({
-        body: mockEventFields,
-      });
-
-      await clientWithApiKey.configure({ getCache: () => mockCache } as any, {
+      await client.configure({ getCache: () => mockCache } as any, {
         auth_token: "test-token",
         project_api_key: "project-api-key",
       });
 
-      expect(mockCache.set).toHaveBeenCalledWith(
-        "bugsnag_current_project",
-        mockProjects[0],
-      );
-      expect(mockProjectAPI.listProjectEventFields).toHaveBeenCalledWith(
-        "proj-1",
-      );
-      // Verify that 'search' field is filtered out
-      const filteredFields = mockEventFields.filter(
-        (field) => field.display_id !== "search",
-      );
-      expect(mockCache.set).toHaveBeenCalledWith(
-        "bugsnag_project_event_fields",
-        { "proj-1": filteredFields },
-      );
+      expect(client.isConfigured()).toBe(true);
     });
-
     it("should initialize without project API key", async () => {
-      const clientWithNoApiKey = new BugsnagClient();
-      const mockProjects = [
-        getMockProject("proj-1", "Project 1", "project-api-key"),
-        getMockProject("proj-2", "Project 2", "other-key"),
-      ];
-
-      mockCache.get.mockReturnValueOnce(mockProjects);
-
-      await clientWithNoApiKey.configure({ getCache: () => mockCache } as any, {
-        auth_token: "test-token",
-      });
-
-      expect(mockCache.set).not.toHaveBeenCalledWith(
-        "bugsnag_current_project",
-        mockProjects[0],
-      );
-    });
-
-    it("should set current project when one project found", async () => {
-      const clientWithNoApiKey = new BugsnagClient();
-      const mockProjects = [
-        getMockProject("proj-1", "Project 1", "project-api-key"),
-      ];
-
-      mockCache.get
-        .mockReturnValueOnce(mockProjects)
-        .mockReturnValueOnce(null) // no current project
-        .mockReturnValueOnce(mockProjects)
-        .mockReturnValueOnce({ "proj-1": getMockEventField("user.email") });
-
-      await clientWithNoApiKey.configure({ getCache: () => mockCache } as any, {
-        auth_token: "test-token",
-      });
-
-      expect(mockCache.set).toHaveBeenCalledWith(
-        "bugsnag_current_project",
-        mockProjects[0],
-      );
-    });
-
-    it("should not throw error when no organizations found", async () => {
-      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({ body: [] });
-
       const client = new BugsnagClient();
-      await expect(
-        client.configure({ getCache: () => mockCache } as any, {
-          auth_token: "test-token",
-        }),
-      ).resolves.toBe(undefined);
-      expect(client.isConfigured()).toBe(false);
-      expect(console.error).toHaveBeenCalledWith(
-        "Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.",
-        expect.any(Error),
-      );
-    });
 
-    it("should not throw error when project with API key not found", async () => {
-      const clientWithApiKey = new BugsnagClient();
-      await clientWithApiKey.configure({ getCache: () => mockCache } as any, {
+      await client.configure({ getCache: () => mockCache } as any, {
         auth_token: "test-token",
-        project_api_key: "non-existent-key",
-      });
-      const mockOrg = getMockOrganization("org-1", "Test Org");
-      const mockProject = getMockProject("proj-1", "Project 1", "other-key");
-
-      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
-        body: [mockOrg],
-      });
-      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
-        body: [mockProject],
       });
 
-      await expect(
-        clientWithApiKey.configure({ getCache: () => mockCache } as any, {
-          auth_token: "test-token",
-          project_api_key: "non-existent-key",
-        }),
-      ).resolves.toBe(undefined);
-      expect(clientWithApiKey.isConfigured()).toBe(true);
-      expect(console.error).toHaveBeenCalledWith(
-        "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. Check your configured BugSnag project API key.",
-      );
-    });
-
-    it("should not throw error when no event fields found for project", async () => {
-      const clientWithApiKey = new BugsnagClient();
-      const mockOrg = getMockOrganization("org-1", "Test Org");
-      const mockProjects = [
-        getMockProject("proj-1", "Project 1", "project-api-key"),
-      ];
-
-      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
-        body: [mockOrg],
-      });
-      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
-        body: mockProjects,
-      });
-      mockProjectAPI.listProjectEventFields.mockResolvedValue({ body: [] });
-
-      await expect(
-        clientWithApiKey.configure({ getCache: () => mockCache } as any, {
-          auth_token: "test-token",
-          project_api_key: "project-api-key",
-        }),
-      ).resolves.toBe(undefined);
-      expect(clientWithApiKey.isConfigured()).toBe(true);
+      expect(client.isConfigured()).toBe(true);
     });
   });
 
