@@ -200,6 +200,16 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of Test Case Steps along with their properties.
 - **Use case**: Getting a list of Test Case Steps and their properties.
 
+### Create Test Case Test Steps
+- **Purpose**: Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.
+- **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - Mode (`mode`) - "APPEND" to add steps, "OVERWRITE" to replace all steps
+    - Items (`items`) - array of test steps, each containing either:
+      - `inline`: step with description, optional testData, expectedResult, customFields
+      - `testCase`: delegation to another test case by key, with optional parameters
+- **Returns**: The ID of the Test Steps resource and the API self URL to fetch it
+- **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
 ### Get Test Execution
 
 - **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
