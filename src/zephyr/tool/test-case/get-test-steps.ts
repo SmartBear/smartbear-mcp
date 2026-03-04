@@ -6,7 +6,7 @@ import type { ZephyrClient } from "../../client";
 import {
   GetTestCaseTestStepsParams,
   GetTestCaseTestStepsQueryParams,
-  GetTestCaseTestSteps200Response as getTestCaseResponse,
+  GetTestCaseTestSteps200Response as getTestCaseStepsResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetTestCaseSteps extends Tool<ZephyrClient> {
@@ -18,7 +18,7 @@ export class GetTestCaseSteps extends Tool<ZephyrClient> {
     inputSchema: GetTestCaseTestStepsParams.and(
       GetTestCaseTestStepsQueryParams.partial(),
     ),
-    outputSchema: getTestCaseResponse,
+    outputSchema: getTestCaseStepsResponse,
     examples: [
       {
         description:
@@ -31,12 +31,12 @@ export class GetTestCaseSteps extends Tool<ZephyrClient> {
         expectedOutput: "The first 10 test case steps with their details",
       },
       {
-        description: "Get any test case steps for test case with key 'SA-T1'",
+        description: "Get any test case step for test case with key 'SA-T1'",
         parameters: {
           testCaseKey: "SA-T1",
           maxResults: 1,
         },
-        expectedOutput: "One test case steps with its details",
+        expectedOutput: "One test case step with its details",
       },
       {
         description:
