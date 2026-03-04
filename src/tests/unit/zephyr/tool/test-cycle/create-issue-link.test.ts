@@ -1,0 +1,160 @@
+import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+} from "@modelcontextprotocol/sdk/types.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { CreateTestCaseIssueLink201Response as createTestCycleIssueLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
+import { CreateTestCycleIssueLink } from "../../../../../zephyr/tool/test-cycle/create-issue-link";
+
+describe("CreateTestCycleIssueLink", () => {
+  let mockClient: any;
+  let instance: CreateTestCycleIssueLink;
+
+  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+    ServerRequest,
+    ServerNotification
+  > = {
+    signal: AbortSignal.timeout(5000),
+    requestId: "",
+    sendNotification: (_notification) => {
+      throw new Error("Function not implemented.");
+    },
+    sendRequest: (_request, _resultSchema, _options?) => {
+      throw new Error("Function not implemented.");
+    },
+  };
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        post: vi.fn(),
+      }),
+    };
+    instance = new CreateTestCycleIssueLink(mockClient as any);
+  });
+
+  it("should set specification correctly", () => {
+    expect(instance.specification.title).toBe("Create Test Cycle Issue Link");
+    expect(instance.specification.summary).toBe(
+      "Create a new link between an issue in Jira and a Test Cycle in Zephyr",
+    );
+    expect(instance.specification.readOnly).toBe(false);
+    expect(instance.specification.idempotent).toBe(false);
+    expect(instance.specification.inputSchema).toBeDefined();
+    expect(instance.specification.outputSchema).toBe(
+      createTestCycleIssueLinkResponse,
+    );
+  });
+
+  it("should call apiClient.post with correct params using test cycle key and return created issue link information", async () => {
+    const responseMock = {
+      id: 53,
+      self: "https://<api-base-url>/issuelinks/53",
+    };
+
+    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
+    const args = {
+      testCycleIdOrKey: "SA-R1",
+      issueId: 53,
+    };
+
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testcycles/SA-R1/links/issues",
+      {
+        issueId: args.issueId,
+      },
+    );
+
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
+  it("should call apiClient.post with correct params using test cycle ID", async () => {
+    const responseMock = {
+      id: 54,
+      self: "https://<api-base-url>/issuelinks/54",
+    };
+
+    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
+    const args = {
+      testCycleIdOrKey: "1001",
+      issueId: 54,
+    };
+
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testcycles/1001/links/issues",
+      {
+        issueId: args.issueId,
+      },
+    );
+
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
+  it("should ignore extra parameters not in the schema", async () => {
+    const responseMock = {
+      id: 55,
+      self: "https://<api-base-url>/issuelinks/55",
+    };
+
+    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
+    const args = {
+      testCycleIdOrKey: "SA-R1",
+      issueId: 55,
+      extraField: "should be ignored",
+    };
+
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testcycles/SA-R1/links/issues",
+      {
+        issueId: args.issueId,
+      },
+    );
+
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
+  it("should handle apiClient.post throwing error", async () => {
+    mockClient
+      .getApiClient()
+      .post.mockRejectedValueOnce(new Error("API error"));
+
+    const args = {
+      testCycleIdOrKey: "SA-R1",
+      issueId: 53,
+    };
+
+    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+      "API error",
+    );
+  });
+
+  it("should throw validation error if issueId is missing", async () => {
+    const args = {
+      testCycleIdOrKey: "SA-R1",
+    };
+
+    await expect(
+      instance.handle(args, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow();
+  });
+
+  it("should throw validation error if testCycleIdOrKey is missing", async () => {
+    const args = {
+      issueId: 53,
+    };
+
+    await expect(
+      instance.handle(args, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow();
+  });
+});
