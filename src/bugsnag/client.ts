@@ -82,12 +82,6 @@ const ConfigurationSchema = z.object({
     .optional(),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
   endpoint: z.url().describe("BugSnag endpoint URL").optional(),
-  allow_unauthenticated: z.coerce
-    .boolean()
-    .describe(
-      "Allow the client to be configured without an auth token (tools will be listed but may fail)",
-    )
-    .default(false),
 });
 
 export class BugsnagClient implements Client {
@@ -137,19 +131,7 @@ export class BugsnagClient implements Client {
 
     const authToken = config.auth_token;
 
-    // Parse config to check for allow_unauthenticated (coerce handles string "true" -> boolean true)
-    const parsedConfig = ConfigurationSchema.safeParse(config);
-    const allowUnauthenticated =
-      parsedConfig.success && parsedConfig.data.allow_unauthenticated;
-
     if (!authToken) {
-      if (allowUnauthenticated) {
-        console.error(
-          "No authentication token provided for BugSnag client. Tools will be listed but may fail when invoked.",
-        );
-        this._isConfigured = true;
-        return;
-      }
       return;
     }
 

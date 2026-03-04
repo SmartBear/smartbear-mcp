@@ -124,7 +124,6 @@ async function createConfiguredClient(
     auth_token: authToken,
     project_api_key: projectApiKey,
     endpoint,
-    allow_unauthenticated: false,
   });
   mockCache.get.mockClear();
   return client;
@@ -548,7 +547,6 @@ describe("BugsnagClient", () => {
 
       await client.configure(mockServer, {
         auth_token: "test-token",
-        allow_unauthenticated: false,
       });
 
       // Cache should be used in getProjects
