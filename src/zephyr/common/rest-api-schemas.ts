@@ -3232,13 +3232,6 @@ export const CreateTestCycleWebLinkBody = zod.object({
   url: zod.string().url().describe("The web link URL"),
 });
 
-export const CreateTestCycleWebLink201Response = zod
-  .object({
-    id: zod.number().min(1).optional(),
-    self: zod.string().optional(),
-  })
-  .strict();
-
 export const CreateTestCycleWebLinkDefaultResponse = zod
   .object({
     errorCode: zod.number(),

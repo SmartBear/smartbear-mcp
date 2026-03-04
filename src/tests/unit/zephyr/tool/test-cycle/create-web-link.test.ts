@@ -4,7 +4,6 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestCycleWebLink201Response as createTestCycleWebLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestCycleWebLink } from "../../../../../zephyr/tool/test-cycle/create-web-link";
 
 describe("CreateTestCycleWebLink", () => {
@@ -42,9 +41,6 @@ describe("CreateTestCycleWebLink", () => {
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
     expect(instance.specification.inputSchema).toBeDefined();
-    expect(instance.specification.outputSchema).toBe(
-      createTestCycleWebLinkResponse,
-    );
   });
 
   it("should call apiClient.post with correct params (Test Cycle Key) and return created web link information", async () => {
