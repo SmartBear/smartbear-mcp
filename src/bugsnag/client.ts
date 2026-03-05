@@ -79,8 +79,7 @@ const ConfigurationSchema = z.object({
 
 export class BugsnagClient implements Client {
   private cache?: CacheService;
-  private projectApiKey?: string;
-  private configuredProjectApiKey?: string;
+  private _projectApiKey?: string;
   private _isConfigured: boolean = false;
   private _currentUserApi: CurrentUserAPI | undefined;
   private _errorsApi: ErrorAPI | undefined;
@@ -139,37 +138,7 @@ export class BugsnagClient implements Client {
     this._currentUserApi = new CurrentUserAPI(apiConfig);
     this._errorsApi = new ErrorAPI(apiConfig);
     this._projectApi = new ProjectAPI(apiConfig);
-    this.projectApiKey = config.project_api_key;
-
-    // Trigger caching of org and projects
-    try {
-      const projects = await this.getProjects();
-      // If there's just one project, make this the current project
-      if (projects.length === 1 && !this.projectApiKey) {
-        this.projectApiKey = projects[0].api_key;
-      }
-      if (this.projectApiKey) {
-        this.configuredProjectApiKey = this.projectApiKey; // Store the originally configured API key
-        const currentProject = await this.getCurrentProject();
-        if (currentProject) {
-          await this.getProjectEventFields(currentProject);
-        } else {
-          // Clear the project API key to allow tools to work across all projects
-          this.projectApiKey = undefined;
-          console.error(
-            "Unable to find your configured BugSnag project, the BugSnag tools will continue to work across all projects in your organization. " +
-              "Check your configured BugSnag project API key.",
-          );
-        }
-      }
-    } catch (error) {
-      // Swallow auth errors here to allow the tools to be registered for visibility, even if the token is invalid
-      console.error(
-        "Unable to connect to BugSnag APIs, the BugSnag tools will not work. Check your configured BugSnag auth token.",
-        error,
-      );
-      return;
-    }
+    this._projectApiKey = config.project_api_key;
     this._isConfigured = true;
     return;
   }
@@ -261,10 +230,11 @@ export class BugsnagClient implements Client {
 
   async getCurrentProject(): Promise<Project | null> {
     let project = this.cache?.get<Project>(cacheKeys.CURRENT_PROJECT) ?? null;
-    if (!project && this.projectApiKey) {
+    if (!project && this._projectApiKey) {
       const projects = await this.getProjects();
       project =
-        projects.find((p: Project) => p.api_key === this.projectApiKey) ?? null;
+        projects.find((p: Project) => p.api_key === this._projectApiKey) ??
+        null;
       this.cache?.set(cacheKeys.CURRENT_PROJECT, project);
     }
     return project;
@@ -337,7 +307,7 @@ export class BugsnagClient implements Client {
         throw new ToolError(`Project with ID ${projectId} not found.`);
       }
       // If this hasn't been configured at startup, set this to the current project for future tool calls
-      if (!this.configuredProjectApiKey) {
+      if (!this._projectApiKey) {
         this.cache?.set(cacheKeys.CURRENT_PROJECT, maybeProject);
       }
       return maybeProject;
