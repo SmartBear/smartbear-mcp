@@ -3206,6 +3206,13 @@ export const CreateTestCycleIssueLinkBody = zod.object({
   issueId: zod.number().min(1).describe("The Jira issue ID"),
 });
 
+export const CreateTestCycleIssueLink201Response = zod
+  .object({
+    id: zod.number().min(1).optional(),
+    self: zod.string().optional(),
+  })
+  .strict();
+
 export const CreateTestCycleIssueLinkDefaultResponse = zod
   .object({
     errorCode: zod.number(),
