@@ -75,6 +75,16 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Cycle ID, with the API URL to access it and the Test Cycle key.
 - **Use case**: Creating a Test Cycle with its properties.
 
+### Create Test Cycle Web Link
+
+- **Purpose**: Creates a web link that associates a test cycle with a specified generic URL.
+ **Parameters:**
+    - Test Cycle key or id (`testCycleIdOrKey`)
+    - optional description (`description`)
+    - url (`url`)
+- **Returns**: The created Test Cycle Web Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creates a link between a test cycle and a generic URL.
+
 ### Update Test Cycle
 
 - **Purpose**: Update an existing Test Cycle within the Zephyr project specified by ID or KEY
@@ -175,7 +185,7 @@ The following environment variables configure the Zephyr integration:
     - Test Case key (`testCaseKey`)
     - optional description (`description`)
     - url (`url`)
-- **Returns**: The created Test Case Web Link ID and the API self URL to access it.
+- **Returns**: The created Test Case Web Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test case and a generic URL.
 
 ### Create Test Case Issue Link
