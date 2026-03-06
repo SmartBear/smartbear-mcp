@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { createReadStream, existsSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
-
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
@@ -36,6 +38,7 @@ export async function runHttpMode() {
     "Content-Type",
     "Authorization",
     "MCP-Session-Id", // Required for StreamableHTTP
+    "MCP-Protocol-Version",
     "x-custom-auth-headers", // used by mcp-inspector
     ...allowedAuthHeaders,
   ].join(", ");
@@ -47,6 +50,7 @@ export async function runHttpMode() {
       if (allowedOrigins.includes(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
       }
+      res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader(
         "Access-Control-Allow-Methods",
         "GET, POST, DELETE, OPTIONS",
@@ -74,6 +78,34 @@ export async function runHttpMode() {
       // STREAMABLE HTTP ENDPOINT (modern, preferred)
       if (url.pathname === "/mcp") {
         await handleStreamableHttpRequest(req, res, transports);
+        return;
+      }
+
+      // Serve static assets from dist/assets/
+      if (req.method === "GET" && url.pathname.startsWith("/assets/")) {
+        const distDir = join(
+          fileURLToPath(new URL(".", import.meta.url)),
+          "../",
+        );
+        const filePath = join(distDir, url.pathname);
+
+        // Prevent directory traversal attacks
+        if (!filePath.startsWith(distDir) || !existsSync(filePath)) {
+          res.writeHead(404, { "Content-Type": "text/plain" });
+          res.end("Not found");
+          return;
+        }
+
+        const ext = url.pathname.split(".").pop();
+        const contentType =
+          ext === "css"
+            ? "text/css"
+            : ext === "js"
+              ? "application/javascript"
+              : "text/plain";
+
+        res.writeHead(200, { "Content-Type": contentType });
+        createReadStream(filePath).pipe(res);
         return;
       }
 

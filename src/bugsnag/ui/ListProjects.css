@@ -1,0 +1,58 @@
+.list-projects {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  input {
+    padding: 0.2rem;
+  }
+
+  .project-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      details {
+        padding: 0.75rem;
+        margin-bottom: 0.1rem;
+        border-radius: 2px;
+        color: #212121;
+        background: white;
+
+        summary {
+          cursor: pointer;
+        }
+
+        &:hover {
+          background: #ededfc;
+        }
+
+        .message,
+        .error-list {
+          margin-top: 0.5rem;
+        }
+      }
+    }
+  }
+
+  .error-list {
+    padding: 0;
+    list-style: none;
+
+    li {
+      margin: 0 0 0.3rem;
+      padding: 0.5rem;
+      border-radius: 3px;
+      background: #ffd7d7;
+    }
+
+    .error-header {
+      font-weight: bold;
+    }
+    .error-message {
+      margin-top: 0.25rem;
+      color: #5a5959;
+    }
+  }
+}
