@@ -16,6 +16,14 @@ The following environment variables configure the Zephyr integration:
 
 ## Available Tools
 
+### Get Issue Link Test Cases
+
+- **Purpose**: Retrieve Test Cases linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Cases along with their keys and versions.
+- **Use case**: Retrieve the Test Cases linked to a specific Jira issue.
+
 ### Get Projects
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
