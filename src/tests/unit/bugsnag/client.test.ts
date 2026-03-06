@@ -545,7 +545,9 @@ describe("BugsnagClient", () => {
         getCache: vi.fn().mockReturnValue(mockCache),
       } as any;
 
-      await client.configure(mockServer, { auth_token: "test-token" });
+      await client.configure(mockServer, {
+        auth_token: "test-token",
+      });
 
       // Cache should be used in getProjects
       mockCache.get.mockReturnValueOnce(null); // No cached org

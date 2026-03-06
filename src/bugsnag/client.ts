@@ -9,18 +9,20 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types";
+import type {
+  Build,
+  EventField,
+  Organization,
+  Project,
+  Release,
+  TraceField,
+} from "./client/api/index";
 import {
-  type Build,
   Configuration,
   CurrentUserAPI,
   ErrorAPI,
   ErrorUpdateRequest,
-  type EventField,
-  type Organization,
-  type Project,
   ProjectAPI,
-  type Release,
-  type TraceField,
 } from "./client/api/index";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
@@ -72,7 +74,12 @@ interface StabilityData {
 }
 
 const ConfigurationSchema = z.object({
-  auth_token: z.string().describe("BugSnag personal authentication token"),
+  auth_token: z
+    .string()
+    .describe(
+      "BugSnag authentication token (personal access token or OAuth token)",
+    )
+    .optional(),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
   endpoint: z.url().describe("BugSnag endpoint URL").optional(),
 });
@@ -121,8 +128,22 @@ export class BugsnagClient implements Client {
       config.project_api_key,
       config.endpoint,
     );
+
+    const authToken = config.auth_token;
+
+    if (!authToken) {
+      return;
+    }
+
+    await this.initializeApis(authToken, config);
+  }
+
+  private async initializeApis(
+    authToken: string,
+    config: z.infer<typeof ConfigurationSchema>,
+  ) {
     const apiConfig = new Configuration({
-      apiKey: `token ${config.auth_token}`,
+      apiKey: `token ${authToken}`,
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
@@ -140,7 +161,6 @@ export class BugsnagClient implements Client {
     this._projectApi = new ProjectAPI(apiConfig);
     this._projectApiKey = config.project_api_key;
     this._isConfigured = true;
-    return;
   }
 
   isConfigured(): boolean {
