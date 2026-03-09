@@ -4,7 +4,6 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestCaseIssueLink201Response as createTestExecutionIssueLinkResponse } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestExecutionIssueLink } from "../../../../../zephyr/tool/test-execution/create-issue-link";
 
 describe("CreateTestExecutionIssueLink", () => {
@@ -44,16 +43,11 @@ describe("CreateTestExecutionIssueLink", () => {
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
     expect(instance.specification.inputSchema).toBeDefined();
-    expect(instance.specification.outputSchema).toBe(
-      createTestExecutionIssueLinkResponse,
-    );
+    expect(instance.specification.outputSchema).toBeUndefined();
   });
 
   it("should call apiClient.post with correct params and return created issue link information", async () => {
-    const responseMock = {
-      id: 53,
-      self: "https://<api-base-url>/issuelinks/53",
-    };
+    const responseMock = {};
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
 
@@ -75,10 +69,7 @@ describe("CreateTestExecutionIssueLink", () => {
   });
 
   it("should work with numeric test execution id", async () => {
-    const responseMock = {
-      id: 54,
-      self: "https://<api-base-url>/issuelinks/54",
-    };
+    const responseMock = {};
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
 
@@ -100,10 +91,7 @@ describe("CreateTestExecutionIssueLink", () => {
   });
 
   it("should ignore extra parameters not in the schema", async () => {
-    const responseMock = {
-      id: 55,
-      self: "https://<api-base-url>/issuelinks/55",
-    };
+    const responseMock = {};
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
 
