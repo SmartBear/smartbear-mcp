@@ -16,6 +16,14 @@ The following environment variables configure the Zephyr integration:
 
 ## Available Tools
 
+### Get Issue Link Test Cases
+
+- **Purpose**: Retrieve Test Cases linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Cases along with their keys and versions.
+- **Use case**: Retrieve the Test Cases linked to a specific Jira issue.
+
 ### Get Projects
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
@@ -66,6 +74,16 @@ The following environment variables configure the Zephyr integration:
     - optional Custom Field names with associated values (`customFields`)
 - **Returns**: The created Test Cycle ID, with the API URL to access it and the Test Cycle key.
 - **Use case**: Creating a Test Cycle with its properties.
+
+### Create Test Cycle Web Link
+
+- **Purpose**: Creates a web link that associates a test cycle with a specified generic URL.
+ **Parameters:**
+    - Test Cycle key or id (`testCycleIdOrKey`)
+    - optional description (`description`)
+    - url (`url`)
+- **Returns**: The created Test Cycle Web Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creates a link between a test cycle and a generic URL.
 
 ### Update Test Cycle
 
@@ -167,7 +185,7 @@ The following environment variables configure the Zephyr integration:
     - Test Case key (`testCaseKey`)
     - optional description (`description`)
     - url (`url`)
-- **Returns**: The created Test Case Web Link ID and the API self URL to access it.
+- **Returns**: The created Test Case Web Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test case and a generic URL.
 
 ### Create Test Case Issue Link

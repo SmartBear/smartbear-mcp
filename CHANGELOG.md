@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool `create-test-steps` for creating Test Steps for a Test Case [#353](https://github.com/SmartBear/smartbear-mcp/pull/353)
 - [Zephyr] Added a tool `update-test-execution` for updating a test execution [#345](https://github.com/SmartBear/smartbear-mcp/pull/345)
 - [Zephyr] Added a tool `get-test-steps` for getting a list of test steps for test case [#355](https://github.com/SmartBear/smartbear-mcp/pull/355)
+- [Zephyr] Added a tool `get-test-cases` for fetching test cases linked to a Jira issue [#358](https://github.com/SmartBear/smartbear-mcp/pull/358)
+- [Zephyr] Added a tool `create-web-link` for creating a Web link for a Test Cycle [#354](https://github.com/SmartBear/smartbear-mcp/pull/354)
 - [Zephyr] Added a tool `create-test-execution-issue-link` for creating a link between a Jira issue and a Test Execution
 
 ### Changed
