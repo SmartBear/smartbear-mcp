@@ -16,6 +16,14 @@ The following environment variables configure the Zephyr integration:
 
 ## Available Tools
 
+### Get Issue Link Test Cases
+
+- **Purpose**: Retrieve Test Cases linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Cases along with their keys and versions.
+- **Use case**: Retrieve the Test Cases linked to a specific Jira issue.
+
 ### Get Projects
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
@@ -66,6 +74,16 @@ The following environment variables configure the Zephyr integration:
     - optional Custom Field names with associated values (`customFields`)
 - **Returns**: The created Test Cycle ID, with the API URL to access it and the Test Cycle key.
 - **Use case**: Creating a Test Cycle with its properties.
+
+### Create Test Cycle Web Link
+
+- **Purpose**: Creates a web link that associates a test cycle with a specified generic URL.
+ **Parameters:**
+    - Test Cycle key or id (`testCycleIdOrKey`)
+    - optional description (`description`)
+    - url (`url`)
+- **Returns**: The created Test Cycle Web Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creates a link between a test cycle and a generic URL.
 
 ### Update Test Cycle
 
@@ -167,7 +185,7 @@ The following environment variables configure the Zephyr integration:
     - Test Case key (`testCaseKey`)
     - optional description (`description`)
     - url (`url`)
-- **Returns**: The created Test Case Web Link ID and the API self URL to access it.
+- **Returns**: The created Test Case Web Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test case and a generic URL.
 
 ### Create Test Case Issue Link
@@ -198,6 +216,26 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Script ID, with the API URL to access it
 - **Use case**: Adding test case scripts (plain or BDD format) to an existing Test Case.
 
+### Get Test Case Steps
+
+- **Purpose**: Retrieve the test case steps for the given test case, available within your Zephyr account by test Case key.
+- **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - optional starting position for pagination (`startAt`)
+    - optional max results to return (`maxResults`)
+- **Returns**: A list of Test Case Steps along with their properties.
+- **Use case**: Getting a list of Test Case Steps and their properties.
+
+### Create Test Case Test Steps
+- **Purpose**: Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.
+- **Parameters:**
+    - Test Case key (`testCaseKey`)
+    - Mode (`mode`) - "APPEND" to add steps, "OVERWRITE" to replace all steps
+    - Items (`items`) - array of test steps, each containing either:
+      - `inline`: step with description, optional testData, expectedResult, customFields
+      - `testCase`: delegation to another test case by key, with optional parameters
+- **Returns**: The ID of the Test Steps resource and the API self URL to fetch it
+- **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
 ### Get Test Execution
 
 - **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
