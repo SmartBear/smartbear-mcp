@@ -29,7 +29,7 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 See individual guides for suggested prompts and supported tools and resources:
 
 - [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - Comprehensive error monitoring and debugging capabilities
-- [Test Hub](https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration) - Test management and execution capabilities
+- [Reflect](https://developer.smartbear.com/smartbear-mcp/docs/reflect-integration) - Test management and execution capabilities
 - **Swagger**
   - [Portal](https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration) - Portal and product management capabilities
   - [Studio](https://developer.smartbear.com/smartbear-mcp/docs/swagger-studio-integration) - API and Domain management capabilities, including AI-powered API generation from prompts and automatic standardization

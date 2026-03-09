@@ -33,7 +33,7 @@
         },
         {
           "name": "REFLECT_API_TOKEN",
-          "description": "Reflect API token. Leave empty to disable Reflect tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/test-hub-integration",
+          "description": "Reflect API token. Leave empty to disable Reflect tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/reflect-integration",
           "isRequired": false,
           "isSecret": true
         },

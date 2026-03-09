@@ -4,7 +4,7 @@ The SmartBear MCP Server enables a secure and intelligent bridge between SmartBe
 
 ![mcp-server.jpg](./images/embedded/mcp-server.jpg)
 
-By surfacing actionable context from across Swagger, Test Hub, QMetry, Zephyr, and BugSnag into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients, the MCP Server empowers teams to accelerate design, testing, and troubleshooting workflows---all while keeping developers within their natural flow of work.
+By surfacing actionable context from across Swagger, Reflect, QMetry, Zephyr, and BugSnag into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients, the MCP Server empowers teams to accelerate design, testing, and troubleshooting workflows---all while keeping developers within their natural flow of work.
 
 This integration empowers development teams to accelerate troubleshooting workflows by bringing rich contextual data from BugSnag directly into their development conversations with AI tools like GitHub Co-Pilot, Cursor, Claude, and other MCP-compatible clients.
 
