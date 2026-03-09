@@ -278,6 +278,15 @@ The following environment variables configure the Zephyr integration:
 - **Returns**:  Empty object if the update is successful.
 - **Use case**: Updating a Test Execution with its properties.
 
+### Create Test Execution Issue Link
+
+- **Purpose**: Creates a link between a Test Execution and a Jira Issue.
+- **Parameters:**
+  - Test Execution key or id (`testExecutionIdOrKey`)
+  - Jira Issue Id (`issueId`)
+- **Returns**: The created Test Execution Issue Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creating a link between a Test Execution and a Jira Issue, for example to associate a test execution with the bug it found or the story it validates.
+
 ### Create folder
 
 - **Purpose**: Create a new Folder within the specified Zephyr project to organize Test Cases, Test Plans, or Test Cycles.
