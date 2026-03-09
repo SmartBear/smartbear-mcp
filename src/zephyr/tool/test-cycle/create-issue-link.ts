@@ -6,7 +6,6 @@ import type { ZephyrClient } from "../../client";
 import {
   CreateTestCycleIssueLinkBody,
   CreateTestCycleIssueLinkParams,
-  CreateTestCaseIssueLink201Response as createTestCycleIssueLinkResponse,
 } from "../../common/rest-api-schemas";
 export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -18,7 +17,6 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
     inputSchema: CreateTestCycleIssueLinkParams.and(
       CreateTestCycleIssueLinkBody.partial(),
     ),
-    outputSchema: createTestCycleIssueLinkResponse,
     examples: [
       {
         description:
