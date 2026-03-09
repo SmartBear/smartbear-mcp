@@ -4,7 +4,6 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  CreateTestExecutionIssueLink201Response,
   CreateTestExecutionIssueLinkBody,
   CreateTestExecutionIssueLinkParams,
 } from "../../common/rest-api-schemas";
@@ -19,7 +18,6 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
     inputSchema: CreateTestExecutionIssueLinkParams.and(
       CreateTestExecutionIssueLinkBody.partial(),
     ),
-    outputSchema: CreateTestExecutionIssueLink201Response,
     examples: [
       {
         description:
