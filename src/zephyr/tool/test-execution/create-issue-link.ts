@@ -4,9 +4,9 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
+  CreateTestExecutionIssueLink201Response,
   CreateTestExecutionIssueLinkBody,
   CreateTestExecutionIssueLinkParams,
-  CreateTestCaseIssueLink201Response as CreateTestExecutionIssueLinkResponse,
 } from "../../common/rest-api-schemas";
 
 export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
@@ -19,7 +19,7 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
     inputSchema: CreateTestExecutionIssueLinkParams.and(
       CreateTestExecutionIssueLinkBody.partial(),
     ),
-    outputSchema: CreateTestExecutionIssueLinkResponse,
+    outputSchema: CreateTestExecutionIssueLink201Response,
     examples: [
       {
         description:
@@ -29,7 +29,7 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
           issueId: 10100,
         },
         expectedOutput:
-          "The newly created Issue Link with its ID and self link",
+          "An empty response indicating the Issue Link was successfully created",
       },
       {
         description:
@@ -39,7 +39,7 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
           issueId: 20050,
         },
         expectedOutput:
-          "The newly created Issue Link with its ID and self link",
+          "An empty response indicating the Issue Link was successfully created",
       },
     ],
   };

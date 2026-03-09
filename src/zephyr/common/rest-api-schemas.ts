@@ -5286,6 +5286,8 @@ export const CreateTestExecutionIssueLinkBody = zod.object({
   issueId: zod.number().min(1).describe("The Jira issue ID"),
 });
 
+export const CreateTestExecutionIssueLink201Response = zod.object({}).strict();
+
 export const CreateTestExecutionIssueLinkDefaultResponse = zod
   .object({
     errorCode: zod.number(),
