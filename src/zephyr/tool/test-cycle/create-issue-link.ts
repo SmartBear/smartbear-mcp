@@ -25,8 +25,6 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
           testCycleIdOrKey: "SA-R1",
           issueId: 10100,
         },
-        expectedOutput:
-          "A confirmation that the issue link was successfully created",
       },
       {
         description:
@@ -35,19 +33,17 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
           testCycleIdOrKey: "1001",
           issueId: 20200,
         },
-        expectedOutput:
-          "A confirmation that the issue link was successfully created",
       },
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const { testCycleIdOrKey } = CreateTestCycleIssueLinkParams.parse(args);
     const body = CreateTestCycleIssueLinkBody.parse(args);
-    const response = await this.client
+    await this.client
       .getApiClient()
       .post(`/testcycles/${testCycleIdOrKey}/links/issues`, body);
     return {
-      structuredContent: response,
+      structuredContent: {},
       content: [],
     };
   };

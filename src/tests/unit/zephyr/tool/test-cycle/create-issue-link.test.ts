@@ -43,17 +43,15 @@ describe("CreateTestCycleIssueLink", () => {
     expect(instance.specification.inputSchema).toBeDefined();
   });
 
-  it("should call apiClient.post with correct params using test cycle key and return created issue link information", async () => {
-    const responseMock = {};
-
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+  it("should call apiClient.post with correct params using test cycle key", async () => {
+    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
 
     const args = {
       testCycleIdOrKey: "SA-R1",
       issueId: 53,
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/SA-R1/links/issues",
@@ -61,21 +59,17 @@ describe("CreateTestCycleIssueLink", () => {
         issueId: args.issueId,
       },
     );
-
-    expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should call apiClient.post with correct params using test cycle ID", async () => {
-    const responseMock = {};
-
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
 
     const args = {
       testCycleIdOrKey: "1001",
       issueId: 54,
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/1001/links/issues",
@@ -83,14 +77,10 @@ describe("CreateTestCycleIssueLink", () => {
         issueId: args.issueId,
       },
     );
-
-    expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should ignore extra parameters not in the schema", async () => {
-    const responseMock = {};
-
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
 
     const args = {
       testCycleIdOrKey: "SA-R1",
@@ -98,7 +88,7 @@ describe("CreateTestCycleIssueLink", () => {
       extraField: "should be ignored",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/SA-R1/links/issues",
@@ -106,8 +96,6 @@ describe("CreateTestCycleIssueLink", () => {
         issueId: args.issueId,
       },
     );
-
-    expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should handle apiClient.post throwing error", async () => {
