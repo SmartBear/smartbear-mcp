@@ -16,12 +16,12 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
     readOnly: false,
     idempotent: false,
     inputSchema: CreateTestExecutionIssueLinkParams.and(
-      CreateTestExecutionIssueLinkBody.partial(),
+      CreateTestExecutionIssueLinkBody,
     ),
     examples: [
       {
         description:
-          "Create a link between the test execution SA-E40 and the Jira Issue ID 10100",
+          "Create a link between the test execution with key SA-E40 and the Jira Issue ID 10100",
         parameters: {
           testExecutionIdOrKey: "SA-E40",
           issueId: 10100,
