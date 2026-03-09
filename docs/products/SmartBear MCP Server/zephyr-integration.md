@@ -130,6 +130,15 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Case Issue Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test case and a Jira Issue.
 
+### Create Test Cycle Issue Link
+
+- **Purpose**: Creates an Issue link that associates a test cycle with a Jira Issue.
+- **Parameters:**
+  - Test Cycle ID or key (`testCycleIdOrKey`)
+  - Jira Issue Id (`issueId`)
+- **Returns**: The created Test Cycle Issue Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creates a link between a test cycle and a Jira Issue.
+
 ## Test Scripts
 
 ### Creation Operations
