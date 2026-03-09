@@ -7,6 +7,7 @@ import {
   CreateTestCycleIssueLinkBody,
   CreateTestCycleIssueLinkParams,
 } from "../../common/rest-api-schemas";
+
 export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Cycle Issue Link",
