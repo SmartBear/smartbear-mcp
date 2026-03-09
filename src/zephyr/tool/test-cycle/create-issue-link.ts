@@ -26,7 +26,7 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
           issueId: 10100,
         },
         expectedOutput:
-          "The newly created Issue Link with its ID and self link",
+          "A confirmation that the issue link was successfully created",
       },
       {
         description:
@@ -36,7 +36,7 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
           issueId: 20200,
         },
         expectedOutput:
-          "The newly created Issue Link with its ID and self link",
+          "A confirmation that the issue link was successfully created",
       },
     ],
   };

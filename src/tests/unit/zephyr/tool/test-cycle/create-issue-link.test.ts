@@ -44,10 +44,7 @@ describe("CreateTestCycleIssueLink", () => {
   });
 
   it("should call apiClient.post with correct params using test cycle key and return created issue link information", async () => {
-    const responseMock = {
-      id: 53,
-      self: "https://<api-base-url>/issuelinks/53",
-    };
+    const responseMock = {};
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
 
@@ -69,10 +66,7 @@ describe("CreateTestCycleIssueLink", () => {
   });
 
   it("should call apiClient.post with correct params using test cycle ID", async () => {
-    const responseMock = {
-      id: 54,
-      self: "https://<api-base-url>/issuelinks/54",
-    };
+    const responseMock = {};
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
 
@@ -94,10 +88,7 @@ describe("CreateTestCycleIssueLink", () => {
   });
 
   it("should ignore extra parameters not in the schema", async () => {
-    const responseMock = {
-      id: 55,
-      self: "https://<api-base-url>/issuelinks/55",
-    };
+    const responseMock = {};
 
     mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
 
