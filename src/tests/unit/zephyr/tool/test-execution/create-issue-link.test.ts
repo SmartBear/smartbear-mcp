@@ -46,17 +46,15 @@ describe("CreateTestExecutionIssueLink", () => {
     expect(instance.specification.outputSchema).toBeUndefined();
   });
 
-  it("should call apiClient.post with correct params and return created issue link information", async () => {
-    const responseMock = {};
-
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+  it("should call apiClient.post with correct params using test execution key", async () => {
+    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
 
     const args = {
       testExecutionIdOrKey: "SA-E40",
       issueId: 10100,
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testexecutions/SA-E40/links/issues",
@@ -64,21 +62,17 @@ describe("CreateTestExecutionIssueLink", () => {
         issueId: args.issueId,
       },
     );
-
-    expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should work with numeric test execution id", async () => {
-    const responseMock = {};
-
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
 
     const args = {
       testExecutionIdOrKey: "1",
       issueId: 20050,
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testexecutions/1/links/issues",
@@ -86,14 +80,10 @@ describe("CreateTestExecutionIssueLink", () => {
         issueId: args.issueId,
       },
     );
-
-    expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should ignore extra parameters not in the schema", async () => {
-    const responseMock = {};
-
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
 
     const args = {
       testExecutionIdOrKey: "SA-E40",
@@ -101,7 +91,7 @@ describe("CreateTestExecutionIssueLink", () => {
       extraField: "should be ignored",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testexecutions/SA-E40/links/issues",
@@ -109,8 +99,6 @@ describe("CreateTestExecutionIssueLink", () => {
         issueId: args.issueId,
       },
     );
-
-    expect(result.structuredContent).toBe(responseMock);
   });
 
   it("should handle apiClient.post throwing error", async () => {

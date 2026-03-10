@@ -26,8 +26,6 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
           testExecutionIdOrKey: "SA-E40",
           issueId: 10100,
         },
-        expectedOutput:
-          "An empty response indicating the Issue Link was successfully created",
       },
       {
         description:
@@ -36,8 +34,6 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
           testExecutionIdOrKey: "1",
           issueId: 20050,
         },
-        expectedOutput:
-          "An empty response indicating the Issue Link was successfully created",
       },
     ],
   };
@@ -46,11 +42,11 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
     const { testExecutionIdOrKey } =
       CreateTestExecutionIssueLinkParams.parse(args);
     const body = CreateTestExecutionIssueLinkBody.parse(args);
-    const response = await this.client
+    await this.client
       .getApiClient()
       .post(`/testexecutions/${testExecutionIdOrKey}/links/issues`, body);
     return {
-      structuredContent: response,
+      structuredContent: {},
       content: [],
     };
   };

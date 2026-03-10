@@ -312,13 +312,15 @@ The following environment variables configure the Zephyr integration:
 - **Use case**: Updating a Test Execution with its properties.
 - **Note**: Unlike other update operations, this endpoint ignores any fields that are null or absent - they will not be cleared or modified. Only explicitly provided non-null values will update the execution.
 
-### Create Test Execution Issue Link
+### Link Operations
+
+#### Create Test Execution Issue Link
 
 - **Purpose**: Creates a link between a Test Execution and a Jira Issue.
 - **Parameters:**
   - Test Execution key or id (`testExecutionIdOrKey`)
   - Jira Issue Id (`issueId`)
-- **Returns**: The created Test Execution Issue Link ID and the API self URL that can be used to delete the link.
+- **Returns**: A confirmation that the link was successfully created.
 - **Use case**: Creating a link between a Test Execution and a Jira Issue, for example to associate a test execution with the bug it found or the story it validates.
 
 ## Statuses
