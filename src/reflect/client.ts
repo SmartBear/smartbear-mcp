@@ -6,6 +6,7 @@ import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
   GetInputFunction,
+  RegisterPromptFunction,
   RegisterToolsFunction,
 } from "../common/types";
 import { API_KEY_HEADER } from "./config/constants";
@@ -25,6 +26,7 @@ import { GetScreenshot } from "./tool/recording/get-screenshot";
 import { ListSegments } from "./tool/tests/list-segments";
 import type { WebSocketManager } from "./websocket-manager";
 import type { TestPlatform } from "./types/common";
+import { PROMPTS } from "./prompts";
 
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("Reflect API authentication token"),
@@ -123,6 +125,12 @@ export class ReflectClient implements Client {
 
     for (const tool of tools) {
       register(tool.specification, tool.handle);
+    }
+  }
+
+  registerPrompts(register: RegisterPromptFunction): void {
+    for (const prompt of PROMPTS) {
+      register(prompt.name, prompt.params, prompt.callback);
     }
   }
 }
