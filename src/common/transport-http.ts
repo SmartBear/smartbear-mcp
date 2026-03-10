@@ -7,6 +7,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import { clientRegistry } from "./client-registry";
+import { requestContextStorage } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import type { Client } from "./types";
 import { isOptionalType } from "./zod-utils";
@@ -454,7 +455,10 @@ async function handleStreamableHttpRequest(
     }
 
     // Delegate to transport to handle the MCP protocol message
-    await transport.handleRequest(req, res, parsedBody);
+    await requestContextStorage.run(
+      { headers: req.headers },
+      async () => await transport.handleRequest(req, res, parsedBody),
+    );
   } catch (error) {
     console.error("Error handling StreamableHTTP request:", error);
     res.writeHead(500, { "Content-Type": "text/plain" });
@@ -559,10 +563,14 @@ async function handleLegacyMessageRequest(
     try {
       const parsedBody = JSON.parse(body);
       // Route message to the SSE transport for processing
-      await (session.transport as SSEServerTransport).handlePostMessage(
-        req,
-        res,
-        parsedBody,
+      await requestContextStorage.run(
+        { headers: req.headers },
+        async () =>
+          await (session.transport as SSEServerTransport).handlePostMessage(
+            req,
+            res,
+            parsedBody,
+          ),
       );
     } catch (error) {
       console.error("Error handling POST message:", error);
@@ -600,35 +608,6 @@ async function newServer(
           req.headers[headerName] || req.headers[headerName.toLowerCase()];
         if (typeof value === "string") {
           return value;
-        }
-
-        // For BugSnag client, allow reading endpoint from environment variable
-        // This is useful for On-Premise installations where the endpoint is fixed
-        if (client.name === "BugSnag" && key === "endpoint") {
-          const envEndpoint =
-            process.env.BUGSNAG_API_URL || process.env.BUGSNAG_ENDPOINT;
-          if (envEndpoint) {
-            return envEndpoint;
-          }
-        }
-
-        // Check standard Authorization header as fallback
-        // This supports the MCP Inspector which sends the obtained OAuth token in the Authorization header
-        // We map this token to the primary authentication config key of the client
-        const isAuthKey = [
-          "auth_token",
-          "api_token",
-          "api_key",
-          "token",
-          "login_ticket",
-        ].includes(key);
-
-        if (isAuthKey && req.headers.authorization) {
-          const authHeader = req.headers.authorization;
-          if (authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-          }
-          return authHeader;
         }
 
         return null;

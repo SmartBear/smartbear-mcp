@@ -1,4 +1,5 @@
 import z from "zod";
+import { getRequestHeader } from "../common/request-context";
 import type {
   Client,
   GetInputFunction,
@@ -44,6 +45,7 @@ const ConfigurationSchema = z.object({
 
 export class ZephyrClient implements Client {
   private apiClient: ApiClient | undefined;
+  private _apiToken: string | undefined;
 
   name = "Zephyr";
   toolPrefix = "zephyr";
@@ -55,10 +57,32 @@ export class ZephyrClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
+    this._apiToken = config.api_token;
     this.apiClient = new ApiClient(
-      config.api_token,
+      () => this.getAuthToken(),
       config.base_url || BASE_URL_DEFAULT,
     );
+  }
+
+  getAuthToken(): string | null {
+    // 1. Try request context
+    const contextHeader =
+      getRequestHeader("Zephyr-Api-Token") || getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer or token prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+      return token;
+    }
+
+    // 2. Fallback to configured token
+    return this._apiToken || null;
   }
 
   isConfigured(): boolean {

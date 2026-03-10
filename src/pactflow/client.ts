@@ -5,6 +5,7 @@ import {
   isSamplingPolyfillResult,
   type SamplingPolyfillResult,
 } from "../common/pollyfills";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -56,13 +57,10 @@ export class PactflowClient implements Client {
   configPrefix = "Pact-Broker";
   config = ConfigurationSchema;
 
-  private headers:
-    | {
-        Authorization: string;
-        "Content-Type": string;
-        "User-Agent": string;
-      }
-    | undefined;
+  private token: string | undefined;
+  private username: string | undefined;
+  private password: string | undefined;
+
   private aiBaseUrl: string | undefined;
   private baseUrl: string | undefined;
   private _clientType: ClientType | undefined;
@@ -77,24 +75,17 @@ export class PactflowClient implements Client {
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
-    // Set headers based on the type of auth provided
+    this.token = config.token;
+    this.username = config.username;
+    this.password = config.password;
+
+    // Set client type based on auth provided
     if (typeof config.token === "string") {
-      this.headers = {
-        Authorization: `Bearer ${config.token}`,
-        "Content-Type": "application/json",
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-      };
       this._clientType = "pactflow";
     } else if (
       typeof config.username === "string" &&
       typeof config.password === "string"
     ) {
-      const authString = `${config.username}:${config.password}`;
-      this.headers = {
-        Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
-        "Content-Type": "application/json",
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-      };
       this._clientType = "pact_broker";
     } else {
       return; // Don't configure the client if no auth is provided
@@ -230,7 +221,7 @@ export class PactflowClient implements Client {
   ): Promise<{ status: number; isComplete: boolean }> {
     const response = await fetch(statusUrl, {
       method: "HEAD",
-      headers: this.headers,
+      headers: this.requestHeaders,
     });
 
     return {
@@ -240,13 +231,58 @@ export class PactflowClient implements Client {
   }
 
   get requestHeaders() {
-    return this.headers;
+    let contextToken =
+      getRequestHeader("Pact-Token") || getRequestHeader("Authorization");
+
+    if (Array.isArray(contextToken)) {
+      contextToken = contextToken[0];
+    }
+
+    if (contextToken) {
+      let authHeader = contextToken;
+      if (
+        !contextToken.startsWith("Basic ") &&
+        !contextToken.startsWith("Bearer ")
+      ) {
+        authHeader = `Bearer ${contextToken}`;
+      }
+
+      return {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      };
+    }
+
+    // Fallback to config
+    if (this.token) {
+      let authHeader = this.token;
+      if (
+        !authHeader.startsWith("Basic ") &&
+        !authHeader.startsWith("Bearer ")
+      ) {
+        authHeader = `Bearer ${authHeader}`;
+      }
+      return {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      };
+    } else if (this.username && this.password) {
+      const authString = `${this.username}:${this.password}`;
+      return {
+        Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
+        "Content-Type": "application/json",
+        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      };
+    }
+    return undefined;
   }
 
   async getResult<T>(resultUrl: string): Promise<T> {
     const response = await fetch(resultUrl, {
       method: "GET",
-      headers: this.headers,
+      headers: this.requestHeaders,
     });
     // Check if the response is OK (status 200)
     if (!response.ok) {
@@ -309,7 +345,7 @@ export class PactflowClient implements Client {
     try {
       const response = await fetch(url, {
         method,
-        headers: this.headers,
+        headers: this.requestHeaders,
         ...(body && { body: JSON.stringify(body) }),
       });
 
@@ -476,7 +512,7 @@ export class PactflowClient implements Client {
     try {
       const response = await fetch(url, {
         method: "GET",
-        headers: this.headers,
+        headers: this.requestHeaders,
       });
 
       if (!response.ok) {
@@ -507,7 +543,7 @@ export class PactflowClient implements Client {
     try {
       const response = await fetch(url, {
         method: "GET",
-        headers: this.headers,
+        headers: this.requestHeaders,
       });
 
       if (!response.ok) {
