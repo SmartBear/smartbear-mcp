@@ -16,24 +16,28 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
     readOnly: false,
     idempotent: false,
     inputSchema: CreateTestCycleIssueLinkParams.and(
-      CreateTestCycleIssueLinkBody.partial(),
+      CreateTestCycleIssueLinkBody,
     ),
     examples: [
       {
         description:
-          "Create a link between the test cycle SA-R1 and the Jira Issue ID 10100",
+          "Create a link between the test cycle with key SA-R1 and the Jira Issue ID 10100",
         parameters: {
           testCycleIdOrKey: "SA-R1",
           issueId: 10100,
         },
+        expectedOutput:
+          "The link between Test Cycle and Jira issue should be created, but no output is expected.",
       },
       {
         description:
-          "Create a link between the test cycle with ID 1001 and the Jira Issue ID 20200",
+          "Create a link between the test cycle with ID 1001 and the Jira issue ID 20200",
         parameters: {
           testCycleIdOrKey: "1001",
           issueId: 20200,
         },
+        expectedOutput:
+          "The link between Test Cycle and Jira issue should be created, but no output is expected.",
       },
     ],
   };
