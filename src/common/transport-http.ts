@@ -101,10 +101,8 @@ export async function runHttpMode() {
           process.env.OAUTH_TOKEN_ENDPOINT || `${issuer}/token`;
         const jwksUri =
           process.env.OAUTH_JWKS_URI || `${issuer}/.well-known/jwks.json`;
-
-        // We provide a local registration endpoint to satisfy MCP Inspector
-        // which returns a pre-configured client ID
-        const registrationEndpoint = `${baseUrl}/oauth/register`;
+        const registrationEndpoint =
+          process.env.OAUTH_REGISTRATION_ENDPOINT || `${issuer}/register`;
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
@@ -128,19 +126,12 @@ export async function runHttpMode() {
 
       // PROTECTED RESOURCE METADATA ENDPOINT (RFC 9293)
       // This endpoint tells the client where to find the Authorization Server.
-      // The Inspector hits this first to find the Auth Server, then hits /.well-known/oauth-authorization-server.
-      // We point to ourselves (or the configured issuer) so the client can find the metadata above.
       if (
         req.method === "GET" &&
         (url.pathname === "/.well-known/oauth-protected-resource" ||
           url.pathname === "/.well-known/oauth-protected-resource/mcp")
       ) {
-        // In this architecture, the MCP server acts as the discovery gateway for the Auth Server.
-        // We point the client to this server's host to fetch the authorization server metadata.
-        // Note: The 'issuer' in the metadata above might be different (external), but we want
-        // the client to discover the metadata *here* first to get our registration_endpoint.
-        // If we pointed directly to an external issuer, we'd lose the ability to inject the
-        // mock registration endpoint.
+        // Point the client to this server's host to fetch the authorization server metadata.
         const authServerUrl = baseUrl;
 
         res.writeHead(200, { "Content-Type": "application/json" });
@@ -150,65 +141,6 @@ export async function runHttpMode() {
             authorization_servers: [authServerUrl],
           }),
         );
-        return;
-      }
-
-      // DYNAMIC CLIENT REGISTRATION ENDPOINT
-      // This endpoint implements a stateless version of RFC 7591 dynamic client registration.
-      // It allows clients (like MCP Inspector) to register themselves to obtain a client_id.
-      // Since this server is stateless, we return a deterministic or configured client_id
-      // rather than persisting client records in a database.
-      // The Inspector calls this to get the client_id before constructing the authorization URL.
-      if (req.method === "POST" && url.pathname === "/oauth/register") {
-        try {
-          // Consume the body
-          const body = (await parseRequestBody(req)) as Record<string, unknown>;
-          const redirectUris = body?.redirect_uris as string[] | undefined;
-
-          // RFC 7591: redirect_uris is required for web clients
-          if (
-            !redirectUris ||
-            !Array.isArray(redirectUris) ||
-            redirectUris.length === 0
-          ) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(
-              JSON.stringify({
-                error: "invalid_redirect_uri",
-                error_description: "redirect_uris parameter is required",
-              }),
-            );
-            return;
-          }
-
-          // Use configured client ID or default to a static one for stateless operation
-          const clientId = process.env.OAUTH_CLIENT_ID || "mcp-client";
-
-          // Determine scopes: Use requested scopes if valid, or default to all supported
-          const supportedScopes = process.env.OAUTH_SCOPES
-            ? process.env.OAUTH_SCOPES.split(",")
-            : ["api", "offline_access"];
-
-          res.writeHead(201, { "Content-Type": "application/json" });
-          res.end(
-            JSON.stringify({
-              client_id: clientId,
-              client_name: body.client_name || "MCP Client",
-              redirect_uris: redirectUris,
-              scope: supportedScopes.join(" "),
-              client_secret_expires_at: 0,
-              client_id_issued_at: Math.floor(Date.now() / 1000),
-              grant_types: ["authorization_code", "refresh_token"],
-              response_types: ["code"],
-              token_endpoint_auth_method: "none",
-              application_type: "web",
-            }),
-          );
-        } catch (error) {
-          console.error("Error handling registration request:", error);
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "invalid_request" }));
-        }
         return;
       }
 
