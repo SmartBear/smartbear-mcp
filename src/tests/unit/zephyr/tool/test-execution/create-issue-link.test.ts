@@ -125,4 +125,14 @@ describe("CreateTestExecutionIssueLink", () => {
       instance.handle(args, EXTRA_REQUEST_HANDLER),
     ).rejects.toThrow();
   });
+
+  it("should throw validation error if testExecutionIdOrKey is missing", async () => {
+    const args = {
+      issueId: 10100,
+    };
+
+    await expect(
+      instance.handle(args, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow();
+  });
 });

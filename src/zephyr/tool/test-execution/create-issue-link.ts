@@ -26,14 +26,18 @@ export class CreateTestExecutionIssueLink extends Tool<ZephyrClient> {
           testExecutionIdOrKey: "SA-E40",
           issueId: 10100,
         },
+        expectedOutput:
+          "The link between Test Execution and Jira issue should be created, but no output is expected.",
       },
       {
         description:
-          "Create a link between the test execution with id 1 and the Jira Issue ID 20050",
+          "Create a link between the test execution with ID 1 and the Jira Issue ID 20050",
         parameters: {
           testExecutionIdOrKey: "1",
           issueId: 20050,
         },
+        expectedOutput:
+          "The link between Test Execution and Jira issue should be created, but no output is expected.",
       },
     ],
   };
