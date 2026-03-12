@@ -87,43 +87,6 @@ export async function runHttpMode() {
         return;
       }
 
-      // OAUTH DISCOVERY ENDPOINT (RFC 8414)
-      if (
-        req.method === "GET" &&
-        (url.pathname === "/.well-known/oauth-authorization-server" ||
-          url.pathname === "/.well-known/oauth-authorization-server/mcp")
-      ) {
-        const issuer =
-          process.env.OAUTH_ISSUER || "https://oauth.smartbear.com";
-        const authEndpoint =
-          process.env.OAUTH_AUTHORIZATION_ENDPOINT || `${issuer}/authorize`;
-        const tokenEndpoint =
-          process.env.OAUTH_TOKEN_ENDPOINT || `${issuer}/token`;
-        const jwksUri =
-          process.env.OAUTH_JWKS_URI || `${issuer}/.well-known/jwks.json`;
-        const registrationEndpoint =
-          process.env.OAUTH_REGISTRATION_ENDPOINT || `${issuer}/register`;
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            issuer: issuer,
-            authorization_endpoint: authEndpoint,
-            token_endpoint: tokenEndpoint,
-            jwks_uri: jwksUri,
-            registration_endpoint: registrationEndpoint,
-            response_types_supported: ["code"],
-            grant_types_supported: ["authorization_code", "refresh_token"],
-            code_challenge_methods_supported: ["S256"],
-            token_endpoint_auth_methods_supported: ["none"],
-            scopes_supported: process.env.OAUTH_SCOPES
-              ? process.env.OAUTH_SCOPES.split(",")
-              : ["api"],
-          }),
-        );
-        return;
-      }
-
       // PROTECTED RESOURCE METADATA ENDPOINT (RFC 9293)
       // This endpoint tells the client where to find the Authorization Server.
       if (
@@ -131,8 +94,9 @@ export async function runHttpMode() {
         (url.pathname === "/.well-known/oauth-protected-resource" ||
           url.pathname === "/.well-known/oauth-protected-resource/mcp")
       ) {
-        // Point the client to this server's host to fetch the authorization server metadata.
-        const authServerUrl = baseUrl;
+        // Point the client to the Authorization Server so it can fetch the metadata document
+        const authServerUrl =
+          process.env.OAUTH_AUTHORIZATION_SERVER_URL || "http://localhost:7070";
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
