@@ -1,5 +1,5 @@
 export interface SwaggerConfigurationParameters {
-  token: string; // API auth token (required)
+  token: string | (() => string | null); // API auth token or provider
   portalBasePath?: string; // Base path for Portal API requests
   registryBasePath?: string; // Base path for Registry API requests
   uiBasePath?: string; // Base URL for the SwaggerHub UI
@@ -8,15 +8,20 @@ export interface SwaggerConfigurationParameters {
 }
 
 export class SwaggerConfiguration {
-  token: string;
+  private tokenProvider: () => string | null;
   portalBasePath: string;
   registryBasePath: string;
   uiBasePath: string;
   userManagementBasePath: string;
-  headers: Record<string, string>;
+  defaultHeaders: Record<string, string>;
 
   constructor(param: SwaggerConfigurationParameters) {
-    this.token = param.token;
+    if (typeof param.token === "string") {
+      this.tokenProvider = () => param.token as string;
+    } else {
+      this.tokenProvider = param.token;
+    }
+
     this.portalBasePath =
       param.portalBasePath || "https://api.portal.swaggerhub.com/v1";
     this.registryBasePath =
@@ -25,20 +30,25 @@ export class SwaggerConfiguration {
     this.userManagementBasePath =
       param.userManagementBasePath ||
       `${this.registryBasePath}/user-management/v1`;
-    // Use Bearer token format consistently across all APIs
-    this.headers = {
-      Authorization: `Bearer ${this.token}`,
+
+    this.defaultHeaders = {
       "Content-Type": "application/json",
       ...param.headers,
     };
   }
 
   /**
-   * Get headers with User-Agent included
+   * Get headers with User-Agent included and dynamic Auth token
    */
   getHeaders(userAgent: string): Record<string, string> {
+    const token = this.tokenProvider();
+    if (!token) {
+      throw new Error("Swagger API token not found");
+    }
+
     return {
-      ...this.headers,
+      Authorization: `Bearer ${token}`,
+      ...this.defaultHeaders,
       "User-Agent": userAgent,
     };
   }

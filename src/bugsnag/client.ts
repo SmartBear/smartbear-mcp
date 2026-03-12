@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CacheService } from "../common/cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -9,18 +10,20 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types";
+import type {
+  Build,
+  EventField,
+  Organization,
+  Project,
+  Release,
+  TraceField,
+} from "./client/api/index";
 import {
-  type Build,
   Configuration,
   CurrentUserAPI,
   ErrorAPI,
   ErrorUpdateRequest,
-  type EventField,
-  type Organization,
-  type Project,
   ProjectAPI,
-  type Release,
-  type TraceField,
 } from "./client/api/index";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
@@ -72,7 +75,12 @@ interface StabilityData {
 }
 
 const ConfigurationSchema = z.object({
-  auth_token: z.string().describe("BugSnag personal authentication token"),
+  auth_token: z
+    .string()
+    .describe(
+      "BugSnag authentication token (personal access token or OAuth token)",
+    )
+    .optional(),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
   endpoint: z.url().describe("BugSnag endpoint URL").optional(),
 });
@@ -85,6 +93,7 @@ export class BugsnagClient implements Client {
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
   private _appEndpoint: string | undefined;
+  private _authToken?: string;
 
   get currentUserApi(): CurrentUserAPI {
     if (!this._currentUserApi) throw new Error("Client not configured");
@@ -116,13 +125,58 @@ export class BugsnagClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
     this.cache = server.getCache();
+
+    // Allow reading endpoint from environment variable as a fallback
+    // This is useful for On-Premise installations where the endpoint is fixed
+    const endpoint = config.endpoint || process.env.BUGSNAG_ENDPOINT;
+
     this._appEndpoint = this.getEndpoint(
       "app",
       config.project_api_key,
-      config.endpoint,
+      endpoint,
     );
+    this._projectApiKey = config.project_api_key;
+    this._authToken = config.auth_token;
+
+    // Initialize APIs even if auth_token is missing, to allow request-level auth
+    await this.initializeApis({ ...config, endpoint });
+  }
+
+  getAuthToken(): string | null {
+    // 1. Try request context
+    const contextHeader =
+      getRequestHeader("Bugsnag-Auth-Token") ||
+      getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer or token prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      } else if (token.startsWith("token ")) {
+        token = token.substring(6);
+      }
+      return token;
+    }
+
+    // 2. Fallback to configured token
+    return this._authToken || null;
+  }
+
+  private async initializeApis(config: z.infer<typeof ConfigurationSchema>) {
     const apiConfig = new Configuration({
-      apiKey: `token ${config.auth_token}`,
+      apiKey: (_name: string) => {
+        const token = this.getAuthToken();
+        if (!token) {
+          throw new Error(
+            "Authentication token not found in request headers or configuration",
+          );
+        }
+        return `token ${token}`;
+      },
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
@@ -138,9 +192,7 @@ export class BugsnagClient implements Client {
     this._currentUserApi = new CurrentUserAPI(apiConfig);
     this._errorsApi = new ErrorAPI(apiConfig);
     this._projectApi = new ProjectAPI(apiConfig);
-    this._projectApiKey = config.project_api_key;
     this._isConfigured = true;
-    return;
   }
 
   isConfigured(): boolean {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -34,7 +35,7 @@ const ConfigurationSchema = z.object({
 
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
-  private headers = {};
+  private _apiToken: string | undefined;
 
   name = "Reflect";
   toolPrefix = "reflect";
@@ -47,21 +48,53 @@ export class ReflectClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
-    this.headers = {
-      "X-API-KEY": `${config.api_token}`,
+    this._apiToken = config.api_token;
+  }
+
+  getAuthToken(): string | null {
+    // 1. Try request context
+    const contextHeader =
+      getRequestHeader("Reflect-Api-Token") ||
+      getRequestHeader("X-API-KEY") ||
+      getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer or token prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+      return token;
+    }
+
+    // 2. Fallback to configured token
+    return this._apiToken || null;
+  }
+
+  isConfigured(): boolean {
+    return this._apiToken !== undefined;
+  }
+
+  private getHeaders(): Record<string, string> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error("Reflect API token not found");
+    }
+
+    return {
+      "X-API-KEY": token,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
   }
 
-  isConfigured(): boolean {
-    return Object.keys(this.headers).length !== 0;
-  }
-
   async listReflectSuites(): Promise<any> {
     const response = await fetch("https://api.reflect.run/v1/suites", {
       method: "GET",
-      headers: this.headers,
+      headers: this.getHeaders(),
     });
 
     return response.json();
@@ -72,7 +105,7 @@ export class ReflectClient implements Client {
       `https://api.reflect.run/v1/suites/${suiteId}/executions`,
       {
         method: "GET",
-        headers: this.headers,
+        headers: this.getHeaders(),
       },
     );
 
@@ -87,7 +120,7 @@ export class ReflectClient implements Client {
       `https://api.reflect.run/v1/suites/${suiteId}/executions/${executionId}`,
       {
         method: "GET",
-        headers: this.headers,
+        headers: this.getHeaders(),
       },
     );
 
@@ -99,7 +132,7 @@ export class ReflectClient implements Client {
       `https://api.reflect.run/v1/suites/${suiteId}/executions`,
       {
         method: "POST",
-        headers: this.headers,
+        headers: this.getHeaders(),
       },
     );
 
@@ -114,7 +147,7 @@ export class ReflectClient implements Client {
       `https://api.reflect.run/v1/suites/${suiteId}/executions/${executionId}/cancel`,
       {
         method: "PATCH",
-        headers: this.headers,
+        headers: this.getHeaders(),
       },
     );
 
@@ -124,7 +157,7 @@ export class ReflectClient implements Client {
   async listReflectTests(): Promise<any> {
     const response = await fetch("https://api.reflect.run/v1/tests", {
       method: "GET",
-      headers: this.headers,
+      headers: this.getHeaders(),
     });
 
     return response.json();
@@ -135,7 +168,7 @@ export class ReflectClient implements Client {
       `https://api.reflect.run/v1/tests/${testId}/executions`,
       {
         method: "POST",
-        headers: this.headers,
+        headers: this.getHeaders(),
       },
     );
 
@@ -150,7 +183,7 @@ export class ReflectClient implements Client {
       `https://api.reflect.run/v1/executions/${executionId}`,
       {
         method: "GET",
-        headers: this.headers,
+        headers: this.getHeaders(),
       },
     );
 

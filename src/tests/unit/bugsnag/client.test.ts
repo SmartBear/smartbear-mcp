@@ -181,7 +181,7 @@ describe("BugsnagClient", () => {
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
           basePath: "https://api.bugsnag.smartbear.com",
-          apiKey: "token test-token",
+          apiKey: expect.any(Function),
           headers: expect.objectContaining({
             "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
             "Content-Type": "application/json",
@@ -190,6 +190,11 @@ describe("BugsnagClient", () => {
           }),
         }),
       );
+
+      // Verify the apiKey function returns the expected token
+      const configCall = MockedConfiguration.mock.calls[0][0];
+      const apiKeyFunc = configCall.apiKey as (name: string) => string;
+      expect(apiKeyFunc("any")).toBe("token test-token");
     });
 
     it("should set project API key when provided", async () => {
@@ -494,9 +499,19 @@ describe("BugsnagClient", () => {
 
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
-          apiKey: `token ${testToken}`,
+          apiKey: expect.any(Function),
         }),
       );
+
+      // Verify the apiKey function returns the expected token
+      const configCall = MockedConfiguration.mock.calls.find(
+        (call) =>
+          (call[0] as any).basePath === "https://api.bugsnag.com" &&
+          typeof (call[0] as any).apiKey === "function",
+      )?.[0];
+      expect(configCall).toBeDefined();
+      const apiKeyFunc = configCall.apiKey as (name: string) => string;
+      expect(apiKeyFunc("any")).toBe(`token ${testToken}`);
     });
 
     it("should include all required headers", async () => {
@@ -545,7 +560,9 @@ describe("BugsnagClient", () => {
         getCache: vi.fn().mockReturnValue(mockCache),
       } as any;
 
-      await client.configure(mockServer, { auth_token: "test-token" });
+      await client.configure(mockServer, {
+        auth_token: "test-token",
+      });
 
       // Cache should be used in getProjects
       mockCache.get.mockReturnValueOnce(null); // No cached org

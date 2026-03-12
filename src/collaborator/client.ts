@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -49,11 +50,25 @@ export class CollaboratorClient implements Client {
    */
   async call(commands: any[]): Promise<any> {
     const url = `${this.baseUrl}/services/json/v1`;
+
+    let login = this.username;
+    let ticket = this.loginTicket;
+
+    const contextLogin = getRequestHeader("Collaborator-Login");
+    const contextTicket = getRequestHeader("Collaborator-Ticket");
+
+    if (contextLogin) {
+      login = Array.isArray(contextLogin) ? contextLogin[0] : contextLogin;
+    }
+    if (contextTicket) {
+      ticket = Array.isArray(contextTicket) ? contextTicket[0] : contextTicket;
+    }
+
     // Always prepend authentication command automatically
     const body = [
       {
         command: "SessionService.authenticate",
-        args: { login: this.username, ticket: this.loginTicket },
+        args: { login, ticket },
       },
       ...commands,
     ];

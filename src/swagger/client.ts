@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -70,6 +71,7 @@ const ConfigurationSchema = z.object({
 // Tool definitions for API Hub API client
 export class SwaggerClient implements Client {
   private api: SwaggerAPI | undefined;
+  private _apiKey: string | undefined;
 
   name = "Swagger";
   toolPrefix = "swagger";
@@ -81,15 +83,37 @@ export class SwaggerClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
+    this._apiKey = config.api_key;
     this.api = new SwaggerAPI(
       new SwaggerConfiguration({
-        token: config.api_key,
+        token: () => this.getAuthToken(),
         portalBasePath: config.portal_base_path,
         registryBasePath: config.registry_base_path,
         uiBasePath: config.ui_base_path,
       }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
+  }
+
+  getAuthToken(): string | null {
+    // 1. Try request context
+    const contextHeader =
+      getRequestHeader("Swagger-Api-Key") || getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer or token prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+      return token;
+    }
+
+    // 2. Fallback to configured token
+    return this._apiKey || null;
   }
 
   isConfigured(): boolean {
