@@ -21,9 +21,11 @@ import {
   ProjectAPI,
   type Release,
   type TraceField,
-} from "./client/api/index";
+} from "./client/api";
 import { type FilterObject, toUrlSearchParams } from "./client/filters";
 import { toolInputParameters } from "./input-schemas";
+import { eventResource } from "./resource/event-resource.ts";
+import { listProjects } from "./tool/projects/list-projects.ts";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -401,52 +403,7 @@ export class BugsnagClient implements Client {
       },
     );
 
-    const listProjectsInputSchema = z.object({
-      apiKey: z
-        .string()
-        .optional()
-        .describe("The API key of the BugSnag project, if known."),
-    });
-
-    register(
-      {
-        title: "List Projects",
-        summary:
-          "List all projects in the organization that the current user has access to, or find a project matching an API key.",
-        purpose:
-          "Retrieve available projects for browsing and selecting which project to analyze.",
-        useCases: [
-          "Get an overview of all projects in the organization",
-          "Locate a project by its API key if known from the user's code",
-        ],
-        inputSchema: listProjectsInputSchema,
-        hints: [
-          "Project IDs from this list can be used with other tools when no project API key is configured",
-        ],
-      },
-      async (args, _extra) => {
-        const params = listProjectsInputSchema.parse(args);
-        let projects = await this.getProjects();
-        if (!projects || projects.length === 0) {
-          throw new ToolError(
-            "No BugSnag projects found for the current user.",
-          );
-        }
-        if (params.apiKey) {
-          const matchedProject = projects.find(
-            (p: Project) => p.api_key === params.apiKey,
-          );
-          projects = matchedProject ? [matchedProject] : [];
-        }
-        const content = {
-          data: projects,
-          count: projects.length,
-        };
-        return {
-          content: [{ type: "text", text: JSON.stringify(content) }],
-        };
-      },
-    );
+    listProjects.register(this, register);
 
     const getErrorInputSchema = z.object({
       projectId: toolInputParameters.projectId,
@@ -1876,15 +1833,6 @@ export class BugsnagClient implements Client {
   }
 
   registerResources(register: RegisterResourceFunction): void {
-    register("event", "{id}", async (uri, variables, _extra) => {
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text: JSON.stringify(await this.getEvent(variables.id as string)),
-          },
-        ],
-      };
-    });
+    eventResource.register(this, register);
   }
 }
