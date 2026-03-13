@@ -321,6 +321,21 @@ The following environment variables configure the Zephyr integration:
 - **Use case**: Updating a Test Execution with its properties.
 - **Note**: Unlike other update operations, this endpoint ignores any fields that are null or absent - they will not be cleared or modified. Only explicitly provided non-null values will update the execution.
 
+## Test Execution Steps
+
+### Retrieval Operations
+
+#### Get Test Execution Steps
+
+- **Purpose**: Retrieve the test execution steps for the given test execution within your Zephyr account by test execution key or ID.
+- **Parameters:**
+  - Test Execution ID or KEY (`testExecutionIdOrKey`)
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional test data row number (`testDataRowNumber`)
+- **Returns**: A list of Test Execution Steps along with their properties.
+- **Use case**: Getting the detailed execution results of each step for a specific test execution.
+
 ### Link Operations
 
 #### Create Test Execution Issue Link
