@@ -82,17 +82,14 @@ describe("GetTestExecutionSteps", () => {
       isLast: true,
       values: [
         {
-          inline: {}
-        }
+          inline: {},
+        },
       ],
     };
 
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
-    const result = await instance.handle(
-      { testExecutionIdOrKey: "SA-E1" },
-      {},
-    );
+    const result = await instance.handle({ testExecutionIdOrKey: "SA-E1" }, {});
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/SA-E1/teststeps",

@@ -75,7 +75,8 @@ export class GetTestExecutionSteps extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testExecutionIdOrKey } = GetTestExecutionTestStepsParams.parse(args);
+    const { testExecutionIdOrKey } =
+      GetTestExecutionTestStepsParams.parse(args);
     const parsedArgs = GetTestExecutionTestStepsQueryParams.parse(args);
     const response = await this.client
       .getApiClient()
