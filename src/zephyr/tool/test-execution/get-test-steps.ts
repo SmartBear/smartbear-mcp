@@ -42,7 +42,7 @@ export class GetTestExecutionSteps extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Get one test execution step for test execution with key 'SA-E1'",
+          "Get any test execution step for test execution with key 'SA-E1'",
         parameters: {
           testExecutionIdOrKey: "SA-E1",
           maxResults: 1,
