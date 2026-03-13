@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [BugSnag] Remove eager caching during client configuration at startup - this is now lazy-loaded, but still cached as before for future requests [#356](https://github.com/SmartBear/smartbear-mcp/pull/356)
+- [Reflect] Refactored implementation of existing tools. The `get-test-status` tool no longer requires a `testId`.
 
 ## [0.14.1] - 2026-02-26
 
