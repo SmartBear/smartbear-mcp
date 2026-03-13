@@ -336,6 +336,17 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of Test Execution Steps along with their properties.
 - **Use case**: Getting the detailed execution results of each step for a specific test execution.
 
+### Link Operations
+
+#### Create Test Execution Issue Link
+
+- **Purpose**: Creates a link between a Test Execution and a Jira Issue.
+- **Parameters:**
+  - Test Execution key or id (`testExecutionIdOrKey`)
+  - Jira Issue Id (`issueId`)
+- **Returns**: A confirmation that the link was successfully created.
+- **Use case**: Creating a link between a Test Execution and a Jira Issue, for example to associate a test execution with the bug it found or the story it validates.
+
 ## Statuses
 
 ### Retrieval Operations

@@ -18,11 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool `get-test-steps` for getting a list of test steps for test case [#355](https://github.com/SmartBear/smartbear-mcp/pull/355)
 - [Zephyr] Added a tool `get-test-cases` for fetching test cases linked to a Jira issue [#358](https://github.com/SmartBear/smartbear-mcp/pull/358)
 - [Zephyr] Added a tool `create-web-link` for creating a Web link for a Test Cycle [#354](https://github.com/SmartBear/smartbear-mcp/pull/354)
+- [Zephyr] Added a tool `create-test-execution-issue-link` for creating a link between a Jira issue and a Test Execution [#362](https://github.com/SmartBear/smartbear-mcp/pull/362)
 - [Zephyr] Added a tool `get-test-steps` for getting a list of test steps for test execution [#367](https://github.com/SmartBear/smartbear-mcp/pull/367)
 
 ### Changed
 
 - [BugSnag] Remove eager caching during client configuration at startup - this is now lazy-loaded, but still cached as before for future requests [#356](https://github.com/SmartBear/smartbear-mcp/pull/356)
+- [Reflect] Refactored implementation of existing tools. The `get-test-status` tool no longer requires a `testId`.
 
 ## [0.14.1] - 2026-02-26
 
