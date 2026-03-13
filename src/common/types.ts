@@ -14,18 +14,10 @@ import type {
 import type { ZodObject, ZodRawShape, ZodType } from "zod";
 import type { SmartBearMcpServer } from "./server";
 
-export type ToolDef<
-  TInput = unknown,
-  TOutput = unknown,
-  TResponseMetadata = unknown,
-> = {
-  input: TInput;
-  output: TOutput;
-  responseMetadata: TResponseMetadata;
-};
-
-export type Tools = Record<string, ToolDef>;
-
+/**
+ * Replace all occurrences of a substring.
+ * StringReplace<"hello world", "l", "y"> // "heyyo woryd"
+ */
 export type StringReplace<
   TString extends string,
   TToReplace extends string,
@@ -34,6 +26,9 @@ export type StringReplace<
   ? `${TPrefix}${TReplacement}${StringReplace<TSuffix, TToReplace, TReplacement>}`
   : TString;
 
+/**
+ * SnakeCase<"Hello World !"> // "hello_world_!"
+ */
 export type SnakeCase<Str extends string> = StringReplace<
   Lowercase<Str>,
   " ",
