@@ -1917,7 +1917,7 @@ export const GetTestCaseTestSteps200Response = zod
                   .describe("The instruction to be followed"),
                 testData: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe(
                     "Any test data required to perform the instruction (optional). The fields values provided can be interpolated into the description.",
                   ),
@@ -1935,7 +1935,7 @@ export const GetTestCaseTestSteps200Response = zod
                   ),
                 reflectRef: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe("The AI reference. Zephyr only feature"),
               })
               .strict()
@@ -1983,7 +1983,7 @@ export const GetTestCaseTestSteps200Response = zod
                   .describe("The list of parameters of the call to test step"),
               })
               .strict()
-              .optional(),
+              .nullish(),
           })
           .strict()
           .describe(
