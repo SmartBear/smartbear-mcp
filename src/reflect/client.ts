@@ -8,7 +8,7 @@ import type {
   RegisterToolsFunction,
 } from "../common/types";
 import { API_KEY_HEADER } from "./config/constants";
-import { CancelSuiteExecution } from "./tool/suites/cancel-suite-execution";
+import { cancelSuiteExecution } from "./tool/suites/cancel-suite-execution";
 import { ExecuteSuite } from "./tool/suites/execute-suite";
 import { GetSuiteExecutionStatus } from "./tool/suites/get-suite-execution-status";
 import { ListSuiteExecutions } from "./tool/suites/list-suite-executions";
@@ -60,11 +60,12 @@ export class ReflectClient implements Client {
       new ListSuiteExecutions(this),
       new GetSuiteExecutionStatus(this),
       new ExecuteSuite(this),
-      new CancelSuiteExecution(this),
       new ListTests(this),
       new RunTest(this),
       new GetTestStatus(this),
     ];
+
+    cancelSuiteExecution.register(this, register);
 
     for (const tool of tools) {
       register(tool.specification, tool.handle);
