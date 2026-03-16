@@ -40,6 +40,7 @@ import { GetTestExecutionLinks } from "./tool/test-execution/get-test-execution-
 import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
 import { GetTestExecutionSteps } from "./tool/test-execution/get-test-steps.ts";
 import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
+import {UpdateTestExecutionSteps} from "./tool/test-execution/update-test-steps.ts";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
 
@@ -117,6 +118,7 @@ export class ZephyrClient implements Client {
       new GetIssueLinkTestCycles(this),
       new GetTestScript(this),
       new CreateTestCycleWebLink(this),
+      new UpdateTestExecutionSteps(this),
       new GetTestExecutionSteps(this),
       new GetTestExecutionLinks(this),
       new GetIssueLinkTestExecutions(this),

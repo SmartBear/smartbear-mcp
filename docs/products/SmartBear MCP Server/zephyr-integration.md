@@ -381,6 +381,18 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of Test Execution Steps along with their properties.
 - **Use case**: Getting the detailed execution results of each step for a specific test execution.
 
+### Update Operations
+
+#### Update Test Execution Steps
+
+- **Purpose**: Update the test execution steps for a given test execution in your Zephyr account using the test execution key or ID
+- **Parameters:**
+  - Steps (`steps`) - array of test execution steps
+    - optional Status name (`statusName`)
+    - optional Actual result (`actualResult`)
+- **Returns**: Empty object if the update is successful.
+- **Use case**: Updating the status and/or actual results of steps in a test execution.
+
 ### Link Operations
 
 #### Create Test Execution Issue Link
