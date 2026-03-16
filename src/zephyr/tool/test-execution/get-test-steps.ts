@@ -62,7 +62,7 @@ export class GetTestExecutionSteps extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Get test execution steps for a specific test data row from test execution with key 'SA-E1'",
+          "Get test execution steps from the test data row 1 from test execution with key 'SA-E1'",
         parameters: {
           testExecutionIdOrKey: "SA-E1",
           testDataRowNumber: 1,
