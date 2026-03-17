@@ -93,26 +93,6 @@ describe("GetTestCaseLinks", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
-  it("should handle apiClient.get throwing error", async () => {
-    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
-    await expect(
-      instance.handle({ testCaseKey: "SA-T10" }, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow("API error");
-  });
-
-  it("should handle apiClient.get returning unexpected data", async () => {
-    mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle(
-      { testCaseKey: "SA-T10" },
-      EXTRA_REQUEST_HANDLER,
-    );
-    expect(result.structuredContent).toBeUndefined();
-  });
-
-  it("should throw validation error if testCaseKey is missing", async () => {
-    await expect(instance.handle({}, EXTRA_REQUEST_HANDLER)).rejects.toThrow();
-  });
-
   it("should handle response with only issue links", async () => {
     const responseMock = {
       self: "https://api.zephyrscale.smartbear.com/v2/testcases/MM2-T1/links",
@@ -168,5 +148,37 @@ describe("GetTestCaseLinks", () => {
       "/testcases/ABC-T1/links",
     );
     expect(result.structuredContent).toBe(responseMock);
+  });
+
+  it("should handle apiClient.get throwing error", async () => {
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
+    await expect(
+      instance.handle({ testCaseKey: "SA-T10" }, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow("API error");
+  });
+
+  it("should handle apiClient.get returning unexpected data", async () => {
+    mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
+    const result = await instance.handle(
+      { testCaseKey: "SA-T10" },
+      EXTRA_REQUEST_HANDLER,
+    );
+    expect(result.structuredContent).toBeUndefined();
+  });
+
+  it("should throw validation error if testCaseKey is missing", async () => {
+    await expect(instance.handle({}, EXTRA_REQUEST_HANDLER)).rejects.toThrow();
+  });
+
+  it("should throw validation error if testCaseKey has invalid format", async () => {
+    await expect(
+      instance.handle({ testCaseKey: 123 }, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow();
+    await expect(
+      instance.handle({ testCaseKey: null }, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow();
+    await expect(
+      instance.handle({ testCaseKey: "" }, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow();
   });
 });
