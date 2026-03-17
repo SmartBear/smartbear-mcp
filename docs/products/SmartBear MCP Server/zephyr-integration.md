@@ -272,6 +272,17 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Cycle Web Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test cycle and a generic URL.
 
+#### Get Test Cycle Links
+
+- **Purpose**: Retrieve all links associated with a test cycle, including Jira issue links, web links, and test plan links.
+- **Parameters:**
+  - Test Cycle ID or key (`testCycleIdOrKey`)
+- **Returns**: An object containing three arrays:
+  - `issues`: List of linked Jira issues with their IDs, link types (COVERAGE, BLOCKS, RELATED), and API endpoints
+  - `webLinks`: List of web links with URLs, descriptions, link types, and API endpoints
+  - `testPlans`: List of linked test plans with their IDs, link types, and API endpoints
+- **Use case**: Retrieving all links for a test cycle to understand its relationships with Jira issues, external resources, and test plans. Useful for traceability and impact analysis.
+
 ## Test Executions
 
 ### Retrieval Operations
@@ -338,6 +349,21 @@ The following environment variables configure the Zephyr integration:
 - **Returns**:  Empty object if the update is successful.
 - **Use case**: Updating a Test Execution with its properties.
 - **Note**: Unlike other update operations, this endpoint ignores any fields that are null or absent - they will not be cleared or modified. Only explicitly provided non-null values will update the execution.
+
+## Test Execution Steps
+
+### Retrieval Operations
+
+#### Get Test Execution Steps
+
+- **Purpose**: Retrieve the test execution steps for the given test execution within your Zephyr account by test execution key or ID.
+- **Parameters:**
+  - Test Execution ID or KEY (`testExecutionIdOrKey`)
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional test data row number (`testDataRowNumber`)
+- **Returns**: A list of Test Execution Steps along with their properties.
+- **Use case**: Getting the detailed execution results of each step for a specific test execution.
 
 ### Link Operations
 

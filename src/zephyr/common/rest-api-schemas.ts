@@ -1772,7 +1772,7 @@ export const GetTestCaseTestScript200Response = zod
     type: zod
       .enum(["plain", "bdd"])
       .describe(
-        "Test scripts can be in plain text or bdd format. BDD type can support remote execution on a build system via API plugin. To create a step-by-step test script, you should first create a plain text test script then use the POST /testcases/{testCaseKey}/teststeps endpoint.",
+        "Test scripts can be written in plain text or BDD format. The BDD type supports\nremote execution on a build system via API plugin.\n\nSupported Keywords for BDD:\nGiven, When, Then, And, But.\n\nFor more information about BDD and Gherkin syntax, see:\nhttps://support.smartbear.com/zephyr/docs/en/test-cases/gherkin-behavior-driven-development--bdd-.html\n\nFor Plain Text scripts, we support HTML fragments.\nTo create a step-by-step test script, you should use the POST /testcases/{testCaseKey}/teststeps endpoint.\n",
       ),
     text: zod.string().min(1),
     id: zod.number().min(1).optional(),
@@ -1807,7 +1807,7 @@ export const CreateTestCaseTestScriptBody = zod
     type: zod
       .enum(["plain", "bdd"])
       .describe(
-        "Test scripts can be written in plain text or BDD format. The BDD type supports remote execution on a build system via API plugin. Supported Keywords for BDD: Given, When, Then, And, But. For more information about BDD and Gherkin syntax, see: https://support.smartbear.com/zephyr/docs/en/test-cases/gherkin-behavior-driven-development--bdd-.html . For Plain Text scripts, we support HTML fragments.To create a step-by-step test script, you should use the POST /testcases/{testCaseKey}/teststeps endpoint.",
+        "Test scripts can be written in plain text or BDD format. The BDD type supports\nremote execution on a build system via API plugin.\n\nSupported Keywords for BDD:\nGiven, When, Then, And, But.\n\nFor more information about BDD and Gherkin syntax, see:\nhttps://support.smartbear.com/zephyr/docs/en/test-cases/gherkin-behavior-driven-development--bdd-.html\n\nFor Plain Text scripts, we support HTML fragments.\nTo create a step-by-step test script, you should use the POST /testcases/{testCaseKey}/teststeps endpoint.\n",
       ),
     text: zod.string().min(1),
   })
@@ -5029,31 +5029,31 @@ export const GetTestExecutionTestSteps200Response = zod
               .object({
                 description: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe("The instruction to be followed"),
                 testData: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe(
                     "Any test data required to perform the instruction (optional). The fields values provided can be interpolated into the description.",
                   ),
                 expectedResult: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe(
                     "The expected outcome of executing the instruction",
                   ),
                 actualResult: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe("The actual outcome of executing the instruction"),
                 testDataRowNumber: zod
                   .number()
-                  .optional()
+                  .nullish()
                   .describe("The id of the test data row"),
                 reflectRef: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe("The AI reference. Zephyr only feature"),
                 status: zod
                   .object({
@@ -5566,7 +5566,9 @@ export const CreateFolderBody = zod.object({
     .string()
     .min(1)
     .max(createFolderBodyNameMax)
-    .describe("Folder name."),
+    .describe(
+      "Folder name. Folder name must not contain `/` and `\\` characters.",
+    ),
   projectKey: zod
     .string()
     .regex(createFolderBodyProjectKeyRegExp)
