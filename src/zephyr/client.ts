@@ -26,6 +26,7 @@ import { UpdateTestCase } from "./tool/test-case/update-test-case.ts";
 import { CreateTestCycleIssueLink } from "./tool/test-cycle/create-issue-link";
 import { CreateTestCycle } from "./tool/test-cycle/create-test-cycle";
 import { CreateTestCycleWebLink } from "./tool/test-cycle/create-web-link.ts";
+import { GetTestCycleLinks } from "./tool/test-cycle/get-links";
 import { GetTestCycle } from "./tool/test-cycle/get-test-cycle";
 import { GetTestCycles } from "./tool/test-cycle/get-test-cycles";
 import { UpdateTestCycle } from "./tool/test-cycle/update-test-cycle.ts";
@@ -85,6 +86,7 @@ export class ZephyrClient implements Client {
       new GetProject(this),
       new GetTestCycles(this),
       new GetTestCycle(this),
+      new GetTestCycleLinks(this),
       new GetPriorities(this),
       new GetStatuses(this),
       new GetTestCases(this),

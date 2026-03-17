@@ -264,6 +264,17 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Cycle Web Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test cycle and a generic URL.
 
+#### Get Test Cycle Links
+
+- **Purpose**: Retrieve all links associated with a test cycle, including Jira issue links, web links, and test plan links.
+- **Parameters:**
+  - Test Cycle ID or key (`testCycleIdOrKey`)
+- **Returns**: An object containing three arrays:
+  - `issues`: List of linked Jira issues with their IDs, link types (COVERAGE, BLOCKS, RELATED), and API endpoints
+  - `webLinks`: List of web links with URLs, descriptions, link types, and API endpoints
+  - `testPlans`: List of linked test plans with their IDs, link types, and API endpoints
+- **Use case**: Retrieving all links for a test cycle to understand its relationships with Jira issues, external resources, and test plans. Useful for traceability and impact analysis.
+
 ## Test Executions
 
 ### Retrieval Operations
