@@ -141,6 +141,16 @@ The following environment variables configure the Zephyr integration:
 
 ## Test Scripts
 
+### Retrieval Operations
+
+#### Get Test Script
+
+- **Purpose**: Retrieve the Test Script (Plain Text or BDD) for a given Test Case.
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+- **Returns**: The test script with its type (plain or bdd), text content, and id.
+- **Use case**: Retrieving the test script content of an existing Test Case to review or inspect its instructions.
+
 ### Creation Operations
 
 #### Create Test Script
