@@ -287,7 +287,6 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
           versionComment: "version 2 with preserved steps",
           notruncurrent: true,
           notrunall: true,
-          isStepUpdated: false,
         },
         expectedOutput:
           "New version 2 created with all steps from version 1 preserved. Steps carry forward with their tcStepID values. Version comment added for tracking.",
@@ -368,7 +367,6 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
           notrunall: false,
           notruncurrent: false,
           scope: "project",
-          isStepUpdated: true,
         },
         expectedOutput:
           "New version 3 created successfully from version 2. Test case now has 7 steps (5 preserved + 2 new). Key: tcVersion=2 was used because version 2 already existed in system. notrunall and notruncurrent both false (not true). Result shows tcVersion: 3 in response with new tcVersionID.",
