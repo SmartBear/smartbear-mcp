@@ -214,6 +214,14 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A Test Cycle along with its properties.
 - **Use case**: Retrieve detailed information about a test cycle.
 
+#### Get Issue Link Test Cycles
+
+- **Purpose**: Retrieve Test Cycles linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Cycles along with their IDs.
+- **Use case**: Retrieve the Test Cycles linked to a specific Jira issue.
+
 ### Creation Operations
 
 #### Create Test Cycles
