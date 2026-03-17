@@ -577,7 +577,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "     * notruncurrent: false (use false, not true)",
       "     * scope: 'project' (always required)",
       "     * versionComment: 'Auto-created version due to test suite association' (or custom message)",
-      "   - DO NOT include isStepUpdated field when withVersion=true (version creation)",
+      "   - Set isStepUpdated: true whenever you modify steps (including when withVersion=true)",
       "   - IMPORTANT: Include ALL existing steps with tcStepID + new steps without tcStepID",
       "",
       "3. VERIFICATION:",
