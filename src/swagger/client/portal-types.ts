@@ -109,6 +109,12 @@ export const CreateTableOfContentsArgsSchema = z.object({
         .describe(
           "Content type - 'apiUrl' for API references, 'html' for HTML content, or 'markdown' for Markdown content",
         ),
+      source: z
+        .enum(["internal", "external"])
+        .optional()
+        .describe(
+          "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+        ),
       url: z
         .string()
         .optional()
@@ -375,6 +381,7 @@ export const UpdateDocumentArgsSchema = z.object({
     .describe("Document UUID - unique identifier for the document"),
   content: z
     .string()
+    .optional()
     .describe(
       "The document content to update (HTML or Markdown based on document type)",
     ),
@@ -383,6 +390,12 @@ export const UpdateDocumentArgsSchema = z.object({
     .optional()
     .describe(
       "Content type - 'html' for HTML content or 'markdown' for Markdown content",
+    ),
+  source: z
+    .enum(["internal", "external"])
+    .optional()
+    .describe(
+      "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
     ),
 });
 
@@ -465,6 +478,7 @@ export interface TableOfContentsItem {
 export interface Document {
   id: string;
   type: "html" | "markdown";
+  source: "internal" | "external";
   content: string;
   createdAt: string;
   updatedAt: string;
@@ -481,11 +495,13 @@ export interface ApiUrlContent {
 
 export interface HtmlContent {
   type: "html";
+  source: "internal" | "external";
   documentId: string | null;
 }
 
 export interface MarkdownContent {
   type: "markdown";
+  source: "internal" | "external";
   documentId: string | null;
 }
 

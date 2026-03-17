@@ -3,8 +3,8 @@
 # Author: @frankkilcommins
 # This script is part of a workflow that publishes content to the SwaggerHub Portal instance.
 
-# SwaggerHub Portal API Ref: https://app.swaggerhub.com/apis-docs/smartbear-public/swaggerhub-portal-api/0.5.0-beta
-# Tested against SwaggerHub Portal API v0.5.0-beta
+# SwaggerHub Portal API Ref: https://app.swaggerhub.com/apis-docs/smartbear-public/swaggerhub-portal-api/0.7.0-beta
+# Tested against SwaggerHub Portal API v0.7.0-beta
 
 # Required environment variables:
 # - SWAGGERHUB_API_KEY: SwaggerHub API Key
@@ -677,13 +677,14 @@ function portal_product_toc_markdown_upsert() {
     local content_order=$3
     local parent_toc_id=$4
     local type=$5
+    local source=$6
 
     log_message $INFO "Upserting markdown TOC: $markdown_title in product $product_id ..."
     portal_product_toc_get_id "$section_id" "$markdown_title"
 
     if [ -z "$product_toc_id" ] || [ "$product_toc_id" == "null" ]; then
         log_message $INFO "Posting markdown TOC: $section_id, $markdown_title, $markdown_slug, $content_order, $parent_toc_id"
-        portal_product_toc_markdown_post "$section_id" "$markdown_title" "$markdown_slug" "$content_order" "$parent_toc_id" "$type"
+        portal_product_toc_markdown_post "$section_id" "$markdown_title" "$markdown_slug" "$content_order" "$parent_toc_id" "$type" "$source"
     else
         log_message $INFO "Patching markdown TOC: $section_id, $product_toc_id, $markdown_title, $markdown_slug, $content_order, $parent_toc_id"
         portal_product_toc_markdown_patch "$section_id" "$product_toc_id" "$markdown_title" "$markdown_slug" "$content_order" "$product_toc_slug" "$parent_toc_id" "$type"
@@ -702,6 +703,7 @@ function portal_product_toc_markdown_post() {
     local content_order=$4
     local parent_toc_id=$5
     local type=$6
+    local source=$7
 
     log_message $INFO "Creating markdown TOC: $markdown_title in product $product_id with parent $parent_toc_id ..."
     local response=$(curl -s --request POST \
@@ -715,7 +717,8 @@ function portal_product_toc_markdown_post() {
             \"order\": $content_order,
             \"parentId\": \"$parent_toc_id\",
             \"content\": {
-                \"type\": \"$type\"
+                \"type\": \"$type\",
+                \"source\": \"$source\"
             }
         }")
 
@@ -798,7 +801,8 @@ function portal_product_document_markdown_patch() {
         --header "Content-Type: application/json" \
         --data "{
             \"content\": $escaped_contents,
-            \"type\": \"$type\"
+            \"type\": \"$type\",
+            \"source\": \"$source\"
         }")
 
     log_message $DEBUG "Document patch response: $response"

@@ -162,13 +162,6 @@ jobs:
           # Push the manifest
           docker manifest push "${REGISTRY}:${IMAGE_TAG}"
 
-          # Also tag as 'latest' if this is the latest release
-          docker manifest create "${REGISTRY}:latest" \
-            --amend "${REGISTRY}:${IMAGE_TAG}-amd64" \
-            --amend "${REGISTRY}:${IMAGE_TAG}-arm64"
-
-          docker manifest push "${REGISTRY}:latest"
-
           # Create manifest list combining both architectures for GHCR
           docker manifest create "${GHCR_REGISTRY}:${IMAGE_TAG}" \
             --amend "${GHCR_REGISTRY}:${IMAGE_TAG}-amd64" \
@@ -177,12 +170,6 @@ jobs:
           # Push the manifest to GHCR
           docker manifest push "${GHCR_REGISTRY}:${IMAGE_TAG}"
 
-          # Also tag as 'latest' if this is the latest release for GHCR
-          docker manifest create "${GHCR_REGISTRY}:latest" \
-            --amend "${GHCR_REGISTRY}:${IMAGE_TAG}-amd64" \
-            --amend "${GHCR_REGISTRY}:${IMAGE_TAG}-arm64"
-
-          docker manifest push "${GHCR_REGISTRY}:latest"
 
   publish:
     name: Publish package

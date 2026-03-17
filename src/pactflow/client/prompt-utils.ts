@@ -1,4 +1,9 @@
-import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import {
+  executeSamplingOrPolyfill,
+  isSamplingPolyfillResult,
+  type SamplingPolyfillResult,
+} from "../../common/pollyfills";
+import type { SmartBearMcpServer } from "../../common/server";
 import { ToolError } from "../../common/tools";
 import type { GetInputFunction } from "../../common/types";
 import {
@@ -11,38 +16,26 @@ import {
 import { OADMatcherPrompt } from "./prompts";
 
 /**
- * Get OpenAPI matcher recommendations using sampling.
+ * Get OpenAPI matcher recommendations using sampling or polyfill.
  *
  * @param openAPI The OpenAPI document to analyze.
  * @param server The SmartBear MCP server instance.
- * @returns A promise that resolves to the matcher recommendations.
+ * @returns A promise that resolves to the matcher recommendations or a polyfill result.
  * @throws Error if unable to parse recommendations.
  */
 export async function getOADMatcherRecommendations(
   openAPI: OpenAPI,
-  server: Pick<Server, "createMessage">,
-): Promise<MatcherRecommendations> {
-  const matcherResponse = await server.createMessage({
-    messages: [
-      {
-        role: "user",
-        content: {
-          type: "text",
-          text: OADMatcherPrompt.replace("{0}", JSON.stringify(openAPI)),
-        },
-      },
-    ],
-    maxTokens: 1000,
-  });
+  server: SmartBearMcpServer,
+): Promise<MatcherRecommendations | SamplingPolyfillResult> {
+  const prompt = OADMatcherPrompt.replace("{0}", JSON.stringify(openAPI));
+  const response = await executeSamplingOrPolyfill(server, prompt, 1000);
+
+  if (isSamplingPolyfillResult(response)) {
+    return response;
+  }
 
   const regex = /```json[c5]?([\s\S]*?)```/i;
-  const content = matcherResponse.content;
-  if (content.type !== "text") {
-    throw new Error(
-      `Received unexpected response type from matcher recommendations: ${content.type}`,
-    );
-  }
-  const match = regex.exec(content.text);
+  const match = regex.exec(response);
 
   if (match) {
     const jsonText = match[1].trim();
@@ -59,15 +52,20 @@ export async function getOADMatcherRecommendations(
 
 /**
  * Get user selection for matcher recommendations.
+ * Handles both regular recommendations and polyfill results.
  *
- * @param recommendations The list of matcher recommendations.
+ * @param recommendations The list of matcher recommendations or a polyfill result.
  * @param getInput The function to get user input.
- * @returns The selected endpoint matcher.
+ * @returns The selected endpoint matcher or a polyfill result.
  */
 export async function getUserMatcherSelection(
-  recommendations: MatcherRecommendations,
+  recommendations: MatcherRecommendations | SamplingPolyfillResult,
   getInput: GetInputFunction,
-): Promise<EndpointMatcher> {
+): Promise<EndpointMatcher | SamplingPolyfillResult> {
+  if (isSamplingPolyfillResult(recommendations)) {
+    return recommendations;
+  }
+
   const recommendationsMap: Map<string, string> = new Map();
   recommendations.forEach((rec, index) => {
     recommendationsMap.set(`Recommendation ${index + 1}`, JSON.stringify(rec));

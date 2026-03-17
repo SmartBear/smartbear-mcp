@@ -33,6 +33,8 @@ describe("SmartBearMcpServer", () => {
       )
       .mockImplementation(vi.fn());
     server.server.elicitInput = vi.fn().mockResolvedValue("mocked input");
+    // Mock elicitation support
+    server.setElicitationSupported(true);
 
     // Reset the Bugsnag mock
     vi.mocked(Bugsnag.notify).mockClear();
@@ -366,8 +368,9 @@ describe("SmartBearMcpServer", () => {
       const getInputFn = mockClient.registerTools.mock.calls[0][1];
       const params = vi.mockObject({});
       const options = vi.mockObject({});
-      getInputFn(params, options);
+      await getInputFn(params, options);
 
+      // Since elicitation is supported, the wrapper should call elicitInput
       expect(server.server.elicitInput).toHaveBeenCalledExactlyOnceWith(
         params,
         options,

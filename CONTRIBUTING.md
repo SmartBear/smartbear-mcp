@@ -144,7 +144,7 @@ Please note – there is only one preview site, shared with `main` merges.
 
 ## Releases
 
-A release will be carried out by a member of the SmartBear team when a set of releasable changes is ready on the `main` branch. If there are commits from more than one product, the releasing engineer will coordinate with each product team to ensure the release is appropriate and sufficiently documented in the changelog/docs.
+A release will be carried out by a member of the SmartBear team when a set of releasable changes is ready on the `main` branch. If there are commits from more than one product, the releasing engineer will coordinate with each product team to ensure the release is appropriate and sufficiently documented in the changelog/docs. The release engineer will ideally wait up to one working day for feedback or agreement from the other product teams before proceeding with the release.
 
 Please follow these steps to create a new release:
 
