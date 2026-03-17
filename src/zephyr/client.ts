@@ -20,6 +20,7 @@ import { CreateTestSteps } from "./tool/test-case/create-test-steps.ts";
 import { CreateTestCaseWebLink } from "./tool/test-case/create-web-link.ts";
 import { GetTestCase } from "./tool/test-case/get-test-case";
 import { GetTestCases } from "./tool/test-case/get-test-cases";
+import { GetTestScript } from "./tool/test-case/get-test-script";
 import { GetTestCaseSteps } from "./tool/test-case/get-test-steps.ts";
 import { UpdateTestCase } from "./tool/test-case/update-test-case.ts";
 import { CreateTestCycleIssueLink } from "./tool/test-cycle/create-issue-link";
@@ -32,6 +33,7 @@ import { CreateTestExecutionIssueLink } from "./tool/test-execution/create-issue
 import { CreateTestExecution } from "./tool/test-execution/create-test-execution";
 import { GetTestExecution } from "./tool/test-execution/get-test-execution";
 import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
+import { GetTestExecutionSteps } from "./tool/test-execution/get-test-steps.ts";
 import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
@@ -105,7 +107,9 @@ export class ZephyrClient implements Client {
       new CreateTestExecutionIssueLink(this),
       new GetTestCaseSteps(this),
       new GetIssueLinkTestCases(this),
+      new GetTestScript(this),
       new CreateTestCycleWebLink(this),
+      new GetTestExecutionSteps(this),
     ];
 
     for (const tool of tools) {

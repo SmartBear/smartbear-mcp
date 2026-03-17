@@ -141,6 +141,16 @@ The following environment variables configure the Zephyr integration:
 
 ## Test Scripts
 
+### Retrieval Operations
+
+#### Get Test Script
+
+- **Purpose**: Retrieve the Test Script (Plain Text or BDD) for a given Test Case.
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+- **Returns**: The test script with its type (plain or bdd), text content, and id.
+- **Use case**: Retrieving the test script content of an existing Test Case to review or inspect its instructions.
+
 ### Creation Operations
 
 #### Create Test Script
@@ -320,6 +330,21 @@ The following environment variables configure the Zephyr integration:
 - **Returns**:  Empty object if the update is successful.
 - **Use case**: Updating a Test Execution with its properties.
 - **Note**: Unlike other update operations, this endpoint ignores any fields that are null or absent - they will not be cleared or modified. Only explicitly provided non-null values will update the execution.
+
+## Test Execution Steps
+
+### Retrieval Operations
+
+#### Get Test Execution Steps
+
+- **Purpose**: Retrieve the test execution steps for the given test execution within your Zephyr account by test execution key or ID.
+- **Parameters:**
+  - Test Execution ID or KEY (`testExecutionIdOrKey`)
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional test data row number (`testDataRowNumber`)
+- **Returns**: A list of Test Execution Steps along with their properties.
+- **Use case**: Getting the detailed execution results of each step for a specific test execution.
 
 ### Link Operations
 
