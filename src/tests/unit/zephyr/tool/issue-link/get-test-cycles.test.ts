@@ -19,7 +19,9 @@ describe("GetIssueLinkTestCycles", () => {
   });
 
   it("should set specification correctly", () => {
-    expect(instance.specification.title).toBe("Get Issue Link Test Cycles");
+    expect(instance.specification.title).toBe(
+      "Get Test Cycles linked to a Jira issue",
+    );
     expect(instance.specification.summary).toBe(
       "Get test cycles linked to a Jira issue in Zephyr",
     );
