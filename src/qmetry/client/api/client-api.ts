@@ -26,7 +26,7 @@ export async function qmetryRequest<T>({
     apikey: token,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
     "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-    "zscale-source": "qmetry-mcp",
+    "qtm-source": "qmetry-mcp",
   };
   if (body) {
     headers["Content-Type"] = "application/json";
