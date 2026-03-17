@@ -139,7 +139,7 @@ export async function importAutomationResults(
     apikey: token,
     project: finalPayload.projectID || project || QMETRY_DEFAULTS.PROJECT_KEY,
     "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-    "qtm-source": "qmetry-mcp",
+    "qmetry-source": "smartbear-mcp",
     // Note: Content-Type will be set automatically by fetch for FormData
   };
 
