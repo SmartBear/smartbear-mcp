@@ -287,6 +287,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
           versionComment: "version 2 with preserved steps",
           notruncurrent: true,
           notrunall: true,
+          isStepUpdated: true,
         },
         expectedOutput:
           "New version 2 created with all steps from version 1 preserved. Steps carry forward with their tcStepID values. Version comment added for tracking.",
