@@ -184,9 +184,9 @@ export async function runHttpMode() {
           const clientId = process.env.OAUTH_CLIENT_ID || "mcp-client";
 
           // Determine scopes: Use requested scopes if valid, or default to all supported
-          const supportedScopes = process.env.OAUTH_SCOPES
-            ? process.env.OAUTH_SCOPES.split(",")
-            : ["api", "offline_access"];
+          // const supportedScopes = process.env.OAUTH_SCOPES
+          //   ? process.env.OAUTH_SCOPES.split(",")
+          //   : ["api", "offline_access"];
 
           res.writeHead(201, { "Content-Type": "application/json" });
           res.end(
@@ -194,13 +194,13 @@ export async function runHttpMode() {
               client_id: clientId,
               client_name: body.client_name || "MCP Client",
               redirect_uris: redirectUris,
-              scope: supportedScopes.join(" "),
-              client_secret_expires_at: 0,
+              // scope: supportedScopes.join(" "),
+              // client_secret_expires_at: 0,
               client_id_issued_at: Math.floor(Date.now() / 1000),
               grant_types: ["authorization_code", "refresh_token"],
               response_types: ["code"],
               token_endpoint_auth_method: "none",
-              application_type: "web",
+              // application_type: "web",
             }),
           );
         } catch (error) {
