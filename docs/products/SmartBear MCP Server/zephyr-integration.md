@@ -67,6 +67,14 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of Test Cases along with their keys and versions.
 - **Use case**: Retrieve the Test Cases linked to a specific Jira issue.
 
+#### Get Test Case Links
+
+- **Purpose**: Retrieve all links (issue links and web links) associated with a test case in Zephyr.
+- **Parameters:**
+  - Test case key (`testCaseKey`)
+- **Returns**: All issue links and web links associated with the test case, including link types (COVERAGE, BLOCKS, RELATED) and URLs.
+- **Use case**: Retrieve all links connected to a specific test case to understand dependencies and related resources.
+
 ### Creation Operations
 
 #### Create Test Case
@@ -214,6 +222,14 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A Test Cycle along with its properties.
 - **Use case**: Retrieve detailed information about a test cycle.
 
+#### Get Test Cycles linked to a Jira issue
+
+- **Purpose**: Retrieve Test Cycles linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Cycles along with their IDs.
+- **Use case**: Retrieve the Test Cycles linked to a specific Jira issue.
+
 ### Creation Operations
 
 #### Create Test Cycles
@@ -263,6 +279,17 @@ The following environment variables configure the Zephyr integration:
   - url (`url`)
 - **Returns**: The created Test Cycle Web Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test cycle and a generic URL.
+
+#### Get Test Cycle Links
+
+- **Purpose**: Retrieve all links associated with a test cycle, including Jira issue links, web links, and test plan links.
+- **Parameters:**
+  - Test Cycle ID or key (`testCycleIdOrKey`)
+- **Returns**: An object containing three arrays:
+  - `issues`: List of linked Jira issues with their IDs, link types (COVERAGE, BLOCKS, RELATED), and API endpoints
+  - `webLinks`: List of web links with URLs, descriptions, link types, and API endpoints
+  - `testPlans`: List of linked test plans with their IDs, link types, and API endpoints
+- **Use case**: Retrieving all links for a test cycle to understand its relationships with Jira issues, external resources, and test plans. Useful for traceability and impact analysis.
 
 ## Test Executions
 
