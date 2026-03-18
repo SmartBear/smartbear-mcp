@@ -35,6 +35,7 @@ import { UpdateTestCycle } from "./tool/test-cycle/update-test-cycle.ts";
 import { CreateTestExecutionIssueLink } from "./tool/test-execution/create-issue-link";
 import { CreateTestExecution } from "./tool/test-execution/create-test-execution";
 import { GetTestExecution } from "./tool/test-execution/get-test-execution";
+import { GetTestExecutionLinks } from "./tool/test-execution/get-test-execution-links";
 import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
 import { GetTestExecutionSteps } from "./tool/test-execution/get-test-steps.ts";
 import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
@@ -116,6 +117,7 @@ export class ZephyrClient implements Client {
       new GetTestScript(this),
       new CreateTestCycleWebLink(this),
       new GetTestExecutionSteps(this),
+      new GetTestExecutionLinks(this),
     ];
 
     for (const tool of tools) {

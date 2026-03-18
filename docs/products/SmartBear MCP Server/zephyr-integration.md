@@ -384,6 +384,16 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A confirmation that the link was successfully created.
 - **Use case**: Creating a link between a Test Execution and a Jira Issue, for example to associate a test execution with the bug it found or the story it validates.
 
+### Retrieval Operations
+
+#### Get Test Execution Links
+
+- **Purpose**: Retrieve all links associated with a specific Test Execution by id or a key in Zephyr.
+- **Parameters:**
+  - Test Execution key or id (`testExecutionIdOrKey`)
+- **Returns**: A list of links associated with the specified Test Execution, including their details.
+- **Use case**: Retrieve links associated with a specific Test Execution.
+
 ## Statuses
 
 ### Retrieval Operations
