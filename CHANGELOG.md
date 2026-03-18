@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ## [0.15.0] - 2026-03-18
-- [QMetry] Enhance LLM prompt handling with contextual metadata and usage tracking [#371](https://github.com/SmartBear/smartbear-mcp/pull/371)
 
 ### Added
 
@@ -29,11 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool 'get-test-execution-links' for fetching links associated with given Test Execution [#376](https://github.com/SmartBear/smartbear-mcp/pull/376)
 - [Zephyr] Added a tool 'get-test-executions' for fetching Test Executions associated with given Issue [#378](https://github.com/SmartBear/smartbear-mcp/pull/378)
 
-
 ### Changed
 
 - [BugSnag] Remove eager caching during client configuration at startup - this is now lazy-loaded, but still cached as before for future requests [#356](https://github.com/SmartBear/smartbear-mcp/pull/356)
 - [Reflect] Refactored implementation of existing tools. The `get-test-status` tool no longer requires a `testId`.
+- [QMetry] Enhance LLM prompt handling with contextual metadata and usage tracking [#371](https://github.com/SmartBear/smartbear-mcp/pull/371)
 
 ## [0.14.1] - 2026-02-26
 
