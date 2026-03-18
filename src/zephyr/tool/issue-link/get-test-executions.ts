@@ -35,7 +35,6 @@ export class GetTestExecutions extends Tool<ZephyrClient> {
       .getApiClient()
       .get(`/issuelinks/${issueKey}/testexecutions`);
     return {
-      // requires structuredContent to be a record, not an array.
       structuredContent: { testExecutions: response },
       content: [],
     };
