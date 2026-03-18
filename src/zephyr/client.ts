@@ -30,7 +30,7 @@ import { GetTestExecution } from "./tool/test-execution/get-test-execution";
 import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
 import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
 
-const BASE_URL_DEFAULT = "http://localhost:5051/v2";
+const BASE_URL_DEFAULT = "http://localhost:5051/v2"; // TODO by now only for the POC
 
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("Zephyr Scale API token for authentication"),
