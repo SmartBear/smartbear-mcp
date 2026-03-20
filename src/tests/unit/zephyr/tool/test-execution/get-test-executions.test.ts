@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  listTestExecutionsNextgenQueryParams,
-  listTestExecutionsNextgen200Response as listTestExecutionsNextgenResponse,
+  ListTestExecutionsNextgenQueryParams,
+  ListTestExecutionsNextgen200Response as ListTestExecutionsNextgenResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetTestExecutions } from "../../../../../zephyr/tool/test-execution/get-test-executions";
 
@@ -26,10 +26,10 @@ describe("GetTestExecutions", () => {
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
     expect(instance.specification.inputSchema).toBe(
-      listTestExecutionsNextgenQueryParams,
+      ListTestExecutionsNextgenQueryParams,
     );
     expect(instance.specification.outputSchema).toBe(
-      listTestExecutionsNextgenResponse,
+      ListTestExecutionsNextgenResponse,
     );
   });
 
@@ -92,7 +92,12 @@ describe("GetTestExecutions", () => {
       ],
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
-    const args = { limit: 10, startAtId: 0 };
+    const args = {
+      includeStepLinks: false,
+      limit: 10,
+      startAtId: 0,
+      onlyLastExecutions: false,
+    };
     const result = await instance.handle(args, {});
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/nextgen",
@@ -115,7 +120,10 @@ describe("GetTestExecutions", () => {
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/nextgen",
       {
+        includeStepLinks: false,
         limit: 10,
+        onlyLastExecutions: false,
+        startAtId: 0,
       },
     );
     expect(result.structuredContent).toBe(responseMock);

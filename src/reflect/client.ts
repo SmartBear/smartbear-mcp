@@ -6,27 +6,27 @@ import { ToolError } from "../common/tools";
 import type {
   Client,
   GetInputFunction,
+  RegisterPromptFunction,
   RegisterToolsFunction,
 } from "../common/types";
-
-// Type definitions for tool arguments
-export interface suiteArgs {
-  suiteId: string;
-}
-
-export interface suiteExecutionArgs {
-  suiteId: string;
-  executionId: string;
-}
-
-export interface testArgs {
-  testId: string;
-}
-
-export interface testExecutionArgs {
-  testId: string;
-  executionId: string;
-}
+import { API_KEY_HEADER } from "./config/constants";
+import { SapTest } from "./prompt/sap-test";
+import { AddPromptStep } from "./tool/recording/add-prompt-step";
+import { AddSegment } from "./tool/recording/add-segment";
+import { ConnectToSession } from "./tool/recording/connect-to-session";
+import { DeletePreviousStep } from "./tool/recording/delete-previous-step";
+import { GetScreenshot } from "./tool/recording/get-screenshot";
+import { CancelSuiteExecution } from "./tool/suites/cancel-suite-execution";
+import { ExecuteSuite } from "./tool/suites/execute-suite";
+import { GetSuiteExecutionStatus } from "./tool/suites/get-suite-execution-status";
+import { ListSuiteExecutions } from "./tool/suites/list-suite-executions";
+import { ListSuites } from "./tool/suites/list-suites";
+import { GetTestStatus } from "./tool/tests/get-test-status";
+import { ListSegments } from "./tool/tests/list-segments";
+import { ListTests } from "./tool/tests/list-tests";
+import { RunTest } from "./tool/tests/run-test";
+import type { TestPlatform } from "./types/common";
+import type { WebSocketManager } from "./websocket-manager";
 
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("Reflect API authentication token"),
@@ -34,7 +34,14 @@ const ConfigurationSchema = z.object({
 
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
-  private headers = {};
+  private headers: Record<string, string> = {};
+  private apiToken = "";
+  private activeConnections = new Map<string, WebSocketManager>();
+  private sessionStates = new Map<
+    string,
+    { platform: TestPlatform; test: { name: string } }
+  >();
+  private mcpSessionConnections = new Map<string, Set<string>>();
 
   name = "Reflect";
   toolPrefix = "reflect";
@@ -47,8 +54,9 @@ export class ReflectClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
+    this.apiToken = config.api_token;
     this.headers = {
-      "X-API-KEY": `${config.api_token}`,
+      [API_KEY_HEADER]: `${config.api_token}`,
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };
@@ -58,296 +66,96 @@ export class ReflectClient implements Client {
     return Object.keys(this.headers).length !== 0;
   }
 
-  async listReflectSuites(): Promise<any> {
-    const response = await fetch("https://api.reflect.run/v1/suites", {
-      method: "GET",
-      headers: this.headers,
-    });
-
-    return response.json();
+  getApiToken(): string {
+    return this.apiToken;
   }
 
-  async listSuiteExecutions(suiteId: string): Promise<any> {
-    const response = await fetch(
-      `https://api.reflect.run/v1/suites/${suiteId}/executions`,
-      {
-        method: "GET",
-        headers: this.headers,
-      },
-    );
-
-    return response.json();
+  getHeaders(): Record<string, string> {
+    return this.headers;
   }
 
-  async getSuiteExecutionStatus(
-    suiteId: string,
-    executionId: string,
-  ): Promise<any> {
-    const response = await fetch(
-      `https://api.reflect.run/v1/suites/${suiteId}/executions/${executionId}`,
-      {
-        method: "GET",
-        headers: this.headers,
-      },
-    );
-
-    return response.json();
+  getSessionState(
+    sessionId: string,
+  ): { platform: TestPlatform; test: { name: string } } | undefined {
+    return this.sessionStates.get(sessionId);
   }
 
-  async executeSuite(suiteId: string): Promise<any> {
-    const response = await fetch(
-      `https://api.reflect.run/v1/suites/${suiteId}/executions`,
-      {
-        method: "POST",
-        headers: this.headers,
-      },
-    );
-
-    return response.json();
+  isSessionConnected(sessionId: string): boolean {
+    const wsManager = this.activeConnections.get(sessionId);
+    return wsManager?.isConnected() ?? false;
   }
 
-  async cancelSuiteExecution(
-    suiteId: string,
-    executionId: string,
-  ): Promise<any> {
-    const response = await fetch(
-      `https://api.reflect.run/v1/suites/${suiteId}/executions/${executionId}/cancel`,
-      {
-        method: "PATCH",
-        headers: this.headers,
-      },
-    );
-
-    return response.json();
+  getConnectedSession(sessionId: string): WebSocketManager {
+    if (!this.isSessionConnected(sessionId)) {
+      throw new ToolError(
+        `Session ${sessionId} is not connected. Call connect_to_session first.`,
+      );
+    }
+    return this.activeConnections.get(sessionId) as WebSocketManager;
   }
 
-  async listReflectTests(): Promise<any> {
-    const response = await fetch("https://api.reflect.run/v1/tests", {
-      method: "GET",
-      headers: this.headers,
-    });
-
-    return response.json();
+  registerConnection(
+    sessionId: string,
+    ws: WebSocketManager,
+    state: { platform: TestPlatform; test: { name: string } },
+    mcpSessionId?: string,
+  ): void {
+    this.activeConnections.set(sessionId, ws);
+    this.sessionStates.set(sessionId, state);
+    if (mcpSessionId) {
+      const existing =
+        this.mcpSessionConnections.get(mcpSessionId) ?? new Set();
+      existing.add(sessionId);
+      this.mcpSessionConnections.set(mcpSessionId, existing);
+    }
   }
 
-  async runReflectTest(testId: string): Promise<any> {
-    const response = await fetch(
-      `https://api.reflect.run/v1/tests/${testId}/executions`,
-      {
-        method: "POST",
-        headers: this.headers,
-      },
-    );
+  async cleanupSession(mcpSessionId: string): Promise<void> {
+    const reflectSessionIds = this.mcpSessionConnections.get(mcpSessionId);
+    if (!reflectSessionIds) return;
 
-    return response.json();
-  }
-
-  async getReflectTestStatus(
-    _testId: string,
-    executionId: string,
-  ): Promise<any> {
-    const response = await fetch(
-      `https://api.reflect.run/v1/executions/${executionId}`,
-      {
-        method: "GET",
-        headers: this.headers,
-      },
-    );
-
-    return response.json();
+    for (const reflectSessionId of reflectSessionIds) {
+      const ws = this.activeConnections.get(reflectSessionId);
+      if (ws) {
+        await ws.disconnect();
+        this.activeConnections.delete(reflectSessionId);
+        this.sessionStates.delete(reflectSessionId);
+      }
+    }
+    this.mcpSessionConnections.delete(mcpSessionId);
   }
 
   async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
-    register(
-      {
-        title: "List Suites",
-        summary: "Retrieve a list of all reflect suites available",
-        parameters: [],
-      },
-      async (_args, _extra) => {
-        const response = await this.listReflectSuites();
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
-    register(
-      {
-        title: "List Suite Executions",
-        summary: "List all executions for a given suite",
-        parameters: [
-          {
-            name: "suiteId",
-            type: z.string(),
-            description: "ID of the reflect suite to list executions for",
-            required: true,
-          },
-        ],
-      },
-      async (args, _extra) => {
-        if (!args.suiteId) throw new ToolError("suiteId argument is required");
-        const response = await this.listSuiteExecutions(args.suiteId as string);
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
-    register(
-      {
-        title: "Get Suite Execution Status",
-        summary: "Get the status of a reflect suite execution",
-        parameters: [
-          {
-            name: "suiteId",
-            type: z.string(),
-            description: "ID of the reflect suite to get execution status for",
-            required: true,
-          },
-          {
-            name: "executionId",
-            type: z.string(),
-            description: "ID of the reflect suite execution to get status for",
-            required: true,
-          },
-        ],
-      },
-      async (args, _extra) => {
-        if (!args.suiteId || !args.executionId)
-          throw new ToolError(
-            "Both suiteId and executionId arguments are required",
-          );
-        const response = await this.getSuiteExecutionStatus(
-          args.suiteId as string,
-          args.executionId as string,
-        );
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
-    register(
-      {
-        title: "Execute Suite",
-        summary: "Execute a reflect suite",
-        parameters: [
-          {
-            name: "suiteId",
-            type: z.string(),
-            description: "ID of the reflect suite to list executions for",
-            required: true,
-          },
-        ],
-      },
-      async (args, _extra) => {
-        if (!args.suiteId) throw new ToolError("suiteId argument is required");
-        const response = await this.executeSuite(args.suiteId as string);
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
-    register(
-      {
-        title: "Cancel Suite Execution",
-        summary: "Cancel a reflect suite execution",
-        parameters: [
-          {
-            name: "suiteId",
-            type: z.string(),
-            description: "ID of the reflect suite to cancel execution for",
-            required: true,
-          },
-          {
-            name: "executionId",
-            type: z.string(),
-            description: "ID of the reflect suite execution to cancel",
-            required: true,
-          },
-        ],
-      },
-      async (args, _extra) => {
-        if (!args.suiteId || !args.executionId)
-          throw new ToolError(
-            "Both suiteId and executionId arguments are required",
-          );
-        const response = await this.cancelSuiteExecution(
-          args.suiteId as string,
-          args.executionId as string,
-        );
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
-    register(
-      {
-        title: "List Tests",
-        summary: "List all reflect tests",
-        parameters: [],
-      },
-      async (_args, _extra) => {
-        const response = await this.listReflectTests();
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
-    register(
-      {
-        title: "Run Test",
-        summary: "Run a reflect test",
-        parameters: [
-          {
-            name: "testId",
-            type: z.string(),
-            description: "ID of the reflect test to run",
-            required: true,
-          },
-        ],
-      },
-      async (args, _extra) => {
-        if (!args.testId) throw new ToolError("testId argument is required");
-        const response = await this.runReflectTest(args.testId as string);
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
-    register(
-      {
-        title: "Get Test Status",
-        summary: "Get the status of a reflect test execution",
-        parameters: [
-          {
-            name: "testId",
-            type: z.string(),
-            description: "ID of the reflect test to run",
-            required: true,
-          },
-          {
-            name: "executionId",
-            type: z.string(),
-            description: "ID of the reflect test execution to get status for",
-            required: true,
-          },
-        ],
-      },
-      async (args, _extra) => {
-        if (!args.testId || !args.executionId)
-          throw new ToolError(
-            "Both testId and executionId arguments are required",
-          );
-        const response = await this.getReflectTestStatus(
-          args.testId as string,
-          args.executionId as string,
-        );
-        return {
-          content: [{ type: "text", text: JSON.stringify(response) }],
-        };
-      },
-    );
+    const tools = [
+      new ListSuites(this),
+      new ListSuiteExecutions(this),
+      new GetSuiteExecutionStatus(this),
+      new ExecuteSuite(this),
+      new CancelSuiteExecution(this),
+      new ListTests(this),
+      new RunTest(this),
+      new GetTestStatus(this),
+      new ListSegments(this),
+      new ConnectToSession(this),
+      new AddPromptStep(this),
+      new GetScreenshot(this),
+      new DeletePreviousStep(this),
+      new AddSegment(this),
+    ];
+
+    for (const tool of tools) {
+      register(tool.specification, tool.handle);
+    }
+  }
+
+  registerPrompts(register: RegisterPromptFunction): void {
+    const prompts = [new SapTest(this)];
+
+    for (const prompt of prompts) {
+      register(prompt.name, prompt.params, prompt.callback);
+    }
   }
 }

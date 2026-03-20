@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  getProject200Response as getProjectResponse,
-  listProjects200Response as listProjectsResponse,
+  GetProject200Response as GetProjectResponse,
+  ListProjects200Response as ListProjectsResponse,
 } from "../../../../zephyr/common/rest-api-schemas";
 
 describe("listProjectsResponse", () => {
@@ -14,7 +14,7 @@ describe("listProjectsResponse", () => {
       isLast: true,
       values: [{ id: 1, jiraProjectId: 2, key: "ABC", enabled: true }],
     };
-    expect(() => listProjectsResponse.parse(valid)).toThrow();
+    expect(() => ListProjectsResponse.parse(valid)).toThrow();
   });
 
   it("validates a correct project list", () => {
@@ -26,7 +26,7 @@ describe("listProjectsResponse", () => {
       isLast: true,
       values: [{ id: 1, jiraProjectId: 2, key: "ABC", enabled: true }],
     };
-    expect(() => listProjectsResponse.parse(valid)).not.toThrow();
+    expect(() => ListProjectsResponse.parse(valid)).not.toThrow();
   });
 
   it("rejects a list containing projects with invalid ID", () => {
@@ -38,7 +38,7 @@ describe("listProjectsResponse", () => {
       isLast: true,
       values: [{ id: "x", jiraProjectId: 2, key: "ABC", enabled: true }],
     };
-    expect(() => listProjectsResponse.parse(invalid)).toThrow();
+    expect(() => ListProjectsResponse.parse(invalid)).toThrow();
   });
 });
 
@@ -50,11 +50,11 @@ describe("getProjectResponse", () => {
       key: "ABC",
       enabled: true,
     };
-    expect(() => getProjectResponse.parse(valid)).not.toThrow();
+    expect(() => GetProjectResponse.parse(valid)).not.toThrow();
   });
 
   it("rejects an invalid project", () => {
     const invalid = { id: "x", jiraProjectId: 2, key: "ABC", enabled: true };
-    expect(() => getProjectResponse.parse(invalid)).toThrow();
+    expect(() => GetProjectResponse.parse(invalid)).toThrow();
   });
 });

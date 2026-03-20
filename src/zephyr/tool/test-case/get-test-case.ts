@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  getTestCaseParams,
-  getTestCase200Response as getTestCaseResponse,
+  GetTestCaseParams,
+  GetTestCase200Response as GetTestCaseResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetTestCase extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class GetTestCase extends Tool<ZephyrClient> {
     summary: "Get details of test case specified by key in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: getTestCaseParams,
-    outputSchema: getTestCaseResponse,
+    inputSchema: GetTestCaseParams,
+    outputSchema: GetTestCaseResponse,
     examples: [
       {
         description: "Get the test case with key 'SA-T10'",
@@ -35,7 +35,7 @@ export class GetTestCase extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCaseKey } = getTestCaseParams.parse(args);
+    const { testCaseKey } = GetTestCaseParams.parse(args);
     const response = await this.client
       .getApiClient()
       .get(`/testcases/${testCaseKey}`);

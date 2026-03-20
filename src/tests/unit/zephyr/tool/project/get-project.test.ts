@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  getProjectParams,
-  getProject200Response as getProjectResponse,
+  GetProjectParams,
+  GetProject200Response as GetProjectResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetProject } from "../../../../../zephyr/tool/project/get-project";
 
@@ -25,8 +25,8 @@ describe("GetProject", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(getProjectParams);
-    expect(instance.specification.outputSchema).toBe(getProjectResponse);
+    expect(instance.specification.inputSchema).toBe(GetProjectParams);
+    expect(instance.specification.outputSchema).toBe(GetProjectResponse);
   });
 
   it("should call apiClient.get with string projectIdOrKey and return formatted content", async () => {

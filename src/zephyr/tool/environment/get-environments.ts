@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  listEnvironmentsQueryParams,
-  listEnvironments200Response as listEnvironmentsResponse,
+  ListEnvironmentsQueryParams,
+  ListEnvironments200Response as ListEnvironmentsResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetEnvironments extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class GetEnvironments extends Tool<ZephyrClient> {
     summary: "Get environments in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: listEnvironmentsQueryParams,
-    outputSchema: listEnvironmentsResponse,
+    inputSchema: ListEnvironmentsQueryParams,
+    outputSchema: ListEnvironmentsResponse,
     examples: [
       {
         description: "Get the first 20 Environments",
@@ -73,7 +73,7 @@ export class GetEnvironments extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const getEnvironmentsInput = listEnvironmentsQueryParams.parse(args);
+    const getEnvironmentsInput = ListEnvironmentsQueryParams.parse(args);
     const response = await this.client
       .getApiClient()
       .get("/environments", getEnvironmentsInput);

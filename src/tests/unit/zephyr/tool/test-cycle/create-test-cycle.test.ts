@@ -5,8 +5,8 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  createTestCycleBody,
-  createTestCycle201Response as createTestCycleResponse,
+  CreateTestCycleBody,
+  CreateTestCycle201Response as CreateTestCycleResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestCycle } from "../../../../../zephyr/tool/test-cycle/create-test-cycle";
 
@@ -43,8 +43,8 @@ describe("CreateTestCyCle", () => {
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
-    expect(instance.specification.inputSchema).toBe(createTestCycleBody);
-    expect(instance.specification.outputSchema).toBe(createTestCycleResponse);
+    expect(instance.specification.inputSchema).toBe(CreateTestCycleBody);
+    expect(instance.specification.outputSchema).toBe(CreateTestCycleResponse);
   });
 
   it("should call apiClient.post with correct params and return created content information", async () => {

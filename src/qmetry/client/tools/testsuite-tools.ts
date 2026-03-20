@@ -1077,7 +1077,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     hints: [
       "CRITICAL: entityIDs, entityType, qmTsRunId, and runStatusID are REQUIRED parameters",
       "",
-      "⚠️ CRITICAL - ALWAYS FETCH STATUS IDs FROM PROJECT INFO:",
+      "CRITICAL - ALWAYS FETCH STATUS IDs FROM PROJECT INFO:",
       "NEVER use hardcoded or memorized status IDs. Status IDs are PROJECT-SPECIFIC and must be fetched dynamically.",
       "MANDATORY WORKFLOW BEFORE USING runStatusID:",
       "1. Call mcp_smartbear_qmetry_fetch_qmetry_project_info with the current projectKey",

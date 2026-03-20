@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  listEnvironmentsQueryParams,
-  listEnvironments200Response as listEnvironmentsResponse,
+  ListEnvironmentsQueryParams,
+  ListEnvironments200Response as ListEnvironmentsResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetEnvironments } from "../../../../../zephyr/tool/environment/get-environments";
 
@@ -99,9 +99,9 @@ describe("GetEnvironments", () => {
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
     expect(instance.specification.inputSchema).toBe(
-      listEnvironmentsQueryParams,
+      ListEnvironmentsQueryParams,
     );
-    expect(instance.specification.outputSchema).toBe(listEnvironmentsResponse);
+    expect(instance.specification.outputSchema).toBe(ListEnvironmentsResponse);
   });
 
   it("should call apiClient.get with all params", async () => {
@@ -130,7 +130,7 @@ describe("GetEnvironments", () => {
     expect(result.structuredContent).toBe(responseFromAllProjectsMock);
   });
 
-  it("should call apiClient.get without startAt", async () => {
+  it("should call apiClient.get without startAt providing default value", async () => {
     mockClient
       .getApiClient()
       .get.mockResolvedValueOnce(responseFromSpecificProjectMock);
@@ -138,7 +138,7 @@ describe("GetEnvironments", () => {
     const result = await instance.handle(args, {});
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
-      args,
+      { ...args, startAt: 0 },
     );
     expect(result.structuredContent).toBe(responseFromSpecificProjectMock);
   });

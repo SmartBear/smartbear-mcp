@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  getTestExecutionParams,
-  getTestExecution200Response as getTestExecutionResponse,
+  GetTestExecutionParams,
+  GetTestExecution200Response as GetTestExecutionResponse,
 } from "../../../../../zephyr/common/rest-api-schemas.js";
 import { GetTestExecution } from "../../../../../zephyr/tool/test-execution/get-test-execution.js";
 
@@ -82,8 +82,8 @@ describe("GetTestExecution", () => {
     );
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.inputSchema).toBe(getTestExecutionParams);
-    expect(instance.specification.outputSchema).toBe(getTestExecutionResponse);
+    expect(instance.specification.inputSchema).toBe(GetTestExecutionParams);
+    expect(instance.specification.outputSchema).toBe(GetTestExecutionResponse);
   });
 
   it("should call apiClient.get with string testExecutionIdOrKey and return formatted content", async () => {

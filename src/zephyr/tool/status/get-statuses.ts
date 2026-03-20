@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  listStatusesQueryParams,
-  listStatuses200Response as listStatusesResponse,
+  ListStatusesQueryParams,
+  ListStatuses200Response as ListStatusesResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetStatuses extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class GetStatuses extends Tool<ZephyrClient> {
     summary: "Get statuses of different types of test artifacts in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: listStatusesQueryParams,
-    outputSchema: listStatusesResponse,
+    inputSchema: ListStatusesQueryParams,
+    outputSchema: ListStatusesResponse,
     examples: [
       {
         description: "Get the first 10 statuses",
@@ -48,7 +48,7 @@ export class GetStatuses extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const getStatusesInput = listStatusesQueryParams.parse(args);
+    const getStatusesInput = ListStatusesQueryParams.parse(args);
     const response = await this.client
       .getApiClient()
       .get("/statuses", getStatusesInput);

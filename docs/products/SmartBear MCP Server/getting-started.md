@@ -6,7 +6,7 @@ This guide is to help you get up and running with our MCP server.
 
 Before setting up and using the SmartBear MCP Server, ensure you have: 
 
--   An active account across our relevant hubs (e.g. [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Test Hub](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
+-   An active account across our relevant products (e.g. [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Reflect](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
 -   Node.js 20 or later installed on your development machine
 -   A compatible MCP client (Claude Desktop, Cursor, etc.)
 
@@ -36,7 +36,7 @@ npm install @smartbear/mcp
 
 ### Authentication Setup
 
-The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its own authentication token.
+The SmartBear MCP Server supports multiple SmartBear products, each requiring its own authentication token.
 
 - **Swagger - Portal & Studio**
 
@@ -48,7 +48,7 @@ The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its ow
 
   Copy the relevant API tokens from [`app.pactflow.io`](https://app.pactflow.io/settings/api-tokens). You will also need to note the tenant URL for your organization (e.g., `{tenant}.pactflow.io`). The MCP server also supports the open source Pact Broker, in which case you will need a username and password instead of a token.
 
-- **Test Hub (Reflect)**
+- **Reflect**
 
   Generate an API key from your dashboard at [`app.reflect.run`](https://app.reflect.run/settings/account).
 
@@ -68,7 +68,7 @@ The SmartBear MCP Server supports multiple SmartBear Hubs, each requiring its ow
 
 ## Configure Environment Variables
 
-The following environment variables based on which SmartBear hubs you want to access:
+The following environment variables based on which SmartBear products you want to access:
 
 ```shell
 # Required for BugSnag tools

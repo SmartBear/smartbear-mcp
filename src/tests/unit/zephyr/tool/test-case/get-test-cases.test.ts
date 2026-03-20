@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  listTestCasesCursorPaginatedQueryParams,
-  listTestCasesCursorPaginated200Response as listTestCasesCursorPaginatedResponse,
+  ListTestCasesCursorPaginatedQueryParams,
+  ListTestCasesCursorPaginated200Response as ListTestCasesCursorPaginatedResponse,
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { GetTestCases } from "../../../../../zephyr/tool/test-case/get-test-cases";
 
@@ -26,10 +26,10 @@ describe("GetTestCases", () => {
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
     expect(instance.specification.inputSchema).toBe(
-      listTestCasesCursorPaginatedQueryParams,
+      ListTestCasesCursorPaginatedQueryParams,
     );
     expect(instance.specification.outputSchema).toBe(
-      listTestCasesCursorPaginatedResponse,
+      ListTestCasesCursorPaginatedResponse,
     );
   });
 
@@ -117,7 +117,7 @@ describe("GetTestCases", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
-  it("should handle empty args and call apiClient.get with undefined params", async () => {
+  it("should handle empty args and call apiClient.get with default param values", async () => {
     const responseMock = {
       nextStartAtId: null,
       limit: 10,
@@ -197,7 +197,7 @@ describe("GetTestCases", () => {
       "/testcases/nextgen",
       {
         limit: 10,
-        startAtId: undefined,
+        startAtId: 0,
       },
     );
     expect(result.structuredContent).toBe(responseMock);

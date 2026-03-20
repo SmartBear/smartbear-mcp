@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  listTestCyclesQueryParams,
-  listTestCycles200Response as listTestCyclesResponse,
+  ListTestCyclesQueryParams,
+  ListTestCycles200Response as ListTestCyclesResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetTestCycles extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class GetTestCycles extends Tool<ZephyrClient> {
     summary: "Get details of Test Cycles in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: listTestCyclesQueryParams,
-    outputSchema: listTestCyclesResponse,
+    inputSchema: ListTestCyclesQueryParams,
+    outputSchema: ListTestCyclesResponse,
     examples: [
       {
         description: "Get the first 10 Test Cycles",
@@ -70,7 +70,7 @@ export class GetTestCycles extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const parsedArgs = listTestCyclesQueryParams.parse(args);
+    const parsedArgs = ListTestCyclesQueryParams.parse(args);
     const response = await this.client
       .getApiClient()
       .get("/testcycles", parsedArgs);

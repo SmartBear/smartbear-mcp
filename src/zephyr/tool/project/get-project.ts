@@ -4,8 +4,8 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ZephyrClient } from "../../client";
 import {
-  getProjectParams,
-  getProject200Response as getProjectResponse,
+  GetProjectParams,
+  GetProject200Response as GetProjectResponse,
 } from "../../common/rest-api-schemas";
 
 export class GetProject extends Tool<ZephyrClient> {
@@ -14,8 +14,8 @@ export class GetProject extends Tool<ZephyrClient> {
     summary: "Get details of project specified by id or key in Zephyr",
     readOnly: true,
     idempotent: true,
-    inputSchema: getProjectParams,
-    outputSchema: getProjectResponse,
+    inputSchema: GetProjectParams,
+    outputSchema: GetProjectResponse,
     examples: [
       {
         description: "Get the project with id 1",
@@ -35,7 +35,7 @@ export class GetProject extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { projectIdOrKey } = getProjectParams.parse(args);
+    const { projectIdOrKey } = GetProjectParams.parse(args);
     const response = await this.client
       .getApiClient()
       .get(`/projects/${projectIdOrKey}`);
