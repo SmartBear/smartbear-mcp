@@ -33,7 +33,7 @@ export class GetTestExecutions extends Tool<ZephyrClient> {
     const { issueKey } = GetIssueLinkTestExecutionsParams.parse(args);
     const response = await this.client
       .getApiClient()
-      .get(`/issuelinks/${issueKey}/testexecutions`);
+      .get(`/issuelinks/${issueKey}/executions`);
     return {
       structuredContent: { testExecutions: response },
       content: [],

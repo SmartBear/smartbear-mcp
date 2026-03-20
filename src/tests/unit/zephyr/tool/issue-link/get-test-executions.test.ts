@@ -39,11 +39,11 @@ describe("GetIssueLinkTestExecutions", () => {
     const responseMock = [
       {
         id: "1",
-        self: "http://api.zephyrscale-dev.smartbear.com/v2/testexecutions/1",
+        self: "http://api.zephyrscale-dev.smartbear.com/v2/executions/1",
       },
       {
         id: "2",
-        self: "http://api.zephyrscale-dev.smartbear.com/v2/testexecutions/2",
+        self: "http://api.zephyrscale-dev.smartbear.com/v2/executions/2",
       },
     ];
 
@@ -53,7 +53,7 @@ describe("GetIssueLinkTestExecutions", () => {
     const result = await instance.handle(args, {});
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
-      "/issuelinks/PROJ-123/testexecutions",
+      "/issuelinks/PROJ-123/executions",
     );
     expect(result.structuredContent).toEqual({ testExecutions: responseMock });
     expect(result.content).toEqual([]);
@@ -65,7 +65,7 @@ describe("GetIssueLinkTestExecutions", () => {
     const result = await instance.handle({ issueKey: "PROJ-123" }, {});
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
-      "/issuelinks/PROJ-123/testexecutions",
+      "/issuelinks/PROJ-123/executions",
     );
     expect(result.structuredContent).toEqual({ testExecutions: [] });
     expect(result.content).toEqual([]);
