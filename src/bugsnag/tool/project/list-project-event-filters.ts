@@ -6,6 +6,10 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+});
+
 // Returns the available event filter fields for a project, used to build filter queries for errors and events.
 export class ListProjectEventFilters extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -18,9 +22,7 @@ export class ListProjectEventFilters extends Tool<BugsnagClient> {
       "Find the correct field names for filtering by user, environment, or custom metadata",
       "Understand filter options and data types for building complex queries",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get all available filter fields",
@@ -36,7 +38,7 @@ export class ListProjectEventFilters extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const eventFilters = await this.client.getProjectEventFields(
       await this.client.getInputProject(params.projectId),
     );

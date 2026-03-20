@@ -26,6 +26,66 @@ const PERMITTED_REOPEN_CONDITIONS = [
   "n_additional_users",
 ] as const;
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  errorId: toolInputParameters.errorId,
+  operation: z
+    .enum(PERMITTED_UPDATE_OPERATIONS)
+    .describe("The operation to apply to the error"),
+  issue_url: z
+    .string()
+    .optional()
+    .describe(
+      "The URL of the issue to link to the error - required when operation is 'link_issue'",
+    ),
+  reopenRules: z
+    .object({
+      reopenIf: z
+        .enum(PERMITTED_REOPEN_CONDITIONS)
+        .describe("Condition for when the error should be reopened"),
+      additionalUsers: z
+        .number()
+        .min(1)
+        .max(100000)
+        .optional()
+        .describe(
+          "for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened.",
+        ),
+      seconds: z
+        .number()
+        .min(1)
+        .optional()
+        .describe(
+          "for occurs_after reopen rules, the number of seconds that the Error should be snoozed for.",
+        ),
+      occurrences: z
+        .number()
+        .min(1)
+        .optional()
+        .describe(
+          "for n_occurrences_in_m_hours reopen rules, the number of occurrences to allow in the number of hours indicated by the hours field, before the Error is automatically reopened.",
+        ),
+      hours: z
+        .number()
+        .min(1)
+        .optional()
+        .describe(
+          "for n_occurrences_in_m_hours reopen rules, the number of hours.",
+        ),
+      additionalOccurrences: z
+        .number()
+        .min(1)
+        .optional()
+        .describe(
+          "or n_additional_occurrences reopen rules, the number of additional occurrences allowed before reopening.",
+        ),
+    })
+    .optional()
+    .describe(
+      "Reopen rules for snooze operation - required when operation is 'snooze'",
+    ),
+});
+
 // Updates an error's workflow state (e.g. fix, ignore, snooze, link/unlink issue). Prompts for severity when overriding it.
 export class UpdateError extends Tool<BugsnagClient> {
   private getInput: GetInputFunction;
@@ -41,65 +101,7 @@ export class UpdateError extends Tool<BugsnagClient> {
       "Update the severity of an error",
       "Snooze an error with defined conditions for when it should be reopened",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      errorId: toolInputParameters.errorId,
-      operation: z
-        .enum(PERMITTED_UPDATE_OPERATIONS)
-        .describe("The operation to apply to the error"),
-      issue_url: z
-        .string()
-        .optional()
-        .describe(
-          "The URL of the issue to link to the error - required when operation is 'link_issue'",
-        ),
-      reopenRules: z
-        .object({
-          reopenIf: z
-            .enum(PERMITTED_REOPEN_CONDITIONS)
-            .describe("Condition for when the error should be reopened"),
-          additionalUsers: z
-            .number()
-            .min(1)
-            .max(100000)
-            .optional()
-            .describe(
-              "for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened.",
-            ),
-          seconds: z
-            .number()
-            .min(1)
-            .optional()
-            .describe(
-              "for occurs_after reopen rules, the number of seconds that the Error should be snoozed for.",
-            ),
-          occurrences: z
-            .number()
-            .min(1)
-            .optional()
-            .describe(
-              "for n_occurrences_in_m_hours reopen rules, the number of occurrences to allow in the number of hours indicated by the hours field, before the Error is automatically reopened.",
-            ),
-          hours: z
-            .number()
-            .min(1)
-            .optional()
-            .describe(
-              "for n_occurrences_in_m_hours reopen rules, the number of hours.",
-            ),
-          additionalOccurrences: z
-            .number()
-            .min(1)
-            .optional()
-            .describe(
-              "or n_additional_occurrences reopen rules, the number of additional occurrences allowed before reopening.",
-            ),
-        })
-        .optional()
-        .describe(
-          "Reopen rules for snooze operation - required when operation is 'snooze'",
-        ),
-    }),
+    inputSchema,
     examples: [
       {
         description: "Mark an error as fixed",
@@ -191,7 +193,7 @@ export class UpdateError extends Tool<BugsnagClient> {
   }
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
 
     // Validate snooze operation requirements

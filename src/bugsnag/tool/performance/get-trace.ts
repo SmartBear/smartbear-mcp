@@ -6,6 +6,19 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  traceId: z.string().describe("Trace ID"),
+  from: z.string().describe("Start time (ISO 8601 format)"),
+  to: z.string().describe("End time (ISO 8601 format)"),
+  targetSpanId: z
+    .string()
+    .optional()
+    .describe("Optional target span ID to focus on"),
+  perPage: toolInputParameters.perPage,
+  nextUrl: toolInputParameters.nextUrl,
+});
+
 // Fetches all spans within a trace by trace ID and time window, optionally focused on a target span.
 export class GetTrace extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -17,18 +30,7 @@ export class GetTrace extends Tool<BugsnagClient> {
       "Understand the flow of a request through the system",
       "Identify bottlenecks in distributed systems",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      traceId: z.string().describe("Trace ID"),
-      from: z.string().describe("Start time (ISO 8601 format)"),
-      to: z.string().describe("End time (ISO 8601 format)"),
-      targetSpanId: z
-        .string()
-        .optional()
-        .describe("Optional target span ID to focus on"),
-      perPage: toolInputParameters.perPage,
-      nextUrl: toolInputParameters.nextUrl,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get all spans for a trace",
@@ -61,7 +63,7 @@ export class GetTrace extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     if (!params.traceId || !params.from || !params.to) {
       throw new ToolError("traceId, from, and to are required");

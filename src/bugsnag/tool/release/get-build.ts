@@ -6,6 +6,11 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  buildId: toolInputParameters.buildId,
+});
+
 // Fetches a single build by ID with stability metrics appended.
 export class GetBuild extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -18,10 +23,7 @@ export class GetBuild extends Tool<BugsnagClient> {
       "Analyze a specific build to correlate with error spikes or deployments",
       "See the stability targets for a project and if the build meets them",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      buildId: toolInputParameters.buildId,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get details for a specific build",
@@ -40,7 +42,7 @@ export class GetBuild extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const response = await this.client.projectApi.getProjectReleaseById(
       project.id,

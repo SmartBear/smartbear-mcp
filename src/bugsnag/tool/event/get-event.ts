@@ -6,6 +6,11 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  eventId: toolInputParameters.eventId,
+});
+
 // Fetches full details for a single event by its ID, including stack trace and metadata.
 export class GetEvent extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -15,10 +20,7 @@ export class GetEvent extends Tool<BugsnagClient> {
     useCases: [
       "Get the full details of an event, including any thread stack traces",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      eventId: toolInputParameters.eventId,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get event details of an event",
@@ -32,7 +34,7 @@ export class GetEvent extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const response = await this.client.getEvent(params.eventId, project.id);
     return {

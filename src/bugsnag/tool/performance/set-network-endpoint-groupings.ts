@@ -6,6 +6,18 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  endpoints: z
+    .array(z.string())
+    .describe(
+      "Array of URL patterns by which network spans are grouped. " +
+        "Endpoints follow OpenAPI path templating syntax (https://swagger.io/specification/#path-templating) where path parameters use curly braces (e.g., /users/{id}). " +
+        "If you encounter colon-prefixed parameters (e.g., :userId from Express/React Router), convert them to curly braces (e.g., {userId}). " +
+        "Wildcards (*) can be used in domains (e.g., https://*.example.com) to match multiple subdomains.",
+    ),
+});
+
 // Replaces all network endpoint grouping rules for a project with the provided URL patterns.
 export class SetNetworkEndpointGroupings extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -19,17 +31,7 @@ export class SetNetworkEndpointGroupings extends Tool<BugsnagClient> {
       "Match multiple subdomains using wildcards (e.g., https://*.example.com groups api.example.com, cdn.example.com)",
       "Simplify performance monitoring by reducing span group clutter",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      endpoints: z
-        .array(z.string())
-        .describe(
-          "Array of URL patterns by which network spans are grouped. " +
-            "Endpoints follow OpenAPI path templating syntax (https://swagger.io/specification/#path-templating) where path parameters use curly braces (e.g., /users/{id}). " +
-            "If you encounter colon-prefixed parameters (e.g., :userId from Express/React Router), convert them to curly braces (e.g., {userId}). " +
-            "Wildcards (*) can be used in domains (e.g., https://*.example.com) to match multiple subdomains.",
-        ),
-    }),
+    inputSchema,
     examples: [
       {
         description: "Group API endpoints with path parameters",
@@ -79,7 +81,7 @@ export class SetNetworkEndpointGroupings extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const result =
       await this.client.projectApi.updateProjectNetworkGroupingRuleset(

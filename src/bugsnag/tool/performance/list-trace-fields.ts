@@ -6,6 +6,10 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+});
+
 // Returns the available custom trace attribute fields for a project, used to build performance filters.
 export class ListTraceFields extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -17,9 +21,7 @@ export class ListTraceFields extends Tool<BugsnagClient> {
       "Understand what metadata is attached to traces",
       "Build dynamic filters based on available fields",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get all trace fields",
@@ -35,7 +37,7 @@ export class ListTraceFields extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const traceFields = await this.client.getProjectTraceFields(project);
 

@@ -7,6 +7,18 @@ import type { BugsnagClient } from "../../client";
 import type { FilterObject } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  filters: toolInputParameters.filters.describe(
+    "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
+      "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+  ),
+  sort: toolInputParameters.sort,
+  direction: toolInputParameters.direction,
+  perPage: toolInputParameters.perPage,
+  nextUrl: toolInputParameters.nextUrl,
+});
+
 // Lists errors in a project with optional filters, sorting, and pagination.
 export class ListProjectErrors extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -21,17 +33,7 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
       "Monitor error trends over time using date range filters",
       "Find errors affecting specific users or environments using metadata filters",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      filters: toolInputParameters.filters.describe(
-        "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
-      ),
-      sort: toolInputParameters.sort,
-      direction: toolInputParameters.direction,
-      perPage: toolInputParameters.perPage,
-      nextUrl: toolInputParameters.nextUrl,
-    }),
+    inputSchema,
     examples: [
       {
         description:
@@ -85,7 +87,7 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
 
     const filters: FilterObject = {

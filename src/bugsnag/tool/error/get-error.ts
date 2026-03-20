@@ -7,6 +7,17 @@ import type { BugsnagClient } from "../../client";
 import { type FilterObject, toUrlSearchParams } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  errorId: toolInputParameters.errorId.describe(
+    "Unique identifier of the error to retrieve",
+  ),
+  filters: toolInputParameters.filters.describe(
+    "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
+      "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
+  ),
+});
+
 // Fetches full details for a single error including aggregated stats, the latest event, pivots, and a dashboard URL.
 export class GetError extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -21,16 +32,7 @@ export class GetError extends Tool<BugsnagClient> {
       "Get error details for debugging and root cause analysis",
       "Retrieve error metadata for incident reports and documentation",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      errorId: toolInputParameters.errorId.describe(
-        "Unique identifier of the error to retrieve",
-      ),
-      filters: toolInputParameters.filters.describe(
-        "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
-      ),
-    }),
+    inputSchema,
     outputDescription:
       "JSON object containing: " +
       " - error_details: Aggregated data about the error, including first and last seen occurrence" +
@@ -57,7 +59,7 @@ export class GetError extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const errorDetails = (
       await this.client.errorsApi.viewErrorOnProject(project.id, params.errorId)

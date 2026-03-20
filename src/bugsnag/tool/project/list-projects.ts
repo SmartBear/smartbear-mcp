@@ -6,6 +6,13 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import type { Project } from "../../client/api/index";
 
+const inputSchema = z.object({
+  apiKey: z
+    .string()
+    .optional()
+    .describe("The API key of the BugSnag project, if known."),
+});
+
 // Lists all projects the user has access to, optionally filtered by API key.
 export class ListProjects extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -18,19 +25,14 @@ export class ListProjects extends Tool<BugsnagClient> {
       "Get an overview of all projects in the organization",
       "Locate a project by its API key if known from the user's code",
     ],
-    inputSchema: z.object({
-      apiKey: z
-        .string()
-        .optional()
-        .describe("The API key of the BugSnag project, if known."),
-    }),
+    inputSchema,
     hints: [
       "Project IDs from this list can be used with other tools when no project API key is configured",
     ],
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     let projects = await this.client.getProjects();
     if (!projects || projects.length === 0) {
       throw new ToolError("No BugSnag projects found for the current user.");

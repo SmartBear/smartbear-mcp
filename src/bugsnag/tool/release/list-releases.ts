@@ -17,6 +17,19 @@ interface StabilityData {
   meets_critical_stability: boolean;
 }
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  releaseStage: toolInputParameters.releaseStage,
+  visibleOnly: z
+    .boolean()
+    .describe(
+      "Whether to only include releases that are marked as visible in the dashboard",
+    )
+    .default(false),
+  perPage: toolInputParameters.perPage,
+  nextUrl: toolInputParameters.nextUrl,
+});
+
 // Lists release groups for a project with stability metrics appended to each result.
 export class ListReleases extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -28,18 +41,7 @@ export class ListReleases extends Tool<BugsnagClient> {
       "View recent releases to correlate with error spikes",
       "Filter releases by stage (e.g. production, staging) for targeted analysis",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      releaseStage: toolInputParameters.releaseStage,
-      visibleOnly: z
-        .boolean()
-        .describe(
-          "Whether to only include releases that are marked as visible in the dashboard",
-        )
-        .default(false),
-      perPage: toolInputParameters.perPage,
-      nextUrl: toolInputParameters.nextUrl,
-    }),
+    inputSchema,
     examples: [
       {
         description: "List production releases for a project",
@@ -75,7 +77,7 @@ export class ListReleases extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const response = await this.client.projectApi.listProjectReleaseGroups(
       project.id,

@@ -6,6 +6,12 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  spanGroupId: toolInputParameters.spanGroupId,
+  filters: toolInputParameters.performanceFilters,
+});
+
 // Fetches detailed performance metrics for a span group, including timeline and duration distribution.
 export class GetSpanGroup extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -17,11 +23,7 @@ export class GetSpanGroup extends Tool<BugsnagClient> {
       "Check if performance targets are configured",
       "Monitor span count to understand operation volume",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      spanGroupId: toolInputParameters.spanGroupId,
-      filters: toolInputParameters.performanceFilters,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get details for an API endpoint span group",
@@ -47,7 +49,7 @@ export class GetSpanGroup extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
 
     const spanGroupResults = await this.client.projectApi.getProjectSpanGroup(

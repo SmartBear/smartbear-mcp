@@ -6,6 +6,35 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  spanGroupId: toolInputParameters.spanGroupId,
+  sort: z
+    .enum([
+      "duration",
+      "timestamp",
+      "full_page_load_lcp",
+      "full_page_load_fid",
+      "full_page_load_cls",
+      "full_page_load_ttfb",
+      "full_page_load_fcp",
+      "rendering_slow_frame_percentage",
+      "rendering_frozen_frame_percentage",
+      "system_metrics_cpu_total_mean",
+      "system_metrics_memory_device_mean",
+      "rendering_metrics_fps_mean",
+      "rendering_metrics_fps_minimum",
+      "rendering_metrics_fps_maximum",
+      "http_response_code",
+    ])
+    .optional()
+    .describe("Field to sort by"),
+  direction: toolInputParameters.direction,
+  perPage: toolInputParameters.perPage,
+  nextUrl: toolInputParameters.nextUrl,
+  filters: toolInputParameters.performanceFilters,
+});
+
 // Lists individual span instances within a span group, with sorting and filtering support.
 export class ListSpans extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -17,34 +46,7 @@ export class ListSpans extends Tool<BugsnagClient> {
       "Debug performance issues by examining specific traces",
       "Find patterns in operation attributes",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      spanGroupId: toolInputParameters.spanGroupId,
-      sort: z
-        .enum([
-          "duration",
-          "timestamp",
-          "full_page_load_lcp",
-          "full_page_load_fid",
-          "full_page_load_cls",
-          "full_page_load_ttfb",
-          "full_page_load_fcp",
-          "rendering_slow_frame_percentage",
-          "rendering_frozen_frame_percentage",
-          "system_metrics_cpu_total_mean",
-          "system_metrics_memory_device_mean",
-          "rendering_metrics_fps_mean",
-          "rendering_metrics_fps_minimum",
-          "rendering_metrics_fps_maximum",
-          "http_response_code",
-        ])
-        .optional()
-        .describe("Field to sort by"),
-      direction: toolInputParameters.direction,
-      perPage: toolInputParameters.perPage,
-      nextUrl: toolInputParameters.nextUrl,
-      filters: toolInputParameters.performanceFilters,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get slowest spans for an operation",
@@ -77,7 +79,7 @@ export class ListSpans extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const result = await this.client.projectApi.listSpansBySpanGroupId(
       project.id,

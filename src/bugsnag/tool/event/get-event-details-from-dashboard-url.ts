@@ -5,6 +5,14 @@ import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 
+const inputSchema = z.object({
+  link: z
+    .string()
+    .describe(
+      "Full URL to the event details page in the BugSnag dashboard (web interface), containing project slug and event_id parameter.",
+    ),
+});
+
 // Parses a BugSnag dashboard URL to extract the project slug and event ID, then fetches the event details.
 export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -18,13 +26,7 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
       "Extract event information from shared links or browser URLs",
       "Quick lookup of event details without needing separate project and event IDs",
     ],
-    inputSchema: z.object({
-      link: z
-        .string()
-        .describe(
-          "Full URL to the event details page in the BugSnag dashboard (web interface), containing project slug and event_id parameter.",
-        ),
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get event details from a dashboard URL",
@@ -42,7 +44,7 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const url = new URL(params.link);
     const eventId = url.searchParams.get("event_id");
     const projectSlug = url.pathname.split("/")[2];

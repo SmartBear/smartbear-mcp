@@ -17,6 +17,11 @@ interface StabilityData {
   meets_critical_stability: boolean;
 }
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  releaseId: toolInputParameters.releaseId,
+});
+
 // Fetches a release by ID including its builds, with stability metrics appended to each.
 export class GetRelease extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -30,10 +35,7 @@ export class GetRelease extends Tool<BugsnagClient> {
       "Analyze the stability data and targets for a release",
       "See the builds that make up the release",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      releaseId: toolInputParameters.releaseId,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get details for a specific release",
@@ -52,7 +54,7 @@ export class GetRelease extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const releaseResponse = await this.client.projectApi.getReleaseGroup(
       params.releaseId,

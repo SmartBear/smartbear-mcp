@@ -6,6 +6,10 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+});
+
 // Returns the current network endpoint grouping rules (URL patterns) configured for a project.
 export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -18,9 +22,7 @@ export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
       "Understand how network requests are being grouped in performance monitoring",
       "Check grouping patterns before making updates",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-    }),
+    inputSchema,
     examples: [
       {
         description: "Get network grouping rules for a project",
@@ -38,7 +40,7 @@ export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const result =
       await this.client.projectApi.getProjectNetworkGroupingRuleset(project.id);

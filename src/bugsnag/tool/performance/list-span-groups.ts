@@ -6,6 +6,49 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+const inputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+  sort: z
+    .enum([
+      "total_spans",
+      "last_seen",
+      "name",
+      "display_name",
+      "network_http_method",
+      "rendering_slow_frame_span_percentage",
+      "rendering_frozen_frame_span_percentage",
+      "duration_p50",
+      "duration_p75",
+      "duration_p90",
+      "duration_p95",
+      "duration_p99",
+      "system_metrics_cpu_total_mean_p50",
+      "system_metrics_cpu_total_mean_p75",
+      "system_metrics_cpu_total_mean_p90",
+      "system_metrics_cpu_total_mean_p95",
+      "system_metrics_cpu_total_mean_p99",
+      "system_metrics_memory_device_mean_p50",
+      "system_metrics_memory_device_mean_p75",
+      "system_metrics_memory_device_mean_p90",
+      "system_metrics_memory_device_mean_p95",
+      "system_metrics_memory_device_mean_p99",
+      "rendering_metrics_fps_mean_p50",
+      "rendering_metrics_fps_mean_p75",
+      "rendering_metrics_fps_mean_p90",
+      "rendering_metrics_fps_mean_p95",
+      "rendering_metrics_fps_mean_p99",
+      "http_response_4xx_percentage",
+      "http_response_5xx_percentage",
+    ])
+    .optional()
+    .describe("Field to sort by"),
+  direction: toolInputParameters.direction,
+  perPage: toolInputParameters.perPage,
+  starredOnly: z.boolean().optional().describe("Show only starred span groups"),
+  nextUrl: toolInputParameters.nextUrl,
+  filters: toolInputParameters.performanceFilters,
+});
+
 // Lists span groups (operation types) being tracked for performance, with support for sorting and filtering.
 export class ListSpanGroups extends Tool<BugsnagClient> {
   specification: ToolParams = {
@@ -17,51 +60,7 @@ export class ListSpanGroups extends Tool<BugsnagClient> {
       "Find slow operations by sorting by duration metrics",
       "Filter to starred/important span groups",
     ],
-    inputSchema: z.object({
-      projectId: toolInputParameters.projectId,
-      sort: z
-        .enum([
-          "total_spans",
-          "last_seen",
-          "name",
-          "display_name",
-          "network_http_method",
-          "rendering_slow_frame_span_percentage",
-          "rendering_frozen_frame_span_percentage",
-          "duration_p50",
-          "duration_p75",
-          "duration_p90",
-          "duration_p95",
-          "duration_p99",
-          "system_metrics_cpu_total_mean_p50",
-          "system_metrics_cpu_total_mean_p75",
-          "system_metrics_cpu_total_mean_p90",
-          "system_metrics_cpu_total_mean_p95",
-          "system_metrics_cpu_total_mean_p99",
-          "system_metrics_memory_device_mean_p50",
-          "system_metrics_memory_device_mean_p75",
-          "system_metrics_memory_device_mean_p90",
-          "system_metrics_memory_device_mean_p95",
-          "system_metrics_memory_device_mean_p99",
-          "rendering_metrics_fps_mean_p50",
-          "rendering_metrics_fps_mean_p75",
-          "rendering_metrics_fps_mean_p90",
-          "rendering_metrics_fps_mean_p95",
-          "rendering_metrics_fps_mean_p99",
-          "http_response_4xx_percentage",
-          "http_response_5xx_percentage",
-        ])
-        .optional()
-        .describe("Field to sort by"),
-      direction: toolInputParameters.direction,
-      perPage: toolInputParameters.perPage,
-      starredOnly: z
-        .boolean()
-        .optional()
-        .describe("Show only starred span groups"),
-      nextUrl: toolInputParameters.nextUrl,
-      filters: toolInputParameters.performanceFilters,
-    }),
+    inputSchema,
     examples: [
       {
         description: "List slowest operations",
@@ -93,7 +92,7 @@ export class ListSpanGroups extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params: any = this.specification.inputSchema!.parse(args);
+    const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const result = await this.client.projectApi.listProjectSpanGroups(
       project.id,
