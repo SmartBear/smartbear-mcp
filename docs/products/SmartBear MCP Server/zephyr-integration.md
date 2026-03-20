@@ -385,8 +385,9 @@ The following environment variables configure the Zephyr integration:
 
 #### Update Test Execution Steps
 
-- **Purpose**: Update the test execution steps for a given test execution in your Zephyr account using the test execution key or ID
+- **Purpose**: Update the test execution steps for the given test execution within your Zephyr account by the test execution key or ID
 - **Parameters:**
+  - Test Execution ID or KEY (`testExecutionIdOrKey`)
   - Steps (`steps`) - array of test execution steps
     - optional Status name (`statusName`)
     - optional Actual result (`actualResult`)
