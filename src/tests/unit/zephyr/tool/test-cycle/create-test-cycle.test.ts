@@ -10,7 +10,7 @@ import {
 } from "../../../../../zephyr/common/rest-api-schemas";
 import { CreateTestCycle } from "../../../../../zephyr/tool/test-cycle/create-test-cycle";
 
-describe("CreateTestCycle", () => {
+describe("CreateTestCyCle", () => {
   let mockClient: any;
   let instance: CreateTestCycle;
   const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
@@ -63,6 +63,31 @@ describe("CreateTestCycle", () => {
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/",
       args,
+    );
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
+  it("should ignore extra parameters not in the schema", async () => {
+    const responseMock = {
+      id: 54,
+      self: "https://<api-base-url>/testcycles/SA-R2",
+      key: "SA-R2",
+    };
+    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+    const args = {
+      projectKey: "SA",
+      name: "New Test Cycles with Extra",
+      description: "This is a new test cycle created via the API for testing",
+      extraParam: "This should be ignored",
+    };
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testcycles/",
+      {
+        projectKey: args.projectKey,
+        name: args.name,
+        description: args.description,
+      },
     );
     expect(result.structuredContent).toBe(responseMock);
   });

@@ -72,6 +72,34 @@ describe("CreateFolder", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
+  it("should ignore extra parameters not in the schema", async () => {
+    const responseMock = {
+      id: 54,
+      self: "https://<api-base-url>/folders/54",
+    };
+
+    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
+    const args = {
+      parentId: 1,
+      name: "Pump Test Plans",
+      projectKey: "SA",
+      folderType: "TEST_PLAN",
+      extraParam: "This should be ignored",
+    };
+
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith("/folders", {
+      parentId: args.parentId,
+      name: args.name,
+      projectKey: args.projectKey,
+      folderType: args.folderType,
+    });
+
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
   it("should handle apiClient.post throwing error", async () => {
     mockClient
       .getApiClient()

@@ -72,6 +72,32 @@ describe("CreateTestCaseIssueLink", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
+  it("should ignore extra parameters not in the schema", async () => {
+    const responseMock = {
+      id: 54,
+      self: "https://<api-base-url>/weblinks/54",
+    };
+
+    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
+
+    const args = {
+      testCaseKey: "SA-T1",
+      issueId: 54,
+      extraField: "should be ignored",
+    };
+
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testcases/SA-T1/links/issues",
+      {
+        issueId: args.issueId,
+      },
+    );
+
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
   it("should handle apiClient.post throwing error", async () => {
     mockClient
       .getApiClient()

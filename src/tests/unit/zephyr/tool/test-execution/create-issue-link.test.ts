@@ -82,6 +82,25 @@ describe("CreateTestExecutionIssueLink", () => {
     );
   });
 
+  it("should ignore extra parameters not in the schema", async () => {
+    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
+
+    const args = {
+      testExecutionIdOrKey: "SA-E40",
+      issueId: 10100,
+      extraField: "should be ignored",
+    };
+
+    await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
+      "/testexecutions/SA-E40/links/issues",
+      {
+        issueId: args.issueId,
+      },
+    );
+  });
+
   it("should handle apiClient.post throwing error", async () => {
     mockClient
       .getApiClient()

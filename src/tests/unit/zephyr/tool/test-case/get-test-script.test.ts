@@ -89,6 +89,29 @@ describe("GetTestScript", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
+  it("should ignore extra parameters not in the schema", async () => {
+    const responseMock = {
+      type: "plain",
+      text: "1. Step one\n2. Step two",
+      id: 303,
+    };
+
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
+
+    const args = {
+      testCaseKey: "SA-T2",
+      extraParam: "should be ignored",
+    };
+
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/testcases/SA-T2/testscript",
+    );
+
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
 
