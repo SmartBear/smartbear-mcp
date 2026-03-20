@@ -80,7 +80,6 @@ describe("CreateTestCaseIssueLink", () => {
     const args = {
       testCaseKey: "SA-T1",
       issueId: 53,
-      description: "Link to documentation",
     };
 
     await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
