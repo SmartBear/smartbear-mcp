@@ -44,16 +44,14 @@ export class ListReleases extends Tool<BugsnagClient> {
       {
         description: "List production releases for a project",
         parameters: {},
-        expectedOutput:
-          "JSON array of release objects in the production stage",
+        expectedOutput: "JSON array of release objects in the production stage",
       },
       {
         description: "List staging releases for a project",
         parameters: {
           releaseStage: "staging",
         },
-        expectedOutput:
-          "JSON array of release objects in the staging stage",
+        expectedOutput: "JSON array of release objects in the staging stage",
       },
       {
         description: "Get the next page of results",

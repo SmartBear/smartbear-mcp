@@ -43,9 +43,7 @@ export class ListProjects extends Tool<BugsnagClient> {
     const params = inputSchema.parse(args);
     let projects = await this.client.getProjects();
     if (!projects || projects.length === 0) {
-      throw new ToolError(
-        "No BugSnag projects found for the current user.",
-      );
+      throw new ToolError("No BugSnag projects found for the current user.");
     }
     if (params.apiKey) {
       const matchedProject = projects.find(

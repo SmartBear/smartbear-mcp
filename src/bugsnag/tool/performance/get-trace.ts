@@ -11,8 +11,7 @@ export class GetTrace extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Trace",
     summary: "Get all spans within a specific trace",
-    purpose:
-      "View the complete trace of operations for a request/transaction",
+    purpose: "View the complete trace of operations for a request/transaction",
     useCases: [
       "Debug slow requests by viewing all operations in the trace",
       "Understand the flow of a request through the system",
@@ -42,8 +41,7 @@ export class GetTrace extends Tool<BugsnagClient> {
           "Array of all spans in the trace with timing and hierarchy",
       },
       {
-        description:
-          "Get spans for a trace with pagination and target span",
+        description: "Get spans for a trace with pagination and target span",
         parameters: {
           traceId: "def456",
           from: "2024-01-01T00:00:00Z",

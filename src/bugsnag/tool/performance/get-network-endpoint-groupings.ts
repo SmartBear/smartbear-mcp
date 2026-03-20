@@ -47,9 +47,8 @@ export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
     });
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
-    const result = await this.client.projectApi.getProjectNetworkGroupingRuleset(
-      project.id,
-    );
+    const result =
+      await this.client.projectApi.getProjectNetworkGroupingRuleset(project.id);
     return {
       content: [
         { type: "text", text: JSON.stringify(result.body.endpoints || []) },

@@ -14,7 +14,6 @@ import {
   Configuration,
   CurrentUserAPI,
   ErrorAPI,
-
   type EventField,
   type Organization,
   type Project,
@@ -59,7 +58,6 @@ const cacheKeys = {
 const EXCLUDED_EVENT_FIELDS = new Set([
   "search", // This is searches multiple fields and is more a convenience for humans, we're removing to avoid over-matching
 ]);
-
 
 interface StabilityData {
   user_stability: number;
@@ -298,9 +296,7 @@ export class BugsnagClient implements Client {
     }
   }
 
-  public async getInputProject(
-    projectId?: unknown | string,
-  ): Promise<Project> {
+  public async getInputProject(projectId?: unknown | string): Promise<Project> {
     if (typeof projectId === "string") {
       const maybeProject = await this.getProject(projectId);
       if (!maybeProject) {

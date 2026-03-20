@@ -10,8 +10,7 @@ import { toolInputParameters } from "../../input-schemas";
 export class ListSpanGroups extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Span Groups",
-    summary:
-      "List span groups (operations) tracked for performance monitoring",
+    summary: "List span groups (operations) tracked for performance monitoring",
     purpose: "Discover and analyze different operations being monitored",
     useCases: [
       "View all operations being tracked for performance",
@@ -79,9 +78,7 @@ export class ListSpanGroups extends Tool<BugsnagClient> {
         parameters: {
           starredOnly: true,
           filters: {
-            "span_group.category": [
-              { type: "eq", value: "full_page_load" },
-            ],
+            "span_group.category": [{ type: "eq", value: "full_page_load" }],
           },
         },
         expectedOutput: "Array of starred span groups filtered by category",
