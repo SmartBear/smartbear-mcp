@@ -47,23 +47,23 @@
     "bump": "node scripts/bump.js"
   },
   "dependencies": {
-    "@bugsnag/js": "^8.2.0",
-    "@modelcontextprotocol/sdk": "^1.15.0",
+    "@bugsnag/js": "^8.8.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "node-cache": "^5.1.2",
-    "swagger-client": "^3.35.6",
+    "swagger-client": "^3.37.1",
     "vite": "^7.3.1",
     "ws": "^8.19.0",
-    "zod": "^4"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
+    "@biomejs/biome": "^2.4.8",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22",
-    "@types/ws": "^8.5",
+    "@types/node": "^22.19.15",
+    "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^3.2.4",
-    "globals": "^16.2.0",
+    "globals": "^16.5.0",
     "shx": "^0.3.4",
-    "typescript": "^5.6.2",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4",
     "vitest-fetch-mock": "^0.4.5"
   }
