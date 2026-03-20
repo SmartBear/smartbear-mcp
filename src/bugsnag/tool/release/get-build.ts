@@ -40,11 +40,7 @@ export class GetBuild extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-      buildId: toolInputParameters.buildId,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const response = await this.client.projectApi.getProjectReleaseById(
       project.id,

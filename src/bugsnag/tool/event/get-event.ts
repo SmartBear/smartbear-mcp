@@ -32,11 +32,7 @@ export class GetEvent extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-      eventId: toolInputParameters.eventId,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const response = await this.client.getEvent(params.eventId, project.id);
     return {

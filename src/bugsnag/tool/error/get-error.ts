@@ -57,17 +57,7 @@ export class GetError extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-      errorId: toolInputParameters.errorId.describe(
-        "Unique identifier of the error to retrieve",
-      ),
-      filters: toolInputParameters.filters.describe(
-        "Apply filters to narrow down the error list. Use the List Project Event Filters tool to discover available filter fields. " +
-          "Time filters support extended ISO 8601 format (e.g. 2018-05-20T00:00:00Z) or relative format (e.g. 7d, 24h).",
-      ),
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const errorDetails = (
       await this.client.errorsApi.viewErrorOnProject(project.id, params.errorId)

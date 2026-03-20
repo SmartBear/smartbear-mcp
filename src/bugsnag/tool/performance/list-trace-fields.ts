@@ -35,10 +35,7 @@ export class ListTraceFields extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const traceFields = await this.client.getProjectTraceFields(project);
 

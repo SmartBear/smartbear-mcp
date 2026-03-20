@@ -38,10 +38,7 @@ export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const result =
       await this.client.projectApi.getProjectNetworkGroupingRuleset(project.id);

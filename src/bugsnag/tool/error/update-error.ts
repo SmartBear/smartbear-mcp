@@ -191,32 +191,7 @@ export class UpdateError extends Tool<BugsnagClient> {
   }
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-      errorId: toolInputParameters.errorId,
-      operation: z
-        .enum(PERMITTED_UPDATE_OPERATIONS)
-        .describe("The operation to apply to the error"),
-      issue_url: z
-        .string()
-        .optional()
-        .describe(
-          "The URL of the issue to link to the error - required when operation is 'link_issue'",
-        ),
-      reopenRules: z
-        .object({
-          reopenIf: z
-            .enum(PERMITTED_REOPEN_CONDITIONS)
-            .describe("Condition for when the error should be reopened"),
-          additionalUsers: z.number().min(1).max(100000).optional(),
-          seconds: z.number().min(1).optional(),
-          occurrences: z.number().min(1).optional(),
-          hours: z.number().min(1).optional(),
-          additionalOccurrences: z.number().min(1).optional(),
-        })
-        .optional(),
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
 
     // Validate snooze operation requirements

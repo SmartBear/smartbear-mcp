@@ -47,12 +47,7 @@ export class GetSpanGroup extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-      spanGroupId: toolInputParameters.spanGroupId,
-      filters: toolInputParameters.performanceFilters,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
 
     const spanGroupResults = await this.client.projectApi.getProjectSpanGroup(

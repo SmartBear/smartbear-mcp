@@ -52,11 +52,7 @@ export class GetRelease extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-      releaseId: toolInputParameters.releaseId,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const releaseResponse = await this.client.projectApi.getReleaseGroup(
       params.releaseId,

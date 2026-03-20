@@ -36,10 +36,7 @@ export class ListProjectEventFilters extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const eventFilters = await this.client.getProjectEventFields(
       await this.client.getInputProject(params.projectId),
     );

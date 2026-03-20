@@ -75,19 +75,7 @@ export class ListReleases extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-      releaseStage: toolInputParameters.releaseStage,
-      visibleOnly: z
-        .boolean()
-        .describe(
-          "Whether to only include releases that are marked as visible in the dashboard",
-        )
-        .default(false),
-      perPage: toolInputParameters.perPage,
-      nextUrl: toolInputParameters.nextUrl,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     const response = await this.client.projectApi.listProjectReleaseGroups(
       project.id,

@@ -42,14 +42,7 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      link: z
-        .string()
-        .describe(
-          "Full URL to the event details page in the BugSnag dashboard (web interface), containing project slug and event_id parameter.",
-        ),
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const url = new URL(params.link);
     const eventId = url.searchParams.get("event_id");
     const projectSlug = url.pathname.split("/")[2];

@@ -30,13 +30,7 @@ export class ListProjects extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      apiKey: z
-        .string()
-        .optional()
-        .describe("The API key of the BugSnag project, if known."),
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     let projects = await this.client.getProjects();
     if (!projects || projects.length === 0) {
       throw new ToolError("No BugSnag projects found for the current user.");

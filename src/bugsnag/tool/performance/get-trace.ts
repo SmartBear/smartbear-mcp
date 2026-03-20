@@ -61,19 +61,7 @@ export class GetTrace extends Tool<BugsnagClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const inputSchema = z.object({
-      projectId: toolInputParameters.projectId,
-      traceId: z.string().describe("Trace ID"),
-      from: z.string().describe("Start time (ISO 8601 format)"),
-      to: z.string().describe("End time (ISO 8601 format)"),
-      targetSpanId: z
-        .string()
-        .optional()
-        .describe("Optional target span ID to focus on"),
-      perPage: toolInputParameters.perPage,
-      nextUrl: toolInputParameters.nextUrl,
-    });
-    const params = inputSchema.parse(args);
+    const params: any = this.specification.inputSchema!.parse(args);
     const project = await this.client.getInputProject(params.projectId);
     if (!params.traceId || !params.from || !params.to) {
       throw new ToolError("traceId, from, and to are required");
