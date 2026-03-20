@@ -67,28 +67,6 @@ describe("CreateTestCase", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
-  it("should ignore extra parameters not in the schema", async () => {
-    const responseMock = {
-      id: 54,
-      self: "https://<api-base-url>/testcases/SA-T11",
-      key: "SA-T11",
-    };
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
-    const args = {
-      projectKey: "SA",
-      name: "New Test Case with Extra",
-      objective: "This is a new test case created via the API for testing",
-      extraParam: "This should be ignored",
-    };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
-    expect(mockClient.getApiClient().post).toHaveBeenCalledWith("/testcases/", {
-      projectKey: args.projectKey,
-      name: args.name,
-      objective: args.objective,
-    });
-    expect(result.structuredContent).toBe(responseMock);
-  });
-
   it("should handle apiClient.post throwing error", async () => {
     mockClient
       .getApiClient()

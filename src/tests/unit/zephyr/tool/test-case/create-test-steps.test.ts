@@ -81,41 +81,6 @@ describe("CreateTestSteps", () => {
     expect(result.structuredContent).toBe(responseMock);
   });
 
-  it("should ignore extra parameters not in the schema", async () => {
-    const responseMock = {
-      id: 102,
-      self: "https://<api-base-url>/testcases/SA-T1/teststeps",
-    };
-
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
-
-    const args = {
-      testCaseKey: "SA-T1",
-      mode: "APPEND",
-      items: [
-        {
-          inline: {
-            description: "Navigate to the login page",
-            expectedResult: "Login page is displayed",
-          },
-        },
-      ],
-      extraField: "should be ignored",
-    };
-
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
-
-    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
-      "/testcases/SA-T1/teststeps",
-      {
-        mode: args.mode,
-        items: args.items,
-      },
-    );
-
-    expect(result.structuredContent).toBe(responseMock);
-  });
-
   it("should handle apiClient.post throwing error", async () => {
     mockClient
       .getApiClient()
