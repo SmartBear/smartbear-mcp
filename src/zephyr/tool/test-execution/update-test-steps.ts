@@ -41,6 +41,18 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
           "Test steps are updated successfully, but no output is expected.",
       },
       {
+        description: "Clear all fields for steps in test execution 'SA-E1'",
+        parameters: {
+          testExecutionIdOrKey: "SA-E1",
+          steps: [
+            { statusName: "", actualResult: "" },
+            { statusName: "", actualResult: "" },
+            { statusName: "", actualResult: "" },
+          ],
+        },
+        expectedOutput: "All test steps are cleared, but no output expected.",
+      },
+      {
         description:
           "Mark the second step in test execution 'SA-E5' as failed (keep everything else unchanged).",
         parameters: {
@@ -48,13 +60,9 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
           steps: [
             {
               statusName: "Pass",
-              actualResult:
-                "Changes were not saved after clicking the update button",
             },
             {
               statusName: "Fail",
-              actualResult:
-                "Page froze while updating notification preferences",
             },
           ],
         },
@@ -68,11 +76,9 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
           testExecutionIdOrKey: "10",
           steps: [
             {
-              statusName: "Error",
               actualResult: "API returned 500 error",
             },
             {
-              statusName: "Error",
               actualResult: "API returned 200 success",
             },
           ],
