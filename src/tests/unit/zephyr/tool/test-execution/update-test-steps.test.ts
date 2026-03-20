@@ -292,7 +292,8 @@ describe("UpdateTestExecutionSteps", () => {
             inline: {
               description: "Step 1",
               expectedResult: "Expected",
-              actualResult: "Page froze while updating notification preferences",
+              actualResult:
+                "Page froze while updating notification preferences",
               testData: null,
               testDataRowNumber: null,
             },
@@ -311,7 +312,9 @@ describe("UpdateTestExecutionSteps", () => {
       await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
-      expect(body.steps[0].actualResult).toBe("Page froze while updating notification preferences");
+      expect(body.steps[0].actualResult).toBe(
+        "Page froze while updating notification preferences",
+      );
       expect(body.steps[0].statusName).toBe("Fail");
     });
 
