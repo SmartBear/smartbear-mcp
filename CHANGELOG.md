@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Reflect] Added `add_segment` tool: Adds an existing set of reusable test steps to the test. [#369](https://github.com/SmartBear/smartbear-mcp/pull/369)
 - [Reflect] Updated "instructions" with guidance to the Agent on how to properly construct a Reflect test. [#369](https://github.com/SmartBear/smartbear-mcp/pull/369)
 - [Reflect] Added a "reflect-sap-test" skill that includes additional guidance for the Agent when creating tests for SAP. [#369](https://github.com/SmartBear/smartbear-mcp/pull/369)
+- [Zephyr] Added a tool `update-test-steps` for updating test execution test steps [#386](https://github.com/SmartBear/smartbear-mcp/pull/386)
 
 ### Changed
 

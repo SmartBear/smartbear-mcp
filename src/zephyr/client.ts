@@ -40,7 +40,7 @@ import { GetTestExecutionLinks } from "./tool/test-execution/get-test-execution-
 import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
 import { GetTestExecutionSteps } from "./tool/test-execution/get-test-steps.ts";
 import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
-import {UpdateTestExecutionSteps} from "./tool/test-execution/update-test-steps.ts";
+import { UpdateTestExecutionSteps } from "./tool/test-execution/update-test-steps.ts";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
 

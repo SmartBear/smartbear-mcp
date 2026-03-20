@@ -1,5 +1,8 @@
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import type { ServerNotification, ServerRequest } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  ServerNotification,
+  ServerRequest,
+} from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UpdateTestExecutionSteps } from "../../../../../zephyr/tool/test-execution/update-test-steps";
 
@@ -7,11 +10,18 @@ describe("UpdateTestExecutionSteps", () => {
   let mockClient: any;
   let instance: UpdateTestExecutionSteps;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<ServerRequest, ServerNotification> = {
+  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+    ServerRequest,
+    ServerNotification
+  > = {
     signal: AbortSignal.timeout(5000),
     requestId: "",
-    sendNotification: () => { throw new Error("Not implemented"); },
-    sendRequest: () => { throw new Error("Not implemented"); },
+    sendNotification: () => {
+      throw new Error("Not implemented");
+    },
+    sendRequest: () => {
+      throw new Error("Not implemented");
+    },
   };
 
   beforeEach(() => {
@@ -34,10 +44,14 @@ describe("UpdateTestExecutionSteps", () => {
       testExecutionIdOrKey: "SA-E1",
       steps: [{ statusName: "Pass", actualResult: "Looks good" }],
     };
-    expect(instance.specification.inputSchema?.safeParse(validInput).success).toBe(true);
+    expect(
+      instance.specification.inputSchema?.safeParse(validInput).success,
+    ).toBe(true);
 
     const missingKey = { steps: [{ statusName: "Pass" }] };
-    expect(instance.specification.inputSchema?.safeParse(missingKey).success).toBe(false);
+    expect(
+      instance.specification.inputSchema?.safeParse(missingKey).success,
+    ).toBe(false);
   });
 
   describe("handle method", () => {
@@ -344,10 +358,15 @@ describe("UpdateTestExecutionSteps", () => {
       };
 
       mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
-      mockClient.getApiClient().put.mockRejectedValueOnce(new Error("Update failed"));
+      mockClient
+        .getApiClient()
+        .put.mockRejectedValueOnce(new Error("Update failed"));
 
       await expect(
-        instance.handle({ testExecutionIdOrKey: "SA-E1", steps: [{ statusName: "Pass" }] }, EXTRA_REQUEST_HANDLER),
+        instance.handle(
+          { testExecutionIdOrKey: "SA-E1", steps: [{ statusName: "Pass" }] },
+          EXTRA_REQUEST_HANDLER,
+        ),
       ).rejects.toThrow("Update failed");
     });
 
@@ -384,7 +403,10 @@ describe("UpdateTestExecutionSteps", () => {
       mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
 
       await expect(
-        instance.handle({ steps: [{ statusName: "Pass" }] }, EXTRA_REQUEST_HANDLER),
+        instance.handle(
+          { steps: [{ statusName: "Pass" }] },
+          EXTRA_REQUEST_HANDLER,
+        ),
       ).rejects.toThrow();
     });
   });

@@ -7,7 +7,7 @@ import {
   PutTestExecutionTestStepsBody,
   PutTestExecutionTestStepsParams,
 } from "../../common/rest-api-schemas";
-import {deepMerge} from "../../common/utils.ts";
+import { deepMerge } from "../../common/utils.ts";
 
 export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -32,7 +32,8 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
             },
             {
               statusName: "Pass",
-              actualResult: "Navigation menu responded correctly to user interactions",
+              actualResult:
+                "Navigation menu responded correctly to user interactions",
             },
           ],
         },
@@ -47,11 +48,13 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
           steps: [
             {
               statusName: "Pass",
-              actualResult: "Changes were not saved after clicking the update button",
+              actualResult:
+                "Changes were not saved after clicking the update button",
             },
             {
               statusName: "Fail",
-              actualResult: "Page froze while updating notification preferences",
+              actualResult:
+                "Page froze while updating notification preferences",
             },
           ],
         },
@@ -81,11 +84,10 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const {testExecutionIdOrKey} =
+    const { testExecutionIdOrKey } =
       PutTestExecutionTestStepsParams.parse(args);
 
-    const body =
-      PutTestExecutionTestStepsBody.partial().parse(args);
+    const body = PutTestExecutionTestStepsBody.partial().parse(args);
 
     const stepUpdates = body.steps || [];
 
