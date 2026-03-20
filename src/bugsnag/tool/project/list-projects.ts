@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import type { Project } from "../../client/api/index";
 
+// Lists all projects the user has access to, optionally filtered by API key.
 export class ListProjects extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Projects",

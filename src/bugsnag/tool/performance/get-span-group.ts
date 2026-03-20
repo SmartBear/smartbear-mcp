@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Fetches detailed performance metrics for a span group, including timeline and duration distribution.
 export class GetSpanGroup extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Span Group",

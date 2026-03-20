@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Lists span groups (operation types) being tracked for performance, with support for sorting and filtering.
 export class ListSpanGroups extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Span Groups",

@@ -10,6 +10,7 @@ import { toolInputParameters } from "../../input-schemas";
 //   listEnvironments200Response as listEnvironmentsResponse,
 // } from "../../common/rest-api-schemas";
 
+// Returns the currently configured project, or throws if no project is set.
 export class GetCurrentProject extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Current Project",

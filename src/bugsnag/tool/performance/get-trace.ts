@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Fetches all spans within a trace by trace ID and time window, optionally focused on a target span.
 export class GetTrace extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Trace",

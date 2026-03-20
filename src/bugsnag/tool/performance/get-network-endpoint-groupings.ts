@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Returns the current network endpoint grouping rules (URL patterns) configured for a project.
 export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Network Endpoint Groupings",

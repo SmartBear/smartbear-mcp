@@ -7,6 +7,7 @@ import type { BugsnagClient } from "../../client";
 import { type FilterObject, toUrlSearchParams } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
 
+// Fetches full details for a single error including aggregated stats, the latest event, pivots, and a dashboard URL.
 export class GetError extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Error",

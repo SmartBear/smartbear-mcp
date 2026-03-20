@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Fetches a single build by ID with stability metrics appended.
 export class GetBuild extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Build",

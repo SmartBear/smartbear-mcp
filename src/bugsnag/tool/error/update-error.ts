@@ -26,6 +26,7 @@ const PERMITTED_REOPEN_CONDITIONS = [
   "n_additional_users",
 ] as const;
 
+// Updates an error's workflow state (e.g. fix, ignore, snooze, link/unlink issue). Prompts for severity when overriding it.
 export class UpdateError extends Tool<BugsnagClient> {
   private getInput: GetInputFunction;
 

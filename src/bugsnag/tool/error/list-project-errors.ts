@@ -7,6 +7,7 @@ import type { BugsnagClient } from "../../client";
 import { type FilterObject } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
 
+// Lists errors in a project with optional filters, sorting, and pagination.
 export class ListProjectErrors extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Project Errors",

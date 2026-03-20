@@ -17,6 +17,7 @@ interface StabilityData {
   meets_critical_stability: boolean;
 }
 
+// Fetches a release by ID including its builds, with stability metrics appended to each.
 export class GetRelease extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Release",

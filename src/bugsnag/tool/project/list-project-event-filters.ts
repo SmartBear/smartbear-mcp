@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Returns the available event filter fields for a project, used to build filter queries for errors and events.
 export class ListProjectEventFilters extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Project Event Filters",

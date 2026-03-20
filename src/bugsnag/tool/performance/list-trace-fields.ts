@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Returns the available custom trace attribute fields for a project, used to build performance filters.
 export class ListTraceFields extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Trace Fields",

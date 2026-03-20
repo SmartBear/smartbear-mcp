@@ -5,6 +5,7 @@ import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 
+// Parses a BugSnag dashboard URL to extract the project slug and event ID, then fetches the event details.
 export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Event Details From Dashboard URL",

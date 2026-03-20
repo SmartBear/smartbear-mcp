@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Fetches full details for a single event by its ID, including stack trace and metadata.
 export class GetEvent extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Event",

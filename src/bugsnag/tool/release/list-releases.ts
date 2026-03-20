@@ -17,6 +17,7 @@ interface StabilityData {
   meets_critical_stability: boolean;
 }
 
+// Lists release groups for a project with stability metrics appended to each result.
 export class ListReleases extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Releases",

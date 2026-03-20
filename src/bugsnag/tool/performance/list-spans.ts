@@ -6,6 +6,7 @@ import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
+// Lists individual span instances within a span group, with sorting and filtering support.
 export class ListSpans extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Spans",
