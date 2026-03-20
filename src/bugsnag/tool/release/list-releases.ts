@@ -74,10 +74,6 @@ export class ListReleases extends Tool<BugsnagClient> {
       "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
   };
 
-  constructor(client: BugsnagClient) {
-    super(client);
-  }
-
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
     const inputSchema = z.object({
       projectId: toolInputParameters.projectId,

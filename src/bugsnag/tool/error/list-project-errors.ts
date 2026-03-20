@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
-import { type FilterObject } from "../../client/filters";
+import type { FilterObject } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
 
 // Lists errors in a project with optional filters, sorting, and pagination.
@@ -83,10 +83,6 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
       "Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size.",
     ],
   };
-
-  constructor(client: BugsnagClient) {
-    super(client);
-  }
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
     const inputSchema = z.object({

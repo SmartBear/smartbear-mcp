@@ -1,7 +1,6 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
-import { ToolError } from "../../../common/tools";
+import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
@@ -27,10 +26,6 @@ export class GetCurrentProject extends Tool<BugsnagClient> {
       "You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project 'apiKey' field from the project list",
     ],
   };
-
-  constructor(client: BugsnagClient) {
-    super(client);
-  }
 
   handle: ToolCallback<ZodRawShape> = async (_args, _extra) => {
     const project = await this.client.getCurrentProject();

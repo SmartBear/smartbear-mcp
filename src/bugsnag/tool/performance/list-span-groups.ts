@@ -92,10 +92,6 @@ export class ListSpanGroups extends Tool<BugsnagClient> {
     ],
   };
 
-  constructor(client: BugsnagClient) {
-    super(client);
-  }
-
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
     const inputSchema = z.object({
       projectId: toolInputParameters.projectId,

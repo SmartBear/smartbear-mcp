@@ -21,26 +21,25 @@ import {
   type Release,
   type TraceField,
 } from "./client/api/index";
-import { type FilterObject } from "./client/filters";
-
-import { GetCurrentProject } from "./tool/project/get-current-project";
-import { ListProjects } from "./tool/project/list-projects";
-import { ListProjectEventFilters } from "./tool/project/list-project-event-filters";
+import type { FilterObject } from "./client/filters";
 import { GetError } from "./tool/error/get-error";
 import { ListProjectErrors } from "./tool/error/list-project-errors";
 import { UpdateError } from "./tool/error/update-error";
 import { GetEvent } from "./tool/event/get-event";
 import { GetEventDetailsFromDashboardUrl } from "./tool/event/get-event-details-from-dashboard-url";
-import { ListReleases } from "./tool/release/list-releases";
-import { GetRelease } from "./tool/release/get-release";
-import { GetBuild } from "./tool/release/get-build";
-import { ListSpanGroups } from "./tool/performance/list-span-groups";
-import { GetSpanGroup } from "./tool/performance/get-span-group";
-import { ListSpans } from "./tool/performance/list-spans";
-import { GetTrace } from "./tool/performance/get-trace";
-import { ListTraceFields } from "./tool/performance/list-trace-fields";
 import { GetNetworkEndpointGroupings } from "./tool/performance/get-network-endpoint-groupings";
+import { GetSpanGroup } from "./tool/performance/get-span-group";
+import { GetTrace } from "./tool/performance/get-trace";
+import { ListSpanGroups } from "./tool/performance/list-span-groups";
+import { ListSpans } from "./tool/performance/list-spans";
+import { ListTraceFields } from "./tool/performance/list-trace-fields";
 import { SetNetworkEndpointGroupings } from "./tool/performance/set-network-endpoint-groupings";
+import { GetCurrentProject } from "./tool/project/get-current-project";
+import { ListProjectEventFilters } from "./tool/project/list-project-event-filters";
+import { ListProjects } from "./tool/project/list-projects";
+import { GetBuild } from "./tool/release/get-build";
+import { GetRelease } from "./tool/release/get-release";
+import { ListReleases } from "./tool/release/list-releases";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";

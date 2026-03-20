@@ -39,10 +39,6 @@ export class GetBuild extends Tool<BugsnagClient> {
       "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
   };
 
-  constructor(client: BugsnagClient) {
-    super(client);
-  }
-
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
     const inputSchema = z.object({
       projectId: toolInputParameters.projectId,
