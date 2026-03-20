@@ -42,8 +42,10 @@ export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCycleIdOrKey } = CreateTestCycleIssueLinkParams.parse(args);
-    const body = CreateTestCycleIssueLinkBody.parse(args);
+    const parsed = CreateTestCycleIssueLinkParams.and(
+      CreateTestCycleIssueLinkBody,
+    ).parse(args);
+    const { testCycleIdOrKey, ...body } = parsed;
     await this.client
       .getApiClient()
       .post(`/testcycles/${testCycleIdOrKey}/links/issues`, body);
