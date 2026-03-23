@@ -55,31 +55,33 @@ describe("UpdateTestExecutionSteps", () => {
   });
 
   describe("handle method", () => {
-    it("should call PUT correctly with key and steps", async () => {
-      const existingSteps = {
-        values: [
-          {
-            inline: {
-              description: "Step 1",
-              expectedResult: "Expected 1",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+    it("should call GET and PUT correctly with key and steps", async () => {
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: null,
+            expectedResult: "Expected 1",
+            actualResult: null,
+            testDataRowNumber: null,
+            status: { id: 1 },
           },
-          {
-            inline: {
-              description: "Step 2",
-              expectedResult: "Expected 2",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+        },
+        {
+          inline: {
+            description: "Step 2",
+            testData: null,
+            expectedResult: "Expected 2",
+            actualResult: null,
+            testDataRowNumber: null,
+            status: { id: 1 },
           },
-        ],
-      };
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
       mockClient.getApiClient().put.mockResolvedValueOnce({});
 
       const args = {
@@ -101,19 +103,11 @@ describe("UpdateTestExecutionSteps", () => {
         {
           steps: [
             {
-              description: "Step 1",
-              expectedResult: "Expected 1",
               actualResult: "Login page displayed",
-              testData: null,
-              testDataRowNumber: null,
               statusName: "Pass",
             },
             {
-              description: "Step 2",
-              expectedResult: "Expected 2",
               actualResult: "User redirected to dashboard",
-              testData: null,
-              testDataRowNumber: null,
               statusName: "Pass",
             },
           ],
@@ -122,54 +116,73 @@ describe("UpdateTestExecutionSteps", () => {
     });
 
     it("should update only first step and keep others unchanged", async () => {
-      const existingSteps = {
-        values: [
-          { inline: { description: "Step 1", actualResult: null } },
-          { inline: { description: "Step 2", actualResult: null } },
-        ],
-      };
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: null,
+            expectedResult: "Expected 1",
+            actualResult: null,
+            testDataRowNumber: null,
+            status: { id: 2 },
+          },
+        },
+        {
+          inline: {
+            description: "Step 2",
+            testData: null,
+            expectedResult: "Expected 2",
+            actualResult: "Existing result 2",
+            testDataRowNumber: null,
+            status: { id: 2 },
+          },
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
       mockClient.getApiClient().put.mockResolvedValueOnce({});
 
       await instance.handle(
         {
           testExecutionIdOrKey: "SA-E1",
-          steps: [{ actualResult: "Updated step 1" }],
+          steps: [
+            { actualResult: "API returned 500 error", statusName: "Fail" },
+          ],
         },
         EXTRA_REQUEST_HANDLER,
       );
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
 
-      expect(body.steps).toEqual([
-        {
-          description: "Step 1",
-          actualResult: "Updated step 1",
-        },
-        {
-          description: "Step 2",
-          actualResult: null,
-        },
-      ]);
+      expect(body.steps[0]).toEqual({
+        actualResult: "API returned 500 error",
+        statusName: "Fail",
+      });
+
+      expect(body.steps[1]).toEqual({
+        actualResult: "Existing result 2",
+      });
     });
 
     it("should call PUT correctly with numeric ID", async () => {
-      const existingSteps = {
-        values: [
-          {
-            inline: {
-              description: "Step 1",
-              expectedResult: "Expected",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: null,
+            expectedResult: "Expected",
+            actualResult: null,
+            testDataRowNumber: null,
+            status: { id: 1 },
           },
-        ],
-      };
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
       mockClient.getApiClient().put.mockResolvedValueOnce({});
 
       await instance.handle(
@@ -186,11 +199,7 @@ describe("UpdateTestExecutionSteps", () => {
         {
           steps: [
             {
-              description: "Step 1",
-              expectedResult: "Expected",
               actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
               statusName: "Fail",
             },
           ],
@@ -199,30 +208,32 @@ describe("UpdateTestExecutionSteps", () => {
     });
 
     it("should skip undefined values in steps", async () => {
-      const existingSteps = {
-        values: [
-          {
-            inline: {
-              description: "Step 1",
-              expectedResult: "Expected 1",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: "test data 1",
+            expectedResult: "Expected 1",
+            actualResult: "Existing result 1",
+            testDataRowNumber: 1,
+            status: { id: 3 },
           },
-          {
-            inline: {
-              description: "Step 2",
-              expectedResult: "Expected 2",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+        },
+        {
+          inline: {
+            description: "Step 2",
+            testData: "test data 2",
+            expectedResult: "Expected 2",
+            actualResult: "Existing result 2",
+            testDataRowNumber: 2,
+            status: { id: 3 },
           },
-        ],
-      };
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
       mockClient.getApiClient().put.mockResolvedValueOnce({});
 
       const args = {
@@ -238,70 +249,85 @@ describe("UpdateTestExecutionSteps", () => {
       const body = mockClient.getApiClient().put.mock.calls[0][1];
 
       expect(body.steps[0]).toEqual({
-        description: "Step 1",
-        expectedResult: "Expected 1",
-        actualResult: null,
-        testData: null,
-        testDataRowNumber: null,
+        actualResult: "Existing result 1",
         statusName: "Pass",
       });
       expect(body.steps[1]).toEqual({
-        description: "Step 2",
-        expectedResult: "Expected 2",
         actualResult: "Step executed",
-        testData: null,
-        testDataRowNumber: null,
-        statusName: undefined,
       });
     });
 
-    it("should update only actualResult and keep statusName unchanged", async () => {
-      const existingSteps = {
-        values: [
-          {
-            inline: {
-              description: "Step 1",
-              expectedResult: "Expected",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+    it("should correctly updates actualResult for step 1 and statusName for step 2", async () => {
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: null,
+            expectedResult: "Expected",
+            actualResult: null,
+            testDataRowNumber: null,
+            status: { id: 2 },
           },
-        ],
-      };
+        },
+        {
+          inline: {
+            description: "Step 2",
+            testData: null,
+            expectedResult: "Expected 2",
+            actualResult: "Existing actual result 2",
+            testDataRowNumber: null,
+            status: { id: 2 },
+          },
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
       mockClient.getApiClient().put.mockResolvedValueOnce({});
 
-      const args = {
-        testExecutionIdOrKey: "SA-E3",
-        steps: [{ actualResult: "API returned 500 error" }],
-      };
+      const stepUpdates = [
+        { actualResult: "API returned 500 error" },
+        { statusName: "Fail" },
+      ];
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(
+        {
+          testExecutionIdOrKey: "SA-E3",
+          steps: stepUpdates,
+        },
+        EXTRA_REQUEST_HANDLER,
+      );
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
-      expect(body.steps[0].statusName).toBeUndefined();
-      expect(body.steps[0].expectedResult).toBe("Expected");
+
+      expect(body.steps[0]).toEqual({
+        actualResult: "API returned 500 error",
+      });
+
+      expect(body.steps[1]).toEqual({
+        actualResult: "Existing actual result 2",
+        statusName: "Fail",
+      });
     });
 
     it("should mark step as failed and keep actualResult unchanged", async () => {
-      const existingSteps = {
-        values: [
-          {
-            inline: {
-              description: "Step 1",
-              expectedResult: "Expected",
-              actualResult:
-                "Page froze while updating notification preferences",
-              testData: null,
-              testDataRowNumber: null,
-            },
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: null,
+            expectedResult: "Expected",
+            actualResult: "Page froze while updating notification preferences",
+            testDataRowNumber: null,
+            status: { id: 2 },
           },
-        ],
-      };
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
       mockClient.getApiClient().put.mockResolvedValueOnce({});
 
       const args = {
@@ -312,28 +338,29 @@ describe("UpdateTestExecutionSteps", () => {
       await instance.handle(args, EXTRA_REQUEST_HANDLER);
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
-      expect(body.steps[0].actualResult).toBe(
-        "Page froze while updating notification preferences",
-      );
-      expect(body.steps[0].statusName).toBe("Fail");
+      expect(body.steps[0]).toEqual({
+        actualResult: "Page froze while updating notification preferences",
+        statusName: "Fail",
+      });
     });
 
     it("should return empty structuredContent and content", async () => {
-      const existingSteps = {
-        values: [
-          {
-            inline: {
-              description: "Step 1",
-              expectedResult: "Expected",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: null,
+            expectedResult: "Expected",
+            actualResult: null,
+            testDataRowNumber: null,
+            status: { id: 1 },
           },
-        ],
-      };
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
       mockClient.getApiClient().put.mockResolvedValueOnce({});
 
       const result = await instance.handle(
@@ -346,21 +373,22 @@ describe("UpdateTestExecutionSteps", () => {
     });
 
     it("should reject when PUT fails", async () => {
-      const existingSteps = {
-        values: [
-          {
-            inline: {
-              description: "Step 1",
-              expectedResult: "Expected",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: null,
+            expectedResult: "Expected",
+            actualResult: null,
+            testDataRowNumber: null,
+            status: { id: 1 },
           },
-        ],
-      };
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
       mockClient
         .getApiClient()
         .put.mockRejectedValueOnce(new Error("Update failed"));
@@ -389,21 +417,22 @@ describe("UpdateTestExecutionSteps", () => {
     });
 
     it("should throw validation error when testExecutionIdOrKey is missing", async () => {
-      const existingSteps = {
-        values: [
-          {
-            inline: {
-              description: "Step 1",
-              expectedResult: "Expected",
-              actualResult: null,
-              testData: null,
-              testDataRowNumber: null,
-            },
+      const existingSteps = [
+        {
+          inline: {
+            description: "Step 1",
+            testData: null,
+            expectedResult: "Expected",
+            actualResult: null,
+            testDataRowNumber: null,
+            status: { id: 1 },
           },
-        ],
-      };
+        },
+      ];
 
-      mockClient.getApiClient().get.mockResolvedValueOnce(existingSteps);
+      mockClient
+        .getApiClient()
+        .get.mockResolvedValueOnce({ values: existingSteps });
 
       await expect(
         instance.handle(

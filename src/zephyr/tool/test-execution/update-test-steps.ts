@@ -7,7 +7,6 @@ import {
   PutTestExecutionTestStepsBody,
   PutTestExecutionTestStepsParams,
 } from "../../common/rest-api-schemas";
-import { deepMerge } from "../../common/utils.ts";
 
 export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
   specification: ToolParams = {
@@ -17,12 +16,12 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
     readOnly: false,
     idempotent: true,
     inputSchema: PutTestExecutionTestStepsParams.and(
-      PutTestExecutionTestStepsBody.partial(),
+      PutTestExecutionTestStepsBody,
     ),
     examples: [
       {
         description:
-          "Mark all steps in test execution 'SA-E1' as passed and provide actual results for each step.",
+          "Mark the status of all steps in the test execution 'SA-E1' as 'Pass'. Set the actual result of step 1 to 'Dashboard widgets loaded correctly' and step 2 to 'Navigation menu responded correctly to user interactions'.",
         parameters: {
           testExecutionIdOrKey: "SA-E1",
           steps: [
@@ -41,20 +40,8 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
           "Test steps are updated successfully, but no output is expected.",
       },
       {
-        description: "Clear all fields for steps in test execution 'SA-E1'",
-        parameters: {
-          testExecutionIdOrKey: "SA-E1",
-          steps: [
-            { statusName: "", actualResult: "" },
-            { statusName: "", actualResult: "" },
-            { statusName: "", actualResult: "" },
-          ],
-        },
-        expectedOutput: "All test steps are cleared, but no output expected.",
-      },
-      {
         description:
-          "Mark the second step in test execution 'SA-E5' as failed (keep everything else unchanged).",
+          "Update only the status of step 2 in test execution 'SA-E5' to 'Fail'. Do not modify any other fields.",
         parameters: {
           testExecutionIdOrKey: "SA-E5",
           steps: [
@@ -71,7 +58,7 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Update only actual results for steps in test execution '10' without changing their status name",
+          "Update only the actual results of the steps in test execution '10'. Set the actual result of step 1 to 'API returned 500 error' and step 2 actual result to 'API returned 200 success'",
         parameters: {
           testExecutionIdOrKey: "10",
           steps: [
@@ -93,26 +80,28 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
     const { testExecutionIdOrKey } =
       PutTestExecutionTestStepsParams.parse(args);
 
-    const body = PutTestExecutionTestStepsBody.partial().parse(args);
+    const body = PutTestExecutionTestStepsBody.required().parse(args);
 
-    const stepUpdates = body.steps || [];
+    const stepUpdates = body.steps;
 
     const response = await this.client
       .getApiClient()
       .get(`/testexecutions/${testExecutionIdOrKey}/teststeps`);
 
-    const existingSteps = response.values || [];
+    const existingSteps = response.values;
 
-    const updatedSteps = existingSteps.map((step: any, index: number) => {
-      const stepData = step.inline;
-      const update = stepUpdates[index];
-
-      if (update) {
-        return deepMerge(stepData, update);
-      }
-
-      return stepData;
-    });
+    const updatedSteps = existingSteps.map(
+      (existingStep: any, index: number) => {
+        const update = stepUpdates?.[index];
+        return {
+          actualResult:
+            update?.actualResult ?? existingStep.inline.actualResult,
+          ...(update?.statusName !== undefined && {
+            statusName: update.statusName,
+          }),
+        };
+      },
+    );
 
     await this.client
       .getApiClient()

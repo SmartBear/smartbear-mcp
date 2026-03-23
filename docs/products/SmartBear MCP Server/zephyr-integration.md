@@ -393,6 +393,7 @@ The following environment variables configure the Zephyr integration:
     - optional Actual result (`actualResult`)
 - **Returns**: Empty object if the update is successful.
 - **Use case**: Updating the status and/or actual results of steps in a test execution.
+- **Note**: Unlike other update operations, this endpoint ignores any fields that are null or absent - they will not be cleared or modified. Only explicitly provided non-null values will update the execution.
 
 ### Link Operations
 
@@ -478,4 +479,4 @@ The following environment variables configure the Zephyr integration:
 - For fields that accept multiple values, such as Test Case `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
   - If you want to add a label, you would need to specify in the prompt the intention to _add a label_, and the MCP would internally call the tool to retrieve the current labels, add the new label to the list and then call the update tool with the complete list of labels.
 - If a field is provided with a `null` value, it will clear the value of that field. For example, if `component` is provided with a `null` value, the component of the Test Case will be cleared. This is usually achieved by prompting for _Removal of the component_, or something similar, to indicate that the value should be removed.
-- **Exception - Update Test Execution**: The Update Test Execution operation behaves differently from other update operations. Any fields that are `null` or absent will be ignored and will not be cleared or modified. Only explicitly provided non-null values will update the execution.
+- **Exception - Update Test Execution & Test Execution Steps**: Both `Update Test Execution` and `Update Test Execution Steps` operations behave differently from other update operations. Any fields that are `null` or absent will be ignored and will not be cleared or modified. Only explicitly provided non-null values will update the execution.
