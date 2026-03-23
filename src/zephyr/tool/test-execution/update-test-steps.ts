@@ -22,7 +22,7 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
     examples: [
       {
         description:
-          "Mark all steps in test execution 'SA-E1' as passed and provide actual results for each step.",
+          "Mark all steps in test execution 'SA-E1' as passed. Set the actual result of step 1 to 'Dashboard widgets loaded correctly' and step 2 to 'Navigation menu responded correctly to user interactions'.",
         parameters: {
           testExecutionIdOrKey: "SA-E1",
           steps: [
@@ -41,20 +41,8 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
           "Test steps are updated successfully, but no output is expected.",
       },
       {
-        description: "Clear all fields for steps in test execution 'SA-E1'",
-        parameters: {
-          testExecutionIdOrKey: "SA-E1",
-          steps: [
-            { statusName: "", actualResult: "" },
-            { statusName: "", actualResult: "" },
-            { statusName: "", actualResult: "" },
-          ],
-        },
-        expectedOutput: "All test steps are cleared, but no output expected.",
-      },
-      {
         description:
-          "Mark the second step in test execution 'SA-E5' as failed (keep everything else unchanged).",
+          "Mark the second step in test execution 'SA-E5' as 'fail' (keep everything else unchanged).",
         parameters: {
           testExecutionIdOrKey: "SA-E5",
           steps: [
@@ -71,7 +59,7 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Update only actual results for steps in test execution '10' without changing their status name",
+          "Update actual results for steps in test execution '10', set step 1 actual result to 'API returned 500 error' and step 2 actual result to 'API returned 200 success'",
         parameters: {
           testExecutionIdOrKey: "10",
           steps: [
@@ -95,7 +83,7 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
 
     const body = PutTestExecutionTestStepsBody.partial().parse(args);
 
-    const stepUpdates = body.steps || [];
+    const stepUpdates = body.steps!;
 
     const response = await this.client
       .getApiClient()
