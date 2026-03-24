@@ -67,26 +67,44 @@ const mockCache = {
   del: vi.fn(),
 };
 
-vi.mock("../../../bugsnag/client/api/index.js", () => ({
-  ...vi.importActual("../../../bugsnag/client/api/index.js"),
+vi.mock("../../../bugsnag/client/api/CurrentUser.ts", () => ({
   CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserAPI),
-  ErrorAPI: vi.fn().mockImplementation(() => mockErrorAPI),
-  ProjectAPI: vi.fn().mockImplementation(() => mockProjectAPI),
-  Configuration: vi.fn().mockImplementation((config) => config),
-  ErrorUpdateRequest: {
-    OperationEnum: {
-      Fix: "fix",
-      Ignore: "ignore",
-      OverrideSeverity: "override_severity",
-      Open: "open",
-      Discard: "discard",
-      Undiscard: "undiscard",
-      Snooze: "snooze",
-      LinkIssue: "link_issue",
-      UnlinkIssue: "unlink_issue",
-    },
-  },
 }));
+
+vi.mock("../../../bugsnag/client/api/Error.ts", () => ({
+  ErrorAPI: vi.fn().mockImplementation(() => mockErrorAPI),
+}));
+
+vi.mock("../../../bugsnag/client/api/Project.ts", () => ({
+  ProjectAPI: vi.fn().mockImplementation(() => mockProjectAPI),
+}));
+
+vi.mock("../../../bugsnag/client/api/configuration.ts", () => ({
+  Configuration: vi.fn().mockImplementation((config) => config),
+}));
+
+vi.mock("../../../bugsnag/client/api/index.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("../../../bugsnag/client/api/index.js")
+    >();
+  return {
+    ...actual,
+    ErrorUpdateRequest: {
+      OperationEnum: {
+        Fix: "fix",
+        Ignore: "ignore",
+        OverrideSeverity: "override_severity",
+        Open: "open",
+        Discard: "discard",
+        Undiscard: "undiscard",
+        Snooze: "snooze",
+        LinkIssue: "link_issue",
+        UnlinkIssue: "unlink_issue",
+      },
+    },
+  };
+});
 
 vi.mock("../../../common/bugsnag.js", () => ({
   default: {
