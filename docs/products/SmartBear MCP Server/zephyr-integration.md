@@ -2,9 +2,9 @@
 
 The Zephyr client provides test management and execution capabilities within Zephyr as listed on [Available Tools](#Available-Tools).
 
-## Setup
+# Setup
 
-### Environment Variables
+## Environment Variables
 
 The following environment variables configure the Zephyr integration:
 
@@ -14,9 +14,14 @@ The following environment variables configure the Zephyr integration:
 - `ZEPHYR_BASE_URL` (optional): The Zephyr Cloud API base url. Should be changed depending on the region of your Jira instance. More information [here](https://support.smartbear.com/zephyr-scale-cloud/api-docs/#section/Authentication/Accessing-the-API).
   - Default: `https://api.zephyrscale.smartbear.com/v2`
 
-## Available Tools
 
-### Get Projects
+# Available Tools
+
+## Projects
+
+### Retrieval Operations
+
+#### Get Projects
 
 - **Purpose**: Retrieve projects available within your Zephyr account.
 - **Parameters**:
@@ -25,49 +30,228 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of projects along with their properties, including information about if they have Zephyr enabled or not. Results are filtered based on the provided parameters.
 - **Use case**: Getting a list of projects and their properties.
 
-### Get Project
+#### Get Project
 
 - **Purpose**: Retrieve a project available within your Zephyr account by either its key or id.
 - **Parameters:** Project key or ID
 - **Returns**: A project along with its properties, including information about if it has Zephyr enabled or not.
 - **Use case**: Getting a project with its properties.
 
-### Get Test Cycles
+## Test Cases
 
--  **Purpose**: Retrieve Test Cycles available within your Zephyr account.
--  **Parameters**:
+### Retrieval Operations
+
+#### Get Test Cases
+
+- **Purpose**: Retrieve Test Cases available within your Zephyr account.
+- **Parameters**:
+  - optional Project key (`projectKey`)
+  - optional Folder ID (`folderId`)
+  - optional max results to return (`limit`)
+  - optional starting cursor position for pagination (`startAtId`)
+- **Returns**: A list of Test Cases along with their properties.
+- **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
+
+#### Get Test Case
+
+- **Purpose**: Retrieve the test case available within your Zephyr projects by key
+- **Parameters:** Test case key
+- **Returns**: A test case along with its properties.
+- **Use case**: Retrieve detailed information about a test case.
+
+#### Get Issue Link Test Cases
+
+- **Purpose**: Retrieve Test Cases linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Cases along with their keys and versions.
+- **Use case**: Retrieve the Test Cases linked to a specific Jira issue.
+
+#### Get Test Case Links
+
+- **Purpose**: Retrieve all links (issue links and web links) associated with a test case in Zephyr.
+- **Parameters:**
+  - Test case key (`testCaseKey`)
+- **Returns**: All issue links and web links associated with the test case, including link types (COVERAGE, BLOCKS, RELATED) and URLs.
+- **Use case**: Retrieve all links connected to a specific test case to understand dependencies and related resources.
+
+### Creation Operations
+
+#### Create Test Case
+
+- **Purpose**: Create a new Test Case within the Zephyr project specified by key
+- **Parameters:**
+  - Project key (`projectKey`)
+  - Name (`name`)
+  - optional objective (`objective`)
+  - optional precondition (`precondition`)
+  - optional estimated time (`estimatedTime`)
+  - optional Jira Component ID (`componentId`)
+  - optional Priority name (`priorityName`)
+  - optional Status name (`statusName`)
+  - optional Folder ID (`folderId`)
+  - optional owner ID (`ownerId `)
+  - optional Labels (`labels`)
+  - optional Custom Field names with associated values (`customFields`)
+- **Returns**: The created Test Case ID, with the API URL to access it and the Test Case key.
+- **Use case**: Creating a Test Case with its properties.
+
+### Update Operations
+
+#### Update Test Case
+
+- **Purpose**: Update an existing Test Case within the Zephyr project specified by key
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+  - optional name (`name`)
+  - optional objective (`objective`)
+  - optional precondition (`precondition`)
+  - optional estimated time (`estimatedTime`)
+  - optional Jira Component ID (`componentId`)
+  - optional Priority name (`priorityName`)
+  - optional Status name (`statusName`)
+  - optional Folder ID (`folderId`)
+  - optional owner ID (`ownerId `)
+  - optional Labels (`labels`)
+  - optional Custom Field names with associated values (`customFields`)
+- **Returns**: Empty object if the update is successful.
+- **Use case**: Updating a Test Case with its properties.
+
+### Link Operations
+
+#### Create Test Case Web Link
+
+- **Purpose**: Creates a web link that associates a test case with a specified generic URL.
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+  - optional description (`description`)
+  - url (`url`)
+- **Returns**: The created Test Case Web Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creates a link between a test case and a generic URL.
+
+#### Create Test Case Issue Link
+
+- **Purpose**: Creates a Issue link that associates a test case with Jira Issue
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+  - Jira Issue Id (`issueId`)
+- **Returns**: The created Test Case Issue Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creates a link between a test case and a Jira Issue.
+
+#### Create Test Cycle Issue Link
+
+- **Purpose**: Creates an Issue link that associates a test cycle with a Jira Issue.
+- **Parameters:**
+  - Test Cycle ID or key (`testCycleIdOrKey`)
+  - Jira Issue Id (`issueId`)
+- **Returns**: A confirmation that the link was successfully created.
+- **Use case**: Creates a link between a test cycle and a Jira Issue.
+
+## Test Scripts
+
+### Retrieval Operations
+
+#### Get Test Script
+
+- **Purpose**: Retrieve the Test Script (Plain Text or BDD) for a given Test Case.
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+- **Returns**: The test script with its type (plain or bdd), text content, and id.
+- **Use case**: Retrieving the test script content of an existing Test Case to review or inspect its instructions.
+
+### Creation Operations
+
+#### Create Test Script
+
+- **Purpose**: Create a new Test Script, of the types Plain text or BDD - Gherkin syntax, for an existing Test Case.
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+  - Type (`type`). Options are PLAIN_TEXT and BDD
+  - text  (`text`). For PLAIN_TEXT, this supports HTML fragments. For BDD, you should use `\n` for line breaks.
+- **Returns**: The created Test Script ID, with the API URL to access it
+- **Use case**: Adding test case scripts (plain or BDD format) to an existing Test Case.
+
+## Test Case Steps
+
+### Retrieval Operations
+
+#### Get Test Case Steps
+
+- **Purpose**: Retrieve the test case steps for the given test case, available within your Zephyr account by test Case key.
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+- **Returns**: A list of Test Case Steps along with their properties.
+- **Use case**: Getting a list of Test Case Steps and their properties.
+
+### Creation Operations
+
+#### Create Test Case Test Steps
+
+- **Purpose**: Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.
+- **Parameters:**
+  - Test Case key (`testCaseKey`)
+  - Mode (`mode`) - "APPEND" to add steps, "OVERWRITE" to replace all steps
+  - Items (`items`) - array of test steps, each containing either:
+    - `inline`: step with description, optional testData, expectedResult, customFields
+    - `testCase`: delegation to another test case by key, with optional parameters
+- **Returns**: The ID of the Test Steps resource and the API self URL to fetch it
+- **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
+
+## Test Cycles
+
+### Retrieval Operations
+
+#### Get Test Cycles
+
+- **Purpose**: Retrieve Test Cycles available within your Zephyr account.
+- **Parameters**:
   - optional Project key (`projectKey`)
   - optional Folder ID (`folderId`)
   - optional Jira Project Version ID (`jiraProjectVersionId`)
   - optional max results to return (`maxResults`)
   - optional starting position for pagination (`startAt`)
--  **Returns**: A list of Test Cycles along with their properties.
--  **Use case**: Retrieve the Test Cycles, it can be filtered by Project Key, Folder ID, Jira Project version ID.
+- **Returns**: A list of Test Cycles along with their properties.
+- **Use case**: Retrieve the Test Cycles, it can be filtered by Project Key, Folder ID, Jira Project version ID.
 
-### Get Test Cycle
+#### Get Test Cycle
 
 - **Purpose**: Retrieve the test cycle available within your Zephyr projects by either its key or id.
 - **Parameters:** Test cycle key or ID
 - **Returns**: A Test Cycle along with its properties.
 - **Use case**: Retrieve detailed information about a test cycle.
 
-### Create Test Cycles
+#### Get Test Cycles linked to a Jira issue
+
+- **Purpose**: Retrieve Test Cycles linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Cycles along with their IDs.
+- **Use case**: Retrieve the Test Cycles linked to a specific Jira issue.
+
+### Creation Operations
+
+#### Create Test Cycles
+
 - **Purpose**: Create a new Test Cycle within the Zephyr project specified by key
 - **Parameters:**
-    - Project key (`projectKey`)
-    - Name (`name`)
-    - optional description (`description`)
-    - optional planned Start Date (`plannedStartDate`)
-    - optional planned End Date (`plannedEndDate`)
-    - optional Jira Project Version (`jiraProjectVersion`)
-    - optional Status name (`statusName`)
-    - optional Folder ID (`folderId`)
-    - optional owner ID (`ownerId`)
-    - optional Custom Field names with associated values (`customFields`)
+  - Project key (`projectKey`)
+  - Name (`name`)
+  - optional description (`description`)
+  - optional planned Start Date (`plannedStartDate`)
+  - optional planned End Date (`plannedEndDate`)
+  - optional Jira Project Version (`jiraProjectVersion`)
+  - optional Status name (`statusName`)
+  - optional Folder ID (`folderId`)
+  - optional owner ID (`ownerId`)
+  - optional Custom Field names with associated values (`customFields`)
 - **Returns**: The created Test Cycle ID, with the API URL to access it and the Test Cycle key.
 - **Use case**: Creating a Test Cycle with its properties.
 
-### Update Test Cycle
+### Update Operations
+
+#### Update Test Cycle
 
 - **Purpose**: Update an existing Test Cycle within the Zephyr project specified by ID or KEY
 - **Parameters:**
@@ -84,150 +268,34 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: Empty object if the update is successful.
 - **Use case**: Updating a Test Cycle with its properties.
 
-### Get Statuses
+### Link Operations
 
-- **Purpose**: Retrieve statuses related to Test Cases, Cycles, Plans or Executions from your Zephyr account.
-- **Parameters**:
-  - optional starting position for pagination (`startAt`)
-  - optional max results to return (`maxResults`)
-  - optional Project key (`projectKey`)
-  - optional type of status (`statusType`)
-- **Returns**: A list of statuses along with their properties, including name and color. Results are filtered based on the provided parameters.
-- **Use case**: Getting details about Zephyr statuses based on the provided filters.
+#### Create Test Cycle Web Link
 
-### Get Priorities
-
-- **Purpose**: Retrieve priorities related to Test Cases from your Zephyr account.
-- **Parameters**:
-  - optional starting position for pagination (`startAt`)
-  - optional max results to return (`maxResults`)
-  - optional Project key (`projectKey`)
-- **Returns**: A list of priorities along with their properties, including name and color. Results are filtered based on the provided parameters.
-- **Use case**: Getting details about Zephyr priorities based on the provided filters.
-
-### Get Test Cases
-
--  **Purpose**: Retrieve Test Cases available within your Zephyr account.
--  **Parameters**:
-- optional Project key (`projectKey`)
-- optional Folder ID (`folderId`)
-- optional max results to return (`limit`)
-- optional starting cursor position for pagination (`startAtId`)
--  **Returns**: A list of Test Cases along with their properties.
--  **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
-
-### Get Test Case
-
-- **Purpose**: Retrieve the test case available within your Zephyr projects by key
-- **Parameters:** Test case key
-- **Returns**: A test case along with its properties.
-- **Use case**: Retrieve detailed information about a test case.
-
-### Create Test Case
-
-- **Purpose**: Create a new Test Case within the Zephyr project specified by key
+- **Purpose**: Creates a web link that associates a test cycle with a specified generic URL.
 - **Parameters:**
-    - Project key (`projectKey`)
-    - Name (`name`)
-    - optional objective (`objective`)
-    - optional precondition (`precondition`)
-    - optional estimated time (`estimatedTime`)
-    - optional Jira Component ID (`componentId`)
-    - optional Priority name (`priorityName`)
-    - optional Status name (`statusName`)
-    - optional Folder ID (`folderId`)
-    - optional owner ID (`ownerId `)
-    - optional Labels (`labels`)
-    - optional Custom Field names with associated values (`customFields`)
-- **Returns**: The created Test Case ID, with the API URL to access it and the Test Case key.
-- **Use case**: Creating a Test Case with its properties.
+  - Test Cycle key or id (`testCycleIdOrKey`)
+  - optional description (`description`)
+  - url (`url`)
+- **Returns**: The created Test Cycle Web Link ID and the API self URL that can be used to delete the link.
+- **Use case**: Creates a link between a test cycle and a generic URL.
 
-### Update Test Case
-- **Purpose**: Update an existing Test Case within the Zephyr project specified by key
+#### Get Test Cycle Links
+
+- **Purpose**: Retrieve all links associated with a test cycle, including Jira issue links, web links, and test plan links.
 - **Parameters:**
-    - Test Case key (`testCaseKey`)
-    - optional name (`name`)
-    - optional objective (`objective`)
-    - optional precondition (`precondition`)
-    - optional estimated time (`estimatedTime`)
-    - optional Jira Component ID (`componentId`)
-    - optional Priority name (`priorityName`)
-    - optional Status name (`statusName`)
-    - optional Folder ID (`folderId`)
-    - optional owner ID (`ownerId `)
-    - optional Labels (`labels`)
-    - optional Custom Field names with associated values (`customFields`)
-- **Returns**: Empty object if the update is successful.
-- **Use case**: Updating a Test Case with its properties.
+  - Test Cycle ID or key (`testCycleIdOrKey`)
+- **Returns**: An object containing three arrays:
+  - `issues`: List of linked Jira issues with their IDs, link types (COVERAGE, BLOCKS, RELATED), and API endpoints
+  - `webLinks`: List of web links with URLs, descriptions, link types, and API endpoints
+  - `testPlans`: List of linked test plans with their IDs, link types, and API endpoints
+- **Use case**: Retrieving all links for a test cycle to understand its relationships with Jira issues, external resources, and test plans. Useful for traceability and impact analysis.
 
-### Create Test Case Web Link
+## Test Executions
 
-- **Purpose**: Creates a web link that associates a test case with a specified generic URL.
- **Parameters:**
-    - Test Case key (`testCaseKey`)
-    - optional description (`description`)
-    - url (`url`)
-- **Returns**: The created Test Case Web Link ID and the API self URL to access it.
-- **Use case**: Creates a link between a test case and a generic URL.
+### Retrieval Operations
 
-### Create Test Case Issue Link
-
-- **Purpose**: Creates a Issue link that associates a test case with Jira Issue
-  **Parameters:**
-  - Test Case key (`testCaseKey`)
-  - Jira Issue Id (`issueId`)
-- **Returns**: The created Test Case Issue Link ID and the API self URL that can be used to delete the link.
-- **Use case**: Creates a link between a test case and a Jira Issue.
-
-
-### Create Test Script
-
-- **Purpose**: Create a new Test Script, of the types Plain text or BDD - Gherkin syntax, for an existing Test Case.
-- **Parameters:**
-    - Test Case key (`testCaseKey`)
-    - Type (`type`). Options are PLAIN_TEXT and BDD
-    - text  (`text`). For PLAIN_TEXT, this supports HTML fragments. For BDD, you should use `\n` for line breaks.
-- **Returns**: The created Test Script ID, with the API URL to access it
-- **Use case**: Adding test case scripts (plain or BDD format) to an existing Test Case.
-
-### Get Test Case Steps
-
-- **Purpose**: Retrieve the test case steps for the given test case, available within your Zephyr account by test Case key.
-- **Parameters:**
-    - Test Case key (`testCaseKey`)
-    - optional starting position for pagination (`startAt`)
-    - optional max results to return (`maxResults`)
-- **Returns**: A list of Test Case Steps along with their properties.
-- **Use case**: Getting a list of Test Case Steps and their properties.
-
-### Create Test Case Test Steps
-- **Purpose**: Create test steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case.
-- **Parameters:**
-    - Test Case key (`testCaseKey`)
-    - Mode (`mode`) - "APPEND" to add steps, "OVERWRITE" to replace all steps
-    - Items (`items`) - array of test steps, each containing either:
-      - `inline`: step with description, optional testData, expectedResult, customFields
-      - `testCase`: delegation to another test case by key, with optional parameters
-- **Returns**: The ID of the Test Steps resource and the API self URL to fetch it
-- **Use case**: Adding step-by-step test instructions to a test case, or composing test cases by referencing other test cases as steps.
-### Get Test Execution
-
-- **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
-- **Parameters:** Test Execution key or ID
-- **Returns**: A Test Execution along with its properties.
-- **Use case**: Getting a Test Execution with its properties.
-
-### Get Environments
-
-- **Purpose**: Retrieve Environments from your Zephyr account.
-- **Parameters**:
-  - optional starting position for pagination (`startAt`)
-  - optional max results to return (`maxResults`)
-  - optional Jira Project key (`projectKey`)
-- **Returns**: A list of environments along with their properties, including but not limited to name and description. Results are filtered based on the provided parameters.
-- **Use case**: Getting details about Zephyr Environments based on the provided filters.
-
-### Get Test Executions
+#### Get Test Executions
 
 - **Purpose**: Retrieve Test Executions available within your Zephyr account
 - **Parameters:**
@@ -244,7 +312,24 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of Test Executions along with their properties. Results are filtered based on the provided parameters.
 - **Use case**: Retrieve Test Executions, filtered by various criteria such as project, test cycle, test case, or execution dates.
 
-### Create Test Executions
+#### Get Test Execution
+
+- **Purpose**: Retrieve a Test Execution available within your Zephyr account by either its key or id.
+- **Parameters:** Test Execution key or ID
+- **Returns**: A Test Execution along with its properties.
+- **Use case**: Getting a Test Execution with its properties.
+
+#### Get Test Executions linked to a Jira issue
+
+- **Purpose**: Retrieve Test Executions linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Executions along with their IDs.
+- **Use case**: Retrieve the Test Executions linked to a specific Jira issue.
+
+### Creation Operations
+
+#### Create Test Executions
 
 - **Purpose**: Creates a test execution. All required test execution custom fields should be present in the request
 - **Parameters:**
@@ -263,7 +348,9 @@ The following environment variables configure the Zephyr integration:
 - **Returns**:  The created Test execution ID and the API self URL to access it.
 - **Use case**: Creating Test Executions, with it's properties
 
-### Update Test Execution
+### Update Operations
+
+#### Update Test Execution
 
 - **Purpose**: Update an existing Test execution.
 - **Parameters:**
@@ -277,8 +364,92 @@ The following environment variables configure the Zephyr integration:
   - optional comment (`comment`)
 - **Returns**:  Empty object if the update is successful.
 - **Use case**: Updating a Test Execution with its properties.
+- **Note**: Unlike other update operations, this endpoint ignores any fields that are null or absent - they will not be cleared or modified. Only explicitly provided non-null values will update the execution.
 
-### Create folder
+## Test Execution Steps
+
+### Retrieval Operations
+
+#### Get Test Execution Steps
+
+- **Purpose**: Retrieve the test execution steps for the given test execution within your Zephyr account by test execution key or ID.
+- **Parameters:**
+  - Test Execution ID or KEY (`testExecutionIdOrKey`)
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional test data row number (`testDataRowNumber`)
+- **Returns**: A list of Test Execution Steps along with their properties.
+- **Use case**: Getting the detailed execution results of each step for a specific test execution.
+
+### Link Operations
+
+#### Create Test Execution Issue Link
+
+- **Purpose**: Creates a link between a Test Execution and a Jira Issue.
+- **Parameters:**
+  - Test Execution key or id (`testExecutionIdOrKey`)
+  - Jira Issue Id (`issueId`)
+- **Returns**: A confirmation that the link was successfully created.
+- **Use case**: Creating a link between a Test Execution and a Jira Issue, for example to associate a test execution with the bug it found or the story it validates.
+
+### Retrieval Operations
+
+#### Get Test Execution Links
+
+- **Purpose**: Retrieve all links associated with a specific Test Execution by id or a key in Zephyr.
+- **Parameters:**
+  - Test Execution key or id (`testExecutionIdOrKey`)
+- **Returns**: A list of links associated with the specified Test Execution, including their details.
+- **Use case**: Retrieve links associated with a specific Test Execution.
+
+## Statuses
+
+### Retrieval Operations
+
+#### Get Statuses
+
+- **Purpose**: Retrieve statuses related to Test Cases, Cycles, Plans or Executions from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Project key (`projectKey`)
+  - optional type of status (`statusType`)
+- **Returns**: A list of statuses along with their properties, including name and color. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr statuses based on the provided filters.
+
+## Priorities
+
+### Retrieval Operations
+
+#### Get Priorities
+
+- **Purpose**: Retrieve priorities related to Test Cases from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Project key (`projectKey`)
+- **Returns**: A list of priorities along with their properties, including name and color. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr priorities based on the provided filters.
+
+## Environments
+
+### Retrieval Operations
+
+#### Get Environments
+
+- **Purpose**: Retrieve Environments from your Zephyr account.
+- **Parameters**:
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+  - optional Jira Project key (`projectKey`)
+- **Returns**: A list of environments along with their properties, including but not limited to name and description. Results are filtered based on the provided parameters.
+- **Use case**: Getting details about Zephyr Environments based on the provided filters.
+
+## Folders
+
+### Creation Operations
+
+#### Create Folder
 
 - **Purpose**: Create a new Folder within the specified Zephyr project to organize Test Cases, Test Plans, or Test Cycles.
 - **Parameters:**
@@ -294,3 +465,4 @@ The following environment variables configure the Zephyr integration:
 - For fields that accept multiple values, such as Test Case `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
   - If you want to add a label, you would need to specify in the prompt the intention to _add a label_, and the MCP would internally call the tool to retrieve the current labels, add the new label to the list and then call the update tool with the complete list of labels.
 - If a field is provided with a `null` value, it will clear the value of that field. For example, if `component` is provided with a `null` value, the component of the Test Case will be cleared. This is usually achieved by prompting for _Removal of the component_, or something similar, to indicate that the value should be removed.
+- **Exception - Update Test Execution**: The Update Test Execution operation behaves differently from other update operations. Any fields that are `null` or absent will be ignored and will not be cleared or modified. Only explicitly provided non-null values will update the execution.

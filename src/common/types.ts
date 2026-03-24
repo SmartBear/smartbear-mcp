@@ -118,4 +118,5 @@ export interface Client {
    * This is used for request-level authentication where the token might change per request.
    */
   getAuthToken?(): string | null;
+  cleanupSession?(mcpSessionId: string): Promise<void>;
 }

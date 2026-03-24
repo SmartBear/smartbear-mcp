@@ -278,6 +278,7 @@ async function createNewTransport(
     if (transport.sessionId) {
       console.log(`[MCP] Session closed: ${transport.sessionId}`);
       transports.delete(transport.sessionId);
+      server.cleanupSession(transport.sessionId);
     }
   };
 
@@ -397,6 +398,7 @@ async function handleLegacySseRequest(
   // Clean up session when connection closes
   res.on("close", () => {
     transports.delete(transport.sessionId);
+    server.cleanupSession(transport.sessionId);
   });
 
   // Connect server to transport (this also starts the transport automatically)

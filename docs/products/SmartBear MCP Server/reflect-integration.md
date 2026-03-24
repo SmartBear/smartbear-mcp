@@ -1,6 +1,6 @@
-![test-hub.png](./images/embedded/test-hub.png)
+![reflect.png](./images/embedded/reflect.png)
 
-The Test Hub client provides test management and execution capabilities as listed below. Tools for Test Hub require an `REFLECT_API_TOKEN`.
+The Reflect client provides test management and execution capabilities as listed below. Tools for Reflect require an `REFLECT_API_TOKEN`.
 
 ## Available Tools
 
