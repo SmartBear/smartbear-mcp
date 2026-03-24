@@ -1,4 +1,3 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { ToolError, TypesafeTool } from "../../../common/tools";
 import type { GetInputFunction } from "../../../common/types";

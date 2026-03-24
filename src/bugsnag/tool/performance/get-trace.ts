@@ -1,5 +1,3 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
 import { ToolError, TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
