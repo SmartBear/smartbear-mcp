@@ -88,7 +88,8 @@ export class PactflowClient implements Client {
     ) {
       this._clientType = "pact_broker";
     } else {
-      return; // Don't configure the client if no auth is provided
+      // Default to pactflow for dynamic auth
+      this._clientType = "pactflow";
     }
     this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;

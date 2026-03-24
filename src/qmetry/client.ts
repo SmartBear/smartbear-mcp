@@ -15,7 +15,7 @@ import { TOOLS } from "./client/tools/index";
 import { QMETRY_DEFAULTS } from "./config/constants";
 
 const ConfigurationSchema = z.object({
-  api_key: z.string().describe("QMetry API key for authentication"),
+  api_key: z.string().describe("QMetry API key for authentication").optional(),
   base_url: z
     .string()
     .url()
@@ -47,7 +47,7 @@ export class QmetryClient implements Client {
   }
 
   isConfigured(): boolean {
-    return this.token !== undefined;
+    return true;
   }
 
   getToken() {

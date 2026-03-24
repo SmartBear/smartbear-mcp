@@ -9,10 +9,14 @@ import type {
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Collaborator server base URL"),
-  username: z.string().describe("Collaborator username for authentication"),
+  username: z
+    .string()
+    .describe("Collaborator username for authentication")
+    .optional(),
   login_ticket: z
     .string()
-    .describe("Collaborator login ticket for authentication"),
+    .describe("Collaborator login ticket for authentication")
+    .optional(),
 });
 
 export class CollaboratorClient implements Client {
@@ -36,11 +40,7 @@ export class CollaboratorClient implements Client {
   }
 
   isConfigured(): boolean {
-    return (
-      this.baseUrl !== undefined &&
-      this.username !== undefined &&
-      this.loginTicket !== undefined
-    );
+    return this.baseUrl !== undefined;
   }
 
   /**

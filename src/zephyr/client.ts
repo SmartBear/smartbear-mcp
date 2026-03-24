@@ -45,7 +45,10 @@ import { UpdateTestExecution } from "./tool/test-execution/update-test-execution
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
 
 const ConfigurationSchema = z.object({
-  api_token: z.string().describe("Zephyr Scale API token for authentication"),
+  api_token: z
+    .string()
+    .describe("Zephyr Scale API token for authentication")
+    .optional(),
   base_url: z
     .string()
     .url()
