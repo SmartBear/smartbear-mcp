@@ -1,8 +1,7 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
+import { TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
 import type { FilterObject } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
@@ -20,8 +19,8 @@ const inputSchema = z.object({
 });
 
 // Lists errors in a project with optional filters, sorting, and pagination.
-export class ListProjectErrors extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export const listProjectErrors = new TypesafeTool(
+  {
     title: "List Project Errors",
     summary:
       "List and search errors in a project using customizable filters and pagination",
@@ -84,11 +83,10 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
       "If the output contains a 'next_url' value, there are more results available - call this tool again supplying the next URL as a parameter to retrieve the next page.",
       "Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size.",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
+  },
+  (client: BugsnagClient) => async (args, _extra) => {
+    const params = args;
+    const project = await client.getInputProject(params.projectId);
 
     const filters: FilterObject = {
       "event.since": [{ type: "eq", value: "30d" }],
@@ -97,9 +95,9 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
     };
 
     // Validate filter keys against cached event fields
-    await this.client.validateEventFields(project, filters);
+    await client.validateEventFields(project, filters);
 
-    const response = await this.client.errorsApi.listProjectErrors(
+    const response = await client.errorsApi.listProjectErrors(
       project.id,
       null,
       params.sort,
@@ -118,5 +116,5 @@ export class ListProjectErrors extends Tool<BugsnagClient> {
     return {
       content: [{ type: "text", text: JSON.stringify(result) }],
     };
-  };
-}
+  },
+);

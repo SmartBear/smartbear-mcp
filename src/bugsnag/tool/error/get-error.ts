@@ -1,8 +1,7 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
+import { ToolError, TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
 import { type FilterObject, toUrlSearchParams } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
@@ -19,8 +18,8 @@ const inputSchema = z.object({
 });
 
 // Fetches full details for a single error including aggregated stats, the latest event, pivots, and a dashboard URL.
-export class GetError extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export const getError = new TypesafeTool(
+  {
     title: "Get Error",
     summary:
       "Get full details on an error, including aggregated and summarized data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.",
@@ -56,13 +55,12 @@ export class GetError extends Tool<BugsnagClient> {
       "If you used a filter to get this error, you can pass the same filters here to restrict the results or apply further filters",
       "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
+  },
+  (client: BugsnagClient) => async (args, _extra) => {
+    const params = args;
+    const project = await client.getInputProject(params.projectId);
     const errorDetails = (
-      await this.client.errorsApi.viewErrorOnProject(project.id, params.errorId)
+      await client.errorsApi.viewErrorOnProject(project.id, params.errorId)
     ).body;
     if (!errorDetails) {
       throw new ToolError(
@@ -75,13 +73,13 @@ export class GetError extends Tool<BugsnagClient> {
       ...params.filters,
     };
 
-    await this.client.validateEventFields(project, filters);
+    await client.validateEventFields(project, filters);
 
     // Get the latest event for this error using the events endpoint with filters
     let latestEvent = null;
     try {
       const latestEvents = (
-        await this.client.errorsApi.listEventsOnProject(
+        await client.errorsApi.listEventsOnProject(
           project.id,
           null,
           "timestamp",
@@ -105,14 +103,14 @@ export class GetError extends Tool<BugsnagClient> {
       latest_event: latestEvent,
       pivots:
         (
-          await this.client.errorsApi.getPivotValuesOnAnError(
+          await client.errorsApi.getPivotValuesOnAnError(
             project.id,
             params.errorId,
             filters,
             5,
           )
         ).body || [],
-      url: await this.client.getErrorUrl(
+      url: await client.getErrorUrl(
         project,
         params.errorId,
         toUrlSearchParams(filters).toString(),
@@ -121,5 +119,5 @@ export class GetError extends Tool<BugsnagClient> {
     return {
       content: [{ type: "text", text: JSON.stringify(content) }],
     };
-  };
-}
+  },
+);

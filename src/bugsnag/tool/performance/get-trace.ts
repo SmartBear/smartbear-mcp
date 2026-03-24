@@ -1,8 +1,7 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
+import { ToolError, TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
@@ -20,8 +19,8 @@ const inputSchema = z.object({
 });
 
 // Fetches all spans within a trace by trace ID and time window, optionally focused on a target span.
-export class GetTrace extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export const getTrace = new TypesafeTool(
+  {
     title: "Get Trace",
     summary: "Get all spans within a specific trace",
     purpose: "View the complete trace of operations for a request/transaction",
@@ -60,15 +59,14 @@ export class GetTrace extends Tool<BugsnagClient> {
       "Use from/to parameters to narrow the time window",
       "targetSpanId can be used to focus on a specific span in the trace",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
+  },
+  (client: BugsnagClient) => async (args, _extra) => {
+    const params = args;
+    const project = await client.getInputProject(params.projectId);
     if (!params.traceId || !params.from || !params.to) {
       throw new ToolError("traceId, from, and to are required");
     }
-    const result = await this.client.projectApi.listSpansByTraceId(
+    const result = await client.projectApi.listSpansByTraceId(
       project.id,
       params.traceId,
       params.from,
@@ -89,5 +87,5 @@ export class GetTrace extends Tool<BugsnagClient> {
         },
       ],
     };
-  };
-}
+  },
+);

@@ -14,11 +14,37 @@ import type {
 import type { ZodObject, ZodRawShape, ZodType } from "zod";
 import type { SmartBearMcpServer } from "./server";
 
-export interface ToolParams {
-  title: string;
+/**
+ * Replace all occurrences of a substring.
+ * StringReplace<"hello world", "l", "y"> // "heyyo woryd"
+ */
+export type StringReplace<
+  TString extends string,
+  TToReplace extends string,
+  TReplacement extends string,
+> = TString extends `${infer TPrefix}${TToReplace}${infer TSuffix}`
+  ? `${TPrefix}${TReplacement}${StringReplace<TSuffix, TToReplace, TReplacement>}`
+  : TString;
+
+/**
+ * SnakeCase<"Hello World !"> // "hello_world_!"
+ */
+export type SnakeCase<Str extends string> = StringReplace<
+  Lowercase<Str>,
+  " ",
+  "_"
+>;
+
+export type ToolParams<
+  Title extends string = string,
+  InputSchema extends ZodType = ZodType,
+  OutputSchema extends ZodType = ZodType,
+> = {
+  title: Title;
   summary: string;
+  /** @deprecated Use `inputSchema` instead to define structured input parameters */
   parameters?: Parameters; // either 'parameters' or an 'inputSchema' should be present
-  inputSchema?: ZodType;
+  inputSchema?: InputSchema;
   /**
    * Specifies the type of object returned by the tool. <br>
    * When `outputSchema` is specified, make sure the tool returns `structuredContent` in its callback. <br>
@@ -26,7 +52,7 @@ export interface ToolParams {
    *
    * https://modelcontextprotocol.io/specification/2025-06-18/server/tools#output-schema
    */
-  outputSchema?: ZodType;
+  outputSchema?: OutputSchema;
   purpose?: string;
   useCases?: string[];
   examples?: Array<{
@@ -40,7 +66,15 @@ export interface ToolParams {
   destructive?: boolean;
   idempotent?: boolean;
   openWorld?: boolean;
-}
+};
+
+export type ToolParamsWithInputSchema<
+  Title extends string = string,
+  InputSchema extends ZodType = ZodType,
+  OutputSchema extends ZodType = ZodType,
+> = Omit<ToolParams<Title, InputSchema, OutputSchema>, "parameters"> & {
+  inputSchema: InputSchema;
+};
 
 export interface PromptParams {
   name: string;

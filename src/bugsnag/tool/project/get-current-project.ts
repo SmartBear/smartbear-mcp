@@ -1,7 +1,6 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
+import { ToolError, TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 // import {
@@ -10,8 +9,8 @@ import { toolInputParameters } from "../../input-schemas";
 // } from "../../common/rest-api-schemas";
 
 // Returns the currently configured project, or throws if no project is set.
-export class GetCurrentProject extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export const getCurrentProject = new TypesafeTool(
+  {
     title: "Get Current Project",
     summary:
       "Retrieve the 'current' project on which tools should operate by default. This allows BugSnag tools to be called with no projectId parameter.",
@@ -25,10 +24,9 @@ export class GetCurrentProject extends Tool<BugsnagClient> {
       "Call the List Projects tool to see all projects that the user has access to. Get the project ID from this list either by asking the user for the project name or slug",
       "You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project 'apiKey' field from the project list",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (_args, _extra) => {
-    const project = await this.client.getCurrentProject();
+  },
+  (client: BugsnagClient) => async (_args, _extra) => {
+    const project = await client.getCurrentProject();
     if (!project) {
       throw new ToolError(
         "No current project is configured in the MCP server - use List Projects to see the available projects and use the project ID as a parameter to other BugSnag tools. You can ask the user to select the project based on the name or slug, or use the apiKey field and see if there's a BugSnag API key set in the user's code when they configure the BugSnag SDK",
@@ -37,5 +35,5 @@ export class GetCurrentProject extends Tool<BugsnagClient> {
     return {
       content: [{ type: "text", text: JSON.stringify(project) }],
     };
-  };
-}
+  },
+);

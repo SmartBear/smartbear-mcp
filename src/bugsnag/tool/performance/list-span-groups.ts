@@ -1,8 +1,7 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
+import { TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
@@ -50,8 +49,8 @@ const inputSchema = z.object({
 });
 
 // Lists span groups (operation types) being tracked for performance, with support for sorting and filtering.
-export class ListSpanGroups extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export const listSpanGroups = new TypesafeTool(
+  {
     title: "List Span Groups",
     summary: "List span groups (operations) tracked for performance monitoring",
     purpose: "Discover and analyze different operations being monitored",
@@ -89,12 +88,11 @@ export class ListSpanGroups extends Tool<BugsnagClient> {
       "Star important span groups for quick access",
       "Use nextUrl for pagination",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-    const result = await this.client.projectApi.listProjectSpanGroups(
+  },
+  (client: BugsnagClient) => async (args, _extra) => {
+    const params = args;
+    const project = await client.getInputProject(params.projectId);
+    const result = await client.projectApi.listProjectSpanGroups(
       project.id,
       params.sort,
       params.direction,
@@ -116,5 +114,5 @@ export class ListSpanGroups extends Tool<BugsnagClient> {
         },
       ],
     };
-  };
-}
+  },
+);

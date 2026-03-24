@@ -1,8 +1,7 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
+import { TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
@@ -12,8 +11,8 @@ const inputSchema = z.object({
 });
 
 // Fetches full details for a single event by its ID, including stack trace and metadata.
-export class GetEvent extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export const getEvent = new TypesafeTool(
+  {
     title: "Get Event",
     summary: "Get detailed information about a specific event",
     purpose: "Retrieve event details directly from its ID",
@@ -31,14 +30,13 @@ export class GetEvent extends Tool<BugsnagClient> {
           "JSON object with complete event details including stack trace (error trace and other threads, if present), metadata, and context",
       },
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-    const response = await this.client.getEvent(params.eventId, project.id);
+  },
+  (client: BugsnagClient) => async (args, _extra) => {
+    const params = args;
+    const project = await client.getInputProject(params.projectId);
+    const response = await client.getEvent(params.eventId, project.id);
     return {
       content: [{ type: "text", text: JSON.stringify(response) }],
     };
-  };
-}
+  },
+);

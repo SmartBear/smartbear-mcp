@@ -1,8 +1,7 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
+import { ToolError, TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
 
 const inputSchema = z.object({
@@ -14,8 +13,8 @@ const inputSchema = z.object({
 });
 
 // Parses a BugSnag dashboard URL to extract the project slug and event ID, then fetches the event details.
-export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export const getEventDetailsFromDashboardUrl = new TypesafeTool(
+  {
     title: "Get Event Details From Dashboard URL",
     summary:
       "Get detailed information about a specific event using its dashboard URL",
@@ -41,10 +40,9 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
       "The URL must contain both project slug in the path and event_id in query parameters",
       "This is useful when users share BugSnag dashboard URLs and you need to extract the event data",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
+  },
+  (client: BugsnagClient) => async (args, _extra) => {
+    const params = args;
     const url = new URL(params.link);
     const eventId = url.searchParams.get("event_id");
     const projectSlug = url.pathname.split("/")[2];
@@ -54,15 +52,15 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
       );
 
     // get the project id from list of projects
-    const projects = await this.client.getProjects();
+    const projects = await client.getProjects();
     const projectId = projects.find((p: any) => p.slug === projectSlug)?.id;
     if (!projectId) {
       throw new ToolError("Project with the specified slug not found.");
     }
 
-    const response = await this.client.getEvent(eventId, projectId);
+    const response = await client.getEvent(eventId, projectId);
     return {
       content: [{ type: "text", text: JSON.stringify(response) }],
     };
-  };
-}
+  },
+);

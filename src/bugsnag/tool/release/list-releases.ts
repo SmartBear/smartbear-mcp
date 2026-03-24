@@ -1,8 +1,7 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
+import { TypesafeTool } from "../../../common/tools";
 import type { BugsnagClient } from "../../client";
 import type { Release } from "../../client/api/index";
 import { toolInputParameters } from "../../input-schemas";
@@ -31,8 +30,8 @@ const inputSchema = z.object({
 });
 
 // Lists release groups for a project with stability metrics appended to each result.
-export class ListReleases extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export const listReleases = new TypesafeTool(
+  {
     title: "List Releases",
     summary: "List releases for a project",
     purpose:
@@ -74,12 +73,11 @@ export class ListReleases extends Tool<BugsnagClient> {
     idempotent: true,
     outputDescription:
       "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-    const response = await this.client.projectApi.listProjectReleaseGroups(
+  },
+  (client: BugsnagClient) => async (args, _extra) => {
+    const params = args;
+    const project = await client.getInputProject(params.projectId);
+    const response = await client.projectApi.listProjectReleaseGroups(
       project.id,
       params.releaseStage,
       false, // Not top-only
@@ -90,9 +88,7 @@ export class ListReleases extends Tool<BugsnagClient> {
 
     let releases: (Release & StabilityData)[] = [];
     if (response.body) {
-      releases = response.body.map((r) =>
-        this.client.addStabilityData(r, project),
-      );
+      releases = response.body.map((r) => client.addStabilityData(r, project));
     }
 
     return {
@@ -108,5 +104,5 @@ export class ListReleases extends Tool<BugsnagClient> {
         },
       ],
     };
-  };
-}
+  },
+);
