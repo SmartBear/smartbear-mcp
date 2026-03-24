@@ -17,12 +17,12 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
     readOnly: false,
     idempotent: true,
     inputSchema: PutTestExecutionTestStepsParams.and(
-      PutTestExecutionTestStepsBody.partial(),
+      PutTestExecutionTestStepsBody,
     ),
     examples: [
       {
         description:
-          "Mark all steps in test execution 'SA-E1' as passed. Set the actual result of step 1 to 'Dashboard widgets loaded correctly' and step 2 to 'Navigation menu responded correctly to user interactions'.",
+          "Mark all steps status names in the test execution 'SA-E1' as 'Pass'. Set the actual result of step 1 to 'Dashboard widgets loaded correctly' and step 2 to 'Navigation menu responded correctly to user interactions'.",
         parameters: {
           testExecutionIdOrKey: "SA-E1",
           steps: [
@@ -42,7 +42,7 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Mark the second step in test execution 'SA-E5' as 'fail' (keep everything else unchanged).",
+          "Mark the status name of the second step in test execution 'SA-E5' as 'Fail' (keep everything else unchanged).",
         parameters: {
           testExecutionIdOrKey: "SA-E5",
           steps: [
@@ -59,7 +59,7 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
       },
       {
         description:
-          "Update actual results for steps in test execution '10', set step 1 actual result to 'API returned 500 error' and step 2 actual result to 'API returned 200 success'",
+          "Update only the actual results for steps in test execution '10'. Set step 1 actual result to 'API returned 500 error' and step 2 actual result to 'API returned 200 success'",
         parameters: {
           testExecutionIdOrKey: "10",
           steps: [
