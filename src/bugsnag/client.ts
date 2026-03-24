@@ -9,18 +9,18 @@ import type {
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import {
-  type Build,
-  Configuration,
-  CurrentUserAPI,
-  ErrorAPI,
-  type EventField,
-  type Organization,
-  type Project,
-  ProjectAPI,
-  type Release,
-  type TraceField,
+import { CurrentUserAPI } from "./client/api/CurrentUser";
+import { Configuration } from "./client/api/configuration";
+import { ErrorAPI } from "./client/api/Error";
+import type {
+  Build,
+  EventField,
+  Organization,
+  Project,
+  Release,
+  TraceField,
 } from "./client/api/index";
+import { ProjectAPI } from "./client/api/Project";
 import type { FilterObject } from "./client/filters";
 import { GetError } from "./tool/error/get-error";
 import { ListProjectErrors } from "./tool/error/list-project-errors";
