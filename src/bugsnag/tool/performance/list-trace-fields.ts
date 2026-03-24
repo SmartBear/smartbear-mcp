@@ -32,8 +32,7 @@ export const listTraceFields = new TypesafeTool(
       "Use these fields for filtering other performance queries",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const traceFields = await client.getProjectTraceFields(project);
 

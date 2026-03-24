@@ -27,8 +27,7 @@ export const listProjects = new TypesafeTool(
       "Project IDs from this list can be used with other tools when no project API key is configured",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     let projects = await client.getProjects();
     if (!projects || projects.length === 0) {
       throw new ToolError("No BugSnag projects found for the current user.");

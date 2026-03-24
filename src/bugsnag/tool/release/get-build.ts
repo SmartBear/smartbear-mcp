@@ -37,8 +37,7 @@ export const getBuild = new TypesafeTool(
     outputDescription:
       "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const response = await client.projectApi.getProjectReleaseById(
       project.id,

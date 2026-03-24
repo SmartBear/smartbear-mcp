@@ -87,8 +87,7 @@ export const listSpanGroups = new TypesafeTool(
       "Use nextUrl for pagination",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const result = await client.projectApi.listProjectSpanGroups(
       project.id,

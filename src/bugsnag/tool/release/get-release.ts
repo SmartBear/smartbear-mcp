@@ -49,8 +49,7 @@ export const getRelease = new TypesafeTool(
     outputDescription:
       "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const releaseResponse = await client.projectApi.getReleaseGroup(
       params.releaseId,

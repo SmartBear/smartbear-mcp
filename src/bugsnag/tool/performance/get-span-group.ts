@@ -44,8 +44,7 @@ export const getSpanGroup = new TypesafeTool(
       "Statistics include p50, p75, p90, p95, p99 percentiles",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
 
     const spanGroupResults = await client.projectApi.getProjectSpanGroup(

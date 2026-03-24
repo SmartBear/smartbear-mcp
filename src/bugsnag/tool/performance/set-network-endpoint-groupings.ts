@@ -76,8 +76,7 @@ export const setNetworkEndpointGroupings = new TypesafeTool(
     readOnly: false,
     idempotent: true,
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const result = await client.projectApi.updateProjectNetworkGroupingRuleset(
       project.id,

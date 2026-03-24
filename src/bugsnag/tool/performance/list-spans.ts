@@ -74,8 +74,7 @@ export const listSpans = new TypesafeTool(
       "Each span includes trace ID for further investigation",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const result = await client.projectApi.listSpansBySpanGroupId(
       project.id,

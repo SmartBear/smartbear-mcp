@@ -54,8 +54,7 @@ export const getError = new TypesafeTool(
       "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const errorDetails = (
       await client.errorsApi.viewErrorOnProject(project.id, params.errorId)

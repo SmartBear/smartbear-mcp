@@ -39,8 +39,7 @@ export const getEventDetailsFromDashboardUrl = new TypesafeTool(
       "This is useful when users share BugSnag dashboard URLs and you need to extract the event data",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const url = new URL(params.link);
     const eventId = url.searchParams.get("event_id");
     const projectSlug = url.pathname.split("/")[2];

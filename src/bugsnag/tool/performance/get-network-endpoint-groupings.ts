@@ -35,8 +35,7 @@ export const getNetworkEndpointGroupings = new TypesafeTool(
     readOnly: true,
     idempotent: true,
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const result = await client.projectApi.getProjectNetworkGroupingRuleset(
       project.id,

@@ -29,8 +29,7 @@ export const getEvent = new TypesafeTool(
       },
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const response = await client.getEvent(params.eventId, project.id);
     return {

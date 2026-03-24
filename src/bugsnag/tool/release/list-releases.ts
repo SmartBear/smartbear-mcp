@@ -72,8 +72,7 @@ export const listReleases = new TypesafeTool(
     outputDescription:
       "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     const response = await client.projectApi.listProjectReleaseGroups(
       project.id,

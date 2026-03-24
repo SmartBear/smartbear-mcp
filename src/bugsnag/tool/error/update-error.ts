@@ -183,8 +183,7 @@ export const updateError = new TypesafeTool(
     idempotent: false,
   },
   (client: BugsnagClient, getInput: GetInputFunction) =>
-    async (args, _extra) => {
-      const params = args;
+    async (params, _extra) => {
       const project = await client.getInputProject(params.projectId);
 
       // Validate snooze operation requirements

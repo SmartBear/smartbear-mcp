@@ -33,8 +33,7 @@ export const listProjectEventFilters = new TypesafeTool(
       "Look for display_id field in the response - these are the field names to use in filters",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const eventFilters = await client.getProjectEventFields(
       await client.getInputProject(params.projectId),
     );

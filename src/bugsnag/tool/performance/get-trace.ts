@@ -58,8 +58,7 @@ export const getTrace = new TypesafeTool(
       "targetSpanId can be used to focus on a specific span in the trace",
     ],
   },
-  (client: BugsnagClient) => async (args, _extra) => {
-    const params = args;
+  (client: BugsnagClient) => async (params, _extra) => {
     const project = await client.getInputProject(params.projectId);
     if (!params.traceId || !params.from || !params.to) {
       throw new ToolError("traceId, from, and to are required");
