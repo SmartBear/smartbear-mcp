@@ -120,35 +120,18 @@ describe("CreateTestExecution", () => {
     expect(result.structuredContent).toEqual(responseMock);
   });
 
-  it("should ignore extra parameters not in the schema", async () => {
-    const responseMock = {
-      id: 54,
-      self: "https://<api-base-url>/testexecutions/54",
-    };
-
-    mockClient.getApiClient().post.mockResolvedValueOnce(responseMock);
-
+  it("should throw error when extra parameters not in the schema", async () => {
     const args = {
       projectKey: "SA",
       testCaseKey: "SA-T1",
       testCycleKey: "SA-R1",
       statusName: "Pass",
-      extraParam: "This should be ignored",
+      extraParam: "This should be rejected",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
-
-    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
-      "/testexecutions/",
-      {
-        projectKey: args.projectKey,
-        testCaseKey: args.testCaseKey,
-        testCycleKey: args.testCycleKey,
-        statusName: args.statusName,
-      },
-    );
-
-    expect(result.structuredContent).toBe(responseMock);
+    await expect(
+      instance.handle(args, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {

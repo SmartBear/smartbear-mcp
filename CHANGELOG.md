@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [Zephyr] Enforce strictness of Zephyr's schemas. [#383](https://github.com/SmartBear/smartbear-mcp/pull/383)
+
 ## [0.15.0] - 2026-03-18
 
 ### Added

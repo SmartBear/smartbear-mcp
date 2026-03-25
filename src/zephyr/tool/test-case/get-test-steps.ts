@@ -53,8 +53,10 @@ export class GetTestCaseSteps extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCaseKey } = GetTestCaseTestStepsParams.parse(args);
-    const parsedArgs = GetTestCaseTestStepsQueryParams.parse(args);
+    const parsed = GetTestCaseTestStepsParams.and(
+      GetTestCaseTestStepsQueryParams,
+    ).parse(args);
+    const { testCaseKey, ...parsedArgs } = parsed;
     const response = await this.client
       .getApiClient()
       .get(`/testcases/${testCaseKey}/teststeps`, parsedArgs);
