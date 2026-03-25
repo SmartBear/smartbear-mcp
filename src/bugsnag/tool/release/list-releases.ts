@@ -27,7 +27,7 @@ const inputSchema = z.object({
 });
 
 // Lists release groups for a project with stability metrics appended to each result.
-export const listReleases = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "List Releases",
     summary: "List releases for a project",

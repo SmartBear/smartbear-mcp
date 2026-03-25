@@ -32,7 +32,7 @@ const inputSchema = z.object({
 });
 
 // Lists individual span instances within a span group, with sorting and filtering support.
-export const listSpans = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "List Spans",
     summary: "Get individual spans belonging to a span group",

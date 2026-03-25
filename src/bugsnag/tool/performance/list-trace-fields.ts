@@ -7,7 +7,7 @@ const inputSchema = z.object({
 });
 
 // Returns the available custom trace attribute fields for a project, used to build performance filters.
-export const listTraceFields = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "List Trace Fields",
     summary: "Get available trace fields/attributes for filtering",

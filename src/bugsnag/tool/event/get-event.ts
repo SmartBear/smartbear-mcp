@@ -8,7 +8,7 @@ const inputSchema = z.object({
 });
 
 // Fetches full details for a single event by its ID, including stack trace and metadata.
-export const getEvent = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Event",
     summary: "Get detailed information about a specific event",

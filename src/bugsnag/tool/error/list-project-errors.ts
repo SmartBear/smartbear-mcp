@@ -16,7 +16,7 @@ const inputSchema = z.object({
 });
 
 // Lists errors in a project with optional filters, sorting, and pagination.
-export const listProjectErrors = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "List Project Errors",
     summary:

@@ -84,7 +84,7 @@ const inputSchema = z.object({
 });
 
 // Updates an error's workflow state (e.g. fix, ignore, snooze, link/unlink issue). Prompts for severity when overriding it.
-export const updateError = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Update Error",
     summary: "Update the status of an error",

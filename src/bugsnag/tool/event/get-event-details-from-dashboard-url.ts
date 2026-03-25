@@ -11,7 +11,7 @@ const inputSchema = z.object({
 });
 
 // Parses a BugSnag dashboard URL to extract the project slug and event ID, then fetches the event details.
-export const getEventDetailsFromDashboardUrl = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Event Details From Dashboard URL",
     summary:

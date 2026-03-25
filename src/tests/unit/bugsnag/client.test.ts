@@ -152,6 +152,8 @@ describe("BugsnagClient", () => {
   let clientWithNoApiKey: BugsnagClient;
 
   beforeEach(async () => {
+    await createConfiguredClient();
+
     vi.clearAllMocks();
     // Reset mock implementations to ensure no persistent return values affect tests
     mockCache.get.mockReset();
@@ -718,11 +720,12 @@ describe("BugsnagClient", () => {
     });
 
     it("should register common tools", async () => {
-      client.registerTools(registerToolsSpy, getInputFunctionSpy);
+      await client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
       const registeredTools = registerToolsSpy.mock.calls.map(
         (call: any) => call[0].title,
       );
+      console.log(registeredTools);
       expect(registeredTools).toContain("Get Current Project");
       expect(registeredTools).toContain("List Projects");
       expect(registeredTools).toContain("Get Error");
@@ -795,7 +798,10 @@ describe("BugsnagClient", () => {
           totalCount: 1,
         });
 
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Errors",
         )[1];
@@ -828,7 +834,10 @@ describe("BugsnagClient", () => {
         const mockProjects = [getMockProject("proj-1", "Project 1")];
         mockCache.get.mockReturnValue(mockProjects);
 
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Projects",
         )[1];
@@ -845,7 +854,10 @@ describe("BugsnagClient", () => {
       it("should handle no projects found", async () => {
         mockCache.get.mockReturnValue([]);
 
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Projects",
         )[1];
@@ -862,7 +874,10 @@ describe("BugsnagClient", () => {
         ];
         mockCache.get.mockReturnValue(mockProjects);
 
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Projects",
         )[1];
@@ -879,7 +894,10 @@ describe("BugsnagClient", () => {
         const mockProjects = [getMockProject("proj-1", "Project 1", "key-1")];
         mockCache.get.mockReturnValue(mockProjects);
 
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Projects",
         )[1];
@@ -935,7 +953,7 @@ describe("BugsnagClient", () => {
           body: mockPivots,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Error",
         )[1];
@@ -978,7 +996,7 @@ describe("BugsnagClient", () => {
           body: [],
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Error",
         )[1];
@@ -1004,7 +1022,7 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
         mockErrorAPI.viewErrorOnProject.mockResolvedValue({ body: null });
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Error",
         )[1];
@@ -1029,7 +1047,7 @@ describe("BugsnagClient", () => {
 
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Event",
         )[1];
@@ -1060,7 +1078,7 @@ describe("BugsnagClient", () => {
 
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) =>
             call[0].title === "Get Event Details From Dashboard URL",
@@ -1078,7 +1096,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when link is invalid", async () => {
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) =>
             call[0].title === "Get Event Details From Dashboard URL",
@@ -1092,7 +1110,7 @@ describe("BugsnagClient", () => {
           getMockProject("proj-1", "Other Project", "other-project"),
         ]);
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) =>
             call[0].title === "Get Event Details From Dashboard URL",
@@ -1106,7 +1124,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when URL is missing required parameters", async () => {
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) =>
             call[0].title === "Get Event Details From Dashboard URL",
@@ -1149,7 +1167,7 @@ describe("BugsnagClient", () => {
           totalCount: 1,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Errors",
         )[1];
@@ -1202,7 +1220,7 @@ describe("BugsnagClient", () => {
           totalCount: 3,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Errors",
         )[1];
@@ -1247,7 +1265,7 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockEventFields);
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Errors",
         )[1];
@@ -1260,7 +1278,10 @@ describe("BugsnagClient", () => {
       it("should throw error when no project ID available", async () => {
         mockCache.get.mockReturnValueOnce(null);
 
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Errors",
         )[1];
@@ -1285,7 +1306,7 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockEventFields);
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Project Event Filters",
         )[1];
@@ -1306,7 +1327,7 @@ describe("BugsnagClient", () => {
           "test-project-key",
         );
         mockCache.get.mockReturnValueOnce(mockProject);
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Current Project",
         )[1];
@@ -1316,7 +1337,7 @@ describe("BugsnagClient", () => {
 
       it("should throw error when no current project is configured", async () => {
         mockCache.get.mockReturnValueOnce(null);
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Current Project",
         )[1];
@@ -1363,7 +1384,7 @@ describe("BugsnagClient", () => {
         mockProjectAPI.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
         });
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Build",
         )[1];
@@ -1401,7 +1422,7 @@ describe("BugsnagClient", () => {
         mockProjectAPI.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
         });
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Build",
         )[1];
@@ -1448,7 +1469,7 @@ describe("BugsnagClient", () => {
         mockProjectAPI.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
         });
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Build",
         )[1];
@@ -1489,7 +1510,7 @@ describe("BugsnagClient", () => {
           body: basicBuild,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Build",
         )[1];
@@ -1523,7 +1544,7 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce([mockProjects[0]]);
         mockProjectAPI.getProjectReleaseById.mockResolvedValue({ body: null });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Build",
         )[1];
@@ -1536,7 +1557,7 @@ describe("BugsnagClient", () => {
       it("should throw error when no project ID available", async () => {
         mockCache.get.mockReturnValue(null);
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Build",
         )[1];
@@ -1579,7 +1600,7 @@ describe("BugsnagClient", () => {
           body: mockReleases,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Releases",
         )[1];
@@ -1635,7 +1656,7 @@ describe("BugsnagClient", () => {
           body: mockReleases,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Releases",
         )[1];
@@ -1678,7 +1699,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValueOnce(mockProjects[0]);
         mockProjectAPI.listProjectReleaseGroups.mockResolvedValue({ body: [] });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Releases",
         )[1];
@@ -1703,7 +1724,7 @@ describe("BugsnagClient", () => {
       it("should throw error when no project ID available", async () => {
         mockCache.get.mockReturnValue(null);
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Releases",
         )[1];
@@ -1760,7 +1781,7 @@ describe("BugsnagClient", () => {
           body: mockBuildsInRelease,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Release",
         )[1];
@@ -1807,7 +1828,7 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(null);
         mockProjectAPI.getReleaseGroup.mockResolvedValue({ body: null });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Release",
         )[1];
@@ -1825,7 +1846,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -1852,7 +1873,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -1876,7 +1897,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -1908,7 +1929,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -1940,7 +1961,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -1972,7 +1993,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2006,7 +2027,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2032,7 +2053,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProjects);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 204 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2058,7 +2079,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2090,7 +2111,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2132,7 +2153,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2154,7 +2175,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValue(mockProject);
         mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 400 });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2170,7 +2191,7 @@ describe("BugsnagClient", () => {
       it("should throw error when no project found", async () => {
         mockCache.get.mockReturnValue(null);
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2190,7 +2211,7 @@ describe("BugsnagClient", () => {
 
         mockCache.get.mockReturnValueOnce(null).mockReturnValueOnce(mockOrg);
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Update Error",
         )[1];
@@ -2220,7 +2241,7 @@ describe("BugsnagClient", () => {
           nextUrl: null,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
         const listSpanGroupsHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Span Groups",
@@ -2273,7 +2294,7 @@ describe("BugsnagClient", () => {
           nextUrl: "/next",
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
         const listSpanGroupsHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Span Groups",
@@ -2337,7 +2358,7 @@ describe("BugsnagClient", () => {
           body: mockDistribution,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
         const getSpanGroupHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Span Group",
@@ -2411,7 +2432,7 @@ describe("BugsnagClient", () => {
           nextUrl: null,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
         const listSpansHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Spans",
@@ -2470,7 +2491,7 @@ describe("BugsnagClient", () => {
           nextUrl: null,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
         const getTraceHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Trace",
@@ -2528,7 +2549,7 @@ describe("BugsnagClient", () => {
           body: mockTraceFields,
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
         const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Trace Fields",
@@ -2571,7 +2592,7 @@ describe("BugsnagClient", () => {
           return undefined;
         });
 
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
 
         const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Trace Fields",
@@ -2610,7 +2631,10 @@ describe("BugsnagClient", () => {
           body: mockTraceFields,
         });
 
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
 
         const listTraceFieldsHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "List Trace Fields",
@@ -2642,7 +2666,7 @@ describe("BugsnagClient", () => {
 
     describe("Get Network Endpoint Groupings tool handler", () => {
       it("should get network grouping rules with project from cache", async () => {
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Network Endpoint Groupings",
         )?.[1];
@@ -2673,7 +2697,10 @@ describe("BugsnagClient", () => {
       });
 
       it("should get network grouping rules with explicit project ID", async () => {
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Network Endpoint Groupings",
         )?.[1];
@@ -2706,7 +2733,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should return empty array when no endpoints configured", async () => {
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Network Endpoint Groupings",
         )?.[1];
@@ -2728,7 +2755,10 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when no project ID available", async () => {
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const getNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Network Endpoint Groupings",
         )?.[1];
@@ -2743,7 +2773,7 @@ describe("BugsnagClient", () => {
 
     describe("Set Network Endpoint Groupings tool handler", () => {
       it("should update network grouping rules with project from cache", async () => {
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Set Network Endpoint Groupings",
         )?.[1];
@@ -2777,7 +2807,10 @@ describe("BugsnagClient", () => {
       });
 
       it("should update network grouping rules with explicit project ID", async () => {
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Set Network Endpoint Groupings",
         )?.[1];
@@ -2815,7 +2848,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should handle 204 status as success", async () => {
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Set Network Endpoint Groupings",
         )?.[1];
@@ -2836,7 +2869,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should update with empty endpoints array", async () => {
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Set Network Endpoint Groupings",
         )?.[1];
@@ -2861,7 +2894,7 @@ describe("BugsnagClient", () => {
       });
 
       it("should handle complex endpoint patterns", async () => {
-        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Set Network Endpoint Groupings",
         )?.[1];
@@ -2890,7 +2923,10 @@ describe("BugsnagClient", () => {
       });
 
       it("should throw error when no project ID available", async () => {
-        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        await clientWithNoApiKey.registerTools(
+          registerToolsSpy,
+          getInputFunctionSpy,
+        );
         const setNetworkGroupingHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Set Network Endpoint Groupings",
         )?.[1];

@@ -7,7 +7,7 @@ const inputSchema = z.object({
 });
 
 // Returns the available event filter fields for a project, used to build filter queries for errors and events.
-export const listProjectEventFilters = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "List Project Event Filters",
     summary: "Get available event filter fields for a project",

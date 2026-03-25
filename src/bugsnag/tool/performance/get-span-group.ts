@@ -9,7 +9,7 @@ const inputSchema = z.object({
 });
 
 // Fetches detailed performance metrics for a span group, including timeline and duration distribution.
-export const getSpanGroup = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Span Group",
     summary: "Get detailed performance metrics for a specific span group",

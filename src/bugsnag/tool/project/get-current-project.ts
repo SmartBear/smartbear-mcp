@@ -3,7 +3,7 @@ import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 // Returns the currently configured project, or throws if no project is set.
-export const getCurrentProject = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Current Project",
     summary:

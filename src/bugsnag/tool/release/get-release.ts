@@ -20,7 +20,7 @@ const inputSchema = z.object({
 });
 
 // Fetches a release by ID including its builds, with stability metrics appended to each.
-export const getRelease = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Release",
     summary:

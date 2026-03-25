@@ -7,7 +7,7 @@ const inputSchema = z.object({
 });
 
 // Returns the current network endpoint grouping rules (URL patterns) configured for a project.
-export const getNetworkEndpointGroupings = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Network Endpoint Groupings",
     summary: "Get the network endpoint grouping rules for a project",

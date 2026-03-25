@@ -46,7 +46,7 @@ const inputSchema = z.object({
 });
 
 // Lists span groups (operation types) being tracked for performance, with support for sorting and filtering.
-export const listSpanGroups = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "List Span Groups",
     summary: "List span groups (operations) tracked for performance monitoring",

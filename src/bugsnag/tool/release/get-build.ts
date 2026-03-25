@@ -9,7 +9,7 @@ const inputSchema = z.object({
 });
 
 // Fetches a single build by ID with stability metrics appended.
-export const getBuild = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Build",
     summary: "Get more details for a specific build by its ID",

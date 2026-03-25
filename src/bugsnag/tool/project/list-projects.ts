@@ -11,7 +11,7 @@ const inputSchema = z.object({
 });
 
 // Lists all projects the user has access to, optionally filtered by API key.
-export const listProjects = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "List Projects",
     summary:

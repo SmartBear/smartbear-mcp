@@ -17,7 +17,7 @@ const inputSchema = z.object({
 });
 
 // Fetches all spans within a trace by trace ID and time window, optionally focused on a target span.
-export const getTrace = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Trace",
     summary: "Get all spans within a specific trace",

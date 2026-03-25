@@ -25,24 +25,6 @@ import {
 } from "./client/api";
 import type { FilterObject } from "./client/filters";
 import { eventResource } from "./resource/event-resource";
-import { getError } from "./tool/error/get-error";
-import { listProjectErrors } from "./tool/error/list-project-errors";
-import { updateError } from "./tool/error/update-error";
-import { getEvent } from "./tool/event/get-event";
-import { getEventDetailsFromDashboardUrl } from "./tool/event/get-event-details-from-dashboard-url";
-import { getNetworkEndpointGroupings } from "./tool/performance/get-network-endpoint-groupings";
-import { getSpanGroup } from "./tool/performance/get-span-group";
-import { getTrace } from "./tool/performance/get-trace";
-import { listSpanGroups } from "./tool/performance/list-span-groups";
-import { listSpans } from "./tool/performance/list-spans";
-import { listTraceFields } from "./tool/performance/list-trace-fields";
-import { setNetworkEndpointGroupings } from "./tool/performance/set-network-endpoint-groupings";
-import { getCurrentProject } from "./tool/project/get-current-project";
-import { listProjectEventFilters } from "./tool/project/list-project-event-filters";
-import { listProjects } from "./tool/project/list-projects";
-import { getBuild } from "./tool/release/get-build";
-import { getRelease } from "./tool/release/get-release";
-import { listReleases } from "./tool/release/list-releases";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -370,29 +352,29 @@ export class BugsnagClient extends Client {
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void> {
-    const tools = [
-      getCurrentProject,
-      listProjects,
-      listProjectEventFilters,
-      getError,
-      listProjectErrors,
-      getEvent,
-      getEventDetailsFromDashboardUrl,
-      listReleases,
-      getRelease,
-      getBuild,
-      listSpanGroups,
-      getSpanGroup,
-      listSpans,
-      getTrace,
-      listTraceFields,
-      getNetworkEndpointGroupings,
-      setNetworkEndpointGroupings,
-      updateError,
-    ];
+    const tools = await Promise.all([
+      import("./tool/error/get-error"),
+      import("./tool/error/list-project-errors"),
+      import("./tool/error/update-error"),
+      import("./tool/event/get-event"),
+      import("./tool/event/get-event-details-from-dashboard-url"),
+      import("./tool/performance/get-network-endpoint-groupings"),
+      import("./tool/performance/get-span-group"),
+      import("./tool/performance/get-trace"),
+      import("./tool/performance/list-span-groups"),
+      import("./tool/performance/list-spans"),
+      import("./tool/performance/list-trace-fields"),
+      import("./tool/performance/set-network-endpoint-groupings"),
+      import("./tool/project/get-current-project"),
+      import("./tool/project/list-project-event-filters"),
+      import("./tool/project/list-projects"),
+      import("./tool/release/get-build"),
+      import("./tool/release/get-release"),
+      import("./tool/release/list-releases"),
+    ]);
 
     for (const tool of tools) {
-      tool.register(this, register, getInput);
+      tool.default.register(this, register, getInput);
     }
   }
 

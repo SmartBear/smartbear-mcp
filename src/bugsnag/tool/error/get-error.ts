@@ -16,7 +16,7 @@ const inputSchema = z.object({
 });
 
 // Fetches full details for a single error including aggregated stats, the latest event, pivots, and a dashboard URL.
-export const getError = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Error",
     summary:

@@ -15,7 +15,7 @@ const inputSchema = z.object({
 });
 
 // Replaces all network endpoint grouping rules for a project with the provided URL patterns.
-export const setNetworkEndpointGroupings = BugsnagClient.createTool(
+export default BugsnagClient.createTool(
   {
     title: "Set Network Endpoint Groupings",
     summary: "Set the network endpoint grouping rules for a project",
