@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 
 const filterValueSchema = z.object({
   type: z.enum(["eq", "ne", "empty"]),
