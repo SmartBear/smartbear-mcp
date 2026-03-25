@@ -2018,7 +2018,7 @@ export const GetTestCaseTestSteps200Response = zod
                   .describe("The list of parameters of the call to test step"),
               })
               .strict()
-              .nullish(),
+              .optional(),
           })
           .strict()
           .describe(
