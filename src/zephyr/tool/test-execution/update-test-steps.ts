@@ -77,12 +77,11 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testExecutionIdOrKey } =
-      PutTestExecutionTestStepsParams.parse(args);
+    const parsed = PutTestExecutionTestStepsParams.and(
+      PutTestExecutionTestStepsBody.required(),
+    ).parse(args);
 
-    const body = PutTestExecutionTestStepsBody.required().parse(args);
-
-    const stepUpdates = body.steps;
+    const { testExecutionIdOrKey, steps: stepUpdates } = parsed;
 
     const response = await this.client
       .getApiClient()
