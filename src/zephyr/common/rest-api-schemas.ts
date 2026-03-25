@@ -1974,7 +1974,7 @@ export const GetTestCaseTestSteps200Response = zod
                   .describe("The AI reference. Zephyr only feature"),
               })
               .strict()
-              .optional(),
+              .nullish(),
             testCase: zod
               .object({
                 self: zod
