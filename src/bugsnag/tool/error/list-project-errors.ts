@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import type { FilterObject } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
 
@@ -17,7 +16,7 @@ const inputSchema = z.object({
 });
 
 // Lists errors in a project with optional filters, sorting, and pagination.
-export const listProjectErrors = new TypesafeTool(
+export const listProjectErrors = BugsnagClient.createTool(
   {
     title: "List Project Errors",
     summary:
@@ -82,13 +81,13 @@ export const listProjectErrors = new TypesafeTool(
       "Do not modify the next URL as this can cause incorrect results. The only other parameter that can be used with 'next' is 'per_page' to control the page size.",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
 
     const filters: FilterObject = {
       "event.since": [{ type: "eq", value: "30d" }],
       "error.status": [{ type: "eq", value: "open" }],
-      ...params.filters,
+      ...args.filters,
     };
 
     // Validate filter keys against cached event fields
@@ -97,11 +96,11 @@ export const listProjectErrors = new TypesafeTool(
     const response = await client.errorsApi.listProjectErrors(
       project.id,
       null,
-      params.sort,
-      params.direction,
-      params.perPage,
+      args.sort,
+      args.direction,
+      args.perPage,
       filters,
-      params.nextUrl,
+      args.nextUrl,
     );
 
     const result = {

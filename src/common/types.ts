@@ -13,6 +13,7 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodObject, ZodRawShape, ZodType } from "zod";
 import type { SmartBearMcpServer } from "./server";
+import type { ToolHandler, TypesafeTool } from "./tools.ts";
 
 /**
  * Replace all occurrences of a substring.
@@ -121,31 +122,82 @@ export type Parameters = Array<{
   constraints?: string[];
 }>;
 
-export interface Client {
+export abstract class Client {
   /** Human-readable name for the client - usually the product name - used to prefix tool names */
-  name: string;
+  abstract name: string;
   /** Prefix for tool IDs */
-  toolPrefix: string;
+  abstract toolPrefix: string;
   /** Prefix for configuration (environment variables and http headers) */
-  configPrefix: string;
+  abstract configPrefix: string;
   /**
    * Zod schema defining configuration fields for this client
    * Field names must use snake case to ensure they are mapped to environment variables and HTTP headers correctly.
    * e.g., `config.my_property` would refer to the environment variable `TOOL_MY_PROPERTY`, http header `Tool-My-Property`
    */
-  config: ZodObject<{
+  abstract config: ZodObject<{
     [key: string]: ZodType;
   }>;
   /**
    * Configure the client with the given server and configuration
    */
-  configure: (server: SmartBearMcpServer, config: any) => Promise<void>;
-  isConfigured: () => boolean;
-  registerTools(
+  abstract configure(server: SmartBearMcpServer, config: any): Promise<void>;
+  abstract isConfigured(): boolean;
+  abstract registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void>;
   registerResources?(register: RegisterResourceFunction): void;
   registerPrompts?(register: RegisterPromptFunction): void;
   cleanupSession?(mcpSessionId: string): Promise<void>;
+
+  /**
+   * Create a new type-safe tool that can be registered to the MCP server.
+   *
+   * @example
+   * ```typescript
+   * const myTool = MyClient.createTool(
+   *   {
+   *     title: "My Tool",
+   *     summary: "Does something useful",
+   *     inputSchema: z.object({ id: z.string() }),
+   *   },
+   *   async ({ client, args }) => {
+   *     const result = await client.doSomething(args.id);
+   *     return {
+   *       content: [{ type: "text", text: JSON.stringify(result) }],
+   *       structuredContent: result, // This type is automatically inferred
+   *     };
+   *   }
+   * );
+   *
+   * // Access inferred types:
+   * type Name = typeof myTool.name;     // "my_tool"
+   * type Input = ToolInput<typeof myTool>;   // { id: string }
+   * type Output = ToolOutput<typeof myTool>; // typeof result
+   * ```
+   */
+  static createTool<
+    T extends InstanceType<typeof Client>,
+    const Config extends ToolParamsWithInputSchema,
+    Handler extends ToolHandler<T, Config["inputSchema"]>,
+  >(this: new (...args: any[]) => T, config: Config, handle: Handler): TypesafeTool<T, Config, Handler> {
+    return {
+      name: config.title.toLowerCase().replaceAll(/\s+/g, "_") as SnakeCase<
+        Config["title"]
+      >,
+      config,
+      handle,
+
+      register(
+        client: T,
+        register: RegisterToolsFunction,
+        getInput: GetInputFunction,
+      ) {
+        register(config, async (args, extra) => {
+          const parsedArgs = config.inputSchema.parse(args);
+          return handle({ client, getInput, args: parsedArgs, extra });
+        });
+      },
+    };
+  }
 }

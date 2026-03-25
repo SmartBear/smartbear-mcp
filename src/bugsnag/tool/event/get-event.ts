@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -9,7 +8,7 @@ const inputSchema = z.object({
 });
 
 // Fetches full details for a single event by its ID, including stack trace and metadata.
-export const getEvent = new TypesafeTool(
+export const getEvent = BugsnagClient.createTool(
   {
     title: "Get Event",
     summary: "Get detailed information about a specific event",
@@ -29,9 +28,9 @@ export const getEvent = new TypesafeTool(
       },
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
-    const response = await client.getEvent(params.eventId, project.id);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
+    const response = await client.getEvent(args.eventId, project.id);
     return {
       content: [{ type: "text", text: JSON.stringify(response) }],
     };

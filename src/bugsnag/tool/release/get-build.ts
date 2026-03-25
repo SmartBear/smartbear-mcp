@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ToolError, TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -9,7 +9,7 @@ const inputSchema = z.object({
 });
 
 // Fetches a single build by ID with stability metrics appended.
-export const getBuild = new TypesafeTool(
+export const getBuild = BugsnagClient.createTool(
   {
     title: "Get Build",
     summary: "Get more details for a specific build by its ID",
@@ -37,15 +37,15 @@ export const getBuild = new TypesafeTool(
     outputDescription:
       "JSON object containing build details along with stability metrics such as user and session stability, and whether it meets project targets",
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
     const response = await client.projectApi.getProjectReleaseById(
       project.id,
-      params.buildId,
+      args.buildId,
     );
 
     if (!response.body)
-      throw new ToolError(`No build for ${params.buildId} found.`);
+      throw new ToolError(`No build for ${args.buildId} found.`);
     const build = client.addStabilityData(response.body, project);
     return {
       content: [{ type: "text", text: JSON.stringify(build) }],

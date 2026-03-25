@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { ToolError, TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
-import type { Build } from "../../client/api/index";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
+import type { Build } from "../../client/api";
 import { toolInputParameters } from "../../input-schemas";
 
 interface StabilityData {
@@ -20,7 +20,7 @@ const inputSchema = z.object({
 });
 
 // Fetches a release by ID including its builds, with stability metrics appended to each.
-export const getRelease = new TypesafeTool(
+export const getRelease = BugsnagClient.createTool(
   {
     title: "Get Release",
     summary:
@@ -49,18 +49,18 @@ export const getRelease = new TypesafeTool(
     outputDescription:
       "JSON object containing release details along with stability metrics such as user and session stability, and whether it meets project targets",
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
     const releaseResponse = await client.projectApi.getReleaseGroup(
-      params.releaseId,
+      args.releaseId,
     );
     if (!releaseResponse.body)
-      throw new ToolError(`No release for ${params.releaseId} found.`);
+      throw new ToolError(`No release for ${args.releaseId} found.`);
     const release = client.addStabilityData(releaseResponse.body, project);
     let builds: (Build & StabilityData)[] = [];
     if (releaseResponse.body) {
       const buildsResponse = await client.projectApi.listBuildsInRelease(
-        params.releaseId,
+        args.releaseId,
       );
       if (buildsResponse.body) {
         builds = buildsResponse.body.map((b) =>

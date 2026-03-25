@@ -4,14 +4,11 @@ import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
-  Client,
   GetInputFunction,
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import { CurrentUserAPI } from "./client/api/CurrentUser";
-import { Configuration } from "./client/api/configuration";
-import { ErrorAPI } from "./client/api/Error";
+import { Client } from "../common/types";
 import type {
   Build,
   EventField,
@@ -19,8 +16,13 @@ import type {
   Project,
   Release,
   TraceField,
-} from "./client/api/index";
-import { ProjectAPI } from "./client/api/Project";
+} from "./client/api";
+import {
+  Configuration,
+  CurrentUserAPI,
+  ErrorAPI,
+  ProjectAPI,
+} from "./client/api";
 import type { FilterObject } from "./client/filters";
 import { eventResource } from "./resource/event-resource";
 import { getError } from "./tool/error/get-error";
@@ -75,7 +77,7 @@ const ConfigurationSchema = z.object({
   endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
 });
 
-export class BugsnagClient implements Client {
+export class BugsnagClient extends Client {
   private cache?: CacheService;
   private _projectApiKey?: string;
   private _isConfigured: boolean = false;
@@ -272,7 +274,7 @@ export class BugsnagClient implements Client {
     return projectFiltersCache[project.id];
   }
 
-  async getEvent(eventId: string, projectId?: string): Promise<any> {
+  async getEvent(eventId: string, projectId?: string) {
     const projectIds = projectId
       ? [projectId]
       : (await this.getProjects()).map((p) => p.id);
@@ -386,15 +388,10 @@ export class BugsnagClient implements Client {
       listTraceFields,
       getNetworkEndpointGroupings,
       setNetworkEndpointGroupings,
+      updateError,
     ];
 
     for (const tool of tools) {
-      tool.register(this, register);
-    }
-
-    const interactiveTools = [updateError];
-
-    for (const tool of interactiveTools) {
       tool.register(this, register, getInput);
     }
   }

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ToolError, TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -17,7 +17,7 @@ const inputSchema = z.object({
 });
 
 // Fetches all spans within a trace by trace ID and time window, optionally focused on a target span.
-export const getTrace = new TypesafeTool(
+export const getTrace = BugsnagClient.createTool(
   {
     title: "Get Trace",
     summary: "Get all spans within a specific trace",
@@ -58,19 +58,19 @@ export const getTrace = new TypesafeTool(
       "targetSpanId can be used to focus on a specific span in the trace",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
-    if (!params.traceId || !params.from || !params.to) {
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
+    if (!args.traceId || !args.from || !args.to) {
       throw new ToolError("traceId, from, and to are required");
     }
     const result = await client.projectApi.listSpansByTraceId(
       project.id,
-      params.traceId,
-      params.from,
-      params.to,
-      params.targetSpanId,
-      params.perPage,
-      params.nextUrl,
+      args.traceId,
+      args.from,
+      args.to,
+      args.targetSpanId,
+      args.perPage,
+      args.nextUrl,
     );
     return {
       content: [
