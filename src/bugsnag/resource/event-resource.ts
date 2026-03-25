@@ -1,12 +1,11 @@
-import { Resource } from "../../common/resources";
-import type { BugsnagClient } from "../client";
+import { BugsnagClient } from "../client";
 
-export const eventResource = new Resource(
+export default BugsnagClient.createResource(
   {
     name: "event",
     path: "{id}",
   },
-  (client: BugsnagClient) => async (uri, variables, _extra) => {
+  async ({ client, uri, variables }) => {
     return {
       contents: [
         {

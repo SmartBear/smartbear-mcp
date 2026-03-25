@@ -12,6 +12,12 @@ import type {
   ElicitResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodObject, ZodRawShape, ZodType } from "zod";
+import type {
+  ExtractPathParams,
+  Resource,
+  ResourceConfig,
+  ResourceTemplateCallback,
+} from "./resources.ts";
 import type { SmartBearMcpServer } from "./server";
 import type { ToolHandler, TypesafeTool } from "./tools.ts";
 
@@ -137,6 +143,7 @@ export abstract class Client {
   abstract config: ZodObject<{
     [key: string]: ZodType;
   }>;
+
   /**
    * Configure the client with the given server and configuration
    */
@@ -146,7 +153,7 @@ export abstract class Client {
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void>;
-  registerResources?(register: RegisterResourceFunction): void;
+  registerResources?(register: RegisterResourceFunction): Promise<void> | void;
   registerPrompts?(register: RegisterPromptFunction): void;
   cleanupSession?(mcpSessionId: string): Promise<void>;
 
@@ -180,7 +187,13 @@ export abstract class Client {
     T extends InstanceType<typeof Client>,
     const Config extends ToolParamsWithInputSchema,
     Handler extends ToolHandler<T, Config["inputSchema"]>,
-  >(this: new (...args: any[]) => T, config: Config, handle: Handler): TypesafeTool<T, Config, Handler> {
+  >(
+    this: new (
+      ...args: any[]
+    ) => T,
+    config: Config,
+    handle: Handler,
+  ): TypesafeTool<T, Config, Handler> {
     return {
       name: config.title.toLowerCase().replaceAll(/\s+/g, "_") as SnakeCase<
         Config["title"]
@@ -197,6 +210,52 @@ export abstract class Client {
           const parsedArgs = config.inputSchema.parse(args);
           return handle({ client, getInput, args: parsedArgs, extra });
         });
+      },
+    };
+  }
+
+  /**
+   * Create a new resource template that can be registered to the MCP server.
+   *
+   * @example
+   * ```typescript
+   * const myResource = MyClient.createResource(
+   *   {
+   *     name: "user",
+   *     path: "{userId}"
+   *   },
+   *   async ({ client, uri, variables }) => {
+   *     const userData = await client.getUser(variables.userId);
+   *     return {
+   *       content: [{ type: "text", text: JSON.stringify(userData) }],
+   *     };
+   *   }
+   * );
+   * ```
+   */
+  static createResource<
+    T extends InstanceType<typeof Client>,
+    const Config extends ResourceConfig<string, string>,
+  >(
+    this: new (
+      ...args: any[]
+    ) => T,
+    config: Config,
+    handle: ResourceTemplateCallback<T, Config["path"]>,
+  ): Resource<T, Config> {
+    return {
+      config,
+      handle,
+
+      register(client: T, register: RegisterResourceFunction) {
+        register(config.name, config.path, async (uri, variables, extra) =>
+          handle({
+            client,
+            uri,
+            variables: variables as ExtractPathParams<Config["path"]>,
+            extra,
+          }),
+        );
       },
     };
   }

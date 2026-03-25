@@ -1,4 +1,3 @@
-import type { ReadResourceTemplateCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
   ReadResourceResult,
@@ -13,7 +12,7 @@ import type { Client, RegisterResourceFunction } from "./types";
  * type T = ExtractPathParams<'/foo/{bar}'>;
  * // => { bar: string }
  */
-type ExtractPathParams<T extends string> =
+export type ExtractPathParams<T extends string> =
   T extends `${string}{${infer Param}}/${infer Rest}`
     ? ExtractPathParams<Rest> extends void
       ? { [k in Param]: string }
@@ -27,39 +26,24 @@ export interface ResourceConfig<Name extends string, Path extends string> {
   path: Path;
 }
 
-export type ResourceTemplateCallback<Path extends string> = (
-  uri: URL,
-  variables: ExtractPathParams<Path>,
-  extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
-) => ReadResourceResult | Promise<ReadResourceResult>;
+export type ResourceTemplateCallback<
+  T extends Client,
+  Path extends string,
+> = (args: {
+  client: T;
+  uri: URL;
+  variables: ExtractPathParams<Path>;
+  extra: RequestHandlerExtra<ServerRequest, ServerNotification>;
+}) => ReadResourceResult | Promise<ReadResourceResult>;
 
 /**
- * Create a new resource that can be registered to the MCP server
+ * A resource that can be registered to the MCP server
  */
-export class Resource<
+export interface Resource<
   T extends Client,
-  const Config extends ResourceConfig<string, string>,
+  Config extends ResourceConfig<string, string>,
 > {
-  variables!: ExtractPathParams<Config["path"]>;
-
-  private readonly config: Config;
-  private readonly handler: (
-    client: T,
-  ) => ResourceTemplateCallback<Config["path"]>;
-
-  constructor(
-    config: Config,
-    handle: (client: T) => ResourceTemplateCallback<Config["path"]>,
-  ) {
-    this.config = config;
-    this.handler = handle;
-  }
-
-  public register(client: T, register: RegisterResourceFunction): void {
-    register(
-      this.config.name,
-      this.config.path,
-      this.handler(client) as ReadResourceTemplateCallback,
-    );
-  }
+  config: Config;
+  handle: ResourceTemplateCallback<T, Config["path"]>;
+  register(client: T, register: RegisterResourceFunction): void;
 }

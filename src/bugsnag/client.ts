@@ -24,7 +24,6 @@ import {
   ProjectAPI,
 } from "./client/api";
 import type { FilterObject } from "./client/filters";
-import { eventResource } from "./resource/event-resource";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -378,7 +377,11 @@ export class BugsnagClient extends Client {
     }
   }
 
-  registerResources(register: RegisterResourceFunction): void {
-    eventResource.register(this, register);
+  async registerResources(register: RegisterResourceFunction): Promise<void> {
+    const resources = [await import("./resource/event-resource")];
+
+    for (const resource of resources) {
+      resource.default.register(this, register);
+    }
   }
 }
