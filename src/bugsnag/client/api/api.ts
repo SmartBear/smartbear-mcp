@@ -11,20 +11,8 @@
  * https://github.com/swagger-api/swagger-codegen.git
  *
  * To update:
- *   1. Generate the TypeScript fetch client code from https://app.swaggerhub.com/apis/smartbear/bugsnag-data-access-api/2
- *     - Ensure the `modelPropertyNaming` is set to `original` in the options
- *   2. Copy the contents of `api.ts` below this comment block, excluding the imports
- *   3. Remove isomorphic-fetch import and revert
- *   4. Remove all the functional programming interfaces (e.g. CurrentUserApiFp), factory interfaces (e.g. CurrentUserApiFactory) and object-oriented interfaces (e.g. CurrentUserApi)
- *      (leaving just the ApiFetchParamCreators)
- *   5. Remove unused APIs (currently SCIM and Integrations)
- *   6. Remove BaseAPI, FetchAPI, BASE_PATH and COLLECTION_FORMATS
- *   7. Fix arrow function warnings using quick fix
- *   8. Remove unused code/types with: `npx tsr --write src/index.ts` (discard changes to other files)
- *   9. Format document with prettier
- *  10. Remove the string "export " from the file and then reinstate one-by-one to solve compile issues referencing types in this and `index.ts`
- *
- * To update, download the latest Node client from API Hub and replace the code below, running `npx tsr --write` (https://github.com/line/tsr) to strip unused exports.
+ *   1. Run `npm run update:bugsnag` to automatically download and prune unused code
+ *   2. Check `git diff` to ensure the changes are correct
  */
 
 import * as url from "node:url";
@@ -57,4936 +45,24 @@ class RequiredError extends Error {
 }
 
 /**
- *
- * @export
- * @interface Breadcrumb
- */
-interface Breadcrumb {
-  /**
-   * A short summary describing the event, such as the user action taken or a new application state.
-   * @type {string}
-   * @memberof Breadcrumb
-   */
-  name: string;
-  /**
-   * A category which describes the breadcrumb, from the list of allowed values. - `navigation` - Changing screens or content being displayed, with a defined destination and optionally a previous location. - `request` - Sending and receiving requests and responses. - `process` - Performing an intensive task or query. - `log` - Messages and severity sent to a logging platform. - `user` - Actions performed by the user, like text input, button presses, or confirming/cancelling an alert dialog. - `state` - Changing the overall state of an app, such as closing, pausing, or being moved to the background, as well as device state changes like memory or battery warnings and network connectivity changes. - `error` - An error which was reported to Bugsnag encountered in the same session. - `manual` - User-defined, manually added breadcrumbs.
-   * @type {string}
-   * @memberof Breadcrumb
-   */
-  type: Breadcrumb.TypeEnum;
-  /**
-   * The time at which the event occurred, in [ISO 8601 format](https://tools.ietf.org/html/rfc3339#section-5.8).
-   * @type {Date}
-   * @memberof Breadcrumb
-   */
-  timestamp: Date;
-  /**
-   * An object containing extra information about a breadcrumb
-   * @type {any}
-   * @memberof Breadcrumb
-   */
-  metaData?: any;
-}
-
-/**
- * @export
- * @namespace Breadcrumb
- */
-namespace Breadcrumb {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum TypeEnum {
-    Navigation = <any>"navigation",
-    Request = <any>"request",
-    Process = <any>"process",
-    Log = <any>"log",
-    User = <any>"user",
-    State = <any>"state",
-    Error = <any>"error",
-    Manual = <any>"manual",
-  }
-}
-
-/**
- *
- * @export
- * @interface CoreFrameFields
- */
-interface CoreFrameFields {
-  /**
-   * The line of the file that this frame of the stack was in.
-   * @type {number}
-   * @memberof CoreFrameFields
-   */
-  lineNumber?: number;
-  /**
-   * The column of the file that this frame of the stack was in.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  columnNumber?: string;
-  /**
-   * The file that this stack frame was executing
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  file?: string;
-  /**
-   * Indicates if this stack trace line is in the project's application code (true) or form a 3rd party library (false).
-   * @type {boolean}
-   * @memberof CoreFrameFields
-   */
-  inProject?: boolean;
-  /**
-   * Path of the code file for the module referenced.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  codeFile?: string;
-  /**
-   * Offset of the frame's return address from the base of the line, function, or module in a minidump.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  addressOffset?: string;
-  /**
-   * Offset of the frame's return address from the base of the line, function, or module.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  relativeAddress?: string;
-  /**
-   * the frame's return address from the base of the line, function, or module in a minidump.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  frameAddress?: string;
-  /**
-   * The method that this particular stack frame is within.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  method?: string;
-  /**
-   * The type of the stackframe. This may be different for each stackframe, for example when the error occurs in native extension of a scripting language.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  type?: string;
-  /**
-   * A link to the affected line of code in source control.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  source_control_link?: string;
-  /**
-   * The name of the source control service being used.
-   * @type {string}
-   * @memberof CoreFrameFields
-   */
-  source_control_name?: string;
-  /**
-   * Indicates if this is an inlined function
-   * @type {boolean}
-   * @memberof CoreFrameFields
-   */
-  inlined?: boolean;
-  /**
-   * The code in the file surrounding this line, with up to three lines on either side of the line that crashed.
-   * @type {any}
-   * @memberof CoreFrameFields
-   */
-  code?: any;
-}
-/**
- *
- * @export
- * @interface ErrorApiView
- */
-export interface ErrorApiView extends ErrorBase {
-  /**
-   * Identifies the collaborator, if any, who has been assigned to the Error.
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  assigned_collaborator_id?: string;
-  /**
-   * Identifies the team, if any, that has been assigned to the Error.
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  assigned_team_id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  project_id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  url?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  project_url?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  error_class?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  message?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  context?: string;
-  /**
-   *
-   * @type {SeverityOptions}
-   * @memberof ErrorApiView
-   */
-  original_severity?: SeverityOptions;
-  /**
-   *
-   * @type {SeverityOptions}
-   * @memberof ErrorApiView
-   */
-  overridden_severity?: SeverityOptions;
-  /**
-   * The number of occurrences of the Error. If the Error request includes filters, this will be a filtered count.
-   * @type {number}
-   * @memberof ErrorApiView
-   */
-  events?: number;
-  /**
-   * The API URL for the Error's Events.
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  events_url?: string;
-  /**
-   * The absolute count of all received Events for the Error.
-   * @type {number}
-   * @memberof ErrorApiView
-   */
-  unthrottled_occurrence_count?: number;
-  /**
-   * The number of users affected by the Error. If the Error request includes filters, this will be a filtered count.
-   * @type {number}
-   * @memberof ErrorApiView
-   */
-  users?: number;
-  /**
-   * The time of the first occurrence of the Error. This time will be within the bounds of any applied time Filters.
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  first_seen?: string;
-  /**
-   * The time of the last occurrence of the Error. This time will be within the bounds of any applied time Filters.
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  last_seen?: string;
-  /**
-   * The time of the first occurrence of this Error. This is an absolute time which may extend beyond the bounds of any applied time Filters.
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  first_seen_unfiltered?: string;
-  /**
-   * The time of the last occurrence of this Error. This is an absolute time which may extend beyond the bounds of any applied time Filters.
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  last_seen_unfiltered?: string;
-  /**
-   * The trend in the Error's daily occurrence frequency. Only included when the `histogram` parameter is provided in the request. If set to `dynamic`, the data is scoped to the time range being requested. If set to `two_week` or not provided, it covers the last 14 days. It's represented as an array of [`date`, `count`] pairs. This trend will take non-time Filters into account.
-   * @type {Array<Array<any>>}
-   * @memberof ErrorApiView
-   */
-  trend?: Array<Array<any>>;
-  /**
-   *
-   * @type {ErrorReopenRules}
-   * @memberof ErrorApiView
-   */
-  reopen_rules?: ErrorReopenRules;
-  /**
-   *
-   * @type {ErrorStatus}
-   * @memberof ErrorApiView
-   */
-  status?: ErrorStatus;
-  /**
-   * Issues linked to this error
-   * @type {Array<ErrorCreatedIssue>}
-   * @memberof ErrorApiView
-   */
-  linked_issues?: Array<ErrorCreatedIssue>;
-  /**
-   *
-   * @type {ErrorCreatedIssue}
-   * @memberof ErrorApiView
-   */
-  created_issue?: ErrorCreatedIssue;
-  /**
-   * The number of comments on the Error. This count does not consider time Filters.
-   * @type {number}
-   * @memberof ErrorApiView
-   */
-  comment_count?: number;
-  /**
-   * An array of UUIDs for dSYMs that were not [uploaded](https://docs.bugsnag.com/platforms/ios/symbolication-guide/) but are required to symbolicate the Error. Applies to iOS, macOS, and tvOS projects.
-   * @type {Array<string>}
-   * @memberof ErrorApiView
-   */
-  missing_dsyms?: Array<string>;
-  /**
-   * The release stages where this Error has occurred.
-   * @type {Array<string>}
-   * @memberof ErrorApiView
-   */
-  release_stages?: Array<string>;
-  /**
-   * The reason that events were grouped into this error. - `frame-code` - same code location - `frame-inner` - top in-project stackframe - `context-inner` - context - `error_class-inner` - error class - `user_defined` - custom grouping hash - `js-blob` - from blobs (JS only) - `js-tag` - same inline script (JS only) - `js-html` - same page location (JS only) - `js-eval` - originate from eval statements (JS only) - `js-structure` - same point in the code using the structure of the surrounding minified code (JS only) - `js-codebase` - same point in the code using the surrounding minified code (JS only) - `js-location` - similar location (JS only)
-   * @type {string}
-   * @memberof ErrorApiView
-   */
-  grouping_reason?: ErrorApiView.GroupingReasonEnum;
-  /**
-   * A map of the fields and their values that were used for the grouping of this error. Long field values may be truncated. The specific fields included in this response are dependent on the `grouping_reason`.
-   * @type {any}
-   * @memberof ErrorApiView
-   */
-  grouping_fields?: any;
-  /**
-   * Whether future Events for this error are being discarded.
-   * @type {boolean}
-   * @memberof ErrorApiView
-   */
-  discarded?: boolean;
-}
-
-/**
- * @export
- * @namespace ErrorApiView
- */
-namespace ErrorApiView {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum GroupingReasonEnum {
-    FrameCode = <any>"frame-code",
-    FrameInner = <any>"frame-inner",
-    ContextInner = <any>"context-inner",
-    ErrorClassInner = <any>"error_class-inner",
-    UserDefined = <any>"user_defined",
-    JsBlob = <any>"js-blob",
-    JsTag = <any>"js-tag",
-    JsHtml = <any>"js-html",
-    JsEval = <any>"js-eval",
-    JsStructure = <any>"js-structure",
-    JsCodebase = <any>"js-codebase",
-    JsLocation = <any>"js-location",
-  }
-}
-/**
- *
- * @export
- * @interface ErrorAssignmentRuleCreateRequest
- */
-interface ErrorAssignmentRuleCreateRequest {
-  /**
-   *
-   * @type {ErrorAssignmentRulesAssignee}
-   * @memberof ErrorAssignmentRuleCreateRequest
-   */
-  assignee: ErrorAssignmentRulesAssignee;
-  /**
-   *
-   * @type {ErrorAssignmentRulePatternApiView}
-   * @memberof ErrorAssignmentRuleCreateRequest
-   */
-  pattern: ErrorAssignmentRulePatternApiView;
-  /**
-   * Freeform text about the rule.
-   * @type {string}
-   * @memberof ErrorAssignmentRuleCreateRequest
-   */
-  comment?: string;
-}
-/**
- *
- * @export
- * @interface ErrorAssignmentRulePatternApiView
- */
-interface ErrorAssignmentRulePatternApiView {
-  /**
-   * The pattern variant.
-   * @type {string}
-   * @memberof ErrorAssignmentRulePatternApiView
-   */
-  type: ErrorAssignmentRulePatternApiView.TypeEnum;
-  /**
-   * The file glob or dot notation payload path that, when matched, will activate the path.
-   * @type {string}
-   * @memberof ErrorAssignmentRulePatternApiView
-   */
-  scope: string;
-  /**
-   * The value to match to the resolved scope - required for payload_path matches, unset for file_path and code_method matches.
-   * @type {string}
-   * @memberof ErrorAssignmentRulePatternApiView
-   */
-  match_value?: string;
-  /**
-   * Whether to match on any line or only the first line - required for file_path and code_method matches, unset for payload_path matches.
-   * @type {string}
-   * @memberof ErrorAssignmentRulePatternApiView
-   */
-  match_frame?: ErrorAssignmentRulePatternApiView.MatchFrameEnum;
-}
-
-/**
- * @export
- * @namespace ErrorAssignmentRulePatternApiView
- */
-namespace ErrorAssignmentRulePatternApiView {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum TypeEnum {
-    PayloadPath = <any>"payload_path",
-    FilePath = <any>"file_path",
-    CodeMethod = <any>"code_method",
-  }
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum MatchFrameEnum {
-    Any = <any>"any",
-    First = <any>"first",
-  }
-}
-/**
- *
- * @export
- * @interface ErrorAssignmentRulesAssignee
- */
-interface ErrorAssignmentRulesAssignee {
-  /**
-   * Whether the rule will assign to a team or a specific user.
-   * @type {string}
-   * @memberof ErrorAssignmentRulesAssignee
-   */
-  type: ErrorAssignmentRulesAssignee.TypeEnum;
-  /**
-   * The ID of the User or Team being assigned the rule.
-   * @type {string}
-   * @memberof ErrorAssignmentRulesAssignee
-   */
-  id: string;
-}
-
-/**
- * @export
- * @namespace ErrorAssignmentRulesAssignee
- */
-namespace ErrorAssignmentRulesAssignee {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum TypeEnum {
-    User = <any>"user",
-    Team = <any>"team",
-  }
-}
-/**
- *
- * @export
- * @interface ErrorAssignmentRulesReplaceRequest
- */
-interface ErrorAssignmentRulesReplaceRequest {
-  /**
-   *
-   * @type {Array<ErrorAssignmentRuleCreateRequest>}
-   * @memberof ErrorAssignmentRulesReplaceRequest
-   */
-  assignment_rules?: Array<ErrorAssignmentRuleCreateRequest>;
-}
-/**
- *
- * @export
- * @interface ErrorBase
- */
-interface ErrorBase {
-  /**
-   *
-   * @type {SeverityOptions}
-   * @memberof ErrorBase
-   */
-  severity?: SeverityOptions;
-}
-/**
- *
- * @export
- * @interface ErrorCreatedIssue
- */
-interface ErrorCreatedIssue {
-  /**
-   * The immutable issue id.
-   * @type {string}
-   * @memberof ErrorCreatedIssue
-   */
-  id: string;
-  /**
-   * The issue key (if applicable). For example, in the case of a Jira story, this will be the mutable key (e.g. ENG-10)
-   * @type {string}
-   * @memberof ErrorCreatedIssue
-   */
-  key?: string;
-  /**
-   * The issue number (if applicable). For example, in the case of a github issue with the url `https://github.com/foo/bar/issues/123` this field will be set to `123`.
-   * @type {number}
-   * @memberof ErrorCreatedIssue
-   */
-  number?: number;
-  /**
-   * An identifier for the 3rd party service
-   * @type {string}
-   * @memberof ErrorCreatedIssue
-   */
-  type: string;
-  /**
-   * The url to the issue on the 3rd party service
-   * @type {string}
-   * @memberof ErrorCreatedIssue
-   */
-  url: string;
-}
-/**
- *
- * @export
- * @interface ErrorReopenRules
- */
-interface ErrorReopenRules {
-  /**
-   * Must be one of the following: - `n_additional_occurrences` - Indicates that the Error should be reopened after n more occurrences. In this case, the `occurrence_threshold` field indicates the number of total occurrences at which the Error should be reopened, and the `additional_occurrences` field indicates the number of additional occurrences that were allowed before reopening. - `n_occurrences_in_m_hours` - Indicates that the Error should be reopened after n occurrences over some configurable number of hours. In this case, the `occurrences` and `hours` fields will both be present. - `occurs_after` - Indicates that the error should be reopened if there are any occurrences after the specified time period. The `seconds` field contains the number of seconds that the Error has been snoozed for. In this case, the `seconds` and `reopen_after` fields will both be present.
-   * @type {string}
-   * @memberof ErrorReopenRules
-   */
-  reopen_if: ErrorReopenRules.ReopenIfEnum;
-  /**
-   * for `occurs_after` reopen rules, this field indicates the time after which the Error should be reopened if there is an additional occurrence.
-   * @type {string}
-   * @memberof ErrorReopenRules
-   */
-  reopen_after?: string;
-  /**
-   * for `occurs_after` reopen rules, the number of seconds that the Error was set to snooze for.
-   * @type {number}
-   * @memberof ErrorReopenRules
-   */
-  seconds?: number;
-  /**
-   * for `n_occurrences_in_m_hours` reopen rules, the number of occurrences to allow in the number of hours indicated by the `hours` field, before the Error is automatically reopened.
-   * @type {number}
-   * @memberof ErrorReopenRules
-   */
-  occurrences?: number;
-  /**
-   * for `n_occurrences_in_m_hours` reopen rules, the number of hours.
-   * @type {number}
-   * @memberof ErrorReopenRules
-   */
-  hours?: number;
-  /**
-   * for `n_additional_occurrences` reopen rules, the number of total occurrences at which the Error should be reopened.
-   * @type {number}
-   * @memberof ErrorReopenRules
-   */
-  occurrence_threshold?: number;
-  /**
-   * for `n_additional_occurrences` reopen rules, the number of additional occurrences allowed before reopening.
-   * @type {number}
-   * @memberof ErrorReopenRules
-   */
-  additional_occurrences?: number;
-}
-
-/**
- * @export
- * @namespace ErrorReopenRules
- */
-namespace ErrorReopenRules {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum ReopenIfEnum {
-    NAdditionalOccurrences = <any>"n_additional_occurrences",
-    NOccurrencesInMHours = <any>"n_occurrences_in_m_hours",
-    OccursAfter = <any>"occurs_after",
-  }
-}
-/**
- *
- * @export
- * @enum {string}
- */
-enum ErrorStatus {
-  Open = <any>"open",
-  InProgress = <any>"in progress",
-  ForReview = <any>"for_review",
-  Fixed = <any>"fixed",
-  Snoozed = <any>"snoozed",
-  Ignored = <any>"ignored",
-}
-/**
- *
- * @export
- * @interface ErrorUpdateReopenRules
- */
-interface ErrorUpdateReopenRules {
-  /**
-   * Must be one of the following: - `occurs_after` - Indicates that the error should be reopened if there are any occurrences after the specified time period. In this case, the `seconds` field must also be provided. - `n_occurrences_in_m_hours` - Indicates that the Error should be reopened after n occurrences over some period of hours. In this case, the `occurrences` and `hours` fields will both be present. - `n_additional_occurrences` - Indicates that the Error should be reopened after n more occurrences. In this case, the `additional_occurrences` field indicates the number of additional occurrences that were allowed before reopening. Cannot be set if more than 10,000 existing users are already affected by an error. - `n_additional_users` - Reopen the error after `n` more users are affected. In this case, the `additional_users` field must be provided.
-   * @type {string}
-   * @memberof ErrorUpdateReopenRules
-   */
-  reopen_if: ErrorUpdateReopenRules.ReopenIfEnum;
-  /**
-   * for `n_additional_users` reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened. Value cannot exceed 100,000.
-   * @type {number}
-   * @memberof ErrorUpdateReopenRules
-   */
-  additional_users?: number;
-  /**
-   * for `occurs_after` reopen rules, the number of seconds that the Error should be snoozed for.
-   * @type {number}
-   * @memberof ErrorUpdateReopenRules
-   */
-  seconds?: number;
-  /**
-   * for `n_occurrences_in_m_hours` reopen rules, the number of occurrences to allow in the number of hours indicated by the `hours` field, before the Error is automatically reopened.
-   * @type {number}
-   * @memberof ErrorUpdateReopenRules
-   */
-  occurrences?: number;
-  /**
-   * for `n_occurrences_in_m_hours` reopen rules, the number of hours.
-   * @type {number}
-   * @memberof ErrorUpdateReopenRules
-   */
-  hours?: number;
-  /**
-   * for `n_additional_occurrences` reopen rules, the number of additional occurrences allowed before reopening.
-   * @type {number}
-   * @memberof ErrorUpdateReopenRules
-   */
-  additional_occurrences?: number;
-}
-
-/**
- * @export
- * @namespace ErrorUpdateReopenRules
- */
-namespace ErrorUpdateReopenRules {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum ReopenIfEnum {
-    OccursAfter = <any>"occurs_after",
-    NOccurrencesInMHours = <any>"n_occurrences_in_m_hours",
-    NAdditionalOccurrences = <any>"n_additional_occurrences",
-    NAdditionalUsers = <any>"n_additional_users",
-  }
-}
-/**
- *
- * @export
- * @interface ErrorUpdateRequest
- */
-export interface ErrorUpdateRequest extends ErrorBase {
-  /**
-   * The type of update operation to perform. The can be used to change the Error's workflow state (e.g. marking the Error as `fixed`). It must be one of the following: * `override_severity`   Set the Error's severity to the newly supplied `severity` parameter. * `assign`   Assign the Error to the Collaborator specified by the `assigned_collaborator_id` parameter. The error will be unassigned if `assigned_collaborator_id` is blank, the identified Collaborator has not accepted their invitation, or they do not have access to the Error's Project. * `create_issue`   Create an issue for the Error. If the `issue_title` parameter is set, the new issue will be created with this title. * `link_issue`   Link the Error to an existing issue. The url should be provided in the `issue_url` parameter. `verify_issue_url` can be set to control whether Bugsnag should attempt to verify the issue URL with any configured issue tracker integration. This is the default behavior if `verify_issue_url` is not supplied. * `unlink_issue`   Remove the link between the Error and its current linked issue.  * `open`   Set the Error's status to open. * `snooze`   Snooze the error per the `reopen_rules` parameter. * `fix`   Set the Error's status to fixed. * `ignore`   Ignore the Error. Errors that are ignored and can only be reopened manually. Events are collected, but no notifications are sent. * `delete`   Delete the Error. The Error and all related Events will be removed from Bugsnag. If the error occurs again, it will appear as a new Error with status `Open`. * `discard`   Discard future Events for this Error. The Error and all existing Events will remain in Bugsnag, but future occurrences of the Error will not be stored by Bugsnag or count toward Event usage limits. * `undiscard`   Undiscard the Error. Future Events will be stored for this Error. This undoes the `discard` option.
-   * @type {string}
-   * @memberof ErrorUpdateRequest
-   */
-  operation: ErrorUpdateRequest.OperationEnum;
-  /**
-   * The Collaborator to assign to the Error. Errors may be assigned only to users who have accepted their Bugsnag invitation and have access to the project.
-   * @type {string}
-   * @memberof ErrorUpdateRequest
-   */
-  assigned_collaborator_id?: string;
-  /**
-   * The Team to assign to the Error. Mutually exclusive with `assigned_collaborator_id`.
-   * @type {string}
-   * @memberof ErrorUpdateRequest
-   */
-  assigned_team_id?: string;
-  /**
-   * Specifies the HTTP link to an external issue when adding or updating a link.
-   * @type {string}
-   * @memberof ErrorUpdateRequest
-   */
-  issue_url?: string;
-  /**
-   * Setting `false` will prevent Bugsnag from attempting to verify the `issue_url` with the configured issue tracker when linking an issue. Defaults to `true` if the parameter is not supplied. If no configured issue tracker the parameter is ignored.
-   * @type {boolean}
-   * @memberof ErrorUpdateRequest
-   */
-  verify_issue_url?: boolean;
-  /**
-   * If the Error has a `created_issue`, the `issue_title` request field can be set to update the issue's title.
-   * @type {string}
-   * @memberof ErrorUpdateRequest
-   */
-  issue_title?: string;
-  /**
-   * ID of the issue tracker to use for `create_issue` and `link_issue` operations. The most recent issue tracker is used if the parameter is omitted, and no issue tracker is used even if `notification_id` is set for `link_issue` operations if `verify_issue_url` is `false`.
-   * @type {string}
-   * @memberof ErrorUpdateRequest
-   */
-  notification_id?: string;
-  /**
-   *
-   * @type {ErrorUpdateReopenRules}
-   * @memberof ErrorUpdateRequest
-   */
-  reopen_rules?: ErrorUpdateReopenRules;
-  /**
-   *
-   * @type {SeverityOptions}
-   * @memberof ErrorUpdateRequest
-   */
-  severity?: SeverityOptions;
-}
-
-/**
- * @export
- * @namespace ErrorUpdateRequest
- */
-export namespace ErrorUpdateRequest {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum OperationEnum {
-    OverrideSeverity = <any>"override_severity",
-    Assign = <any>"assign",
-    CreateIssue = <any>"create_issue",
-    LinkIssue = <any>"link_issue",
-    UnlinkIssue = <any>"unlink_issue",
-    Open = <any>"open",
-    Snooze = <any>"snooze",
-    Fix = <any>"fix",
-    Ignore = <any>"ignore",
-    Delete = <any>"delete",
-    Discard = <any>"discard",
-    Undiscard = <any>"undiscard",
-  }
-}
-/**
- *
- * @export
- * @interface EventApiView
- */
-export interface EventApiView {
-  /**
-   *
-   * @type {string}
-   * @memberof EventApiView
-   */
-  id?: string;
-  /**
-   * The URL for the event
-   * @type {string}
-   * @memberof EventApiView
-   */
-  url?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof EventApiView
-   */
-  project_url?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof EventApiView
-   */
-  is_full_report?: boolean;
-  /**
-   * The Error this Event is an occurrence of
-   * @type {string}
-   * @memberof EventApiView
-   */
-  error_id?: string;
-  /**
-   * The time the [Error Reporting API](https://developer.smartbear.com/bugsnag/docs/reporting-events-and-sessions/) was notified of this Event
-   * @type {string}
-   * @memberof EventApiView
-   */
-  received_at?: string;
-  /**
-   * An array of exceptions that occurred during this event. Most of the time there will only be one exception, but some languages support \"nested\" or \"caused by\" exceptions. The first item in the array represents the outermost exception. Each subsequent item represents the exception that caused the preceding one.
-   * @type {Array<EventException>}
-   * @memberof EventApiView
-   */
-  exceptions?: Array<EventException>;
-  /**
-   * An array of the threads running when this event was reported.
-   * @type {Array<EventThread>}
-   * @memberof EventApiView
-   */
-  threads?: Array<EventThread>;
-  /**
-   * Custom metadata passed with the event manually or via the notifier library. The API preserves the original casing and key format as received.
-   * @type {any}
-   * @memberof EventApiView
-   */
-  metaData?: any;
-  /**
-   *
-   * @type {EventRequest}
-   * @memberof EventApiView
-   */
-  request?: EventRequest;
-  /**
-   *
-   * @type {EventApp}
-   * @memberof EventApiView
-   */
-  app?: EventApp;
-  /**
-   *
-   * @type {EventDevice}
-   * @memberof EventApiView
-   */
-  device?: EventDevice;
-  /**
-   *
-   * @type {EventUser}
-   * @memberof EventApiView
-   */
-  user?: EventUser;
-  /**
-   * An array of user- and system-initiated events which led up to an error, providing additional context. This list is sequential and ordered newest to oldest.
-   * @type {Array<Breadcrumb>}
-   * @memberof EventApiView
-   */
-  breadcrumbs?: Array<Breadcrumb>;
-  /**
-   * This refers to the action that was happening when the event occurred.
-   * @type {string}
-   * @memberof EventApiView
-   */
-  context?: string;
-  /**
-   *
-   * @type {SeverityOptions}
-   * @memberof EventApiView
-   */
-  severity?: SeverityOptions;
-  /**
-   * Whether or not the event was from an unhandled exception.
-   * @type {boolean}
-   * @memberof EventApiView
-   */
-  unhandled?: boolean;
-  /**
-   * Whether or not there's a missing dSYM (only included in response if event includes a dsym_uuid).
-   * @type {boolean}
-   * @memberof EventApiView
-   */
-  missing_dsym?: boolean;
-  /**
-   *
-   * @type {EventCorrelation}
-   * @memberof EventApiView
-   */
-  correlation?: EventCorrelation;
-  /**
-   * Feature flags and variants that were active when the event occurred.
-   * @type {Array<FeatureFlagSummary>}
-   * @memberof EventApiView
-   */
-  feature_flags?: Array<FeatureFlagSummary>;
-}
-/**
- *
- * @export
- * @interface EventApp
- */
-interface EventApp {
-  /**
-   * A unique ID for the application.
-   * @type {string}
-   * @memberof EventApp
-   */
-  id?: string;
-  /**
-   * The version number of the application which generated the error.
-   * @type {string}
-   * @memberof EventApp
-   */
-  version?: string;
-  /**
-   * The [version code](https://developer.android.com/studio/publish/versioning.html) of the application (Android only)
-   * @type {number}
-   * @memberof EventApp
-   */
-  versionCode?: number;
-  /**
-   * The [bundle version/build number](https://developer.apple.com/library/content/technotes/tn2420/_index.html) of the application (iOS/macOS/tvOS only)
-   * @type {string}
-   * @memberof EventApp
-   */
-  bundleVersion?: string;
-  /**
-   * A unique identifier to identify a code bundle release when using tools like CodePush (mobile only).
-   * @type {string}
-   * @memberof EventApp
-   */
-  codeBundleId?: string;
-  /**
-   * A build ID that is required to identify a specific build when the version and version code are the same.
-   * @type {string}
-   * @memberof EventApp
-   */
-  buildUUID?: string;
-  /**
-   * The release stage that this error occurred in, for example \"development\", \"staging\" or \"production\".
-   * @type {string}
-   * @memberof EventApp
-   */
-  releaseStage?: string;
-  /**
-   * The application type, such as a web framework or mobile platform, for example \"rails\" or \"android\".
-   * @type {string}
-   * @memberof EventApp
-   */
-  type?: string;
-  /**
-   * The UUIDs of the [debug symbols file](http://lldb.llvm.org/symbols.html) corresponding to this application, if any.
-   * @type {Array<string>}
-   * @memberof EventApp
-   */
-  dsymUUIDs?: Array<string>;
-  /**
-   * How long the app has been running for in milliseconds.
-   * @type {number}
-   * @memberof EventApp
-   */
-  duration?: number;
-  /**
-   * How long the app has been in the foreground of the device in milliseconds.
-   * @type {number}
-   * @memberof EventApp
-   */
-  durationInForeground?: number;
-  /**
-   * Whether or not the app was in the foreground when the error occurred.
-   * @type {boolean}
-   * @memberof EventApp
-   */
-  inForeground?: boolean;
-  /**
-   * Whether or not the application was still in the process of launching when the event was created.
-   * @type {boolean}
-   * @memberof EventApp
-   */
-  isLaunching?: boolean;
-  /**
-   * The architecture of the running binary (Android only). - `x86` - x86/i386 (32-bit). - `x86_64` - x86 (64-bit). - `arm32` - armeabi/armeabi-v7a (32-bit). - `arm64` - arm64-v8a (64-bit). - `amd64` - amd64 (64-bit).
-   * @type {string}
-   * @memberof EventApp
-   */
-  binaryArch?: EventApp.BinaryArchEnum;
-  /**
-   * Whether or not the application was running through Rosetta (iOS only).
-   * @type {boolean}
-   * @memberof EventApp
-   */
-  runningOnRosetta?: boolean;
-}
-
-/**
- * @export
- * @namespace EventApp
- */
-namespace EventApp {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum BinaryArchEnum {
-    X86 = <any>"x86",
-    X8664 = <any>"x86_64",
-    Arm32 = <any>"arm32",
-    Arm64 = <any>"arm64",
-    Amd64 = <any>"amd64",
-  }
-}
-/**
- *
- * @export
- * @interface EventCorrelation
- */
-interface EventCorrelation {
-  /**
-   * The ID of the OTel trace during which this event occurred
-   * @type {string}
-   * @memberof EventCorrelation
-   */
-  traceId?: string;
-  /**
-   * The ID of the OTel span during which this event occurred
-   * @type {string}
-   * @memberof EventCorrelation
-   */
-  spanId?: string;
-}
-/**
- * only include event fields that pertain to the user such as event.user, event.device, and event.request; you may need to remove/redact some fields before giving this data to your users that request it
- * @export
- * @enum {string}
- */
-enum EventDataRequestReportType {
-  Gdpr = <any>"gdpr",
-}
-/**
- *
- * @export
- * @interface EventDevice
- */
-interface EventDevice {
-  /**
-   * A unique identifier for the device.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  id?: string;
-  /**
-   * The hostname of the server running your code, if applicable.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  hostname?: string;
-  /**
-   * The manufacturer of the device.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  manufacturer?: string;
-  /**
-   * The model of the device.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  model?: string;
-  /**
-   * The model number of the device.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  modelNumber?: string;
-  /**
-   * The device's operating system name.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  osName?: string;
-  /**
-   * The device's operating system version.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  osVersion?: string;
-  /**
-   * The number of bytes unused in the device's RAM.
-   * @type {number}
-   * @memberof EventDevice
-   */
-  freeMemory?: number;
-  /**
-   * The number of total bytes in the device's RAM.
-   * @type {number}
-   * @memberof EventDevice
-   */
-  totalMemory?: number;
-  /**
-   * The number of unused bytes on the drive running the application.
-   * @type {number}
-   * @memberof EventDevice
-   */
-  freeDisk?: number;
-  /**
-   * If a web application, the web browser used by the device.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  browserName?: string;
-  /**
-   * If a web application, the version of the browser used by the device.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  browserVersion?: string;
-  /**
-   * Whether or not the device has been modified to give users root access.
-   * @type {boolean}
-   * @memberof EventDevice
-   */
-  jailbroken?: boolean;
-  /**
-   * The orientation of the device at the time of the error.
-   * @type {string}
-   * @memberof EventDevice
-   */
-  orientation?: string;
-  /**
-   * The locale of the device
-   * @type {string}
-   * @memberof EventDevice
-   */
-  locale?: string;
-  /**
-   * Whether the device was charging
-   * @type {boolean}
-   * @memberof EventDevice
-   */
-  charging?: boolean;
-  /**
-   * The battery level of the device as a decimal
-   * @type {number}
-   * @memberof EventDevice
-   */
-  batteryLevel?: number;
-  /**
-   * The time at which the error occurred, in [ISO 8601 format](https://tools.ietf.org/html/rfc3339#section-5.8).
-   * @type {Date}
-   * @memberof EventDevice
-   */
-  time?: Date;
-  /**
-   * The timezone in which the error occurred
-   * @type {string}
-   * @memberof EventDevice
-   */
-  timezone?: string;
-  /**
-   * The [ABIs](https://developer.android.com/ndk/guides/abis) supported by the device (Android only).
-   * @type {Array<string>}
-   * @memberof EventDevice
-   */
-  cpuAbi?: Array<string>;
-  /**
-   * Hash of the versions of the relevant runtimes, languages and/or frameworks for the platform.
-   * @type {any}
-   * @memberof EventDevice
-   */
-  runtimeVersions?: any;
-  /**
-   * The Mac Catalyst version (iOS only).
-   * @type {string}
-   * @memberof EventDevice
-   */
-  macCatalystIosVersion?: string;
-}
-/**
- *
- * @export
- * @interface EventException
- */
-interface EventException {
-  /**
-   *
-   * @type {string}
-   * @memberof EventException
-   */
-  errorClass?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof EventException
-   */
-  message?: string;
-  /**
-   * The type of the exception. `null` if not recorded.
-   * @type {string}
-   * @memberof EventException
-   */
-  type?: string;
-  /**
-   * An array of stack trace objects. Each object represents one line in the exception's stack trace. Bugsnag uses this information to help with error grouping, as well as displaying it to the user.
-   * @type {Array<EventExceptionStacktrace>}
-   * @memberof EventException
-   */
-  stacktrace?: Array<EventExceptionStacktrace>;
-  /**
-   * An array of register details for minidump stackframes.
-   * @type {Array<EventExceptionRegister>}
-   * @memberof EventException
-   */
-  registers?: Array<EventExceptionRegister>;
-}
-/**
- *
- * @export
- * @interface EventExceptionRegister
- */
-interface EventExceptionRegister {
-  /**
-   * The index of the frame in the stacktrace that the registers apply to
-   * @type {number}
-   * @memberof EventExceptionRegister
-   */
-  frame_index?: number;
-  /**
-   * Details of a register
-   * @type {Array<EventExceptionRegisterValue>}
-   * @memberof EventExceptionRegister
-   */
-  register_values?: Array<EventExceptionRegisterValue>;
-}
-/**
- *
- * @export
- * @interface EventExceptionRegisterValue
- */
-interface EventExceptionRegisterValue {
-  /**
-   * The name of the register
-   * @type {string}
-   * @memberof EventExceptionRegisterValue
-   */
-  register_name?: string;
-  /**
-   * The value of the register
-   * @type {string}
-   * @memberof EventExceptionRegisterValue
-   */
-  register_value?: string;
-}
-/**
- *
- * @export
- * @interface EventExceptionStacktrace
- */
-interface EventExceptionStacktrace {
-  /**
-   * The line of the file that this frame of the stack was in.
-   * @type {number}
-   * @memberof EventExceptionStacktrace
-   */
-  line_number?: number;
-  /**
-   * The column of the file that this frame of the stack was in.
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  column_number?: string;
-  /**
-   * The file that this stack frame was executing
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  file?: string;
-  /**
-   * Indicates if this stack trace line is in the project's application code (true) or form a 3rd party library (false).
-   * @type {boolean}
-   * @memberof EventExceptionStacktrace
-   */
-  in_project?: boolean;
-  /**
-   * Path of the code file for the module referenced.
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  code_file?: string;
-  /**
-   * Offset of the frame's return address from the base of the line, function, or module in a minidump.
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  address_offset?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  macho_uuid?: string;
-  /**
-   * Offset of the frame's return address from the base of the line, function, or module.
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  relative_address?: string;
-  /**
-   * The frame's return address from the base of the line, function, or module in a minidump.
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  frame_address?: string;
-  /**
-   * The method that this particular stack frame is within.
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  method?: string;
-  /**
-   * A link to the affected line of code in source control.
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  source_control_link?: string;
-  /**
-   * The name of the source control service being used.
-   * @type {string}
-   * @memberof EventExceptionStacktrace
-   */
-  source_control_name?: string;
-  /**
-   * Indicates if this is an inlined function
-   * @type {boolean}
-   * @memberof EventExceptionStacktrace
-   */
-  inlined?: boolean;
-  /**
-   * The code in the file surrounding this line, with up to three lines on either side of the line that crashed.
-   * @type {any}
-   * @memberof EventExceptionStacktrace
-   */
-  code?: any;
-}
-/**
- *
- * @export
- * @interface EventField
- */
-export interface EventField {
-  /**
-   * Whether the field is a custom event field created by your organization
-   * @type {boolean}
-   * @memberof EventField
-   */
-  custom?: boolean;
-  /**
-   * Identifier which is the key to use for filtering by this field
-   * @type {string}
-   * @memberof EventField
-   */
-  display_id?: string;
-  /**
-   *
-   * @type {EventFieldFilterOptions}
-   * @memberof EventField
-   */
-  filter_options: EventFieldFilterOptions;
-  /**
-   * Possible values for this filter, only if this filter has a finite set of values
-   * @type {Array<FilterValue>}
-   * @memberof EventField
-   */
-  values?: Array<FilterValue>;
-  /**
-   * The valid match types when filtering by this field   - eq - Results must equal the value   - ne - Results must not equal the value
-   * @type {Array<string>}
-   * @memberof EventField
-   */
-  match_types?: Array<EventField.MatchTypesEnum>;
-  /**
-   *
-   * @type {PivotOptions}
-   * @memberof EventField
-   */
-  pivot_options: PivotOptions;
-  /**
-   * Whether a reindex of this field is currently in progress (applicable to custom fields only)
-   * @type {boolean}
-   * @memberof EventField
-   */
-  reindex_in_progress?: boolean;
-  /**
-   * The percentage complete of the reindexing of this field (applicable to custom fields only)
-   * @type {number}
-   * @memberof EventField
-   */
-  reindex_percentage?: number;
-}
-
-/**
- * @export
- * @namespace EventField
- */
-namespace EventField {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum MatchTypesEnum {
-    Eq = <any>"eq",
-    Ne = <any>"ne",
-  }
-}
-/**
- *
- * @export
- * @interface EventFieldCreateRequest
- */
-interface EventFieldCreateRequest {
-  /**
-   * [Path](https://docs.bugsnag.com/product/custom-filters/advanced-custom-filters/#custom-filter-path) to locate the relevant data inside an Event data structure
-   * @type {string}
-   * @memberof EventFieldCreateRequest
-   */
-  path: string;
-  /**
-   * Whether to reindex historical events for this field
-   * @type {boolean}
-   * @memberof EventFieldCreateRequest
-   */
-  reindex?: boolean;
-  /**
-   *
-   * @type {EventFieldCreateRequestFilterOptions}
-   * @memberof EventFieldCreateRequest
-   */
-  filter_options: EventFieldCreateRequestFilterOptions;
-  /**
-   *
-   * @type {PivotOptions}
-   * @memberof EventFieldCreateRequest
-   */
-  pivot_options?: PivotOptions;
-}
-/**
- *
- * @export
- * @interface EventFieldCreateRequestFilterOptions
- */
-interface EventFieldCreateRequestFilterOptions {
-  /**
-   * Human readable name for the filter
-   * @type {string}
-   * @memberof EventFieldCreateRequestFilterOptions
-   */
-  name?: string;
-}
-/**
- *
- * @export
- * @interface EventFieldFilterOptions
- */
-interface EventFieldFilterOptions {
-  /**
-   * Human readable display name for the filter
-   * @type {string}
-   * @memberof EventFieldFilterOptions
-   */
-  name: string;
-  /**
-   * Description of what the filter is
-   * @type {string}
-   * @memberof EventFieldFilterOptions
-   */
-  description?: string;
-  /**
-   * Other possible names that match this field when filtering
-   * @type {Array<string>}
-   * @memberof EventFieldFilterOptions
-   */
-  aliases?: Array<string>;
-  /**
-   * Hint text to clarify the use of the field for filtering
-   * @type {string}
-   * @memberof EventFieldFilterOptions
-   */
-  hint_text?: string;
-  /**
-   * Link to Bugsnag documentation about this filter
-   * @type {string}
-   * @memberof EventFieldFilterOptions
-   */
-  hint_url?: string;
-}
-/**
- *
- * @export
- * @interface EventRequest
- */
-interface EventRequest {
-  /**
-   * The URL the request was made to
-   * @type {string}
-   * @memberof EventRequest
-   */
-  url?: string;
-  /**
-   * The IP making the request
-   * @type {string}
-   * @memberof EventRequest
-   */
-  clientIp?: string;
-  /**
-   * The HTTP method used for the request
-   * @type {string}
-   * @memberof EventRequest
-   */
-  httpMethod?: string;
-  /**
-   * The URL referring the user
-   * @type {string}
-   * @memberof EventRequest
-   */
-  referer?: string;
-  /**
-   * Hash of headers sent with the request
-   * @type {any}
-   * @memberof EventRequest
-   */
-  headers?: any;
-  /**
-   * Hash of parameter sent with the request
-   * @type {any}
-   * @memberof EventRequest
-   */
-  params?: any;
-}
-/**
- *
- * @export
- * @interface EventThread
- */
-interface EventThread {
-  /**
-   * The id of the thread in the application.
-   * @type {number}
-   * @memberof EventThread
-   */
-  id?: number;
-  /**
-   * A human readable name for the thread.
-   * @type {string}
-   * @memberof EventThread
-   */
-  name?: string;
-  /**
-   * The type of the thread
-   * @type {string}
-   * @memberof EventThread
-   */
-  type?: string;
-  /**
-   * An array of stack trace objects. Each object represents one line in the exception's stack trace. Bugsnag uses this information to help with error grouping, as well as displaying it to the user.
-   * @type {Array<CoreFrameFields>}
-   * @memberof EventThread
-   */
-  stacktrace?: Array<CoreFrameFields>;
-  /**
-   * Indicates if this is the thread from which the error was reported.
-   * @type {boolean}
-   * @memberof EventThread
-   */
-  error_reporting_thread?: boolean;
-  /**
-   * The state of the thread
-   * @type {string}
-   * @memberof EventThread
-   */
-  state?: string;
-}
-/**
- *
- * @export
- * @interface EventUser
- */
-interface EventUser {
-  /**
-   * A unique identifier for a user affected by this event. This could be any distinct identifier that makes sense for your application/platform.
-   * @type {string}
-   * @memberof EventUser
-   */
-  id?: string;
-  /**
-   * The user's name, or a string you use to identify them.
-   * @type {string}
-   * @memberof EventUser
-   */
-  name?: string;
-  /**
-   * The user's email address.
-   * @type {string}
-   * @memberof EventUser
-   */
-  email?: string;
-}
-/**
- *
- * @export
- * @interface FeatureFlagSummary
- */
-interface FeatureFlagSummary {
-  /**
-   * The ID of the feature flag.
-   * @type {string}
-   * @memberof FeatureFlagSummary
-   */
-  id: string;
-  /**
-   * The name of the feature flag.
-   * @type {string}
-   * @memberof FeatureFlagSummary
-   */
-  name: string;
-}
-/**
- * - eq - Filter for items that \"match\" (exact match or substring match depending on the field) the value - ne - Filter for items that don't match the value
- * @export
- * @enum {string}
- */
-enum FilterMatchType {
-  Eq = <any>"eq",
-  Ne = <any>"ne",
-}
-/**
- *
- * @export
- * @interface FilterValue
- */
-interface FilterValue {
-  /**
-   * The identifier to use when filtering by this value
-   * @type {string}
-   * @memberof FilterValue
-   */
-  id?: string;
-  /**
-   * A human readable representation of this value
-   * @type {string}
-   * @memberof FilterValue
-   */
-  name?: string;
-}
-/**
- *
- * @export
- * @interface Filters
- */
-interface Filters {
-  /**
-   * An array of user ids. Matches Errors affecting any of these users. This refers to user ids in the context of your application. Exact match only.
-   * @type {Array<FiltersUserId>}
-   * @memberof Filters
-   */
-  user_id?: Array<FiltersUserId>;
-  /**
-   * An array of email addresses. Matches Errors that have affected users with email addresses matching any of the provided emails. Supports substring matches.
-   * @type {Array<FiltersUserEmail>}
-   * @memberof Filters
-   */
-  user_email?: Array<FiltersUserEmail>;
-  /**
-   * An array of user names. Matches Errors that have affected users with names matching any of the provided names. Supports substring matches.
-   * @type {Array<FiltersUserName>}
-   * @memberof Filters
-   */
-  user_name?: Array<FiltersUserName>;
-  /**
-   * An array of error ids. Matches errors with IDs matching any of the given error IDs. Exact match only.
-   * @type {Array<FiltersErrorId>}
-   * @memberof Filters
-   */
-  error_id?: Array<FiltersErrorId>;
-  /**
-   * An array of error statuses. Matches Errors that have any of the given statuses. Exact match only.
-   * @type {Array<FiltersErrorStatus>}
-   * @memberof Filters
-   */
-  error_status?: Array<FiltersErrorStatus>;
-  /**
-   * An array of collaborator identifiers. Matches Errors that have been assigned to any of the given collaborators. Exact match only.  Values can be `me` (for errors assigned to the current user), `anyone` (for errors assigned to anyone), a collaborator ID, or an email address.
-   * @type {Array<FiltersErrorAssignedTo>}
-   * @memberof Filters
-   */
-  error_assigned_to?: Array<FiltersErrorAssignedTo>;
-  /**
-   * If set to true, matches Errors that have had an issue created for them. If set to false, matches Errors that have not had an issue created for them.
-   * @type {boolean}
-   * @memberof Filters
-   */
-  error_has_issue?: boolean;
-  /**
-   * An array of release stages. Matches Errors that have occurred in any of the given release stages. Exact match only.
-   * @type {Array<FiltersAppReleaseStage>}
-   * @memberof Filters
-   */
-  app_release_stage?: Array<FiltersAppReleaseStage>;
-  /**
-   * An array of application contexts. This refers to the action that was happening when the event occurred. Matches Errors that occurred in any of the given contexts. Supports substring matches.
-   * @type {Array<FiltersAppContext>}
-   * @memberof Filters
-   */
-  app_context?: Array<FiltersAppContext>;
-  /**
-   * An array of application types. Matches Errors that occurred in any of the given application types. Exact match only.
-   * @type {Array<FiltersAppType>}
-   * @memberof Filters
-   */
-  app_type?: Array<FiltersAppType>;
-  /**
-   * An array of application versions. Matches Errors that occurred for the first time in any of the given versions. Supports the `?` and `*` wildcards.
-   * @type {Array<FiltersVersionIntroducedIn>}
-   * @memberof Filters
-   */
-  version_introduced_in?: Array<FiltersVersionIntroducedIn>;
-  /**
-   * An array of application versions. Matches Errors that occurred in any of the given versions. Supports the `?` and `*` wildcards.
-   * @type {Array<FiltersVersionSeenIn>}
-   * @memberof Filters
-   */
-  version_seen_in?: Array<FiltersVersionSeenIn>;
-  /**
-   * An array of version codes. Matches Errors that occurred for the first time in a version of the application identified by any of the given versions codes. The value of an Error's versionCode depends on the corresponding Project's type. In Android apps this will match the versionCode setting. In iOS apps, versionCode is taken from the Build Number setting. Exact match only.
-   * @type {Array<FiltersVersionCodeIntroducedIn>}
-   * @memberof Filters
-   */
-  version_code_introduced_in?: Array<FiltersVersionCodeIntroducedIn>;
-  /**
-   * An array of version codes. Matches Errors that occurred in a version of the application identified by any of the given versions codes. The value of an Error's versionCode depends on the corresponding Project's type. In Android apps this will match the versionCode setting. In iOS apps, versionCode is taken from the Build Number setting. Exact match only.
-   * @type {Array<FiltersVersionCodeIntroducedIn>}
-   * @memberof Filters
-   */
-  version_code_seen_in?: Array<FiltersVersionCodeIntroducedIn>;
-  /**
-   * An array of Release `build_label`s, `app_version`s, `app_version_code`s, or `app_bundle_version`s. Matches Errors that occurred for the first time in any of the given Releases. Supports the `?` and `*` wildcards.
-   * @type {Array<FiltersReleaseIntroducedIn>}
-   * @memberof Filters
-   */
-  release_introduced_in?: Array<FiltersReleaseIntroducedIn>;
-  /**
-   * An array of Release `build_label`s, `app_version`s, `app_version_code`s, or `app_bundle_version`s. Matches Errors that occurred in any of the given Releases. Supports the `?` and `*` wildcards.
-   * @type {Array<FiltersReleaseIntroducedIn>}
-   * @memberof Filters
-   */
-  release_seen_in?: Array<FiltersReleaseIntroducedIn>;
-  /**
-   * An array of classes. Matches Errors with any of the given classes. Supports substring matches.
-   * @type {Array<FiltersEventClass>}
-   * @memberof Filters
-   */
-  event_class?: Array<FiltersEventClass>;
-  /**
-   * An array of messages. Matches Errors with any of the given messages. Supports substring matches.
-   * @type {Array<FiltersEventMessage>}
-   * @memberof Filters
-   */
-  event_message?: Array<FiltersEventMessage>;
-  /**
-   * An array of file paths. Matches Errors with any of the given files in their stack traces'. Supports substring matches.
-   * @type {Array<FiltersEventFile>}
-   * @memberof Filters
-   */
-  event_file?: Array<FiltersEventFile>;
-  /**
-   * An array of method names. Matches Errors with any of the given methods in their stack traces'. Supports substring matches.
-   * @type {Array<FiltersEventMethod>}
-   * @memberof Filters
-   */
-  event_method?: Array<FiltersEventMethod>;
-  /**
-   * An array of severities. Matches Errors with any of the given severities. Exact match only.
-   * @type {Array<FiltersEventSeverity>}
-   * @memberof Filters
-   */
-  event_severity?: Array<FiltersEventSeverity>;
-  /**
-   * An array containing a single timestamp. Matches Errors with events occurring after the given time. Exact match only.
-   * @type {Array<FiltersEventSince>}
-   * @memberof Filters
-   */
-  event_since?: Array<FiltersEventSince>;
-  /**
-   * An array containing a single timestamp. Matches Errors with events occurring before the given time. Exact match only.
-   * @type {Array<FiltersEventSince>}
-   * @memberof Filters
-   */
-  event_before?: Array<FiltersEventSince>;
-  /**
-   * An array containing web browser names. Matches Errors with events originating from any of the given web browsers. Exact match only.
-   * @type {Array<FiltersBrowserName>}
-   * @memberof Filters
-   */
-  browser_name?: Array<FiltersBrowserName>;
-  /**
-   * An array containing web browser versions. Matches Errors with events originating from any browser with the given version. Exact match only.
-   * @type {Array<FiltersBrowserVersion>}
-   * @memberof Filters
-   */
-  browser_version?: Array<FiltersBrowserVersion>;
-  /**
-   * An array containing operating system names. Matches Errors with events originating from devices running any of the given operating systems. Exact match only.
-   * @type {Array<FiltersOsName>}
-   * @memberof Filters
-   */
-  os_name?: Array<FiltersOsName>;
-  /**
-   * An array containing operating system versions. Matches Errors with events originating from devices running any of the given operating system versions. Supports the `?` and `*` wildcards.
-   * @type {Array<FiltersOsVersion>}
-   * @memberof Filters
-   */
-  os_version?: Array<FiltersOsVersion>;
-  /**
-   * An array containing hostnames. Matches Errors with events occurring on any hosts with one of the given hostnames. Exact match only.
-   * @type {Array<FiltersDeviceHostname>}
-   * @memberof Filters
-   */
-  device_hostname?: Array<FiltersDeviceHostname>;
-  /**
-   * An array containing device manufacturer names. Matches Errors with events occurring on any devices made by the given manufacturers. Exact match only.
-   * @type {Array<FiltersDeviceManufacturer>}
-   * @memberof Filters
-   */
-  device_manufacturer?: Array<FiltersDeviceManufacturer>;
-  /**
-   * An array containing device model names. Matches Errors with events occurring on any of the given device models. Exact match only.
-   * @type {Array<FiltersDeviceModel>}
-   * @memberof Filters
-   */
-  device_model?: Array<FiltersDeviceModel>;
-  /**
-   * An array of URLs. Matches Errors with events associated with requests to any of the given URLs. Supports substring matches.
-   * @type {Array<FiltersRequestUrl>}
-   * @memberof Filters
-   */
-  request_url?: Array<FiltersRequestUrl>;
-  /**
-   * An array of IP addresses. Matches Errors with events affecting any of the given IPs. Exact match only.
-   * @type {Array<FiltersRequestIp>}
-   * @memberof Filters
-   */
-  request_ip?: Array<FiltersRequestIp>;
-  /**
-   * An array containing a boolean. If `true`, matches Errors with events occurring on jailbroken devices.
-   * @type {Array<FiltersDeviceJailbroken>}
-   * @memberof Filters
-   */
-  device_jailbroken?: Array<FiltersDeviceJailbroken>;
-  /**
-   * An array containing a boolean. If `true`, matches Errors with events occurring when the application was in the foreground.
-   * @type {Array<FiltersAppInForeground>}
-   * @memberof Filters
-   */
-  app_in_foreground?: Array<FiltersAppInForeground>;
-}
-/**
- *
- * @export
- * @interface FiltersAppContext
- */
-interface FiltersAppContext {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersAppContext
-   */
-  type: FilterMatchType;
-  /**
-   * Application context
-   * @type {string}
-   * @memberof FiltersAppContext
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersAppInForeground
- */
-interface FiltersAppInForeground {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersAppInForeground
-   */
-  type: FilterMatchType;
-  /**
-   * Foreground status
-   * @type {string}
-   * @memberof FiltersAppInForeground
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersAppReleaseStage
- */
-interface FiltersAppReleaseStage {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersAppReleaseStage
-   */
-  type: FilterMatchType;
-  /**
-   * Release stage
-   * @type {string}
-   * @memberof FiltersAppReleaseStage
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersAppType
- */
-interface FiltersAppType {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersAppType
-   */
-  type: FilterMatchType;
-  /**
-   * Application type
-   * @type {string}
-   * @memberof FiltersAppType
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersBrowserName
- */
-interface FiltersBrowserName {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersBrowserName
-   */
-  type: FilterMatchType;
-  /**
-   * Browser name
-   * @type {string}
-   * @memberof FiltersBrowserName
-   */
-  value: FiltersBrowserName.ValueEnum;
-}
-
-/**
- * @export
- * @namespace FiltersBrowserName
- */
-namespace FiltersBrowserName {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum ValueEnum {
-    Chrome = <any>"Chrome",
-    Firefox = <any>"Firefox",
-    Safari = <any>"Safari",
-    Opera = <any>"Opera",
-  }
-}
-/**
- *
- * @export
- * @interface FiltersBrowserVersion
- */
-interface FiltersBrowserVersion {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersBrowserVersion
-   */
-  type: FilterMatchType;
-  /**
-   * Browser version
-   * @type {string}
-   * @memberof FiltersBrowserVersion
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersDeviceHostname
- */
-interface FiltersDeviceHostname {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersDeviceHostname
-   */
-  type: FilterMatchType;
-  /**
-   * Device hostname
-   * @type {string}
-   * @memberof FiltersDeviceHostname
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersDeviceJailbroken
- */
-interface FiltersDeviceJailbroken {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersDeviceJailbroken
-   */
-  type: FilterMatchType;
-  /**
-   * Jailbroken status
-   * @type {string}
-   * @memberof FiltersDeviceJailbroken
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersDeviceManufacturer
- */
-interface FiltersDeviceManufacturer {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersDeviceManufacturer
-   */
-  type: FilterMatchType;
-  /**
-   * Device manufacturer
-   * @type {string}
-   * @memberof FiltersDeviceManufacturer
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersDeviceModel
- */
-interface FiltersDeviceModel {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersDeviceModel
-   */
-  type: FilterMatchType;
-  /**
-   * Device model
-   * @type {string}
-   * @memberof FiltersDeviceModel
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersErrorAssignedTo
- */
-interface FiltersErrorAssignedTo {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersErrorAssignedTo
-   */
-  type: FilterMatchType;
-  /**
-   * Collaborator ID
-   * @type {string}
-   * @memberof FiltersErrorAssignedTo
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersErrorId
- */
-interface FiltersErrorId {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersErrorId
-   */
-  type: FilterMatchType;
-  /**
-   * Error ID
-   * @type {string}
-   * @memberof FiltersErrorId
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersErrorStatus
- */
-interface FiltersErrorStatus {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersErrorStatus
-   */
-  type: FilterMatchType;
-  /**
-   *
-   * @type {ErrorStatus}
-   * @memberof FiltersErrorStatus
-   */
-  value: ErrorStatus;
-}
-/**
- *
- * @export
- * @interface FiltersEventClass
- */
-interface FiltersEventClass {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersEventClass
-   */
-  type: FilterMatchType;
-  /**
-   * Event class
-   * @type {string}
-   * @memberof FiltersEventClass
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersEventFile
- */
-interface FiltersEventFile {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersEventFile
-   */
-  type: FilterMatchType;
-  /**
-   * File path
-   * @type {string}
-   * @memberof FiltersEventFile
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersEventMessage
- */
-interface FiltersEventMessage {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersEventMessage
-   */
-  type: FilterMatchType;
-  /**
-   * Event message
-   * @type {string}
-   * @memberof FiltersEventMessage
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersEventMethod
- */
-interface FiltersEventMethod {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersEventMethod
-   */
-  type: FilterMatchType;
-  /**
-   * Method name
-   * @type {string}
-   * @memberof FiltersEventMethod
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersEventSeverity
- */
-interface FiltersEventSeverity {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersEventSeverity
-   */
-  type: FilterMatchType;
-  /**
-   *
-   * @type {SeverityOptions}
-   * @memberof FiltersEventSeverity
-   */
-  value: SeverityOptions;
-}
-/**
- *
- * @export
- * @interface FiltersEventSince
- */
-interface FiltersEventSince {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersEventSince
-   */
-  type: FilterMatchType;
-  /**
-   * Timestamp
-   * @type {string}
-   * @memberof FiltersEventSince
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersOsName
- */
-interface FiltersOsName {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersOsName
-   */
-  type: FilterMatchType;
-  /**
-   * Operating system name
-   * @type {string}
-   * @memberof FiltersOsName
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersOsVersion
- */
-interface FiltersOsVersion {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersOsVersion
-   */
-  type: FilterMatchType;
-  /**
-   * Operating system version
-   * @type {string}
-   * @memberof FiltersOsVersion
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersReleaseIntroducedIn
- */
-interface FiltersReleaseIntroducedIn {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersReleaseIntroducedIn
-   */
-  type: FilterMatchType;
-  /**
-   * Release identifier
-   * @type {string}
-   * @memberof FiltersReleaseIntroducedIn
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersRequestIp
- */
-interface FiltersRequestIp {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersRequestIp
-   */
-  type: FilterMatchType;
-  /**
-   * IP address
-   * @type {string}
-   * @memberof FiltersRequestIp
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersRequestUrl
- */
-interface FiltersRequestUrl {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersRequestUrl
-   */
-  type: FilterMatchType;
-  /**
-   * Request URL
-   * @type {string}
-   * @memberof FiltersRequestUrl
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersUserEmail
- */
-interface FiltersUserEmail {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersUserEmail
-   */
-  type: FilterMatchType;
-  /**
-   * User email
-   * @type {string}
-   * @memberof FiltersUserEmail
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersUserId
- */
-interface FiltersUserId {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersUserId
-   */
-  type: FilterMatchType;
-  /**
-   * User ID
-   * @type {string}
-   * @memberof FiltersUserId
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersUserName
- */
-interface FiltersUserName {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersUserName
-   */
-  type: FilterMatchType;
-  /**
-   * User name
-   * @type {string}
-   * @memberof FiltersUserName
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersVersionCodeIntroducedIn
- */
-interface FiltersVersionCodeIntroducedIn {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersVersionCodeIntroducedIn
-   */
-  type: FilterMatchType;
-  /**
-   * Version code
-   * @type {string}
-   * @memberof FiltersVersionCodeIntroducedIn
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersVersionIntroducedIn
- */
-interface FiltersVersionIntroducedIn {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersVersionIntroducedIn
-   */
-  type: FilterMatchType;
-  /**
-   * Application version
-   * @type {string}
-   * @memberof FiltersVersionIntroducedIn
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FiltersVersionSeenIn
- */
-interface FiltersVersionSeenIn {
-  /**
-   *
-   * @type {FilterMatchType}
-   * @memberof FiltersVersionSeenIn
-   */
-  type: FilterMatchType;
-  /**
-   * Application version
-   * @type {string}
-   * @memberof FiltersVersionSeenIn
-   */
-  value: string;
-}
-/**
- *
- * @export
- * @interface FrameRateStatistics
- */
-interface FrameRateStatistics {
-  /**
-   * The P50 of frames
-   * @type {number}
-   * @memberof FrameRateStatistics
-   */
-  p50: number;
-  /**
-   * The P75 of frames
-   * @type {number}
-   * @memberof FrameRateStatistics
-   */
-  p75: number;
-  /**
-   * The P90 of frames
-   * @type {number}
-   * @memberof FrameRateStatistics
-   */
-  p90: number;
-  /**
-   * The P95 of frames
-   * @type {number}
-   * @memberof FrameRateStatistics
-   */
-  p95: number;
-  /**
-   * The P99 of frames
-   * @type {number}
-   * @memberof FrameRateStatistics
-   */
-  p99: number;
-}
-
-/**
- *
- * @export
- * @interface NetworkGroupingRulesetRequest
- */
-interface NetworkGroupingRulesetRequest {
-  /**
-   * The URL patterns by which network spans are grouped.
-   * @type {Array<string>}
-   * @memberof NetworkGroupingRulesetRequest
-   */
-  endpoints: Array<string>;
-}
-
-/**
- *
- * @export
- * @interface OrganizationApiView
- */
-export interface OrganizationApiView extends OrganizationBase {
-  /**
-   *
-   * @type {string}
-   * @memberof OrganizationApiView
-   */
-  id: string;
-  /**
-   *
-   * @type {string}
-   * @memberof OrganizationApiView
-   */
-  slug: string;
-  /**
-   * The notifier API used to send traces to this organization.
-   * @type {string}
-   * @memberof OrganizationApiView
-   */
-  api_key?: string;
-  /**
-   *
-   * @type {OrganizationApiViewCreator}
-   * @memberof OrganizationApiView
-   */
-  creator?: OrganizationApiViewCreator;
-  /**
-   * API URL for the Organization's Collaborators.
-   * @type {string}
-   * @memberof OrganizationApiView
-   */
-  collaborators_url?: string;
-  /**
-   * API URL for the Organization's Projects.
-   * @type {string}
-   * @memberof OrganizationApiView
-   */
-  projects_url?: string;
-  /**
-   *
-   * @type {Date}
-   * @memberof OrganizationApiView
-   */
-  created_at: Date;
-  /**
-   *
-   * @type {Date}
-   * @memberof OrganizationApiView
-   */
-  updated_at: Date;
-  /**
-   *
-   * @type {string}
-   * @memberof OrganizationApiView
-   */
-  upgrade_url?: string;
-  /**
-   * Whether the organization is managed by SmartBear Platform Services.
-   * @type {boolean}
-   * @memberof OrganizationApiView
-   */
-  managed_by_platform_services: boolean;
-}
-/**
- *
- * @export
- * @interface OrganizationApiViewCreator
- */
-interface OrganizationApiViewCreator {
-  /**
-   *
-   * @type {string}
-   * @memberof OrganizationApiViewCreator
-   */
-  email?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof OrganizationApiViewCreator
-   */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof OrganizationApiViewCreator
-   */
-  name?: string;
-}
-/**
- *
- * @export
- * @interface OrganizationBase
- */
-interface OrganizationBase {
-  /**
-   *
-   * @type {string}
-   * @memberof OrganizationBase
-   */
-  name: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof OrganizationBase
-   */
-  billing_emails?: Array<string>;
-  /**
-   * whether we should upgrade your plan in response to the organization reaching its plan limit of events. If this value is `false` your events will be throttled when you reach your plan limit.
-   * @type {boolean}
-   * @memberof OrganizationBase
-   */
-  auto_upgrade: boolean;
-}
-/**
- *
- * @export
- * @enum {string}
- */
-enum PerformanceDisplayType {
-  Js = <any>"js",
-  Mobile = <any>"mobile",
-  Server = <any>"server",
-  WebserverBackend = <any>"webserver_backend",
-  WebserverFrontend = <any>"webserver_frontend",
-  WebserverMixed = <any>"webserver_mixed",
-  Unsupported = <any>"unsupported",
-}
-/**
- *
- * @export
- * @interface PerformanceFilter
- */
-interface PerformanceFilter {
-  /**
-   * Identifier that is used as the key when filtering by this field.
-   * @type {string}
-   * @memberof PerformanceFilter
-   */
-  key: string;
-  /**
-   * The values to filter by.
-   * @type {Array<PerformanceFilterValue>}
-   * @memberof PerformanceFilter
-   */
-  filter_values?: Array<PerformanceFilterValue>;
-}
-/**
- *
- * @export
- * @interface PerformanceFilterValue
- */
-interface PerformanceFilterValue {
-  /**
-   *
-   * @type {string}
-   * @memberof PerformanceFilterValue
-   */
-  value: string;
-  /**
-   * - eq - Filter for items that match the value - ne - Filter for items that don't match the value - lt - Filter for items that are less than the value - gt - Filter for items that are greater than the value - empty - Filter for items that are not populated or missing
-   * @type {string}
-   * @memberof PerformanceFilterValue
-   */
-  match_type: PerformanceFilterValue.MatchTypeEnum;
-}
-
-/**
- * @export
- * @namespace PerformanceFilterValue
- */
-namespace PerformanceFilterValue {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum MatchTypeEnum {
-    Eq = <any>"eq",
-    Ne = <any>"ne",
-    Lt = <any>"lt",
-    Gt = <any>"gt",
-    Empty = <any>"empty",
-  }
-}
-/**
- *
- * @export
- * @interface PerformanceTarget
- */
-interface PerformanceTarget {
-  /**
-   * The ID of the Performance Target.
-   * @type {string}
-   * @memberof PerformanceTarget
-   */
-  id: string;
-  /**
-   * The ID of the Project that the Performance Target belongs to.
-   * @type {string}
-   * @memberof PerformanceTarget
-   */
-  project_id: string;
-  /**
-   *
-   * @type {PerformanceTargetType}
-   * @memberof PerformanceTarget
-   */
-  type: PerformanceTargetType;
-  /**
-   *
-   * @type {PerformanceTargetSpanGroupDetails}
-   * @memberof PerformanceTarget
-   */
-  span_group: PerformanceTargetSpanGroupDetails;
-  /**
-   *
-   * @type {PerformanceTargetConfiguration}
-   * @memberof PerformanceTarget
-   */
-  config: PerformanceTargetConfiguration;
-}
-/**
- *
- * @export
- * @interface PerformanceTargetConfiguration
- */
-interface PerformanceTargetConfiguration {
-  /**
-   * The state of the Performance Target.
-   * @type {string}
-   * @memberof PerformanceTargetConfiguration
-   */
-  state: PerformanceTargetConfiguration.StateEnum;
-  /**
-   *
-   * @type {PerformanceTargetConfigurationThreshold}
-   * @memberof PerformanceTargetConfiguration
-   */
-  warning_performance?: PerformanceTargetConfigurationThreshold;
-  /**
-   *
-   * @type {PerformanceTargetConfigurationThreshold}
-   * @memberof PerformanceTargetConfiguration
-   */
-  critical_performance?: PerformanceTargetConfigurationThreshold;
-}
-
-/**
- * @export
- * @namespace PerformanceTargetConfiguration
- */
-namespace PerformanceTargetConfiguration {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum StateEnum {
-    Enabled = <any>"enabled",
-    Disabled = <any>"disabled",
-  }
-}
-/**
- *
- * @export
- * @interface PerformanceTargetConfigurationThreshold
- */
-interface PerformanceTargetConfigurationThreshold {
-  /**
-   * The duration threshold in milliseconds.
-   * @type {number}
-   * @memberof PerformanceTargetConfigurationThreshold
-   */
-  duration: number;
-}
-/**
- *
- * @export
- * @interface PerformanceTargetSpanGroupDetails
- */
-interface PerformanceTargetSpanGroupDetails {
-  /**
-   *
-   * @type {SpanGroupCategory}
-   * @memberof PerformanceTargetSpanGroupDetails
-   */
-  category: SpanGroupCategory;
-  /**
-   * The ID of the Span Group. Required when Performance Target type is span_group.
-   * @type {string}
-   * @memberof PerformanceTargetSpanGroupDetails
-   */
-  id?: string;
-  /**
-   * The name of the Span Group for display purposes. Required when Performance Target type is span_group.
-   * @type {string}
-   * @memberof PerformanceTargetSpanGroupDetails
-   */
-  display_name?: string;
-}
-/**
- *
- * @export
- * @enum {string}
- */
-enum PerformanceTargetType {
-  Category = <any>"category",
-  SpanGroup = <any>"span_group",
-}
-/**
- *
- * @export
- * @interface PivotApiView
- */
-export interface PivotApiView {
-  /**
-   * the ID of the Event Field that this Pivot describes
-   * @type {string}
-   * @memberof PivotApiView
-   */
-  event_field_display_id: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PivotApiView
-   */
-  name: string;
-  /**
-   * how many unique values of the given Event Field are present in the Events matching the provided Filters. For example, in the case of the `app.release_stage` Pivot, if the Events matching the provided Filters occurred only in production and staging, then the cardinality would be 2.  Applicable to some Event Fields.
-   * @type {number}
-   * @memberof PivotApiView
-   */
-  cardinality?: number;
-  /**
-   * A summary of the top values for this Pivot. Applicable to some Event Fields.
-   * @type {any}
-   * @memberof PivotApiView
-   */
-  summary?: any;
-  /**
-   * A list of the values of the Event Field which have had the most occurrences. The data in this list along with the `no_value` and `other` properties will account for all of the occurrences of the Event that match the Filters.
-   * @type {Array<PivotApiViewList>}
-   * @memberof PivotApiView
-   */
-  list?: Array<PivotApiViewList>;
-  /**
-   * The number of Events that matched the provided Filters that had no value for the given Event Field
-   * @type {number}
-   * @memberof PivotApiView
-   */
-  no_value?: number;
-  /**
-   * The number of Events that matched the provided Filters that had a value for the given Event Field other than those described in `list`
-   * @type {number}
-   * @memberof PivotApiView
-   */
-  other?: number;
-  /**
-   * The average value for the given Event Field. Applicable to some Event Fields. This will be null if there is no average value (if there are no values to be averaged).
-   * @type {number}
-   * @memberof PivotApiView
-   */
-  average?: number;
-}
-/**
- *
- * @export
- * @interface PivotApiViewList
- */
-interface PivotApiViewList {
-  /**
-   * A particular value for the given Event Field
-   * @type {string}
-   * @memberof PivotApiViewList
-   */
-  value?: string;
-  /**
-   * The number of Events that matched the provided Filters that had this value for the given Event Field
-   * @type {number}
-   * @memberof PivotApiViewList
-   */
-  events?: number;
-}
-/**
- *
- * @export
- * @interface PivotOptions
- */
-interface PivotOptions {
-  /**
-   * Human readable display name of the pivot.
-   * @type {string}
-   * @memberof PivotOptions
-   */
-  name?: string;
-  /**
-   * Additional fields that are displayed in the pivot tab, for example the users pivot displays user name and email in addition to ID.
-   * @type {Array<FilterValue>}
-   * @memberof PivotOptions
-   */
-  fields?: Array<FilterValue>;
-  /**
-   * Whether this field is displayed in the error summary section of the dashboard
-   * @type {boolean}
-   * @memberof PivotOptions
-   */
-  summary?: boolean;
-  /**
-   * Whether this field is displayed as a pivot tab in the dashboard
-   * @type {boolean}
-   * @memberof PivotOptions
-   */
-  values?: boolean;
-  /**
-   * Whether the unique values of this field are calculated
-   * @type {boolean}
-   * @memberof PivotOptions
-   */
-  cardinality?: boolean;
-  /**
-   * Whether an average value of this field is calculated
-   * @type {boolean}
-   * @memberof PivotOptions
-   */
-  average?: boolean;
-}
-/**
- *
- * @export
- * @interface ProjectApiView
- */
-export interface ProjectApiView extends ProjectBase {
-  /**
-   *
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  id?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  organization_id?: string;
-  /**
-   *
-   * @type {ProjectType}
-   * @memberof ProjectApiView
-   */
-  type?: ProjectType;
-  /**
-   *
-   * @type {PerformanceDisplayType}
-   * @memberof ProjectApiView
-   */
-  performance_display_type?: PerformanceDisplayType;
-  /**
-   * unique, human-readable identifier that can be used in place of `id` in URLs
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  slug?: string;
-  /**
-   * the notifier API key used to configure the [notifier library](https://docs.bugsnag.com/platforms/) being used to report errors in the project
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  api_key?: string;
-  /**
-   * Always true for this endpoint. Used to differentiate between terse and complete project representations.
-   * @type {boolean}
-   * @memberof ProjectApiView
-   */
-  is_full_view?: boolean;
-  /**
-   * The release stages for which this project has received events. This will be an array of strings whose values will depend on your Project.
-   * @type {Array<any>}
-   * @memberof ProjectApiView
-   */
-  release_stages?: Array<any>;
-  /**
-   * The Project's programming language as derived from the framework represented in the `type` field
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  language?: string;
-  /**
-   * The time of the Project's creation.
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  created_at?: string;
-  /**
-   * The time the Project was last modified.
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  updated_at?: string;
-  /**
-   * The API URL for the Project.
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  url?: string;
-  /**
-   * The dashboard URL for the project.
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  html_url?: string;
-  /**
-   * The API URL for the Project's Errors.
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  errors_url?: string;
-  /**
-   * The API URL for the Project's Events.
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  events_url?: string;
-  /**
-   * The number of open errors the Project has. Considers all events currently stored for the Project.
-   * @type {number}
-   * @memberof ProjectApiView
-   */
-  open_error_count?: number;
-  /**
-   * The number of errors for review the Project has. Considers all events currently stored for the Project.
-   * @type {number}
-   * @memberof ProjectApiView
-   */
-  for_review_error_count?: number;
-  /**
-   * The number of collaborators with access to the Project.
-   * @type {number}
-   * @memberof ProjectApiView
-   */
-  collaborators_count?: number;
-  /**
-   * The number of teams with access to the Project.
-   * @type {number}
-   * @memberof ProjectApiView
-   */
-  teams_count?: number;
-  /**
-   * The count of how many [Custom Filters](https://docs.bugsnag.com/product/custom-filters/) have been created for the Project.
-   * @type {number}
-   * @memberof ProjectApiView
-   */
-  custom_event_fields_used?: number;
-  /**
-   * The details of the ECMAScript version used to parse JavaScript events. Only present for Browser JavaScript Projects.
-   * @type {any}
-   * @memberof ProjectApiView
-   */
-  ecmascript_parse_version?: any;
-  /**
-   * Whether the project should use stability targets based on sessions or users. Values are `user` or `session`.
-   * @type {string}
-   * @memberof ProjectApiView
-   */
-  stability_target_type?: string;
-  /**
-   *
-   * @type {StabilityTarget}
-   * @memberof ProjectApiView
-   */
-  target_stability?: StabilityTarget;
-  /**
-   *
-   * @type {StabilityTarget}
-   * @memberof ProjectApiView
-   */
-  critical_stability?: StabilityTarget;
-}
-/**
- *
- * @export
- * @interface ProjectBase
- */
-interface ProjectBase {
-  /**
-   *
-   * @type {string}
-   * @memberof ProjectBase
-   */
-  name?: string;
-  /**
-   * A list of error classes. Events with these classes will be grouped by their class, regardless of the location that they occur in the Project's source code. Altering a Project's `global_grouping` will not cause existing errors to be regrouped.  Note: In the UI this is referred to as grouping by error class.  Example:  ``` [\"foo\", \"bar\"] ```
-   * @type {Array<any>}
-   * @memberof ProjectBase
-   */
-  global_grouping?: Array<any>;
-  /**
-   * A list of error classes. Events with these classes will be grouped by their `context`. Altering a Project's `location_grouping` will not cause existing errors to be regrouped.  Note: In the UI this is referred to as grouping by error context.
-   * @type {Array<any>}
-   * @memberof ProjectBase
-   */
-  location_grouping?: Array<any>;
-  /**
-   * A list of app versions whose events will be [discarded](https://docs.bugsnag.com/product/event-usage/#discard-by-app-version) if received for the Project. Supports [regular expressions](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/RegExp#Special_characters_meaning_in_regular_expressions) and [semver ranges](https://github.com/npm/node-semver#ranges). Errors matching these versions won't be processed by Bugsnag, and you won't receive notifications about them.
-   * @type {Array<any>}
-   * @memberof ProjectBase
-   */
-  discarded_app_versions?: Array<any>;
-  /**
-   * A list of Error classes whose events will be [discarded](https://docs.bugsnag.com/product/event-usage/#discard-by-error-class) if received for the Project. Errors with these classes won't be processed by Bugsnag, and you won't receive notifications about them.
-   * @type {Array<any>}
-   * @memberof ProjectBase
-   */
-  discarded_errors?: Array<any>;
-  /**
-   * When configured, the script source of each error's innermost stack trace's top frame is checked. If the script was not served from a matching domain the error will not be processed by BugSnag and will be discarded.  Provide a list of newline separated domain names. To match example.com and its subdomains specify *.example.com.  Relevant to JavaScript Projects only.
-   * @type {Array<any>}
-   * @memberof ProjectBase
-   */
-  url_whitelist?: Array<any>;
-  /**
-   * Whether the Events in the Project will be ignored if they originate from old web browsers.  Relevant to JavaScript Projects only.
-   * @type {boolean}
-   * @memberof ProjectBase
-   */
-  ignore_old_browsers?: boolean;
-  /**
-   * Relevant to JavaScript Projects only.  A mapping a of browser name to browser version. If set, Events in the Project will be ignored if they originate from a browser specified here whose version is earlier than the given version.  Keys must be one of the following strings: chrome, ie, firefox, safari, android, uc, opera, opera_mini, samsung, blackberry, sogou, other.  Values must be a number indicating which which version to ignore up to (but not including), or one of the strings: `ignore_all`, `ignore_none`  Example:  ``` { \"chrome\": \"ignore_none\", \"safari\": 6, \"other\": \"ignore_all\" } ```
-   * @type {any}
-   * @memberof ProjectBase
-   */
-  ignored_browser_versions?: any;
-  /**
-   * If true, every error in the Project will be marked as 'fixed' after using the Deploy Tracking API to notify Bugsnag of a new production deploy.  Applies to non-JavaScript Projects only.
-   * @type {boolean}
-   * @memberof ProjectBase
-   */
-  resolve_on_deploy?: boolean;
-}
-/**
- *
- * @export
- * @interface ProjectCreateRequest
- */
-interface ProjectCreateRequest {
-  /**
-   * The new Project's name. Note that the first character should not start with a '$'.
-   * @type {string}
-   * @memberof ProjectCreateRequest
-   */
-  name: string;
-  /**
-   *
-   * @type {ProjectType}
-   * @memberof ProjectCreateRequest
-   */
-  type: ProjectType;
-  /**
-   * For javascript projects this will filter errors from older browsers
-   * @type {boolean}
-   * @memberof ProjectCreateRequest
-   */
-  ignore_old_browsers?: boolean;
-}
-/**
- *
- * @export
- * @interface ProjectIdEventDataDeletionsBody
- */
-interface ProjectIdEventDataDeletionsBody {
-  /**
-   * whether to skip requiring another request to confirm the deletion
-   * @type {boolean}
-   * @memberof ProjectIdEventDataDeletionsBody
-   */
-  skip_confirmation?: boolean;
-  /**
-   *
-   * @type {Filters}
-   * @memberof ProjectIdEventDataDeletionsBody
-   */
-  filters: Filters;
-}
-/**
- *
- * @export
- * @interface ProjectIdEventDataRequestsBody
- */
-interface ProjectIdEventDataRequestsBody {
-  /**
-   *
-   * @type {EventDataRequestReportType}
-   * @memberof ProjectIdEventDataRequestsBody
-   */
-  report_type?: EventDataRequestReportType;
-  /**
-   *
-   * @type {Filters}
-   * @memberof ProjectIdEventDataRequestsBody
-   */
-  filters: Filters;
-}
-/**
- *
- * @export
- * @interface ProjectIdStarredFeatureFlagsBody
- */
-interface ProjectIdStarredFeatureFlagsBody {
-  /**
-   * ID of the Feature Flag to star.
-   * @type {string}
-   * @memberof ProjectIdStarredFeatureFlagsBody
-   */
-  feature_flag_id: string;
-}
-/**
- *
- * @export
- * @interface ProjectNetworkGroupingRuleset
- */
-export interface ProjectNetworkGroupingRuleset {
-  /**
-   * The ID of the project this is for
-   * @type {string}
-   * @memberof ProjectNetworkGroupingRuleset
-   */
-  project_id: string;
-  /**
-   * The URL patterns by which network spans are grouped.
-   * @type {Array<string>}
-   * @memberof ProjectNetworkGroupingRuleset
-   */
-  endpoints: Array<string>;
-}
-/**
- * used for Projects that use a framework other than those listed above
- * @export
- * @enum {string}
- */
-enum ProjectType {
-  Android = <any>"android",
-  Angular = <any>"angular",
-  Asgi = <any>"asgi",
-  Aspnet = <any>"aspnet",
-  AspnetCore = <any>"aspnet_core",
-  Backbone = <any>"backbone",
-  Bottle = <any>"bottle",
-  Cocos2dx = <any>"cocos2dx",
-  Connect = <any>"connect",
-  Django = <any>"django",
-  Dotnet = <any>"dotnet",
-  DotnetDesktop = <any>"dotnet_desktop",
-  DotnetMvc = <any>"dotnet_mvc",
-  Electron = <any>"electron",
-  Ember = <any>"ember",
-  Eventmachine = <any>"eventmachine",
-  Expo = <any>"expo",
-  Express = <any>"express",
-  Flask = <any>"flask",
-  Flutter = <any>"flutter",
-  Gin = <any>"gin",
-  Go = <any>"go",
-  GoNetHttp = <any>"go_net_http",
-  Heroku = <any>"heroku",
-  Ios = <any>"ios",
-  Java = <any>"java",
-  JavaDesktop = <any>"java_desktop",
-  Js = <any>"js",
-  Vega = <any>"vega",
-  Koa = <any>"koa",
-  Laravel = <any>"laravel",
-  Lumen = <any>"lumen",
-  Magento = <any>"magento",
-  Martini = <any>"martini",
-  Minidump = <any>"minidump",
-  Ndk = <any>"ndk",
-  Negroni = <any>"negroni",
-  NintendoSwitch = <any>"nintendo_switch",
-  Node = <any>"node",
-  Osx = <any>"osx",
-  OtherDesktop = <any>"other_desktop",
-  OtherMobile = <any>"other_mobile",
-  OtherTv = <any>"other_tv",
-  Php = <any>"php",
-  Python = <any>"python",
-  Rack = <any>"rack",
-  Rails = <any>"rails",
-  React = <any>"react",
-  Reactnative = <any>"reactnative",
-  Restify = <any>"restify",
-  Revel = <any>"revel",
-  Ruby = <any>"ruby",
-  Silex = <any>"silex",
-  Sinatra = <any>"sinatra",
-  Spring = <any>"spring",
-  Symfony = <any>"symfony",
-  Tornado = <any>"tornado",
-  Tvos = <any>"tvos",
-  Unity = <any>"unity",
-  Unrealengine = <any>"unrealengine",
-  Vue = <any>"vue",
-  Watchos = <any>"watchos",
-  Webapi = <any>"webapi",
-  Wordpress = <any>"wordpress",
-  Wpf = <any>"wpf",
-  Wsgi = <any>"wsgi",
-  Other = <any>"other",
-}
-/**
- *
- * @export
- * @interface ProjectUpdateRequest
- */
-interface ProjectUpdateRequest extends ProjectBase {
-  /**
-   * If provided in the request, the Project will be updated so that its set of Collaborators will reflect those indicated by this list of ids. Existing Collaborators whose ids do not appear in the list will be removed from the Project.
-   * @type {Array<string>}
-   * @memberof ProjectUpdateRequest
-   */
-  collaborator_ids?: Array<string>;
-}
-/**
- *
- * @export
- * @interface ReleaseApiView
- */
-export interface ReleaseApiView {
-  /**
-   * ID of the release
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  id?: string;
-  /**
-   * ID of project this release belongs to
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  project_id?: string;
-  /**
-   * when the release happened (in ISO 8601 format)
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  release_time?: string;
-  /**
-   *
-   * @type {ReleaseRequestSource}
-   * @memberof ReleaseApiView
-   */
-  release_source?: ReleaseRequestSource;
-  /**
-   * version name/number
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  app_version?: string;
-  /**
-   * version code of release (applicable to Android)
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  app_version_code?: string;
-  /**
-   * bundle version/build number of release (applicable to iOS/macOS/tvOS)
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  app_bundle_version?: string;
-  /**
-   * auto-generated descriptive label describing the build
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  build_label?: string;
-  /**
-   * name of person or system that triggered the release/build
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  builder_name?: string;
-  /**
-   * tool used to report this release
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  build_tool?: string;
-  /**
-   * number of errors introduced in this release
-   * @type {number}
-   * @memberof ReleaseApiView
-   */
-  errors_introduced_count?: number;
-  /**
-   * number of errors that happened in this release
-   * @type {number}
-   * @memberof ReleaseApiView
-   */
-  errors_seen_count?: number;
-  /**
-   * number of sessions started for this release in the last 24 hours
-   * @type {number}
-   * @memberof ReleaseApiView
-   */
-  sessions_count_in_last_24h?: number;
-  /**
-   * number of sessions that started in this release
-   * @type {number}
-   * @memberof ReleaseApiView
-   */
-  total_sessions_count?: number;
-  /**
-   * number of sessions in this release that have seen at least one unhandled event. Session Stability can be computed with (1 - (unhandled_sessions_count / total_sessions_count)) * 100
-   * @type {number}
-   * @memberof ReleaseApiView
-   */
-  unhandled_sessions_count?: number;
-  /**
-   * number of user with at least one session in this release group
-   * @type {number}
-   * @memberof ReleaseApiView
-   */
-  accumulative_daily_users_seen?: number;
-  /**
-   * number of user sessions with at least one unhandled event. User Stability can be computed with (1 - (accumulative_daily_users_with_unhandled / accumulative_daily_users_seen)) * 100
-   * @type {number}
-   * @memberof ReleaseApiView
-   */
-  accumulative_daily_users_with_unhandled?: number;
-  /**
-   * metadata about the release
-   * @type {any}
-   * @memberof ReleaseApiView
-   */
-  metadata?: any;
-  /**
-   *
-   * @type {ReleaseApiViewReleaseStage}
-   * @memberof ReleaseApiView
-   */
-  release_stage?: ReleaseApiViewReleaseStage;
-  /**
-   *
-   * @type {ReleaseSourceControl}
-   * @memberof ReleaseApiView
-   */
-  source_control?: ReleaseSourceControl;
-  /**
-   * ID of release group that this release belongs to
-   * @type {string}
-   * @memberof ReleaseApiView
-   */
-  release_group_id?: string;
-}
-/**
- * information about this release's release stage
- * @export
- * @interface ReleaseApiViewReleaseStage
- */
-interface ReleaseApiViewReleaseStage {
-  /**
-   * name of the release stage
-   * @type {string}
-   * @memberof ReleaseApiViewReleaseStage
-   */
-  name?: string;
-}
-/**
- *
- * @export
- * @interface ReleaseGroup
- */
-export interface ReleaseGroup {
-  /**
-   * ID of release group
-   * @type {string}
-   * @memberof ReleaseGroup
-   */
-  id: string;
-  /**
-   * ID of project that this release group belongs to
-   * @type {string}
-   * @memberof ReleaseGroup
-   */
-  project_id: string;
-  /**
-   * name of the release stage for this release group
-   * @type {string}
-   * @memberof ReleaseGroup
-   */
-  release_stage_name: string;
-  /**
-   * version string for this release group
-   * @type {string}
-   * @memberof ReleaseGroup
-   */
-  app_version: string;
-  /**
-   * when the first release of this release group was released
-   * @type {string}
-   * @memberof ReleaseGroup
-   */
-  first_released_at: string;
-  /**
-   * ID of first release of this release group
-   * @type {string}
-   * @memberof ReleaseGroup
-   */
-  first_release_id: string;
-  /**
-   * Number of releases that belong to this release group. This will be 1 for releases that don't use secondary versions.
-   * @type {number}
-   * @memberof ReleaseGroup
-   */
-  releases_count: number;
-  /**
-   * Whether the releases in this release group use secondary versions (version code or bundle version). This is usually true for mobile projects and false for non-mobile projects.
-   * @type {boolean}
-   * @memberof ReleaseGroup
-   */
-  has_secondary_versions: boolean;
-  /**
-   * tool used to report the first release of this release group
-   * @type {string}
-   * @memberof ReleaseGroup
-   */
-  build_tool?: string;
-  /**
-   * name of person or system that triggered the first release/build of this release group
-   * @type {string}
-   * @memberof ReleaseGroup
-   */
-  builder_name?: string;
-  /**
-   *
-   * @type {ReleaseGroupSourceControl}
-   * @memberof ReleaseGroup
-   */
-  source_control?: ReleaseGroupSourceControl;
-  /**
-   * total number of sessions seen for this release group. This field will be returned if the current Plan supports stability monitoring.
-   * @type {number}
-   * @memberof ReleaseGroup
-   */
-  total_sessions_count: number;
-  /**
-   * number of sessions in this release group that had at least one unhandled event. Session Stability can be computed with (1 - (unhandled_sessions_count / total_sessions_count)) * 100. This field will be returned if the current Plan supports stability monitoring.
-   * @type {number}
-   * @memberof ReleaseGroup
-   */
-  unhandled_sessions_count?: number;
-  /**
-   * number of sessions seen in the last 24 hours for this release group. This field will be returned if the current Plan supports stability monitoring.
-   * @type {number}
-   * @memberof ReleaseGroup
-   */
-  sessions_count_in_last_24h?: number;
-  /**
-   * number of user with at least one session in this release group. This field will be returned if the current Plan supports stability monitoring.
-   * @type {number}
-   * @memberof ReleaseGroup
-   */
-  accumulative_daily_users_seen?: number;
-  /**
-   * number of user sessions with at least one unhandled event. User Stability can be computed with (1 - (accumulative_daily_users_with_unhandled / accumulative_daily_users_seen)) * 100. This field will be returned if the current Plan supports stability monitoring.
-   * @type {number}
-   * @memberof ReleaseGroup
-   */
-  accumulative_daily_users_with_unhandled?: number;
-  /**
-   * whether this release group is a top release
-   * @type {boolean}
-   * @memberof ReleaseGroup
-   */
-  top_release_group: boolean;
-  /**
-   * whether this release group is visible
-   * @type {boolean}
-   * @memberof ReleaseGroup
-   */
-  visible: boolean;
-}
-/**
- *
- * @export
- * @interface ReleaseGroupSourceControl
- */
-interface ReleaseGroupSourceControl {
-  /**
-   * the source control provider/service
-   * @type {string}
-   * @memberof ReleaseGroupSourceControl
-   */
-  service?: string;
-  /**
-   * URL to the revision/commit corresponding to the release
-   * @type {string}
-   * @memberof ReleaseGroupSourceControl
-   */
-  commit_url?: string;
-  /**
-   * identifier for the revision of the release
-   * @type {string}
-   * @memberof ReleaseGroupSourceControl
-   */
-  revision?: string;
-  /**
-   * URL to view the changes from the previous release
-   * @type {string}
-   * @memberof ReleaseGroupSourceControl
-   */
-  diff_url_to_previous?: string;
-  /**
-   * Previous app version for the diff
-   * @type {string}
-   * @memberof ReleaseGroupSourceControl
-   */
-  previous_app_version?: string;
-}
-/**
- *
- * @export
- * @interface ReleaseGroupsIdBody
- */
-interface ReleaseGroupsIdBody {
-  /**
-   * the updated visibility
-   * @type {boolean}
-   * @memberof ReleaseGroupsIdBody
-   */
-  visible: boolean;
-}
-/**
- * - unknown_source - source is unknown - event - originated from an event - session - originated from a session - api - obtained from an API request - deploy - obtained from a deploy request - error - obtained from an error (with complete information) - error_incomplete_build - obtained from an error (but the build information is incomplete)
- * @export
- * @enum {string}
- */
-enum ReleaseRequestSource {
-  UnknownSource = <any>"unknown_source",
-  Event = <any>"event",
-  Session = <any>"session",
-  Api = <any>"api",
-  Deploy = <any>"deploy",
-  Error = <any>"error",
-  ErrorIncompleteBuild = <any>"error_incomplete_build",
-}
-/**
- *
- * @export
- * @interface ReleaseSourceControl
- */
-interface ReleaseSourceControl {
-  /**
-   * the source control provider/service
-   * @type {string}
-   * @memberof ReleaseSourceControl
-   */
-  service?: string;
-  /**
-   * URL to the revision/commit corresponding to the release
-   * @type {string}
-   * @memberof ReleaseSourceControl
-   */
-  commit_url?: string;
-  /**
-   * identifier for the revision of the release
-   * @type {string}
-   * @memberof ReleaseSourceControl
-   */
-  revision?: string;
-  /**
-   * URL to view the changes from the previous release
-   * @type {string}
-   * @memberof ReleaseSourceControl
-   */
-  diff_url_to_previous?: string;
-}
-/**
- *
- * @export
- * @interface RenderingMetrics
- */
-interface RenderingMetrics {
-  /**
-   *
-   * @type {RenderingMetricsSlowFrames}
-   * @memberof RenderingMetrics
-   */
-  slow_frames?: RenderingMetricsSlowFrames;
-  /**
-   *
-   * @type {RenderingMetricsFrozenFrames}
-   * @memberof RenderingMetrics
-   */
-  frozen_frames?: RenderingMetricsFrozenFrames;
-  /**
-   *
-   * @type {RenderingMetricsTotalFrames}
-   * @memberof RenderingMetrics
-   */
-  total_frames?: RenderingMetricsTotalFrames;
-  /**
-   *
-   * @type {RenderingStatisticsFrameRateStatistics}
-   * @memberof RenderingMetrics
-   */
-  frame_rate_statistics?: RenderingStatisticsFrameRateStatistics;
-}
-/**
- *
- * @export
- * @interface RenderingMetricsFrozenFrames
- */
-interface RenderingMetricsFrozenFrames {
-  /**
-   * The number of Spans that has at least one frozen frame
-   * @type {number}
-   * @memberof RenderingMetricsFrozenFrames
-   */
-  span_count: number;
-}
-/**
- *
- * @export
- * @interface RenderingMetricsSlowFrames
- */
-interface RenderingMetricsSlowFrames {
-  /**
-   * The number of Spans that has at least one slow frame
-   * @type {number}
-   * @memberof RenderingMetricsSlowFrames
-   */
-  span_count: number;
-}
-/**
- *
- * @export
- * @interface RenderingMetricsTotalFrames
- */
-interface RenderingMetricsTotalFrames {
-  /**
-   * The number of Spans that tracked at least one frame
-   * @type {number}
-   * @memberof RenderingMetricsTotalFrames
-   */
-  span_count: number;
-}
-/**
- *
- * @export
- * @interface RenderingStatisticsFrameRateStatistics
- */
-interface RenderingStatisticsFrameRateStatistics {
-  /**
-   * The number of Spans that reported rendering metrics of this type
-   * @type {number}
-   * @memberof RenderingStatisticsFrameRateStatistics
-   */
-  span_count: number;
-  /**
-   *
-   * @type {FrameRateStatistics}
-   * @memberof RenderingStatisticsFrameRateStatistics
-   */
-  fps_mean: FrameRateStatistics;
-  /**
-   * The lowest seen FPS for a Span Group
-   * @type {number}
-   * @memberof RenderingStatisticsFrameRateStatistics
-   */
-  fps_minimum: number;
-  /**
-   * The highest seen FPS for a Span Group
-   * @type {number}
-   * @memberof RenderingStatisticsFrameRateStatistics
-   */
-  fps_maximum: number;
-}
-/**
- *
- * @export
- * @interface SavedSearchCreateRequest
- */
-interface SavedSearchCreateRequest {
-  /**
-   * ID of project this saved search is for
-   * @type {string}
-   * @memberof SavedSearchCreateRequest
-   */
-  project_id: string;
-  /**
-   * name of the saved search
-   * @type {string}
-   * @memberof SavedSearchCreateRequest
-   */
-  name: string;
-  /**
-   *
-   * @type {Filters}
-   * @memberof SavedSearchCreateRequest
-   */
-  filters: Filters;
-  /**
-   *
-   * @type {SearchSort}
-   * @memberof SavedSearchCreateRequest
-   */
-  sort?: SearchSort;
-  /**
-   * whether this saved search is shared among collaborators
-   * @type {boolean}
-   * @memberof SavedSearchCreateRequest
-   */
-  shared?: boolean;
-  /**
-   * whether this saved search is the project default for the current user
-   * @type {boolean}
-   * @memberof SavedSearchCreateRequest
-   */
-  project_default: boolean;
-}
-/**
- *
- * @export
- * @interface SavedSearchUpdateRequest
- */
-interface SavedSearchUpdateRequest {
-  /**
-   * name of the saved search
-   * @type {string}
-   * @memberof SavedSearchUpdateRequest
-   */
-  name?: string;
-  /**
-   *
-   * @type {Filters}
-   * @memberof SavedSearchUpdateRequest
-   */
-  filters?: Filters;
-  /**
-   *
-   * @type {SearchSort}
-   * @memberof SavedSearchUpdateRequest
-   */
-  sort?: SearchSort;
-  /**
-   * whether this saved search is shared among collaborators
-   * @type {boolean}
-   * @memberof SavedSearchUpdateRequest
-   */
-  shared?: boolean;
-  /**
-   * whether this saved search is the project default for the current user
-   * @type {boolean}
-   * @memberof SavedSearchUpdateRequest
-   */
-  project_default?: boolean;
-}
-
-/**
- *
- * @export
- * @enum {string}
- */
-enum SearchSort {
-  FirstSeen = <any>"first_seen",
-  Users = <any>"users",
-  Events = <any>"events",
-  LastSeen = <any>"last_seen",
-}
-/**
- * - info - can be used in manual Bugsnag.notify calls - warning - the default severity when Bugsnag.notify is called manually - error - the default severity for uncaught exceptions and crashes
- * @export
- * @enum {string}
- */
-enum SeverityOptions {
-  Info = <any>"info",
-  Warning = <any>"warning",
-  Error = <any>"error",
-}
-/**
- *
- * @export
- * @interface Span
- */
-export interface Span {
-  /**
-   * The ID of the span
-   * @type {string}
-   * @memberof Span
-   */
-  id: string;
-  /**
-   * The ID of the parent span if applicable
-   * @type {string}
-   * @memberof Span
-   */
-  parent_span_id?: string;
-  /**
-   * The ID of the trace
-   * @type {string}
-   * @memberof Span
-   */
-  trace_id: string;
-  /**
-   * The category of the span
-   * @type {string}
-   * @memberof Span
-   */
-  category: string;
-  /**
-   * The name of the span
-   * @type {string}
-   * @memberof Span
-   */
-  name: string;
-  /**
-   * The name of the span for display purposes
-   * @type {string}
-   * @memberof Span
-   */
-  display_name: string;
-  /**
-   * The duration of the span in milliseconds
-   * @type {number}
-   * @memberof Span
-   */
-  duration: number;
-  /**
-   * The timestamp we've attributed to the Span
-   * @type {string}
-   * @memberof Span
-   */
-  timestamp: string;
-  /**
-   * How the time was adjusted
-   * @type {string}
-   * @memberof Span
-   */
-  time_adjustment_type: Span.TimeAdjustmentTypeEnum;
-  /**
-   * The time the span started
-   * @type {string}
-   * @memberof Span
-   */
-  start_time: string;
-  /**
-   * Whether the span is first class or just a sub-span
-   * @type {boolean}
-   * @memberof Span
-   */
-  is_first_class: boolean;
-  /**
-   * The ID of the build that this span is associated with
-   * @type {string}
-   * @memberof Span
-   */
-  build_id?: string;
-  /**
-   * The ID of the project that this span is associated with
-   * @type {string}
-   * @memberof Span
-   */
-  project_id?: string;
-  /**
-   * The id of the span group if applicable
-   * @type {string}
-   * @memberof Span
-   */
-  span_group_id?: string;
-  /**
-   * The raw id of the page load span group if applicable
-   * @type {string}
-   * @memberof Span
-   */
-  virtual_span_group_id?: string;
-  /**
-   *
-   * @type {SpanStatistics}
-   * @memberof Span
-   */
-  statistics?: SpanStatistics;
-  /**
-   *
-   * @type {SpanMetadata}
-   * @memberof Span
-   */
-  metadata?: SpanMetadata;
-}
-
-/**
- * @export
- * @namespace Span
- */
-namespace Span {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum TimeAdjustmentTypeEnum {
-    Adjusted = <any>"adjusted",
-    Device = <any>"device",
-    Received = <any>"received",
-    Unadjusted = <any>"unadjusted",
-  }
-}
-/**
- *
- * @export
- * @interface SpanCategoryStatistics
- */
-interface SpanCategoryStatistics {
-  /**
-   *
-   * @type {SpanCategoryStatisticsFullPageLoad}
-   * @memberof SpanCategoryStatistics
-   */
-  full_page_load?: SpanCategoryStatisticsFullPageLoad;
-}
-/**
- *
- * @export
- * @interface SpanCategoryStatisticsFullPageLoad
- */
-interface SpanCategoryStatisticsFullPageLoad {
-  /**
-   * The largest contentful paint time in milliseconds
-   * @type {number}
-   * @memberof SpanCategoryStatisticsFullPageLoad
-   */
-  largest_contentful_paint?: number;
-  /**
-   * The first input delay time in milliseconds
-   * @type {number}
-   * @memberof SpanCategoryStatisticsFullPageLoad
-   */
-  first_input_delay?: number;
-  /**
-   * The time the first input delay ended
-   * @type {string}
-   * @memberof SpanCategoryStatisticsFullPageLoad
-   */
-  first_input_delay_ended_at?: string;
-  /**
-   * Measure of how often visible elements move unexpectedly
-   * @type {number}
-   * @memberof SpanCategoryStatisticsFullPageLoad
-   */
-  cumulative_layout_shift?: number;
-  /**
-   * The time to first byte in milliseconds
-   * @type {number}
-   * @memberof SpanCategoryStatisticsFullPageLoad
-   */
-  time_to_first_byte?: number;
-  /**
-   * The first contentful paint time in milliseconds
-   * @type {number}
-   * @memberof SpanCategoryStatisticsFullPageLoad
-   */
-  first_contentful_paint?: number;
-}
-/**
- *
- * @export
- * @interface SpanGroup
- */
-export interface SpanGroup {
-  /**
-   * The ID of the Span Group.
-   * @type {string}
-   * @memberof SpanGroup
-   */
-  id: string;
-  /**
-   *
-   * @type {SpanGroupCategory}
-   * @memberof SpanGroup
-   */
-  category: SpanGroupCategory;
-  /**
-   * The name of the Span Group.
-   * @type {string}
-   * @memberof SpanGroup
-   */
-  name: string;
-  /**
-   * The name of the Span Group for display purposes.
-   * @type {string}
-   * @memberof SpanGroup
-   */
-  display_name: string;
-  /**
-   * Whether the requesting user has starred the Span Group.
-   * @type {boolean}
-   * @memberof SpanGroup
-   */
-  is_starred?: boolean;
-  /**
-   *
-   * @type {SpanGroupStatistics}
-   * @memberof SpanGroup
-   */
-  statistics?: SpanGroupStatistics;
-  /**
-   *
-   * @type {PerformanceTarget}
-   * @memberof SpanGroup
-   */
-  performance_target?: PerformanceTarget;
-}
-/**
- *
- * @export
- * @enum {string}
- */
-enum SpanGroupCategory {
-  AppStart = <any>"app_start",
-  ViewLoad = <any>"view_load",
-  PageLoad = <any>"page_load",
-  RouteChange = <any>"route_change",
-  FullPageLoad = <any>"full_page_load",
-  Network = <any>"network",
-  Custom = <any>"custom",
-  Navigation = <any>"navigation",
-  InboundHttp = <any>"inbound_http",
-  OutboundHttp = <any>"outbound_http",
-  InboundRpc = <any>"inbound_rpc",
-  OutboundRpc = <any>"outbound_rpc",
-  CustomServer = <any>"custom_server",
-  FrozenFrame = <any>"frozen_frame",
-}
-/**
- *
- * @export
- * @interface SpanGroupCategoryStatistics
- */
-interface SpanGroupCategoryStatistics {
-  /**
-   *
-   * @type {SpanGroupCategoryStatisticsFullPageLoadStatistics}
-   * @memberof SpanGroupCategoryStatistics
-   */
-  full_page_load?: SpanGroupCategoryStatisticsFullPageLoadStatistics;
-}
-/**
- *
- * @export
- * @interface SpanGroupCategoryStatisticsFullPageLoadStatistics
- */
-interface SpanGroupCategoryStatisticsFullPageLoadStatistics {
-  /**
-   * P75 Time (integer, in ms) from a navigation event to the largest element on the page rendered
-   * @type {number}
-   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
-   */
-  largest_contentful_paint?: number;
-  /**
-   * P75 Time (integer, in ms) from a user interaction with the page (e.g. click) to the page becoming interactive
-   * @type {number}
-   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
-   */
-  first_input_delay?: number;
-  /**
-   * P75 Measure (float) of how often visible elements move unexpectedly
-   * @type {number}
-   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
-   */
-  cumulative_layout_shift?: number;
-  /**
-   * P75 Time (integer, in ms) from a navigation event starting to the first byte arriving
-   * @type {number}
-   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
-   */
-  time_to_first_byte?: number;
-  /**
-   * P75 Time (in ms) from a navigation event to the first element rendered
-   * @type {number}
-   * @memberof SpanGroupCategoryStatisticsFullPageLoadStatistics
-   */
-  first_contentful_paint?: number;
-}
-/**
- *
- * @export
- * @interface SpanGroupDurationStatistics
- */
-interface SpanGroupDurationStatistics {
-  /**
-   * The P50 duration (in ms).
-   * @type {number}
-   * @memberof SpanGroupDurationStatistics
-   */
-  p50: number;
-  /**
-   * The P75 duration (in ms).
-   * @type {number}
-   * @memberof SpanGroupDurationStatistics
-   */
-  p75: number;
-  /**
-   * The P90 duration (in ms).
-   * @type {number}
-   * @memberof SpanGroupDurationStatistics
-   */
-  p90: number;
-  /**
-   * The P95 duration (in ms).
-   * @type {number}
-   * @memberof SpanGroupDurationStatistics
-   */
-  p95: number;
-  /**
-   * The P99 duration (in ms).
-   * @type {number}
-   * @memberof SpanGroupDurationStatistics
-   */
-  p99: number;
-}
-/**
- *
- * @export
- * @interface SpanGroupHttpResponseCodes
- */
-interface SpanGroupHttpResponseCodes {
-  /**
-   * The total number of Spans which have a HTTP response code.
-   * @type {number}
-   * @memberof SpanGroupHttpResponseCodes
-   */
-  total_spans: number;
-  /**
-   * The number of Spans with a 1xx response code.
-   * @type {number}
-   * @memberof SpanGroupHttpResponseCodes
-   */
-  codes_1xx: number;
-  /**
-   * The number of Spans with a 2xx response code.
-   * @type {number}
-   * @memberof SpanGroupHttpResponseCodes
-   */
-  codes_2xx: number;
-  /**
-   * The number of Spans with a 3xx response code.
-   * @type {number}
-   * @memberof SpanGroupHttpResponseCodes
-   */
-  codes_3xx: number;
-  /**
-   * The number of Spans with a 4xx response code.
-   * @type {number}
-   * @memberof SpanGroupHttpResponseCodes
-   */
-  codes_4xx: number;
-  /**
-   * The number of Spans with a 5xx response code.
-   * @type {number}
-   * @memberof SpanGroupHttpResponseCodes
-   */
-  codes_5xx: number;
-}
-/**
- *
- * @export
- * @interface SpanGroupHttpStatistics
- */
-interface SpanGroupHttpStatistics {
-  /**
-   *
-   * @type {SpanGroupHttpResponseCodes}
-   * @memberof SpanGroupHttpStatistics
-   */
-  response_codes?: SpanGroupHttpResponseCodes;
-}
-/**
- *
- * @export
- * @interface SpanGroupStatistics
- */
-interface SpanGroupStatistics {
-  /**
-   *
-   * @type {SpanGroupDurationStatistics}
-   * @memberof SpanGroupStatistics
-   */
-  duration_statistics: SpanGroupDurationStatistics;
-  /**
-   * The total number of Spans that were sampled in the bucketed time period.
-   * @type {number}
-   * @memberof SpanGroupStatistics
-   */
-  total_spans: number;
-  /**
-   * The estimated total of Spans that were generated in the bucketed time period, before sampling was applied.
-   * @type {number}
-   * @memberof SpanGroupStatistics
-   */
-  estimated_spans?: number;
-  /**
-   * When the last filtered Span within this Span Group was seen.
-   * @type {string}
-   * @memberof SpanGroupStatistics
-   */
-  last_seen: string;
-  /**
-   *
-   * @type {SpanGroupCategoryStatistics}
-   * @memberof SpanGroupStatistics
-   */
-  category_statistics?: SpanGroupCategoryStatistics;
-  /**
-   *
-   * @type {RenderingMetrics}
-   * @memberof SpanGroupStatistics
-   */
-  rendering_statistics?: RenderingMetrics;
-  /**
-   *
-   * @type {SystemMetrics}
-   * @memberof SpanGroupStatistics
-   */
-  system_metrics_statistics?: SystemMetrics;
-  /**
-   *
-   * @type {SpanGroupHttpStatistics}
-   * @memberof SpanGroupStatistics
-   */
-  http_statistics?: SpanGroupHttpStatistics;
-}
-/**
- *
- * @export
- * @interface SpanGroupsIdBody
- */
-interface SpanGroupsIdBody {
-  /**
-   * whether or not the Span Group is starred by the user.
-   * @type {boolean}
-   * @memberof SpanGroupsIdBody
-   */
-  is_starred?: boolean;
-}
-/**
- *
- * @export
- * @interface SpanHttpStatistics
- */
-interface SpanHttpStatistics {
-  /**
-   * The response status code for the Span
-   * @type {number}
-   * @memberof SpanHttpStatistics
-   */
-  response_code: number;
-}
-/**
- *
- * @export
- * @interface SpanMetadata
- */
-interface SpanMetadata {
-  /**
-   * The key of the metadata
-   * @type {string}
-   * @memberof SpanMetadata
-   */
-  key: string;
-  /**
-   * The value of the metadata. May be a string or an integer.
-   * @type {string}
-   * @memberof SpanMetadata
-   */
-  value: string;
-  /**
-   *
-   * @type {SpanMetadataLevel}
-   * @memberof SpanMetadata
-   */
-  level: SpanMetadataLevel;
-}
-/**
- *
- * @export
- * @enum {string}
- */
-enum SpanMetadataLevel {
-  Unspecified = <any>"unspecified",
-  Resource = <any>"resource",
-  Span = <any>"span",
-}
-/**
- *
- * @export
- * @interface SpanRenderingStatistics
- */
-interface SpanRenderingStatistics {
-  /**
-   *
-   * @type {SpanRenderingStatisticsFrameRate}
-   * @memberof SpanRenderingStatistics
-   */
-  frame_rate_statistics?: SpanRenderingStatisticsFrameRate;
-}
-/**
- *
- * @export
- * @interface SpanRenderingStatisticsFrameRate
- */
-interface SpanRenderingStatisticsFrameRate {
-  /**
-   * The average FPS for a Span
-   * @type {number}
-   * @memberof SpanRenderingStatisticsFrameRate
-   */
-  fps_mean: number;
-  /**
-   * The lowest seen FPS for a Span
-   * @type {number}
-   * @memberof SpanRenderingStatisticsFrameRate
-   */
-  fps_minimum: number;
-  /**
-   * The highest seen FPS for a Span
-   * @type {number}
-   * @memberof SpanRenderingStatisticsFrameRate
-   */
-  fps_maximum: number;
-}
-/**
- *
- * @export
- * @interface SpanStatistics
- */
-interface SpanStatistics {
-  /**
-   *
-   * @type {SpanCategoryStatistics}
-   * @memberof SpanStatistics
-   */
-  category_statistics?: SpanCategoryStatistics;
-  /**
-   *
-   * @type {SpanSystemMetrics}
-   * @memberof SpanStatistics
-   */
-  system_metric_statistics?: SpanSystemMetrics;
-  /**
-   *
-   * @type {SpanRenderingStatistics}
-   * @memberof SpanStatistics
-   */
-  rendering_statistics?: SpanRenderingStatistics;
-  /**
-   *
-   * @type {SpanHttpStatistics}
-   * @memberof SpanStatistics
-   */
-  http_statistics?: SpanHttpStatistics;
-}
-/**
- *
- * @export
- * @interface SpanSystemMetrics
- */
-interface SpanSystemMetrics {
-  /**
-   *
-   * @type {SpanSystemMetricsCpu}
-   * @memberof SpanSystemMetrics
-   */
-  cpu?: SpanSystemMetricsCpu;
-  /**
-   *
-   * @type {SpanSystemMetricsMemory}
-   * @memberof SpanSystemMetrics
-   */
-  memory?: SpanSystemMetricsMemory;
-}
-/**
- *
- * @export
- * @interface SpanSystemMetricsCpu
- */
-interface SpanSystemMetricsCpu {
-  /**
-   *
-   * @type {SpanSystemMetricsCpuStatistics}
-   * @memberof SpanSystemMetricsCpu
-   */
-  total: SpanSystemMetricsCpuStatistics;
-  /**
-   *
-   * @type {SpanSystemMetricsCpuStatistics}
-   * @memberof SpanSystemMetricsCpu
-   */
-  main_thread: SpanSystemMetricsCpuStatistics;
-}
-/**
- *
- * @export
- * @interface SpanSystemMetricsCpuStatistics
- */
-interface SpanSystemMetricsCpuStatistics {
-  /**
-   * The mean value of the measurements (as a percentage)
-   * @type {number}
-   * @memberof SpanSystemMetricsCpuStatistics
-   */
-  mean: number;
-}
-/**
- *
- * @export
- * @interface SpanSystemMetricsMemory
- */
-interface SpanSystemMetricsMemory {
-  /**
-   *
-   * @type {SpanSystemMetricsMemoryStatistics}
-   * @memberof SpanSystemMetricsMemory
-   */
-  device: SpanSystemMetricsMemoryStatistics;
-  /**
-   *
-   * @type {SpanSystemMetricsMemoryStatistics}
-   * @memberof SpanSystemMetricsMemory
-   */
-  android_runtime?: SpanSystemMetricsMemoryStatistics;
-}
-/**
- *
- * @export
- * @interface SpanSystemMetricsMemoryStatistics
- */
-interface SpanSystemMetricsMemoryStatistics {
-  /**
-   * The mean value of the measurements (in bytes)
-   * @type {number}
-   * @memberof SpanSystemMetricsMemoryStatistics
-   */
-  mean: number;
-}
-/**
- *
- * @export
- * @interface StabilityTarget
- */
-interface StabilityTarget {
-  /**
-   * The target value of the proportion of unhandled_sessions/total_sessions.
-   * @type {number}
-   * @memberof StabilityTarget
-   */
-  value: number;
-  /**
-   * (Updated automatically) The time the target was last updated.
-   * @type {string}
-   * @memberof StabilityTarget
-   */
-  updated_at?: string;
-  /**
-   * (Updated automatically) The id of the collaborator that last updated the value.
-   * @type {string}
-   * @memberof StabilityTarget
-   */
-  updated_by_id?: string;
-}
-/**
- *
- * @export
- * @interface SystemMetrics
- */
-interface SystemMetrics {
-  /**
-   *
-   * @type {SystemMetricsCpu}
-   * @memberof SystemMetrics
-   */
-  cpu?: SystemMetricsCpu;
-  /**
-   *
-   * @type {SystemMetricsMemory}
-   * @memberof SystemMetrics
-   */
-  memory?: SystemMetricsMemory;
-}
-/**
- *
- * @export
- * @interface SystemMetricsCpu
- */
-interface SystemMetricsCpu {
-  /**
-   *
-   * @type {SystemMetricsCpuTotal}
-   * @memberof SystemMetricsCpu
-   */
-  total: SystemMetricsCpuTotal;
-  /**
-   *
-   * @type {SystemMetricsCpuMainThread}
-   * @memberof SystemMetricsCpu
-   */
-  main_thread: SystemMetricsCpuMainThread;
-}
-/**
- *
- * @export
- * @interface SystemMetricsCpuMainThread
- */
-interface SystemMetricsCpuMainThread {
-  /**
-   *
-   * @type {SystemMetricsCpuStatistics}
-   * @memberof SystemMetricsCpuMainThread
-   */
-  mean: SystemMetricsCpuStatistics;
-}
-/**
- *
- * @export
- * @interface SystemMetricsCpuStatistics
- */
-interface SystemMetricsCpuStatistics {
-  /**
-   * The number of Spans that reported CPU system metric
-   * @type {number}
-   * @memberof SystemMetricsCpuStatistics
-   */
-  span_count: number;
-  /**
-   * The P50 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsCpuStatistics
-   */
-  p50?: number;
-  /**
-   * The p75 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsCpuStatistics
-   */
-  p75?: number;
-  /**
-   * The p90 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsCpuStatistics
-   */
-  p90?: number;
-  /**
-   * The p95 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsCpuStatistics
-   */
-  p95?: number;
-  /**
-   * The p99 CPU usage percentage between 0 and 100 - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsCpuStatistics
-   */
-  p99?: number;
-}
-/**
- *
- * @export
- * @interface SystemMetricsCpuTotal
- */
-interface SystemMetricsCpuTotal {
-  /**
-   *
-   * @type {SystemMetricsCpuStatistics}
-   * @memberof SystemMetricsCpuTotal
-   */
-  mean: SystemMetricsCpuStatistics;
-}
-/**
- *
- * @export
- * @interface SystemMetricsMemory
- */
-interface SystemMetricsMemory {
-  /**
-   *
-   * @type {SystemMetricsMemoryDevice}
-   * @memberof SystemMetricsMemory
-   */
-  device: SystemMetricsMemoryDevice;
-  /**
-   *
-   * @type {SystemMetricsMemoryAndroidRuntime}
-   * @memberof SystemMetricsMemory
-   */
-  android_runtime?: SystemMetricsMemoryAndroidRuntime;
-}
-/**
- *
- * @export
- * @interface SystemMetricsMemoryAndroidRuntime
- */
-interface SystemMetricsMemoryAndroidRuntime {
-  /**
-   *
-   * @type {SystemMetricsMemoryStatistics}
-   * @memberof SystemMetricsMemoryAndroidRuntime
-   */
-  mean: SystemMetricsMemoryStatistics;
-}
-/**
- *
- * @export
- * @interface SystemMetricsMemoryDevice
- */
-interface SystemMetricsMemoryDevice {
-  /**
-   *
-   * @type {SystemMetricsMemoryStatistics}
-   * @memberof SystemMetricsMemoryDevice
-   */
-  mean: SystemMetricsMemoryStatistics;
-}
-/**
- *
- * @export
- * @interface SystemMetricsMemoryStatistics
- */
-interface SystemMetricsMemoryStatistics {
-  /**
-   * The number of Spans that reported memory system metrics of this type
-   * @type {number}
-   * @memberof SystemMetricsMemoryStatistics
-   */
-  span_count: number;
-  /**
-   * The P50 memory usage (in bytes) - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsMemoryStatistics
-   */
-  p50?: number;
-  /**
-   * The p75 memory usage (in bytes) - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsMemoryStatistics
-   */
-  p75?: number;
-  /**
-   * The p90 memory usage (in bytes) - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsMemoryStatistics
-   */
-  p90?: number;
-  /**
-   * The p95 memory usage (in bytes) - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsMemoryStatistics
-   */
-  p95?: number;
-  /**
-   * The p99 memory usage (in bytes) - (Only present if span_count > 0)
-   * @type {number}
-   * @memberof SystemMetricsMemoryStatistics
-   */
-  p99?: number;
-}
-
-/**
- *
- * @export
- * @interface TraceField
- */
-export interface TraceField {
-  /**
-   * Identifier that is used as the key for filtering by this field.
-   * @type {string}
-   * @memberof TraceField
-   */
-  display_id: string;
-  /**
-   *
-   * @type {TraceFieldOptions}
-   * @memberof TraceField
-   */
-  filter_options: TraceFieldOptions;
-  /**
-   * Whether or not this Trace Field is for a user-specified attribute rather than a pre-defined filter.
-   * @type {boolean}
-   * @memberof TraceField
-   */
-  custom: boolean;
-  /**
-   * The key in metadata to use for this Trace Field. Only present when `custom` is `true`.
-   * @type {string}
-   * @memberof TraceField
-   */
-  metadata_key?: string;
-  /**
-   * The location of the metadata key within a Trace. Only present when `custom` is `true`.
-   * @type {string}
-   * @memberof TraceField
-   */
-  metadata_location?: TraceField.MetadataLocationEnum;
-  /**
-   * The type of the field. Only present when `custom` is `true`.
-   * @type {string}
-   * @memberof TraceField
-   */
-  field_type?: TraceField.FieldTypeEnum;
-}
-
-/**
- * @export
- * @namespace TraceField
- */
-export namespace TraceField {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum MetadataLocationEnum {
-    SpanAttribute = <any>"span_attribute",
-    ResourceAttribute = <any>"resource_attribute",
-  }
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum FieldTypeEnum {
-    String = <any>"string",
-    Boolean = <any>"boolean",
-    Number = <any>"number",
-  }
-}
-/**
- *
- * @export
- * @interface TraceFieldOptionValue
- */
-export interface TraceFieldOptionValue {
-  /**
-   * The identifier to use when filtering by this value.
-   * @type {string}
-   * @memberof TraceFieldOptionValue
-   */
-  id: string;
-  /**
-   * A human readable represenation of this value.
-   * @type {string}
-   * @memberof TraceFieldOptionValue
-   */
-  name: string;
-}
-/**
- *
- * @export
- * @interface TraceFieldOptions
- */
-export interface TraceFieldOptions {
-  /**
-   * Human readable display name for the filter.
-   * @type {string}
-   * @memberof TraceFieldOptions
-   */
-  name: string;
-  /**
-   * Description of what the filter is.
-   * @type {string}
-   * @memberof TraceFieldOptions
-   */
-  description: string;
-  /**
-   * Possible values for this filter, only if this filter has a fixed set of values.
-   * @type {Array<TraceFieldOptionValue>}
-   * @memberof TraceFieldOptions
-   */
-  values?: Array<TraceFieldOptionValue>;
-  /**
-   * The match types that are supported by this filter.
-   * @type {Array<string>}
-   * @memberof TraceFieldOptions
-   */
-  match_types: Array<TraceFieldOptions.MatchTypesEnum>;
-  /**
-   * Whether the filter is searchable in the search bar suggestions.
-   * @type {boolean}
-   * @memberof TraceFieldOptions
-   */
-  searchable: boolean;
-}
-
-/**
- * @export
- * @namespace TraceFieldOptions
- */
-export namespace TraceFieldOptions {
-  /**
-   * @export
-   * @enum {string}
-   */
-  export enum MatchTypesEnum {
-    Eq = <any>"eq",
-    Ne = <any>"ne",
-    Lt = <any>"lt",
-    Gt = <any>"gt",
-    Empty = <any>"empty",
-  }
-}
-
-/**
  * CurrentUserApi - fetch parameter creator
  * @export
  */
 export const CurrentUserApiFetchParamCreator = (
-  configuration?: Configuration,
+  _configuration?: Configuration,
 ) => ({
   /**
    *
    * @summary Create a Saved Search
-   * @param {SavedSearchCreateRequest} [body]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  createSavedSearch(
-    body?: SavedSearchCreateRequest,
-    options: any = {},
-  ): FetchArgs {
+  createSavedSearch(options: any = {}): FetchArgs {
     const localVarPath = `/saved_searches`;
     const localVarUrlObj = url.parse(localVarPath, true);
     const localVarRequestOptions = Object.assign({ method: "POST" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -5001,12 +77,6 @@ export const CurrentUserApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"SavedSearchCreateRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -5016,11 +86,11 @@ export const CurrentUserApiFetchParamCreator = (
   /**
    *
    * @summary Delete a Saved Search
-   * @param {string} id The ID of the saved search
+   * @param {any} id The ID of the saved search
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  deleteSavedSearchById(id: string, options: any = {}): FetchArgs {
+  deleteSavedSearchById(id: any, options: any = {}): FetchArgs {
     // verify required parameter 'id' is not null or undefined
     if (id === null || id === undefined) {
       throw new RequiredError(
@@ -5036,15 +106,6 @@ export const CurrentUserApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -5068,20 +129,20 @@ export const CurrentUserApiFetchParamCreator = (
   /**
    * Returns a list of projects for the given organization.
    * @summary List an Organization's Projects
-   * @param {string} organization_id the ID of the organization
-   * @param {string} [q] Search projects with names matching parameter
-   * @param {string} [sort] Which field to sort the results by
-   * @param {string} [direction] Which direction to sort the results by. Defaults to &#x60;desc&#x60; for all sorts except &#x60;favorite&#x60;. Defaults to &#x60;asc&#x60; if sorting by &#x60;favorite&#x60; (cannot sort &#x60;favorite&#x60;s &#x60;desc&#x60;).
-   * @param {number} [per_page] How many results to return per page
+   * @param {any} organization_id the ID of the organization
+   * @param {any} [q] Search projects with names matching parameter
+   * @param {any} [sort] Which field to sort the results by
+   * @param {any} [direction] Which direction to sort the results by. Defaults to &#x60;desc&#x60; for all sorts except &#x60;favorite&#x60;. Defaults to &#x60;asc&#x60; if sorting by &#x60;favorite&#x60; (cannot sort &#x60;favorite&#x60;s &#x60;desc&#x60;).
+   * @param {any} [per_page] How many results to return per page
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getOrganizationProjects(
-    organization_id: string,
-    q?: string,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
+    organization_id: any,
+    q?: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'organization_id' is not null or undefined
@@ -5099,15 +160,6 @@ export const CurrentUserApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (q !== undefined) {
       localVarQueryParameter["q"] = q;
@@ -5147,11 +199,11 @@ export const CurrentUserApiFetchParamCreator = (
   /**
    *
    * @summary Get a Saved Search
-   * @param {string} id The ID of the saved search
+   * @param {any} id The ID of the saved search
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  getSavedSearchById(id: string, options: any = {}): FetchArgs {
+  getSavedSearchById(id: any, options: any = {}): FetchArgs {
     // verify required parameter 'id' is not null or undefined
     if (id === null || id === undefined) {
       throw new RequiredError(
@@ -5167,15 +219,6 @@ export const CurrentUserApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -5199,11 +242,11 @@ export const CurrentUserApiFetchParamCreator = (
   /**
    * Returns a short usage summary for a saved search.
    * @summary Get the Usage Summary for a Saved Search
-   * @param {string} id the ID of the saved search to get a summary for
+   * @param {any} id the ID of the saved search to get a summary for
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  getSavedSearchUsageSummary(id: string, options: any = {}): FetchArgs {
+  getSavedSearchUsageSummary(id: any, options: any = {}): FetchArgs {
     // verify required parameter 'id' is not null or undefined
     if (id === null || id === undefined) {
       throw new RequiredError(
@@ -5219,15 +262,6 @@ export const CurrentUserApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -5251,14 +285,14 @@ export const CurrentUserApiFetchParamCreator = (
   /**
    * Returns the saved searches for a given project sorted by name in lexicographic order.
    * @summary List Saved Searches on a Project
-   * @param {string} project_id
-   * @param {string} [shared] Limit Saved Searches returned to only those with this &#x60;shared&#x60; property
+   * @param {any} project_id
+   * @param {any} [shared] Limit Saved Searches returned to only those with this &#x60;shared&#x60; property
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectSavedSearches(
-    project_id: string,
-    shared?: string,
+    project_id: any,
+    shared?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -5276,15 +310,6 @@ export const CurrentUserApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (shared !== undefined) {
       localVarQueryParameter["shared"] = shared;
@@ -5312,14 +337,14 @@ export const CurrentUserApiFetchParamCreator = (
   /**
    *
    * @summary List the Current User's Organizations
-   * @param {boolean} [admin] &#x60;true&#x60; if only Organizations the Current User is an admin of should be returned
-   * @param {number} [per_page] Number of results per page
+   * @param {any} [admin] &#x60;true&#x60; if only Organizations the Current User is an admin of should be returned
+   * @param {any} [per_page] Number of results per page
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listUserOrganizations(
-    admin?: boolean,
-    per_page?: number,
+    admin?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     const localVarPath = `/user/organizations`;
@@ -5327,15 +352,6 @@ export const CurrentUserApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (admin !== undefined) {
       localVarQueryParameter["admin"] = admin;
@@ -5367,16 +383,11 @@ export const CurrentUserApiFetchParamCreator = (
   /**
    *
    * @summary Update a Saved Search
-   * @param {string} id The ID of the saved search
-   * @param {SavedSearchUpdateRequest} [body]
+   * @param {any} id The ID of the saved search
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  updateSavedSearchById(
-    id: string,
-    body?: SavedSearchUpdateRequest,
-    options: any = {},
-  ): FetchArgs {
+  updateSavedSearchById(id: any, options: any = {}): FetchArgs {
     // verify required parameter 'id' is not null or undefined
     if (id === null || id === undefined) {
       throw new RequiredError(
@@ -5393,17 +404,6 @@ export const CurrentUserApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -5417,12 +417,6 @@ export const CurrentUserApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"SavedSearchUpdateRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -5430,34 +424,24 @@ export const CurrentUserApiFetchParamCreator = (
     };
   },
 });
-
 /**
  * ErrorsApi - fetch parameter creator
  * @export
  */
-export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
+export const ErrorsApiFetchParamCreator = (_configuration?: Configuration) => ({
   /**
    *
    * @summary Bulk Update Errors
-   * @param {ErrorUpdateRequest} body
-   * @param {string} project_id
-   * @param {Array<string>} error_ids
+   * @param {any} project_id
+   * @param {any} error_ids
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   bulkUpdateErrors(
-    body: ErrorUpdateRequest,
-    project_id: string,
-    error_ids: Array<string>,
+    project_id: any,
+    error_ids: any,
     options: any = {},
   ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling bulkUpdateErrors.",
-      );
-    }
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -5481,20 +465,9 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    if (error_ids) {
+    if (error_ids !== undefined) {
       localVarQueryParameter["error_ids"] = error_ids;
     }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -5509,12 +482,60 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ErrorUpdateRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Requires user authentication as the user who will be the author of the comment.
+   * @summary Create a Comment on an Error
+   * @param {any} project_id ID of the Project
+   * @param {any} error_id ID of the Error
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  createCommentOnError(
+    project_id: any,
+    error_id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'project_id' is not null or undefined
+    if (project_id === null || project_id === undefined) {
+      throw new RequiredError(
+        "project_id",
+        "Required parameter project_id was null or undefined when calling createCommentOnError.",
+      );
+    }
+    // verify required parameter 'error_id' is not null or undefined
+    if (error_id === null || error_id === undefined) {
+      throw new RequiredError(
+        "error_id",
+        "Required parameter error_id was null or undefined when calling createCommentOnError.",
+      );
+    }
+    const localVarPath = `/projects/{project_id}/errors/{error_id}/comments`
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+      .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
 
     return {
       url: url.format(localVarUrlObj),
@@ -5524,11 +545,11 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    * Deletes all Error and Event data in a project. Use with caution. This action cannot be reversed.
    * @summary Delete all Errors in a Project
-   * @param {string} project_id
+   * @param {any} project_id
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  deleteAllErrorsInProject(project_id: string, options: any = {}): FetchArgs {
+  deleteAllErrorsInProject(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -5545,14 +566,48 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Delete a Comment
+   * @param {any} comment_id ID of the comment
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteComment(comment_id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'comment_id' is not null or undefined
+    if (comment_id === null || comment_id === undefined) {
+      throw new RequiredError(
+        "comment_id",
+        "Required parameter comment_id was null or undefined when calling deleteComment.",
+      );
     }
+    const localVarPath = `/comments/{comment_id}`.replace(
+      `{${"comment_id"}}`,
+      encodeURIComponent(String(comment_id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -5576,14 +631,14 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary Delete an Error
-   * @param {string} project_id
-   * @param {string} error_id
+   * @param {any} project_id
+   * @param {any} error_id
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   deleteErrorOnProject(
-    project_id: string,
-    error_id: string,
+    project_id: any,
+    error_id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -5608,15 +663,6 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -5639,14 +685,14 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary Delete an Event
-   * @param {string} project_id
-   * @param {string} event_id
+   * @param {any} project_id
+   * @param {any} event_id
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   deleteEventById(
-    project_id: string,
-    event_id: string,
+    project_id: any,
+    event_id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -5671,15 +717,6 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -5702,20 +739,24 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    * Counts for an Error in a given time range, suitable for drawing histograms. Will return a maximum of 50 buckets (when using `buckets_count`) or 2000 data points (when using `resolution`).
    * @summary List the Trends for an Error
-   * @param {string} project_id ID of the Project
-   * @param {string} error_id ID of the error
-   * @param {Filters} [filters] Search filters to restrict the events reported in the trend
-   * @param {number} [buckets_count] Number of buckets to group trend data into (max 50)
-   * @param {string} [resolution] The trend data will be grouped so that each bucket spans the given time period
+   * @param {any} project_id ID of the Project
+   * @param {any} error_id ID of the error
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join] Search filters to restrict the events reported in the trend
+   * @param {any} [buckets_count] Number of buckets to group trend data into (max 50)
+   * @param {any} [resolution] The trend data will be grouped so that each bucket spans the given time period
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getBucketedAndUnbucketedTrendsOnError(
-    project_id: string,
-    error_id: string,
-    filters?: Filters,
-    buckets_count?: number,
-    resolution?: string,
+    project_id: any,
+    error_id: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    buckets_count?: any,
+    resolution?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -5740,17 +781,16 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (buckets_count !== undefined) {
@@ -5783,18 +823,22 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    * Counts for a Project in a given time range, suitable for drawing histograms. Will return a maximum of 50 buckets (when using `buckets_count`) or 2000 data points (when using `resolution`).
    * @summary List the Trends for a Project
-   * @param {string} project_id ID of the project
-   * @param {Filters} [filters] Search filters to restrict the events reported in the trend
-   * @param {number} [buckets_count] Number of buckets to group trend data into (max 50)
-   * @param {string} [resolution] The trend data will be grouped so that each bucket spans the given time period
+   * @param {any} project_id ID of the project
+   * @param {any} [filters] Search filters to restrict the events reported in the trend
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
+   * @param {any} [buckets_count] Number of buckets to group trend data into (max 50)
+   * @param {any} [resolution] The trend data will be grouped so that each bucket spans the given time period
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getBucketedAndUnbucketedTrendsOnProject(
-    project_id: string,
-    filters?: Filters,
-    buckets_count?: number,
-    resolution?: string,
+    project_id: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    buckets_count?: any,
+    resolution?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -5813,17 +857,16 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (buckets_count !== undefined) {
@@ -5856,22 +899,26 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary List values of a Pivot on a Project
-   * @param {string} project_id
-   * @param {string} event_field_display_id
-   * @param {Filters} [filters]
-   * @param {string} [sort]
-   * @param {Date} [base]
-   * @param {number} [per_page]
+   * @param {any} project_id
+   * @param {any} event_field_display_id
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
+   * @param {any} [sort]
+   * @param {any} [base]
+   * @param {any} [per_page]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getPivotValuesOnAProject(
-    project_id: string,
-    event_field_display_id: string,
-    filters?: Filters,
-    sort?: string,
-    base?: Date,
-    per_page?: number,
+    project_id: any,
+    event_field_display_id: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    sort?: any,
+    base?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -5903,17 +950,16 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (sort !== undefined) {
@@ -5921,7 +967,7 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     }
 
     if (base !== undefined) {
-      localVarQueryParameter["base"] = (base as any).toISOString();
+      localVarQueryParameter["base"] = base;
     }
 
     if (per_page !== undefined) {
@@ -5950,24 +996,28 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary List values of a Pivot on an Error
-   * @param {string} project_id
-   * @param {string} error_id
-   * @param {string} event_field_display_id
-   * @param {Filters} [filters]
-   * @param {string} [sort]
-   * @param {Date} [base]
-   * @param {number} [per_page]
+   * @param {any} project_id
+   * @param {any} error_id
+   * @param {any} event_field_display_id
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
+   * @param {any} [sort]
+   * @param {any} [base]
+   * @param {any} [per_page]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getPivotValuesOnAnError(
-    project_id: string,
-    error_id: string,
-    event_field_display_id: string,
-    filters?: Filters,
-    sort?: string,
-    base?: Date,
-    per_page?: number,
+    project_id: any,
+    error_id: any,
+    event_field_display_id: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    sort?: any,
+    base?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -6007,17 +1057,16 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (sort !== undefined) {
@@ -6025,7 +1074,7 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     }
 
     if (base !== undefined) {
-      localVarQueryParameter["base"] = (base as any).toISOString();
+      localVarQueryParameter["base"] = base;
     }
 
     if (per_page !== undefined) {
@@ -6054,18 +1103,22 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary List Pivots on a Project
-   * @param {string} project_id
-   * @param {Filters} [filters]
-   * @param {number} [summary_size]
-   * @param {Array<string>} [pivots]
+   * @param {any} project_id
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
+   * @param {any} [summary_size]
+   * @param {any} [pivots]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getPivotsOnAProject(
-    project_id: string,
-    filters?: Filters,
-    summary_size?: number,
-    pivots?: Array<string>,
+    project_id: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    summary_size?: any,
+    pivots?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -6084,25 +1137,102 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (summary_size !== undefined) {
       localVarQueryParameter["summary_size"] = summary_size;
     }
 
-    if (pivots) {
+    if (pivots !== undefined) {
       localVarQueryParameter["pivots"] = pivots;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Collaborators are able to comment on Errors to add details, context, and work together toward a fix.
+   * @summary List Comments on an Error
+   * @param {any} project_id ID of the Project
+   * @param {any} error_id ID of the Error
+   * @param {any} [sort] Comments are only sortable by creation time
+   * @param {any} [direction] Which direction to sort the results by
+   * @param {any} [per_page] How many results to return per page
+   * @param {any} [offset] The pagination offset. This will not typically need to be set manually, as the &#x60;link&#x60; header will contain the full url to the next page of results.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listCommentsOnError(
+    project_id: any,
+    error_id: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
+    offset?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'project_id' is not null or undefined
+    if (project_id === null || project_id === undefined) {
+      throw new RequiredError(
+        "project_id",
+        "Required parameter project_id was null or undefined when calling listCommentsOnError.",
+      );
+    }
+    // verify required parameter 'error_id' is not null or undefined
+    if (error_id === null || error_id === undefined) {
+      throw new RequiredError(
+        "error_id",
+        "Required parameter error_id was null or undefined when calling listCommentsOnError.",
+      );
+    }
+    const localVarPath = `/projects/{project_id}/errors/{error_id}/comments`
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+      .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (sort !== undefined) {
+      localVarQueryParameter["sort"] = sort;
+    }
+
+    if (direction !== undefined) {
+      localVarQueryParameter["direction"] = direction;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (offset !== undefined) {
+      localVarQueryParameter["offset"] = offset;
     }
 
     localVarUrlObj.query = Object.assign(
@@ -6127,26 +1257,30 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    * Get a list of the events of an error. If you require a feed of all new events as they are reported consider setting up a webhook integration instead.
    * @summary List the Events on an Error
-   * @param {string} project_id
-   * @param {string} error_id
-   * @param {Date} [base]
-   * @param {string} [sort]
-   * @param {string} [direction]
-   * @param {number} [per_page]
-   * @param {Filters} [filters]
-   * @param {boolean} [full_reports]
+   * @param {any} project_id
+   * @param {any} error_id
+   * @param {any} [base]
+   * @param {any} [sort]
+   * @param {any} [direction]
+   * @param {any} [per_page]
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
+   * @param {any} [full_reports]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listEventsOnError(
-    project_id: string,
-    error_id: string,
-    base?: Date,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
-    filters?: Filters,
-    full_reports?: boolean,
+    project_id: any,
+    error_id: any,
+    base?: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    full_reports?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -6171,17 +1305,8 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (base !== undefined) {
-      localVarQueryParameter["base"] = (base as any).toISOString();
+      localVarQueryParameter["base"] = base;
     }
 
     if (sort !== undefined) {
@@ -6198,6 +1323,14 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
 
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (full_reports !== undefined) {
@@ -6226,24 +1359,28 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary List the Events on a Project
-   * @param {string} project_id
-   * @param {Date} [base]
-   * @param {string} [sort]
-   * @param {string} [direction]
-   * @param {number} [per_page]
-   * @param {Filters} [filters]
-   * @param {boolean} [full_reports]
+   * @param {any} project_id
+   * @param {any} [base]
+   * @param {any} [sort]
+   * @param {any} [direction]
+   * @param {any} [per_page]
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
+   * @param {any} [full_reports]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listEventsOnProject(
-    project_id: string,
-    base?: Date,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
-    filters?: Filters,
-    full_reports?: boolean,
+    project_id: any,
+    base?: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    full_reports?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -6262,17 +1399,8 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (base !== undefined) {
-      localVarQueryParameter["base"] = (base as any).toISOString();
+      localVarQueryParameter["base"] = base;
     }
 
     if (sort !== undefined) {
@@ -6289,6 +1417,14 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
 
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (full_reports !== undefined) {
@@ -6317,22 +1453,26 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary List Pivots on an Error
-   * @param {string} project_id
-   * @param {string} error_id
-   * @param {Filters} [filters]
-   * @param {number} [summary_size]
-   * @param {Array<string>} [pivots]
-   * @param {number} [per_page]
+   * @param {any} project_id
+   * @param {any} error_id
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
+   * @param {any} [summary_size]
+   * @param {any} [pivots]
+   * @param {any} [per_page]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listPivotsOnAnError(
-    project_id: string,
-    error_id: string,
-    filters?: Filters,
-    summary_size?: number,
-    pivots?: Array<string>,
-    per_page?: number,
+    project_id: any,
+    error_id: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    summary_size?: any,
+    pivots?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -6357,24 +1497,23 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (summary_size !== undefined) {
       localVarQueryParameter["summary_size"] = summary_size;
     }
 
-    if (pivots) {
+    if (pivots !== undefined) {
       localVarQueryParameter["pivots"] = pivots;
     }
 
@@ -6404,24 +1543,28 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    * Get a list of the errors on a project. If you require a feed of all new errors as they are reported consider setting up a webhook integration instead.
    * @summary List the Errors on a Project
-   * @param {string} project_id
-   * @param {Date} [base]
-   * @param {string} [sort]
-   * @param {string} [direction]
-   * @param {number} [per_page]
-   * @param {Filters} [filters]
-   * @param {string} [histogram] The type of histogram to include in the response. Only specific values are accepted. When provided, adds trend data to each error in the response.
+   * @param {any} project_id
+   * @param {any} [base]
+   * @param {any} [sort]
+   * @param {any} [direction]
+   * @param {any} [per_page]
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
+   * @param {any} [histogram] The type of histogram to include in the response. Only specific values are accepted. When provided, adds trend data to each error in the response.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectErrors(
-    project_id: string,
-    base?: Date,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
-    filters?: Filters,
-    histogram?: string,
+    project_id: any,
+    base?: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
+    histogram?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -6440,17 +1583,8 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (base !== undefined) {
-      localVarQueryParameter["base"] = (base as any).toISOString();
+      localVarQueryParameter["base"] = base;
     }
 
     if (sort !== undefined) {
@@ -6467,6 +1601,14 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
 
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     if (histogram !== undefined) {
@@ -6493,27 +1635,61 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     };
   },
   /**
+   * Requires user authentication as only the author is able to update their comments.
+   * @summary Update a Comment
+   * @param {any} comment_id ID of the comment
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  updateComment(comment_id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'comment_id' is not null or undefined
+    if (comment_id === null || comment_id === undefined) {
+      throw new RequiredError(
+        "comment_id",
+        "Required parameter comment_id was null or undefined when calling updateComment.",
+      );
+    }
+    const localVarPath = `/comments/{comment_id}`.replace(
+      `{${"comment_id"}}`,
+      encodeURIComponent(String(comment_id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
    *
    * @summary Update an Error
-   * @param {ErrorUpdateRequest} body
-   * @param {string} project_id
-   * @param {string} error_id
+   * @param {any} project_id
+   * @param {any} error_id
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   updateErrorOnProject(
-    body: ErrorUpdateRequest,
-    project_id: string,
-    error_id: string,
+    project_id: any,
+    error_id: any,
     options: any = {},
   ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling updateErrorOnProject.",
-      );
-    }
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -6536,17 +1712,6 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -6560,12 +1725,6 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ErrorUpdateRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -6575,14 +1734,20 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary View an Error
-   * @param {string} project_id
-   * @param {string} error_id
+   * @param {any} project_id
+   * @param {any} error_id
+   * @param {any} [filters]
+   * @param {any} [filter_groups]
+   * @param {any} [filter_groups_join]
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   viewErrorOnProject(
-    project_id: string,
-    error_id: string,
+    project_id: any,
+    error_id: any,
+    filters?: any,
+    filter_groups?: any,
+    filter_groups_join?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -6607,13 +1772,16 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+    if (filters !== undefined) {
+      localVarQueryParameter["filters"] = filters;
+    }
+
+    if (filter_groups !== undefined) {
+      localVarQueryParameter["filter_groups"] = filter_groups;
+    }
+
+    if (filter_groups_join !== undefined) {
+      localVarQueryParameter["filter_groups_join"] = filter_groups_join;
     }
 
     localVarUrlObj.query = Object.assign(
@@ -6638,16 +1806,12 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    * Note that event objects can include custom metadata and diagnostic fields configured directly in your app or added by the notifier library. The API preserves the original casing and key format as received, so any casing, including both snake_case and camelCase, may be valid for some fields.
    * @summary View an Event
-   * @param {string} project_id
-   * @param {string} event_id
+   * @param {any} project_id
+   * @param {any} event_id
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  viewEventById(
-    project_id: string,
-    event_id: string,
-    options: any = {},
-  ): FetchArgs {
+  viewEventById(project_id: any, event_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -6669,15 +1833,6 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -6701,11 +1856,11 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
   /**
    *
    * @summary View the latest Event on an Error
-   * @param {string} error_id
+   * @param {any} error_id
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  viewLatestEventOnError(error_id: string, options: any = {}): FetchArgs {
+  viewLatestEventOnError(error_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'error_id' is not null or undefined
     if (error_id === null || error_id === undefined) {
       throw new RequiredError(
@@ -6721,15 +1876,6 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -6751,25 +1897,2456 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
     };
   },
 });
+/**
+ * OrganizationsApi - fetch parameter creator
+ * @export
+ */
+export const OrganizationsApiFetchParamCreator = (
+  _configuration?: Configuration,
+) => ({
+  /**
+   * Add a collaborator to a list of teams, or all a collaborator to all the teams in this organization.
+   * @summary Add a collaborator to a group of Teams
+   * @param {any} organization_id The ID of the organization.
+   * @param {any} id The ID of the collaborator.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  addOrganizationCollaboratorTeamMemberships(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling addOrganizationCollaboratorTeamMemberships.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling addOrganizationCollaboratorTeamMemberships.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/{id}/team_memberships`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
 
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Add Collaborators to a Team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  addOrganizationTeamMemberships(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling addOrganizationTeamMemberships.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling addOrganizationTeamMemberships.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/teams/{id}/team_memberships`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Bulk invite collaborators to your organization
+   * @param {any} organization_id the ID of your organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  bulkInviteOrganizationCollaborators(
+    organization_id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling bulkInviteOrganizationCollaborators.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/bulk_invite`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Creates a new Bugsnag organization and adds the current user to it as an admin. Requires user authentication as the initial user of the organization.
+   * @summary Create an Organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  createOrganization(options: any = {}): FetchArgs {
+    const localVarPath = `/organizations`;
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Create a Team
+   * @param {any} organization_id ID of the organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  createOrganizationTeam(organization_id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling createOrganizationTeam.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/teams`.replace(
+      `{${"organization_id"}}`,
+      encodeURIComponent(String(organization_id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Delete an Organization
+   * @param {any} id ID of the organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteOrganization(id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling deleteOrganization.",
+      );
+    }
+    const localVarPath = `/organizations/{id}`.replace(
+      `{${"id"}}`,
+      encodeURIComponent(String(id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Delete a Collaborator
+   * @param {any} organization_id the ID of your organization
+   * @param {any} id the ID of the collaborator to update
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteOrganizationCollaborator(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling deleteOrganizationCollaborator.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling deleteOrganizationCollaborator.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/collaborators/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Remove a collaborator from a group of teams. The request body for this operation should be documented here: The request body would have matched the TeamIDRequest schema, but DELETE operations cannot have a request body in OpenAPI3. Example: {   \"team_ids\": [\"team_id_1\", \"team_id_2\"] }
+   * @summary Remove a Collaborator from a group of Teams
+   * @param {any} organization_id The ID of the organization.
+   * @param {any} id The ID of the collaborator.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteOrganizationCollaboratorTeamMemberships(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling deleteOrganizationCollaboratorTeamMemberships.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling deleteOrganizationCollaboratorTeamMemberships.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/{id}/team_memberships`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Delete a team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team to be deleted
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteOrganizationTeam(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling deleteOrganizationTeam.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling deleteOrganizationTeam.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/teams/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Request body requires a CollaboratorsRequest object with the following properties: - user_ids: array of user IDs to remove from the team
+   * @summary Remove Collaborators from a Team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteOrganizationTeamMemberships(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling deleteOrganizationTeamMemberships.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling deleteOrganizationTeamMemberships.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/teams/{id}/team_memberships`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Request body requires a TeamProjectAccessesDelete object with the following properties: - project_ids: array of project IDs to remove access from
+   * @summary Remove Project Access from a Team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteOrganizationTeamProjectAccesses(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling deleteOrganizationTeamProjectAccesses.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling deleteOrganizationTeamProjectAccesses.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/teams/{id}/project_accesses`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary View an Organization
+   * @param {any} id the ID of the organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getOrganizationById(id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling getOrganizationById.",
+      );
+    }
+    const localVarPath = `/organizations/{id}`.replace(
+      `{${"id"}}`,
+      encodeURIComponent(String(id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Show a Collaborator on an Organization
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the collaborator
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getOrganizationCollaborator(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling getOrganizationCollaborator.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling getOrganizationCollaborator.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/collaborators/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Return the details of a collaborator's access to a project.
+   * @summary Show a Collaborator's Access Details for a Project
+   * @param {any} organization_id The ID of the organization.
+   * @param {any} collaborator_id The ID of the collaborator.
+   * @param {any} project_id The ID of the project.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getOrganizationCollaboratorProjectAccessById(
+    organization_id: any,
+    collaborator_id: any,
+    project_id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling getOrganizationCollaboratorProjectAccessById.",
+      );
+    }
+    // verify required parameter 'collaborator_id' is not null or undefined
+    if (collaborator_id === null || collaborator_id === undefined) {
+      throw new RequiredError(
+        "collaborator_id",
+        "Required parameter collaborator_id was null or undefined when calling getOrganizationCollaboratorProjectAccessById.",
+      );
+    }
+    // verify required parameter 'project_id' is not null or undefined
+    if (project_id === null || project_id === undefined) {
+      throw new RequiredError(
+        "project_id",
+        "Required parameter project_id was null or undefined when calling getOrganizationCollaboratorProjectAccessById.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/{collaborator_id}/project_accesses/{project_id}`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(
+          `{${"collaborator_id"}}`,
+          encodeURIComponent(String(collaborator_id)),
+        )
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * View the project count of a collaborator
+   * @summary View the project count of a collaborator
+   * @param {any} organization_id ID of the organization
+   * @param {any} collaborator_ids IDs of collaborators to view the project count of
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getOrganizationCollaboratorProjectAccessCounts(
+    organization_id: any,
+    collaborator_ids: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling getOrganizationCollaboratorProjectAccessCounts.",
+      );
+    }
+    // verify required parameter 'collaborator_ids' is not null or undefined
+    if (collaborator_ids === null || collaborator_ids === undefined) {
+      throw new RequiredError(
+        "collaborator_ids",
+        "Required parameter collaborator_ids was null or undefined when calling getOrganizationCollaboratorProjectAccessCounts.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/project_access_counts`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (collaborator_ids !== undefined) {
+      localVarQueryParameter["collaborator_ids"] = collaborator_ids;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * View Projects a Collaborator has access to
+   * @summary View Projects a Collaborator has access to
+   * @param {any} organization_id the ID of the organization
+   * @param {any} collaborator_id the ID of the user
+   * @param {any} [q] Search projects with names matching parameter
+   * @param {any} [sort] Which field to sort the results by
+   * @param {any} [direction] Which direction to sort the results by
+   * @param {any} [per_page] How many results to return per page
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getOrganizationCollaboratorProjects(
+    organization_id: any,
+    collaborator_id: any,
+    q?: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling getOrganizationCollaboratorProjects.",
+      );
+    }
+    // verify required parameter 'collaborator_id' is not null or undefined
+    if (collaborator_id === null || collaborator_id === undefined) {
+      throw new RequiredError(
+        "collaborator_id",
+        "Required parameter collaborator_id was null or undefined when calling getOrganizationCollaboratorProjects.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/{collaborator_id}/projects`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(
+          `{${"collaborator_id"}}`,
+          encodeURIComponent(String(collaborator_id)),
+        );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    if (sort !== undefined) {
+      localVarQueryParameter["sort"] = sort;
+    }
+
+    if (direction !== undefined) {
+      localVarQueryParameter["direction"] = direction;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Show the details of a team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getOrganizationTeam(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling getOrganizationTeam.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling getOrganizationTeam.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/teams/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Show a collaborator in a project. Requires requesting user to have access to the given project.
+   * @summary Show a collaborator in a project.
+   * @param {any} project_id the ID of the project
+   * @param {any} id the ID of the collaborator
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getProjectCollaborator(
+    project_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'project_id' is not null or undefined
+    if (project_id === null || project_id === undefined) {
+      throw new RequiredError(
+        "project_id",
+        "Required parameter project_id was null or undefined when calling getProjectCollaborator.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling getProjectCollaborator.",
+      );
+    }
+    const localVarPath = `/projects/{project_id}/collaborators/{id}`
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Invite a collaborator to your organization
+   * @param {any} organization_id the ID of your organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  inviteOrganizationCollaborator(
+    organization_id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling inviteOrganizationCollaborator.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * List all projects a collaborator has access to within an organization.
+   * @summary List project accesses for a collaborator
+   * @param {any} organization_id The ID of the organization
+   * @param {any} collaborator_id The ID of the collaborator
+   * @param {any} [per_page] Number of results per page
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationCollaboratorProjectAccesses(
+    organization_id: any,
+    collaborator_id: any,
+    per_page?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationCollaboratorProjectAccesses.",
+      );
+    }
+    // verify required parameter 'collaborator_id' is not null or undefined
+    if (collaborator_id === null || collaborator_id === undefined) {
+      throw new RequiredError(
+        "collaborator_id",
+        "Required parameter collaborator_id was null or undefined when calling listOrganizationCollaboratorProjectAccesses.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/{collaborator_id}/project_accesses`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(
+          `{${"collaborator_id"}}`,
+          encodeURIComponent(String(collaborator_id)),
+        );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary List Suggested Teams for a Collaborator
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the collaborator
+   * @param {any} [q] A partial or full team name to filter the results by
+   * @param {any} [include_is_member] Request all teams in the organization, including those that the collaborator is already on. By default only teams the collaborator is not a member of will be returned
+   * @param {any} [per_page]
+   * @param {any} [offset] token to retrieve next page of results
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationCollaboratorSuggestedTeams(
+    organization_id: any,
+    id: any,
+    q?: any,
+    include_is_member?: any,
+    per_page?: any,
+    offset?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationCollaboratorSuggestedTeams.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling listOrganizationCollaboratorSuggestedTeams.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/{id}/suggested_teams`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    if (include_is_member !== undefined) {
+      localVarQueryParameter["include_is_member"] = include_is_member;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (offset !== undefined) {
+      localVarQueryParameter["offset"] = offset;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary List Teams for a Collaborator
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the collaborator
+   * @param {any} [q] A partial or full team name to filter the results by
+   * @param {any} [per_page]
+   * @param {any} [offset] token to retrieve next page of results
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationCollaboratorTeams(
+    organization_id: any,
+    id: any,
+    q?: any,
+    per_page?: any,
+    offset?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationCollaboratorTeams.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling listOrganizationCollaboratorTeams.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators/{id}/teams`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (offset !== undefined) {
+      localVarQueryParameter["offset"] = offset;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary List all collaborators that are members of your organization
+   * @param {any} organization_id the ID of your organization
+   * @param {any} [per_page] Number of results per page
+   * @param {any} [q] Search collaborators with names or emails matching parameter
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationCollaborators(
+    organization_id: any,
+    per_page?: any,
+    q?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationCollaborators.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/collaborators`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Returns the spans for a trace at an organizational level. Access to this endpoint is restricted on the distributed traces view permission.
+   * @summary List Spans for a Trace
+   * @param {any} organization_id The ID of the Organization to which the spans belong.
+   * @param {any} trace_id The ID of the Trace to which the spans belong.
+   * @param {any} from Beginning of window to return spans from.
+   * @param {any} to End of window to return spans from.
+   * @param {any} [target_span_id] The ID of a Span within the Trace to focus on. If provided the target Span and its direct children will be returned ahead of other Spans in the Trace.
+   * @param {any} [per_page] The number of results to return per page. Defaults to 20.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationSpans(
+    organization_id: any,
+    trace_id: any,
+    from: any,
+    to: any,
+    target_span_id?: any,
+    per_page?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationSpans.",
+      );
+    }
+    // verify required parameter 'trace_id' is not null or undefined
+    if (trace_id === null || trace_id === undefined) {
+      throw new RequiredError(
+        "trace_id",
+        "Required parameter trace_id was null or undefined when calling listOrganizationSpans.",
+      );
+    }
+    // verify required parameter 'from' is not null or undefined
+    if (from === null || from === undefined) {
+      throw new RequiredError(
+        "from",
+        "Required parameter from was null or undefined when calling listOrganizationSpans.",
+      );
+    }
+    // verify required parameter 'to' is not null or undefined
+    if (to === null || to === undefined) {
+      throw new RequiredError(
+        "to",
+        "Required parameter to was null or undefined when calling listOrganizationSpans.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/traces/{trace_id}/spans`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"trace_id"}}`, encodeURIComponent(String(trace_id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (from !== undefined) {
+      localVarQueryParameter["from"] = from;
+    }
+
+    if (to !== undefined) {
+      localVarQueryParameter["to"] = to;
+    }
+
+    if (target_span_id !== undefined) {
+      localVarQueryParameter["target_span_id"] = target_span_id;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary List the Collaborators in a Team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {any} [q] A partial or full user name or email to filter the results by.
+   * @param {any} [per_page]
+   * @param {any} [offset] token to retrieve next page of results
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationTeamCollaborators(
+    organization_id: any,
+    id: any,
+    q?: any,
+    per_page?: any,
+    offset?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationTeamCollaborators.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling listOrganizationTeamCollaborators.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/teams/{id}/collaborators`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (offset !== undefined) {
+      localVarQueryParameter["offset"] = offset;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary List Project Access for a Team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {any} [q] A partial or full project name to filter the results by.
+   * @param {any} [per_page]
+   * @param {any} [offset] A token for pagination
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationTeamProjectAccesses(
+    organization_id: any,
+    id: any,
+    q?: any,
+    per_page?: any,
+    offset?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationTeamProjectAccesses.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling listOrganizationTeamProjectAccesses.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/teams/{id}/project_accesses`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (offset !== undefined) {
+      localVarQueryParameter["offset"] = offset;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary List Suggested Collaborators to Add to a Team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {any} [q] A partial or full user name or email to filter the results by.
+   * @param {any} [include_has_access] Request all collaborators in the organization, including those that are not members of the team. By default only collaborators who are not members of the team will be returned.
+   * @param {any} [per_page]
+   * @param {any} [offset] token to retrieve next page of results
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationTeamSuggestedCollaborators(
+    organization_id: any,
+    id: any,
+    q?: any,
+    include_has_access?: any,
+    per_page?: any,
+    offset?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationTeamSuggestedCollaborators.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling listOrganizationTeamSuggestedCollaborators.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/teams/{id}/suggested_collaborators`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    if (include_has_access !== undefined) {
+      localVarQueryParameter["include_has_access"] = include_has_access;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (offset !== undefined) {
+      localVarQueryParameter["offset"] = offset;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Suggest a list of projects from the organization that the team could be given access to.
+   * @summary Suggest Projects to Add to a Team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {any} [include_has_access] should projects the team already has access to be included?
+   * @param {any} [q] A partial or full project name to filter the results by.
+   * @param {any} [per_page]
+   * @param {any} [offset] token to retrieve next page of results
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationTeamSuggestedProjects(
+    organization_id: any,
+    id: any,
+    include_has_access?: any,
+    q?: any,
+    per_page?: any,
+    offset?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationTeamSuggestedProjects.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling listOrganizationTeamSuggestedProjects.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/teams/{id}/suggested_projects`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (include_has_access !== undefined) {
+      localVarQueryParameter["include_has_access"] = include_has_access;
+    }
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (offset !== undefined) {
+      localVarQueryParameter["offset"] = offset;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary List Teams from a query
+   * @param {any} organization_id ID of the organization
+   * @param {any} [q] A partial or full team name to filter the results by.
+   * @param {any} [per_page]
+   * @param {any} [offset] Token to retrieve next page of results
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listOrganizationTeams(
+    organization_id: any,
+    q?: any,
+    per_page?: any,
+    offset?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listOrganizationTeams.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/teams`.replace(
+      `{${"organization_id"}}`,
+      encodeURIComponent(String(organization_id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (q !== undefined) {
+      localVarQueryParameter["q"] = q;
+    }
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    if (offset !== undefined) {
+      localVarQueryParameter["offset"] = offset;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * List all collaborators that have access to a project.
+   * @summary List Collaborators on a Project
+   * @param {any} project_id the ID of the project
+   * @param {any} [per_page] Number of results per page
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listProjectCollaborators(
+    project_id: any,
+    per_page?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'project_id' is not null or undefined
+    if (project_id === null || project_id === undefined) {
+      throw new RequiredError(
+        "project_id",
+        "Required parameter project_id was null or undefined when calling listProjectCollaborators.",
+      );
+    }
+    const localVarPath = `/projects/{project_id}/collaborators`.replace(
+      `{${"project_id"}}`,
+      encodeURIComponent(String(project_id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (per_page !== undefined) {
+      localVarQueryParameter["per_page"] = per_page;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Creates a request to asynchronously delete events for the organization. Note that filters such as `user.email` and `user.name` use substring matching, so using the `user.id` filter will be more appropriate for deleting events for 1 specific user.
+   * @summary Create an event deletion request
+   * @param {any} organization_id ID of the organization to delete events from
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  organizationEventDataDeletions(
+    organization_id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling organizationEventDataDeletions.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/event_data_deletions`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Check the status of an event deletion request
+   * @param {any} organization_id ID of the organization of the deletion request
+   * @param {any} id ID of the deletion request
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  organizationEventDataDeletionsById(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling organizationEventDataDeletionsById.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling organizationEventDataDeletionsById.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/event_data_deletions/{id}`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Confirm an event deletion request
+   * @param {any} organization_id ID of the organization of the deletion request
+   * @param {any} id ID of the deletion request
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  organizationEventDataDeletionsConfirm(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling organizationEventDataDeletionsConfirm.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling organizationEventDataDeletionsConfirm.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/event_data_deletions/{id}/confirm`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Request event data for the given organization. This request will start an asynchronous job to collate all event data present at the time of the request and return a URL where you can download the data when the job is complete. These endpoints are intended for bulk download of events. If you want to query events, use the Events APIs instead. User data will not be included in the bulk download unless the request's `report_type` attribute is set to `gdpr`. With the `report_type` set to `gdpr` Bugsnag will only return user-related metadata.
+   * @summary Create an event data request
+   * @param {any} organization_id ID of the organization to request events for
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  organizationEventDataRequests(
+    organization_id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling organizationEventDataRequests.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/event_data_requests`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Check the status of an event data request
+   * @param {any} organization_id ID of the organization of the event data request
+   * @param {any} id ID of the event data request
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  organizationEventDataRequestsById(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling organizationEventDataRequestsById.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling organizationEventDataRequestsById.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/event_data_requests/{id}`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Regenerate an Organization's API key
+   * @param {any} id ID of the organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  revokeOrganizationApiKey(id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling revokeOrganizationApiKey.",
+      );
+    }
+    const localVarPath = `/organizations/{id}/api_key`.replace(
+      `{${"id"}}`,
+      encodeURIComponent(String(id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Deprecated. Use user-level authentication tokens instead.\\nGenerate a new data access API auth token for the organization. This token allows you to read data from and write data to Bugsnag relating to your Organization, Projects, Errors, etc. After regenerating the auth token, the prior data access API auth token will no longer be supported. Note that this key is different from the project-level notifier API key that you use to identify a project to Bugsnag when you report errors.
+   * @summary Regenerate an Organization's auth token
+   * @param {any} id ID of the organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  revokeOrganizationAuthToken(id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling revokeOrganizationAuthToken.",
+      );
+    }
+    const localVarPath = `/organizations/{id}/auth_token`.replace(
+      `{${"id"}}`,
+      encodeURIComponent(String(id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Update an Organization
+   * @param {any} id the ID of the organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  updateOrganizationById(id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling updateOrganizationById.",
+      );
+    }
+    const localVarPath = `/organizations/{id}`.replace(
+      `{${"id"}}`,
+      encodeURIComponent(String(id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Update a Collaborator's permissions
+   * @param {any} organization_id the ID of your organization
+   * @param {any} id the ID of the collaborator to update
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  updateOrganizationCollaborator(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling updateOrganizationCollaborator.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling updateOrganizationCollaborator.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/collaborators/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Update a team name
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team to be deleted
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  updateOrganizationTeam(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling updateOrganizationTeam.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling updateOrganizationTeam.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/teams/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Add Project Access to a Team
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the team
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  updateOrganizationTeamProjectAccesses(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling updateOrganizationTeamProjectAccesses.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling updateOrganizationTeamProjectAccesses.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/teams/{id}/project_accesses`
+        .replace(
+          `{${"organization_id"}}`,
+          encodeURIComponent(String(organization_id)),
+        )
+        .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+});
 /**
  * ProjectsApi - fetch parameter creator
  * @export
  */
 export const ProjectsApiFetchParamCreator = (
-  configuration?: Configuration,
+  _configuration?: Configuration,
 ) => ({
   /**
    *
    * @summary Confirm an event deletion request
-   * @param {string} project_id ID of the project of the deletion request
-   * @param {string} id ID of the deletion request
+   * @param {any} project_id ID of the project of the deletion request
+   * @param {any} id ID of the deletion request
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   confirmProjectEventDataDeletion(
-    project_id: string,
-    id: string,
+    project_id: any,
+    id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -6795,15 +4372,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -6826,23 +4394,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Create a Project in an Organization
-   * @param {ProjectCreateRequest} body
-   * @param {string} organization_id ID of the organization
+   * @param {any} organization_id ID of the organization
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   createOrganizationProject(
-    body: ProjectCreateRequest,
-    organization_id: string,
+    organization_id: any,
     options: any = {},
   ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling createOrganizationProject.",
-      );
-    }
     // verify required parameter 'organization_id' is not null or undefined
     if (organization_id === null || organization_id === undefined) {
       throw new RequiredError(
@@ -6859,17 +4418,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -6883,12 +4431,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ProjectCreateRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -6898,23 +4440,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * Creates a request to asynchronously delete events for the project. Note that filters such as `user.email` and `user.name` use substring matching, so using the `user.id` filter will be more appropriate for deleting events for 1 specific user.
    * @summary Create an event deletion request
-   * @param {ProjectIdEventDataDeletionsBody} body
-   * @param {string} project_id ID of the project to delete events from
+   * @param {any} project_id ID of the project to delete events from
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   createProjectEventDataDeletion(
-    body: ProjectIdEventDataDeletionsBody,
-    project_id: string,
+    project_id: any,
     options: any = {},
   ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling createProjectEventDataDeletion.",
-      );
-    }
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -6931,17 +4464,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -6955,12 +4477,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ProjectIdEventDataDeletionsBody" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -6970,23 +4486,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * Request event data for the given project. This request will start an asynchronous job to collate all event data present at the time of the request and return a URL where you can download the data when the job is complete. These endpoints are intended for bulk download of events. If you want to query events, use the Events APIs instead. User data will not be included in the bulk download unless the request's `report_type` attribute is set to `gdpr`. With the `report_type` set to `gdpr` Bugsnag will only return user-related metadata.
    * @summary Create an event data request
-   * @param {ProjectIdEventDataRequestsBody} body
-   * @param {string} project_id ID of the project to request events for
+   * @param {any} project_id ID of the project to request events for
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  createProjectEventDataRequest(
-    body: ProjectIdEventDataRequestsBody,
-    project_id: string,
-    options: any = {},
-  ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling createProjectEventDataRequest.",
-      );
-    }
+  createProjectEventDataRequest(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -7003,17 +4507,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -7027,12 +4520,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ProjectIdEventDataRequestsBody" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -7042,23 +4529,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Create a custom Event Field
-   * @param {EventFieldCreateRequest} body
-   * @param {string} project_id ID of the Project
+   * @param {any} project_id ID of the Project
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  createProjectEventField(
-    body: EventFieldCreateRequest,
-    project_id: string,
-    options: any = {},
-  ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling createProjectEventField.",
-      );
-    }
+  createProjectEventField(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -7075,17 +4550,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -7099,12 +4563,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"EventFieldCreateRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -7114,23 +4572,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Star a Feature Flag
-   * @param {ProjectIdStarredFeatureFlagsBody} body
-   * @param {string} project_id ID of the Project.
+   * @param {any} project_id ID of the Project.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  createUserStarredFeatureFlag(
-    body: ProjectIdStarredFeatureFlagsBody,
-    project_id: string,
-    options: any = {},
-  ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling createUserStarredFeatureFlag.",
-      );
-    }
+  createUserStarredFeatureFlag(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -7148,17 +4594,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -7172,12 +4607,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ProjectIdStarredFeatureFlagsBody" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -7187,11 +4616,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Delete a Project
-   * @param {string} project_id ID of the project
+   * @param {any} project_id ID of the project
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  deleteProject(project_id: string, options: any = {}): FetchArgs {
+  deleteProject(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -7207,15 +4636,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -7239,14 +4659,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Delete a custom Event Field
-   * @param {string} project_id ID of the Project
-   * @param {string} display_id human friendly ID for the EventField
+   * @param {any} project_id ID of the Project
+   * @param {any} display_id human friendly ID for the EventField
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   deleteProjectEventFieldByDisplayId(
-    project_id: string,
-    display_id: string,
+    project_id: any,
+    display_id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -7271,15 +4691,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -7302,14 +4713,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Delete a Feature Flag
-   * @param {string} project_id ID of the Project.
-   * @param {string} id ID of the Feature Flag to unstar.
+   * @param {any} project_id ID of the Project.
+   * @param {any} id ID of the Feature Flag to unstar.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   deleteProjectFeatureFlag(
-    project_id: string,
-    id: string,
+    project_id: any,
+    id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -7334,15 +4745,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -7365,14 +4767,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Unstar a Feature Flag
-   * @param {string} project_id ID of the Project.
-   * @param {string} id ID of the Feature Flag to unstar.
+   * @param {any} project_id ID of the Project.
+   * @param {any} id ID of the Feature Flag to unstar.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   deleteUserProjectStarredFeatureFlag(
-    project_id: string,
-    id: string,
+    project_id: any,
+    id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -7398,15 +4800,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -7429,20 +4822,20 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * Returns a list of projects for the given organization.
    * @summary List an Organization's Projects
-   * @param {string} organization_id the ID of the organization
-   * @param {string} [q] Search projects with names matching parameter
-   * @param {string} [sort] Which field to sort the results by
-   * @param {string} [direction] Which direction to sort the results by. Defaults to &#x60;desc&#x60; for all sorts except &#x60;favorite&#x60;. Defaults to &#x60;asc&#x60; if sorting by &#x60;favorite&#x60; (cannot sort &#x60;favorite&#x60;s &#x60;desc&#x60;).
-   * @param {number} [per_page] How many results to return per page
+   * @param {any} organization_id the ID of the organization
+   * @param {any} [q] Search projects with names matching parameter
+   * @param {any} [sort] Which field to sort the results by
+   * @param {any} [direction] Which direction to sort the results by. Defaults to &#x60;desc&#x60; for all sorts except &#x60;favorite&#x60;. Defaults to &#x60;asc&#x60; if sorting by &#x60;favorite&#x60; (cannot sort &#x60;favorite&#x60;s &#x60;desc&#x60;).
+   * @param {any} [per_page] How many results to return per page
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getOrganizationProjects(
-    organization_id: string,
-    q?: string,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
+    organization_id: any,
+    q?: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'organization_id' is not null or undefined
@@ -7460,15 +4853,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (q !== undefined) {
       localVarQueryParameter["q"] = q;
@@ -7508,11 +4892,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary View a Project
-   * @param {string} project_id ID of the project
+   * @param {any} project_id ID of the project
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  getProject(project_id: string, options: any = {}): FetchArgs {
+  getProject(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -7528,15 +4912,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -7560,14 +4935,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Check the status of an event deletion request
-   * @param {string} project_id ID of the project of the deletion request
-   * @param {string} id ID of the deletion request
+   * @param {any} project_id ID of the project of the deletion request
+   * @param {any} id ID of the deletion request
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectEventDataDeletionById(
-    project_id: string,
-    id: string,
+    project_id: any,
+    id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -7592,15 +4967,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -7623,14 +4989,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Check the status of an event data request
-   * @param {string} project_id ID of the project of the event data request
-   * @param {string} id ID of the event data request
+   * @param {any} project_id ID of the project of the event data request
+   * @param {any} id ID of the event data request
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectEventDataRequestById(
-    project_id: string,
-    id: string,
+    project_id: any,
+    id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -7655,15 +5021,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -7686,18 +5043,18 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Get a Feature Flag
-   * @param {string} id ID of the FeatureFlag.
-   * @param {string} project_id ID of the Project.
-   * @param {string} release_stage_name Release stage name to get the feature flags for.
-   * @param {boolean} [include_variant_summary] Whether to include a summary of the Variants for the Feature Flag.
+   * @param {any} id ID of the FeatureFlag.
+   * @param {any} project_id ID of the Project.
+   * @param {any} release_stage_name Release stage name to get the feature flags for.
+   * @param {any} [include_variant_summary] Whether to include a summary of the Variants for the Feature Flag.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectFeatureFlag(
-    id: string,
-    project_id: string,
-    release_stage_name: string,
-    include_variant_summary?: boolean,
+    id: any,
+    project_id: any,
+    release_stage_name: any,
+    include_variant_summary?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'id' is not null or undefined
@@ -7728,15 +5085,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (release_stage_name !== undefined) {
       localVarQueryParameter["release_stage_name"] = release_stage_name;
@@ -7769,16 +5117,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Get a Feature Flag's Error Overview
-   * @param {string} id ID of the FeatureFlag.
-   * @param {string} project_id ID of the Project.
-   * @param {string} release_stage_name Release stage name to get the feature flags for.
+   * @param {any} id ID of the FeatureFlag.
+   * @param {any} project_id ID of the Project.
+   * @param {any} release_stage_name Release stage name to get the feature flags for.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectFeatureFlagErrorOverview(
-    id: string,
-    project_id: string,
-    release_stage_name: string,
+    id: any,
+    project_id: any,
+    release_stage_name: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'id' is not null or undefined
@@ -7811,15 +5159,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (release_stage_name !== undefined) {
       localVarQueryParameter["release_stage_name"] = release_stage_name;
     }
@@ -7846,20 +5185,20 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Variants on a Feature Flag by ID
-   * @param {string} id ID of the feature flag.
-   * @param {string} project_id ID of the project.
-   * @param {string} [release_stage_name] Release stage name to get the variants for.
-   * @param {string} [q] Search for feature flags with a name matching this query parameter. Supports case-insensitive substring matching.
-   * @param {number} [per_page] How many results to return per page.
+   * @param {any} id ID of the feature flag.
+   * @param {any} project_id ID of the project.
+   * @param {any} [release_stage_name] Release stage name to get the variants for.
+   * @param {any} [q] Search for feature flags with a name matching this query parameter. Supports case-insensitive substring matching.
+   * @param {any} [per_page] How many results to return per page.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectFeatureFlagVariants(
-    id: string,
-    project_id: string,
-    release_stage_name?: string,
-    q?: string,
-    per_page?: number,
+    id: any,
+    project_id: any,
+    release_stage_name?: any,
+    q?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'id' is not null or undefined
@@ -7883,15 +5222,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (release_stage_name !== undefined) {
       localVarQueryParameter["release_stage_name"] = release_stage_name;
@@ -7927,20 +5257,20 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Variants on a Feature Flag by name
-   * @param {string} name Name of the feature flag, case-sensitive and with no substring matching.
-   * @param {string} project_id ID of the project.
-   * @param {string} [release_stage_name] Release stage name to get the variants for.
-   * @param {string} [q] Search for feature flag variants with a name matching this query parameter. Supports case-insensitive substring matching.
-   * @param {number} [per_page] How many results to return per page.
+   * @param {any} name Name of the feature flag, case-sensitive and with no substring matching.
+   * @param {any} project_id ID of the project.
+   * @param {any} [release_stage_name] Release stage name to get the variants for.
+   * @param {any} [q] Search for feature flag variants with a name matching this query parameter. Supports case-insensitive substring matching.
+   * @param {any} [per_page] How many results to return per page.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectFeatureFlagVariantsByName(
-    name: string,
-    project_id: string,
-    release_stage_name?: string,
-    q?: string,
-    per_page?: number,
+    name: any,
+    project_id: any,
+    release_stage_name?: any,
+    q?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'name' is not null or undefined
@@ -7965,15 +5295,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (release_stage_name !== undefined) {
       localVarQueryParameter["release_stage_name"] = release_stage_name;
@@ -8009,18 +5330,18 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Get a Feature Flag Variant's Error Overview
-   * @param {string} id ID of the FeatureFlag.
-   * @param {string} project_id ID of the Project.
-   * @param {Array<string>} variant_ids IDs for the FeatureFlag variants.
-   * @param {string} release_stage_name Release stage name to get the feature flags for.
+   * @param {any} id ID of the FeatureFlag.
+   * @param {any} project_id ID of the Project.
+   * @param {any} variant_ids IDs for the FeatureFlag variants.
+   * @param {any} release_stage_name Release stage name to get the feature flags for.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectFeatureFlagVariantsErrorOverview(
-    id: string,
-    project_id: string,
-    variant_ids: Array<string>,
-    release_stage_name: string,
+    id: any,
+    project_id: any,
+    variant_ids: any,
+    release_stage_name: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'id' is not null or undefined
@@ -8060,16 +5381,7 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    if (variant_ids) {
+    if (variant_ids !== undefined) {
       localVarQueryParameter["variant_ids"] = variant_ids;
     }
 
@@ -8099,12 +5411,12 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List a Project's Network Grouping Ruleset
-   * @param {string} project_id The ID of the Project to retrieve the endpoints for
+   * @param {any} project_id The ID of the Project to retrieve the endpoints for
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectNetworkGroupingRuleset(
-    project_id: string,
+    project_id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8123,15 +5435,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -8155,16 +5458,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Show a Page Load Span Group by ID
-   * @param {string} project_id The ID of the Project to which the Page Load Span Group belongs.
-   * @param {string} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Page Load Span Group.
-   * @param {Array<PerformanceFilter>} [filters] The current filters that are being applied.
+   * @param {any} project_id The ID of the Project to which the Page Load Span Group belongs.
+   * @param {any} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Page Load Span Group.
+   * @param {any} [filters] The current filters that are being applied.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectPageLoadSpanGroupById(
-    project_id: string,
-    id: string,
-    filters?: Array<PerformanceFilter>,
+    project_id: any,
+    id: any,
+    filters?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8189,17 +5492,60 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+    if (filters !== undefined) {
+      localVarQueryParameter["filters"] = filters;
     }
 
-    if (filters) {
-      localVarQueryParameter["filters"] = filters;
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Retrieve the performance score for a specific project.
+   * @summary Get Performance Score Overview for Project
+   * @param {any} project_id The ID of the project to retrieve the performance score for.
+   * @param {any} [release_stage_name] The name of the release stage to filter the performance score.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getProjectPerformanceScoreOverview(
+    project_id: any,
+    release_stage_name?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'project_id' is not null or undefined
+    if (project_id === null || project_id === undefined) {
+      throw new RequiredError(
+        "project_id",
+        "Required parameter project_id was null or undefined when calling getProjectPerformanceScoreOverview.",
+      );
+    }
+    const localVarPath = `/projects/{project_id}/performance_overview`.replace(
+      `{${"project_id"}}`,
+      encodeURIComponent(String(project_id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (release_stage_name !== undefined) {
+      localVarQueryParameter["release_stage_name"] = release_stage_name;
     }
 
     localVarUrlObj.query = Object.assign(
@@ -8224,14 +5570,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary View a Release
-   * @param {string} project_id ID of the Project
-   * @param {string} release_id ID of release to view
+   * @param {any} project_id ID of the Project
+   * @param {any} release_id ID of release to view
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectReleaseById(
-    project_id: string,
-    release_id: string,
+    project_id: any,
+    release_id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8256,15 +5602,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -8287,16 +5624,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * If there are no spans in the requested group, it will show a span group with an empty `statistics` attribute.
    * @summary Show a Span Group
-   * @param {string} project_id The ID of the Project to which the Span Group belongs.
-   * @param {string} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
-   * @param {Array<PerformanceFilter>} [filters] The current filters that are being applied.
+   * @param {any} project_id The ID of the Project to which the Span Group belongs.
+   * @param {any} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
+   * @param {any} [filters] The current filters that are being applied.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectSpanGroup(
-    project_id: string,
-    id: string,
-    filters?: Array<PerformanceFilter>,
+    project_id: any,
+    id: any,
+    filters?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8321,16 +5658,7 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    if (filters) {
+    if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
@@ -8356,16 +5684,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Get a Span Group's distribution
-   * @param {string} project_id The ID of the Project to which the Span Group belongs.
-   * @param {string} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
-   * @param {Array<PerformanceFilter>} [filters] The current filters that are being applied.
+   * @param {any} project_id The ID of the Project to which the Span Group belongs.
+   * @param {any} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
+   * @param {any} [filters] The current filters that are being applied.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectSpanGroupDistribution(
-    project_id: string,
-    id: string,
-    filters?: Array<PerformanceFilter>,
+    project_id: any,
+    id: any,
+    filters?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8390,16 +5718,7 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    if (filters) {
+    if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
@@ -8425,16 +5744,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Get a Span Group's timeline
-   * @param {string} project_id The ID of the Project to which the Span Group belongs.
-   * @param {string} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
-   * @param {Array<PerformanceFilter>} [filters] The current filters that are being applied.
+   * @param {any} project_id The ID of the Project to which the Span Group belongs.
+   * @param {any} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
+   * @param {any} [filters] The current filters that are being applied.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getProjectSpanGroupTimeline(
-    project_id: string,
-    id: string,
-    filters?: Array<PerformanceFilter>,
+    project_id: any,
+    id: any,
+    filters?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8459,16 +5778,7 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    if (filters) {
+    if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
@@ -8494,11 +5804,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * Request the trend of unhandled session information (grouped by UTC day) in the last 30 days for the project's primary release stage.
    * @summary View the stability trend for a project
-   * @param {string} project_id ID of the project to retrieve stability information for
+   * @param {any} project_id ID of the project to retrieve stability information for
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  getProjectStabilityTrend(project_id: string, options: any = {}): FetchArgs {
+  getProjectStabilityTrend(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -8514,15 +5824,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -8546,11 +5847,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Retrieve a Release Group
-   * @param {string} id ID of release group to get
+   * @param {any} id ID of release group to get
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  getReleaseGroup(id: string, options: any = {}): FetchArgs {
+  getReleaseGroup(id: any, options: any = {}): FetchArgs {
     // verify required parameter 'id' is not null or undefined
     if (id === null || id === undefined) {
       throw new RequiredError(
@@ -8566,15 +5867,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -8598,16 +5890,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Get Spans for a Span Group
-   * @param {string} project_id The ID of the Project to which the spans belong.
-   * @param {string} category The name of the Span Group Category.
-   * @param {string} name The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) name of the Span Group.
+   * @param {any} project_id The ID of the Project to which the spans belong.
+   * @param {any} category The name of the Span Group Category.
+   * @param {any} name The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) name of the Span Group.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   getSpansByCategoryAndName(
-    project_id: string,
-    category: string,
-    name: string,
+    project_id: any,
+    category: any,
+    name: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8641,15 +5933,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -8672,11 +5955,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * Event fields are the fields on event resources that can be used for filtering. This includes built-in fields and any custom filters. The event fields supported vary by project type.
    * @summary List the Event Fields for a Project
-   * @param {string} project_id ID of the Project
+   * @param {any} project_id ID of the Project
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  listProjectEventFields(project_id: string, options: any = {}): FetchArgs {
+  listProjectEventFields(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -8692,15 +5975,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -8724,16 +5998,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Feature Flag Summaries for a Project
-   * @param {string} project_id ID of the Project.
-   * @param {string} [q] Search for feature flags with a name matching this query parameter. Supports case-insensitive substring matching.
-   * @param {number} [per_page] How many results to return per page.
+   * @param {any} project_id ID of the Project.
+   * @param {any} [q] Search for feature flags with a name matching this query parameter. Supports case-insensitive substring matching.
+   * @param {any} [per_page] How many results to return per page.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectFeatureFlagSummaries(
-    project_id: string,
-    q?: string,
-    per_page?: number,
+    project_id: any,
+    q?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8752,15 +6026,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (q !== undefined) {
       localVarQueryParameter["q"] = q;
@@ -8792,30 +6057,30 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Feature Flags on a Project
-   * @param {string} project_id ID of the Project.
-   * @param {string} release_stage_name Release stage name to get the feature flags for.
-   * @param {boolean} [starred_at_top] Whether to return starred Feature Flags at the top of the Feature Flags list.
-   * @param {boolean} [include_variant_summary] Whether to include a summary of the Variants for each Feature Flag.
-   * @param {string} [q] Search for feature flags with a name matching this query parameter. Supports case-insensitive substring matching.
-   * @param {string} [first_seen] Filter to Feature Flags that were first seen in the release stage within the specified time frame.
-   * @param {boolean} [include_inactive] Whether to include inactive Feature Flags.
-   * @param {string} [sort] Which field to sort on.
-   * @param {string} [direction] Which direction to sort the results by.
-   * @param {number} [per_page] How many results to return per page.
+   * @param {any} project_id ID of the Project.
+   * @param {any} release_stage_name Release stage name to get the feature flags for.
+   * @param {any} [starred_at_top] Whether to return starred Feature Flags at the top of the Feature Flags list.
+   * @param {any} [include_variant_summary] Whether to include a summary of the Variants for each Feature Flag.
+   * @param {any} [q] Search for feature flags with a name matching this query parameter. Supports case-insensitive substring matching.
+   * @param {any} [first_seen] Filter to Feature Flags that were first seen in the release stage within the specified time frame.
+   * @param {any} [include_inactive] Whether to include inactive Feature Flags.
+   * @param {any} [sort] Which field to sort on.
+   * @param {any} [direction] Which direction to sort the results by.
+   * @param {any} [per_page] How many results to return per page.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectFeatureFlags(
-    project_id: string,
-    release_stage_name: string,
-    starred_at_top?: boolean,
-    include_variant_summary?: boolean,
-    q?: string,
-    first_seen?: string,
-    include_inactive?: boolean,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
+    project_id: any,
+    release_stage_name: any,
+    starred_at_top?: any,
+    include_variant_summary?: any,
+    q?: any,
+    first_seen?: any,
+    include_inactive?: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8840,15 +6105,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (release_stage_name !== undefined) {
       localVarQueryParameter["release_stage_name"] = release_stage_name;
@@ -8909,24 +6165,24 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Page Load Span Groups
-   * @param {string} project_id The ID of the Project to which the Page Load Span Groups belong.
-   * @param {string} [sort] The field to sort the page load span groups by
-   * @param {string} [direction] The direction to sort the page load span groups by
-   * @param {number} [per_page] the number of results per page
-   * @param {number} [offset] the offset for the next page of results
-   * @param {Array<PerformanceFilter>} [filters] The current filters that are being applied.
-   * @param {boolean} [starred_only] Whether to only return Page Load Span Groups the requesting user has starred.
+   * @param {any} project_id The ID of the Project to which the Page Load Span Groups belong.
+   * @param {any} [sort] The field to sort the page load span groups by
+   * @param {any} [direction] The direction to sort the page load span groups by
+   * @param {any} [per_page] the number of results per page
+   * @param {any} [offset] the offset for the next page of results
+   * @param {any} [filters] The current filters that are being applied.
+   * @param {any} [starred_only] Whether to only return Page Load Span Groups the requesting user has starred.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectPageLoadSpanGroups(
-    project_id: string,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
-    offset?: number,
-    filters?: Array<PerformanceFilter>,
-    starred_only?: boolean,
+    project_id: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
+    offset?: any,
+    filters?: any,
+    starred_only?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -8945,15 +6201,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (sort !== undefined) {
       localVarQueryParameter["sort"] = sort;
     }
@@ -8970,7 +6217,7 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["offset"] = offset;
     }
 
-    if (filters) {
+    if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
@@ -9000,22 +6247,22 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Release Groups on a Project
-   * @param {string} project_id ID of the project
-   * @param {string} release_stage_name name of release stage to list release groups for
-   * @param {boolean} [top_only] return only the top release groups (default false)
-   * @param {boolean} [visible_only] return only visible release groups (default false)
-   * @param {number} [per_page] how many results to return per page
-   * @param {string} [page_token] value from the next relation in the Link response header to obtain the next page of results
+   * @param {any} project_id ID of the project
+   * @param {any} release_stage_name name of release stage to list release groups for
+   * @param {any} [top_only] return only the top release groups (default false)
+   * @param {any} [visible_only] return only visible release groups (default false)
+   * @param {any} [per_page] how many results to return per page
+   * @param {any} [page_token] value from the next relation in the Link response header to obtain the next page of results
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectReleaseGroups(
-    project_id: string,
-    release_stage_name: string,
-    top_only?: boolean,
-    visible_only?: boolean,
-    per_page?: number,
-    page_token?: string,
+    project_id: any,
+    release_stage_name: any,
+    top_only?: any,
+    visible_only?: any,
+    per_page?: any,
+    page_token?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -9040,15 +6287,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (release_stage_name !== undefined) {
       localVarQueryParameter["release_stage_name"] = release_stage_name;
@@ -9092,22 +6330,22 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * A release models a particular application version running in a particular release stage. In the case of mobile projects, a release is also associated with a version code or bundle version. To learn more, see the following resources on the [releases dashboard](https://docs.bugsnag.com/product/releases/releases-dashboard) and [build tool integrations](https://docs.bugsnag.com/build-integrations/).
    * @summary List Releases on a Project
-   * @param {string} project_id ID of the Project
-   * @param {string} [release_stage] release stage to filter by
-   * @param {string} [base] date and time (in ISO 8601 format) to search for releases before
-   * @param {string} [sort] How to sort the results
-   * @param {number} [offset] The pagination offset
-   * @param {number} [per_page] How many results (between 1 and 10) to return per page
+   * @param {any} project_id ID of the Project
+   * @param {any} [release_stage] release stage to filter by
+   * @param {any} [base] date and time (in ISO 8601 format) to search for releases before
+   * @param {any} [sort] How to sort the results
+   * @param {any} [offset] The pagination offset
+   * @param {any} [per_page] How many results (between 1 and 10) to return per page
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectReleases(
-    project_id: string,
-    release_stage?: string,
-    base?: string,
-    sort?: string,
-    offset?: number,
-    per_page?: number,
+    project_id: any,
+    release_stage?: any,
+    base?: any,
+    sort?: any,
+    offset?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -9125,15 +6363,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (release_stage !== undefined) {
       localVarQueryParameter["release_stage"] = release_stage;
@@ -9177,14 +6406,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Performance Targets for a Span Group by ID
-   * @param {string} project_id The ID of the Project to which the span group belongs.
-   * @param {string} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
+   * @param {any} project_id The ID of the Project to which the span group belongs.
+   * @param {any} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectSpanGroupPerformanceTargets(
-    project_id: string,
-    id: string,
+    project_id: any,
+    id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -9210,15 +6439,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -9241,18 +6461,18 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Span Group Summaries for a Project
-   * @param {string} project_id The ID of the Project to which the Span Groups belong.
-   * @param {number} [per_page] the number of results per page
-   * @param {number} [offset] the offset for the next page of results
-   * @param {Array<PerformanceFilter>} [filters] The current filters that are being applied.
+   * @param {any} project_id The ID of the Project to which the Span Groups belong.
+   * @param {any} [per_page] the number of results per page
+   * @param {any} [offset] the offset for the next page of results
+   * @param {any} [filters] The current filters that are being applied.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectSpanGroupSummaries(
-    project_id: string,
-    per_page?: number,
-    offset?: number,
-    filters?: Array<PerformanceFilter>,
+    project_id: any,
+    per_page?: any,
+    offset?: any,
+    filters?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -9271,15 +6491,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (per_page !== undefined) {
       localVarQueryParameter["per_page"] = per_page;
     }
@@ -9288,7 +6499,7 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["offset"] = offset;
     }
 
-    if (filters) {
+    if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
@@ -9314,24 +6525,24 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * If there are no Span Groups, it returns an empty array.
    * @summary List Span Groups on a Project
-   * @param {string} project_id The ID of the Project to which the Span Groups belong.
-   * @param {string} [sort] The field to sort the span groups by
-   * @param {string} [direction] The direction to sort the span groups by
-   * @param {number} [per_page] the number of results per page
-   * @param {number} [offset] the offset for the next page of results
-   * @param {Array<PerformanceFilter>} [filters] The current filters that are being applied.
-   * @param {boolean} [starred_only] Whether to only return Span Groups the requesting user has starred.
+   * @param {any} project_id The ID of the Project to which the Span Groups belong.
+   * @param {any} [sort] The field to sort the span groups by
+   * @param {any} [direction] The direction to sort the span groups by
+   * @param {any} [per_page] the number of results per page
+   * @param {any} [offset] the offset for the next page of results
+   * @param {any} [filters] The current filters that are being applied.
+   * @param {any} [starred_only] Whether to only return Span Groups the requesting user has starred.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectSpanGroups(
-    project_id: string,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
-    offset?: number,
-    filters?: Array<PerformanceFilter>,
-    starred_only?: boolean,
+    project_id: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
+    offset?: any,
+    filters?: any,
+    starred_only?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -9350,15 +6561,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
     if (sort !== undefined) {
       localVarQueryParameter["sort"] = sort;
     }
@@ -9375,7 +6577,7 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["offset"] = offset;
     }
 
-    if (filters) {
+    if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
@@ -9405,18 +6607,18 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * List the names and properties of the requesting user's starred Span Groups for a project and optionally performance categories.
    * @summary List the starred Span Group descriptions
-   * @param {string} project_id The ID of the project to which the Span Groups belong.
-   * @param {Array<string>} [categories] The performance categories of the Span Groups.
-   * @param {number} [per_page] the number of results per page
-   * @param {number} [offset] the offset for the next page of results
+   * @param {any} project_id The ID of the project to which the Span Groups belong.
+   * @param {any} [categories] The performance categories of the Span Groups.
+   * @param {any} [per_page] the number of results per page
+   * @param {any} [offset] the offset for the next page of results
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listProjectStarredSpanGroups(
-    project_id: string,
-    categories?: Array<string>,
-    per_page?: number,
-    offset?: number,
+    project_id: any,
+    categories?: any,
+    per_page?: any,
+    offset?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -9435,16 +6637,7 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    if (categories) {
+    if (categories !== undefined) {
       localVarQueryParameter["categories"] = categories;
     }
 
@@ -9478,11 +6671,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * Trace fields are the fields used for filtering spans that are aggregated in span groups on a project. They include a name identifier and filter options for each field. See [Filtering](#introduction/filtering/trace-fields-and-performance-filtering) for more information.
    * @summary List the Trace Fields on a project
-   * @param {string} project_id The ID of the Project to which the Trace Field belongs.
+   * @param {any} project_id The ID of the Project to which the Trace Field belongs.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  listProjectTraceFields(project_id: string, options: any = {}): FetchArgs {
+  listProjectTraceFields(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -9498,15 +6691,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -9530,16 +6714,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Releases on a Release Group
-   * @param {string} release_group_id ID of release group to list releases for
-   * @param {number} [per_page] how many results to return per page
-   * @param {string} [page_token] value from the next relation in the Link response header to obtain the next page of results
+   * @param {any} release_group_id ID of release group to list releases for
+   * @param {any} [per_page] how many results to return per page
+   * @param {any} [page_token] value from the next relation in the Link response header to obtain the next page of results
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listReleaseGroupReleases(
-    release_group_id: string,
-    per_page?: number,
-    page_token?: string,
+    release_group_id: any,
+    per_page?: any,
+    page_token?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'release_group_id' is not null or undefined
@@ -9557,15 +6741,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (per_page !== undefined) {
       localVarQueryParameter["per_page"] = per_page;
@@ -9597,22 +6772,22 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Spans for a Span Group by ID
-   * @param {string} project_id The ID of the Project to which the spans belong.
-   * @param {string} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
-   * @param {Array<PerformanceFilter>} [filters] The current filters that are being applied.
-   * @param {string} [sort] The field to sort the results by.
-   * @param {string} [direction] The direction to sort the results by.
-   * @param {number} [per_page] The number of results to return per page. Defaults to 20.
+   * @param {any} project_id The ID of the Project to which the spans belong.
+   * @param {any} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
+   * @param {any} [filters] The current filters that are being applied.
+   * @param {any} [sort] The field to sort the results by.
+   * @param {any} [direction] The direction to sort the results by.
+   * @param {any} [per_page] The number of results to return per page. Defaults to 20.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listSpansBySpanGroupId(
-    project_id: string,
-    id: string,
-    filters?: Array<PerformanceFilter>,
-    sort?: string,
-    direction?: string,
-    per_page?: number,
+    project_id: any,
+    id: any,
+    filters?: any,
+    sort?: any,
+    direction?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -9637,16 +6812,7 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    if (filters) {
+    if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
@@ -9684,22 +6850,22 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary List Spans for a Trace
-   * @param {string} project_id The ID of the Project to which the spans belong.
-   * @param {string} trace_id The ID of the Trace to which the spans belong.
-   * @param {string} from Beginning of window to return spans from.
-   * @param {string} to End of window to return spans from.
-   * @param {string} [target_span_id] The ID of a Span within the Trace to focus on. If provided the target Span and its direct children will be returned ahead of other Spans in the Trace.
-   * @param {number} [per_page] The number of results to return per page. Defaults to 20.
+   * @param {any} project_id The ID of the Project to which the spans belong.
+   * @param {any} trace_id The ID of the Trace to which the spans belong.
+   * @param {any} from Beginning of window to return spans from.
+   * @param {any} to End of window to return spans from.
+   * @param {any} [target_span_id] The ID of a Span within the Trace to focus on. If provided the target Span and its direct children will be returned ahead of other Spans in the Trace.
+   * @param {any} [per_page] The number of results to return per page. Defaults to 20.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   listSpansByTraceId(
-    project_id: string,
-    trace_id: string,
-    from: string,
-    to: string,
-    target_span_id?: string,
-    per_page?: number,
+    project_id: any,
+    trace_id: any,
+    from: any,
+    to: any,
+    target_span_id?: any,
+    per_page?: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -9737,15 +6903,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarRequestOptions = Object.assign({ method: "GET" }, options);
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
-
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
 
     if (from !== undefined) {
       localVarQueryParameter["from"] = from;
@@ -9785,11 +6942,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * Generate a new notifier API key for a project. This API key is used to configure the [notifier library](https://docs.bugsnag.com/platforms/) being used to report errors in the project. After regenerating a Project's notifier API key, your platform-specific notifier will need its configuration updated to use the new key. The previous key will not be supported. Note that a Project's notifier API key is different from both the Organization-level and User-level Data Access API auth tokens.
    * @summary Regenerate a Project's notifier API key
-   * @param {string} project_id ID of the project
+   * @param {any} project_id ID of the project
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  regenerateProjectApiKey(project_id: string, options: any = {}): FetchArgs {
+  regenerateProjectApiKey(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -9806,14 +6963,48 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Generate a new upload API key for a project. This API key is used to authenticate file upload requests (source maps, proguard files, etc.). After regenerating a Project's upload API key, your upload scripts will need to be updated to use the new key. The previous key will not be supported. Note that a Project's upload API key is different from the notifier API key, Organization-level API key, and User-level Data Access API auth tokens.
+   * @summary Regenerate a Project's upload API key
+   * @param {any} project_id ID of the project
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  regenerateProjectUploadApiKey(project_id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'project_id' is not null or undefined
+    if (project_id === null || project_id === undefined) {
+      throw new RequiredError(
+        "project_id",
+        "Required parameter project_id was null or undefined when calling regenerateProjectUploadApiKey.",
+      );
     }
+    const localVarPath = `/projects/{project_id}/upload_api_key`.replace(
+      `{${"project_id"}}`,
+      encodeURIComponent(String(project_id)),
+    );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -9837,23 +7028,14 @@ export const ProjectsApiFetchParamCreator = (
   /**
    * Replaces all the ErrorAssignmentRules on the project with the rules supplied rules. If no rules are supplied, all rules on the project are deleted.
    * @summary Replace the ErrorAssignmentRules on a project
-   * @param {ErrorAssignmentRulesReplaceRequest} body
-   * @param {string} project_id The ID of the Project to which the ErrorAssignmentRule belongs.
+   * @param {any} project_id The ID of the Project to which the ErrorAssignmentRule belongs.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   replaceProjectErrorAssignmentRules(
-    body: ErrorAssignmentRulesReplaceRequest,
-    project_id: string,
+    project_id: any,
     options: any = {},
   ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling replaceProjectErrorAssignmentRules.",
-      );
-    }
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -9871,17 +7053,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -9895,12 +7066,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ErrorAssignmentRulesReplaceRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -9910,23 +7075,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Update a Project
-   * @param {ProjectUpdateRequest} body
-   * @param {string} project_id ID of the project
+   * @param {any} project_id ID of the project
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  updateProject(
-    body: ProjectUpdateRequest,
-    project_id: string,
-    options: any = {},
-  ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling updateProject.",
-      );
-    }
+  updateProject(project_id: any, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -9943,17 +7096,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -9967,12 +7109,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ProjectUpdateRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -9982,25 +7118,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Update a custom Event Field
-   * @param {EventFieldCreateRequest} body
-   * @param {string} project_id ID of the Project
-   * @param {string} display_id human friendly ID for the EventField
+   * @param {any} project_id ID of the Project
+   * @param {any} display_id human friendly ID for the EventField
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   updateProjectEventFieldByDisplayId(
-    body: EventFieldCreateRequest,
-    project_id: string,
-    display_id: string,
+    project_id: any,
+    display_id: any,
     options: any = {},
   ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling updateProjectEventFieldByDisplayId.",
-      );
-    }
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -10023,17 +7150,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -10047,12 +7163,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"EventFieldCreateRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -10062,14 +7172,12 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Update a Project's Network Grouping Ruleset
-   * @param {string} project_id The ID of the Project to retrieve the endpoints for
-   * @param {NetworkGroupingRulesetRequest} [body]
+   * @param {any} project_id The ID of the Project to retrieve the endpoints for
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   updateProjectNetworkGroupingRuleset(
-    project_id: string,
-    body?: NetworkGroupingRulesetRequest,
+    project_id: any,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
@@ -10089,17 +7197,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -10113,12 +7210,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"NetworkGroupingRulesetRequest" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -10128,25 +7219,16 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Update Span Group
-   * @param {SpanGroupsIdBody} body
-   * @param {string} project_id The ID of the Project to which the Span Group belongs.
-   * @param {string} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
+   * @param {any} project_id The ID of the Project to which the Span Group belongs.
+   * @param {any} id The [URL-encoded](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) ID of the Span Group.
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
   updateProjectSpanGroup(
-    body: SpanGroupsIdBody,
-    project_id: string,
-    id: string,
+    project_id: any,
+    id: any,
     options: any = {},
   ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling updateProjectSpanGroup.",
-      );
-    }
     // verify required parameter 'project_id' is not null or undefined
     if (project_id === null || project_id === undefined) {
       throw new RequiredError(
@@ -10169,17 +7251,6 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
-
-    localVarHeaderParameter["Content-Type"] = "application/json";
-
     localVarUrlObj.query = Object.assign(
       {},
       localVarUrlObj.query,
@@ -10193,12 +7264,6 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"SpanGroupsIdBody" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
 
     return {
       url: url.format(localVarUrlObj),
@@ -10208,23 +7273,11 @@ export const ProjectsApiFetchParamCreator = (
   /**
    *
    * @summary Update a Release Group
-   * @param {ReleaseGroupsIdBody} body
-   * @param {string} id ID of release group to update
+   * @param {any} id ID of release group to update
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  updateReleaseGroup(
-    body: ReleaseGroupsIdBody,
-    id: string,
-    options: any = {},
-  ): FetchArgs {
-    // verify required parameter 'body' is not null or undefined
-    if (body === null || body === undefined) {
-      throw new RequiredError(
-        "body",
-        "Required parameter body was null or undefined when calling updateReleaseGroup.",
-      );
-    }
+  updateReleaseGroup(id: any, options: any = {}): FetchArgs {
     // verify required parameter 'id' is not null or undefined
     if (id === null || id === undefined) {
       throw new RequiredError(
@@ -10241,16 +7294,55 @@ export const ProjectsApiFetchParamCreator = (
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
-    // authentication tokenAuth required
-    if (configuration && configuration.apiKey) {
-      const localVarApiKeyValue =
-        typeof configuration.apiKey === "function"
-          ? configuration.apiKey("Authorization")
-          : configuration.apiKey;
-      localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-    }
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
 
-    localVarHeaderParameter["Content-Type"] = "application/json";
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+});
+/**
+ * SCIMApi - fetch parameter creator
+ * @export
+ */
+export const SCIMApiFetchParamCreator = (_configuration?: Configuration) => ({
+  /**
+   *
+   * @summary Create a Collaborator
+   * @param {any} organization_id ID of the organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  createScimCollaborator(organization_id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling createScimCollaborator.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/scim/v2/Users`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
 
     localVarUrlObj.query = Object.assign(
       {},
@@ -10265,12 +7357,595 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter,
       options.headers,
     );
-    const needsSerialization =
-      <any>"ReleaseGroupsIdBody" !== "string" ||
-      localVarRequestOptions.headers["Content-Type"] === "application/json";
-    localVarRequestOptions.body = needsSerialization
-      ? JSON.stringify(body || {})
-      : body || "";
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * This endpoint is used to add a group to your BugSnag organization.  Collaborators are not added when creating a group, so these must be added using the Update Group on an Organization endpoint after a group is created.
+   * @summary Create Group on an Organization
+   * @param {any} organization_id ID of the organization
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  createScimGroup(organization_id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling createScimGroup.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/scim/v2/Groups`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Remove a Collaborator
+   * @param {any} organization_id the ID of your organization
+   * @param {any} id the ID of the collaborator to update
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteScimCollaborator(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling deleteScimCollaborator.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling deleteScimCollaborator.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/scim/v2/Users/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Delete Group on an Organization
+   * @param {any} organization_id ID of the organization
+   * @param {any} id ID of the group
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  deleteScimGroup(organization_id: any, id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling deleteScimGroup.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling deleteScimGroup.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/scim/v2/Groups/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Show a Collaborator on an Organization
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the collaborator
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getScimCollaborator(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling getScimCollaborator.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling getScimCollaborator.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/scim/v2/Users/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   *
+   * @summary Show Group on an Organization
+   * @param {any} organization_id ID of the organization
+   * @param {any} id the ID of the Group
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  getScimGroup(organization_id: any, id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling getScimGroup.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling getScimGroup.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/scim/v2/Groups/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Return the list of users for the organization.  The request may be filtered by `userName` equality by passing a filter of the form `userName eq \"james@example.com\"`. No other filtering is supported.  Results will be paginated. Further pages may be requested by setting `startIndex` and `itemsPerPage`.
+   * @summary List Collaborators on an Organization
+   * @param {any} organization_id ID of the organization
+   * @param {any} startIndex the pagination offset, 1-indexed, defaults to 1
+   * @param {any} itemsPerPage the number of results returned in this response, defaults to 30, maximum of 100
+   * @param {any} [filter] filter the results by userName
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listScimCollaborators(
+    organization_id: any,
+    startIndex: any,
+    itemsPerPage: any,
+    filter?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listScimCollaborators.",
+      );
+    }
+    // verify required parameter 'startIndex' is not null or undefined
+    if (startIndex === null || startIndex === undefined) {
+      throw new RequiredError(
+        "startIndex",
+        "Required parameter startIndex was null or undefined when calling listScimCollaborators.",
+      );
+    }
+    // verify required parameter 'itemsPerPage' is not null or undefined
+    if (itemsPerPage === null || itemsPerPage === undefined) {
+      throw new RequiredError(
+        "itemsPerPage",
+        "Required parameter itemsPerPage was null or undefined when calling listScimCollaborators.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/scim/v2/Users`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (filter !== undefined) {
+      localVarQueryParameter["filter"] = filter;
+    }
+
+    if (startIndex !== undefined) {
+      localVarQueryParameter["startIndex"] = startIndex;
+    }
+
+    if (itemsPerPage !== undefined) {
+      localVarQueryParameter["itemsPerPage"] = itemsPerPage;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Return the list of groups for an organization.  The request may be filtered by `displayName` equality by passing a filter of the form `displayName eq \"Development Group\"`. No other filtering is supported.  Results will be paginated. Further pages may be requested by setting `startIndex` and `itemsPerPage`.
+   * @summary List Groups on an Organization
+   * @param {any} organization_id ID of the organization
+   * @param {any} startIndex the pagination offset, 1-indexed, defaults to 1
+   * @param {any} itemsPerPage the number of results returned in this response, defaults to 30, maximum of 100
+   * @param {any} [filter] filter the results by userName
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  listScimGroups(
+    organization_id: any,
+    startIndex: any,
+    itemsPerPage: any,
+    filter?: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling listScimGroups.",
+      );
+    }
+    // verify required parameter 'startIndex' is not null or undefined
+    if (startIndex === null || startIndex === undefined) {
+      throw new RequiredError(
+        "startIndex",
+        "Required parameter startIndex was null or undefined when calling listScimGroups.",
+      );
+    }
+    // verify required parameter 'itemsPerPage' is not null or undefined
+    if (itemsPerPage === null || itemsPerPage === undefined) {
+      throw new RequiredError(
+        "itemsPerPage",
+        "Required parameter itemsPerPage was null or undefined when calling listScimGroups.",
+      );
+    }
+    const localVarPath =
+      `/organizations/{organization_id}/scim/v2/Groups`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    if (filter !== undefined) {
+      localVarQueryParameter["filter"] = filter;
+    }
+
+    if (startIndex !== undefined) {
+      localVarQueryParameter["startIndex"] = startIndex;
+    }
+
+    if (itemsPerPage !== undefined) {
+      localVarQueryParameter["itemsPerPage"] = itemsPerPage;
+    }
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * As with the update method above, the `active` flag for a previously added collaborator can be set to remove or re-add them to an organization.  Setting the `active` flag is the only operation we support for this method.
+   * @summary Add or Remove Previously Added Collaborators
+   * @param {any} organization_id the ID of your organization
+   * @param {any} id the ID of the collaborator
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  patchScimCollaborator(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling patchScimCollaborator.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling patchScimCollaborator.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/scim/v2/Users/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * Update the basic details of a collaborator. This includes the email address and name of the collaborator.  Optionally, a collaborator can be added or removed from the organization. - If the `active` flag is set to `false` for an existing collaborator then they are removed from the organization. - If the `active` flag is set to `true` for a user who is not currently a collaborator, but for whom the ID is known, then they are added to the organization.  This approach is used by Okta and OneLogin to remove and re-add users to a Bugsnag organization without removing them entirely from their records.
+   * @summary Update a Collaborator
+   * @param {any} organization_id the ID of your organization
+   * @param {any} id the ID of the collaborator
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  updateScimCollaborator(
+    organization_id: any,
+    id: any,
+    options: any = {},
+  ): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling updateScimCollaborator.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling updateScimCollaborator.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/scim/v2/Users/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "PUT" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
+
+    return {
+      url: url.format(localVarUrlObj),
+      options: localVarRequestOptions,
+    };
+  },
+  /**
+   * The `value` attribute can use different formatting depending on the context. When updating a groups collaborators with the `add` or `remove` operations use an array of objects, where each objects `value` is an ID for a collaborator in the org:  ``` \"value\": [   {     \"value\": \"515fb9337c1074f6fd000001\"   },   {     \"value\": \"515fb9337c1074f6fd000002\"   } ] ```  When updating group details (i.e. the display name) with the `replace` operation use an object with the `displayName` attribute:  ``` \"value\": {   \"displayName\": \"Testing Group\" } ```  For more details see the full SCIM standard as defined in [RFC7644](https://tools.ietf.org/html/rfc7644).
+   * @summary Update Group on an Organization
+   * @param {any} organization_id ID of the organization
+   * @param {any} id ID of the group
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   */
+  updateScimGroup(organization_id: any, id: any, options: any = {}): FetchArgs {
+    // verify required parameter 'organization_id' is not null or undefined
+    if (organization_id === null || organization_id === undefined) {
+      throw new RequiredError(
+        "organization_id",
+        "Required parameter organization_id was null or undefined when calling updateScimGroup.",
+      );
+    }
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new RequiredError(
+        "id",
+        "Required parameter id was null or undefined when calling updateScimGroup.",
+      );
+    }
+    const localVarPath = `/organizations/{organization_id}/scim/v2/Groups/{id}`
+      .replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      )
+      .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+    const localVarUrlObj = url.parse(localVarPath, true);
+    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarHeaderParameter = {} as any;
+    const localVarQueryParameter = {} as any;
+
+    localVarUrlObj.query = Object.assign(
+      {},
+      localVarUrlObj.query,
+      localVarQueryParameter,
+      options.query,
+    );
+    // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+    localVarUrlObj.search = null;
+    localVarRequestOptions.headers = Object.assign(
+      {},
+      localVarHeaderParameter,
+      options.headers,
+    );
 
     return {
       url: url.format(localVarUrlObj),
