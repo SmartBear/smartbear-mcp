@@ -33,8 +33,10 @@ export class CreateTestCaseIssueLink extends Tool<ZephyrClient> {
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCaseKey } = CreateTestCaseIssueLinkParams.parse(args);
-    const body = CreateTestCaseIssueLinkBody.parse(args);
+    const parsed = CreateTestCaseIssueLinkParams.and(
+      CreateTestCaseIssueLinkBody,
+    ).parse(args);
+    const { testCaseKey, ...body } = parsed;
     const response = await this.client
       .getApiClient()
       .post(`/testcases/${testCaseKey}/links/issues`, body);
