@@ -50,8 +50,10 @@ export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
     ],
   };
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCycleIdOrKey } = CreateTestCycleWebLinkParams.parse(args);
-    const body = CreateTestCycleWebLinkBody.parse(args);
+    const parsed = CreateTestCycleWebLinkParams.and(
+      CreateTestCycleWebLinkBody,
+    ).parse(args);
+    const { testCycleIdOrKey, ...body } = parsed;
     const response = await this.client
       .getApiClient()
       .post(`/testcycles/${testCycleIdOrKey}/links/weblinks`, body);
