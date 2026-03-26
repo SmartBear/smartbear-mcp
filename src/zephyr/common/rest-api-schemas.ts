@@ -337,7 +337,7 @@ export const ListTestCases200Response = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.string().describe("The web link URL"),
                         self: zod
                           .string()
                           .url()
@@ -753,7 +753,7 @@ export const ListTestCasesCursorPaginated200Response = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.string().describe("The web link URL"),
                         self: zod
                           .string()
                           .url()
@@ -999,7 +999,7 @@ export const GetTestCase200Response = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -1241,7 +1241,7 @@ export const UpdateTestCaseBody = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -1344,7 +1344,7 @@ export const GetTestCaseLinks200Response = zod
               .string()
               .optional()
               .describe("The web link description"),
-            url: zod.string().url().describe("The web link URL"),
+            url: zod.string().describe("The web link URL"),
             self: zod
               .string()
               .url()
@@ -1430,7 +1430,7 @@ export const CreateTestCaseWebLinkParams = zod
 export const CreateTestCaseWebLinkBody = zod
   .object({
     description: zod.string().optional().describe("The web link description"),
-    url: zod.string().url().describe("The web link URL"),
+    url: zod.string().describe("The web link URL"),
   })
   .strict();
 
@@ -1757,7 +1757,7 @@ export const GetTestCaseVersion200Response = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -2440,7 +2440,7 @@ export const ListTestCycles200Response = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.string().describe("The web link URL"),
                         self: zod
                           .string()
                           .url()
@@ -2782,7 +2782,7 @@ export const GetTestCycle200Response = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -3031,7 +3031,7 @@ export const UpdateTestCycleBody = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -3174,7 +3174,7 @@ export const GetTestCycleLinks200Response = zod
               .string()
               .optional()
               .describe("The web link description"),
-            url: zod.string().url().describe("The web link URL"),
+            url: zod.string().describe("The web link URL"),
             self: zod
               .string()
               .url()
@@ -3291,7 +3291,7 @@ export const CreateTestCycleWebLinkParams = zod
 export const CreateTestCycleWebLinkBody = zod
   .object({
     description: zod.string().optional().describe("The web link description"),
-    url: zod.string().url().describe("The web link URL"),
+    url: zod.string().describe("The web link URL"),
   })
   .strict();
 
@@ -3479,7 +3479,7 @@ export const ListTestPlans200Response = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.string().describe("The web link URL"),
                         self: zod
                           .string()
                           .url()
@@ -3780,7 +3780,7 @@ export const GetTestPlan200Response = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -3904,7 +3904,7 @@ export const CreateTestPlanWebLinkParams = zod
 export const CreateTestPlanWebLinkBody = zod
   .object({
     description: zod.string().optional().describe("The web link description"),
-    url: zod.string().url().describe("The web link URL"),
+    url: zod.string().describe("The web link URL"),
   })
   .strict()
   .and(zod.unknown());

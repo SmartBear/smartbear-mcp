@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [Zephyr] Enforce strictness of Zephyr's schemas. [#383](https://github.com/SmartBear/smartbear-mcp/pull/383)
+- [Zephyr] Allow the GetTestCaseLinks tool to return invalid-format URLs. [#397](https://github.com/SmartBear/smartbear-mcp/pull/397)
 
 ## [0.15.0] - 2026-03-18
 
