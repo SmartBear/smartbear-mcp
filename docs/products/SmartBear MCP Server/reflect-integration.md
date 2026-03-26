@@ -71,39 +71,42 @@ The Reflect client provides test management, execution, and test authoring capab
 #### `list_segments`
 
 - Purpose: List reusable test step segments available in the account.
+- Parameters: Platform (`platform`), optional offset and limit for pagination (`offset`, `limit`).
 - Returns: List of segments along with relevant metadata.
 - Use case: Discover reusable steps that can help accomplish a task more efficiently.
 
 #### `connect_to_session`
 
 - Purpose: Establish a WebSocket connection to a live Reflect test recording session.
-- Parameters: sessionID (alpha-numeric string from the live session URL)
+- Parameters: Session identifier (`sessionId`).
 - Returns: Connection to an active session.
 - Use case: Enable real-time interaction while authoring or recording a test.
 
 #### `add_prompt_step`
 
 - Purpose: Add a natural language instruction as a test step.
-- Parameters: Natural language instruction.
+- Parameters: Session identifier (`sessionId`), Natural language instruction (`prompt`).
 - Returns: Result of step creation.
 - Use case: Add actions, assertions, or queries using natural language.
 
 #### `add_segment`
 
 - Purpose: Add an existing reusable segment to the current test.
-- Parameters: Segment identifier.
+- Parameters: Session identifier (`sessionId`), Segment identifier (`segmentId`).
 - Returns: Result of segment insertion.
 - Use case: Reuse predefined steps to accelerate test creation.
 
 #### `delete_previous_step`
 
 - Purpose: Undo the most recently added step or segment.
+- Parameters: Session identifier (`sessionId`).
 - Returns: Result of deletion.
 - Use case: Recover from incorrect or failed steps during test creation.
 
 #### `get_screenshot`
 
 - Purpose: Capture the current state of the application under test.
+- Parameters: Session identifier (`sessionId`).
 - Returns: Screenshot of the browser (Web) or device (Mobile).
 - Use case: Analyze UI state and inform next actions during test execution or authoring.
 
@@ -112,4 +115,4 @@ The Reflect client provides test management, execution, and test authoring capab
 ## Additional Notes
 
 - The Reflect client now includes enhanced guidance for agents on how to construct effective tests.
-- A specialized `reflect-sap-test` skill is available to provide additional instructions when creating tests for SAP applications.
+- A specialized `reflect-sap-test` prompt is available to provide additional instructions when creating tests for SAP applications.
