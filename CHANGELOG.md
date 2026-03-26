@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.16.0] - 2026-03-25
+
 ### Added
 
 - [Reflect] Added `list_segments` tool: Lists the reusable test steps in the account, and includes some relevant metadata about each segment to help the Agent understand when a segment could be used as part of accomplishing a task. [#369](https://github.com/SmartBear/smartbear-mcp/pull/369)
