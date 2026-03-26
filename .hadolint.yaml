@@ -1,0 +1,2 @@
+ignored:
+  - DL3006 # We specify the builder image as a build argument, so we ignore this issue. See the Dockerfile for more details.
