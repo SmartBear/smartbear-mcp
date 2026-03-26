@@ -1,4 +1,5 @@
-FROM node:22-alpine AS builder
+ARG BUILDER_IMAGE_NAME=node:22-alpine
+FROM $BUILDER_IMAGE_NAME AS builder
 
 # Must be entire project because `prepare` script is run during dependency installation and requires all files.
 WORKDIR /app
