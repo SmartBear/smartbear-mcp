@@ -1,4 +1,5 @@
 ARG BUILDER_IMAGE_NAME=node:22-alpine
+# hadolint ignore=DL3006 # We accept these issues, because we specify it above.
 FROM $BUILDER_IMAGE_NAME AS builder
 
 # Must be entire project because `prepare` script is run during dependency installation and requires all files.
