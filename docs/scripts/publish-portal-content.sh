@@ -687,7 +687,7 @@ function portal_product_toc_markdown_upsert() {
         portal_product_toc_markdown_post "$section_id" "$markdown_title" "$markdown_slug" "$content_order" "$parent_toc_id" "$type" "$source"
     else
         log_message $INFO "Patching markdown TOC: $section_id, $product_toc_id, $markdown_title, $markdown_slug, $content_order, $parent_toc_id"
-        portal_product_toc_markdown_patch "$section_id" "$product_toc_id" "$markdown_title" "$markdown_slug" "$content_order" "$product_toc_slug" "$parent_toc_id" "$type"
+        portal_product_toc_markdown_patch "$section_id" "$product_toc_id" "$markdown_title" "$markdown_slug" "$content_order" "$product_toc_slug" "$parent_toc_id"
     fi
 
     log_message $DEBUG "Returning document_id: $document_id"
@@ -738,7 +738,6 @@ function portal_product_toc_markdown_patch() {
     local content_order=$5
     local product_toc_slug=$6
     local parent_toc_id=$7
-    local type=$8
 
     log_message $INFO "Updating markdown TOC: $markdown_title in product $product_id with parent $parent_toc_id ..."
     if [ "$markdown_slug" == "$product_toc_slug" ]; then
@@ -750,10 +749,7 @@ function portal_product_toc_markdown_patch() {
             --data "{
                 \"title\": \"$markdown_title\",
                 \"order\": $content_order,
-                \"parentId\": \"$parent_toc_id\",
-                \"content\": {
-                    \"type\": \"$type\"
-                }
+                \"parentId\": \"$parent_toc_id\"
             }")
     else
         local response=$(curl -s --request PATCH \
@@ -764,10 +760,7 @@ function portal_product_toc_markdown_patch() {
                 \"title\": \"$markdown_title\",
                 \"slug\": \"$markdown_slug\",
                 \"order\": $content_order,
-                \"parentId\": \"$parent_toc_id\",
-                \"content\": {
-                    \"type\": \"$type\"
-                }
+                \"parentId\": \"$parent_toc_id\"
             }")
     fi
 
@@ -791,19 +784,32 @@ function portal_product_document_markdown_patch() {
     log_message $DEBUG "Enter portal_product_document_markdown_patch"
     local contents=$1
     local type=$2
+    local source=$3
 
     log_message $INFO "Updating markdown document in product $product_id for document $document_id..."
     local escaped_contents=$(jq -Rs . <<< "$contents")
 
-    local response=$(curl -s --request PATCH \
-        --url "$PORTAL_URL/documents/$document_id" \
-        --header "Authorization: Bearer $SWAGGERHUB_API_KEY" \
-        --header "Content-Type: application/json" \
-        --data "{
-            \"content\": $escaped_contents,
-            \"type\": \"$type\",
-            \"source\": \"$source\"
-        }")
+    if [ -z "$source" ] || [ "$source" = "" ]; then
+      local response=$(curl -s --request PATCH \
+          --url "$PORTAL_URL/documents/$document_id" \
+          --header "Authorization: Bearer $SWAGGERHUB_API_KEY" \
+          --header "Content-Type: application/json" \
+          --data "{
+              \"content\": $escaped_contents,
+              \"type\": \"$type\"
+          }")
+    else
+      local response=$(curl -s --request PATCH \
+          --url "$PORTAL_URL/documents/$document_id" \
+          --header "Authorization: Bearer $SWAGGERHUB_API_KEY" \
+          --header "Content-Type: application/json" \
+          --data "{
+              \"content\": $escaped_contents,
+              \"type\": \"$type\",
+              \"source\": \"$source\"
+          }")
+    fi
+
 
     log_message $DEBUG "Document patch response: $response"
     log_message $INFO "Done updating $type document."
