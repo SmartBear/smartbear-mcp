@@ -46,9 +46,6 @@ export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
           testExecutionIdOrKey: "SA-E5",
           steps: [
             {
-              statusName: "Pass",
-            },
-            {
               statusName: "Fail",
             },
           ],
