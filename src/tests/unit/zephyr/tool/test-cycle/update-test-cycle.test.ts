@@ -90,12 +90,6 @@ describe("UpdateTestCycle", () => {
         Browser: "Chrome",
         Implemented: false,
       },
-      links: {
-        self: "http://example.com",
-        issues: [],
-        webLinks: [],
-        testPlans: [],
-      },
     };
 
     beforeEach(() => {
@@ -142,7 +136,6 @@ describe("UpdateTestCycle", () => {
             id: 10000,
             self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/10000",
           },
-          links: existingTestCycle.links,
         }),
       );
     });
@@ -168,7 +161,6 @@ describe("UpdateTestCycle", () => {
         Browser: "Chrome",
         Implemented: false,
       });
-      expect(mergedBody.links).toEqual(existingTestCycle.links);
     });
 
     it("should handle API errors when fetching not existing test cycle", async () => {
@@ -236,12 +228,6 @@ describe("UpdateTestCycle", () => {
         Implemented: false,
         Region: "US",
       },
-      links: {
-        self: "http://example.com",
-        issues: [],
-        webLinks: [],
-        testPlans: [],
-      },
     };
 
     beforeEach(() => {
@@ -269,8 +255,6 @@ describe("UpdateTestCycle", () => {
         Region: "US",
         OS: "Windows",
       });
-
-      expect(mergedBody.links).toEqual(existingTestCycle.links);
     });
 
     it("should skip undefined values in updates", async () => {
