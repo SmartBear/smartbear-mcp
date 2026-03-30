@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [Zephyr] Added context to the `create-test-case` tool description about automatic empty test step creation. [#401](https://github.com/SmartBear/smartbear-mcp/pull/401)
+
+## [0.16.0] - 2026-03-25
+
 ### Added
 
 - [Reflect] Added `list_segments` tool: Lists the reusable test steps in the account, and includes some relevant metadata about each segment to help the Agent understand when a segment could be used as part of accomplishing a task. [#369](https://github.com/SmartBear/smartbear-mcp/pull/369)
@@ -22,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [Zephyr] Enforce strictness of Zephyr's schemas. [#383](https://github.com/SmartBear/smartbear-mcp/pull/383)
+- [Zephyr] Allow the GetTestCaseLinks tool to return invalid-format URLs. [#397](https://github.com/SmartBear/smartbear-mcp/pull/397)
 
 ## [0.15.0] - 2026-03-18
 
