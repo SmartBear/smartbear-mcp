@@ -159,9 +159,6 @@ export class BugsnagClient implements Client {
     // Fall back to Authorization header (used by OAuth flow)
     const bearerToken = this.getBearerToken();
     if (bearerToken) {
-      console.debug(
-        "Using bearer token from request headers for API authentication",
-      );
       return bearerToken;
     }
 

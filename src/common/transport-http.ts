@@ -527,15 +527,13 @@ async function newServer(
     // Check if any configured client actually has auth credentials for this request.
     // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
     // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
-    const hasAuth = requestContextStorage.run(
-      { headers: req.headers },
-      () =>
-        server.getClients().some((client) => {
-          // Client doesn't support dynamic auth — auth was provided at config time
-          if (!client.getAuthToken) return true;
-          // Client supports dynamic auth — check if a token is available
-          return client.getAuthToken() !== null;
-        }),
+    const hasAuth = requestContextStorage.run({ headers: req.headers }, () =>
+      server.getClients().some((client) => {
+        // Client doesn't support dynamic auth — auth was provided at config time
+        if (!client.getAuthToken) return true;
+        // Client supports dynamic auth — check if a token is available
+        return client.getAuthToken() !== null;
+      }),
     );
 
     if (!hasAuth) {
