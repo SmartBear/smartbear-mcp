@@ -138,7 +138,7 @@ export class BugsnagClient implements Client {
   }
 
   getAuthToken(): string | null {
-    const contextHeader = getRequestHeader("Bugsnag-Auth-Token")
+    const contextHeader = getRequestHeader("Bugsnag-Auth-Token");
     if (contextHeader) {
       let token = Array.isArray(contextHeader)
         ? contextHeader[0]
@@ -149,17 +149,24 @@ export class BugsnagClient implements Client {
         token = token.substring(6);
       }
 
-      return token;
+      return `token ${token}`;
     }
+
+    console.debug(
+      "Auth token not found in request headers, falling back to bearer token or configured token",
+    );
 
     // Fall back to Authorization header (used by OAuth flow)
     const bearerToken = this.getBearerToken();
     if (bearerToken) {
+      console.debug(
+        "Using bearer token from request headers for API authentication",
+      );
       return bearerToken;
     }
 
-    // Fall back to configured token
-    return this._authToken || null;
+    // Fall back to configured token (needs prefix for Authorization header)
+    return this._authToken ? `token ${this._authToken}` : null;
   }
 
   getBearerToken(): string | null {
@@ -175,7 +182,7 @@ export class BugsnagClient implements Client {
         token = token.substring(7);
       }
 
-      return token;
+      return `Bearer ${token}`;
     }
 
     return null;
@@ -184,15 +191,9 @@ export class BugsnagClient implements Client {
   private async initializeApis(config: z.infer<typeof ConfigurationSchema>) {
     const apiConfig = new Configuration({
       apiKey: (_name: string) => {
-        console.log("Retrieving auth token for API request");
         const authToken = this.getAuthToken();
         if (authToken) {
-          return `token ${authToken}`;
-        }
-
-        const bearerToken = this.getBearerToken();
-        if (bearerToken) {
-          return `Bearer ${bearerToken}`;
+          return authToken;
         }
 
         throw new Error(
@@ -407,7 +408,7 @@ export class BugsnagClient implements Client {
       accumulativeDailyUsersSeen === 0 // avoid division by zero
         ? 0
         : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
-        accumulativeDailyUsersSeen;
+          accumulativeDailyUsersSeen;
 
     const totalSessionsCount = source.total_sessions_count || 0;
     const unhandledSessionsCount = source.unhandled_sessions_count || 0;
