@@ -407,7 +407,7 @@ export class BugsnagClient implements Client {
       accumulativeDailyUsersSeen === 0 // avoid division by zero
         ? 0
         : (accumulativeDailyUsersSeen - accumulativeDailyUsersWithUnhandled) /
-          accumulativeDailyUsersSeen;
+        accumulativeDailyUsersSeen;
 
     const totalSessionsCount = source.total_sessions_count || 0;
     const unhandledSessionsCount = source.unhandled_sessions_count || 0;
