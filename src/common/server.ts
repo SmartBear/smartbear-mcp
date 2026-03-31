@@ -87,6 +87,10 @@ export class SmartBearMcpServer extends McpServer {
     return this.elicitationSupported;
   }
 
+  getClients(): Client[] {
+    return this.clients;
+  }
+
   async cleanupSession(mcpSessionId: string): Promise<void> {
     for (const client of this.clients) {
       await client.cleanupSession?.(mcpSessionId);

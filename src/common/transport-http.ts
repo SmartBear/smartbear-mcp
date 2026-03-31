@@ -495,21 +495,23 @@ async function newServer(
 ): Promise<SmartBearMcpServer | null> {
   const server = new SmartBearMcpServer();
   try {
-    // Configure server with values from HTTP headers
-    const configuredCount = await clientRegistry.configure(
-      server,
-      (client, key) => {
-        const headerName = getHeaderName(client, key);
-        // Check both original case and lower-case headers for compatibility
-        // (HTTP headers are case-insensitive, but Node.js lowercases them)
-        const value =
-          req.headers[headerName] || req.headers[headerName.toLowerCase()];
-        if (typeof value === "string") {
-          return value;
-        }
+    // Run configuration within request context so that client getAuthToken()
+    // methods can access request headers via AsyncLocalStorage
+    const configuredCount = await requestContextStorage.run(
+      { headers: req.headers },
+      () =>
+        clientRegistry.configure(server, (client, key) => {
+          const headerName = getHeaderName(client, key);
+          // Check both original case and lower-case headers for compatibility
+          // (HTTP headers are case-insensitive, but Node.js lowercases them)
+          const value =
+            req.headers[headerName] || req.headers[headerName.toLowerCase()];
+          if (typeof value === "string") {
+            return value;
+          }
 
-        return null;
-      },
+          return null;
+        }),
     );
 
     console.log(
@@ -519,6 +521,26 @@ async function newServer(
     if (configuredCount === 0) {
       throw new Error(
         "No clients successfully configured. Missing authentication headers.",
+      );
+    }
+
+    // Check if any configured client actually has auth credentials for this request.
+    // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
+    // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
+    const hasAuth = requestContextStorage.run(
+      { headers: req.headers },
+      () =>
+        server.getClients().some((client) => {
+          // Client doesn't support dynamic auth — auth was provided at config time
+          if (!client.getAuthToken) return true;
+          // Client supports dynamic auth — check if a token is available
+          return client.getAuthToken() !== null;
+        }),
+    );
+
+    if (!hasAuth) {
+      throw new Error(
+        "No clients have valid authentication credentials. Please authenticate via OAuth or provide auth headers.",
       );
     }
   } catch (error: any) {

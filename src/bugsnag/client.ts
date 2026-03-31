@@ -138,39 +138,66 @@ export class BugsnagClient implements Client {
   }
 
   getAuthToken(): string | null {
-    // 1. Try request context
-    const contextHeader =
-      getRequestHeader("Bugsnag-Auth-Token") ||
-      getRequestHeader("Authorization");
+    const contextHeader = getRequestHeader("Bugsnag-Auth-Token")
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle token prefix if present
+      if (token.startsWith("token ")) {
+        token = token.substring(6);
+      }
+
+      return token;
+    }
+
+    // Fall back to Authorization header (used by OAuth flow)
+    const bearerToken = this.getBearerToken();
+    if (bearerToken) {
+      return bearerToken;
+    }
+
+    // Fall back to configured token
+    return this._authToken || null;
+  }
+
+  getBearerToken(): string | null {
+    const contextHeader = getRequestHeader("Authorization");
 
     if (contextHeader) {
       let token = Array.isArray(contextHeader)
         ? contextHeader[0]
         : contextHeader;
 
-      // Handle Bearer or token prefix if present
+      // Handle Bearer prefix if present
       if (token.startsWith("Bearer ")) {
         token = token.substring(7);
-      } else if (token.startsWith("token ")) {
-        token = token.substring(6);
       }
+
       return token;
     }
 
-    // 2. Fallback to configured token
-    return this._authToken || null;
+    return null;
   }
 
   private async initializeApis(config: z.infer<typeof ConfigurationSchema>) {
     const apiConfig = new Configuration({
       apiKey: (_name: string) => {
-        const token = this.getAuthToken();
-        if (!token) {
-          throw new Error(
-            "Authentication token not found in request headers or configuration",
-          );
+        console.log("Retrieving auth token for API request");
+        const authToken = this.getAuthToken();
+        if (authToken) {
+          return `token ${authToken}`;
         }
-        return `token ${token}`;
+
+        const bearerToken = this.getBearerToken();
+        if (bearerToken) {
+          return `Bearer ${bearerToken}`;
+        }
+
+        throw new Error(
+          "Authentication token not found in request headers or configuration",
+        );
       },
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
