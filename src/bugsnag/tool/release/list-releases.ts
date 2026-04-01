@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
-import type { Release } from "../../client/api/index";
+import { BugsnagClient } from "../../client";
+import type { Release } from "../../client/api";
 import { toolInputParameters } from "../../input-schemas";
 
 interface StabilityData {
@@ -28,7 +27,7 @@ const inputSchema = z.object({
 });
 
 // Lists release groups for a project with stability metrics appended to each result.
-export const listReleases = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "List Releases",
     summary: "List releases for a project",
@@ -72,15 +71,15 @@ export const listReleases = new TypesafeTool(
     outputDescription:
       "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
     const response = await client.projectApi.listProjectReleaseGroups(
       project.id,
-      params.releaseStage,
+      args.releaseStage,
       false, // Not top-only
-      params.visibleOnly,
-      params.perPage,
-      params.nextUrl,
+      args.visibleOnly,
+      args.perPage,
+      args.nextUrl,
     );
 
     let releases: (Release & StabilityData)[] = [];

@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { ToolError, TypesafeTool } from "../../../common/tools";
-import type { GetInputFunction } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
 import { ErrorUpdateRequest } from "../../client/api/index";
 import { toolInputParameters } from "../../input-schemas";
 
@@ -85,7 +84,7 @@ const inputSchema = z.object({
 });
 
 // Updates an error's workflow state (e.g. fix, ignore, snooze, link/unlink issue). Prompts for severity when overriding it.
-export const updateError = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "Update Error",
     summary: "Update the status of an error",
@@ -182,139 +181,138 @@ export const updateError = new TypesafeTool(
     readOnly: false,
     idempotent: false,
   },
-  (client: BugsnagClient, getInput: GetInputFunction) =>
-    async (params, _extra) => {
-      const project = await client.getInputProject(params.projectId);
+  async ({ client, args, getInput }) => {
+    const project = await client.getInputProject(args.projectId);
 
-      // Validate snooze operation requirements
-      if (params.operation === "snooze" && !params.reopenRules) {
-        throw new ToolError(
-          "reopenRules parameter is required when using 'snooze' operation",
-        );
-      }
-
-      // Validate link_issue operation requirements
-      if (params.operation === "link_issue" && !params.issue_url) {
-        throw new ToolError(
-          "'issue_url' parameter is required for 'link_issue' operation",
-        );
-      }
-
-      // Validate reopen rule parameters based on reopenIf type
-      if (params.reopenRules) {
-        const { reopenIf } = params.reopenRules;
-        if (reopenIf === "occurs_after" && !params.reopenRules.seconds) {
-          throw new ToolError(
-            "'seconds' parameter is required for 'occurs_after' reopen rules",
-          );
-        }
-        if (
-          reopenIf === "n_additional_users" &&
-          !params.reopenRules.additionalUsers
-        ) {
-          throw new ToolError(
-            "'additionalUsers' parameter is required for 'n_additional_users' reopen rules",
-          );
-        }
-        if (
-          reopenIf === "n_occurrences_in_m_hours" &&
-          (!params.reopenRules.occurrences || !params.reopenRules.hours)
-        ) {
-          throw new ToolError(
-            "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules",
-          );
-        }
-        if (
-          reopenIf === "n_additional_occurrences" &&
-          !params.reopenRules.additionalOccurrences
-        ) {
-          throw new ToolError(
-            "'additionalOccurrences' parameter is required for 'n_additional_occurrences' reopen rules",
-          );
-        }
-      }
-
-      let severity: any;
-      if (params.operation === "override_severity") {
-        // illicit the severity from the user
-        const result = await getInput({
-          message:
-            "Please provide the new severity for the error (e.g. 'info', 'warning', 'error', 'critical')",
-          requestedSchema: {
-            type: "object",
-            properties: {
-              severity: {
-                type: "string",
-                enum: ["info", "warning", "error"],
-                description: "The new severity level for the error",
-              },
-            },
-            required: ["severity"],
-          },
-        });
-
-        if (result.action === "accept" && result.content?.severity) {
-          severity = result.content.severity;
-        }
-      }
-
-      // Prepare reopen rules for API call
-      let reopenRules: any;
-      if (params.reopenRules) {
-        reopenRules = {
-          reopen_if: params.reopenRules.reopenIf,
-        };
-        if (params.reopenRules.additionalUsers !== undefined) {
-          reopenRules.additional_users = params.reopenRules.additionalUsers;
-        }
-        if (params.reopenRules.seconds !== undefined) {
-          reopenRules.seconds = params.reopenRules.seconds;
-        }
-        if (params.reopenRules.occurrences !== undefined) {
-          reopenRules.occurrences = params.reopenRules.occurrences;
-        }
-        if (params.reopenRules.hours !== undefined) {
-          reopenRules.hours = params.reopenRules.hours;
-        }
-        if (params.reopenRules.additionalOccurrences !== undefined) {
-          reopenRules.additional_occurrences =
-            params.reopenRules.additionalOccurrences;
-        }
-      }
-
-      const errorUpdateRequestBody: any = {
-        operation: Object.values(ErrorUpdateRequest.OperationEnum).find(
-          (value) => value === params.operation,
-        ) as ErrorUpdateRequest.OperationEnum,
-      };
-      if (severity !== undefined) {
-        errorUpdateRequestBody.severity = severity;
-      }
-      if (reopenRules !== undefined) {
-        errorUpdateRequestBody.reopen_rules = reopenRules;
-      }
-      if (params.operation === "link_issue" && params.issue_url) {
-        errorUpdateRequestBody.issue_url = params.issue_url;
-        errorUpdateRequestBody.verify_issue_url = true;
-      }
-
-      const result = await client.errorsApi.updateErrorOnProject(
-        project.id,
-        params.errorId,
-        errorUpdateRequestBody,
+    // Validate snooze operation requirements
+    if (args.operation === "snooze" && !args.reopenRules) {
+      throw new ToolError(
+        "reopenRules parameter is required when using 'snooze' operation",
       );
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              success: result.status === 200 || result.status === 204,
-            }),
+    }
+
+    // Validate link_issue operation requirements
+    if (args.operation === "link_issue" && !args.issue_url) {
+      throw new ToolError(
+        "'issue_url' parameter is required for 'link_issue' operation",
+      );
+    }
+
+    // Validate reopen rule parameters based on reopenIf type
+    if (args.reopenRules) {
+      const { reopenIf } = args.reopenRules;
+      if (reopenIf === "occurs_after" && !args.reopenRules.seconds) {
+        throw new ToolError(
+          "'seconds' parameter is required for 'occurs_after' reopen rules",
+        );
+      }
+      if (
+        reopenIf === "n_additional_users" &&
+        !args.reopenRules.additionalUsers
+      ) {
+        throw new ToolError(
+          "'additionalUsers' parameter is required for 'n_additional_users' reopen rules",
+        );
+      }
+      if (
+        reopenIf === "n_occurrences_in_m_hours" &&
+        (!args.reopenRules.occurrences || !args.reopenRules.hours)
+      ) {
+        throw new ToolError(
+          "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules",
+        );
+      }
+      if (
+        reopenIf === "n_additional_occurrences" &&
+        !args.reopenRules.additionalOccurrences
+      ) {
+        throw new ToolError(
+          "'additionalOccurrences' parameter is required for 'n_additional_occurrences' reopen rules",
+        );
+      }
+    }
+
+    let severity: any;
+    if (args.operation === "override_severity") {
+      // illicit the severity from the user
+      const result = await getInput({
+        message:
+          "Please provide the new severity for the error (e.g. 'info', 'warning', 'error', 'critical')",
+        requestedSchema: {
+          type: "object",
+          properties: {
+            severity: {
+              type: "string",
+              enum: ["info", "warning", "error"],
+              description: "The new severity level for the error",
+            },
           },
-        ],
-        structuredContent: {
-          success: result.status === 200 || result.status === 204,
+          required: ["severity"],
         },
+      });
+
+      if (result.action === "accept" && result.content?.severity) {
+        severity = result.content.severity;
+      }
+    }
+
+    // Prepare reopen rules for API call
+    let reopenRules: any;
+    if (args.reopenRules) {
+      reopenRules = {
+        reopen_if: args.reopenRules.reopenIf,
       };
-    },
+      if (args.reopenRules.additionalUsers !== undefined) {
+        reopenRules.additional_users = args.reopenRules.additionalUsers;
+      }
+      if (args.reopenRules.seconds !== undefined) {
+        reopenRules.seconds = args.reopenRules.seconds;
+      }
+      if (args.reopenRules.occurrences !== undefined) {
+        reopenRules.occurrences = args.reopenRules.occurrences;
+      }
+      if (args.reopenRules.hours !== undefined) {
+        reopenRules.hours = args.reopenRules.hours;
+      }
+      if (args.reopenRules.additionalOccurrences !== undefined) {
+        reopenRules.additional_occurrences =
+          args.reopenRules.additionalOccurrences;
+      }
+    }
+
+    const errorUpdateRequestBody: any = {
+      operation: Object.values(ErrorUpdateRequest.OperationEnum).find(
+        (value) => value === args.operation,
+      ) as ErrorUpdateRequest.OperationEnum,
+    };
+    if (severity !== undefined) {
+      errorUpdateRequestBody.severity = severity;
+    }
+    if (reopenRules !== undefined) {
+      errorUpdateRequestBody.reopen_rules = reopenRules;
+    }
+    if (args.operation === "link_issue" && args.issue_url) {
+      errorUpdateRequestBody.issue_url = args.issue_url;
+      errorUpdateRequestBody.verify_issue_url = true;
+    }
+
+    const result = await client.errorsApi.updateErrorOnProject(
+      project.id,
+      args.errorId,
+      errorUpdateRequestBody,
+    );
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            success: result.status === 200 || result.status === 204,
+          }),
+        },
+      ],
+      structuredContent: {
+        success: result.status === 200 || result.status === 204,
+      },
+    };
+  },
 );

@@ -1,7 +1,9 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape, z } from "zod";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { ZodRawShape, ZodType, z } from "zod";
 import type {
   Client,
+  GetInputFunction,
   RegisterToolsFunction,
   SnakeCase,
   ToolParams,
@@ -9,7 +11,7 @@ import type {
 } from "./types";
 
 /**
- * Error class for tool-specific errors – these result in a response to the LLM with `isError: true`
+ * Error class for tool-specific errors – these result in a response to the LLM with `isError: true`
  * and are not reported to BugSnag
  */
 export class ToolError extends Error {
@@ -42,72 +44,61 @@ export abstract class Tool<T extends Client> {
 /**
  * Extract the structuredContent type from a CallToolResult
  */
-type ExtractStructuredContent<T> =
-  T extends Promise<infer U>
-    ? U extends { structuredContent?: infer S }
-      ? S
+type ExtractStructuredContent<T> = T extends Promise<infer U>
+  ? U extends { structuredContent?: infer S }
+    ? S
+    : never
+  : T extends { structuredContent?: infer S }
+    ? S
+    : never;
+
+export type ToolInput<T> = T extends TypesafeTool<any, infer C, any>
+  ? C extends { inputSchema: infer I }
+    ? z.infer<I>
+    : never
+  : never;
+
+export type ToolOutput<T> = T extends TypesafeTool<any, infer C, infer H>
+  ? C extends { outputSchema: infer O }
+    ? z.infer<O>
+    : H extends (...args: any[]) => infer R
+      ? ExtractStructuredContent<R>
       : never
-    : T extends { structuredContent?: infer S }
-      ? S
-      : never;
+  : never;
+
+export interface ToolArgs<T extends Client, I extends ZodType> {
+  client: T;
+  getInput: GetInputFunction;
+  args: Parameters<ToolCallback<I>>[0];
+  extra: Parameters<ToolCallback<I>>[1];
+}
 
 /**
- * Create a new type-safe tool that can be registered to the MCP server.
- *
- * @example
- * ```typescript
- * const myTool = new TypesafeTool(
- *   {
- *     title: "My Tool",
- *     summary: "Does something useful",
- *     inputSchema: z.object({ id: z.string() }),
- *   },
- *   (client: MyClient) => async (args) => {
- *     const result = await client.doSomething(args.id);
- *     return {
- *       content: [{ type: "text", text: JSON.stringify(result) }],
- *       structuredContent: result, // This type is automatically inferred
- *     };
- *   }
- * );
- *
- * // Access inferred types:
- * type Name = typeof myTool.name;     // "my_tool"
- * type Input = typeof myTool.input;   // { id: string }
- * type Output = typeof myTool.output; // typeof result
- * ```
+ * Make the structuredContent inferable
  */
-export class TypesafeTool<
-  const Config extends ToolParamsWithInputSchema,
-  Handler extends (
-    client: any,
-    getInput?: any,
-  ) => ToolCallback<Config["inputSchema"]> = (
-    client: any,
-    getInput?: any,
-  ) => ToolCallback<Config["inputSchema"]>,
+interface Result<T extends { [x: string]: unknown } | undefined = any>
+  extends CallToolResult {
+  structuredContent?: T;
+}
+
+export type ToolHandler<T extends Client, I extends ZodType> = (
+  args: ToolArgs<T, I>,
+) => Promise<Result>;
+
+/**
+ * Represents a type-safe tool that can be registered to the MCP server via a client.
+ */
+export interface TypesafeTool<
+  T extends Client,
+  Config extends ToolParamsWithInputSchema,
+  Handler extends ToolHandler<T, Config["inputSchema"]>,
 > {
-  name!: SnakeCase<Config["title"]>;
-  input!: z.infer<Config["inputSchema"]>;
-  output!: ExtractStructuredContent<ReturnType<ReturnType<Handler>>>;
-
-  private readonly config: Config;
-  private readonly handler: Handler;
-
-  constructor(config: Config, handle: Handler) {
-    this.config = config;
-    this.handler = handle;
-  }
-
-  public register<T extends Client>(
+  name: SnakeCase<Config["title"]>;
+  config: Config;
+  handle: Handler;
+  register(
     client: T,
     register: RegisterToolsFunction,
-    getInput?: any,
-  ): void {
-    const handler = this.handler(client, getInput);
-    register(this.config, async (args, extra) => {
-      const parsedArgs = this.config.inputSchema.parse(args);
-      return handler(parsedArgs, extra);
-    });
-  }
+    getInput: GetInputFunction,
+  ): void;
 }

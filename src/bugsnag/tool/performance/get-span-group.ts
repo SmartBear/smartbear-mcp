@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -10,7 +9,7 @@ const inputSchema = z.object({
 });
 
 // Fetches detailed performance metrics for a span group, including timeline and duration distribution.
-export const getSpanGroup = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Span Group",
     summary: "Get detailed performance metrics for a specific span group",
@@ -44,27 +43,27 @@ export const getSpanGroup = new TypesafeTool(
       "Statistics include p50, p75, p90, p95, p99 percentiles",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
 
     const spanGroupResults = await client.projectApi.getProjectSpanGroup(
       project.id,
-      params.spanGroupId,
-      params.filters,
+      args.spanGroupId,
+      args.filters,
     );
 
     const spanGroupTimelineResult =
       await client.projectApi.getProjectSpanGroupTimeline(
         project.id,
-        params.spanGroupId,
-        params.filters,
+        args.spanGroupId,
+        args.filters,
       );
 
     const spanGroupDistributionResult =
       await client.projectApi.getProjectSpanGroupDistribution(
         project.id,
-        params.spanGroupId,
-        params.filters,
+        args.spanGroupId,
+        args.filters,
       );
 
     const result = {

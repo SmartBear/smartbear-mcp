@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -33,7 +32,7 @@ const inputSchema = z.object({
 });
 
 // Lists individual span instances within a span group, with sorting and filtering support.
-export const listSpans = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "List Spans",
     summary: "Get individual spans belonging to a span group",
@@ -74,16 +73,16 @@ export const listSpans = new TypesafeTool(
       "Each span includes trace ID for further investigation",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
     const result = await client.projectApi.listSpansBySpanGroupId(
       project.id,
-      params.spanGroupId,
-      params.filters,
-      params.sort,
-      params.direction,
-      params.perPage,
-      params.nextUrl,
+      args.spanGroupId,
+      args.filters,
+      args.sort,
+      args.direction,
+      args.perPage,
+      args.nextUrl,
     );
     return {
       content: [

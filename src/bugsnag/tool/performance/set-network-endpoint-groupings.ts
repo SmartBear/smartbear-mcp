@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -16,7 +15,7 @@ const inputSchema = z.object({
 });
 
 // Replaces all network endpoint grouping rules for a project with the provided URL patterns.
-export const setNetworkEndpointGroupings = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "Set Network Endpoint Groupings",
     summary: "Set the network endpoint grouping rules for a project",
@@ -76,11 +75,11 @@ export const setNetworkEndpointGroupings = new TypesafeTool(
     readOnly: false,
     idempotent: true,
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
     const result = await client.projectApi.updateProjectNetworkGroupingRuleset(
       project.id,
-      params.endpoints,
+      args.endpoints,
     );
     return {
       content: [
@@ -89,7 +88,7 @@ export const setNetworkEndpointGroupings = new TypesafeTool(
           text: JSON.stringify({
             success: result.status === 200 || result.status === 204,
             projectId: project.id,
-            endpoints: params.endpoints,
+            endpoints: args.endpoints,
           }),
         },
       ],

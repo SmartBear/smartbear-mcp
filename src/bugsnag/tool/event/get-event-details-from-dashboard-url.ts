@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ToolError, TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
 
 const inputSchema = z.object({
   link: z
@@ -11,7 +11,7 @@ const inputSchema = z.object({
 });
 
 // Parses a BugSnag dashboard URL to extract the project slug and event ID, then fetches the event details.
-export const getEventDetailsFromDashboardUrl = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Event Details From Dashboard URL",
     summary:
@@ -39,8 +39,8 @@ export const getEventDetailsFromDashboardUrl = new TypesafeTool(
       "This is useful when users share BugSnag dashboard URLs and you need to extract the event data",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const url = new URL(params.link);
+  async ({ client, args }) => {
+    const url = new URL(args.link);
     const eventId = url.searchParams.get("event_id");
     const projectSlug = url.pathname.split("/")[2];
     if (!projectSlug || !eventId)
@@ -58,6 +58,7 @@ export const getEventDetailsFromDashboardUrl = new TypesafeTool(
     const response = await client.getEvent(eventId, projectId);
     return {
       content: [{ type: "text", text: JSON.stringify(response) }],
+      structuredContent: response,
     };
   },
 );

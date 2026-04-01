@@ -4,14 +4,11 @@ import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
-  Client,
   GetInputFunction,
   RegisterResourceFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import { CurrentUserAPI } from "./client/api/CurrentUser";
-import { Configuration } from "./client/api/configuration";
-import { ErrorAPI } from "./client/api/Error";
+import { Client } from "../common/types";
 import type {
   Build,
   EventField,
@@ -19,28 +16,14 @@ import type {
   Project,
   Release,
   TraceField,
-} from "./client/api/index";
-import { ProjectAPI } from "./client/api/Project";
+} from "./client/api";
+import {
+  Configuration,
+  CurrentUserAPI,
+  ErrorAPI,
+  ProjectAPI,
+} from "./client/api";
 import type { FilterObject } from "./client/filters";
-import { eventResource } from "./resource/event-resource";
-import { getError } from "./tool/error/get-error";
-import { listProjectErrors } from "./tool/error/list-project-errors";
-import { updateError } from "./tool/error/update-error";
-import { getEvent } from "./tool/event/get-event";
-import { getEventDetailsFromDashboardUrl } from "./tool/event/get-event-details-from-dashboard-url";
-import { getNetworkEndpointGroupings } from "./tool/performance/get-network-endpoint-groupings";
-import { getSpanGroup } from "./tool/performance/get-span-group";
-import { getTrace } from "./tool/performance/get-trace";
-import { listSpanGroups } from "./tool/performance/list-span-groups";
-import { listSpans } from "./tool/performance/list-spans";
-import { listTraceFields } from "./tool/performance/list-trace-fields";
-import { setNetworkEndpointGroupings } from "./tool/performance/set-network-endpoint-groupings";
-import { getCurrentProject } from "./tool/project/get-current-project";
-import { listProjectEventFilters } from "./tool/project/list-project-event-filters";
-import { listProjects } from "./tool/project/list-projects";
-import { getBuild } from "./tool/release/get-build";
-import { getRelease } from "./tool/release/get-release";
-import { listReleases } from "./tool/release/list-releases";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -75,7 +58,7 @@ const ConfigurationSchema = z.object({
   endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
 });
 
-export class BugsnagClient implements Client {
+export class BugsnagClient extends Client {
   private cache?: CacheService;
   private _projectApiKey?: string;
   private _isConfigured: boolean = false;
@@ -272,7 +255,7 @@ export class BugsnagClient implements Client {
     return projectFiltersCache[project.id];
   }
 
-  async getEvent(eventId: string, projectId?: string): Promise<any> {
+  async getEvent(eventId: string, projectId?: string) {
     const projectIds = projectId
       ? [projectId]
       : (await this.getProjects()).map((p) => p.id);
@@ -368,38 +351,37 @@ export class BugsnagClient implements Client {
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void> {
-    const tools = [
-      getCurrentProject,
-      listProjects,
-      listProjectEventFilters,
-      getError,
-      listProjectErrors,
-      getEvent,
-      getEventDetailsFromDashboardUrl,
-      listReleases,
-      getRelease,
-      getBuild,
-      listSpanGroups,
-      getSpanGroup,
-      listSpans,
-      getTrace,
-      listTraceFields,
-      getNetworkEndpointGroupings,
-      setNetworkEndpointGroupings,
-    ];
+    const tools = await Promise.all([
+      import("./tool/error/get-error"),
+      import("./tool/error/list-project-errors"),
+      import("./tool/error/update-error"),
+      import("./tool/event/get-event"),
+      import("./tool/event/get-event-details-from-dashboard-url"),
+      import("./tool/performance/get-network-endpoint-groupings"),
+      import("./tool/performance/get-span-group"),
+      import("./tool/performance/get-trace"),
+      import("./tool/performance/list-span-groups"),
+      import("./tool/performance/list-spans"),
+      import("./tool/performance/list-trace-fields"),
+      import("./tool/performance/set-network-endpoint-groupings"),
+      import("./tool/project/get-current-project"),
+      import("./tool/project/list-project-event-filters"),
+      import("./tool/project/list-projects"),
+      import("./tool/release/get-build"),
+      import("./tool/release/get-release"),
+      import("./tool/release/list-releases"),
+    ]);
 
     for (const tool of tools) {
-      tool.register(this, register);
-    }
-
-    const interactiveTools = [updateError];
-
-    for (const tool of interactiveTools) {
-      tool.register(this, register, getInput);
+      tool.default.register(this, register, getInput);
     }
   }
 
-  registerResources(register: RegisterResourceFunction): void {
-    eventResource.register(this, register);
+  async registerResources(register: RegisterResourceFunction): Promise<void> {
+    const resources = [await import("./resource/event-resource")];
+
+    for (const resource of resources) {
+      resource.default.register(this, register);
+    }
   }
 }

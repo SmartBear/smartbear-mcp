@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { ToolError, TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
-import type { Project } from "../../client/api/index";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
+import type { Project } from "../../client/api";
 
 const inputSchema = z.object({
   apiKey: z
@@ -11,7 +11,7 @@ const inputSchema = z.object({
 });
 
 // Lists all projects the user has access to, optionally filtered by API key.
-export const listProjects = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "List Projects",
     summary:
@@ -27,14 +27,14 @@ export const listProjects = new TypesafeTool(
       "Project IDs from this list can be used with other tools when no project API key is configured",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
+  async ({ client, args }) => {
     let projects = await client.getProjects();
     if (!projects || projects.length === 0) {
       throw new ToolError("No BugSnag projects found for the current user.");
     }
-    if (params.apiKey) {
+    if (args.apiKey) {
       const matchedProject = projects.find(
-        (p: Project) => p.api_key === params.apiKey,
+        (p: Project) => p.api_key === args.apiKey,
       );
       projects = matchedProject ? [matchedProject] : [];
     }
@@ -44,6 +44,7 @@ export const listProjects = new TypesafeTool(
     };
     return {
       content: [{ type: "text", text: JSON.stringify(content) }],
+      structuredContent: content,
     };
   },
 );

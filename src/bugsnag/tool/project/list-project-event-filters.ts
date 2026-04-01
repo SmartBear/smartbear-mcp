@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -8,7 +7,7 @@ const inputSchema = z.object({
 });
 
 // Returns the available event filter fields for a project, used to build filter queries for errors and events.
-export const listProjectEventFilters = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "List Project Event Filters",
     summary: "Get available event filter fields for a project",
@@ -33,9 +32,9 @@ export const listProjectEventFilters = new TypesafeTool(
       "Look for display_id field in the response - these are the field names to use in filters",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
+  async ({ client, args }) => {
     const eventFilters = await client.getProjectEventFields(
-      await client.getInputProject(params.projectId),
+      await client.getInputProject(args.projectId),
     );
     return {
       content: [{ type: "text", text: JSON.stringify(eventFilters) }],

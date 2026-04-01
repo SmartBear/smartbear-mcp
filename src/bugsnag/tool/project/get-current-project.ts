@@ -1,13 +1,9 @@
-import { ToolError, TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
-// import {
-//   listEnvironmentsQueryParams,
-//   listEnvironments200Response as listEnvironmentsResponse,
-// } from "../../common/rest-api-schemas";
 
 // Returns the currently configured project, or throws if no project is set.
-export const getCurrentProject = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Current Project",
     summary:
@@ -23,7 +19,7 @@ export const getCurrentProject = new TypesafeTool(
       "You might find a BugSnag API key in the user's code where they configure the BugSnag SDK that can be matched to a project 'apiKey' field from the project list",
     ],
   },
-  (client: BugsnagClient) => async (_args, _extra) => {
+  async ({ client }) => {
     const project = await client.getCurrentProject();
     if (!project) {
       throw new ToolError(

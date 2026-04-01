@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -47,7 +46,7 @@ const inputSchema = z.object({
 });
 
 // Lists span groups (operation types) being tracked for performance, with support for sorting and filtering.
-export const listSpanGroups = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "List Span Groups",
     summary: "List span groups (operations) tracked for performance monitoring",
@@ -87,17 +86,17 @@ export const listSpanGroups = new TypesafeTool(
       "Use nextUrl for pagination",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
     const result = await client.projectApi.listProjectSpanGroups(
       project.id,
-      params.sort,
-      params.direction,
-      params.perPage,
+      args.sort,
+      args.direction,
+      args.perPage,
       undefined,
-      params.filters,
-      params.starredOnly,
-      params.nextUrl,
+      args.filters,
+      args.starredOnly,
+      args.nextUrl,
     );
     return {
       content: [

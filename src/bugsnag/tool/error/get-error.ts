@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ToolError, TypesafeTool } from "../../../common/tools";
-import type { BugsnagClient } from "../../client";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
 import { type FilterObject, toUrlSearchParams } from "../../client/filters";
 import { toolInputParameters } from "../../input-schemas";
 
@@ -16,7 +16,7 @@ const inputSchema = z.object({
 });
 
 // Fetches full details for a single error including aggregated stats, the latest event, pivots, and a dashboard URL.
-export const getError = new TypesafeTool(
+export default BugsnagClient.createTool(
   {
     title: "Get Error",
     summary:
@@ -54,20 +54,20 @@ export const getError = new TypesafeTool(
       "The URL provided in the response points should be shown to the user in all cases as it allows them to view the error in the dashboard and perform further analysis",
     ],
   },
-  (client: BugsnagClient) => async (params, _extra) => {
-    const project = await client.getInputProject(params.projectId);
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
     const errorDetails = (
-      await client.errorsApi.viewErrorOnProject(project.id, params.errorId)
+      await client.errorsApi.viewErrorOnProject(project.id, args.errorId)
     ).body;
     if (!errorDetails) {
       throw new ToolError(
-        `Error with ID ${params.errorId} not found in project ${project.id}.`,
+        `Error with ID ${args.errorId} not found in project ${project.id}.`,
       );
     }
 
     const filters: FilterObject = {
-      error: [{ type: "eq", value: params.errorId }],
-      ...params.filters,
+      error: [{ type: "eq", value: args.errorId }],
+      ...args.filters,
     };
 
     await client.validateEventFields(project, filters);
@@ -102,14 +102,14 @@ export const getError = new TypesafeTool(
         (
           await client.errorsApi.getPivotValuesOnAnError(
             project.id,
-            params.errorId,
+            args.errorId,
             filters,
             5,
           )
         ).body || [],
       url: await client.getErrorUrl(
         project,
-        params.errorId,
+        args.errorId,
         toUrlSearchParams(filters).toString(),
       ),
     };
