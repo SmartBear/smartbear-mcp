@@ -75,8 +75,11 @@ export class UpdateTestExecution extends Tool<ZephyrClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testExecutionIdOrKey } = UpdateTestExecutionParams.parse(args);
-    const body = UpdateTestExecutionBody.partial().parse(args);
+    const fullInputSchema = UpdateTestExecutionParams.and(
+      UpdateTestExecutionBody.partial(),
+    );
+    const parsed = fullInputSchema.parse(args);
+    const { testExecutionIdOrKey, ...body } = parsed;
 
     await this.client
       .getApiClient()

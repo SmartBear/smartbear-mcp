@@ -181,4 +181,46 @@ describe("GetTestCaseLinks", () => {
       instance.handle({ testCaseKey: "" }, EXTRA_REQUEST_HANDLER),
     ).rejects.toThrow();
   });
+
+  it("should accept web links with invalid URL format", async () => {
+    const responseMock = {
+      self: "https://api.zephyrscale.smartbear.com/v2/testcases/SA-T10/links",
+      webLinks: [
+        {
+          description: "Malformed URL",
+          url: "not-a-valid-url",
+          self: "https://api.zephyrscale.smartbear.com/v2/testcases/14/links/weblinks/1",
+          id: 1,
+          type: "RELATED",
+        },
+        {
+          description: "Incomplete URL",
+          url: "//incomplete",
+          self: "https://api.zephyrscale.smartbear.com/v2/testcases/14/links/weblinks/2",
+          id: 2,
+          type: "COVERAGE",
+        },
+        {
+          description: "URL with spaces",
+          url: "http://example.com/path with spaces",
+          self: "https://api.zephyrscale.smartbear.com/v2/testcases/14/links/weblinks/3",
+          id: 3,
+          type: "BLOCKS",
+        },
+      ],
+    };
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
+    const args = { testCaseKey: "SA-T10" };
+    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/testcases/SA-T10/links",
+    );
+    expect(result.structuredContent).toBe(responseMock);
+    expect(result.structuredContent.webLinks).toHaveLength(3);
+    expect(result.structuredContent.webLinks[0].url).toBe("not-a-valid-url");
+    expect(result.structuredContent.webLinks[1].url).toBe("//incomplete");
+    expect(result.structuredContent.webLinks[2].url).toBe(
+      "http://example.com/path with spaces",
+    );
+  });
 });
