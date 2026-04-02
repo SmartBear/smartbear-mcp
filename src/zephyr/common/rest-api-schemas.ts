@@ -337,7 +337,7 @@ export const ListTestCases200Response = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.string().describe("The web link URL"),
                         self: zod
                           .string()
                           .url()
@@ -378,7 +378,7 @@ export const ListTestCasesDefaultResponse = zod
   .strict();
 
 /**
- * Creates a test case. Fields `priorityName` and `statusName` will be set to default values if not informed. Default values are usually “Normal” for `priorityName` and “Draft” for `statusName`. All required test case custom fields should be present in the request.
+ * Creates a test case. Fields `priorityName` and `statusName` will be set to default values if not informed. Default values are usually “Normal” for `priorityName` and “Draft” for `statusName`. All required test case custom fields should be present in the request. Note: when a test case is created, a single empty test step is automatically added to it. To define your own test steps, use the `POST /testcases/{testCaseKey}/teststeps` endpoint after creation using `OVERWRITE` mode.
 
  * @summary Create test case
  */
@@ -397,65 +397,70 @@ export const createTestCaseBodyStatusNameMax = 255;
 export const createTestCaseBodyOwnerIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
 export const createTestCaseBodyLabelsMax = 50;
 
-export const CreateTestCaseBody = zod.object({
-  projectKey: zod
-    .string()
-    .regex(createTestCaseBodyProjectKeyRegExp)
-    .describe("Jira project key."),
-  name: zod
-    .string()
-    .min(1)
-    .max(createTestCaseBodyNameMax)
-    .regex(createTestCaseBodyNameRegExp),
-  objective: zod.string().nullish().describe("A description of the objective."),
-  precondition: zod
-    .string()
-    .nullish()
-    .describe("Any conditions that need to be met."),
-  estimatedTime: zod
-    .number()
-    .min(createTestCaseBodyEstimatedTimeMin)
-    .optional()
-    .describe("Estimated duration in milliseconds."),
-  componentId: zod
-    .number()
-    .min(createTestCaseBodyComponentIdMin)
-    .optional()
-    .describe("ID of a component from Jira."),
-  priorityName: zod
-    .string()
-    .min(1)
-    .max(createTestCaseBodyPriorityNameMax)
-    .optional()
-    .describe("The priority name."),
-  statusName: zod
-    .string()
-    .min(1)
-    .max(createTestCaseBodyStatusNameMax)
-    .optional()
-    .describe("The status name."),
-  folderId: zod
-    .number()
-    .min(1)
-    .optional()
-    .describe("ID of a folder to place the entity within."),
-  ownerId: zod
-    .string()
-    .regex(createTestCaseBodyOwnerIdRegExp)
-    .nullish()
-    .describe("Atlassian Account ID of the Jira user."),
-  labels: zod
-    .array(zod.string())
-    .max(createTestCaseBodyLabelsMax)
-    .optional()
-    .describe("Array of labels associated to this entity."),
-  customFields: zod
-    .record(zod.string(), zod.unknown())
-    .optional()
-    .describe(
-      "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-    ),
-});
+export const CreateTestCaseBody = zod
+  .object({
+    projectKey: zod
+      .string()
+      .regex(createTestCaseBodyProjectKeyRegExp)
+      .describe("Jira project key."),
+    name: zod
+      .string()
+      .min(1)
+      .max(createTestCaseBodyNameMax)
+      .regex(createTestCaseBodyNameRegExp),
+    objective: zod
+      .string()
+      .nullish()
+      .describe("A description of the objective."),
+    precondition: zod
+      .string()
+      .nullish()
+      .describe("Any conditions that need to be met."),
+    estimatedTime: zod
+      .number()
+      .min(createTestCaseBodyEstimatedTimeMin)
+      .optional()
+      .describe("Estimated duration in milliseconds."),
+    componentId: zod
+      .number()
+      .min(createTestCaseBodyComponentIdMin)
+      .optional()
+      .describe("ID of a component from Jira."),
+    priorityName: zod
+      .string()
+      .min(1)
+      .max(createTestCaseBodyPriorityNameMax)
+      .optional()
+      .describe("The priority name."),
+    statusName: zod
+      .string()
+      .min(1)
+      .max(createTestCaseBodyStatusNameMax)
+      .optional()
+      .describe("The status name."),
+    folderId: zod
+      .number()
+      .min(1)
+      .optional()
+      .describe("ID of a folder to place the entity within."),
+    ownerId: zod
+      .string()
+      .regex(createTestCaseBodyOwnerIdRegExp)
+      .nullish()
+      .describe("Atlassian Account ID of the Jira user."),
+    labels: zod
+      .array(zod.string())
+      .max(createTestCaseBodyLabelsMax)
+      .optional()
+      .describe("Array of labels associated to this entity."),
+    customFields: zod
+      .record(zod.string(), zod.unknown())
+      .optional()
+      .describe(
+        "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+      ),
+  })
+  .strict();
 
 export const CreateTestCase201Response = zod
   .object({
@@ -748,7 +753,7 @@ export const ListTestCasesCursorPaginated200Response = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.string().describe("The web link URL"),
                         self: zod
                           .string()
                           .url()
@@ -794,14 +799,16 @@ export const ListTestCasesCursorPaginatedDefaultResponse = zod
  */
 export const getTestCasePathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const GetTestCaseParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(getTestCasePathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const GetTestCaseParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(getTestCasePathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
 export const getTestCase200ResponseKeyRegExp = /.+-T[0-9]+/;
 export const getTestCase200ResponseNameMax = 255;
@@ -992,7 +999,7 @@ export const GetTestCase200Response = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -1035,14 +1042,16 @@ export const GetTestCaseDefaultResponse = zod
  */
 export const updateTestCasePathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const UpdateTestCaseParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(updateTestCasePathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const UpdateTestCaseParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(updateTestCasePathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
 export const updateTestCaseBodyKeyRegExp = /.+-T[0-9]+/;
 export const updateTestCaseBodyNameMax = 255;
@@ -1055,187 +1064,172 @@ export const updateTestCaseBodyLabelsMax = 50;
 
 export const updateTestCaseBodyOwnerAccountIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const UpdateTestCaseBody = zod.object({
-  id: zod.number().min(1).describe("The ID of the entity"),
-  key: zod
-    .string()
-    .regex(updateTestCaseBodyKeyRegExp)
-    .describe("The test case key"),
-  name: zod
-    .string()
-    .min(1)
-    .max(updateTestCaseBodyNameMax)
-    .regex(updateTestCaseBodyNameRegExp),
-  project: zod
-    .object({
-      id: zod.number().min(1).describe("The ID of the entity"),
-    })
-    .and(
-      zod.object({
+export const UpdateTestCaseBody = zod
+  .object({
+    id: zod.number().min(1).describe("The ID of the entity"),
+    key: zod
+      .string()
+      .regex(updateTestCaseBodyKeyRegExp)
+      .describe("The test case key"),
+    name: zod
+      .string()
+      .min(1)
+      .max(updateTestCaseBodyNameMax)
+      .regex(updateTestCaseBodyNameRegExp),
+    project: zod
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .describe("ID and link relative to Zephyr project."),
-  createdOn: zod
-    .string()
-    .datetime({})
-    .optional()
-    .describe(
-      "Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.\n",
-    ),
-  objective: zod.string().nullish().describe("A description of the objective."),
-  precondition: zod
-    .string()
-    .nullish()
-    .describe("Any conditions that need to be met."),
-  estimatedTime: zod
-    .number()
-    .min(updateTestCaseBodyEstimatedTimeMin)
-    .nullish()
-    .describe("Estimated duration in milliseconds."),
-  labels: zod
-    .array(zod.string())
-    .max(updateTestCaseBodyLabelsMax)
-    .optional()
-    .describe("Array of labels associated to this entity."),
-  component: zod
-    .object({
-      id: zod.number().min(1).describe("The ID of the entity"),
-    })
-    .and(
-      zod.object({
+      })
+      .strict()
+      .describe("ID and link relative to Zephyr project."),
+    createdOn: zod
+      .string()
+      .datetime({})
+      .optional()
+      .describe(
+        "Data and time test case was created. Format: yyyy-MM-dd'T'HH:mm:ss'Z'. This field is read-only, cannot be updated.\n",
+      ),
+    objective: zod
+      .string()
+      .nullish()
+      .describe("A description of the objective."),
+    precondition: zod
+      .string()
+      .nullish()
+      .describe("Any conditions that need to be met."),
+    estimatedTime: zod
+      .number()
+      .min(updateTestCaseBodyEstimatedTimeMin)
+      .nullish()
+      .describe("Estimated duration in milliseconds."),
+    labels: zod
+      .array(zod.string())
+      .max(updateTestCaseBodyLabelsMax)
+      .optional()
+      .describe("Array of labels associated to this entity."),
+    component: zod
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .nullish()
-    .describe("ID and link to the Jira component resource."),
-  priority: zod
-    .object({
-      id: zod.number().min(1).describe("The ID of the entity"),
-    })
-    .and(
-      zod.object({
+      })
+      .strict()
+      .nullish()
+      .describe("ID and link to the Jira component resource."),
+    priority: zod
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .describe("ID and link to the priority resource."),
-  status: zod
-    .object({
-      id: zod.number().min(1).describe("The ID of the entity"),
-    })
-    .and(
-      zod.object({
+      })
+      .strict()
+      .describe("ID and link to the priority resource."),
+    status: zod
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .describe("ID and link to the status resource."),
-  folder: zod
-    .object({
-      id: zod.number().min(1).describe("The ID of the entity"),
-    })
-    .and(
-      zod.object({
+      })
+      .strict()
+      .describe("ID and link to the status resource."),
+    folder: zod
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .nullish()
-    .describe("ID and link to the folder resource."),
-  owner: zod
-    .object({
-      accountId: zod
-        .string()
-        .regex(updateTestCaseBodyOwnerAccountIdRegExp)
-        .nullable()
-        .describe("Atlassian Account ID of the Jira user."),
-      self: zod
-        .string()
-        .url()
-        .optional()
-        .describe(
-          "The Jira REST API endpoint to get the full representation of the Jira user.",
-        ),
-    })
-    .nullish(),
-  testScript: zod
-    .object({
-      self: zod
-        .string()
-        .url()
-        .optional()
-        .describe("The REST API endpoint to get more resource details."),
-    })
-    .optional(),
-  customFields: zod
-    .record(zod.string(), zod.unknown())
-    .optional()
-    .describe(
-      "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-    ),
-  links: zod
-    .object({
-      self: zod
-        .string()
-        .url()
-        .optional()
-        .describe("The REST API endpoint to get more resource details."),
-    })
-    .and(
-      zod.object({
+      })
+      .strict()
+      .nullish()
+      .describe("ID and link to the folder resource."),
+    owner: zod
+      .object({
+        accountId: zod
+          .string()
+          .regex(updateTestCaseBodyOwnerAccountIdRegExp)
+          .nullable()
+          .describe("Atlassian Account ID of the Jira user."),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe(
+            "The Jira REST API endpoint to get the full representation of the Jira user.",
+          ),
+      })
+      .strict()
+      .nullish(),
+    testScript: zod
+      .object({
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
+      })
+      .strict()
+      .optional(),
+    customFields: zod
+      .record(zod.string(), zod.unknown())
+      .optional()
+      .describe(
+        "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+      ),
+    links: zod
+      .object({
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
         issues: zod
           .array(
             zod
               .object({
                 issueId: zod.number().min(1).describe("The Jira issue ID"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                  ),
+                id: zod
+                  .number()
+                  .min(1)
+                  .optional()
+                  .describe(
+                    "The ID that represents the link between the entity and the Jira issue.",
+                  ),
+                target: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The Jira Cloud REST API endpoint to get the full representation of the issue",
+                  ),
+                type: zod
+                  .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                  .optional()
+                  .describe("The link type"),
               })
-              .and(
-                zod.object({
-                  self: zod
-                    .string()
-                    .url()
-                    .optional()
-                    .describe(
-                      "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
-                    ),
-                  id: zod
-                    .number()
-                    .min(1)
-                    .optional()
-                    .describe(
-                      "The ID that represents the link between the entity and the Jira issue.",
-                    ),
-                  target: zod
-                    .string()
-                    .url()
-                    .optional()
-                    .describe(
-                      "The Jira Cloud REST API endpoint to get the full representation of the issue",
-                    ),
-                  type: zod
-                    .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                    .optional()
-                    .describe("The link type"),
-                }),
-              ),
+              .strict(),
           )
           .optional()
           .describe("A list of Jira issues linked to this entity"),
@@ -1247,36 +1241,34 @@ export const UpdateTestCaseBody = zod.object({
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                  ),
+                id: zod
+                  .number()
+                  .min(1)
+                  .optional()
+                  .describe("The ID of the entity"),
+                type: zod
+                  .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                  .optional()
+                  .describe("The link type"),
               })
-              .and(
-                zod.object({
-                  self: zod
-                    .string()
-                    .url()
-                    .optional()
-                    .describe(
-                      "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
-                    ),
-                  id: zod
-                    .number()
-                    .min(1)
-                    .optional()
-                    .describe("The ID of the entity"),
-                  type: zod
-                    .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                    .optional()
-                    .describe("The link type"),
-                }),
-              ),
+              .strict(),
           )
           .optional()
           .describe("A list of web links for this entity"),
-      }),
-    )
-    .optional()
-    .describe("This property is ignored on updates."),
-});
+      })
+      .strict()
+      .optional()
+      .describe("This property is ignored on updates."),
+  })
+  .strict();
 
 export const UpdateTestCaseDefaultResponse = zod
   .object({
@@ -1291,14 +1283,16 @@ export const UpdateTestCaseDefaultResponse = zod
  */
 export const getTestCaseLinksPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const GetTestCaseLinksParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(getTestCaseLinksPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const GetTestCaseLinksParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(getTestCaseLinksPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
 export const GetTestCaseLinks200Response = zod
   .object({
@@ -1350,7 +1344,7 @@ export const GetTestCaseLinks200Response = zod
               .string()
               .optional()
               .describe("The web link description"),
-            url: zod.string().url().describe("The web link URL"),
+            url: zod.string().describe("The web link URL"),
             self: zod
               .string()
               .url()
@@ -1385,18 +1379,22 @@ export const GetTestCaseLinksDefaultResponse = zod
  */
 export const createTestCaseIssueLinkPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const CreateTestCaseIssueLinkParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(createTestCaseIssueLinkPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const CreateTestCaseIssueLinkParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(createTestCaseIssueLinkPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
-export const CreateTestCaseIssueLinkBody = zod.object({
-  issueId: zod.number().min(1).describe("The Jira issue ID"),
-});
+export const CreateTestCaseIssueLinkBody = zod
+  .object({
+    issueId: zod.number().min(1).describe("The Jira issue ID"),
+  })
+  .strict();
 
 export const CreateTestCaseIssueLink201Response = zod
   .object({
@@ -1418,19 +1416,23 @@ export const CreateTestCaseIssueLinkDefaultResponse = zod
  */
 export const createTestCaseWebLinkPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const CreateTestCaseWebLinkParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(createTestCaseWebLinkPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const CreateTestCaseWebLinkParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(createTestCaseWebLinkPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
-export const CreateTestCaseWebLinkBody = zod.object({
-  description: zod.string().optional().describe("The web link description"),
-  url: zod.string().url().describe("The web link URL"),
-});
+export const CreateTestCaseWebLinkBody = zod
+  .object({
+    description: zod.string().optional().describe("The web link description"),
+    url: zod.string().describe("The web link URL"),
+  })
+  .strict();
 
 export const CreateTestCaseWebLink201Response = zod
   .object({
@@ -1452,14 +1454,16 @@ export const CreateTestCaseWebLinkDefaultResponse = zod
  */
 export const listTestCaseVersionsPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const ListTestCaseVersionsParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(listTestCaseVersionsPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const ListTestCaseVersionsParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(listTestCaseVersionsPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
 export const listTestCaseVersionsQueryMaxResultsDefault = 10;
 
@@ -1552,15 +1556,17 @@ export const ListTestCaseVersionsDefaultResponse = zod
  */
 export const getTestCaseVersionPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const GetTestCaseVersionParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(getTestCaseVersionPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-  version: zod.number().describe("Version of the test case to retrieve."),
-});
+export const GetTestCaseVersionParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(getTestCaseVersionPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+    version: zod.number().describe("Version of the test case to retrieve."),
+  })
+  .strict();
 
 export const getTestCaseVersion200ResponseKeyRegExp = /.+-T[0-9]+/;
 export const getTestCaseVersion200ResponseNameMax = 255;
@@ -1751,7 +1757,7 @@ export const GetTestCaseVersion200Response = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -1793,14 +1799,16 @@ export const GetTestCaseVersionDefaultResponse = zod
  */
 export const getTestCaseTestScriptPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const GetTestCaseTestScriptParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(getTestCaseTestScriptPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const GetTestCaseTestScriptParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(getTestCaseTestScriptPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
 export const GetTestCaseTestScript200Response = zod
   .object({
@@ -1828,14 +1836,16 @@ export const GetTestCaseTestScriptDefaultResponse = zod
  */
 export const createTestCaseTestScriptPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const CreateTestCaseTestScriptParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(createTestCaseTestScriptPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const CreateTestCaseTestScriptParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(createTestCaseTestScriptPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
 export const CreateTestCaseTestScriptBody = zod
   .object({
@@ -1846,6 +1856,7 @@ export const CreateTestCaseTestScriptBody = zod
       ),
     text: zod.string().min(1),
   })
+  .strict()
   .describe("Request body for creating test scripts");
 
 export const CreateTestCaseTestScript201Response = zod
@@ -1868,14 +1879,16 @@ export const CreateTestCaseTestScriptDefaultResponse = zod
  */
 export const getTestCaseTestStepsPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const GetTestCaseTestStepsParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(getTestCaseTestStepsPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const GetTestCaseTestStepsParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(getTestCaseTestStepsPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
 export const getTestCaseTestStepsQueryMaxResultsDefault = 10;
 
@@ -1948,17 +1961,17 @@ export const GetTestCaseTestSteps200Response = zod
               .object({
                 description: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe("The instruction to be followed"),
                 testData: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe(
                     "Any test data required to perform the instruction (optional). The fields values provided can be interpolated into the description.",
                   ),
                 expectedResult: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe(
                     "The expected outcome of executing the instruction",
                   ),
@@ -1970,11 +1983,11 @@ export const GetTestCaseTestSteps200Response = zod
                   ),
                 reflectRef: zod
                   .string()
-                  .optional()
+                  .nullish()
                   .describe("The AI reference. Zephyr only feature"),
               })
               .strict()
-              .optional(),
+              .nullish(),
             testCase: zod
               .object({
                 self: zod
@@ -2014,11 +2027,11 @@ export const GetTestCaseTestSteps200Response = zod
                       })
                       .strict(),
                   )
-                  .optional()
+                  .nullish()
                   .describe("The list of parameters of the call to test step"),
               })
               .strict()
-              .optional(),
+              .nullish(),
           })
           .strict()
           .describe(
@@ -2045,14 +2058,16 @@ export const GetTestCaseTestStepsDefaultResponse = zod
  */
 export const createTestCaseTestStepsPathTestCaseKeyRegExp = /(.+-T[0-9]+)/;
 
-export const CreateTestCaseTestStepsParams = zod.object({
-  testCaseKey: zod
-    .string()
-    .regex(createTestCaseTestStepsPathTestCaseKeyRegExp)
-    .describe(
-      "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
-    ),
-});
+export const CreateTestCaseTestStepsParams = zod
+  .object({
+    testCaseKey: zod
+      .string()
+      .regex(createTestCaseTestStepsPathTestCaseKeyRegExp)
+      .describe(
+        "The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+",
+      ),
+  })
+  .strict();
 
 export const createTestCaseTestStepsBodyItemsItemTestCaseTwoTestCaseKeyRegExp =
   /(.+-T[0-9]+)/;
@@ -2097,6 +2112,7 @@ export const CreateTestCaseTestStepsBody = zod
                   .optional()
                   .describe("The AI reference. Zephyr only feature"),
               })
+              .strict()
               .optional(),
             testCase: zod
               .object({
@@ -2107,21 +2123,19 @@ export const CreateTestCaseTestStepsBody = zod
                   .describe(
                     "The REST API endpoint to get more resource details.",
                   ),
-              })
-              .and(
-                zod.object({
-                  testCaseKey: zod
-                    .string()
-                    .regex(
-                      createTestCaseTestStepsBodyItemsItemTestCaseTwoTestCaseKeyRegExp,
-                    )
-                    .optional()
-                    .describe(
-                      "The key of the other test case that the test step should delegate execution to. This cannot be the parent test case.",
-                    ),
-                  parameters: zod
-                    .array(
-                      zod.object({
+                testCaseKey: zod
+                  .string()
+                  .regex(
+                    createTestCaseTestStepsBodyItemsItemTestCaseTwoTestCaseKeyRegExp,
+                  )
+                  .optional()
+                  .describe(
+                    "The key of the other test case that the test step should delegate execution to. This cannot be the parent test case.",
+                  ),
+                parameters: zod
+                  .array(
+                    zod
+                      .object({
                         name: zod
                           .string()
                           .optional()
@@ -2136,16 +2150,16 @@ export const CreateTestCaseTestStepsBody = zod
                           .string()
                           .optional()
                           .describe("Value of the parameter"),
-                      }),
-                    )
-                    .optional()
-                    .describe(
-                      "The list of parameters of the call to test step",
-                    ),
-                }),
-              )
+                      })
+                      .strict(),
+                  )
+                  .optional()
+                  .describe("The list of parameters of the call to test step"),
+              })
+              .strict()
               .optional(),
           })
+          .strict()
           .describe(
             "An instruction to be followed as part of a step-by-step test script. The test step can have either an inline definition, or delegate execution to another test case. One of these options must be specified.",
           ),
@@ -2154,6 +2168,7 @@ export const CreateTestCaseTestStepsBody = zod
         "The list of test steps. Each step should be an object containing `inline` or `testCase`. **They should only include one of these fields at a time**.",
       ),
   })
+  .strict()
   .describe(
     "Request body for creating test steps. A maximum of 100 test steps can be added in one request. To add more than 100 steps, you can submit multiple requests. The mode property allows you to specify whether you want to delete the current test steps and create a new list, or append more items to the end of the current list.",
   );
@@ -2425,7 +2440,7 @@ export const ListTestCycles200Response = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.string().describe("The web link URL"),
                         self: zod
                           .string()
                           .url()
@@ -2519,64 +2534,66 @@ export const createTestCycleBodyStatusNameMax = 255;
 
 export const createTestCycleBodyOwnerIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const CreateTestCycleBody = zod.object({
-  projectKey: zod
-    .string()
-    .regex(createTestCycleBodyProjectKeyRegExp)
-    .describe("Jira project key."),
-  name: zod
-    .string()
-    .min(1)
-    .max(createTestCycleBodyNameMax)
-    .regex(createTestCycleBodyNameRegExp),
-  description: zod
-    .string()
-    .nullish()
-    .describe("Description outlining the scope."),
-  plannedStartDate: zod
-    .string()
-    .datetime({})
-    .optional()
-    .describe(
-      "Planned start date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
-    ),
-  plannedEndDate: zod
-    .string()
-    .datetime({})
-    .optional()
-    .describe(
-      "The planned end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
-    ),
-  jiraProjectVersion: zod
-    .number()
-    .min(1)
-    .optional()
-    .describe(
-      "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
-    ),
-  statusName: zod
-    .string()
-    .min(1)
-    .max(createTestCycleBodyStatusNameMax)
-    .optional()
-    .describe("The status name."),
-  folderId: zod
-    .number()
-    .min(1)
-    .optional()
-    .describe("ID of a folder to place the entity within."),
-  ownerId: zod
-    .string()
-    .regex(createTestCycleBodyOwnerIdRegExp)
-    .nullish()
-    .describe("Atlassian Account ID of the Jira user."),
-  customFields: zod
-    .record(zod.string(), zod.unknown())
-    .optional()
-    .describe(
-      "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-    ),
-});
+export const CreateTestCycleBody = zod
+  .object({
+    projectKey: zod
+      .string()
+      .regex(createTestCycleBodyProjectKeyRegExp)
+      .describe("Jira project key."),
+    name: zod
+      .string()
+      .min(1)
+      .max(createTestCycleBodyNameMax)
+      .regex(createTestCycleBodyNameRegExp),
+    description: zod
+      .string()
+      .nullish()
+      .describe("Description outlining the scope."),
+    plannedStartDate: zod
+      .string()
+      .datetime({})
+      .optional()
+      .describe(
+        "Planned start date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+      ),
+    plannedEndDate: zod
+      .string()
+      .datetime({})
+      .optional()
+      .describe(
+        "The planned end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+      ),
+    jiraProjectVersion: zod
+      .number()
+      .min(1)
+      .optional()
+      .describe(
+        "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+      ),
+    statusName: zod
+      .string()
+      .min(1)
+      .max(createTestCycleBodyStatusNameMax)
+      .optional()
+      .describe("The status name."),
+    folderId: zod
+      .number()
+      .min(1)
+      .optional()
+      .describe("ID of a folder to place the entity within."),
+    ownerId: zod
+      .string()
+      .regex(createTestCycleBodyOwnerIdRegExp)
+      .nullish()
+      .describe("Atlassian Account ID of the Jira user."),
+    customFields: zod
+      .record(zod.string(), zod.unknown())
+      .optional()
+      .describe(
+        "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+      ),
+  })
+  .strict();
 
 export const CreateTestCycle201Response = zod
   .object({
@@ -2600,12 +2617,14 @@ export const CreateTestCycleDefaultResponse = zod
 export const getTestCyclePathTestCycleIdOrKeyRegExp =
   /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const GetTestCycleParams = zod.object({
-  testCycleIdOrKey: zod
-    .string()
-    .regex(getTestCyclePathTestCycleIdOrKeyRegExp)
-    .describe("The ID or key of the test cycle."),
-});
+export const GetTestCycleParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(getTestCyclePathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+  })
+  .strict();
 
 export const getTestCycle200ResponseKeyRegExp = /([A-Z][A-Z_0-9]+-R[0-9]+)/;
 export const getTestCycle200ResponseNameRegExp = /^(?!\s*$).+/;
@@ -2763,7 +2782,7 @@ export const GetTestCycle200Response = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -2848,12 +2867,14 @@ export const GetTestCycleDefaultResponse = zod
 export const updateTestCyclePathTestCycleIdOrKeyRegExp =
   /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const UpdateTestCycleParams = zod.object({
-  testCycleIdOrKey: zod
-    .string()
-    .regex(updateTestCyclePathTestCycleIdOrKeyRegExp)
-    .describe("The ID or key of the test cycle."),
-});
+export const UpdateTestCycleParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(updateTestCyclePathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+  })
+  .strict();
 
 export const updateTestCycleBodyKeyRegExp = /([A-Z][A-Z_0-9]+-R[0-9]+)/;
 export const updateTestCycleBodyNameRegExp = /^(?!\s*$).+/;
@@ -2874,30 +2895,24 @@ export const UpdateTestCycleBody = zod
     project: zod
       .object({
         id: zod.number().min(1).describe("The ID of the entity"),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
       })
-      .and(
-        zod.object({
-          self: zod
-            .string()
-            .url()
-            .optional()
-            .describe("The REST API endpoint to get more resource details."),
-        }),
-      )
+      .strict()
       .describe("ID and link relative to Zephyr project."),
     jiraProjectVersion: zod
       .object({
         id: zod.number().min(1).describe("The ID of the entity"),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
       })
-      .and(
-        zod.object({
-          self: zod
-            .string()
-            .url()
-            .optional()
-            .describe("The REST API endpoint to get more resource details."),
-        }),
-      )
+      .strict()
       .nullish()
       .describe(
         "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
@@ -2905,30 +2920,24 @@ export const UpdateTestCycleBody = zod
     status: zod
       .object({
         id: zod.number().min(1).describe("The ID of the entity"),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
       })
-      .and(
-        zod.object({
-          self: zod
-            .string()
-            .url()
-            .optional()
-            .describe("The REST API endpoint to get more resource details."),
-        }),
-      )
+      .strict()
       .describe("ID and link to the status resource."),
     folder: zod
       .object({
         id: zod.number().min(1).describe("The ID of the entity"),
+        self: zod
+          .string()
+          .url()
+          .optional()
+          .describe("The REST API endpoint to get more resource details."),
       })
-      .and(
-        zod.object({
-          self: zod
-            .string()
-            .url()
-            .optional()
-            .describe("The REST API endpoint to get more resource details."),
-        }),
-      )
+      .strict()
       .nullish()
       .describe("ID and link to the folder resource."),
     description: zod
@@ -2964,6 +2973,7 @@ export const UpdateTestCycleBody = zod
             "The Jira REST API endpoint to get the full representation of the Jira user.",
           ),
       })
+      .strict()
       .nullish(),
     customFields: zod
       .record(zod.string(), zod.unknown())
@@ -2978,83 +2988,75 @@ export const UpdateTestCycleBody = zod
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      })
-      .and(
-        zod.object({
-          issues: zod
-            .array(
-              zod
-                .object({
-                  issueId: zod.number().min(1).describe("The Jira issue ID"),
-                })
-                .and(
-                  zod.object({
-                    self: zod
-                      .string()
-                      .url()
-                      .optional()
-                      .describe(
-                        "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
-                      ),
-                    id: zod
-                      .number()
-                      .min(1)
-                      .optional()
-                      .describe(
-                        "The ID that represents the link between the entity and the Jira issue.",
-                      ),
-                    target: zod
-                      .string()
-                      .url()
-                      .optional()
-                      .describe(
-                        "The Jira Cloud REST API endpoint to get the full representation of the issue",
-                      ),
-                    type: zod
-                      .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                      .optional()
-                      .describe("The link type"),
-                  }),
-                ),
-            )
-            .optional()
-            .describe("A list of Jira issues linked to this entity"),
-          webLinks: zod
-            .array(
-              zod
-                .object({
-                  description: zod
-                    .string()
-                    .optional()
-                    .describe("The web link description"),
-                  url: zod.string().url().describe("The web link URL"),
-                })
-                .and(
-                  zod.object({
-                    self: zod
-                      .string()
-                      .url()
-                      .optional()
-                      .describe(
-                        "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
-                      ),
-                    id: zod
-                      .number()
-                      .min(1)
-                      .optional()
-                      .describe("The ID of the entity"),
-                    type: zod
-                      .enum(["COVERAGE", "BLOCKS", "RELATED"])
-                      .optional()
-                      .describe("The link type"),
-                  }),
-                ),
-            )
-            .optional()
-            .describe("A list of web links for this entity"),
-          testPlans: zod
-            .array(
-              zod.object({
+        issues: zod
+          .array(
+            zod
+              .object({
+                issueId: zod.number().min(1).describe("The Jira issue ID"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and the Jira issue.",
+                  ),
+                id: zod
+                  .number()
+                  .min(1)
+                  .optional()
+                  .describe(
+                    "The ID that represents the link between the entity and the Jira issue.",
+                  ),
+                target: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The Jira Cloud REST API endpoint to get the full representation of the issue",
+                  ),
+                type: zod
+                  .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                  .optional()
+                  .describe("The link type"),
+              })
+              .strict(),
+          )
+          .optional()
+          .describe("A list of Jira issues linked to this entity"),
+        webLinks: zod
+          .array(
+            zod
+              .object({
+                description: zod
+                  .string()
+                  .optional()
+                  .describe("The web link description"),
+                url: zod.string().describe("The web link URL"),
+                self: zod
+                  .string()
+                  .url()
+                  .optional()
+                  .describe(
+                    "The Zephyr REST API endpoint relative to the link between the entity and this web link.",
+                  ),
+                id: zod
+                  .number()
+                  .min(1)
+                  .optional()
+                  .describe("The ID of the entity"),
+                type: zod
+                  .enum(["COVERAGE", "BLOCKS", "RELATED"])
+                  .optional()
+                  .describe("The link type"),
+              })
+              .strict(),
+          )
+          .optional()
+          .describe("A list of web links for this entity"),
+        testPlans: zod
+          .array(
+            zod
+              .object({
                 id: zod
                   .number()
                   .min(1)
@@ -3084,17 +3086,19 @@ export const UpdateTestCycleBody = zod
                   .describe(
                     "The Zephyr REST API endpoint to get the full representation of the test plan",
                   ),
-              }),
-            )
-            .optional()
-            .describe("A list of test plans linked to a test cycle"),
-        }),
-      )
+              })
+              .strict(),
+          )
+          .optional()
+          .describe("A list of test plans linked to a test cycle"),
+      })
+      .strict()
       .optional()
       .describe(
         "Represents all links that a Test Cycle has. This property is ignored on update operations.",
       ),
   })
+  .strict()
   .describe("Details of a test cycle");
 
 export const UpdateTestCycleDefaultResponse = zod
@@ -3111,12 +3115,14 @@ export const UpdateTestCycleDefaultResponse = zod
 export const getTestCycleLinksPathTestCycleIdOrKeyRegExp =
   /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const GetTestCycleLinksParams = zod.object({
-  testCycleIdOrKey: zod
-    .string()
-    .regex(getTestCycleLinksPathTestCycleIdOrKeyRegExp)
-    .describe("The ID or key of the test cycle."),
-});
+export const GetTestCycleLinksParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(getTestCycleLinksPathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+  })
+  .strict();
 
 export const GetTestCycleLinks200Response = zod
   .object({
@@ -3168,7 +3174,7 @@ export const GetTestCycleLinks200Response = zod
               .string()
               .optional()
               .describe("The web link description"),
-            url: zod.string().url().describe("The web link URL"),
+            url: zod.string().describe("The web link URL"),
             self: zod
               .string()
               .url()
@@ -3244,16 +3250,20 @@ export const GetTestCycleLinksDefaultResponse = zod
 export const createTestCycleIssueLinkPathTestCycleIdOrKeyRegExp =
   /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const CreateTestCycleIssueLinkParams = zod.object({
-  testCycleIdOrKey: zod
-    .string()
-    .regex(createTestCycleIssueLinkPathTestCycleIdOrKeyRegExp)
-    .describe("The ID or key of the test cycle."),
-});
+export const CreateTestCycleIssueLinkParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(createTestCycleIssueLinkPathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+  })
+  .strict();
 
-export const CreateTestCycleIssueLinkBody = zod.object({
-  issueId: zod.number().min(1).describe("The Jira issue ID"),
-});
+export const CreateTestCycleIssueLinkBody = zod
+  .object({
+    issueId: zod.number().min(1).describe("The Jira issue ID"),
+  })
+  .strict();
 
 export const CreateTestCycleIssueLinkDefaultResponse = zod
   .object({
@@ -3269,17 +3279,21 @@ export const CreateTestCycleIssueLinkDefaultResponse = zod
 export const createTestCycleWebLinkPathTestCycleIdOrKeyRegExp =
   /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const CreateTestCycleWebLinkParams = zod.object({
-  testCycleIdOrKey: zod
-    .string()
-    .regex(createTestCycleWebLinkPathTestCycleIdOrKeyRegExp)
-    .describe("The ID or key of the test cycle."),
-});
+export const CreateTestCycleWebLinkParams = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(createTestCycleWebLinkPathTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+  })
+  .strict();
 
-export const CreateTestCycleWebLinkBody = zod.object({
-  description: zod.string().optional().describe("The web link description"),
-  url: zod.string().url().describe("The web link URL"),
-});
+export const CreateTestCycleWebLinkBody = zod
+  .object({
+    description: zod.string().optional().describe("The web link description"),
+    url: zod.string().describe("The web link URL"),
+  })
+  .strict();
 
 export const CreateTestCycleWebLinkDefaultResponse = zod
   .object({
@@ -3465,7 +3479,7 @@ export const ListTestPlans200Response = zod
                           .string()
                           .optional()
                           .describe("The web link description"),
-                        url: zod.string().url().describe("The web link URL"),
+                        url: zod.string().describe("The web link URL"),
                         self: zod
                           .string()
                           .url()
@@ -3592,45 +3606,50 @@ export const createTestPlanBodyStatusNameMax = 255;
 export const createTestPlanBodyOwnerIdRegExp = /^[-:a-zA-Z0-9]{1,128}$/;
 export const createTestPlanBodyLabelsMax = 50;
 
-export const CreateTestPlanBody = zod.object({
-  projectKey: zod
-    .string()
-    .regex(createTestPlanBodyProjectKeyRegExp)
-    .describe("Jira project key."),
-  name: zod
-    .string()
-    .min(1)
-    .max(createTestPlanBodyNameMax)
-    .regex(createTestPlanBodyNameRegExp),
-  objective: zod.string().nullish().describe("A description of the objective."),
-  folderId: zod
-    .number()
-    .min(1)
-    .optional()
-    .describe("ID of a folder to place the entity within."),
-  statusName: zod
-    .string()
-    .min(1)
-    .max(createTestPlanBodyStatusNameMax)
-    .optional()
-    .describe("The status name."),
-  ownerId: zod
-    .string()
-    .regex(createTestPlanBodyOwnerIdRegExp)
-    .nullish()
-    .describe("Atlassian Account ID of the Jira user."),
-  labels: zod
-    .array(zod.string())
-    .max(createTestPlanBodyLabelsMax)
-    .optional()
-    .describe("Array of labels associated to this entity."),
-  customFields: zod
-    .record(zod.string(), zod.unknown())
-    .optional()
-    .describe(
-      "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-    ),
-});
+export const CreateTestPlanBody = zod
+  .object({
+    projectKey: zod
+      .string()
+      .regex(createTestPlanBodyProjectKeyRegExp)
+      .describe("Jira project key."),
+    name: zod
+      .string()
+      .min(1)
+      .max(createTestPlanBodyNameMax)
+      .regex(createTestPlanBodyNameRegExp),
+    objective: zod
+      .string()
+      .nullish()
+      .describe("A description of the objective."),
+    folderId: zod
+      .number()
+      .min(1)
+      .optional()
+      .describe("ID of a folder to place the entity within."),
+    statusName: zod
+      .string()
+      .min(1)
+      .max(createTestPlanBodyStatusNameMax)
+      .optional()
+      .describe("The status name."),
+    ownerId: zod
+      .string()
+      .regex(createTestPlanBodyOwnerIdRegExp)
+      .nullish()
+      .describe("Atlassian Account ID of the Jira user."),
+    labels: zod
+      .array(zod.string())
+      .max(createTestPlanBodyLabelsMax)
+      .optional()
+      .describe("Array of labels associated to this entity."),
+    customFields: zod
+      .record(zod.string(), zod.unknown())
+      .optional()
+      .describe(
+        "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+      ),
+  })
+  .strict();
 
 export const CreateTestPlan201Response = zod
   .object({
@@ -3653,14 +3672,16 @@ export const CreateTestPlanDefaultResponse = zod
  */
 export const getTestPlanPathTestPlanIdOrKeyRegExp = /([0-9]+)|(.+-P[0-9]+)/;
 
-export const GetTestPlanParams = zod.object({
-  testPlanIdOrKey: zod
-    .string()
-    .regex(getTestPlanPathTestPlanIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
-    ),
-});
+export const GetTestPlanParams = zod
+  .object({
+    testPlanIdOrKey: zod
+      .string()
+      .regex(getTestPlanPathTestPlanIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+      ),
+  })
+  .strict();
 
 export const getTestPlan200ResponseKeyRegExp = /.+-P[0-9]+/;
 export const getTestPlan200ResponseNameMax = 255;
@@ -3759,7 +3780,7 @@ export const GetTestPlan200Response = zod
                   .string()
                   .optional()
                   .describe("The web link description"),
-                url: zod.string().url().describe("The web link URL"),
+                url: zod.string().describe("The web link URL"),
                 self: zod
                   .string()
                   .url()
@@ -3869,20 +3890,23 @@ export const GetTestPlanDefaultResponse = zod
 export const createTestPlanWebLinkPathTestPlanIdOrKeyRegExp =
   /([0-9]+)|(.+-P[0-9]+)/;
 
-export const CreateTestPlanWebLinkParams = zod.object({
-  testPlanIdOrKey: zod
-    .string()
-    .regex(createTestPlanWebLinkPathTestPlanIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
-    ),
-});
+export const CreateTestPlanWebLinkParams = zod
+  .object({
+    testPlanIdOrKey: zod
+      .string()
+      .regex(createTestPlanWebLinkPathTestPlanIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+      ),
+  })
+  .strict();
 
 export const CreateTestPlanWebLinkBody = zod
   .object({
     description: zod.string().optional().describe("The web link description"),
-    url: zod.string().url().describe("The web link URL"),
+    url: zod.string().describe("The web link URL"),
   })
+  .strict()
   .and(zod.unknown());
 
 export const CreateTestPlanWebLink201Response = zod
@@ -3906,18 +3930,22 @@ export const CreateTestPlanWebLinkDefaultResponse = zod
 export const createTestPlanIssueLinkPathTestPlanIdOrKeyRegExp =
   /([0-9]+)|(.+-P[0-9]+)/;
 
-export const CreateTestPlanIssueLinkParams = zod.object({
-  testPlanIdOrKey: zod
-    .string()
-    .regex(createTestPlanIssueLinkPathTestPlanIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
-    ),
-});
+export const CreateTestPlanIssueLinkParams = zod
+  .object({
+    testPlanIdOrKey: zod
+      .string()
+      .regex(createTestPlanIssueLinkPathTestPlanIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+      ),
+  })
+  .strict();
 
-export const CreateTestPlanIssueLinkBody = zod.object({
-  issueId: zod.number().min(1).describe("The Jira issue ID"),
-});
+export const CreateTestPlanIssueLinkBody = zod
+  .object({
+    issueId: zod.number().min(1).describe("The Jira issue ID"),
+  })
+  .strict();
 
 export const CreateTestPlanIssueLink201Response = zod
   .object({
@@ -3940,24 +3968,28 @@ export const CreateTestPlanIssueLinkDefaultResponse = zod
 export const createTestPlanTestCycleLinkPathTestPlanIdOrKeyRegExp =
   /([0-9]+)|(.+-P[0-9]+)/;
 
-export const CreateTestPlanTestCycleLinkParams = zod.object({
-  testPlanIdOrKey: zod
-    .string()
-    .regex(createTestPlanTestCycleLinkPathTestPlanIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
-    ),
-});
+export const CreateTestPlanTestCycleLinkParams = zod
+  .object({
+    testPlanIdOrKey: zod
+      .string()
+      .regex(createTestPlanTestCycleLinkPathTestPlanIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test plan. Test plan keys are of the format [A-Z]+-P[0-9]+",
+      ),
+  })
+  .strict();
 
 export const createTestPlanTestCycleLinkBodyTestCycleIdOrKeyRegExp =
   /([0-9]+)|([A-Z][A-Z_0-9]+-R[0-9]+)/;
 
-export const CreateTestPlanTestCycleLinkBody = zod.object({
-  testCycleIdOrKey: zod
-    .string()
-    .regex(createTestPlanTestCycleLinkBodyTestCycleIdOrKeyRegExp)
-    .describe("The ID or key of the test cycle."),
-});
+export const CreateTestPlanTestCycleLinkBody = zod
+  .object({
+    testCycleIdOrKey: zod
+      .string()
+      .regex(createTestPlanTestCycleLinkBodyTestCycleIdOrKeyRegExp)
+      .describe("The ID or key of the test cycle."),
+  })
+  .strict();
 
 export const CreateTestPlanTestCycleLink201Response = zod
   .object({
@@ -4331,87 +4363,91 @@ export const createTestExecutionBodyExecutedByIdRegExp =
 export const createTestExecutionBodyAssignedToIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const CreateTestExecutionBody = zod.object({
-  projectKey: zod
-    .string()
-    .regex(createTestExecutionBodyProjectKeyRegExp)
-    .describe("Jira project key."),
-  testCaseKey: zod
-    .string()
-    .regex(createTestExecutionBodyTestCaseKeyRegExp)
-    .describe(
-      "Key of test case the execution applies to. NOTE: Test cases with call to test, parameters and test data are not supported.",
-    ),
-  testCycleKey: zod
-    .string()
-    .regex(createTestExecutionBodyTestCycleKeyRegExp)
-    .describe("Key of test cycle the execution applies to."),
-  statusName: zod
-    .string()
-    .min(1)
-    .max(createTestExecutionBodyStatusNameMax)
-    .describe("The status name."),
-  testScriptResults: zod
-    .array(
-      zod.object({
-        statusName: zod
-          .string()
-          .min(1)
-          .max(createTestExecutionBodyTestScriptResultsItemStatusNameMax)
-          .describe("The status name."),
-        actualEndDate: zod
-          .string()
-          .datetime({})
-          .optional()
-          .describe(
-            "The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
-          ),
-        actualResult: zod
-          .string()
-          .optional()
-          .describe(
-            "free text field to provide more info on result of step execution.",
-          ),
-      }),
-    )
-    .optional(),
-  environmentName: zod
-    .string()
-    .optional()
-    .describe("Environment assigned to the test case."),
-  actualEndDate: zod
-    .string()
-    .datetime({})
-    .optional()
-    .describe(
-      "The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
-    ),
-  executionTime: zod
-    .number()
-    .min(createTestExecutionBodyExecutionTimeMin)
-    .optional()
-    .describe("Actual test execution time in milliseconds."),
-  executedById: zod
-    .string()
-    .regex(createTestExecutionBodyExecutedByIdRegExp)
-    .nullish()
-    .describe("Atlassian Account ID of the Jira user."),
-  assignedToId: zod
-    .string()
-    .regex(createTestExecutionBodyAssignedToIdRegExp)
-    .nullish()
-    .describe("Atlassian Account ID of the Jira user."),
-  comment: zod
-    .string()
-    .nullish()
-    .describe("Comment added against overall test case execution."),
-  customFields: zod
-    .record(zod.string(), zod.unknown())
-    .optional()
-    .describe(
-      "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-    ),
-});
+export const CreateTestExecutionBody = zod
+  .object({
+    projectKey: zod
+      .string()
+      .regex(createTestExecutionBodyProjectKeyRegExp)
+      .describe("Jira project key."),
+    testCaseKey: zod
+      .string()
+      .regex(createTestExecutionBodyTestCaseKeyRegExp)
+      .describe(
+        "Key of test case the execution applies to. NOTE: Test cases with call to test, parameters and test data are not supported.",
+      ),
+    testCycleKey: zod
+      .string()
+      .regex(createTestExecutionBodyTestCycleKeyRegExp)
+      .describe("Key of test cycle the execution applies to."),
+    statusName: zod
+      .string()
+      .min(1)
+      .max(createTestExecutionBodyStatusNameMax)
+      .describe("The status name."),
+    testScriptResults: zod
+      .array(
+        zod
+          .object({
+            statusName: zod
+              .string()
+              .min(1)
+              .max(createTestExecutionBodyTestScriptResultsItemStatusNameMax)
+              .describe("The status name."),
+            actualEndDate: zod
+              .string()
+              .datetime({})
+              .optional()
+              .describe(
+                "The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+              ),
+            actualResult: zod
+              .string()
+              .optional()
+              .describe(
+                "free text field to provide more info on result of step execution.",
+              ),
+          })
+          .strict(),
+      )
+      .optional(),
+    environmentName: zod
+      .string()
+      .optional()
+      .describe("Environment assigned to the test case."),
+    actualEndDate: zod
+      .string()
+      .datetime({})
+      .optional()
+      .describe(
+        "The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+      ),
+    executionTime: zod
+      .number()
+      .min(createTestExecutionBodyExecutionTimeMin)
+      .optional()
+      .describe("Actual test execution time in milliseconds."),
+    executedById: zod
+      .string()
+      .regex(createTestExecutionBodyExecutedByIdRegExp)
+      .nullish()
+      .describe("Atlassian Account ID of the Jira user."),
+    assignedToId: zod
+      .string()
+      .regex(createTestExecutionBodyAssignedToIdRegExp)
+      .nullish()
+      .describe("Atlassian Account ID of the Jira user."),
+    comment: zod
+      .string()
+      .nullish()
+      .describe("Comment added against overall test case execution."),
+    customFields: zod
+      .record(zod.string(), zod.unknown())
+      .optional()
+      .describe(
+        "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+      ),
+  })
+  .strict();
 
 export const CreateTestExecution201Response = zod
   .object({
@@ -4763,14 +4799,16 @@ export const ListTestExecutionsNextgenDefaultResponse = zod
 export const getTestExecutionPathTestExecutionIdOrKeyRegExp =
   /([0-9]+)|(.+-E[0-9]+)/;
 
-export const GetTestExecutionParams = zod.object({
-  testExecutionIdOrKey: zod
-    .string()
-    .regex(getTestExecutionPathTestExecutionIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
-    ),
-});
+export const GetTestExecutionParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(getTestExecutionPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+  })
+  .strict();
 
 export const getTestExecutionQueryIncludeStepLinksDefault = false;
 
@@ -4974,14 +5012,16 @@ export const GetTestExecutionDefaultResponse = zod
 export const updateTestExecutionPathTestExecutionIdOrKeyRegExp =
   /([0-9]+)|(.+-E[0-9]+)/;
 
-export const UpdateTestExecutionParams = zod.object({
-  testExecutionIdOrKey: zod
-    .string()
-    .regex(updateTestExecutionPathTestExecutionIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
-    ),
-});
+export const UpdateTestExecutionParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(updateTestExecutionPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+  })
+  .strict();
 
 export const updateTestExecutionBodyStatusNameMax = 255;
 
@@ -4992,44 +5032,46 @@ export const updateTestExecutionBodyExecutedByIdRegExp =
 export const updateTestExecutionBodyAssignedToIdRegExp =
   /^[-:a-zA-Z0-9]{1,128}$/;
 
-export const UpdateTestExecutionBody = zod.object({
-  statusName: zod
-    .string()
-    .min(1)
-    .max(updateTestExecutionBodyStatusNameMax)
-    .optional()
-    .describe("The status name."),
-  environmentName: zod
-    .string()
-    .optional()
-    .describe("Environment assigned to the test case."),
-  actualEndDate: zod
-    .string()
-    .datetime({})
-    .optional()
-    .describe(
-      "The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
-    ),
-  executionTime: zod
-    .number()
-    .min(updateTestExecutionBodyExecutionTimeMin)
-    .optional()
-    .describe("Actual test execution time in milliseconds."),
-  executedById: zod
-    .string()
-    .regex(updateTestExecutionBodyExecutedByIdRegExp)
-    .nullish()
-    .describe("Atlassian Account ID of the Jira user."),
-  assignedToId: zod
-    .string()
-    .regex(updateTestExecutionBodyAssignedToIdRegExp)
-    .nullish()
-    .describe("Atlassian Account ID of the Jira user."),
-  comment: zod
-    .string()
-    .nullish()
-    .describe("Comment added against overall test case execution."),
-});
+export const UpdateTestExecutionBody = zod
+  .object({
+    statusName: zod
+      .string()
+      .min(1)
+      .max(updateTestExecutionBodyStatusNameMax)
+      .optional()
+      .describe("The status name."),
+    environmentName: zod
+      .string()
+      .optional()
+      .describe("Environment assigned to the test case."),
+    actualEndDate: zod
+      .string()
+      .datetime({})
+      .optional()
+      .describe(
+        "The actual end date of the test cycle. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+      ),
+    executionTime: zod
+      .number()
+      .min(updateTestExecutionBodyExecutionTimeMin)
+      .optional()
+      .describe("Actual test execution time in milliseconds."),
+    executedById: zod
+      .string()
+      .regex(updateTestExecutionBodyExecutedByIdRegExp)
+      .nullish()
+      .describe("Atlassian Account ID of the Jira user."),
+    assignedToId: zod
+      .string()
+      .regex(updateTestExecutionBodyAssignedToIdRegExp)
+      .nullish()
+      .describe("Atlassian Account ID of the Jira user."),
+    comment: zod
+      .string()
+      .nullish()
+      .describe("Comment added against overall test case execution."),
+  })
+  .strict();
 
 export const UpdateTestExecutionDefaultResponse = zod
   .object({
@@ -5045,14 +5087,16 @@ export const UpdateTestExecutionDefaultResponse = zod
 export const getTestExecutionTestStepsPathTestExecutionIdOrKeyRegExp =
   /([0-9]+)|(.+-E[0-9]+)/;
 
-export const GetTestExecutionTestStepsParams = zod.object({
-  testExecutionIdOrKey: zod
-    .string()
-    .regex(getTestExecutionTestStepsPathTestExecutionIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
-    ),
-});
+export const GetTestExecutionTestStepsParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(getTestExecutionTestStepsPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+  })
+  .strict();
 
 export const getTestExecutionTestStepsQueryMaxResultsDefault = 10;
 
@@ -5189,32 +5233,41 @@ export const GetTestExecutionTestSteps200Response = zod
 export const putTestExecutionTestStepsPathTestExecutionIdOrKeyRegExp =
   /([0-9]+)|(.+-E[0-9]+)/;
 
-export const PutTestExecutionTestStepsParams = zod.object({
-  testExecutionIdOrKey: zod
-    .string()
-    .regex(putTestExecutionTestStepsPathTestExecutionIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
-    ),
-});
+export const PutTestExecutionTestStepsParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(putTestExecutionTestStepsPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+  })
+  .strict();
 
 export const putTestExecutionTestStepsBodyStepsItemStatusNameMax = 255;
 
-export const PutTestExecutionTestStepsBody = zod.object({
-  steps: zod
-    .array(
-      zod.object({
-        actualResult: zod.string().optional().describe("The actual result."),
-        statusName: zod
-          .string()
-          .min(1)
-          .max(putTestExecutionTestStepsBodyStepsItemStatusNameMax)
-          .optional()
-          .describe("The status name."),
-      }),
-    )
-    .optional(),
-});
+export const PutTestExecutionTestStepsBody = zod
+  .object({
+    steps: zod
+      .array(
+        zod
+          .object({
+            actualResult: zod
+              .string()
+              .optional()
+              .describe("The actual result."),
+            statusName: zod
+              .string()
+              .min(1)
+              .max(putTestExecutionTestStepsBodyStepsItemStatusNameMax)
+              .optional()
+              .describe("The status name."),
+          })
+          .strict(),
+      )
+      .optional(),
+  })
+  .strict();
 
 export const PutTestExecutionTestSteps404Response = zod
   .object({
@@ -5259,14 +5312,16 @@ export const PutTestExecutionTestStepsDefaultResponse = zod
 export const syncTestExecutionScriptPathTestExecutionIdOrKeyRegExp =
   /([0-9]+)|(.+-E[0-9]+)/;
 
-export const SyncTestExecutionScriptParams = zod.object({
-  testExecutionIdOrKey: zod
-    .string()
-    .regex(syncTestExecutionScriptPathTestExecutionIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
-    ),
-});
+export const SyncTestExecutionScriptParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(syncTestExecutionScriptPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+  })
+  .strict();
 
 export const SyncTestExecutionScript200Response = zod
   .object({
@@ -5306,14 +5361,16 @@ export const SyncTestExecutionScriptDefaultResponse = zod
 export const listTestExecutionLinksPathTestExecutionIdOrKeyRegExp =
   /([0-9]+)|(.+-E[0-9]+)/;
 
-export const ListTestExecutionLinksParams = zod.object({
-  testExecutionIdOrKey: zod
-    .string()
-    .regex(listTestExecutionLinksPathTestExecutionIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
-    ),
-});
+export const ListTestExecutionLinksParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(listTestExecutionLinksPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+  })
+  .strict();
 
 export const ListTestExecutionLinks200Response = zod
   .object({
@@ -5374,18 +5431,22 @@ export const ListTestExecutionLinksDefaultResponse = zod
 export const createTestExecutionIssueLinkPathTestExecutionIdOrKeyRegExp =
   /([0-9]+)|(.+-E[0-9]+)/;
 
-export const CreateTestExecutionIssueLinkParams = zod.object({
-  testExecutionIdOrKey: zod
-    .string()
-    .regex(createTestExecutionIssueLinkPathTestExecutionIdOrKeyRegExp)
-    .describe(
-      "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
-    ),
-});
+export const CreateTestExecutionIssueLinkParams = zod
+  .object({
+    testExecutionIdOrKey: zod
+      .string()
+      .regex(createTestExecutionIssueLinkPathTestExecutionIdOrKeyRegExp)
+      .describe(
+        "The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+",
+      ),
+  })
+  .strict();
 
-export const CreateTestExecutionIssueLinkBody = zod.object({
-  issueId: zod.number().min(1).describe("The Jira issue ID"),
-});
+export const CreateTestExecutionIssueLinkBody = zod
+  .object({
+    issueId: zod.number().min(1).describe("The Jira issue ID"),
+  })
+  .strict();
 
 export const CreateTestExecutionIssueLinkDefaultResponse = zod
   .object({
@@ -5492,12 +5553,14 @@ export const ListProjectsDefaultResponse = zod
  */
 export const getProjectPathProjectIdOrKeyRegExp = /([0-9]+)|([A-Z][A-Z_0-9]+)/;
 
-export const GetProjectParams = zod.object({
-  projectIdOrKey: zod
-    .string()
-    .regex(getProjectPathProjectIdOrKeyRegExp)
-    .describe("The Zephyr project ID or Jira project key"),
-});
+export const GetProjectParams = zod
+  .object({
+    projectIdOrKey: zod
+      .string()
+      .regex(getProjectPathProjectIdOrKeyRegExp)
+      .describe("The Zephyr project ID or Jira project key"),
+  })
+  .strict();
 
 export const GetProject200Response = zod
   .object({
@@ -5655,29 +5718,31 @@ export const createFolderBodyNameMax = 255;
 
 export const createFolderBodyProjectKeyRegExp = /([A-Z][A-Z_0-9]+)/;
 
-export const CreateFolderBody = zod.object({
-  parentId: zod
-    .number()
-    .min(1)
-    .optional()
-    .describe(
-      "Folder ID of the parent folder. Must be `null` for root folders.",
-    ),
-  name: zod
-    .string()
-    .min(1)
-    .max(createFolderBodyNameMax)
-    .describe(
-      "Folder name. Folder name must not contain `/` and `\\` characters.",
-    ),
-  projectKey: zod
-    .string()
-    .regex(createFolderBodyProjectKeyRegExp)
-    .describe("Jira project key."),
-  folderType: zod
-    .string()
-    .describe('Valid values: `"TEST_CASE"`, `"TEST_PLAN"`, `"TEST_CYCLE"`'),
-});
+export const CreateFolderBody = zod
+  .object({
+    parentId: zod
+      .number()
+      .min(1)
+      .optional()
+      .describe(
+        "Folder ID of the parent folder. Must be `null` for root folders.",
+      ),
+    name: zod
+      .string()
+      .min(1)
+      .max(createFolderBodyNameMax)
+      .describe(
+        "Folder name. Folder name must not contain `/` and `\\` characters.",
+      ),
+    projectKey: zod
+      .string()
+      .regex(createFolderBodyProjectKeyRegExp)
+      .describe("Jira project key."),
+    folderType: zod
+      .string()
+      .describe('Valid values: `"TEST_CASE"`, `"TEST_PLAN"`, `"TEST_CYCLE"`'),
+  })
+  .strict();
 
 export const CreateFolder201Response = zod
   .object({
@@ -5698,9 +5763,11 @@ export const CreateFolderDefaultResponse = zod
  * @summary Get folder
  */
 
-export const GetFolderParams = zod.object({
-  folderId: zod.number().min(1).describe("Folder ID"),
-});
+export const GetFolderParams = zod
+  .object({
+    folderId: zod.number().min(1).describe("Folder ID"),
+  })
+  .strict();
 
 export const getFolder200ResponseNameMax = 255;
 
@@ -5886,28 +5953,30 @@ export const createPriorityBodyDescriptionMax = 255;
 
 export const createPriorityBodyColorRegExp = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})/;
 
-export const CreatePriorityBody = zod.object({
-  projectKey: zod
-    .string()
-    .regex(createPriorityBodyProjectKeyRegExp)
-    .describe("Jira project key."),
-  name: zod
-    .string()
-    .min(1)
-    .max(createPriorityBodyNameMax)
-    .describe("The priority name."),
-  description: zod
-    .string()
-    .min(1)
-    .max(createPriorityBodyDescriptionMax)
-    .optional()
-    .describe("The priority description."),
-  color: zod
-    .string()
-    .regex(createPriorityBodyColorRegExp)
-    .optional()
-    .describe("A color in hexadecimal format"),
-});
+export const CreatePriorityBody = zod
+  .object({
+    projectKey: zod
+      .string()
+      .regex(createPriorityBodyProjectKeyRegExp)
+      .describe("Jira project key."),
+    name: zod
+      .string()
+      .min(1)
+      .max(createPriorityBodyNameMax)
+      .describe("The priority name."),
+    description: zod
+      .string()
+      .min(1)
+      .max(createPriorityBodyDescriptionMax)
+      .optional()
+      .describe("The priority description."),
+    color: zod
+      .string()
+      .regex(createPriorityBodyColorRegExp)
+      .optional()
+      .describe("A color in hexadecimal format"),
+  })
+  .strict();
 
 export const CreatePriority201Response = zod
   .object({
@@ -5928,9 +5997,11 @@ export const CreatePriorityDefaultResponse = zod
  * @summary Get priority
  */
 
-export const GetPriorityParams = zod.object({
-  priorityId: zod.number().min(1),
-});
+export const GetPriorityParams = zod
+  .object({
+    priorityId: zod.number().min(1),
+  })
+  .strict();
 
 export const getPriority200ResponseOneNameMax = 255;
 
@@ -5994,9 +6065,11 @@ export const GetPriorityDefaultResponse = zod
  * @summary Update priority
  */
 
-export const UpdatePriorityParams = zod.object({
-  priorityId: zod.number().min(1),
-});
+export const UpdatePriorityParams = zod
+  .object({
+    priorityId: zod.number().min(1),
+  })
+  .strict();
 
 export const updatePriorityBodyNameMax = 255;
 
@@ -6006,41 +6079,40 @@ export const updatePriorityBodyIndexMin = 0;
 
 export const updatePriorityBodyColorRegExp = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})/;
 
-export const UpdatePriorityBody = zod.object({
-  id: zod.number().min(1).describe("The ID of the entity"),
-  project: zod
-    .object({
-      id: zod.number().min(1).describe("The ID of the entity"),
-    })
-    .and(
-      zod.object({
+export const UpdatePriorityBody = zod
+  .object({
+    id: zod.number().min(1).describe("The ID of the entity"),
+    project: zod
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .describe("ID and link relative to Zephyr project."),
-  name: zod
-    .string()
-    .min(1)
-    .max(updatePriorityBodyNameMax)
-    .describe("The priority name."),
-  description: zod
-    .string()
-    .min(1)
-    .max(updatePriorityBodyDescriptionMax)
-    .optional()
-    .describe("The priority description."),
-  index: zod.number().min(updatePriorityBodyIndexMin),
-  default: zod.boolean(),
-  color: zod
-    .string()
-    .regex(updatePriorityBodyColorRegExp)
-    .optional()
-    .describe("A color in hexadecimal format"),
-});
+      })
+      .strict()
+      .describe("ID and link relative to Zephyr project."),
+    name: zod
+      .string()
+      .min(1)
+      .max(updatePriorityBodyNameMax)
+      .describe("The priority name."),
+    description: zod
+      .string()
+      .min(1)
+      .max(updatePriorityBodyDescriptionMax)
+      .optional()
+      .describe("The priority description."),
+    index: zod.number().min(updatePriorityBodyIndexMin),
+    default: zod.boolean(),
+    color: zod
+      .string()
+      .regex(updatePriorityBodyColorRegExp)
+      .optional()
+      .describe("A color in hexadecimal format"),
+  })
+  .strict();
 
 export const UpdatePriorityDefaultResponse = zod
   .object({
@@ -6197,31 +6269,33 @@ export const createStatusBodyDescriptionMax = 255;
 
 export const createStatusBodyColorRegExp = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})/;
 
-export const CreateStatusBody = zod.object({
-  projectKey: zod
-    .string()
-    .regex(createStatusBodyProjectKeyRegExp)
-    .describe("Jira project key."),
-  name: zod
-    .string()
-    .min(1)
-    .max(createStatusBodyNameMax)
-    .describe("The status name."),
-  type: zod
-    .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
-    .describe("Determines which type of entity the status belongs to."),
-  description: zod
-    .string()
-    .min(1)
-    .max(createStatusBodyDescriptionMax)
-    .optional()
-    .describe("The status description."),
-  color: zod
-    .string()
-    .regex(createStatusBodyColorRegExp)
-    .optional()
-    .describe("A color in hexadecimal format"),
-});
+export const CreateStatusBody = zod
+  .object({
+    projectKey: zod
+      .string()
+      .regex(createStatusBodyProjectKeyRegExp)
+      .describe("Jira project key."),
+    name: zod
+      .string()
+      .min(1)
+      .max(createStatusBodyNameMax)
+      .describe("The status name."),
+    type: zod
+      .enum(["TEST_CASE", "TEST_PLAN", "TEST_CYCLE", "TEST_EXECUTION"])
+      .describe("Determines which type of entity the status belongs to."),
+    description: zod
+      .string()
+      .min(1)
+      .max(createStatusBodyDescriptionMax)
+      .optional()
+      .describe("The status description."),
+    color: zod
+      .string()
+      .regex(createStatusBodyColorRegExp)
+      .optional()
+      .describe("A color in hexadecimal format"),
+  })
+  .strict();
 
 export const CreateStatus201Response = zod
   .object({
@@ -6242,9 +6316,11 @@ export const CreateStatusDefaultResponse = zod
  * @summary Get status
  */
 
-export const GetStatusParams = zod.object({
-  statusId: zod.number().min(1),
-});
+export const GetStatusParams = zod
+  .object({
+    statusId: zod.number().min(1),
+  })
+  .strict();
 
 export const getStatus200ResponseOneNameMax = 255;
 
@@ -6309,9 +6385,11 @@ export const GetStatusDefaultResponse = zod
  * @summary Update status
  */
 
-export const UpdateStatusParams = zod.object({
-  statusId: zod.number().min(1),
-});
+export const UpdateStatusParams = zod
+  .object({
+    statusId: zod.number().min(1),
+  })
+  .strict();
 
 export const updateStatusBodyNameMax = 255;
 
@@ -6321,42 +6399,41 @@ export const updateStatusBodyIndexMin = 0;
 
 export const updateStatusBodyColorRegExp = /#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})/;
 
-export const UpdateStatusBody = zod.object({
-  id: zod.number().min(1).describe("The ID of the entity"),
-  project: zod
-    .object({
-      id: zod.number().min(1).describe("The ID of the entity"),
-    })
-    .and(
-      zod.object({
+export const UpdateStatusBody = zod
+  .object({
+    id: zod.number().min(1).describe("The ID of the entity"),
+    project: zod
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .describe("ID and link relative to Zephyr project."),
-  name: zod
-    .string()
-    .min(1)
-    .max(updateStatusBodyNameMax)
-    .describe("The status name."),
-  description: zod
-    .string()
-    .min(1)
-    .max(updateStatusBodyDescriptionMax)
-    .optional()
-    .describe("The status description."),
-  index: zod.number().min(updateStatusBodyIndexMin),
-  archived: zod.boolean(),
-  default: zod.boolean(),
-  color: zod
-    .string()
-    .regex(updateStatusBodyColorRegExp)
-    .optional()
-    .describe("A color in hexadecimal format"),
-});
+      })
+      .strict()
+      .describe("ID and link relative to Zephyr project."),
+    name: zod
+      .string()
+      .min(1)
+      .max(updateStatusBodyNameMax)
+      .describe("The status name."),
+    description: zod
+      .string()
+      .min(1)
+      .max(updateStatusBodyDescriptionMax)
+      .optional()
+      .describe("The status description."),
+    index: zod.number().min(updateStatusBodyIndexMin),
+    archived: zod.boolean(),
+    default: zod.boolean(),
+    color: zod
+      .string()
+      .regex(updateStatusBodyColorRegExp)
+      .optional()
+      .describe("A color in hexadecimal format"),
+  })
+  .strict();
 
 export const UpdateStatusDefaultResponse = zod
   .object({
@@ -6501,23 +6578,25 @@ export const createEnvironmentBodyNameMax = 255;
 
 export const createEnvironmentBodyDescriptionMax = 255;
 
-export const CreateEnvironmentBody = zod.object({
-  projectKey: zod
-    .string()
-    .regex(createEnvironmentBodyProjectKeyRegExp)
-    .describe("Jira project key."),
-  name: zod
-    .string()
-    .min(1)
-    .max(createEnvironmentBodyNameMax)
-    .describe("The environment name."),
-  description: zod
-    .string()
-    .min(1)
-    .max(createEnvironmentBodyDescriptionMax)
-    .optional()
-    .describe("The environment description."),
-});
+export const CreateEnvironmentBody = zod
+  .object({
+    projectKey: zod
+      .string()
+      .regex(createEnvironmentBodyProjectKeyRegExp)
+      .describe("Jira project key."),
+    name: zod
+      .string()
+      .min(1)
+      .max(createEnvironmentBodyNameMax)
+      .describe("The environment name."),
+    description: zod
+      .string()
+      .min(1)
+      .max(createEnvironmentBodyDescriptionMax)
+      .optional()
+      .describe("The environment description."),
+  })
+  .strict();
 
 export const CreateEnvironment201Response = zod
   .object({
@@ -6565,9 +6644,11 @@ export const CreateEnvironmentDefaultResponse = zod
  * @summary Get environment
  */
 
-export const GetEnvironmentParams = zod.object({
-  environmentId: zod.number().min(1),
-});
+export const GetEnvironmentParams = zod
+  .object({
+    environmentId: zod.number().min(1),
+  })
+  .strict();
 
 export const getEnvironment200ResponseOneNameMax = 255;
 
@@ -6626,9 +6707,11 @@ export const GetEnvironmentDefaultResponse = zod
  * @summary Update an environment
  */
 
-export const UpdateEnvironmentParams = zod.object({
-  environmentId: zod.number().min(1),
-});
+export const UpdateEnvironmentParams = zod
+  .object({
+    environmentId: zod.number().min(1),
+  })
+  .strict();
 
 export const updateEnvironmentBodyNameMax = 255;
 
@@ -6636,35 +6719,34 @@ export const updateEnvironmentBodyDescriptionMax = 255;
 
 export const updateEnvironmentBodyIndexMin = 0;
 
-export const UpdateEnvironmentBody = zod.object({
-  id: zod.number().min(1).describe("The ID of the entity"),
-  project: zod
-    .object({
-      id: zod.number().min(1).describe("The ID of the entity"),
-    })
-    .and(
-      zod.object({
+export const UpdateEnvironmentBody = zod
+  .object({
+    id: zod.number().min(1).describe("The ID of the entity"),
+    project: zod
+      .object({
+        id: zod.number().min(1).describe("The ID of the entity"),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
-      }),
-    )
-    .describe("ID and link relative to Zephyr project."),
-  name: zod
-    .string()
-    .min(1)
-    .max(updateEnvironmentBodyNameMax)
-    .describe("The environment name."),
-  description: zod
-    .string()
-    .min(1)
-    .max(updateEnvironmentBodyDescriptionMax)
-    .optional()
-    .describe("The environment description."),
-  index: zod.number().min(updateEnvironmentBodyIndexMin),
-});
+      })
+      .strict()
+      .describe("ID and link relative to Zephyr project."),
+    name: zod
+      .string()
+      .min(1)
+      .max(updateEnvironmentBodyNameMax)
+      .describe("The environment name."),
+    description: zod
+      .string()
+      .min(1)
+      .max(updateEnvironmentBodyDescriptionMax)
+      .optional()
+      .describe("The environment description."),
+    index: zod.number().min(updateEnvironmentBodyIndexMin),
+  })
+  .strict();
 
 export const UpdateEnvironment400Response = zod.union([
   zod
@@ -6711,9 +6793,11 @@ export const UpdateEnvironmentDefaultResponse = zod
  * @summary Delete link
  */
 
-export const DeleteLinkParams = zod.object({
-  linkId: zod.number().min(1),
-});
+export const DeleteLinkParams = zod
+  .object({
+    linkId: zod.number().min(1),
+  })
+  .strict();
 
 export const DeleteLinkDefaultResponse = zod
   .object({
@@ -6728,12 +6812,14 @@ export const DeleteLinkDefaultResponse = zod
  */
 export const getIssueLinkTestCasesPathIssueKeyRegExp = /.+-[0-9]+/;
 
-export const GetIssueLinkTestCasesParams = zod.object({
-  issueKey: zod
-    .string()
-    .regex(getIssueLinkTestCasesPathIssueKeyRegExp)
-    .describe("The key of the Jira issue"),
-});
+export const GetIssueLinkTestCasesParams = zod
+  .object({
+    issueKey: zod
+      .string()
+      .regex(getIssueLinkTestCasesPathIssueKeyRegExp)
+      .describe("The key of the Jira issue"),
+  })
+  .strict();
 
 export const GetIssueLinkTestCases200ResponseItem = zod
   .object({
@@ -6763,12 +6849,14 @@ export const GetIssueLinkTestCasesDefaultResponse = zod
  */
 export const getIssueLinkTestCyclesPathIssueKeyRegExp = /.+-[0-9]+/;
 
-export const GetIssueLinkTestCyclesParams = zod.object({
-  issueKey: zod
-    .string()
-    .regex(getIssueLinkTestCyclesPathIssueKeyRegExp)
-    .describe("The key of the Jira issue"),
-});
+export const GetIssueLinkTestCyclesParams = zod
+  .object({
+    issueKey: zod
+      .string()
+      .regex(getIssueLinkTestCyclesPathIssueKeyRegExp)
+      .describe("The key of the Jira issue"),
+  })
+  .strict();
 
 export const GetIssueLinkTestCycles200ResponseItem = zod
   .object({
@@ -6798,12 +6886,14 @@ export const GetIssueLinkTestCyclesDefaultResponse = zod
  */
 export const getIssueLinkTestPlansPathIssueKeyRegExp = /.+-[0-9]+/;
 
-export const GetIssueLinkTestPlansParams = zod.object({
-  issueKey: zod
-    .string()
-    .regex(getIssueLinkTestPlansPathIssueKeyRegExp)
-    .describe("The key of the Jira issue"),
-});
+export const GetIssueLinkTestPlansParams = zod
+  .object({
+    issueKey: zod
+      .string()
+      .regex(getIssueLinkTestPlansPathIssueKeyRegExp)
+      .describe("The key of the Jira issue"),
+  })
+  .strict();
 
 export const GetIssueLinkTestPlans200ResponseItem = zod
   .object({
@@ -6833,12 +6923,14 @@ export const GetIssueLinkTestPlansDefaultResponse = zod
  */
 export const getIssueLinkTestExecutionsPathIssueKeyRegExp = /.+-[0-9]+/;
 
-export const GetIssueLinkTestExecutionsParams = zod.object({
-  issueKey: zod
-    .string()
-    .regex(getIssueLinkTestExecutionsPathIssueKeyRegExp)
-    .describe("The key of the Jira issue"),
-});
+export const GetIssueLinkTestExecutionsParams = zod
+  .object({
+    issueKey: zod
+      .string()
+      .regex(getIssueLinkTestExecutionsPathIssueKeyRegExp)
+      .describe("The key of the Jira issue"),
+  })
+  .strict();
 
 export const GetIssueLinkTestExecutions200ResponseItem = zod
   .object({
@@ -6892,44 +6984,47 @@ export const createCustomExecutionsBodyTestCycleNameMax = 255;
 
 export const createCustomExecutionsBodyTestCycleNameRegExp = /^(?!\\s*$).+/;
 
-export const CreateCustomExecutionsBody = zod.object({
-  file: zod.instanceof(File),
-  testCycle: zod
-    .object({
-      name: zod
-        .string()
-        .min(1)
-        .max(createCustomExecutionsBodyTestCycleNameMax)
-        .regex(createCustomExecutionsBodyTestCycleNameRegExp)
-        .optional(),
-      description: zod
-        .string()
-        .nullish()
-        .describe("Description outlining the scope."),
-      jiraProjectVersion: zod
-        .number()
-        .min(1)
-        .optional()
-        .describe(
-          "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
-        ),
-      folderId: zod
-        .number()
-        .min(1)
-        .optional()
-        .describe("ID of a folder to place the entity within."),
-      customFields: zod
-        .record(zod.string(), zod.unknown())
-        .optional()
-        .describe(
-          "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-        ),
-    })
-    .optional()
-    .describe(
-      "Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as `application/json` otherwise the object will be ignored.",
-    ),
-});
+export const CreateCustomExecutionsBody = zod
+  .object({
+    file: zod.instanceof(File),
+    testCycle: zod
+      .object({
+        name: zod
+          .string()
+          .min(1)
+          .max(createCustomExecutionsBodyTestCycleNameMax)
+          .regex(createCustomExecutionsBodyTestCycleNameRegExp)
+          .optional(),
+        description: zod
+          .string()
+          .nullish()
+          .describe("Description outlining the scope."),
+        jiraProjectVersion: zod
+          .number()
+          .min(1)
+          .optional()
+          .describe(
+            "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+          ),
+        folderId: zod
+          .number()
+          .min(1)
+          .optional()
+          .describe("ID of a folder to place the entity within."),
+        customFields: zod
+          .record(zod.string(), zod.unknown())
+          .optional()
+          .describe(
+            "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+          ),
+      })
+      .strict()
+      .optional()
+      .describe(
+        "Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as `application/json` otherwise the object will be ignored.",
+      ),
+  })
+  .strict();
 
 export const createCustomExecutions200ResponseTestCycleKeyRegExp =
   /([A-Z][A-Z_0-9]+-R[0-9]+)/;
@@ -6996,44 +7091,47 @@ export const createCucumberExecutionsBodyTestCycleNameMax = 255;
 
 export const createCucumberExecutionsBodyTestCycleNameRegExp = /^(?!\\s*$).+/;
 
-export const CreateCucumberExecutionsBody = zod.object({
-  file: zod.instanceof(File),
-  testCycle: zod
-    .object({
-      name: zod
-        .string()
-        .min(1)
-        .max(createCucumberExecutionsBodyTestCycleNameMax)
-        .regex(createCucumberExecutionsBodyTestCycleNameRegExp)
-        .optional(),
-      description: zod
-        .string()
-        .nullish()
-        .describe("Description outlining the scope."),
-      jiraProjectVersion: zod
-        .number()
-        .min(1)
-        .optional()
-        .describe(
-          "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
-        ),
-      folderId: zod
-        .number()
-        .min(1)
-        .optional()
-        .describe("ID of a folder to place the entity within."),
-      customFields: zod
-        .record(zod.string(), zod.unknown())
-        .optional()
-        .describe(
-          "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-        ),
-    })
-    .optional()
-    .describe(
-      "Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as `application/json` otherwise the object will be ignored.",
-    ),
-});
+export const CreateCucumberExecutionsBody = zod
+  .object({
+    file: zod.instanceof(File),
+    testCycle: zod
+      .object({
+        name: zod
+          .string()
+          .min(1)
+          .max(createCucumberExecutionsBodyTestCycleNameMax)
+          .regex(createCucumberExecutionsBodyTestCycleNameRegExp)
+          .optional(),
+        description: zod
+          .string()
+          .nullish()
+          .describe("Description outlining the scope."),
+        jiraProjectVersion: zod
+          .number()
+          .min(1)
+          .optional()
+          .describe(
+            "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+          ),
+        folderId: zod
+          .number()
+          .min(1)
+          .optional()
+          .describe("ID of a folder to place the entity within."),
+        customFields: zod
+          .record(zod.string(), zod.unknown())
+          .optional()
+          .describe(
+            "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+          ),
+      })
+      .strict()
+      .optional()
+      .describe(
+        "Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as `application/json` otherwise the object will be ignored.",
+      ),
+  })
+  .strict();
 
 export const createCucumberExecutions200ResponseTestCycleKeyRegExp =
   /([A-Z][A-Z_0-9]+-R[0-9]+)/;
@@ -7099,44 +7197,47 @@ export const createJUnitExecutionsBodyTestCycleNameMax = 255;
 
 export const createJUnitExecutionsBodyTestCycleNameRegExp = /^(?!\\s*$).+/;
 
-export const CreateJUnitExecutionsBody = zod.object({
-  file: zod.instanceof(File),
-  testCycle: zod
-    .object({
-      name: zod
-        .string()
-        .min(1)
-        .max(createJUnitExecutionsBodyTestCycleNameMax)
-        .regex(createJUnitExecutionsBodyTestCycleNameRegExp)
-        .optional(),
-      description: zod
-        .string()
-        .nullish()
-        .describe("Description outlining the scope."),
-      jiraProjectVersion: zod
-        .number()
-        .min(1)
-        .optional()
-        .describe(
-          "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
-        ),
-      folderId: zod
-        .number()
-        .min(1)
-        .optional()
-        .describe("ID of a folder to place the entity within."),
-      customFields: zod
-        .record(zod.string(), zod.unknown())
-        .optional()
-        .describe(
-          "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
-        ),
-    })
-    .optional()
-    .describe(
-      "Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as `application/json` otherwise the object will be ignored.",
-    ),
-});
+export const CreateJUnitExecutionsBody = zod
+  .object({
+    file: zod.instanceof(File),
+    testCycle: zod
+      .object({
+        name: zod
+          .string()
+          .min(1)
+          .max(createJUnitExecutionsBodyTestCycleNameMax)
+          .regex(createJUnitExecutionsBodyTestCycleNameRegExp)
+          .optional(),
+        description: zod
+          .string()
+          .nullish()
+          .describe("Description outlining the scope."),
+        jiraProjectVersion: zod
+          .number()
+          .min(1)
+          .optional()
+          .describe(
+            "Jira Project Version ID. Relates to 'Version' or 'Releases' in Jira projects.",
+          ),
+        folderId: zod
+          .number()
+          .min(1)
+          .optional()
+          .describe("ID of a folder to place the entity within."),
+        customFields: zod
+          .record(zod.string(), zod.unknown())
+          .optional()
+          .describe(
+            "Multi-line text fields support HTML and should denote new lines with the \\<br\\> tag.\nDates should be in the format 'yyyy-MM-dd'.\nUsers should have values of Jira User Account IDs.\n",
+          ),
+      })
+      .strict()
+      .optional()
+      .describe(
+        "Pass this object as a JSON in your form-data alongside the file. Make sure you set the type of this object as `application/json` otherwise the object will be ignored.",
+      ),
+  })
+  .strict();
 
 export const createJUnitExecutions200ResponseTestCycleKeyRegExp =
   /([A-Z][A-Z_0-9]+-R[0-9]+)/;
