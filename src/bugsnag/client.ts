@@ -152,10 +152,6 @@ export class BugsnagClient implements Client {
       return `token ${token}`;
     }
 
-    console.debug(
-      "Auth token not found in request headers, falling back to bearer token or configured token",
-    );
-
     // Fall back to Authorization header (used by OAuth flow)
     const bearerToken = this.getBearerToken();
     if (bearerToken) {
