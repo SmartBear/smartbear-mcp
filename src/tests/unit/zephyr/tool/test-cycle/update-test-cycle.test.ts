@@ -90,6 +90,12 @@ describe("UpdateTestCycle", () => {
         Browser: "Chrome",
         Implemented: false,
       },
+      links: {
+        self: "http://example.com",
+        issues: [],
+        webLinks: [],
+        testPlans: [],
+      },
     };
 
     beforeEach(() => {
@@ -227,6 +233,12 @@ describe("UpdateTestCycle", () => {
         Browser: "Chrome",
         Implemented: false,
         Region: "US",
+      },
+      links: {
+        self: "http://example.com",
+        issues: [],
+        webLinks: [],
+        testPlans: [],
       },
     };
 
@@ -451,6 +463,20 @@ describe("UpdateTestCycle", () => {
         Region: "US",
         MultiOptionField: ["Option1", "Option2"],
       });
+    });
+
+    it("Should not include links in the PUT request", async () => {
+      const args = {
+        testCycleIdOrKey: "SA-R40",
+        name: "Updated Name",
+      };
+
+      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      expect(mergedBody.links).toBeUndefined();
+      expect(mergedBody.name).toBe("Updated Name");
+      expect(mergedBody.description).toBe("Original description");
     });
   });
 });
