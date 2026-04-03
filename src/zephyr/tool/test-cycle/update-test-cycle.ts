@@ -108,6 +108,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
 
     // Merge updates into the existing resource so unspecified fields remain unchanged.
     const mergedBody = deepMerge(existingTestCycle, updates);
+    delete mergedBody.links;
 
     await this.client
       .getApiClient()
