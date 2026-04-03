@@ -95,7 +95,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
     // Deep merge the updates with the existing test case
     // For nested objects like customFields, we merge instead of replacing
     const mergedBody = deepMerge(existingTestCase, updates);
-    delete mergedBody.createdOn
+    delete mergedBody.createdOn;
     delete mergedBody.links;
 
     await this.client
