@@ -378,7 +378,7 @@ export const ListTestCasesDefaultResponse = zod
   .strict();
 
 /**
- * Creates a test case. Fields `priorityName` and `statusName` will be set to default values if not informed. Default values are usually “Normal” for `priorityName` and “Draft” for `statusName`. All required test case custom fields should be present in the request.
+ * Creates a test case. Fields `priorityName` and `statusName` will be set to default values if not informed. Default values are usually “Normal” for `priorityName` and “Draft” for `statusName`. All required test case custom fields should be present in the request. Note: when a test case is created, a single empty test step is automatically added to it. To define your own test steps, use the `POST /testcases/{testCaseKey}/teststeps` endpoint after creation using `OVERWRITE` mode.
 
  * @summary Create test case
  */
@@ -519,6 +519,13 @@ export const ListTestCasesCursorPaginatedQueryParams = zod.object({
     .min(listTestCasesCursorPaginatedQueryStartAtIdMin)
     .default(listTestCasesCursorPaginatedQueryStartAtIdDefault)
     .describe("Zero-indexed starting position for ID-based pagination."),
+  updatedAfter: zod
+    .string()
+    .datetime({})
+    .optional()
+    .describe(
+      "Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+    ),
 });
 
 export const listTestCasesCursorPaginated200ResponseOneNextStartAtIdMin = 0;
@@ -1976,7 +1983,7 @@ export const CreateTestCaseTestStepsParams = zod
   })
   .strict();
 
-export const createTestCaseTestStepsBodyItemsItemTestCaseOneTwoTestCaseKeyRegExp =
+export const createTestCaseTestStepsBodyItemsItemTestCaseTwoTestCaseKeyRegExp =
   /(.+-T[0-9]+)/;
 
 export const CreateTestCaseTestStepsBody = zod
@@ -1994,17 +2001,17 @@ export const CreateTestCaseTestStepsBody = zod
               .object({
                 description: zod
                   .string()
-                  .nullish()
+                  .optional()
                   .describe("The instruction to be followed"),
                 testData: zod
                   .string()
-                  .nullish()
+                  .optional()
                   .describe(
                     "Any test data required to perform the instruction (optional). The fields values provided can be interpolated into the description.",
                   ),
                 expectedResult: zod
                   .string()
-                  .nullish()
+                  .optional()
                   .describe(
                     "The expected outcome of executing the instruction",
                   ),
@@ -2016,11 +2023,11 @@ export const CreateTestCaseTestStepsBody = zod
                   ),
                 reflectRef: zod
                   .string()
-                  .nullish()
+                  .optional()
                   .describe("The AI reference. Zephyr only feature"),
               })
               .strict()
-              .nullish(),
+              .optional(),
             testCase: zod
               .object({
                 self: zod
@@ -2033,7 +2040,7 @@ export const CreateTestCaseTestStepsBody = zod
                 testCaseKey: zod
                   .string()
                   .regex(
-                    createTestCaseTestStepsBodyItemsItemTestCaseOneTwoTestCaseKeyRegExp,
+                    createTestCaseTestStepsBodyItemsItemTestCaseTwoTestCaseKeyRegExp,
                   )
                   .optional()
                   .describe(
@@ -2060,11 +2067,11 @@ export const CreateTestCaseTestStepsBody = zod
                       })
                       .strict(),
                   )
-                  .nullish()
+                  .optional()
                   .describe("The list of parameters of the call to test step"),
               })
               .strict()
-              .nullish(),
+              .optional(),
           })
           .strict()
           .describe(
