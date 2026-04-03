@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [Zephyr] Added context to the `create-test-case` tool description about automatic empty test step creation. [#401](https://github.com/SmartBear/smartbear-mcp/pull/401)
+- [Zephyr] Updated REST schemas - removed read-only fields from UpdateTestCase and UpdateTestCycle operations. [#407](https://github.com/SmartBear/smartbear-mcp/pull/407)
 
 ## [0.16.0] - 2026-03-25
 
