@@ -12,13 +12,46 @@ import type {
   ElicitResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodObject, ZodRawShape, ZodType } from "zod";
+import type {
+  ExtractPathParams,
+  Resource,
+  ResourceConfig,
+  ResourceTemplateCallback,
+} from "./resources.ts";
 import type { SmartBearMcpServer } from "./server";
+import type { ToolHandler, TypesafeTool } from "./tools.ts";
 
-export interface ToolParams {
-  title: string;
+/**
+ * Replace all occurrences of a substring.
+ * StringReplace<"hello world", "l", "y"> // "heyyo woryd"
+ */
+export type StringReplace<
+  TString extends string,
+  TToReplace extends string,
+  TReplacement extends string,
+> = TString extends `${infer TPrefix}${TToReplace}${infer TSuffix}`
+  ? `${TPrefix}${TReplacement}${StringReplace<TSuffix, TToReplace, TReplacement>}`
+  : TString;
+
+/**
+ * SnakeCase<"Hello World !"> // "hello_world_!"
+ */
+export type SnakeCase<Str extends string> = StringReplace<
+  Lowercase<Str>,
+  " ",
+  "_"
+>;
+
+export type ToolParams<
+  Title extends string = string,
+  InputSchema extends ZodType = ZodType,
+  OutputSchema extends ZodType = ZodType,
+> = {
+  title: Title;
   summary: string;
+  /** @deprecated Use `inputSchema` instead to define structured input parameters */
   parameters?: Parameters; // either 'parameters' or an 'inputSchema' should be present
-  inputSchema?: ZodType;
+  inputSchema?: InputSchema;
   /**
    * Specifies the type of object returned by the tool. <br>
    * When `outputSchema` is specified, make sure the tool returns `structuredContent` in its callback. <br>
@@ -26,7 +59,7 @@ export interface ToolParams {
    *
    * https://modelcontextprotocol.io/specification/2025-06-18/server/tools#output-schema
    */
-  outputSchema?: ZodType;
+  outputSchema?: OutputSchema;
   purpose?: string;
   useCases?: string[];
   examples?: Array<{
@@ -40,7 +73,15 @@ export interface ToolParams {
   destructive?: boolean;
   idempotent?: boolean;
   openWorld?: boolean;
-}
+};
+
+export type ToolParamsWithInputSchema<
+  Title extends string = string,
+  InputSchema extends ZodType = ZodType,
+  OutputSchema extends ZodType = ZodType,
+> = Omit<ToolParams<Title, InputSchema, OutputSchema>, "parameters"> & {
+  inputSchema: InputSchema;
+};
 
 export interface PromptParams {
   name: string;
@@ -87,31 +128,135 @@ export type Parameters = Array<{
   constraints?: string[];
 }>;
 
-export interface Client {
+export abstract class Client {
   /** Human-readable name for the client - usually the product name - used to prefix tool names */
-  name: string;
+  abstract name: string;
   /** Prefix for tool IDs */
-  toolPrefix: string;
+  abstract toolPrefix: string;
   /** Prefix for configuration (environment variables and http headers) */
-  configPrefix: string;
+  abstract configPrefix: string;
   /**
    * Zod schema defining configuration fields for this client
    * Field names must use snake case to ensure they are mapped to environment variables and HTTP headers correctly.
    * e.g., `config.my_property` would refer to the environment variable `TOOL_MY_PROPERTY`, http header `Tool-My-Property`
    */
-  config: ZodObject<{
+  abstract config: ZodObject<{
     [key: string]: ZodType;
   }>;
+
   /**
    * Configure the client with the given server and configuration
    */
-  configure: (server: SmartBearMcpServer, config: any) => Promise<void>;
-  isConfigured: () => boolean;
-  registerTools(
+  abstract configure(server: SmartBearMcpServer, config: any): Promise<void>;
+  abstract isConfigured(): boolean;
+  abstract registerTools(
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void>;
-  registerResources?(register: RegisterResourceFunction): void;
+  registerResources?(register: RegisterResourceFunction): Promise<void> | void;
   registerPrompts?(register: RegisterPromptFunction): void;
   cleanupSession?(mcpSessionId: string): Promise<void>;
+
+  /**
+   * Create a new type-safe tool that can be registered to the MCP server.
+   *
+   * @example
+   * ```typescript
+   * const myTool = MyClient.createTool(
+   *   {
+   *     title: "My Tool",
+   *     summary: "Does something useful",
+   *     inputSchema: z.object({ id: z.string() }),
+   *   },
+   *   async ({ client, args }) => {
+   *     const result = await client.doSomething(args.id);
+   *     return {
+   *       content: [{ type: "text", text: JSON.stringify(result) }],
+   *       structuredContent: result, // This type is automatically inferred
+   *     };
+   *   }
+   * );
+   *
+   * // Access inferred types:
+   * type Name = typeof myTool.name;     // "my_tool"
+   * type Input = ToolInput<typeof myTool>;   // { id: string }
+   * type Output = ToolOutput<typeof myTool>; // typeof result
+   * ```
+   */
+  static createTool<
+    T extends InstanceType<typeof Client>,
+    const Config extends ToolParamsWithInputSchema,
+    Handler extends ToolHandler<T, Config["inputSchema"]>,
+  >(
+    this: new (
+      ...args: any[]
+    ) => T,
+    config: Config,
+    handle: Handler,
+  ): TypesafeTool<T, Config, Handler> {
+    return {
+      name: config.title.toLowerCase().replaceAll(/\s+/g, "_") as SnakeCase<
+        Config["title"]
+      >,
+      config,
+      handle,
+
+      register(
+        client: T,
+        register: RegisterToolsFunction,
+        getInput: GetInputFunction,
+      ) {
+        register(config, async (args, extra) => {
+          const parsedArgs = config.inputSchema.parse(args);
+          return handle({ client, getInput, args: parsedArgs, extra });
+        });
+      },
+    };
+  }
+
+  /**
+   * Create a new resource template that can be registered to the MCP server.
+   *
+   * @example
+   * ```typescript
+   * const myResource = MyClient.createResource(
+   *   {
+   *     name: "user",
+   *     path: "{userId}"
+   *   },
+   *   async ({ client, uri, variables }) => {
+   *     const userData = await client.getUser(variables.userId);
+   *     return {
+   *       content: [{ type: "text", text: JSON.stringify(userData) }],
+   *     };
+   *   }
+   * );
+   * ```
+   */
+  static createResource<
+    T extends InstanceType<typeof Client>,
+    const Config extends ResourceConfig<string, string>,
+  >(
+    this: new (
+      ...args: any[]
+    ) => T,
+    config: Config,
+    handle: ResourceTemplateCallback<T, Config["path"]>,
+  ): Resource<T, Config> {
+    return {
+      config,
+      handle,
+
+      register(client: T, register: RegisterResourceFunction) {
+        register(config.name, config.path, async (uri, variables, extra) =>
+          handle({
+            client,
+            uri,
+            variables: variables as ExtractPathParams<Config["path"]>,
+            extra,
+          }),
+        );
+      },
+    };
+  }
 }

@@ -1,9 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -11,8 +7,8 @@ const inputSchema = z.object({
 });
 
 // Returns the available event filter fields for a project, used to build filter queries for errors and events.
-export class ListProjectEventFilters extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export default BugsnagClient.createTool(
+  {
     title: "List Project Event Filters",
     summary: "Get available event filter fields for a project",
     purpose:
@@ -35,15 +31,13 @@ export class ListProjectEventFilters extends Tool<BugsnagClient> {
       "Use this tool before the List Errors or Get Error tools to understand available filters",
       "Look for display_id field in the response - these are the field names to use in filters",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const eventFilters = await this.client.getProjectEventFields(
-      await this.client.getInputProject(params.projectId),
+  },
+  async ({ client, args }) => {
+    const eventFilters = await client.getProjectEventFields(
+      await client.getInputProject(args.projectId),
     );
     return {
       content: [{ type: "text", text: JSON.stringify(eventFilters) }],
     };
-  };
-}
+  },
+);

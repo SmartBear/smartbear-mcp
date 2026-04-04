@@ -1,9 +1,6 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { GetInputFunction, ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
 import { ErrorUpdateRequest } from "../../client/api/index";
 import { toolInputParameters } from "../../input-schemas";
 
@@ -87,10 +84,8 @@ const inputSchema = z.object({
 });
 
 // Updates an error's workflow state (e.g. fix, ignore, snooze, link/unlink issue). Prompts for severity when overriding it.
-export class UpdateError extends Tool<BugsnagClient> {
-  private getInput: GetInputFunction;
-
-  specification: ToolParams = {
+export default BugsnagClient.createTool(
+  {
     title: "Update Error",
     summary: "Update the status of an error",
     purpose:
@@ -185,42 +180,35 @@ export class UpdateError extends Tool<BugsnagClient> {
     ],
     readOnly: false,
     idempotent: false,
-  };
-
-  constructor(client: BugsnagClient, getInput: GetInputFunction) {
-    super(client);
-    this.getInput = getInput;
-  }
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
+  },
+  async ({ client, args, getInput }) => {
+    const project = await client.getInputProject(args.projectId);
 
     // Validate snooze operation requirements
-    if (params.operation === "snooze" && !params.reopenRules) {
+    if (args.operation === "snooze" && !args.reopenRules) {
       throw new ToolError(
         "reopenRules parameter is required when using 'snooze' operation",
       );
     }
 
     // Validate link_issue operation requirements
-    if (params.operation === "link_issue" && !params.issue_url) {
+    if (args.operation === "link_issue" && !args.issue_url) {
       throw new ToolError(
         "'issue_url' parameter is required for 'link_issue' operation",
       );
     }
 
     // Validate reopen rule parameters based on reopenIf type
-    if (params.reopenRules) {
-      const { reopenIf } = params.reopenRules;
-      if (reopenIf === "occurs_after" && !params.reopenRules.seconds) {
+    if (args.reopenRules) {
+      const { reopenIf } = args.reopenRules;
+      if (reopenIf === "occurs_after" && !args.reopenRules.seconds) {
         throw new ToolError(
           "'seconds' parameter is required for 'occurs_after' reopen rules",
         );
       }
       if (
         reopenIf === "n_additional_users" &&
-        !params.reopenRules.additionalUsers
+        !args.reopenRules.additionalUsers
       ) {
         throw new ToolError(
           "'additionalUsers' parameter is required for 'n_additional_users' reopen rules",
@@ -228,7 +216,7 @@ export class UpdateError extends Tool<BugsnagClient> {
       }
       if (
         reopenIf === "n_occurrences_in_m_hours" &&
-        (!params.reopenRules.occurrences || !params.reopenRules.hours)
+        (!args.reopenRules.occurrences || !args.reopenRules.hours)
       ) {
         throw new ToolError(
           "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules",
@@ -236,7 +224,7 @@ export class UpdateError extends Tool<BugsnagClient> {
       }
       if (
         reopenIf === "n_additional_occurrences" &&
-        !params.reopenRules.additionalOccurrences
+        !args.reopenRules.additionalOccurrences
       ) {
         throw new ToolError(
           "'additionalOccurrences' parameter is required for 'n_additional_occurrences' reopen rules",
@@ -245,9 +233,9 @@ export class UpdateError extends Tool<BugsnagClient> {
     }
 
     let severity: any;
-    if (params.operation === "override_severity") {
+    if (args.operation === "override_severity") {
       // illicit the severity from the user
-      const result = await this.getInput({
+      const result = await getInput({
         message:
           "Please provide the new severity for the error (e.g. 'info', 'warning', 'error', 'critical')",
         requestedSchema: {
@@ -270,31 +258,31 @@ export class UpdateError extends Tool<BugsnagClient> {
 
     // Prepare reopen rules for API call
     let reopenRules: any;
-    if (params.reopenRules) {
+    if (args.reopenRules) {
       reopenRules = {
-        reopen_if: params.reopenRules.reopenIf,
+        reopen_if: args.reopenRules.reopenIf,
       };
-      if (params.reopenRules.additionalUsers !== undefined) {
-        reopenRules.additional_users = params.reopenRules.additionalUsers;
+      if (args.reopenRules.additionalUsers !== undefined) {
+        reopenRules.additional_users = args.reopenRules.additionalUsers;
       }
-      if (params.reopenRules.seconds !== undefined) {
-        reopenRules.seconds = params.reopenRules.seconds;
+      if (args.reopenRules.seconds !== undefined) {
+        reopenRules.seconds = args.reopenRules.seconds;
       }
-      if (params.reopenRules.occurrences !== undefined) {
-        reopenRules.occurrences = params.reopenRules.occurrences;
+      if (args.reopenRules.occurrences !== undefined) {
+        reopenRules.occurrences = args.reopenRules.occurrences;
       }
-      if (params.reopenRules.hours !== undefined) {
-        reopenRules.hours = params.reopenRules.hours;
+      if (args.reopenRules.hours !== undefined) {
+        reopenRules.hours = args.reopenRules.hours;
       }
-      if (params.reopenRules.additionalOccurrences !== undefined) {
+      if (args.reopenRules.additionalOccurrences !== undefined) {
         reopenRules.additional_occurrences =
-          params.reopenRules.additionalOccurrences;
+          args.reopenRules.additionalOccurrences;
       }
     }
 
     const errorUpdateRequestBody: any = {
       operation: Object.values(ErrorUpdateRequest.OperationEnum).find(
-        (value) => value === params.operation,
+        (value) => value === args.operation,
       ) as ErrorUpdateRequest.OperationEnum,
     };
     if (severity !== undefined) {
@@ -303,14 +291,14 @@ export class UpdateError extends Tool<BugsnagClient> {
     if (reopenRules !== undefined) {
       errorUpdateRequestBody.reopen_rules = reopenRules;
     }
-    if (params.operation === "link_issue" && params.issue_url) {
-      errorUpdateRequestBody.issue_url = params.issue_url;
+    if (args.operation === "link_issue" && args.issue_url) {
+      errorUpdateRequestBody.issue_url = args.issue_url;
       errorUpdateRequestBody.verify_issue_url = true;
     }
 
-    const result = await this.client.errorsApi.updateErrorOnProject(
+    const result = await client.errorsApi.updateErrorOnProject(
       project.id,
-      params.errorId,
+      args.errorId,
       errorUpdateRequestBody,
     );
     return {
@@ -322,6 +310,9 @@ export class UpdateError extends Tool<BugsnagClient> {
           }),
         },
       ],
+      structuredContent: {
+        success: result.status === 200 || result.status === 204,
+      },
     };
-  };
-}
+  },
+);

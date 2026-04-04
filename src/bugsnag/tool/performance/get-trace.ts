@@ -1,9 +1,6 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
+import { ToolError } from "../../../common/tools";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -20,8 +17,8 @@ const inputSchema = z.object({
 });
 
 // Fetches all spans within a trace by trace ID and time window, optionally focused on a target span.
-export class GetTrace extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export default BugsnagClient.createTool(
+  {
     title: "Get Trace",
     summary: "Get all spans within a specific trace",
     purpose: "View the complete trace of operations for a request/transaction",
@@ -60,22 +57,20 @@ export class GetTrace extends Tool<BugsnagClient> {
       "Use from/to parameters to narrow the time window",
       "targetSpanId can be used to focus on a specific span in the trace",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-    if (!params.traceId || !params.from || !params.to) {
+  },
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
+    if (!args.traceId || !args.from || !args.to) {
       throw new ToolError("traceId, from, and to are required");
     }
-    const result = await this.client.projectApi.listSpansByTraceId(
+    const result = await client.projectApi.listSpansByTraceId(
       project.id,
-      params.traceId,
-      params.from,
-      params.to,
-      params.targetSpanId,
-      params.perPage,
-      params.nextUrl,
+      args.traceId,
+      args.from,
+      args.to,
+      args.targetSpanId,
+      args.perPage,
+      args.nextUrl,
     );
     return {
       content: [
@@ -89,5 +84,5 @@ export class GetTrace extends Tool<BugsnagClient> {
         },
       ],
     };
-  };
-}
+  },
+);

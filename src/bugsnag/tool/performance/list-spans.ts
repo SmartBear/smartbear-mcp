@@ -1,9 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -36,8 +32,8 @@ const inputSchema = z.object({
 });
 
 // Lists individual span instances within a span group, with sorting and filtering support.
-export class ListSpans extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export default BugsnagClient.createTool(
+  {
     title: "List Spans",
     summary: "Get individual spans belonging to a span group",
     purpose: "Examine individual operation instances within a span group",
@@ -76,19 +72,17 @@ export class ListSpans extends Tool<BugsnagClient> {
       "Sort by duration descending to find the slowest instances",
       "Each span includes trace ID for further investigation",
     ],
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-    const result = await this.client.projectApi.listSpansBySpanGroupId(
+  },
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
+    const result = await client.projectApi.listSpansBySpanGroupId(
       project.id,
-      params.spanGroupId,
-      params.filters,
-      params.sort,
-      params.direction,
-      params.perPage,
-      params.nextUrl,
+      args.spanGroupId,
+      args.filters,
+      args.sort,
+      args.direction,
+      args.perPage,
+      args.nextUrl,
     );
     return {
       content: [
@@ -102,5 +96,5 @@ export class ListSpans extends Tool<BugsnagClient> {
         },
       ],
     };
-  };
-}
+  },
+);

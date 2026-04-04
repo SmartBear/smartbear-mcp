@@ -1,9 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -13,8 +9,8 @@ const inputSchema = z.object({
 });
 
 // Fetches detailed performance metrics for a span group, including timeline and duration distribution.
-export class GetSpanGroup extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export default BugsnagClient.createTool(
+  {
     title: "Get Span Group",
     summary: "Get detailed performance metrics for a specific span group",
     purpose: "Analyze performance characteristics of a specific operation",
@@ -46,30 +42,28 @@ export class GetSpanGroup extends Tool<BugsnagClient> {
       "IDs are automatically URL-encoded - provide the raw ID",
       "Statistics include p50, p75, p90, p95, p99 percentiles",
     ],
-  };
+  },
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
 
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-
-    const spanGroupResults = await this.client.projectApi.getProjectSpanGroup(
+    const spanGroupResults = await client.projectApi.getProjectSpanGroup(
       project.id,
-      params.spanGroupId,
-      params.filters,
+      args.spanGroupId,
+      args.filters,
     );
 
     const spanGroupTimelineResult =
-      await this.client.projectApi.getProjectSpanGroupTimeline(
+      await client.projectApi.getProjectSpanGroupTimeline(
         project.id,
-        params.spanGroupId,
-        params.filters,
+        args.spanGroupId,
+        args.filters,
       );
 
     const spanGroupDistributionResult =
-      await this.client.projectApi.getProjectSpanGroupDistribution(
+      await client.projectApi.getProjectSpanGroupDistribution(
         project.id,
-        params.spanGroupId,
-        params.filters,
+        args.spanGroupId,
+        args.filters,
       );
 
     const result = {
@@ -81,5 +75,5 @@ export class GetSpanGroup extends Tool<BugsnagClient> {
     return {
       content: [{ type: "text", text: JSON.stringify(result) }],
     };
-  };
-}
+  },
+);

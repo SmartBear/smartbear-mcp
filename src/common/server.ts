@@ -172,7 +172,7 @@ export class SmartBearMcpServer extends McpServer {
     );
 
     if (client.registerResources) {
-      client.registerResources((name, path, cb) => {
+      await client.registerResources((name, path, cb) => {
         const url = `${client.toolPrefix}://${name}/${path}`;
         return super.registerResource(
           name,

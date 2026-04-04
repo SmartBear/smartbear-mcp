@@ -1,10 +1,6 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
-import type { Release } from "../../client/api/index";
+import { BugsnagClient } from "../../client";
+import type { Release } from "../../client/api";
 import { toolInputParameters } from "../../input-schemas";
 
 interface StabilityData {
@@ -31,8 +27,8 @@ const inputSchema = z.object({
 });
 
 // Lists release groups for a project with stability metrics appended to each result.
-export class ListReleases extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export default BugsnagClient.createTool(
+  {
     title: "List Releases",
     summary: "List releases for a project",
     purpose:
@@ -74,25 +70,21 @@ export class ListReleases extends Tool<BugsnagClient> {
     idempotent: true,
     outputDescription:
       "JSON array of release summary objects with metadata, with a URL to the next page if more results are available",
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-    const response = await this.client.projectApi.listProjectReleaseGroups(
+  },
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
+    const response = await client.projectApi.listProjectReleaseGroups(
       project.id,
-      params.releaseStage,
+      args.releaseStage,
       false, // Not top-only
-      params.visibleOnly,
-      params.perPage,
-      params.nextUrl,
+      args.visibleOnly,
+      args.perPage,
+      args.nextUrl,
     );
 
     let releases: (Release & StabilityData)[] = [];
     if (response.body) {
-      releases = response.body.map((r) =>
-        this.client.addStabilityData(r, project),
-      );
+      releases = response.body.map((r) => client.addStabilityData(r, project));
     }
 
     return {
@@ -108,5 +100,5 @@ export class ListReleases extends Tool<BugsnagClient> {
         },
       ],
     };
-  };
-}
+  },
+);

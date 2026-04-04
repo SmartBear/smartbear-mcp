@@ -1,9 +1,5 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
+import { BugsnagClient } from "../../client";
 import { toolInputParameters } from "../../input-schemas";
 
 const inputSchema = z.object({
@@ -11,8 +7,8 @@ const inputSchema = z.object({
 });
 
 // Returns the current network endpoint grouping rules (URL patterns) configured for a project.
-export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
-  specification: ToolParams = {
+export default BugsnagClient.createTool(
+  {
     title: "Get Network Endpoint Groupings",
     summary: "Get the network endpoint grouping rules for a project",
     purpose:
@@ -37,17 +33,16 @@ export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
     ],
     readOnly: true,
     idempotent: true,
-  };
-
-  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
-    const params = inputSchema.parse(args);
-    const project = await this.client.getInputProject(params.projectId);
-    const result =
-      await this.client.projectApi.getProjectNetworkGroupingRuleset(project.id);
+  },
+  async ({ client, args }) => {
+    const project = await client.getInputProject(args.projectId);
+    const result = await client.projectApi.getProjectNetworkGroupingRuleset(
+      project.id,
+    );
     return {
       content: [
         { type: "text", text: JSON.stringify(result.body.endpoints || []) },
       ],
     };
-  };
-}
+  },
+);
