@@ -1,7 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { IncomingMessage } from "node:http";
 
-// Define the shape of our request context
+// Storage for pre-request data that can be retrieved from a tool to prevent caching as part of the server instance in a session.
+// For example, the auth token.
 export interface RequestContext {
   headers: Record<string, string | string[] | undefined>;
 }
