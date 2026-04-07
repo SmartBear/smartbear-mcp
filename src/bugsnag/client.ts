@@ -27,6 +27,7 @@ import { ListProjectErrors } from "./tool/error/list-project-errors";
 import { UpdateError } from "./tool/error/update-error";
 import { GetEvent } from "./tool/event/get-event";
 import { GetEventDetailsFromDashboardUrl } from "./tool/event/get-event-details-from-dashboard-url";
+import { ListErrorEvents } from "./tool/event/list-error-events";
 import { GetNetworkEndpointGroupings } from "./tool/performance/get-network-endpoint-groupings";
 import { GetSpanGroup } from "./tool/performance/get-span-group";
 import { GetTrace } from "./tool/performance/get-trace";
@@ -376,6 +377,7 @@ export class BugsnagClient implements Client {
       new UpdateError(this, getInput),
       new GetEvent(this),
       new GetEventDetailsFromDashboardUrl(this),
+      new ListErrorEvents(this),
       new ListReleases(this),
       new GetRelease(this),
       new GetBuild(this),
