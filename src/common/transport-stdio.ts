@@ -83,6 +83,6 @@ export async function runStdioMode() {
   await server.connect(transport);
 }
 
-function getEnvVarName(client: Client, key: string): string {
+export function getEnvVarName(client: Client, key: string): string {
   return `${client.configPrefix.toUpperCase().replace(/-/g, "_")}_${key.toUpperCase()}`;
 }

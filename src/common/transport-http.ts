@@ -7,16 +7,22 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import { clientRegistry } from "./client-registry";
-import { requestContextStorage } from "./request-context";
+import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
+import { getEnvVarName } from "./transport-stdio";
 import type { Client } from "./types";
 import { isOptionalType } from "./zod-utils";
 
 /**
  * Helper to construct the base URL from the request, respecting proxy headers.
  * This is critical for cloud deployments where SSL termination happens at the load balancer.
+ * If BASE_URL env var is set, it takes precedence over request headers.
  */
 function getBaseUrl(req: IncomingMessage): string {
+  const baseUrlOverride = process.env.BASE_URL;
+  if (baseUrlOverride) {
+    return baseUrlOverride;
+  }
   const protocol = (req.headers["x-forwarded-proto"] as string) || "http";
   const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
   return `${protocol}://${host}`;
@@ -31,7 +37,6 @@ export async function runHttpMode() {
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
     "http://localhost:3000",
   ];
-  const baseUrlOverride = process.env.BASE_URL; // Allow explicit override if headers are unreliable
 
   // Store transports by session ID
   const transports = new Map<
@@ -74,8 +79,7 @@ export async function runHttpMode() {
       }
 
       // Determine the public URL of this server
-      // Use env override if set, otherwise detect from request headers
-      const baseUrl = baseUrlOverride || getBaseUrl(req);
+      const baseUrl = getBaseUrl(req);
       const url = new URL(req.url || "/", baseUrl);
 
       // HEALTH CHECK ENDPOINT
@@ -352,8 +356,8 @@ async function handleStreamableHttpRequest(
     }
 
     // Delegate to transport to handle the MCP protocol message
-    await requestContextStorage.run(
-      { headers: req.headers },
+    await withRequestContext(
+      req,
       async () => await transport.handleRequest(req, res, parsedBody),
     );
   } catch (error) {
@@ -461,8 +465,8 @@ async function handleLegacyMessageRequest(
     try {
       const parsedBody = JSON.parse(body);
       // Route message to the SSE transport for processing
-      await requestContextStorage.run(
-        { headers: req.headers },
+      await withRequestContext(
+        req,
         async () =>
           await (session.transport as SSEServerTransport).handlePostMessage(
             req,
@@ -497,21 +501,21 @@ async function newServer(
   try {
     // Run configuration within request context so that client getAuthToken()
     // methods can access request headers via AsyncLocalStorage
-    const configuredCount = await requestContextStorage.run(
-      { headers: req.headers },
-      () =>
-        clientRegistry.configure(server, (client, key) => {
-          const headerName = getHeaderName(client, key);
-          // Check both original case and lower-case headers for compatibility
-          // (HTTP headers are case-insensitive, but Node.js lowercases them)
-          const value =
-            req.headers[headerName] || req.headers[headerName.toLowerCase()];
-          if (typeof value === "string") {
-            return value;
-          }
+    const configuredCount = await withRequestContext(req, () =>
+      clientRegistry.configure(server, (client, key) => {
+        const headerName = getHeaderName(client, key);
+        // Check both original case and lower-case headers for compatibility
+        // (HTTP headers are case-insensitive, but Node.js lowercases them)
+        const value =
+          req.headers[headerName] || req.headers[headerName.toLowerCase()];
+        if (typeof value === "string") {
+          return value;
+        }
 
-          return null;
-        }),
+        // Fall back to environment variable if header is not present
+        const envVarName = getEnvVarName(client, key);
+        return process.env[envVarName] || null;
+      }),
     );
 
     console.log(
@@ -527,7 +531,7 @@ async function newServer(
     // Check if any configured client actually has auth credentials for this request.
     // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
     // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
-    const hasAuth = requestContextStorage.run({ headers: req.headers }, () =>
+    const hasAuth = withRequestContext(req, () =>
       server.getClients().some((client) => {
         // Client doesn't support dynamic auth — auth was provided at config time
         if (!client.getAuthToken) return true;
@@ -538,7 +542,7 @@ async function newServer(
 
     if (!hasAuth) {
       throw new Error(
-        "No clients have valid authentication credentials. Please authenticate via OAuth or provide auth headers.",
+        "No clients have valid authentication credentials. Please authenticate via OAuth or provide alternative auth headers (e.g. API key or personal auth token).",
       );
     }
   } catch (error: any) {

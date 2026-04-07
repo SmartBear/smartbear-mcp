@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { IncomingMessage } from "node:http";
 
 // Define the shape of our request context
 export interface RequestContext {
@@ -7,6 +8,14 @@ export interface RequestContext {
 
 // Create the storage instance
 export const requestContextStorage = new AsyncLocalStorage<RequestContext>();
+
+/**
+ * Run a callback within the request context, extracting headers from the request.
+ * This ensures request headers are available via AsyncLocalStorage to downstream code.
+ */
+export function withRequestContext<T>(req: IncomingMessage, fn: () => T): T {
+  return requestContextStorage.run({ headers: req.headers }, fn);
+}
 
 // Helper to get the current context
 export function getRequestContext(): RequestContext | undefined {
