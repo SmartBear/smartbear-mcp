@@ -18,7 +18,7 @@ import { isOptionalType } from "./zod-utils";
  * This is critical for cloud deployments where SSL termination happens at the load balancer.
  * If BASE_URL env var is set, it takes precedence over request headers.
  */
-function getBaseUrl(req: IncomingMessage): string {
+export function getBaseUrl(req: IncomingMessage): string {
   const baseUrlOverride = process.env.BASE_URL;
   if (baseUrlOverride) {
     return baseUrlOverride;
@@ -585,7 +585,7 @@ async function newServer(
  * @param key The config key in snake_case
  * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
  */
-function getHeaderName(client: Client, key: string): string {
+export function getHeaderName(client: Client, key: string): string {
   return `${client.configPrefix}-${key
     .split("_")
     .map(
