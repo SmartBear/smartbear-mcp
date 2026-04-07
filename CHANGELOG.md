@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.17.0] - 2026-04-07
+
 ### Added
 
 - [Zephyr] Added a tool `update-test-steps` for updating test execution test steps [#386](https://github.com/SmartBear/smartbear-mcp/pull/386)
