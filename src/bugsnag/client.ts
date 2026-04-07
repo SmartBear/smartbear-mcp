@@ -116,20 +116,16 @@ export class BugsnagClient implements Client {
   ): Promise<void> {
     this.cache = server.getCache();
 
-    // Allow reading endpoint from environment variable as a fallback
-    // This is useful for On-Premise installations where the endpoint is fixed
-    const endpoint = config.endpoint || process.env.BUGSNAG_ENDPOINT;
-
     this._appEndpoint = this.getEndpoint(
       "app",
       config.project_api_key,
-      endpoint,
+      config.endpoint,
     );
     this._projectApiKey = config.project_api_key;
     this._authToken = config.auth_token;
 
     // Initialize APIs even if auth_token is missing, to allow request-level auth
-    await this.initializeApis({ ...config, endpoint });
+    await this.initializeApis(config);
   }
 
   getAuthToken(): string | null {
