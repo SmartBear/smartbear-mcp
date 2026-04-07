@@ -629,6 +629,41 @@ describe("SmartBearMcpServer", () => {
     });
   });
 
+  describe("cleanupSession", () => {
+    it("should skip clients without cleanupSession and call those that have it", async () => {
+      const clientWithCleanup = {
+        name: "Test Product A",
+        toolPrefix: "test_product_a",
+        configPrefix: "test-product-a",
+        config: z.object({}),
+        registerTools: vi.fn(),
+        registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+        cleanupSession: vi.fn().mockResolvedValue(undefined),
+      };
+      const clientWithoutCleanup = {
+        name: "Test Product B",
+        toolPrefix: "test_product_b",
+        configPrefix: "test-product-b",
+        config: z.object({}),
+        registerTools: vi.fn(),
+        registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+      };
+
+      await server.addClient(clientWithCleanup);
+      await server.addClient(clientWithoutCleanup);
+
+      await expect(server.cleanupSession("session-abc")).resolves.not.toThrow();
+      expect(clientWithCleanup.cleanupSession).toHaveBeenCalledOnce();
+      expect(clientWithCleanup.cleanupSession).toHaveBeenCalledWith(
+        "session-abc",
+      );
+    });
+  });
+
   describe("schemaToRawShape", () => {
     it("should convert Zod schema to raw shape", () => {
       const schema = z.object({

@@ -113,4 +113,5 @@ export interface Client {
   ): Promise<void>;
   registerResources?(register: RegisterResourceFunction): void;
   registerPrompts?(register: RegisterPromptFunction): void;
+  cleanupSession?(mcpSessionId: string): Promise<void>;
 }

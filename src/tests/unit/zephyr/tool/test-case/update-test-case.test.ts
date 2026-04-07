@@ -243,6 +243,27 @@ describe("UpdateTestCase", () => {
         Browser: "Chrome",
         Region: "US",
       },
+      links: {
+        self: "http://example.com/links",
+        issues: [
+          {
+            issueId: 123,
+            id: 456,
+            self: "http://example.com/issue-link/456",
+            target: "https://jira.example/browse/PROJ-1",
+            type: "COVERAGE",
+          },
+        ],
+        webLinks: [
+          {
+            id: 789,
+            url: "https://external.example.com",
+            description: "External resource",
+            self: "http://example.com/web-link/789",
+            type: "RELATED",
+          },
+        ],
+      },
     };
 
     beforeEach(() => {
@@ -521,6 +542,29 @@ describe("UpdateTestCase", () => {
       });
       expect(mergedBody.estimatedTime).toBe(7200000);
       expect(mergedBody.objective).toBe("Original objective"); // Preserved
+    });
+
+    it("Links and the createdOn field should not be included in the PUT request", async () => {
+      const args = {
+        testCaseKey: "SA-T10",
+        id: 12345,
+        key: "SA-T10",
+        name: "Updated Test Case",
+        project: { id: 100 },
+        priority: { id: 1 },
+        status: { id: 1 },
+      };
+
+      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+
+      expect(mergedBody.links).toBeUndefined();
+      expect(mergedBody.createdOn).toBeUndefined();
+
+      expect(mergedBody.name).toBe("Updated Test Case");
+      expect(mergedBody.objective).toBe("Original objective");
+      expect(mergedBody.labels).toEqual(["existing-label"]);
     });
   });
 });

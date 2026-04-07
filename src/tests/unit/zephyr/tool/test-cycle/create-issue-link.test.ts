@@ -79,23 +79,16 @@ describe("CreateTestCycleIssueLink", () => {
     );
   });
 
-  it("should ignore extra parameters not in the schema", async () => {
-    mockClient.getApiClient().post.mockResolvedValueOnce(undefined);
-
+  it("should throw error when extra parameters not in the schema", async () => {
     const args = {
       testCycleIdOrKey: "SA-R1",
       issueId: 55,
-      extraField: "should be ignored",
+      extraField: "should be rejected",
     };
 
-    await instance.handle(args, EXTRA_REQUEST_HANDLER);
-
-    expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
-      "/testcycles/SA-R1/links/issues",
-      {
-        issueId: args.issueId,
-      },
-    );
+    await expect(
+      instance.handle(args, EXTRA_REQUEST_HANDLER),
+    ).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {

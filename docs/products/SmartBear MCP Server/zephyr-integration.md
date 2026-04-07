@@ -67,6 +67,14 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of Test Cases along with their keys and versions.
 - **Use case**: Retrieve the Test Cases linked to a specific Jira issue.
 
+#### Get Test Case Links
+
+- **Purpose**: Retrieve all links (issue links and web links) associated with a test case in Zephyr.
+- **Parameters:**
+  - Test case key (`testCaseKey`)
+- **Returns**: All issue links and web links associated with the test case, including link types (COVERAGE, BLOCKS, RELATED) and URLs.
+- **Use case**: Retrieve all links connected to a specific test case to understand dependencies and related resources.
+
 ### Creation Operations
 
 #### Create Test Case
@@ -214,6 +222,14 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A Test Cycle along with its properties.
 - **Use case**: Retrieve detailed information about a test cycle.
 
+#### Get Test Cycles linked to a Jira issue
+
+- **Purpose**: Retrieve Test Cycles linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Cycles along with their IDs.
+- **Use case**: Retrieve the Test Cycles linked to a specific Jira issue.
+
 ### Creation Operations
 
 #### Create Test Cycles
@@ -264,6 +280,17 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: The created Test Cycle Web Link ID and the API self URL that can be used to delete the link.
 - **Use case**: Creates a link between a test cycle and a generic URL.
 
+#### Get Test Cycle Links
+
+- **Purpose**: Retrieve all links associated with a test cycle, including Jira issue links, web links, and test plan links.
+- **Parameters:**
+  - Test Cycle ID or key (`testCycleIdOrKey`)
+- **Returns**: An object containing three arrays:
+  - `issues`: List of linked Jira issues with their IDs, link types (COVERAGE, BLOCKS, RELATED), and API endpoints
+  - `webLinks`: List of web links with URLs, descriptions, link types, and API endpoints
+  - `testPlans`: List of linked test plans with their IDs, link types, and API endpoints
+- **Use case**: Retrieving all links for a test cycle to understand its relationships with Jira issues, external resources, and test plans. Useful for traceability and impact analysis.
+
 ## Test Executions
 
 ### Retrieval Operations
@@ -291,6 +318,14 @@ The following environment variables configure the Zephyr integration:
 - **Parameters:** Test Execution key or ID
 - **Returns**: A Test Execution along with its properties.
 - **Use case**: Getting a Test Execution with its properties.
+
+#### Get Test Executions linked to a Jira issue
+
+- **Purpose**: Retrieve Test Executions linked to a given Jira issue within your Zephyr projects.
+- **Parameters:**
+  - Jira Issue key (`issueKey`)
+- **Returns**: A list of Test Executions along with their IDs.
+- **Use case**: Retrieve the Test Executions linked to a specific Jira issue.
 
 ### Creation Operations
 
@@ -346,6 +381,20 @@ The following environment variables configure the Zephyr integration:
 - **Returns**: A list of Test Execution Steps along with their properties.
 - **Use case**: Getting the detailed execution results of each step for a specific test execution.
 
+### Update Operations
+
+#### Update Test Execution Steps
+
+- **Purpose**: Update the test execution steps for the given test execution within your Zephyr account by the test execution key or ID
+- **Parameters:**
+  - Test Execution ID or KEY (`testExecutionIdOrKey`)
+  - Steps (`steps`) - array of test execution steps
+    - optional Status name (`statusName`)
+    - optional Actual result (`actualResult`)
+- **Returns**: Empty object if the update is successful.
+- **Use case**: Updating the status and/or actual results of steps in a test execution.
+- **Note**: Unlike other update operations, this endpoint ignores any fields that are null or absent - they will not be cleared or modified. Only explicitly provided non-null values will update the execution.
+
 ### Link Operations
 
 #### Create Test Execution Issue Link
@@ -356,6 +405,16 @@ The following environment variables configure the Zephyr integration:
   - Jira Issue Id (`issueId`)
 - **Returns**: A confirmation that the link was successfully created.
 - **Use case**: Creating a link between a Test Execution and a Jira Issue, for example to associate a test execution with the bug it found or the story it validates.
+
+### Retrieval Operations
+
+#### Get Test Execution Links
+
+- **Purpose**: Retrieve all links associated with a specific Test Execution by id or a key in Zephyr.
+- **Parameters:**
+  - Test Execution key or id (`testExecutionIdOrKey`)
+- **Returns**: A list of links associated with the specified Test Execution, including their details.
+- **Use case**: Retrieve links associated with a specific Test Execution.
 
 ## Statuses
 
@@ -420,4 +479,4 @@ The following environment variables configure the Zephyr integration:
 - For fields that accept multiple values, such as Test Case `labels`, if the field is provided, it will override the previous values. For example, if `labels` is provided with the values `["label1", "label2"]`, the Test Case will now only have those two labels, and any previous labels will be removed.
   - If you want to add a label, you would need to specify in the prompt the intention to _add a label_, and the MCP would internally call the tool to retrieve the current labels, add the new label to the list and then call the update tool with the complete list of labels.
 - If a field is provided with a `null` value, it will clear the value of that field. For example, if `component` is provided with a `null` value, the component of the Test Case will be cleared. This is usually achieved by prompting for _Removal of the component_, or something similar, to indicate that the value should be removed.
-- **Exception - Update Test Execution**: The Update Test Execution operation behaves differently from other update operations. Any fields that are `null` or absent will be ignored and will not be cleared or modified. Only explicitly provided non-null values will update the execution.
+- **Exception - Update Test Execution & Test Execution Steps**: Both `Update Test Execution` and `Update Test Execution Steps` operations behave differently from other update operations. Any fields that are `null` or absent will be ignored and will not be cleared or modified. Only explicitly provided non-null values will update the execution.
