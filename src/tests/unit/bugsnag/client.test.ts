@@ -40,6 +40,7 @@ const mockErrorAPI = {
   listEventsOnProject: vi.fn(),
   viewEventById: vi.fn(),
   listProjectErrors: vi.fn(),
+  listErrorEvents: vi.fn(),
   updateErrorOnProject: vi.fn(),
   getPivotValuesOnAnError: vi.fn(),
 } satisfies Omit<ErrorAPI, keyof BaseAPI>;
@@ -890,6 +891,7 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("Get Event");
       expect(registeredTools).toContain("Get Event Details From Dashboard URL");
       expect(registeredTools).toContain("List Project Errors");
+      expect(registeredTools).toContain("Get Events on an Error");
       expect(registeredTools).toContain("List Project Event Filters");
       expect(registeredTools).toContain("Update Error");
       expect(registeredTools).toContain("Get Build");
@@ -902,7 +904,7 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("List Trace Fields");
       expect(registeredTools).toContain("Get Network Endpoint Groupings");
       expect(registeredTools).toContain("Set Network Endpoint Groupings");
-      expect(registeredTools.length).toBe(18);
+      expect(registeredTools.length).toBe(19);
     });
   });
 
@@ -1429,6 +1431,55 @@ describe("BugsnagClient", () => {
         await expect(toolHandler({ projectId: "no-match" })).rejects.toThrow(
           "Project with ID no-match not found.",
         );
+      });
+    });
+
+    describe("Get Events on an Error tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
+      it("should list error events with supplied parameters", async () => {
+        const mockEvents: EventApiView[] = [
+          getMockEvent("event-1"),
+          getMockEvent("event-2"),
+        ];
+        const filters = {
+          "event.since": [{ type: "eq" as const, value: "7d" }],
+        };
+
+        mockCache.get.mockReturnValueOnce(mockProject); // current project
+        mockErrorAPI.listErrorEvents.mockResolvedValue({
+          body: mockEvents,
+          totalCount: 2,
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Events on an Error",
+        )[1];
+
+        const result = await toolHandler({
+          errorId: "error-1",
+          filters,
+          direction: "desc",
+          perPage: 50,
+        });
+
+        expect(mockErrorAPI.listErrorEvents).toHaveBeenCalledWith(
+          "proj-1",
+          "error-1",
+          undefined,
+          "timestamp",
+          "desc",
+          50,
+          filters,
+          undefined,
+        );
+        const expectedResult = {
+          data: mockEvents,
+          data_count: 2,
+          total_count: 2,
+        };
+        expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
       });
     });
 

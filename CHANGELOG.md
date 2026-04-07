@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Zephyr] Added a tool `update-test-steps` for updating test execution test steps [#386](https://github.com/SmartBear/smartbear-mcp/pull/386)
+- [BugSnag] Added "Get Events on an Error" tool for listing the events that have grouped into a specified error [#406](https://github.com/SmartBear/smartbear-mcp/pull/406)
 
 ### Changed
 
 - [Zephyr] Added context to the `create-test-case` tool description about automatic empty test step creation. [#401](https://github.com/SmartBear/smartbear-mcp/pull/401)
+- [Zephyr] Updated REST schemas - removed read-only fields from UpdateTestCase and UpdateTestCycle operations. [#407](https://github.com/SmartBear/smartbear-mcp/pull/407)
 
 ## [0.16.0] - 2026-03-25
 
