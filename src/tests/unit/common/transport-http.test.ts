@@ -1,6 +1,11 @@
-import type { IncomingMessage } from "node:http";
-import { afterEach, describe, expect, it } from "vitest";
-import { getBaseUrl, getHeaderName } from "../../../common/transport-http";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clientRegistry } from "../../../common/client-registry";
+import {
+  getBaseUrl,
+  getHeaderName,
+  newServer,
+} from "../../../common/transport-http";
 import type { Client } from "../../../common/types";
 
 function fakeRequest(
@@ -12,6 +17,107 @@ function fakeRequest(
 function fakeClient(configPrefix: string): Client {
   return { configPrefix } as unknown as Client;
 }
+
+/**
+ * Create a mock ServerResponse that captures writeHead/end calls
+ */
+function fakeResponse(): ServerResponse & {
+  _status: number | null;
+  _headers: Record<string, string>;
+  _body: string;
+} {
+  const res = {
+    _status: null as number | null,
+    _headers: {} as Record<string, string>,
+    _body: "",
+    writeHead(status: number, headers?: Record<string, string>) {
+      res._status = status;
+      if (headers) {
+        Object.assign(res._headers, headers);
+      }
+    },
+    end(body?: string) {
+      if (body) res._body = body;
+    },
+  };
+  return res as unknown as ServerResponse & {
+    _status: number | null;
+    _headers: Record<string, string>;
+    _body: string;
+  };
+}
+
+/**
+ * Create a minimal Client that mimics Bugsnag's auth behavior for testing
+ */
+function createTestClient(
+  opts: {
+    name?: string;
+    configPrefix?: string;
+    authToken?: string | null;
+    hasGetAuthToken?: boolean;
+    requiredFields?: string[];
+  } = {},
+): Client {
+  const {
+    name = "TestClient",
+    configPrefix = "Test",
+    authToken = null,
+    hasGetAuthToken = true,
+    requiredFields = [],
+  } = opts;
+
+  const { z } = require("zod");
+  const shape: Record<string, any> = {
+    auth_token: z.string().describe("Test auth token").optional(),
+  };
+  for (const field of requiredFields) {
+    shape[field] = z.string().describe(`${field} (required)`);
+  }
+
+  const client: any = {
+    name,
+    toolPrefix: name.toLowerCase(),
+    configPrefix,
+    config: z.object(shape),
+    _configured: false,
+    _authToken: authToken,
+    configure: vi.fn().mockImplementation(async (_server: any, config: any) => {
+      client._configured = true;
+      if (config.auth_token) {
+        client._authToken = config.auth_token;
+      }
+    }),
+    isConfigured: () => client._configured,
+    registerTools: vi.fn(),
+    registerResources: vi.fn(),
+  };
+
+  if (hasGetAuthToken) {
+    client.getAuthToken = () => client._authToken;
+  }
+
+  return client;
+}
+
+// Mock SmartBearMcpServer
+vi.mock("../../../common/server.js", () => ({
+  SmartBearMcpServer: vi.fn().mockImplementation(() => ({
+    getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+    addClient: vi.fn(),
+    getClients: vi.fn().mockReturnValue([]),
+    connect: vi.fn(),
+    setSamplingSupported: vi.fn(),
+    setElicitationSupported: vi.fn(),
+    cleanupSession: vi.fn(),
+    server: { elicitInput: vi.fn() },
+  })),
+}));
+
+// Mock Bugsnag
+vi.mock("../../../common/bugsnag.js", () => ({
+  default: { notify: vi.fn() },
+}));
 
 describe("transport-http helpers", () => {
   describe("getBaseUrl", () => {
@@ -79,5 +185,242 @@ describe("transport-http helpers", () => {
       const client = fakeClient("Zephyr");
       expect(getHeaderName(client, "api_token")).toBe("Zephyr-Api-Token");
     });
+  });
+});
+
+describe("newServer (OAuth flow)", () => {
+  let originalGetAll: typeof clientRegistry.getAll;
+
+  beforeEach(() => {
+    originalGetAll = clientRegistry.getAll.bind(clientRegistry);
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Restore clientRegistry.getAll
+    clientRegistry.getAll = originalGetAll;
+  });
+
+  it("should return 401 with WWW-Authenticate header when no clients are configured", async () => {
+    // Override getAll to return no clients
+    clientRegistry.getAll = () => [];
+
+    const req = fakeRequest({ host: "myserver.example.com:3000" });
+    const res = fakeResponse();
+
+    const server = await newServer(req, res);
+
+    expect(server).toBeNull();
+    expect(res._status).toBe(401);
+    expect(res._headers["WWW-Authenticate"]).toBe(
+      'OAuth resource_metadata="http://myserver.example.com:3000/.well-known/oauth-protected-resource"',
+    );
+  });
+
+  it("should include Content-Type text/plain in 401 response", async () => {
+    clientRegistry.getAll = () => [];
+    const req = fakeRequest({ host: "localhost:3000" });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._status).toBe(401);
+    expect(res._headers["Content-Type"]).toBe("text/plain");
+  });
+
+  it("should omit WWW-Authenticate header when host header is missing", async () => {
+    clientRegistry.getAll = () => [];
+    const req = fakeRequest({});
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._status).toBe(401);
+    expect(res._headers["WWW-Authenticate"]).toBeUndefined();
+  });
+
+  it("should return 401 when clients configure but none have auth credentials", async () => {
+    // Client with optional auth that returns null (no token available)
+    const testClient = createTestClient({
+      name: "NoAuth",
+      configPrefix: "NoAuth",
+      hasGetAuthToken: true,
+      authToken: null,
+    });
+    clientRegistry.getAll = () => [testClient];
+
+    // Mock SmartBearMcpServer.getClients to return the client
+    const { SmartBearMcpServer } = await import("../../../common/server.js");
+    vi.mocked(SmartBearMcpServer).mockImplementation(
+      () =>
+        ({
+          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+          addClient: vi.fn(),
+          getClients: () => [testClient],
+          connect: vi.fn(),
+          setSamplingSupported: vi.fn(),
+          setElicitationSupported: vi.fn(),
+          cleanupSession: vi.fn(),
+          server: { elicitInput: vi.fn() },
+        }) as any,
+    );
+
+    const req = fakeRequest({ host: "localhost:3000" });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._status).toBe(401);
+    expect(res._body).toContain(
+      "No clients have valid authentication credentials",
+    );
+    expect(res._body).toContain("OAuth");
+    expect(res._headers["WWW-Authenticate"]).toContain(
+      "oauth-protected-resource",
+    );
+  });
+
+  it("should return server when client has auth from header", async () => {
+    const testClient = createTestClient({
+      name: "WithAuth",
+      configPrefix: "WithAuth",
+      hasGetAuthToken: true,
+      authToken: "token my-secret",
+    });
+    clientRegistry.getAll = () => [testClient];
+
+    const { SmartBearMcpServer } = await import("../../../common/server.js");
+    vi.mocked(SmartBearMcpServer).mockImplementation(
+      () =>
+        ({
+          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+          addClient: vi.fn(),
+          getClients: () => [testClient],
+          connect: vi.fn(),
+          setSamplingSupported: vi.fn(),
+          setElicitationSupported: vi.fn(),
+          cleanupSession: vi.fn(),
+          server: { elicitInput: vi.fn() },
+        }) as any,
+    );
+
+    const req = fakeRequest({
+      host: "localhost:3000",
+      "withauth-auth-token": "my-pat",
+    });
+    const res = fakeResponse();
+
+    const server = await newServer(req, res);
+
+    expect(server).not.toBeNull();
+    expect(res._status).toBeNull(); // No error response written
+  });
+
+  it("should skip client when dynamic auth check succeeds without getAuthToken", async () => {
+    // Client without getAuthToken means auth was provided at config time
+    const testClient = createTestClient({
+      name: "StaticAuth",
+      configPrefix: "StaticAuth",
+      hasGetAuthToken: false,
+    });
+    clientRegistry.getAll = () => [testClient];
+
+    const { SmartBearMcpServer } = await import("../../../common/server.js");
+    vi.mocked(SmartBearMcpServer).mockImplementation(
+      () =>
+        ({
+          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+          addClient: vi.fn(),
+          getClients: () => [testClient],
+          connect: vi.fn(),
+          setSamplingSupported: vi.fn(),
+          setElicitationSupported: vi.fn(),
+          cleanupSession: vi.fn(),
+          server: { elicitInput: vi.fn() },
+        }) as any,
+    );
+
+    const req = fakeRequest({ host: "localhost:3000" });
+    const res = fakeResponse();
+
+    const server = await newServer(req, res);
+
+    expect(server).not.toBeNull();
+  });
+
+  it("should fall back to env var when header is not present", async () => {
+    const testClient = createTestClient({
+      name: "EnvFallback",
+      configPrefix: "EnvFallback",
+      hasGetAuthToken: false,
+    });
+    clientRegistry.getAll = () => [testClient];
+
+    const { SmartBearMcpServer } = await import("../../../common/server.js");
+    vi.mocked(SmartBearMcpServer).mockImplementation(
+      () =>
+        ({
+          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+          addClient: vi.fn(),
+          getClients: () => [testClient],
+          connect: vi.fn(),
+          setSamplingSupported: vi.fn(),
+          setElicitationSupported: vi.fn(),
+          cleanupSession: vi.fn(),
+          server: { elicitInput: vi.fn() },
+        }) as any,
+    );
+
+    // Set env var that matches client prefix + key
+    process.env.ENVFALLBACK_AUTH_TOKEN = "env-token";
+
+    const req = fakeRequest({ host: "localhost:3000" });
+    const res = fakeResponse();
+
+    const server = await newServer(req, res);
+
+    expect(server).not.toBeNull();
+    expect(testClient.configure).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ auth_token: "env-token" }),
+    );
+
+    delete process.env.ENVFALLBACK_AUTH_TOKEN;
+  });
+
+  it("should include error details and header help in 401 response body", async () => {
+    const testClient = createTestClient({
+      name: "HelpTest",
+      configPrefix: "HelpTest",
+      hasGetAuthToken: true,
+      authToken: null,
+    });
+    clientRegistry.getAll = () => [testClient];
+
+    const { SmartBearMcpServer } = await import("../../../common/server.js");
+    vi.mocked(SmartBearMcpServer).mockImplementation(
+      () =>
+        ({
+          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+          addClient: vi.fn(),
+          getClients: () => [testClient],
+          connect: vi.fn(),
+          setSamplingSupported: vi.fn(),
+          setElicitationSupported: vi.fn(),
+          cleanupSession: vi.fn(),
+          server: { elicitInput: vi.fn() },
+        }) as any,
+    );
+
+    const req = fakeRequest({ host: "localhost:3000" });
+    const res = fakeResponse();
+
+    await newServer(req, res);
+
+    expect(res._status).toBe(401);
+    // Error body should contain the client name and header info
+    expect(res._body).toContain("Configuration error");
+    expect(res._body).toContain("HelpTest");
+    expect(res._body).toContain("HelpTest-Auth-Token");
   });
 });

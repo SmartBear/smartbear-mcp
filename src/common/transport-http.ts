@@ -493,7 +493,7 @@ async function handleLegacyMessageRequest(
  *
  * @returns SmartBearMcpServer instance if successful, null if configuration fails
  */
-async function newServer(
+export async function newServer(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
