@@ -2,8 +2,8 @@
 
 import { describe, expect, it } from "vitest";
 import type { ZodObject, ZodTypeAny } from "zod";
-import { TOOLS } from "../../../pactflow/client/tools";
 import type { ClientType } from "../../../pactflow/client/tools";
+import { TOOLS } from "../../../pactflow/client/tools";
 
 describe("TOOLS definition for 'Generate Pact Tests'", () => {
   it("defines the generate pact tests tool with correct metadata", () => {
@@ -79,7 +79,8 @@ describe("TOOLS definition for 'Get Team Metrics'", () => {
 function findTool(title: string) {
   const tool = TOOLS.find((t) => t.title === title);
   expect(tool).toBeDefined();
-  return tool!;
+  if (!tool) throw new Error(`Tool with title "${title}" not found`);
+  return tool;
 }
 
 describe("TOOLS definition for 'List Pacticipants'", () => {
