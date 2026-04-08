@@ -1318,6 +1318,874 @@ describe("PactFlowClient", () => {
       });
     });
 
+    describe("listPacticipants", () => {
+      it("should retrieve pacticipants without params", async () => {
+        const mockResponse = { pacticipants: [{ name: "ServiceA" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listPacticipants();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.pacticipants).toHaveLength(1);
+      });
+
+      it("should append pagination query params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ pacticipants: [] }));
+
+        await client.listPacticipants({ pageNumber: 2, pageSize: 10 });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants?page=2&size=10",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Unauthorized", {
+          status: 401,
+          statusText: "Unauthorized",
+        });
+        await expect(client.listPacticipants()).rejects.toThrow(
+          "List Pacticipants Failed - status: 401 Unauthorized - Unauthorized",
+        );
+      });
+    });
+
+    describe("getPacticipant", () => {
+      it("should retrieve a pacticipant by name", async () => {
+        const mockResponse = { name: "ServiceA", mainBranch: "main" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getPacticipant({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("ServiceA");
+      });
+
+      it("should URL-encode the pacticipant name", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ name: "Service A/B" }));
+
+        await client.getPacticipant({ pacticipantName: "Service A/B" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/Service%20A%2FB",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("should handle 404 when pacticipant not found", async () => {
+        fetchMock.mockResponseOnce("Not found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(
+          client.getPacticipant({ pacticipantName: "Unknown" }),
+        ).rejects.toThrow(
+          "Get Pacticipant Failed - status: 404 Not Found - Not found",
+        );
+      });
+    });
+
+    describe("listBranches", () => {
+      it("should retrieve branches for a pacticipant", async () => {
+        const mockResponse = { branches: [{ name: "main" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listBranches({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.branches).toHaveLength(1);
+      });
+
+      it("should append filter and pagination query params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ branches: [] }));
+
+        await client.listBranches({
+          pacticipantName: "ServiceA",
+          q: "feat",
+          pageNumber: 1,
+          pageSize: 20,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches?q=feat&pageNumber=1&pageSize=20",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listVersions", () => {
+      it("should retrieve versions for a pacticipant", async () => {
+        const mockResponse = { versions: [{ number: "1.0.0" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listVersions({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.versions).toHaveLength(1);
+      });
+
+      it("should append pagination query params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ versions: [] }));
+
+        await client.listVersions({
+          pacticipantName: "ServiceA",
+          pageNumber: 2,
+          pageSize: 50,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions?page=2&size=50",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getVersion", () => {
+      it("should retrieve a specific version", async () => {
+        const mockResponse = { number: "1.0.0", branch: "main" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getVersion({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.number).toBe("1.0.0");
+      });
+
+      it("should URL-encode version number with special characters", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.getVersion({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0-beta+build.1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0-beta%2Bbuild.1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getLatestVersion", () => {
+      it("should retrieve the latest version without tag", async () => {
+        const mockResponse = { number: "2.0.0" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getLatestVersion({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/latest-version",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.number).toBe("2.0.0");
+      });
+
+      it("should retrieve the latest version filtered by tag", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ number: "1.5.0" }));
+
+        await client.getLatestVersion({
+          pacticipantName: "ServiceA",
+          tag: "prod",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/latest-version/prod",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listEnvironments", () => {
+      it("should retrieve all environments", async () => {
+        const mockResponse = {
+          environments: [{ name: "production", uuid: "env-1" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listEnvironments();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.environments).toHaveLength(1);
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Forbidden", {
+          status: 403,
+          statusText: "Forbidden",
+        });
+        await expect(client.listEnvironments()).rejects.toThrow(
+          "List Environments Failed - status: 403 Forbidden - Forbidden",
+        );
+      });
+    });
+
+    describe("getEnvironment", () => {
+      it("should retrieve an environment by UUID", async () => {
+        const mockResponse = {
+          name: "production",
+          uuid: "env-uuid-1",
+          production: true,
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getEnvironment({
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments/env-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("production");
+        expect(result.production).toBe(true);
+      });
+    });
+
+    describe("recordDeployment", () => {
+      const baseInput = {
+        pacticipantName: "ServiceA",
+        versionNumber: "1.0.0",
+        environmentId: "env-uuid-1",
+      };
+
+      it("should record a deployment without applicationInstance", async () => {
+        const mockResponse = { pacticipant: "ServiceA" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.recordDeployment(baseInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/deployed-versions/environment/env-uuid-1",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+
+      it("should include applicationInstance in the body when provided", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.recordDeployment({
+          ...baseInput,
+          applicationInstance: "blue",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/deployed-versions/environment/env-uuid-1",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ applicationInstance: "blue" }),
+          },
+        );
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Not found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(client.recordDeployment(baseInput)).rejects.toThrow(
+          "Record Deployment Failed - status: 404 Not Found - Not found",
+        );
+      });
+    });
+
+    describe("getCurrentlyDeployed", () => {
+      it("should retrieve currently deployed versions for an environment", async () => {
+        const mockResponse = {
+          deployedVersions: [
+            { pacticipant: { name: "ServiceA" }, version: { number: "1.0.0" } },
+          ],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getCurrentlyDeployed({
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments/env-uuid-1/deployed-versions/currently-deployed",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.deployedVersions).toHaveLength(1);
+      });
+    });
+
+    describe("recordRelease", () => {
+      it("should record a release", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ pacticipant: "ServiceA" }));
+
+        await client.recordRelease({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/released-versions/environment/env-uuid-1",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+    });
+
+    describe("getCurrentlySupported", () => {
+      it("should retrieve currently supported versions for an environment", async () => {
+        const mockResponse = { releasedVersions: [] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getCurrentlySupported({
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments/env-uuid-1/released-versions/currently-supported",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.releasedVersions).toBeDefined();
+      });
+    });
+
+    describe("publishContracts", () => {
+      const mockInput = {
+        pacticipantName: "ConsumerApp",
+        pacticipantVersionNumber: "1.0.0",
+        contracts: [
+          {
+            consumerName: "ConsumerApp",
+            providerName: "ProviderAPI",
+            content: "eyJjb25zdW1lciI6IHsibmFtZSI6ICJDb25zdW1lckFwcCJ9fQ==",
+            contentType: "application/json" as const,
+            specification: "pact" as const,
+          },
+        ],
+        branch: "main",
+      };
+
+      it("should publish consumer contracts", async () => {
+        const mockResponse = { pacticipantVersionNumber: "1.0.0" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.publishContracts(mockInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/contracts/publish",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify(mockInput),
+          },
+        );
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Unprocessable Entity", {
+          status: 422,
+          statusText: "Unprocessable Entity",
+        });
+        await expect(client.publishContracts(mockInput)).rejects.toThrow(
+          "Publish Consumer Contracts Failed - status: 422 Unprocessable Entity",
+        );
+      });
+    });
+
+    describe("publishProviderContract", () => {
+      const mockInput = {
+        providerName: "ProviderAPI",
+        pacticipantVersionNumber: "2.0.0",
+        contract: {
+          content: "eyJvcGVuYXBpIjogIjMuMC4wIn0=",
+          contentType: "application/json" as const,
+          specification: "oas" as const,
+          selfVerificationResults: {
+            success: true,
+            verifier: "dredd",
+          },
+        },
+        branch: "main",
+      };
+
+      it("should publish a provider contract", async () => {
+        const mockResponse = { success: true };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const { providerName, ...bodyWithoutProvider } = mockInput;
+        await client.publishProviderContract(mockInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/provider-contracts/provider/ProviderAPI/publish",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify(bodyWithoutProvider),
+          },
+        );
+      });
+
+      it("should URL-encode the provider name", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.publishProviderContract({
+          ...mockInput,
+          providerName: "Provider API/v2",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/provider-contracts/provider/Provider%20API%2Fv2/publish",
+          expect.objectContaining({ method: "POST" }),
+        );
+      });
+    });
+
+    describe("getPactsForVerification", () => {
+      it("should retrieve pacts for verification", async () => {
+        const mockInput = {
+          providerName: "ProviderAPI",
+          consumerVersionSelectors: [{ mainBranch: true }],
+          includePendingStatus: true,
+        };
+        const mockResponse = { pacts: [] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const { providerName, ...bodyWithoutProvider } = mockInput;
+        await client.getPactsForVerification(mockInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacts/provider/ProviderAPI/for-verification",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify(bodyWithoutProvider),
+          },
+        );
+      });
+    });
+
+    describe("BDCT provider-version methods", () => {
+      const bdctInput = {
+        providerName: "ProviderAPI",
+        providerVersionNumber: "2.0.0",
+      };
+      const bdctBase =
+        "https://example.com/contracts/bi-directional/provider/ProviderAPI/version/2.0.0";
+
+      it("getBiDirectionalProviderContract should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalProviderContract(bdctInput);
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/provider-contract`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalProviderContractVerificationResults should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalProviderContractVerificationResults(
+          bdctInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/provider-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalConsumerContract should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalConsumerContract(bdctInput);
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/consumer-contract`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalConsumerContractVerificationResults should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalConsumerContractVerificationResults(
+          bdctInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/consumer-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalCrossContractVerificationResults should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalCrossContractVerificationResults(
+          bdctInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/cross-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("BDCT consumer-version methods", () => {
+      const bdctConsumerInput = {
+        providerName: "ProviderAPI",
+        providerVersionNumber: "2.0.0",
+        consumerName: "ConsumerApp",
+        consumerVersionNumber: "1.0.0",
+      };
+      const bdctBase =
+        "https://example.com/contracts/bi-directional/provider/ProviderAPI/version/2.0.0/consumer/ConsumerApp/version/1.0.0";
+
+      it("getBiDirectionalConsumerContractByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalConsumerContractByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/consumer-contract`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalProviderContractByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalProviderContractByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/provider-contract`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalProviderContractVerificationResultsByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalProviderContractVerificationResultsByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/provider-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalConsumerContractVerificationResultsByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalConsumerContractVerificationResultsByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/consumer-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalCrossContractVerificationResultsByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalCrossContractVerificationResultsByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/cross-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listIntegrations", () => {
+      it("should retrieve all integrations", async () => {
+        const mockResponse = {
+          integrations: [
+            {
+              consumer: { name: "ConsumerApp" },
+              provider: { name: "ProviderAPI" },
+            },
+          ],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listIntegrations();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/integrations",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.integrations).toHaveLength(1);
+      });
+    });
+
+    describe("getPacticipantNetwork", () => {
+      it("should retrieve the integration network for a pacticipant", async () => {
+        const mockResponse = {
+          pacticipants: [{ name: "ServiceA" }, { name: "ServiceB" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getPacticipantNetwork({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipant/ServiceA/network",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.pacticipants).toHaveLength(2);
+      });
+    });
+
+    describe("listLabels", () => {
+      it("should retrieve all labels without params", async () => {
+        const mockResponse = { labels: [{ name: "team-a" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listLabels();
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/labels", {
+          method: "GET",
+          headers: client.requestHeaders,
+        });
+        expect(result.labels).toHaveLength(1);
+      });
+
+      it("should append pagination query params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ labels: [] }));
+
+        await client.listLabels({ pageNumber: 1, pageSize: 10 });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/labels?page=1&size=10",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getPacticipantLabel", () => {
+      it("should retrieve a specific label for a pacticipant", async () => {
+        const mockResponse = { name: "team-a" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getPacticipantLabel({
+          pacticipantName: "ServiceA",
+          labelName: "team-a",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/labels/team-a",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("team-a");
+      });
+
+      it("should handle 404 when label not applied", async () => {
+        fetchMock.mockResponseOnce("Not Found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(
+          client.getPacticipantLabel({
+            pacticipantName: "ServiceA",
+            labelName: "missing-label",
+          }),
+        ).rejects.toThrow(
+          "Get Pacticipant Label Failed - status: 404 Not Found - Not Found",
+        );
+      });
+    });
+
+    describe("listPacticipantsByLabel", () => {
+      it("should retrieve pacticipants with a given label", async () => {
+        const mockResponse = {
+          pacticipants: [{ name: "ServiceA" }, { name: "ServiceB" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listPacticipantsByLabel({
+          labelName: "team-a",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/label/team-a",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.pacticipants).toHaveLength(2);
+      });
+    });
+
+    describe("updatePacticipant", () => {
+      it("should send a PUT request to update pacticipant metadata", async () => {
+        const mockResponse = { name: "ServiceA", mainBranch: "main" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.updatePacticipant({
+          pacticipantName: "ServiceA",
+          mainBranch: "main",
+          displayName: "Service A",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              mainBranch: "main",
+              displayName: "Service A",
+            }),
+          },
+        );
+      });
+    });
+
+    describe("patchPacticipant", () => {
+      it("should send a PATCH request to partially update pacticipant metadata", async () => {
+        const mockResponse = { name: "ServiceA", mainBranch: "develop" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.patchPacticipant({
+          pacticipantName: "ServiceA",
+          mainBranch: "develop",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA",
+          {
+            method: "PATCH",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ mainBranch: "develop" }),
+          },
+        );
+      });
+    });
+
+    describe("updateVersion", () => {
+      it("should send a PUT request to update a version's build URL", async () => {
+        const mockResponse = { number: "1.0.0", buildUrl: "https://ci.com/1" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.updateVersion({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          buildUrl: "https://ci.com/1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ buildUrl: "https://ci.com/1" }),
+          },
+        );
+      });
+    });
+
+    describe("getBranchVersions", () => {
+      it("should retrieve all versions for a branch", async () => {
+        const mockResponse = { versions: [{ number: "1.0.0" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getBranchVersions({
+          pacticipantName: "ServiceA",
+          branchName: "main",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches/main/versions",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.versions).toHaveLength(1);
+      });
+
+      it("should append pagination params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ versions: [] }));
+
+        await client.getBranchVersions({
+          pacticipantName: "ServiceA",
+          branchName: "main",
+          pageNumber: 2,
+          pageSize: 25,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches/main/versions?page=2&size=25",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getDeployedVersions", () => {
+      it("should retrieve deployment records for a specific version in an environment", async () => {
+        const mockResponse = {
+          deployedVersions: [{ currentlyDeployed: true }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getDeployedVersions({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/deployed-versions/environment/env-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.deployedVersions[0].currentlyDeployed).toBe(true);
+      });
+    });
+
+    describe("getReleasedVersions", () => {
+      it("should retrieve release records for a specific version in an environment", async () => {
+        const mockResponse = {
+          releasedVersions: [{ currentlySupported: true }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getReleasedVersions({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/released-versions/environment/env-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.releasedVersions[0].currentlySupported).toBe(true);
+      });
+    });
+
     describe("registerPrompts", () => {
       const mockRegisterPrompt = vi.fn();
 
