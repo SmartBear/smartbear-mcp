@@ -128,7 +128,326 @@ export interface MatrixResponse {
 export type CanIDeployInput = z.infer<typeof CanIDeploySchema>;
 export type MatrixInput = z.infer<typeof MatrixSchema>;
 
-export const MetricsSchema = z.object({});
+export const GetPacticipantSchema = z.object({
+  pacticipantName: z
+    .string()
+    .describe("Name of the pacticipant (application or service)"),
+});
+
+export const ListBranchesSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  q: z.string().optional().describe("Filter branches by name"),
+  pageNumber: z.number().optional().describe("Page number (default: 1)"),
+  pageSize: z.number().optional().describe("Results per page (default: 100)"),
+});
+
+export const ListVersionsSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  pageNumber: z.number().optional().describe("Page number"),
+  pageSize: z.number().optional().describe("Results per page"),
+});
+
+export const GetVersionSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  versionNumber: z.string().describe("Version number to retrieve"),
+});
+
+export const GetLatestVersionSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  tag: z
+    .string()
+    .optional()
+    .describe(
+      "Tag to filter by. If omitted, returns the overall latest version.",
+    ),
+});
+
+export const GetEnvironmentSchema = z.object({
+  environmentId: z.string().describe("UUID of the environment"),
+});
+
+export const RecordDeploymentSchema = z.object({
+  pacticipantName: z
+    .string()
+    .describe("Name of the pacticipant that was deployed"),
+  versionNumber: z.string().describe("Version number that was deployed"),
+  environmentId: z.string().describe("UUID of the target environment"),
+  applicationInstance: z
+    .string()
+    .optional()
+    .describe(
+      "Identifies a specific instance when multiple instances of the same application are deployed to the same environment (e.g. 'blue', 'green')",
+    ),
+});
+
+export const GetCurrentlyDeployedSchema = z.object({
+  environmentId: z.string().describe("UUID of the environment"),
+});
+
+export const RecordReleaseSchema = z.object({
+  pacticipantName: z
+    .string()
+    .describe("Name of the pacticipant that was released"),
+  versionNumber: z.string().describe("Version number that was released"),
+  environmentId: z.string().describe("UUID of the target environment"),
+});
+
+export const GetCurrentlySupportedSchema = z.object({
+  environmentId: z.string().describe("UUID of the environment"),
+});
+
+export const PublishConsumerContractsSchema = z.object({
+  pacticipantName: z
+    .string()
+    .min(1)
+    .describe("Name of the consumer application"),
+  pacticipantVersionNumber: z
+    .string()
+    .min(1)
+    .describe("Version number of the consumer"),
+  contracts: z
+    .array(
+      z.object({
+        consumerName: z.string().describe("Consumer application name"),
+        providerName: z.string().describe("Provider application name"),
+        content: z.string().describe("Base64-encoded Pact JSON content"),
+        contentType: z
+          .literal("application/json")
+          .describe("Content type (must be 'application/json')"),
+        specification: z
+          .literal("pact")
+          .describe("Specification type (must be 'pact')"),
+      }),
+    )
+    .describe("Contracts to publish"),
+  tags: z
+    .array(z.string())
+    .optional()
+    .describe("Version tags (e.g. 'main', 'staging')"),
+  branch: z.string().optional().describe("Branch name of the consumer"),
+  buildUrl: z
+    .string()
+    .optional()
+    .describe("URL of the CI build that produced these contracts"),
+});
+
+export const PublishProviderContractSchema = z.object({
+  providerName: z.string().describe("Name of the provider application"),
+  pacticipantVersionNumber: z
+    .string()
+    .min(1)
+    .describe("Version number of the provider"),
+  contract: z
+    .object({
+      content: z
+        .string()
+        .describe("Base64-encoded OpenAPI specification content"),
+      contentType: z
+        .enum(["application/json", "application/yaml", "application/yml"])
+        .describe("Content type of the OpenAPI spec"),
+      specification: z
+        .literal("oas")
+        .describe("Specification type (must be 'oas')"),
+      selfVerificationResults: z
+        .object({
+          success: z.boolean().describe("Whether self-verification passed"),
+          content: z
+            .string()
+            .optional()
+            .describe("Verification results content (e.g. test output)"),
+          contentType: z
+            .string()
+            .optional()
+            .describe("Content type of the verification results"),
+          verifier: z
+            .string()
+            .describe(
+              "Name of the tool used for verification (e.g. 'dredd', 'schemathesis')",
+            ),
+          verifierVersion: z
+            .string()
+            .optional()
+            .describe("Version of the verification tool"),
+          format: z
+            .string()
+            .optional()
+            .describe("Format of the verification results"),
+        })
+        .describe(
+          "Results of self-verifying the provider against its own contract",
+        ),
+    })
+    .describe("Provider contract (OpenAPI spec) and verification details"),
+  tags: z.array(z.string()).optional().describe("Version tags"),
+  branch: z.string().optional().describe("Branch name of the provider"),
+  buildUrl: z.string().optional().describe("URL of the CI build"),
+});
+
+export const GetPactsForVerificationSchema = z.object({
+  providerName: z.string().describe("Name of the provider to get pacts for"),
+  consumerVersionSelectors: z
+    .array(
+      z.object({
+        branch: z.string().optional().describe("Consumer branch name"),
+        consumer: z.string().optional().describe("Consumer name"),
+        deployed: z
+          .boolean()
+          .optional()
+          .describe("Include versions that are currently deployed"),
+        deployedOrReleased: z
+          .boolean()
+          .optional()
+          .describe("Include versions that are currently deployed or released"),
+        environment: z.string().optional().describe("Environment name"),
+        fallbackBranch: z
+          .string()
+          .optional()
+          .describe("Fallback branch if primary branch doesn't exist"),
+        latest: z
+          .boolean()
+          .optional()
+          .describe("Select only the latest version"),
+        mainBranch: z
+          .boolean()
+          .optional()
+          .describe("Select versions from the consumer's main branch"),
+        matchingBranch: z
+          .boolean()
+          .optional()
+          .describe(
+            "Select versions from the branch that matches the provider branch",
+          ),
+        released: z
+          .boolean()
+          .optional()
+          .describe("Include versions that are currently released"),
+        tag: z.string().optional().describe("Tag name (legacy, prefer branch)"),
+      }),
+    )
+    .optional()
+    .describe("Selectors specifying which consumer versions to include"),
+  includePendingStatus: z
+    .boolean()
+    .optional()
+    .describe("Include the pending status in the results"),
+  includeWipPactsSince: z
+    .string()
+    .optional()
+    .describe("Include WIP pacts published since this date (ISO 8601)"),
+  providerVersionBranch: z
+    .string()
+    .optional()
+    .describe("Branch of the provider version being verified"),
+  providerVersionTags: z
+    .array(z.string())
+    .optional()
+    .describe("Tags for the provider version being verified"),
+});
+
+export const GetLabelSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  labelName: z.string().describe("Name of the label"),
+});
+
+export const LabelByNameSchema = z.object({
+  labelName: z.string().describe("Label name to filter by"),
+});
+
+export const UpdatePacticipantSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant to update"),
+  displayName: z.string().optional().describe("Human-readable display name"),
+  mainBranch: z
+    .string()
+    .optional()
+    .describe("Name of the main/trunk branch (e.g. 'main')"),
+  repositoryName: z.string().optional().describe("Repository name"),
+  repositoryNamespace: z
+    .string()
+    .optional()
+    .describe("Repository namespace/organisation"),
+  repositoryUrl: z.string().optional().describe("URL of the source repository"),
+});
+
+export const UpdateVersionSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  versionNumber: z.string().describe("Version number to update"),
+  buildUrl: z
+    .string()
+    .optional()
+    .describe("URL of the CI build that produced this version"),
+});
+
+export const GetBranchVersionsSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  branchName: z.string().describe("Name of the branch"),
+  pageNumber: z.number().optional().describe("Page number"),
+  pageSize: z.number().optional().describe("Results per page"),
+});
+
+export const GetVersionDeployedSchema = z.object({
+  pacticipantName: z.string().describe("Name of the pacticipant"),
+  versionNumber: z.string().describe("Version number"),
+  environmentId: z.string().describe("UUID of the environment"),
+});
+
+export type GetLabelInput = z.infer<typeof GetLabelSchema>;
+export type LabelByNameInput = z.infer<typeof LabelByNameSchema>;
+export type UpdatePacticipantInput = z.infer<typeof UpdatePacticipantSchema>;
+export type UpdateVersionInput = z.infer<typeof UpdateVersionSchema>;
+export type GetBranchVersionsInput = z.infer<typeof GetBranchVersionsSchema>;
+export type GetVersionDeployedInput = z.infer<typeof GetVersionDeployedSchema>;
+
+export const GetBiDirectionalProviderVersionSchema = z.object({
+  providerName: z.string().describe("Name of the provider"),
+  providerVersionNumber: z.string().describe("Provider version number"),
+});
+
+export const GetBiDirectionalConsumerProviderVersionSchema = z.object({
+  providerName: z.string().describe("Name of the provider"),
+  providerVersionNumber: z.string().describe("Provider version number"),
+  consumerName: z.string().describe("Name of the consumer"),
+  consumerVersionNumber: z.string().describe("Consumer version number"),
+});
+
+export type GetBiDirectionalProviderVersionInput = z.infer<
+  typeof GetBiDirectionalProviderVersionSchema
+>;
+export type GetBiDirectionalConsumerProviderVersionInput = z.infer<
+  typeof GetBiDirectionalConsumerProviderVersionSchema
+>;
+
+export const GetPacticipantNetworkSchema = z.object({
+  pacticipantName: z
+    .string()
+    .describe("Name of the pacticipant to get network for"),
+});
+
+export type GetPacticipantInput = z.infer<typeof GetPacticipantSchema>;
+export type ListBranchesInput = z.infer<typeof ListBranchesSchema>;
+export type ListVersionsInput = z.infer<typeof ListVersionsSchema>;
+export type GetVersionInput = z.infer<typeof GetVersionSchema>;
+export type GetLatestVersionInput = z.infer<typeof GetLatestVersionSchema>;
+export type GetEnvironmentInput = z.infer<typeof GetEnvironmentSchema>;
+export type RecordDeploymentInput = z.infer<typeof RecordDeploymentSchema>;
+export type GetCurrentlyDeployedInput = z.infer<
+  typeof GetCurrentlyDeployedSchema
+>;
+export type RecordReleaseInput = z.infer<typeof RecordReleaseSchema>;
+export type GetCurrentlySupportedInput = z.infer<
+  typeof GetCurrentlySupportedSchema
+>;
+export type PublishConsumerContractsInput = z.infer<
+  typeof PublishConsumerContractsSchema
+>;
+export type PublishProviderContractInput = z.infer<
+  typeof PublishProviderContractSchema
+>;
+export type GetPactsForVerificationInput = z.infer<
+  typeof GetPactsForVerificationSchema
+>;
+export type GetPacticipantNetworkInput = z.infer<
+  typeof GetPacticipantNetworkSchema
+>;
 
 interface CountMetric {
   count: number;

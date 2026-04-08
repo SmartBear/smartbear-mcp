@@ -24,10 +24,32 @@ import type {
 import type {
   CanIDeployInput,
   CanIDeployResponse,
+  GetBiDirectionalConsumerProviderVersionInput,
+  GetBiDirectionalProviderVersionInput,
+  GetBranchVersionsInput,
+  GetLabelInput,
+  GetVersionDeployedInput,
+  LabelByNameInput,
+  UpdatePacticipantInput,
+  UpdateVersionInput,
+  GetCurrentlyDeployedInput,
+  GetCurrentlySupportedInput,
+  GetEnvironmentInput,
+  GetLatestVersionInput,
+  GetPacticipantInput,
+  GetPacticipantNetworkInput,
+  GetPactsForVerificationInput,
+  GetVersionInput,
+  ListBranchesInput,
+  ListVersionsInput,
   MatrixInput,
   MatrixResponse,
   MetricsResponse,
   ProviderStatesResponse,
+  PublishConsumerContractsInput,
+  PublishProviderContractInput,
+  RecordDeploymentInput,
+  RecordReleaseInput,
   TeamMetricsResponse,
 } from "./client/base";
 import {
@@ -299,7 +321,7 @@ export class PactflowClient implements Client {
   private async fetchJson<T>(
     url: string,
     options: {
-      method: "GET" | "POST";
+      method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
       body?: any;
       errorContext?: string;
     },
@@ -322,6 +344,10 @@ export class PactflowClient implements Client {
           undefined,
           new Map<string, number>([["responseStatus", response.status]]),
         );
+      }
+
+      if (response.status === 204) {
+        return undefined as unknown as T;
       }
 
       return (await response.json()) as T;
@@ -524,6 +550,426 @@ export class PactflowClient implements Client {
       console.error("[GetTeamMetrics] Unexpected error:", error);
       throw error;
     }
+  }
+
+  // ============================================================
+  // Pacticipant methods
+  // ============================================================
+
+  async listPacticipants(params?: {
+    pageNumber?: number;
+    pageSize?: number;
+  }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params?.pageNumber) queryParams.set("page", String(params.pageNumber));
+    if (params?.pageSize) queryParams.set("size", String(params.pageSize));
+    const qs = queryParams.toString();
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants${qs ? `?${qs}` : ""}`,
+      { method: "GET", errorContext: "List Pacticipants" },
+    );
+  }
+
+  async getPacticipant({ pacticipantName }: GetPacticipantInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
+      { method: "GET", errorContext: "Get Pacticipant" },
+    );
+  }
+
+  async listBranches({
+    pacticipantName,
+    q,
+    pageNumber,
+    pageSize,
+  }: ListBranchesInput): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (q) queryParams.set("q", q);
+    if (pageNumber) queryParams.set("pageNumber", String(pageNumber));
+    if (pageSize) queryParams.set("pageSize", String(pageSize));
+    const qs = queryParams.toString();
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/branches${qs ? `?${qs}` : ""}`,
+      { method: "GET", errorContext: "List Branches" },
+    );
+  }
+
+  async listVersions({
+    pacticipantName,
+    pageNumber,
+    pageSize,
+  }: ListVersionsInput): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (pageNumber) queryParams.set("page", String(pageNumber));
+    if (pageSize) queryParams.set("size", String(pageSize));
+    const qs = queryParams.toString();
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions${qs ? `?${qs}` : ""}`,
+      { method: "GET", errorContext: "List Versions" },
+    );
+  }
+
+  async getVersion({
+    pacticipantName,
+    versionNumber,
+  }: GetVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}`,
+      { method: "GET", errorContext: "Get Version" },
+    );
+  }
+
+  async getLatestVersion({
+    pacticipantName,
+    tag,
+  }: GetLatestVersionInput): Promise<any> {
+    const path = tag
+      ? `/pacticipants/${encodeURIComponent(pacticipantName)}/latest-version/${encodeURIComponent(tag)}`
+      : `/pacticipants/${encodeURIComponent(pacticipantName)}/latest-version`;
+    return await this.fetchJson<any>(`${this.baseUrl}${path}`, {
+      method: "GET",
+      errorContext: "Get Latest Version",
+    });
+  }
+
+  async listEnvironments(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/environments`, {
+      method: "GET",
+      errorContext: "List Environments",
+    });
+  }
+
+  async getEnvironment({ environmentId }: GetEnvironmentInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}`,
+      { method: "GET", errorContext: "Get Environment" },
+    );
+  }
+
+  async recordDeployment({
+    pacticipantName,
+    versionNumber,
+    environmentId,
+    applicationInstance,
+  }: RecordDeploymentInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/deployed-versions/environment/${encodeURIComponent(environmentId)}`,
+      {
+        method: "POST",
+        body: applicationInstance ? { applicationInstance } : {},
+        errorContext: "Record Deployment",
+      },
+    );
+  }
+
+  async getCurrentlyDeployed({
+    environmentId,
+  }: GetCurrentlyDeployedInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}/deployed-versions/currently-deployed`,
+      { method: "GET", errorContext: "Get Currently Deployed" },
+    );
+  }
+
+  async recordRelease({
+    pacticipantName,
+    versionNumber,
+    environmentId,
+  }: RecordReleaseInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/released-versions/environment/${encodeURIComponent(environmentId)}`,
+      { method: "POST", body: {}, errorContext: "Record Release" },
+    );
+  }
+
+  async getCurrentlySupported({
+    environmentId,
+  }: GetCurrentlySupportedInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}/released-versions/currently-supported`,
+      { method: "GET", errorContext: "Get Currently Supported" },
+    );
+  }
+
+  async publishContracts(body: PublishConsumerContractsInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/contracts/publish`, {
+      method: "POST",
+      body,
+      errorContext: "Publish Consumer Contracts",
+    });
+  }
+
+  async publishProviderContract({
+    providerName,
+    ...body
+  }: PublishProviderContractInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/provider-contracts/provider/${encodeURIComponent(providerName)}/publish`,
+      { method: "POST", body, errorContext: "Publish Provider Contract" },
+    );
+  }
+
+  async getPactsForVerification({
+    providerName,
+    ...body
+  }: GetPactsForVerificationInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacts/provider/${encodeURIComponent(providerName)}/for-verification`,
+      { method: "POST", body, errorContext: "Get Pacts for Verification" },
+    );
+  }
+
+  async getBiDirectionalProviderContract({
+    providerName,
+    providerVersionNumber,
+  }: GetBiDirectionalProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/provider-contract`,
+      { method: "GET", errorContext: "Get BDCT Provider Contract" },
+    );
+  }
+
+  async getBiDirectionalProviderContractVerificationResults({
+    providerName,
+    providerVersionNumber,
+  }: GetBiDirectionalProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/provider-contract-verification-results`,
+      {
+        method: "GET",
+        errorContext: "Get BDCT Provider Contract Verification Results",
+      },
+    );
+  }
+
+  async getBiDirectionalConsumerContract({
+    providerName,
+    providerVersionNumber,
+  }: GetBiDirectionalProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer-contract`,
+      { method: "GET", errorContext: "Get BDCT Consumer Contract" },
+    );
+  }
+
+  async getBiDirectionalConsumerContractVerificationResults({
+    providerName,
+    providerVersionNumber,
+  }: GetBiDirectionalProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer-contract-verification-results`,
+      {
+        method: "GET",
+        errorContext: "Get BDCT Consumer Contract Verification Results",
+      },
+    );
+  }
+
+  async getBiDirectionalCrossContractVerificationResults({
+    providerName,
+    providerVersionNumber,
+  }: GetBiDirectionalProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/cross-contract-verification-results`,
+      {
+        method: "GET",
+        errorContext: "Get BDCT Cross-Contract Verification Results",
+      },
+    );
+  }
+
+  async getBiDirectionalConsumerContractByConsumer({
+    providerName,
+    providerVersionNumber,
+    consumerName,
+    consumerVersionNumber,
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/consumer-contract`,
+      {
+        method: "GET",
+        errorContext: "Get BDCT Consumer Contract (by consumer version)",
+      },
+    );
+  }
+
+  async getBiDirectionalProviderContractByConsumer({
+    providerName,
+    providerVersionNumber,
+    consumerName,
+    consumerVersionNumber,
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/provider-contract`,
+      {
+        method: "GET",
+        errorContext: "Get BDCT Provider Contract (by consumer version)",
+      },
+    );
+  }
+
+  async getBiDirectionalProviderContractVerificationResultsByConsumer({
+    providerName,
+    providerVersionNumber,
+    consumerName,
+    consumerVersionNumber,
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/provider-contract-verification-results`,
+      {
+        method: "GET",
+        errorContext:
+          "Get BDCT Provider Contract Verification Results (by consumer version)",
+      },
+    );
+  }
+
+  async getBiDirectionalConsumerContractVerificationResultsByConsumer({
+    providerName,
+    providerVersionNumber,
+    consumerName,
+    consumerVersionNumber,
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/consumer-contract-verification-results`,
+      {
+        method: "GET",
+        errorContext:
+          "Get BDCT Consumer Contract Verification Results (by consumer version)",
+      },
+    );
+  }
+
+  async getBiDirectionalCrossContractVerificationResultsByConsumer({
+    providerName,
+    providerVersionNumber,
+    consumerName,
+    consumerVersionNumber,
+  }: GetBiDirectionalConsumerProviderVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/contracts/bi-directional/provider/${encodeURIComponent(providerName)}/version/${encodeURIComponent(providerVersionNumber)}/consumer/${encodeURIComponent(consumerName)}/version/${encodeURIComponent(consumerVersionNumber)}/cross-contract-verification-results`,
+      {
+        method: "GET",
+        errorContext:
+          "Get BDCT Cross-Contract Verification Results (by consumer version)",
+      },
+    );
+  }
+
+  async listIntegrations(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/integrations`, {
+      method: "GET",
+      errorContext: "List Integrations",
+    });
+  }
+
+  async getPacticipantNetwork({
+    pacticipantName,
+  }: GetPacticipantNetworkInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipant/${encodeURIComponent(pacticipantName)}/network`,
+      { method: "GET", errorContext: "Get Pacticipant Network" },
+    );
+  }
+
+  async listLabels(params?: {
+    pageNumber?: number;
+    pageSize?: number;
+  }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params?.pageNumber) queryParams.set("page", String(params.pageNumber));
+    if (params?.pageSize) queryParams.set("size", String(params.pageSize));
+    const qs = queryParams.toString();
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/labels${qs ? `?${qs}` : ""}`,
+      { method: "GET", errorContext: "List Labels" },
+    );
+  }
+
+  async getPacticipantLabel({
+    pacticipantName,
+    labelName,
+  }: GetLabelInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/labels/${encodeURIComponent(labelName)}`,
+      { method: "GET", errorContext: "Get Pacticipant Label" },
+    );
+  }
+
+  async listPacticipantsByLabel({ labelName }: LabelByNameInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/label/${encodeURIComponent(labelName)}`,
+      { method: "GET", errorContext: "List Pacticipants by Label" },
+    );
+  }
+
+  async updatePacticipant({
+    pacticipantName,
+    ...body
+  }: UpdatePacticipantInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
+      { method: "PUT", body, errorContext: "Update Pacticipant" },
+    );
+  }
+
+  async patchPacticipant({
+    pacticipantName,
+    ...body
+  }: UpdatePacticipantInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
+      { method: "PATCH", body, errorContext: "Patch Pacticipant" },
+    );
+  }
+
+  async updateVersion({
+    pacticipantName,
+    versionNumber,
+    ...body
+  }: UpdateVersionInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}`,
+      { method: "PUT", body, errorContext: "Update Version" },
+    );
+  }
+
+  async getBranchVersions({
+    pacticipantName,
+    branchName,
+    pageNumber,
+    pageSize,
+  }: GetBranchVersionsInput): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (pageNumber) queryParams.set("page", String(pageNumber));
+    if (pageSize) queryParams.set("size", String(pageSize));
+    const qs = queryParams.toString();
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/branches/${encodeURIComponent(branchName)}/versions${qs ? `?${qs}` : ""}`,
+      { method: "GET", errorContext: "Get Branch Versions" },
+    );
+  }
+
+  async getDeployedVersions({
+    pacticipantName,
+    versionNumber,
+    environmentId,
+  }: GetVersionDeployedInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/deployed-versions/environment/${encodeURIComponent(environmentId)}`,
+      { method: "GET", errorContext: "Get Deployed Versions" },
+    );
+  }
+
+  async getReleasedVersions({
+    pacticipantName,
+    versionNumber,
+    environmentId,
+  }: GetVersionDeployedInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/released-versions/environment/${encodeURIComponent(environmentId)}`,
+      { method: "GET", errorContext: "Get Released Versions" },
+    );
   }
 
   /**
