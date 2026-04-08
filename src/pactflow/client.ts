@@ -90,11 +90,20 @@ export class PactflowClient implements Client {
   private _clientType: ClientType | undefined;
   private _server: SmartBearMcpServer | undefined;
 
+  /** Returns the configured MCP server instance. @throws Error if not yet configured. */
   get server(): SmartBearMcpServer {
     if (!this._server) throw new Error("Server not configured");
     return this._server;
   }
 
+  /**
+   * Initialises the client with auth credentials and the MCP server reference.
+   * Accepts either a Bearer token (PactFlow) or username/password (Pact Broker).
+   * Does nothing if neither is supplied.
+   *
+   * @param server - The MCP server instance to bind to.
+   * @param config - Connection config (base_url + token OR username/password).
+   */
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
@@ -126,6 +135,7 @@ export class PactflowClient implements Client {
     this._server = server;
   }
 
+  /** Returns true if the client has been configured with a base URL and credentials. */
   isConfigured(): boolean {
     return this.baseUrl !== undefined;
   }
@@ -247,6 +257,12 @@ export class PactflowClient implements Client {
     });
   }
 
+  /**
+   * Polls the given status URL with a HEAD request to check operation progress.
+   *
+   * @param statusUrl - The URL returned by the async AI operation.
+   * @returns HTTP status code and whether the operation has completed (status 200).
+   */
   async getStatus(
     statusUrl: string,
   ): Promise<{ status: number; isComplete: boolean }> {
@@ -261,10 +277,18 @@ export class PactflowClient implements Client {
     };
   }
 
+  /** Returns the current auth/content-type headers used for all requests. */
   get requestHeaders() {
     return this.headers;
   }
 
+  /**
+   * Fetches the final result of a completed async operation.
+   *
+   * @param resultUrl - The result URL returned by the async AI operation.
+   * @returns The parsed JSON result of type T.
+   * @throws ToolError if the response is not OK.
+   */
   async getResult<T>(resultUrl: string): Promise<T> {
     const response = await fetch(resultUrl, {
       method: "GET",
@@ -278,6 +302,14 @@ export class PactflowClient implements Client {
     return response.json();
   }
 
+  /**
+   * Polls status_url every second until the operation completes or times out (120s).
+   *
+   * @param status_response - URLs returned by the initial async submission.
+   * @param operationName - Human-readable name used in error messages.
+   * @returns The parsed result of type T on success.
+   * @throws ToolError on non-202 status or timeout.
+   */
   private async pollForCompletion<T>(
     status_response: StatusResponse,
     operationName: string,
@@ -389,6 +421,13 @@ export class PactflowClient implements Client {
 
   // PactFlow / Pact_Broker client methods
 
+  /**
+   * Retrieves all provider states declared by a provider's pact tests.
+   *
+   * @param params - `provider`: The name of the provider.
+   * @returns List of provider state strings the provider supports.
+   * @throws ToolError if the request fails.
+   */
   async getProviderStates({
     provider,
   }: {
@@ -1235,6 +1274,1038 @@ export class PactflowClient implements Client {
     return await this.fetchJson<any>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/versions/${encodeURIComponent(versionNumber)}/released-versions/environment/${encodeURIComponent(environmentId)}`,
       { method: "GET", errorContext: "Get Released Versions" },
+    );
+  }
+
+  /**
+   * Creates a new deployment environment in the workspace.
+   *
+   * @param body - Environment name, display name, and whether it is a production environment.
+   * @returns The created environment resource.
+   * @throws ToolError if the request fails.
+   */
+  async createEnvironment({
+    ...body
+  }: import("./client/base").CreateEnvironmentInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/environments`, {
+      method: "POST",
+      body,
+      errorContext: "Create Environment",
+    });
+  }
+
+  /**
+   * Fully replaces an environment's configuration.
+   *
+   * @param params - `environmentId` (UUID) plus updated name, display name, and production flag.
+   * @returns The updated environment resource.
+   * @throws ToolError if the environment is not found or the request fails.
+   */
+  async updateEnvironment({
+    environmentId,
+    ...body
+  }: import("./client/base").UpdateEnvironmentInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}`,
+      {
+        method: "PUT",
+        body,
+        errorContext: "Update Environment",
+      },
+    );
+  }
+
+  /**
+   * Deletes a deployment environment from the workspace.
+   *
+   * @param params - `environmentId`: UUID of the environment to delete.
+   * @throws ToolError if the environment is not found or the request fails.
+   */
+  async deleteEnvironment({
+    environmentId,
+  }: import("./client/base").GetEnvironmentInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}`,
+      {
+        method: "DELETE",
+        errorContext: "Delete Environment",
+      },
+    );
+  }
+
+  /**
+   * Registers a new pacticipant (application/service) in the workspace.
+   *
+   * @param body - Name, optional display name, main branch, and repository URL.
+   * @returns The created pacticipant resource.
+   * @throws ToolError if the request fails.
+   */
+  async createPacticipant({
+    ...body
+  }: import("./client/base").CreatePacticipantInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/pacticipants`, {
+      method: "POST",
+      body,
+      errorContext: "Create Pacticipant",
+    });
+  }
+
+  /**
+   * Permanently removes a pacticipant and all its associated data from the workspace.
+   *
+   * @param params - `pacticipantName`: The name of the pacticipant to delete.
+   * @throws ToolError if the request fails.
+   */
+  async deletePacticipant({
+    pacticipantName,
+  }: import("./client/base").DeletePacticipantInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
+      {
+        method: "DELETE",
+        errorContext: "Delete Pacticipant",
+      },
+    );
+  }
+
+  /**
+   * Retrieves metadata for a specific branch of a pacticipant.
+   *
+   * @param params - `pacticipantName` and `branchName`.
+   * @returns Branch metadata including its versions.
+   * @throws ToolError if the branch is not found or the request fails.
+   */
+  async getBranch({
+    pacticipantName,
+    branchName,
+  }: import("./client/base").GetBranchInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/branches/${encodeURIComponent(branchName)}`,
+      { method: "GET", errorContext: "Get Branch" },
+    );
+  }
+
+  /**
+   * Deletes a branch and its version associations from a pacticipant.
+   *
+   * @param params - `pacticipantName` and `branchName`.
+   * @throws ToolError if the branch is not found or the request fails.
+   */
+  async deleteBranch({
+    pacticipantName,
+    branchName,
+  }: import("./client/base").DeleteBranchInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/branches/${encodeURIComponent(branchName)}`,
+      { method: "DELETE", errorContext: "Delete Branch" },
+    );
+  }
+
+  /**
+   * Applies a label to a pacticipant.
+   *
+   * @param params - `pacticipantName` and `labelName` to apply.
+   * @returns The created label resource.
+   * @throws ToolError if the request fails.
+   */
+  async addLabel({
+    pacticipantName,
+    labelName,
+  }: import("./client/base").ManageLabelInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/labels/${encodeURIComponent(labelName)}`,
+      { method: "PUT", body: {}, errorContext: "Add Label" },
+    );
+  }
+
+  /**
+   * Removes a label from a pacticipant.
+   *
+   * @param params - `pacticipantName` and `labelName` to remove.
+   * @throws ToolError if the label or pacticipant is not found, or the request fails.
+   */
+  async removeLabel({
+    pacticipantName,
+    labelName,
+  }: import("./client/base").ManageLabelInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}/labels/${encodeURIComponent(labelName)}`,
+      { method: "DELETE", errorContext: "Remove Label" },
+    );
+  }
+
+  /**
+   * Retrieves all consumer-provider integrations assigned to a specific team.
+   *
+   * @param params - `teamId`: UUID of the team.
+   * @returns List of integrations associated with the team.
+   * @throws ToolError if the request fails.
+   */
+  async getIntegrationsByTeam({
+    teamId,
+  }: import("./client/base").GetIntegrationsByTeamInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/integrations/team/${encodeURIComponent(teamId)}`,
+      {
+        method: "GET",
+        errorContext: "Get Integrations by Team",
+      },
+    );
+  }
+
+  /**
+   * Deletes the integration (pact relationship) between a specific consumer and provider.
+   *
+   * @param params - `providerName` and `consumerName`.
+   * @throws ToolError if the integration is not found or the request fails.
+   */
+  async deleteIntegration({
+    providerName,
+    consumerName,
+  }: import("./client/base").DeleteIntegrationInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/integrations/provider/${encodeURIComponent(providerName)}/consumer/${encodeURIComponent(consumerName)}`,
+      { method: "DELETE", errorContext: "Delete Integration" },
+    );
+  }
+
+  /**
+   * Deletes all consumer-provider integrations in the workspace. Use with caution.
+   *
+   * @throws ToolError if the request fails.
+   */
+  async deleteAllIntegrations(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/integrations`, {
+      method: "DELETE",
+      errorContext: "Delete All Integrations",
+    });
+  }
+
+  /**
+   * Retrieves all webhooks configured in the workspace.
+   *
+   * @returns List of webhook definitions and their trigger configurations.
+   * @throws ToolError if the request fails.
+   */
+  async listWebhooks(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/webhooks`, {
+      method: "GET",
+      errorContext: "List Webhooks",
+    });
+  }
+
+  /**
+   * Retrieves the configuration for a specific webhook by UUID.
+   *
+   * @param params - `webhookId`: UUID of the webhook.
+   * @returns Webhook definition including its URL, events, and consumer/provider filters.
+   * @throws ToolError if the webhook is not found or the request fails.
+   */
+  async getWebhook({
+    webhookId,
+  }: import("./client/base").WebhookIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/webhooks/${encodeURIComponent(webhookId)}`,
+      {
+        method: "GET",
+        errorContext: "Get Webhook",
+      },
+    );
+  }
+
+  /**
+   * Creates a new webhook triggered by pact publication or verification events.
+   *
+   * @param body - Webhook URL, HTTP method, headers, body, events, and optional
+   *   consumer/provider filters.
+   * @returns The created webhook resource.
+   * @throws ToolError if the request fails.
+   */
+  async createWebhook({
+    ...body
+  }: import("./client/base").CreateWebhookInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/webhooks`, {
+      method: "POST",
+      body,
+      errorContext: "Create Webhook",
+    });
+  }
+
+  /**
+   * Replaces the configuration of an existing webhook.
+   *
+   * @param params - `webhookId` (UUID) plus the full updated webhook definition.
+   * @returns The updated webhook resource.
+   * @throws ToolError if the webhook is not found or the request fails.
+   */
+  async updateWebhook({
+    webhookId,
+    ...body
+  }: import("./client/base").UpdateWebhookInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/webhooks/${encodeURIComponent(webhookId)}`,
+      {
+        method: "PUT",
+        body,
+        errorContext: "Update Webhook",
+      },
+    );
+  }
+
+  /**
+   * Deletes a webhook by UUID.
+   *
+   * @param params - `webhookId`: UUID of the webhook to delete.
+   * @throws ToolError if the webhook is not found or the request fails.
+   */
+  async deleteWebhook({
+    webhookId,
+  }: import("./client/base").WebhookIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/webhooks/${encodeURIComponent(webhookId)}`,
+      {
+        method: "DELETE",
+        errorContext: "Delete Webhook",
+      },
+    );
+  }
+
+  /**
+   * Fires all webhooks in the workspace as a test, regardless of their trigger conditions.
+   *
+   * @throws ToolError if the request fails.
+   */
+  async executeWebhooks(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/webhooks/execute`, {
+      method: "POST",
+      body: {},
+      errorContext: "Execute Webhooks",
+    });
+  }
+
+  /**
+   * Fires a specific webhook as a test, regardless of its trigger conditions.
+   *
+   * @param params - `webhookId`: UUID of the webhook to execute.
+   * @throws ToolError if the webhook is not found or the request fails.
+   */
+  async executeWebhook({
+    webhookId,
+  }: import("./client/base").WebhookIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/webhooks/${encodeURIComponent(webhookId)}/execute`,
+      {
+        method: "POST",
+        body: {},
+        errorContext: "Execute Webhook",
+      },
+    );
+  }
+
+  /**
+   * Retrieves all secrets stored in the workspace (names only, not values).
+   *
+   * @returns List of secret metadata.
+   * @throws ToolError if the request fails.
+   */
+  async listSecrets(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/secrets`, {
+      method: "GET",
+      errorContext: "List Secrets",
+    });
+  }
+
+  /**
+   * Retrieves metadata for a specific secret by UUID (value is not returned).
+   *
+   * @param params - `secretId`: UUID of the secret.
+   * @throws ToolError if the secret is not found or the request fails.
+   */
+  async getSecret({
+    secretId,
+  }: import("./client/base").SecretIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/secrets/${encodeURIComponent(secretId)}`,
+      {
+        method: "GET",
+        errorContext: "Get Secret",
+      },
+    );
+  }
+
+  /**
+   * Creates a new secret for use in webhook configurations.
+   *
+   * @param body - Secret name, description, and value.
+   * @returns The created secret resource (value is not echoed back).
+   * @throws ToolError if the request fails.
+   */
+  async createSecret({
+    ...body
+  }: import("./client/base").CreateSecretInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/secrets`, {
+      method: "POST",
+      body,
+      errorContext: "Create Secret",
+    });
+  }
+
+  /**
+   * Replaces the value and/or description of an existing secret.
+   *
+   * @param params - `secretId` (UUID) plus updated name, description, and/or value.
+   * @throws ToolError if the secret is not found or the request fails.
+   */
+  async updateSecret({
+    secretId,
+    ...body
+  }: import("./client/base").UpdateSecretInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/secrets/${encodeURIComponent(secretId)}`,
+      {
+        method: "PUT",
+        body,
+        errorContext: "Update Secret",
+      },
+    );
+  }
+
+  /**
+   * Permanently deletes a secret from the workspace.
+   *
+   * @param params - `secretId`: UUID of the secret to delete.
+   * @throws ToolError if the secret is not found or the request fails.
+   */
+  async deleteSecret({
+    secretId,
+  }: import("./client/base").SecretIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/secrets/${encodeURIComponent(secretId)}`,
+      {
+        method: "DELETE",
+        errorContext: "Delete Secret",
+      },
+    );
+  }
+
+  /**
+   * Retrieves the profile of the currently authenticated user.
+   *
+   * @returns Current user's name, email, roles, and active status.
+   * @throws ToolError if the request fails.
+   */
+  async getCurrentUser(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/user`, {
+      method: "GET",
+      errorContext: "Get Current User",
+    });
+  }
+
+  /**
+   * Lists all API tokens associated with the current user's account.
+   *
+   * @returns Token metadata (IDs, descriptions) — values are not returned.
+   * @throws ToolError if the request fails.
+   */
+  async listTokens(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/settings/tokens`, {
+      method: "GET",
+      errorContext: "List Tokens",
+    });
+  }
+
+  /**
+   * Regenerates (rotates) an API token, invalidating the previous value.
+   *
+   * @param params - `tokenId`: The identifier of the token to regenerate.
+   * @returns The new token value.
+   * @throws ToolError if the token is not found or the request fails.
+   */
+  async regenerateToken({
+    tokenId,
+  }: import("./client/base").RegenerateTokenInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/settings/tokens/${encodeURIComponent(tokenId)}/regenerate`,
+      {
+        method: "POST",
+        body: {},
+        errorContext: "Regenerate Token",
+      },
+    );
+  }
+
+  /**
+   * Retrieves UI and notification preferences for the currently authenticated user.
+   *
+   * @returns User preference settings.
+   * @throws ToolError if the request fails.
+   */
+  async getUserPreferences(): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/preferences/current-user`,
+      {
+        method: "GET",
+        errorContext: "Get User Preferences",
+      },
+    );
+  }
+
+  /**
+   * Retrieves workspace-level system preferences and configuration.
+   *
+   * @returns System preference settings.
+   * @throws ToolError if the request fails.
+   */
+  async getSystemPreferences(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/preferences/system`, {
+      method: "GET",
+      errorContext: "Get System Preferences",
+    });
+  }
+
+  /**
+   * Retrieves the workspace audit log with optional filtering and pagination.
+   *
+   * @param params - Optional filters: `since` (ISO date), `userUuid`, `type`,
+   *   `sort`, `from` cursor, `pageNumber`, and `pageSize`.
+   * @returns Paginated list of audit events.
+   * @throws ToolError if the request fails.
+   */
+  async getAuditLog(params: import("./client/base").AuditInput): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params.since) queryParams.set("since", params.since);
+    if (params.userUuid) queryParams.set("userUuid", params.userUuid);
+    if (params.type) queryParams.set("type", params.type);
+    if (params.sort) queryParams.set("sort", params.sort);
+    if (params.from) queryParams.set("from", params.from);
+    if (params.pageNumber)
+      queryParams.set("pageNumber", String(params.pageNumber));
+    if (params.pageSize) queryParams.set("pageSize", String(params.pageSize));
+    const qs = queryParams.toString();
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/audit${qs ? `?${qs}` : ""}`,
+      {
+        method: "GET",
+        errorContext: "Get Audit Log",
+      },
+    );
+  }
+
+  /**
+   * Lists all users in the workspace with optional filtering and pagination (admin).
+   *
+   * @param params - Optional `active` flag, `q` (name/email search), `userType`,
+   *   `page`, and `size`.
+   * @returns Paginated list of user accounts.
+   * @throws ToolError if the request fails.
+   */
+  async listAdminUsers(
+    params: import("./client/base").ListAdminUsersInput,
+  ): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params.active !== undefined)
+      queryParams.set("active", String(params.active));
+    if (params.q) queryParams.set("q", params.q);
+    if (params.userType !== undefined)
+      queryParams.set("userType", String(params.userType));
+    if (params.page) queryParams.set("page", String(params.page));
+    if (params.size) queryParams.set("size", String(params.size));
+    const qs = queryParams.toString();
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/users${qs ? `?${qs}` : ""}`,
+      {
+        method: "GET",
+        errorContext: "List Admin Users",
+      },
+    );
+  }
+
+  /**
+   * Retrieves a user's full profile by UUID (admin).
+   *
+   * @param params - `userId`: UUID of the user.
+   * @returns User profile including roles and active status.
+   * @throws ToolError if the user is not found or the request fails.
+   */
+  async getAdminUser({
+    userId,
+  }: import("./client/base").AdminUserIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}`,
+      {
+        method: "GET",
+        errorContext: "Get Admin User",
+      },
+    );
+  }
+
+  /**
+   * Creates a new user account in the workspace (admin).
+   *
+   * @param body - User name, email, and optional SSO identity fields.
+   * @returns The created user resource.
+   * @throws ToolError if the request fails.
+   */
+  async createAdminUser({
+    ...body
+  }: import("./client/base").CreateAdminUserInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/admin/users`, {
+      method: "POST",
+      body,
+      errorContext: "Create Admin User",
+    });
+  }
+
+  /**
+   * Replaces a user's profile (admin). Can also deactivate the user.
+   *
+   * @param params - `userId` (UUID) plus updated name, email, active flag, and SSO fields.
+   * @returns The updated user resource.
+   * @throws ToolError if the user is not found or the request fails.
+   */
+  async updateAdminUser({
+    userId,
+    ...body
+  }: import("./client/base").UpdateAdminUserInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}`,
+      {
+        method: "PUT",
+        body,
+        errorContext: "Update Admin User",
+      },
+    );
+  }
+
+  /**
+   * Permanently deletes a user account from the workspace (admin).
+   *
+   * @param params - `userId`: UUID of the user to delete.
+   * @throws ToolError if the user is not found or the request fails.
+   */
+  async deleteAdminUser({
+    userId,
+  }: import("./client/base").AdminUserIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}`,
+      {
+        method: "DELETE",
+        errorContext: "Delete Admin User",
+      },
+    );
+  }
+
+  /**
+   * Sends invitation emails to one or more new users (admin).
+   *
+   * @param params - `users`: Array of objects with email and optional name.
+   * @throws ToolError if the request fails.
+   */
+  async inviteUsers({
+    users,
+  }: import("./client/base").InviteUsersInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/users/invite-users`,
+      {
+        method: "POST",
+        body: { users },
+        errorContext: "Invite Users",
+      },
+    );
+  }
+
+  /**
+   * Fully replaces the roles assigned to a user (admin).
+   * All existing roles are removed; the provided list becomes the new set.
+   *
+   * @param params - `userId` (UUID) and `roles` array of role UUIDs.
+   * @throws ToolError if the user is not found or the request fails.
+   */
+  async setUserRoles({
+    userId,
+    roles,
+  }: import("./client/base").SetUserRolesInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}/roles`,
+      {
+        method: "PUT",
+        body: { roles },
+        errorContext: "Set User Roles",
+      },
+    );
+  }
+
+  /**
+   * Grants a single additional role to a user without affecting their existing roles (admin).
+   *
+   * @param params - `userId` and `roleId` UUIDs.
+   * @throws ToolError if the user or role is not found, or the request fails.
+   */
+  async addRoleToUser({
+    userId,
+    roleId,
+  }: import("./client/base").UserRoleInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`,
+      { method: "PUT", body: {}, errorContext: "Add Role to User" },
+    );
+  }
+
+  /**
+   * Revokes a specific role from a user without affecting their other roles (admin).
+   *
+   * @param params - `userId` and `roleId` UUIDs.
+   * @throws ToolError if the user or role is not found, or the request fails.
+   */
+  async removeRoleFromUser({
+    userId,
+    roleId,
+  }: import("./client/base").UserRoleInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`,
+      { method: "DELETE", errorContext: "Remove Role from User" },
+    );
+  }
+
+  /**
+   * Lists all teams in the workspace with optional name filtering and pagination (admin).
+   *
+   * @param params - Optional `q` (name search), `page`, and `size`.
+   * @returns Paginated list of teams.
+   * @throws ToolError if the request fails.
+   */
+  async listAdminTeams(
+    params: import("./client/base").ListAdminTeamsInput,
+  ): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params.q) queryParams.set("q", params.q);
+    if (params.page) queryParams.set("page", String(params.page));
+    if (params.size) queryParams.set("size", String(params.size));
+    const qs = queryParams.toString();
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams${qs ? `?${qs}` : ""}`,
+      {
+        method: "GET",
+        errorContext: "List Admin Teams",
+      },
+    );
+  }
+
+  /**
+   * Retrieves the full configuration of a team by UUID (admin).
+   *
+   * @param params - `teamId`: UUID of the team.
+   * @returns Team details including name, members, environments, and pacticipants.
+   * @throws ToolError if the team is not found or the request fails.
+   */
+  async getAdminTeam({
+    teamId,
+  }: import("./client/base").AdminTeamIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}`,
+      {
+        method: "GET",
+        errorContext: "Get Admin Team",
+      },
+    );
+  }
+
+  /**
+   * Creates a new team in the workspace (admin).
+   *
+   * @param body - Team name and optional administrators, environments, and pacticipants.
+   * @returns The created team resource.
+   * @throws ToolError if the request fails.
+   */
+  async createAdminTeam({
+    ...body
+  }: import("./client/base").CreateTeamInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/admin/teams`, {
+      method: "POST",
+      body,
+      errorContext: "Create Admin Team",
+    });
+  }
+
+  /**
+   * Fully replaces a team's configuration (admin).
+   *
+   * @param params - `teamId` (UUID) plus updated name, administrators, environments,
+   *   and pacticipant assignments.
+   * @throws ToolError if the team is not found or the request fails.
+   */
+  async updateAdminTeam({
+    teamId,
+    ...body
+  }: import("./client/base").UpdateTeamInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}`,
+      {
+        method: "PUT",
+        body,
+        errorContext: "Update Admin Team",
+      },
+    );
+  }
+
+  /**
+   * Permanently deletes a team from the workspace (admin). Members are not deleted.
+   *
+   * @param params - `teamId`: UUID of the team to delete.
+   * @throws ToolError if the team is not found or the request fails.
+   */
+  async deleteAdminTeam({
+    teamId,
+  }: import("./client/base").AdminTeamIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}`,
+      {
+        method: "DELETE",
+        errorContext: "Delete Admin Team",
+      },
+    );
+  }
+
+  /**
+   * Lists all user members of a specific team (admin).
+   *
+   * @param params - `teamId`: UUID of the team.
+   * @returns List of users in the team.
+   * @throws ToolError if the team is not found or the request fails.
+   */
+  async listTeamUsers({
+    teamId,
+  }: import("./client/base").AdminTeamIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users`,
+      {
+        method: "GET",
+        errorContext: "List Team Users",
+      },
+    );
+  }
+
+  /**
+   * Verifies whether a specific user is a member of a team (admin).
+   * Returns 404 if the user is not in the team.
+   *
+   * @param params - `teamId` and `userId` UUIDs.
+   * @throws ToolError if not found or the request fails.
+   */
+  async getTeamUser({
+    teamId,
+    userId,
+  }: import("./client/base").TeamUserIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users/${encodeURIComponent(userId)}`,
+      { method: "GET", errorContext: "Get Team User" },
+    );
+  }
+
+  /**
+   * Fully replaces the members of a team (admin).
+   * All existing members are removed; the provided UUID list becomes the new membership.
+   *
+   * @param params - `teamId` (UUID) and `uuids` array of user UUIDs.
+   * @throws ToolError if the team is not found or the request fails.
+   */
+  async setTeamUsers({
+    teamId,
+    uuids,
+  }: import("./client/base").SetTeamUsersInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users`,
+      {
+        method: "PUT",
+        body: { uuids },
+        errorContext: "Set Team Users",
+      },
+    );
+  }
+
+  /**
+   * Adds or removes individual users from a team using JSON Patch semantics (admin).
+   *
+   * @param params - `teamId` (UUID) and `operations` array of JSON Patch ops (add/remove).
+   * @throws ToolError if the team is not found or the request fails.
+   */
+  async patchTeamUsers({
+    teamId,
+    operations,
+  }: import("./client/base").PatchTeamUsersInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users`,
+      {
+        method: "PATCH",
+        body: operations,
+        errorContext: "Patch Team Users",
+      },
+    );
+  }
+
+  /**
+   * Removes a specific user from a team (admin).
+   *
+   * @param params - `teamId` and `userId` UUIDs.
+   * @throws ToolError if not found or the request fails.
+   */
+  async removeUserFromTeam({
+    teamId,
+    userId,
+  }: import("./client/base").TeamUserIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users/${encodeURIComponent(userId)}`,
+      { method: "DELETE", errorContext: "Remove User from Team" },
+    );
+  }
+
+  /**
+   * Lists all roles defined in the workspace (admin).
+   *
+   * @returns All role definitions and their associated permission scopes.
+   * @throws ToolError if the request fails.
+   */
+  async listAdminRoles(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/admin/roles`, {
+      method: "GET",
+      errorContext: "List Admin Roles",
+    });
+  }
+
+  /**
+   * Retrieves a role's name, description, and full permission set by UUID (admin).
+   *
+   * @param params - `roleId`: UUID of the role.
+   * @throws ToolError if the role is not found or the request fails.
+   */
+  async getAdminRole({
+    roleId,
+  }: import("./client/base").AdminRoleIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/roles/${encodeURIComponent(roleId)}`,
+      {
+        method: "GET",
+        errorContext: "Get Admin Role",
+      },
+    );
+  }
+
+  /**
+   * Creates a custom role with a tailored set of permission scopes (admin).
+   *
+   * @param body - Role name, optional description, and array of permission scope strings.
+   * @returns The created role resource.
+   * @throws ToolError if the request fails.
+   */
+  async createAdminRole({
+    ...body
+  }: import("./client/base").CreateRoleInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/admin/roles`, {
+      method: "POST",
+      body,
+      errorContext: "Create Admin Role",
+    });
+  }
+
+  /**
+   * Updates an existing role's name and/or permission set (admin).
+   * Changes affect all users currently assigned the role.
+   *
+   * @param params - `roleId` (UUID) plus updated name, description, and permissions.
+   * @throws ToolError if the role is not found or the request fails.
+   */
+  async updateAdminRole({
+    roleId,
+    ...body
+  }: import("./client/base").UpdateRoleInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/roles/${encodeURIComponent(roleId)}`,
+      {
+        method: "PUT",
+        body,
+        errorContext: "Update Admin Role",
+      },
+    );
+  }
+
+  /**
+   * Permanently deletes a role (admin). Users assigned this role will lose its permissions.
+   *
+   * @param params - `roleId`: UUID of the role to delete.
+   * @throws ToolError if the role is not found or the request fails.
+   */
+  async deleteAdminRole({
+    roleId,
+  }: import("./client/base").AdminRoleIdInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/roles/${encodeURIComponent(roleId)}`,
+      {
+        method: "DELETE",
+        errorContext: "Delete Admin Role",
+      },
+    );
+  }
+
+  /**
+   * Resets all roles to factory defaults (admin).
+   * Custom roles are removed; built-in roles are restored to their original permissions.
+   *
+   * @throws ToolError if the request fails.
+   */
+  async resetAdminRoles(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/admin/roles/reset`, {
+      method: "POST",
+      body: {},
+      errorContext: "Reset Admin Roles",
+    });
+  }
+
+  /**
+   * Lists all permission scopes available to assign to roles (admin).
+   *
+   * @returns All permission scope definitions.
+   * @throws ToolError if the request fails.
+   */
+  async listAdminPermissions(): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/admin/permissions`, {
+      method: "GET",
+      errorContext: "List Admin Permissions",
+    });
+  }
+
+  /**
+   * Creates a machine/service account that authenticates via API token (admin).
+   *
+   * @param body - Account name and optional description.
+   * @returns The created system account resource.
+   * @throws ToolError if the request fails.
+   */
+  async createSystemAccount({
+    ...body
+  }: import("./client/base").CreateSystemAccountInput): Promise<any> {
+    return await this.fetchJson<any>(`${this.baseUrl}/admin/system-accounts`, {
+      method: "POST",
+      body,
+      errorContext: "Create System Account",
+    });
+  }
+
+  /**
+   * Retrieves the API tokens associated with a system account (admin).
+   *
+   * @param params - `accountId`: UUID of the system account.
+   * @returns Token list for use in CI/CD pipelines.
+   * @throws ToolError if the account is not found or the request fails.
+   */
+  async getSystemAccountTokens({
+    accountId,
+  }: import("./client/base").GetSystemAccountTokensInput): Promise<any> {
+    return await this.fetchJson<any>(
+      `${this.baseUrl}/admin/system-accounts/${encodeURIComponent(accountId)}/tokens`,
+      {
+        method: "GET",
+        errorContext: "Get System Account Tokens",
+      },
     );
   }
 
