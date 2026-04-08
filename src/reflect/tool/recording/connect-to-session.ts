@@ -38,7 +38,8 @@ export class ConnectToSession extends Tool<ReflectClient> {
 
     if (this.client.isSessionConnected(sessionId)) {
       const state = this.client.getSessionState(sessionId);
-      const { platform, test } = state!;
+      if (!state) throw new ToolError("Failed to get session state");
+      const { platform, test } = state;
       return {
         content: [
           {
