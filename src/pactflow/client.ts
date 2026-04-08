@@ -552,10 +552,14 @@ export class PactflowClient implements Client {
     }
   }
 
-  // ============================================================
-  // Pacticipant methods
-  // ============================================================
-
+  /**
+   * Retrieves all pacticipants (applications/services) registered in the workspace,
+   * with optional pagination.
+   *
+   * @param params - Optional pagination parameters (`pageNumber`, `pageSize`).
+   * @returns List of pacticipants with their metadata.
+   * @throws ToolError if the request fails.
+   */
   async listPacticipants(params?: {
     pageNumber?: number;
     pageSize?: number;
@@ -570,6 +574,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves metadata for a specific pacticipant by name.
+   *
+   * @param params - `pacticipantName`: The name of the pacticipant to fetch.
+   * @returns Pacticipant metadata including display name, main branch, and repository URL.
+   * @throws ToolError if the pacticipant is not found or the request fails.
+   */
   async getPacticipant({ pacticipantName }: GetPacticipantInput): Promise<any> {
     return await this.fetchJson<any>(
       `${this.baseUrl}/pacticipants/${encodeURIComponent(pacticipantName)}`,
@@ -577,6 +588,14 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves all branches for a given pacticipant, with optional name filtering
+   * and pagination.
+   *
+   * @param params - `pacticipantName`, optional `q` (name filter), `pageNumber`, `pageSize`.
+   * @returns List of branches for the pacticipant.
+   * @throws ToolError if the request fails.
+   */
   async listBranches({
     pacticipantName,
     q,
@@ -594,6 +613,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves all published versions for a given pacticipant, with optional pagination.
+   *
+   * @param params - `pacticipantName`, optional `pageNumber` and `pageSize`.
+   * @returns List of versions with their branch and tag associations.
+   * @throws ToolError if the request fails.
+   */
   async listVersions({
     pacticipantName,
     pageNumber,
@@ -609,6 +635,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves metadata for a specific version of a pacticipant.
+   *
+   * @param params - `pacticipantName` and `versionNumber` to retrieve.
+   * @returns Version metadata including branches, tags, and build URL.
+   * @throws ToolError if the version is not found or the request fails.
+   */
   async getVersion({
     pacticipantName,
     versionNumber,
@@ -619,6 +652,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves the latest version of a pacticipant, optionally filtered by tag.
+   *
+   * @param params - `pacticipantName` and optional `tag` to filter by.
+   * @returns The latest matching version.
+   * @throws ToolError if the request fails.
+   */
   async getLatestVersion({
     pacticipantName,
     tag,
@@ -632,6 +672,12 @@ export class PactflowClient implements Client {
     });
   }
 
+  /**
+   * Retrieves all environments configured in the workspace.
+   *
+   * @returns List of environments with their UUIDs, names, and production flags.
+   * @throws ToolError if the request fails.
+   */
   async listEnvironments(): Promise<any> {
     return await this.fetchJson<any>(`${this.baseUrl}/environments`, {
       method: "GET",
@@ -639,6 +685,13 @@ export class PactflowClient implements Client {
     });
   }
 
+  /**
+   * Retrieves metadata for a specific environment by UUID.
+   *
+   * @param params - `environmentId`: The UUID of the environment.
+   * @returns Environment metadata including name, display name, and production flag.
+   * @throws ToolError if the environment is not found or the request fails.
+   */
   async getEnvironment({ environmentId }: GetEnvironmentInput): Promise<any> {
     return await this.fetchJson<any>(
       `${this.baseUrl}/environments/${encodeURIComponent(environmentId)}`,
@@ -646,6 +699,14 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Records that a specific version of a pacticipant has been deployed to an environment.
+   *
+   * @param params - `pacticipantName`, `versionNumber`, `environmentId`, and optional
+   *   `applicationInstance` (for blue/green or multi-instance deployments).
+   * @returns The created deployment record.
+   * @throws ToolError if the request fails.
+   */
   async recordDeployment({
     pacticipantName,
     versionNumber,
@@ -662,6 +723,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves all versions currently deployed to a given environment.
+   *
+   * @param params - `environmentId`: The UUID of the environment to query.
+   * @returns List of currently deployed versions across all pacticipants.
+   * @throws ToolError if the request fails.
+   */
   async getCurrentlyDeployed({
     environmentId,
   }: GetCurrentlyDeployedInput): Promise<any> {
@@ -671,6 +739,14 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Records that a version of a pacticipant has been released to an environment.
+   * Used for mobile/library workflows where multiple versions coexist simultaneously.
+   *
+   * @param params - `pacticipantName`, `versionNumber`, and `environmentId`.
+   * @returns The created release record.
+   * @throws ToolError if the request fails.
+   */
   async recordRelease({
     pacticipantName,
     versionNumber,
@@ -682,6 +758,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves all versions currently released and supported in a given environment.
+   *
+   * @param params - `environmentId`: The UUID of the environment to query.
+   * @returns List of currently supported released versions.
+   * @throws ToolError if the request fails.
+   */
   async getCurrentlySupported({
     environmentId,
   }: GetCurrentlySupportedInput): Promise<any> {
@@ -691,6 +774,14 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Publishes one or more consumer Pact contracts to the Pact Broker or PactFlow.
+   *
+   * @param body - Consumer name, version number, contract files (base64-encoded),
+   *   and optional branch/tag metadata.
+   * @returns Publication result including the pacticipant version number.
+   * @throws ToolError if the request fails.
+   */
   async publishContracts(body: PublishConsumerContractsInput): Promise<any> {
     return await this.fetchJson<any>(`${this.baseUrl}/contracts/publish`, {
       method: "POST",
@@ -699,6 +790,15 @@ export class PactflowClient implements Client {
     });
   }
 
+  /**
+   * Publishes a provider OpenAPI contract and its self-verification results to PactFlow
+   * for use in Bi-Directional Contract Testing.
+   *
+   * @param params - `providerName`, version number, base64-encoded OpenAPI spec,
+   *   content type, and self-verification results.
+   * @returns Publication result.
+   * @throws ToolError if the request fails.
+   */
   async publishProviderContract({
     providerName,
     ...body
@@ -709,6 +809,15 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves the set of consumer pacts a provider should verify in its current CI run,
+   * based on consumer version selectors and WIP/pending pact configuration.
+   *
+   * @param params - `providerName`, consumer version selectors, pending/WIP flags,
+   *   and optional provider branch/tag context.
+   * @returns List of pact URLs and metadata the provider must verify.
+   * @throws ToolError if the request fails.
+   */
   async getPactsForVerification({
     providerName,
     ...body
@@ -719,6 +828,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the provider OpenAPI contract for a given provider version in BDCT.
+   *
+   * @param params - `providerName` and `providerVersionNumber`.
+   * @returns The published OpenAPI spec and its verification status.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalProviderContract({
     providerName,
     providerVersionNumber,
@@ -729,6 +845,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the self-verification results for a provider contract version in BDCT.
+   *
+   * @param params - `providerName` and `providerVersionNumber`.
+   * @returns The results of the tool (e.g. Dredd, Schemathesis) that verified the provider.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalProviderContractVerificationResults({
     providerName,
     providerVersionNumber,
@@ -742,6 +865,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches all consumer Pact contracts relevant to a given provider version in BDCT.
+   *
+   * @param params - `providerName` and `providerVersionNumber`.
+   * @returns Consumer contracts compared against the provider's OpenAPI spec.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalConsumerContract({
     providerName,
     providerVersionNumber,
@@ -752,6 +882,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the consumer contract verification results for a given provider version in BDCT.
+   *
+   * @param params - `providerName` and `providerVersionNumber`.
+   * @returns Results of comparing all consumer pacts against the provider's OpenAPI spec.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalConsumerContractVerificationResults({
     providerName,
     providerVersionNumber,
@@ -765,6 +902,14 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the cross-contract verification results for a given provider version in BDCT.
+   *
+   * @param params - `providerName` and `providerVersionNumber`.
+   * @returns Combined outcome of PactFlow's automated comparison of the provider spec
+   *   against all relevant consumer pacts.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalCrossContractVerificationResults({
     providerName,
     providerVersionNumber,
@@ -778,6 +923,14 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the consumer Pact contract for a specific consumer-provider version pair in BDCT.
+   *
+   * @param params - `providerName`, `providerVersionNumber`, `consumerName`,
+   *   and `consumerVersionNumber`.
+   * @returns The Pact contract published by the specified consumer version.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalConsumerContractByConsumer({
     providerName,
     providerVersionNumber,
@@ -793,6 +946,14 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the provider OpenAPI contract for a specific consumer-provider version pair in BDCT.
+   *
+   * @param params - `providerName`, `providerVersionNumber`, `consumerName`,
+   *   and `consumerVersionNumber`.
+   * @returns The provider's OpenAPI spec in the context of the given consumer version.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalProviderContractByConsumer({
     providerName,
     providerVersionNumber,
@@ -808,6 +969,15 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the provider contract self-verification results for a specific
+   * consumer-provider version pair in BDCT.
+   *
+   * @param params - `providerName`, `providerVersionNumber`, `consumerName`,
+   *   and `consumerVersionNumber`.
+   * @returns Provider self-verification results scoped to the given consumer version.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalProviderContractVerificationResultsByConsumer({
     providerName,
     providerVersionNumber,
@@ -824,6 +994,15 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the consumer contract verification results for a specific
+   * consumer-provider version pair in BDCT.
+   *
+   * @param params - `providerName`, `providerVersionNumber`, `consumerName`,
+   *   and `consumerVersionNumber`.
+   * @returns Results of comparing the specific consumer pact against the provider's OpenAPI spec.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalConsumerContractVerificationResultsByConsumer({
     providerName,
     providerVersionNumber,
@@ -840,6 +1019,15 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fetches the cross-contract verification results for a specific
+   * consumer-provider version pair in BDCT.
+   *
+   * @param params - `providerName`, `providerVersionNumber`, `consumerName`,
+   *   and `consumerVersionNumber`.
+   * @returns The precise cross-contract comparison outcome for the given pairing.
+   * @throws ToolError if the request fails.
+   */
   async getBiDirectionalCrossContractVerificationResultsByConsumer({
     providerName,
     providerVersionNumber,
@@ -856,6 +1044,12 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves all consumer-provider integrations registered in the workspace.
+   *
+   * @returns List of all consumer-provider pairings that have pacts published.
+   * @throws ToolError if the request fails.
+   */
   async listIntegrations(): Promise<any> {
     return await this.fetchJson<any>(`${this.baseUrl}/integrations`, {
       method: "GET",
@@ -863,6 +1057,14 @@ export class PactflowClient implements Client {
     });
   }
 
+  /**
+   * Retrieves the integration network graph for a specific pacticipant,
+   * showing all services it consumes and all consumers that depend on it.
+   *
+   * @param params - `pacticipantName`: The name of the pacticipant.
+   * @returns Network graph of consumer-provider relationships for the pacticipant.
+   * @throws ToolError if the request fails.
+   */
   async getPacticipantNetwork({
     pacticipantName,
   }: GetPacticipantNetworkInput): Promise<any> {
@@ -872,6 +1074,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves all labels used across the workspace, with optional pagination.
+   *
+   * @param params - Optional `pageNumber` and `pageSize`.
+   * @returns List of every label applied to any pacticipant.
+   * @throws ToolError if the request fails.
+   */
   async listLabels(params?: {
     pageNumber?: number;
     pageSize?: number;
@@ -886,6 +1095,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Checks whether a specific label is applied to a pacticipant.
+   *
+   * @param params - `pacticipantName` and `labelName`.
+   * @returns The label resource if it exists (404 if not applied).
+   * @throws ToolError if the request fails.
+   */
   async getPacticipantLabel({
     pacticipantName,
     labelName,
@@ -896,6 +1112,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves all pacticipants that have a specific label applied.
+   *
+   * @param params - `labelName`: The label to filter by.
+   * @returns List of pacticipants with the given label.
+   * @throws ToolError if the request fails.
+   */
   async listPacticipantsByLabel({ labelName }: LabelByNameInput): Promise<any> {
     return await this.fetchJson<any>(
       `${this.baseUrl}/pacticipants/label/${encodeURIComponent(labelName)}`,
@@ -903,6 +1126,14 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Fully replaces a pacticipant's metadata. All fields not provided are cleared.
+   *
+   * @param params - `pacticipantName` plus optional metadata fields
+   *   (displayName, mainBranch, repositoryUrl, etc.).
+   * @returns The updated pacticipant resource.
+   * @throws ToolError if the request fails.
+   */
   async updatePacticipant({
     pacticipantName,
     ...body
@@ -913,6 +1144,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Partially updates a pacticipant's metadata — only the fields provided are changed.
+   *
+   * @param params - `pacticipantName` plus the specific fields to update.
+   * @returns The updated pacticipant resource.
+   * @throws ToolError if the request fails.
+   */
   async patchPacticipant({
     pacticipantName,
     ...body
@@ -923,6 +1161,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Updates metadata for a specific pacticipant version (e.g. sets the build URL).
+   *
+   * @param params - `pacticipantName`, `versionNumber`, and optional `buildUrl`.
+   * @returns The updated version resource.
+   * @throws ToolError if the request fails.
+   */
   async updateVersion({
     pacticipantName,
     versionNumber,
@@ -934,6 +1179,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves all versions published from a specific branch of a pacticipant.
+   *
+   * @param params - `pacticipantName`, `branchName`, optional `pageNumber` and `pageSize`.
+   * @returns List of versions created on the given branch.
+   * @throws ToolError if the request fails.
+   */
   async getBranchVersions({
     pacticipantName,
     branchName,
@@ -950,6 +1202,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves deployment records for a specific pacticipant version in a given environment.
+   *
+   * @param params - `pacticipantName`, `versionNumber`, and `environmentId`.
+   * @returns All deployment records for the version, including whether each is currently active.
+   * @throws ToolError if the request fails.
+   */
   async getDeployedVersions({
     pacticipantName,
     versionNumber,
@@ -961,6 +1220,13 @@ export class PactflowClient implements Client {
     );
   }
 
+  /**
+   * Retrieves release records for a specific pacticipant version in a given environment.
+   *
+   * @param params - `pacticipantName`, `versionNumber`, and `environmentId`.
+   * @returns All release records for the version in the environment.
+   * @throws ToolError if the request fails.
+   */
   async getReleasedVersions({
     pacticipantName,
     versionNumber,
