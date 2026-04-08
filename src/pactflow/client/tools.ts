@@ -14,30 +14,66 @@ import { z } from "zod";
 import type { ToolParams } from "../../common/types";
 import { GenerationInputSchema, RefineInputSchema } from "./ai";
 import {
+  AdminRoleIdSchema,
+  AdminTeamIdSchema,
+  AdminUserIdSchema,
+  AuditSchema,
   CanIDeploySchema,
+  CreateAdminUserSchema,
+  CreateEnvironmentSchema,
+  CreatePacticipantSchema,
+  CreateRoleSchema,
+  CreateSecretSchema,
+  CreateSystemAccountSchema,
+  CreateTeamSchema,
+  CreateWebhookSchema,
+  DeleteBranchSchema,
+  DeleteIntegrationSchema,
+  DeletePacticipantSchema,
   GetBiDirectionalConsumerProviderVersionSchema,
   GetBiDirectionalProviderVersionSchema,
+  GetBranchSchema,
   GetBranchVersionsSchema,
   GetCurrentlyDeployedSchema,
   GetCurrentlySupportedSchema,
   GetEnvironmentSchema,
+  GetIntegrationsByTeamSchema,
   GetLabelSchema,
   GetLatestVersionSchema,
   GetPacticipantNetworkSchema,
   GetPacticipantSchema,
   GetPactsForVerificationSchema,
+  GetSystemAccountTokensSchema,
   GetVersionDeployedSchema,
   GetVersionSchema,
+  InviteUsersSchema,
   LabelByNameSchema,
+  ListAdminTeamsSchema,
+  ListAdminUsersSchema,
   ListBranchesSchema,
   ListVersionsSchema,
+  ManageLabelSchema,
   MatrixSchema,
+  PatchTeamUsersSchema,
   PublishConsumerContractsSchema,
   PublishProviderContractSchema,
   RecordDeploymentSchema,
   RecordReleaseSchema,
+  RegenerateTokenSchema,
+  SecretIdSchema,
+  SetTeamUsersSchema,
+  SetUserRolesSchema,
+  TeamUserIdSchema,
+  UpdateAdminUserSchema,
+  UpdateEnvironmentSchema,
   UpdatePacticipantSchema,
+  UpdateRoleSchema,
+  UpdateSecretSchema,
+  UpdateTeamSchema,
   UpdateVersionSchema,
+  UpdateWebhookSchema,
+  UserRoleSchema,
+  WebhookIdSchema,
 } from "./base";
 
 export type ClientType = "pactflow" | "pact_broker";
@@ -509,5 +545,531 @@ export const TOOLS: PactflowToolParams[] = [
     inputSchema: GetVersionDeployedSchema,
     handler: "getReleasedVersions",
     clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Create Environment",
+    summary: "Create a new deployment environment in PactFlow.",
+    purpose:
+      "Register a new environment (e.g. 'staging', 'production') so it can be used in record-deployment and can-i-deploy workflows.",
+    inputSchema: CreateEnvironmentSchema,
+    handler: "createEnvironment",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Update Environment",
+    summary: "Update an existing environment's metadata.",
+    purpose:
+      "Rename an environment, change its production flag, or update team assignments.",
+    inputSchema: UpdateEnvironmentSchema,
+    handler: "updateEnvironment",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Delete Environment",
+    summary: "Delete an environment by UUID.",
+    purpose:
+      "Remove an environment that is no longer needed. This will also remove all deployed and released version records for this environment.",
+    inputSchema: GetEnvironmentSchema,
+    handler: "deleteEnvironment",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Create Pacticipant",
+    summary:
+      "Register a new application/service (pacticipant) in the workspace.",
+    purpose:
+      "Create a pacticipant entry before publishing contracts or recording deployments. The name cannot be changed after creation.",
+    inputSchema: CreatePacticipantSchema,
+    handler: "createPacticipant",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Delete Pacticipant",
+    summary: "Delete a pacticipant and all its associated data.",
+    purpose:
+      "Remove a service from the workspace, including all its pacts, verifications, deployments, and version records.",
+    inputSchema: DeletePacticipantSchema,
+    handler: "deletePacticipant",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Get Branch",
+    summary: "Retrieve details for a specific branch of a pacticipant.",
+    purpose:
+      "Fetch metadata for a single branch, including its latest version.",
+    inputSchema: GetBranchSchema,
+    handler: "getBranch",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Delete Branch",
+    summary: "Delete a branch from a pacticipant.",
+    purpose:
+      "Remove a stale branch record. This does not delete the versions or pacts published from the branch.",
+    inputSchema: DeleteBranchSchema,
+    handler: "deleteBranch",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Add Label to Pacticipant",
+    summary: "Apply a label to a pacticipant.",
+    purpose:
+      "Tag a service with a label for grouping and filtering. Creates the label if it does not already exist.",
+    inputSchema: ManageLabelSchema,
+    handler: "addLabel",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Remove Label from Pacticipant",
+    summary: "Remove a label from a pacticipant.",
+    purpose:
+      "Delete the label association from a pacticipant. Does not affect other pacticipants that have the same label.",
+    inputSchema: ManageLabelSchema,
+    handler: "removeLabel",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Get Integrations by Team",
+    summary:
+      "Retrieve all consumer-provider integrations belonging to a specific team.",
+    purpose:
+      "Filter the integration list by team ownership to see only the pairings relevant to a given team.",
+    inputSchema: GetIntegrationsByTeamSchema,
+    handler: "getIntegrationsByTeam",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Delete Integration",
+    summary: "Delete a specific consumer-provider integration.",
+    purpose:
+      "Remove the integration record between a consumer and provider. Use with caution — this removes the link even if pacts exist.",
+    inputSchema: DeleteIntegrationSchema,
+    handler: "deleteIntegration",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Delete All Integrations",
+    summary: "Delete ALL consumer-provider integrations in the workspace.",
+    purpose:
+      "Bulk-remove all integration records. This is a destructive operation — use only when resetting the workspace.",
+    inputSchema: z.object({}),
+    handler: "deleteAllIntegrations",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "List Webhooks",
+    summary: "Retrieve all webhooks configured in the workspace.",
+    purpose:
+      "Get an overview of all webhook triggers, their target URLs, and enabled/disabled status.",
+    inputSchema: z.object({}),
+    handler: "listWebhooks",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Get Webhook",
+    summary: "Retrieve details for a specific webhook by UUID.",
+    purpose:
+      "Fetch the full configuration of a single webhook including events, request details, and consumer/provider filters.",
+    inputSchema: WebhookIdSchema,
+    handler: "getWebhook",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Create Webhook",
+    summary: "Create a new webhook to trigger on contract events.",
+    purpose:
+      "Set up automated notifications or CI triggers that fire when contracts change, verifications are published, or other events occur.",
+    inputSchema: CreateWebhookSchema,
+    handler: "createWebhook",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Update Webhook",
+    summary: "Update an existing webhook's configuration.",
+    purpose:
+      "Modify the URL, events, consumer/provider filters, or enabled status of a webhook.",
+    inputSchema: UpdateWebhookSchema,
+    handler: "updateWebhook",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Delete Webhook",
+    summary: "Delete a webhook by UUID.",
+    purpose:
+      "Permanently remove a webhook. Any in-flight triggered executions will still complete.",
+    inputSchema: WebhookIdSchema,
+    handler: "deleteWebhook",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Test Execute Webhooks",
+    summary:
+      "Trigger a test execution of all matching webhooks without a real event.",
+    purpose:
+      "Verify webhook configuration by sending a test request. Useful for debugging URL, auth, or body template issues.",
+    inputSchema: z.object({}),
+    handler: "executeWebhooks",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "Execute Webhook",
+    summary: "Trigger a test execution of a specific webhook.",
+    purpose:
+      "Send a test request for a single webhook to verify its configuration without waiting for a real event.",
+    inputSchema: WebhookIdSchema,
+    handler: "executeWebhook",
+    clients: ["pactflow", "pact_broker"],
+  },
+  {
+    title: "List Secrets",
+    summary: "Retrieve all secrets stored in the workspace.",
+    purpose:
+      "Get an overview of all configured secrets. Note: secret values are never returned — only metadata.",
+    inputSchema: z.object({}),
+    handler: "listSecrets",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Get Secret",
+    summary: "Retrieve metadata for a specific secret by UUID.",
+    purpose:
+      "Fetch secret metadata (name, description, team). The secret value is never returned.",
+    inputSchema: SecretIdSchema,
+    handler: "getSecret",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Create Secret",
+    summary: "Create a new secret for use in webhook authentication.",
+    purpose:
+      "Store a sensitive value (API key, password, token) securely. The value can be referenced in webhook configurations without exposing it.",
+    inputSchema: CreateSecretSchema,
+    handler: "createSecret",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Update Secret",
+    summary: "Update an existing secret's name, value, or description.",
+    purpose:
+      "Rotate or rename a secret. The team assignment cannot be changed after creation.",
+    inputSchema: UpdateSecretSchema,
+    handler: "updateSecret",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Delete Secret",
+    summary: "Delete a secret by UUID.",
+    purpose:
+      "Permanently remove a secret. Any webhooks referencing this secret will need to be updated.",
+    inputSchema: SecretIdSchema,
+    handler: "deleteSecret",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Get Current User",
+    summary: "Retrieve the profile of the currently authenticated user.",
+    purpose:
+      "Check who you are authenticated as, including your UUID, name, email, and roles.",
+    inputSchema: z.object({}),
+    handler: "getCurrentUser",
+    clients: ["pactflow"],
+  },
+  {
+    title: "List API Tokens",
+    summary: "Retrieve API tokens for the current user.",
+    purpose:
+      "List the read-only and read-write API tokens for the authenticated user.",
+    inputSchema: z.object({}),
+    handler: "listTokens",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Regenerate API Token",
+    summary: "Regenerate (rotate) an API token by ID.",
+    purpose:
+      "Invalidate the current token and generate a new one. Use when a token has been compromised.",
+    inputSchema: RegenerateTokenSchema,
+    handler: "regenerateToken",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Get User Preferences",
+    summary: "Retrieve the current user's preferences.",
+    purpose: "Fetch all preference settings for the authenticated user.",
+    inputSchema: z.object({}),
+    handler: "getUserPreferences",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Get System Preferences",
+    summary: "Retrieve system-wide preferences.",
+    purpose: "Fetch all system-level preference settings for the workspace.",
+    inputSchema: z.object({}),
+    handler: "getSystemPreferences",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Get Audit Log",
+    summary: "Retrieve the audit log of events in the workspace.",
+    purpose:
+      "Search and filter the audit trail of actions taken in PactFlow. Useful for compliance, debugging, and security reviews.",
+    useCases: [
+      "Review recent changes to pacticipants, webhooks, or secrets",
+      "Investigate who published a specific pact or verification",
+      "Filter events by user or event type for compliance reporting",
+      "Track deployment recording activity across environments",
+    ],
+    inputSchema: AuditSchema,
+    handler: "getAuditLog",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin List Users",
+    summary: "List all users in the workspace (admin).",
+    purpose:
+      "Get an overview of all user accounts with optional filtering by active status, name/email, or user type.",
+    inputSchema: ListAdminUsersSchema,
+    handler: "listAdminUsers",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Get User",
+    summary: "Retrieve details for a specific user by UUID (admin).",
+    purpose:
+      "Fetch a user's profile including their email, name, roles, and active status.",
+    inputSchema: AdminUserIdSchema,
+    handler: "getAdminUser",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Create User",
+    summary: "Create a new user account (admin).",
+    purpose:
+      "Add a new user to the workspace. For SSO environments, provide externalIdpId or externalIdpUsername to match the IdP identity.",
+    inputSchema: CreateAdminUserSchema,
+    handler: "createAdminUser",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Update User",
+    summary: "Update a user's profile or active status (admin).",
+    purpose:
+      "Modify user details such as name, email, or active status. Deactivating a user prevents them from logging in.",
+    inputSchema: UpdateAdminUserSchema,
+    handler: "updateAdminUser",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Delete User",
+    summary: "Delete a user account (admin).",
+    purpose: "Permanently remove a user from the workspace.",
+    inputSchema: AdminUserIdSchema,
+    handler: "deleteAdminUser",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Invite Users",
+    summary: "Send invitations to new users (admin).",
+    purpose:
+      "Invite one or more people to join the workspace by email. They will receive an invitation email.",
+    inputSchema: InviteUsersSchema,
+    handler: "inviteUsers",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Set User Roles",
+    summary: "Replace all roles assigned to a user (admin).",
+    purpose:
+      "Fully replace the set of roles for a user. All existing roles are removed and replaced with the provided list.",
+    inputSchema: SetUserRolesSchema,
+    handler: "setUserRoles",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Add Role to User",
+    summary: "Add a single role to a user (admin).",
+    purpose:
+      "Grant an additional role to a user without affecting their existing roles.",
+    inputSchema: UserRoleSchema,
+    handler: "addRoleToUser",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Remove Role from User",
+    summary: "Remove a single role from a user (admin).",
+    purpose:
+      "Revoke a specific role from a user without affecting their other roles.",
+    inputSchema: UserRoleSchema,
+    handler: "removeRoleFromUser",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin List Teams",
+    summary: "List all teams in the workspace (admin).",
+    purpose:
+      "Get an overview of all teams with optional name filtering and pagination.",
+    inputSchema: ListAdminTeamsSchema,
+    handler: "listAdminTeams",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Get Team",
+    summary: "Retrieve details for a specific team by UUID (admin).",
+    purpose:
+      "Fetch a team's configuration including its name, members, environments, and pacticipants.",
+    inputSchema: AdminTeamIdSchema,
+    handler: "getAdminTeam",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Create Team",
+    summary: "Create a new team (admin).",
+    purpose:
+      "Add a new team to the workspace and optionally assign administrators, environments, and pacticipants.",
+    inputSchema: CreateTeamSchema,
+    handler: "createAdminTeam",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Update Team",
+    summary: "Replace a team's configuration (admin).",
+    purpose:
+      "Fully update a team's name, administrators, environments, and pacticipant assignments.",
+    inputSchema: UpdateTeamSchema,
+    handler: "updateAdminTeam",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Delete Team",
+    summary: "Delete a team (admin).",
+    purpose:
+      "Permanently remove a team from the workspace. Members are not deleted.",
+    inputSchema: AdminTeamIdSchema,
+    handler: "deleteAdminTeam",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin List Team Users",
+    summary: "List all users in a specific team (admin).",
+    purpose: "Retrieve all user members of a team.",
+    inputSchema: AdminTeamIdSchema,
+    handler: "listTeamUsers",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Get Team User",
+    summary: "Check if a specific user is a member of a team (admin).",
+    purpose:
+      "Verify team membership for a user. Returns 404 if the user is not in the team.",
+    inputSchema: TeamUserIdSchema,
+    handler: "getTeamUser",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Set Team Users",
+    summary: "Replace all members of a team (admin).",
+    purpose:
+      "Fully replace the set of users in a team. All existing members are removed and replaced with the provided list.",
+    inputSchema: SetTeamUsersSchema,
+    handler: "setTeamUsers",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Patch Team Users",
+    summary:
+      "Add or remove individual users from a team using JSON Patch (admin).",
+    purpose:
+      "Make targeted changes to team membership — add specific users or remove them — without replacing the entire member list.",
+    inputSchema: PatchTeamUsersSchema,
+    handler: "patchTeamUsers",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Remove User from Team",
+    summary: "Remove a specific user from a team (admin).",
+    purpose: "Revoke team membership for a user.",
+    inputSchema: TeamUserIdSchema,
+    handler: "removeUserFromTeam",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin List Roles",
+    summary: "List all roles defined in the workspace (admin).",
+    purpose:
+      "Get an overview of all role definitions and their associated permissions.",
+    inputSchema: z.object({}),
+    handler: "listAdminRoles",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Get Role",
+    summary: "Retrieve details for a specific role by UUID (admin).",
+    purpose:
+      "Fetch a role's name, description, and full list of permission scopes.",
+    inputSchema: AdminRoleIdSchema,
+    handler: "getAdminRole",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Create Role",
+    summary: "Create a new role with specific permissions (admin).",
+    purpose:
+      "Define a custom role with a tailored set of permission scopes. Roles can then be assigned to users.",
+    inputSchema: CreateRoleSchema,
+    handler: "createAdminRole",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Update Role",
+    summary: "Update an existing role's name and permissions (admin).",
+    purpose:
+      "Modify the permission set of a role. Changes take effect for all users assigned the role.",
+    inputSchema: UpdateRoleSchema,
+    handler: "updateAdminRole",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Delete Role",
+    summary: "Delete a role (admin).",
+    purpose:
+      "Permanently remove a role. Users currently assigned this role will lose its permissions.",
+    inputSchema: AdminRoleIdSchema,
+    handler: "deleteAdminRole",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Reset Roles",
+    summary: "Reset all roles to their factory defaults (admin).",
+    purpose:
+      "Restore the built-in roles to their original permission sets. Custom roles are removed.",
+    inputSchema: z.object({}),
+    handler: "resetAdminRoles",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin List Permissions",
+    summary: "List all available permission scopes (admin).",
+    purpose: "Retrieve all permission scopes that can be assigned to roles.",
+    inputSchema: z.object({}),
+    handler: "listAdminPermissions",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Create System Account",
+    summary: "Create a new system account (admin).",
+    purpose:
+      "Add a machine/service account that can authenticate via API token rather than user credentials.",
+    inputSchema: CreateSystemAccountSchema,
+    handler: "createSystemAccount",
+    clients: ["pactflow"],
+  },
+  {
+    title: "Admin Get System Account Tokens",
+    summary: "Retrieve API tokens for a system account (admin).",
+    purpose:
+      "Get the tokens associated with a system account for use in CI/CD pipelines.",
+    inputSchema: GetSystemAccountTokensSchema,
+    handler: "getSystemAccountTokens",
+    clients: ["pactflow"],
   },
 ];

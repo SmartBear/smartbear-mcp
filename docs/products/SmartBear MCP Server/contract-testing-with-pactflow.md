@@ -225,6 +225,31 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
   - Update a single field (e.g. `mainBranch`) without affecting other metadata.
   - Preferred over **Update Pacticipant** when making targeted changes.
 
+#### Create Pacticipant
+
+- Purpose: Register a new pacticipant (application/service) in the workspace.
+- Parameters:
+  - **`name`** (required): Unique name for the pacticipant
+  - **`displayName`** (optional): Human-readable display name
+  - **`mainBranch`** (optional): Name of the main/trunk branch (e.g. `main`)
+  - **`repositoryUrl`** (optional): URL of the source repository
+  - **`repositoryName`** (optional): Repository name
+  - **`repositoryNamespace`** (optional): Repository namespace/organisation
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Register a new service before publishing its first contract.
+  - Pre-populate workspace metadata for a new service joining the contract testing ecosystem.
+
+#### Delete Pacticipant
+
+- Purpose: Permanently remove a pacticipant and all its associated data from the workspace.
+- Parameters:
+  - **`pacticipantName`** (required): Name of the pacticipant to delete
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Remove a decommissioned service from the workspace.
+  - Clean up test or temporary pacticipants.
+
 ### Branches & Versions
 
 #### List Branches
@@ -296,6 +321,28 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
 - Availability: Cloud, On-Premises, Pact Broker
 - **Use Cases:**
   - Set the build URL for a version when it was not available at publish time.
+
+#### Get Branch
+
+- Purpose: Retrieve metadata for a specific branch of a pacticipant.
+- Parameters:
+  - **`pacticipantName`** (required): Name of the pacticipant
+  - **`branchName`** (required): Name of the branch
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Inspect branch details before performing branch-scoped can-i-deploy checks.
+  - Confirm a branch exists for a given pacticipant.
+
+#### Delete Branch
+
+- Purpose: Delete a branch and its version associations from a pacticipant.
+- Parameters:
+  - **`pacticipantName`** (required): Name of the pacticipant
+  - **`branchName`** (required): Name of the branch to delete
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Remove stale feature branches after they have been merged or abandoned.
+  - Keep the workspace clean by pruning outdated branch data.
 
 ### Environments & Deployments
 
@@ -384,6 +431,39 @@ Read more on PactFlow [Docs](https://docs.pactflow.io/).
 - Availability: Cloud, On-Premises, Pact Broker
 - **Use Cases:**
   - Review the full release history for a version in mobile/library workflows.
+
+#### Create Environment
+
+- Purpose: Create a new deployment environment in the workspace.
+- Parameters:
+  - **`name`** (required): Unique environment name (e.g. `production`, `staging`)
+  - **`displayName`** (optional): Human-readable display name
+  - **`production`** (optional): Whether this is a production environment (affects can-i-deploy behaviour)
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Set up new environments (e.g. a new staging region) without using the UI.
+  - Automate workspace provisioning as part of infrastructure-as-code workflows.
+
+#### Update Environment
+
+- Purpose: Fully replace an environment's configuration.
+- Parameters:
+  - **`environmentId`** (required): UUID of the environment to update
+  - **`name`** (required): New environment name
+  - **`displayName`** (optional): Human-readable display name
+  - **`production`** (optional): Whether this is a production environment
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Rename an environment or toggle its production flag.
+
+#### Delete Environment
+
+- Purpose: Delete a deployment environment from the workspace.
+- Parameters:
+  - **`environmentId`** (required): UUID of the environment to delete
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Remove decommissioned environments to keep the workspace clean.
 
 ### Contracts
 
@@ -544,6 +624,34 @@ These tools provide access to BDCT artefacts and verification results. All BDCT 
   - Visualise all the services a pacticipant consumes and all consumers that depend on it.
   - Understand the blast radius of changes to a service before deploying.
 
+#### Get Integrations by Team
+
+- Purpose: Retrieve all consumer-provider integrations assigned to a specific team.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Audit which integrations a team is responsible for.
+  - Filter the integration landscape to a single team's ownership.
+
+#### Delete Integration
+
+- Purpose: Delete the pact relationship between a specific consumer and provider.
+- Parameters:
+  - **`providerName`** (required): Name of the provider
+  - **`consumerName`** (required): Name of the consumer
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Remove a consumer-provider pairing that no longer exists.
+  - Clean up stale integrations from decommissioned services.
+
+#### Delete All Integrations
+
+- Purpose: Delete all consumer-provider integrations in the workspace.
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Reset the workspace for testing or migration scenarios. Use with caution.
+
 ### Labels
 
 #### List Labels
@@ -575,6 +683,450 @@ These tools provide access to BDCT artefacts and verification results. All BDCT 
 - **Use Cases:**
   - Filter services by team ownership, technology, or any custom grouping applied via labels.
   - Query all services belonging to a particular team label.
+
+#### Add Label
+
+- Purpose: Apply a label to a pacticipant.
+- Parameters:
+  - **`pacticipantName`** (required): Name of the pacticipant
+  - **`labelName`** (required): Label to apply
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Tag a service with a team or technology label for filtering and reporting.
+
+#### Remove Label
+
+- Purpose: Remove a label from a pacticipant.
+- Parameters:
+  - **`pacticipantName`** (required): Name of the pacticipant
+  - **`labelName`** (required): Label to remove
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Clean up stale labels when a service changes team or technology.
+
+### Webhooks
+
+#### List Webhooks
+
+- Purpose: Retrieve all webhooks configured in the workspace.
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Audit all webhook configurations and their trigger conditions.
+
+#### Get Webhook
+
+- Purpose: Retrieve the configuration for a specific webhook by UUID.
+- Parameters:
+  - **`webhookId`** (required): UUID of the webhook
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Inspect a webhook's URL, events, and consumer/provider filters before modifying it.
+
+#### Create Webhook
+
+- Purpose: Create a new webhook triggered by pact publication or verification events.
+- Parameters:
+  - **`description`** (optional): Human-readable description
+  - **`events`** (required): Array of event objects (e.g. `{ "name": "contract_published" }`)
+  - **`request`** (required): HTTP request definition including:
+    - **`method`**: HTTP method (e.g. `POST`)
+    - **`url`**: Target URL
+    - **`headers`** (optional): Request headers
+    - **`body`** (optional): Request body
+  - **`consumer`** (optional): Consumer pacticipant filter `{ "name": "..." }`
+  - **`provider`** (optional): Provider pacticipant filter `{ "name": "..." }`
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Trigger a CI build whenever a new consumer contract is published.
+  - Post Slack notifications when a verification result changes.
+
+#### Update Webhook
+
+- Purpose: Fully replace the configuration of an existing webhook.
+- Parameters:
+  - **`webhookId`** (required): UUID of the webhook
+  - All parameters from **Create Webhook**
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Update the target URL or event filters for an existing webhook.
+
+#### Delete Webhook
+
+- Purpose: Delete a webhook by UUID.
+- Parameters:
+  - **`webhookId`** (required): UUID of the webhook
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Remove webhooks for decommissioned CI pipelines or integrations.
+
+#### Execute Webhooks
+
+- Purpose: Fire all webhooks in the workspace as a test, regardless of trigger conditions.
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Verify that webhook endpoints are reachable and responding correctly.
+
+#### Execute Webhook
+
+- Purpose: Fire a specific webhook as a test, regardless of its trigger conditions.
+- Parameters:
+  - **`webhookId`** (required): UUID of the webhook
+- Availability: Cloud, On-Premises, Pact Broker
+- **Use Cases:**
+  - Debug a specific webhook by triggering it manually and inspecting the response.
+
+### Secrets
+
+#### List Secrets
+
+- Purpose: Retrieve all secrets stored in the workspace (names and metadata only — values are never returned).
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Audit which secrets are configured for use in webhooks.
+
+#### Get Secret
+
+- Purpose: Retrieve metadata for a specific secret by UUID.
+- Parameters:
+  - **`secretId`** (required): UUID of the secret
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Verify a secret exists before referencing it in a webhook configuration.
+
+#### Create Secret
+
+- Purpose: Create a new secret for use in webhook request headers or bodies.
+- Parameters:
+  - **`name`** (required): Unique name for the secret
+  - **`description`** (optional): Human-readable description
+  - **`value`** (required): The secret value (stored encrypted; never returned)
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Store API tokens or shared secrets for use in webhook integrations without exposing values in webhook configurations.
+
+#### Update Secret
+
+- Purpose: Replace the value and/or description of an existing secret.
+- Parameters:
+  - **`secretId`** (required): UUID of the secret
+  - **`name`** (optional): Updated name
+  - **`description`** (optional): Updated description
+  - **`value`** (optional): New secret value
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Rotate a secret without needing to update every webhook that references it.
+
+#### Delete Secret
+
+- Purpose: Permanently delete a secret from the workspace.
+- Parameters:
+  - **`secretId`** (required): UUID of the secret
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Remove secrets for decommissioned integrations.
+
+### User, Tokens & Preferences
+
+#### Get Current User
+
+- Purpose: Retrieve the profile of the currently authenticated user.
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Confirm the identity and roles of the authenticated principal.
+
+#### List Tokens
+
+- Purpose: List all API tokens associated with the current user's account.
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Audit the active API tokens for your account.
+
+#### Regenerate Token
+
+- Purpose: Rotate an API token, invalidating the previous value and issuing a new one.
+- Parameters:
+  - **`tokenId`** (required): Identifier of the token to regenerate (typically `read-only` or `read-write`)
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Rotate credentials as part of a security hygiene process.
+
+#### Get User Preferences
+
+- Purpose: Retrieve UI and notification preferences for the currently authenticated user.
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Inspect the current user's workspace preferences.
+
+#### Get System Preferences
+
+- Purpose: Retrieve workspace-level system preferences and configuration.
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Inspect global workspace settings such as guest access configuration.
+
+### Audit
+
+#### Get Audit Log
+
+- Purpose: Retrieve the workspace audit log with optional filtering and pagination.
+- Parameters:
+  - **`since`** (optional): ISO 8601 date — return events after this date
+  - **`userUuid`** (optional): Filter events by the user who performed the action
+  - **`type`** (optional): Filter by event type (e.g. `create`, `update`, `delete`)
+  - **`sort`** (optional): Sort order (`asc` or `desc`)
+  - **`from`** (optional): Cursor for page-based navigation
+  - **`pageNumber`** (optional): Page number
+  - **`pageSize`** (optional): Results per page
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Investigate when and by whom a resource was created, modified, or deleted.
+  - Produce compliance reports covering all administrative actions in the workspace.
+
+### Admin
+
+Admin tools are available to workspace administrators and require a token with administrative permissions.
+
+#### Admin List Users
+
+- Purpose: List all users in the workspace with optional filtering and pagination.
+- Parameters:
+  - **`active`** (optional): Filter by active status (`true` or `false`)
+  - **`q`** (optional): Search by name or email
+  - **`userType`** (optional): Filter by user type
+  - **`page`** (optional): Page number
+  - **`size`** (optional): Results per page
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Audit all user accounts and their active status.
+  - Find users by email or name for role assignment.
+
+#### Admin Get User
+
+- Purpose: Retrieve a user's full profile by UUID.
+- Parameters:
+  - **`userId`** (required): UUID of the user
+- Availability: Cloud, On-Premises
+
+#### Admin Create User
+
+- Purpose: Create a new user account in the workspace.
+- Parameters:
+  - **`name`** (required): User's display name
+  - **`email`** (required): User's email address
+  - **`externalIdpId`** (optional): External identity provider ID (for SSO)
+  - **`externalIdpUsername`** (optional): External IdP username (for SSO)
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Provision user accounts as part of onboarding workflows.
+
+#### Admin Update User
+
+- Purpose: Fully replace a user's profile. Can be used to deactivate a user.
+- Parameters:
+  - **`userId`** (required): UUID of the user
+  - **`name`** (optional): Updated display name
+  - **`email`** (optional): Updated email address
+  - **`active`** (optional): Set to `false` to deactivate the user
+  - **`externalIdpId`** (optional): External IdP ID
+  - **`externalIdpUsername`** (optional): External IdP username
+- Availability: Cloud, On-Premises
+
+#### Admin Delete User
+
+- Purpose: Permanently delete a user account from the workspace.
+- Parameters:
+  - **`userId`** (required): UUID of the user
+- Availability: Cloud, On-Premises
+
+#### Admin Invite Users
+
+- Purpose: Send invitation emails to one or more new users.
+- Parameters:
+  - **`users`** (required): Array of objects, each with:
+    - **`email`** (required): Invitee's email address
+    - **`name`** (optional): Invitee's display name
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Onboard multiple team members at once via email invitation.
+
+#### Admin Set User Roles
+
+- Purpose: Fully replace all roles assigned to a user. All existing roles are removed.
+- Parameters:
+  - **`userId`** (required): UUID of the user
+  - **`roles`** (required): Array of role objects `[{ "uuid": "..." }]`
+- Availability: Cloud, On-Premises
+
+#### Admin Add Role to User
+
+- Purpose: Grant a single additional role to a user without affecting their existing roles.
+- Parameters:
+  - **`userId`** (required): UUID of the user
+  - **`roleId`** (required): UUID of the role to add
+- Availability: Cloud, On-Premises
+
+#### Admin Remove Role from User
+
+- Purpose: Revoke a specific role from a user without affecting their other roles.
+- Parameters:
+  - **`userId`** (required): UUID of the user
+  - **`roleId`** (required): UUID of the role to remove
+- Availability: Cloud, On-Premises
+
+#### Admin List Teams
+
+- Purpose: List all teams in the workspace with optional name filtering and pagination.
+- Parameters:
+  - **`q`** (optional): Filter teams by name
+  - **`page`** (optional): Page number
+  - **`size`** (optional): Results per page
+- Availability: Cloud, On-Premises
+
+#### Admin Get Team
+
+- Purpose: Retrieve the full configuration of a team by UUID.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+- Availability: Cloud, On-Premises
+
+#### Admin Create Team
+
+- Purpose: Create a new team in the workspace.
+- Parameters:
+  - **`name`** (required): Team name
+  - **`pacticipants`** (optional): Array of pacticipant UUIDs to assign
+  - **`environments`** (optional): Array of environment UUIDs to assign
+  - **`administrators`** (optional): Array of user UUIDs to set as administrators
+- Availability: Cloud, On-Premises
+
+#### Admin Update Team
+
+- Purpose: Fully replace a team's configuration.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+  - Same body fields as **Admin Create Team**
+- Availability: Cloud, On-Premises
+
+#### Admin Delete Team
+
+- Purpose: Permanently delete a team. Members are not deleted.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+- Availability: Cloud, On-Premises
+
+#### Admin List Team Users
+
+- Purpose: List all user members of a specific team.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+- Availability: Cloud, On-Premises
+
+#### Admin Get Team User
+
+- Purpose: Verify whether a specific user is a member of a team. Returns 404 if not a member.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+  - **`userId`** (required): UUID of the user
+- Availability: Cloud, On-Premises
+
+#### Admin Set Team Users
+
+- Purpose: Fully replace all members of a team. All existing members are removed.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+  - **`uuids`** (required): Array of user UUID strings
+- Availability: Cloud, On-Premises
+
+#### Admin Patch Team Users
+
+- Purpose: Add or remove individual users from a team using JSON Patch semantics.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+  - **`operations`** (required): Array of JSON Patch operations (each with `op`, `path`, and optional `value`)
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Add or remove specific members without replacing the entire member list.
+
+#### Admin Remove User from Team
+
+- Purpose: Remove a specific user from a team.
+- Parameters:
+  - **`teamId`** (required): UUID of the team
+  - **`userId`** (required): UUID of the user
+- Availability: Cloud, On-Premises
+
+#### Admin List Roles
+
+- Purpose: List all roles defined in the workspace, including their permission scopes.
+- Availability: Cloud, On-Premises
+
+#### Admin Get Role
+
+- Purpose: Retrieve a role's full definition including its permission scopes.
+- Parameters:
+  - **`roleId`** (required): UUID of the role
+- Availability: Cloud, On-Premises
+
+#### Admin Create Role
+
+- Purpose: Create a custom role with a tailored set of permission scopes.
+- Parameters:
+  - **`name`** (required): Role name
+  - **`description`** (optional): Role description
+  - **`permissions`** (optional): Array of permission scope strings (e.g. `["contract:read", "contract:write"]`)
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Define least-privilege roles for CI system accounts or external collaborators.
+
+#### Admin Update Role
+
+- Purpose: Update an existing role's name and permission set. Changes affect all users assigned the role.
+- Parameters:
+  - **`roleId`** (required): UUID of the role
+  - **`name`** (optional): Updated name
+  - **`description`** (optional): Updated description
+  - **`permissions`** (optional): Updated array of permission scope strings
+- Availability: Cloud, On-Premises
+
+#### Admin Delete Role
+
+- Purpose: Permanently delete a role. Users currently assigned this role will lose its permissions.
+- Parameters:
+  - **`roleId`** (required): UUID of the role
+- Availability: Cloud, On-Premises
+
+#### Admin Reset Roles
+
+- Purpose: Reset all roles to factory defaults. Custom roles are removed and built-in roles are restored to their original permission sets.
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Recover from a mis-configured roles setup.
+
+#### Admin List Permissions
+
+- Purpose: List all available permission scopes that can be assigned to roles.
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Discover valid permission scope strings before creating or updating a custom role.
+
+#### Admin Create System Account
+
+- Purpose: Create a machine/service account that authenticates via API token rather than user credentials.
+- Parameters:
+  - **`name`** (required): Account name
+  - **`description`** (optional): Human-readable description
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Provision dedicated CI/CD identities that are not tied to any individual user.
+
+#### Admin Get System Account Tokens
+
+- Purpose: Retrieve the API tokens associated with a system account.
+- Parameters:
+  - **`accountId`** (required): UUID of the system account
+- Availability: Cloud, On-Premises
+- **Use Cases:**
+  - Retrieve the token value for a newly created system account for use in CI/CD pipelines.
 
 ## Configuration Notes
 
