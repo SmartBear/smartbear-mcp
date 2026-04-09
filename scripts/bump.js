@@ -100,7 +100,10 @@ const updateServerJson = (newVersion) => {
     serverJson.packages[0].version = newVersion;
   }
 
-  fs.writeFileSync(SERVER_JSON_PATH, JSON.stringify(serverJson, null, 2) + "\n");
+  fs.writeFileSync(
+    SERVER_JSON_PATH,
+    JSON.stringify(serverJson, null, 2) + "\n",
+  );
   console.log(`Updated server.json`);
 };
 
