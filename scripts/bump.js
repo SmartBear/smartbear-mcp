@@ -14,7 +14,6 @@ const PACKAGE_JSON_PATH = path.join(ROOT_DIR, "package.json");
 const CHANGELOG_PATH = path.join(ROOT_DIR, "CHANGELOG.md");
 const DEPLOYMENT_PATH = path.join(ROOT_DIR, "deploy", "deployment.yaml");
 
-
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -90,7 +89,6 @@ const updateDeployment = (newVersion) => {
     );
   }
 };
-
 
 const main = async () => {
   console.log("🚀 Starting Release Process...");
