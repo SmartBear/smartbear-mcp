@@ -13,6 +13,7 @@ const ROOT_DIR = path.resolve(__dirname, "..");
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, "package.json");
 const CHANGELOG_PATH = path.join(ROOT_DIR, "CHANGELOG.md");
 const DEPLOYMENT_PATH = path.join(ROOT_DIR, "deploy", "deployment.yaml");
+const SERVER_JSON_PATH = path.join(ROOT_DIR, "server.json");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -90,6 +91,19 @@ const updateDeployment = (newVersion) => {
   }
 };
 
+const updateServerJson = (newVersion) => {
+  const serverJson = JSON.parse(fs.readFileSync(SERVER_JSON_PATH, "utf-8"));
+
+  serverJson.version = newVersion;
+
+  if (serverJson.packages && serverJson.packages.length > 0) {
+    serverJson.packages[0].version = newVersion;
+  }
+
+  fs.writeFileSync(SERVER_JSON_PATH, JSON.stringify(serverJson, null, 2) + "\n");
+  console.log(`Updated server.json`);
+};
+
 const main = async () => {
   console.log("🚀 Starting Release Process...");
 
@@ -148,14 +162,17 @@ const main = async () => {
   // 5. Update Deployment Manifest
   updateDeployment(newVersion);
 
-  // 6. Commit Changes
+  // 6. Update Server JSON
+  updateServerJson(newVersion);
+
+  // 7. Commit Changes
   console.log("Committing changes...");
   runCommand(
-    "git add package.json package-lock.json CHANGELOG.md deploy/deployment.yaml",
+    "git add package.json package-lock.json CHANGELOG.md deploy/deployment.yaml server.json",
   );
   runCommand(`git commit -m "release: v${newVersion}"`);
 
-  // 7. Push branch
+  // 8. Push branch
   console.log(`Pushing branch ${branchName} to origin...`);
   runCommand(`git push -u origin ${branchName}`);
 
