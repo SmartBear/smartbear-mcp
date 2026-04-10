@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.18.0] - 2026-04-10
 
+### Added
+
+- [Common] Added OAuth token support for HTTP transport clients. [#330](https://github.com/SmartBear/smartbear-mcp/pull/330)
+
 ### Changed
 
 - [Portal] Adjusted internal script to recent changes in Portal's API [#404](https://github.com/SmartBear/smartbear-mcp/pull/404)
+
 ## [0.17.1] - 2026-04-09
 
 ### Added
@@ -24,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Zephyr] Added a tool `update-test-steps` for updating test execution test steps [#386](https://github.com/SmartBear/smartbear-mcp/pull/386)
-- [Common] Added OAuth token support for HTTP transport clients. [#330](https://github.com/SmartBear/smartbear-mcp/pull/330)
 - [BugSnag] Added "Get Events on an Error" tool for listing the events that have grouped into a specified error [#406](https://github.com/SmartBear/smartbear-mcp/pull/406)
 
 ### Changed
