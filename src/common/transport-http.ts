@@ -7,9 +7,26 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import { clientRegistry } from "./client-registry";
+import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
+import { getEnvVarName } from "./transport-stdio";
 import type { Client } from "./types";
 import { isOptionalType } from "./zod-utils";
+
+/**
+ * Helper to construct the base URL from the request, respecting proxy headers.
+ * This is critical for cloud deployments where SSL termination happens at the load balancer.
+ * If BASE_URL env var is set, it takes precedence over request headers.
+ */
+export function getBaseUrl(req: IncomingMessage): string {
+  const baseUrlOverride = process.env.BASE_URL;
+  if (baseUrlOverride) {
+    return baseUrlOverride;
+  }
+  const protocol = (req.headers["x-forwarded-proto"] as string) || "http";
+  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
+  return `${protocol}://${host}`;
+}
 
 /**
  * Run server in HTTP mode with Streamable HTTP transport
@@ -37,6 +54,7 @@ export async function runHttpMode() {
     "Authorization",
     "MCP-Session-Id", // Required for StreamableHTTP
     "x-custom-auth-headers", // used by mcp-inspector
+    "mcp-protocol-version",
     ...allowedAuthHeaders,
   ].join(", ");
 
@@ -60,13 +78,36 @@ export async function runHttpMode() {
         return;
       }
 
-      const url = new URL(req.url || "/", `http://${req.headers.host}`);
+      // Determine the public URL of this server
+      const baseUrl = getBaseUrl(req);
+      const url = new URL(req.url || "/", baseUrl);
 
       // HEALTH CHECK ENDPOINT
       if (req.method === "GET" && url.pathname === "/health") {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+        );
+        return;
+      }
+
+      // PROTECTED RESOURCE METADATA ENDPOINT (RFC 9293)
+      // This endpoint tells the client where to find the Authorization Server.
+      if (
+        req.method === "GET" &&
+        (url.pathname === "/.well-known/oauth-protected-resource" ||
+          url.pathname === "/.well-known/oauth-protected-resource/mcp")
+      ) {
+        // Point the client to the Authorization Server so it can fetch the metadata document
+        const authServerUrl =
+          process.env.OAUTH_AUTHORIZATION_SERVER_URL || "http://localhost:7070";
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            resource: `${baseUrl}/mcp`,
+            authorization_servers: [authServerUrl],
+          }),
         );
         return;
       }
@@ -315,7 +356,10 @@ async function handleStreamableHttpRequest(
     }
 
     // Delegate to transport to handle the MCP protocol message
-    await transport.handleRequest(req, res, parsedBody);
+    await withRequestContext(
+      req,
+      async () => await transport.handleRequest(req, res, parsedBody),
+    );
   } catch (error) {
     console.error("Error handling StreamableHTTP request:", error);
     res.writeHead(500, { "Content-Type": "text/plain" });
@@ -421,10 +465,14 @@ async function handleLegacyMessageRequest(
     try {
       const parsedBody = JSON.parse(body);
       // Route message to the SSE transport for processing
-      await (session.transport as SSEServerTransport).handlePostMessage(
+      await withRequestContext(
         req,
-        res,
-        parsedBody,
+        async () =>
+          await (session.transport as SSEServerTransport).handlePostMessage(
+            req,
+            res,
+            parsedBody,
+          ),
       );
     } catch (error) {
       console.error("Error handling POST message:", error);
@@ -445,24 +493,58 @@ async function handleLegacyMessageRequest(
  *
  * @returns SmartBearMcpServer instance if successful, null if configuration fails
  */
-async function newServer(
+export async function newServer(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
   const server = new SmartBearMcpServer();
   try {
-    // Configure server with values from HTTP headers
-    await clientRegistry.configure(server, (client, key) => {
-      const headerName = getHeaderName(client, key);
-      // Check both original case and lower-case headers for compatibility
-      // (HTTP headers are case-insensitive, but Node.js lowercases them)
-      const value =
-        req.headers[headerName] || req.headers[headerName.toLowerCase()];
-      if (typeof value === "string") {
-        return value;
-      }
-      return null;
-    });
+    // Run configuration within request context so that client getAuthToken()
+    // methods can access request headers via AsyncLocalStorage
+    const configuredCount = await withRequestContext(req, () =>
+      clientRegistry.configure(server, (client, key) => {
+        const headerName = getHeaderName(client, key);
+        // Check both original case and lower-case headers for compatibility
+        // (HTTP headers are case-insensitive, but Node.js lowercases them)
+        const value =
+          req.headers[headerName] || req.headers[headerName.toLowerCase()];
+        if (typeof value === "string") {
+          return value;
+        }
+
+        // Fall back to environment variable if header is not present
+        const envVarName = getEnvVarName(client, key);
+        return process.env[envVarName] || null;
+      }),
+    );
+
+    console.log(
+      `Configured ${configuredCount} clients for new server instance`,
+    );
+
+    if (configuredCount === 0) {
+      throw new Error(
+        "No clients successfully configured. Missing authentication headers.",
+      );
+    }
+
+    // Check if any configured client actually has auth credentials for this request.
+    // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
+    // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
+    const hasAuth = withRequestContext(req, () =>
+      server.getClients().some((client) => {
+        // Client doesn't support dynamic auth — auth was provided at config time
+        if (!client.getAuthToken) return true;
+        // Client supports dynamic auth — check if a token is available
+        return client.getAuthToken() !== null;
+      }),
+    );
+
+    if (!hasAuth) {
+      throw new Error(
+        "No clients have valid authentication credentials. Please authenticate via OAuth or provide alternative auth headers (e.g. API key or personal auth token).",
+      );
+    }
   } catch (error: any) {
     // Configuration failed - provide helpful error message
     const headerHelp = getHttpHeadersHelp();
@@ -471,7 +553,18 @@ async function newServer(
         ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
         : "No clients support HTTP header configuration.";
 
-    res.writeHead(401, { "Content-Type": "text/plain" });
+    const headers: Record<string, string> = {
+      "Content-Type": "text/plain",
+    };
+
+    // Add WWW-Authenticate header to support OAuth discovery flow
+    // This points the client to the Protected Resource Metadata endpoint
+    if (req.headers.host) {
+      headers["WWW-Authenticate"] =
+        `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+    }
+
+    res.writeHead(401, headers);
     res.end(errorMessage);
     return null;
   }
@@ -492,7 +585,7 @@ async function newServer(
  * @param key The config key in snake_case
  * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
  */
-function getHeaderName(client: Client, key: string): string {
+export function getHeaderName(client: Client, key: string): string {
   return `${client.configPrefix}-${key
     .split("_")
     .map(

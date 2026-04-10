@@ -200,7 +200,7 @@ describe("BugsnagClient", () => {
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
           basePath: "https://api.bugsnag.smartbear.com",
-          apiKey: "token test-token",
+          apiKey: expect.any(Function),
           headers: expect.objectContaining({
             "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
             "Content-Type": "application/json",
@@ -209,6 +209,11 @@ describe("BugsnagClient", () => {
           }),
         }),
       );
+
+      // Verify the apiKey function returns the expected token
+      const configCall = MockedConfiguration.mock.calls[0][0];
+      const apiKeyFunc = configCall.apiKey as (name: string) => string;
+      expect(apiKeyFunc("any")).toBe("token test-token");
     });
 
     it("should set project API key when provided", async () => {
@@ -217,6 +222,150 @@ describe("BugsnagClient", () => {
         "test-project-key",
       );
       expect(client).toBeInstanceOf(BugsnagClient);
+    });
+  });
+
+  describe("getAuthToken", () => {
+    it("should return token from Bugsnag-Auth-Token header with 'token' prefix", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": "my-pat" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token my-pat");
+    });
+
+    it("should strip existing 'token ' prefix from header value", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": "token already-prefixed" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token already-prefixed");
+    });
+
+    it("should fall back to Authorization Bearer header for OAuth", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "Bearer oauth-jwt-token" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("Bearer oauth-jwt-token");
+    });
+
+    it("should fall back to configured auth_token with 'token' prefix", async () => {
+      const client = await createConfiguredClient("my-configured-pat");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getAuthToken(),
+      );
+      expect(result).toBe("token my-configured-pat");
+    });
+
+    it("should return null when no auth is available", async () => {
+      const client = new BugsnagClient();
+      const mockServer = { getCache: () => mockCache } as any;
+      await client.configure(mockServer, {});
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getAuthToken(),
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should prefer Bugsnag-Auth-Token over Authorization header", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        {
+          headers: {
+            "Bugsnag-Auth-Token": "pat-value",
+            authorization: "Bearer oauth-value",
+          },
+        },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token pat-value");
+    });
+
+    it("should handle array header values", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": ["first-token", "second-token"] } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token first-token");
+    });
+  });
+
+  describe("getBearerToken", () => {
+    it("should extract Bearer token from Authorization header", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "Bearer my-jwt" } },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer my-jwt");
+    });
+
+    it("should add Bearer prefix when not present", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "raw-token-value" } },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer raw-token-value");
+    });
+
+    it("should return null when no Authorization header", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getBearerToken(),
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should handle array Authorization header values", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        {
+          headers: {
+            authorization: ["Bearer first", "Bearer second"],
+          },
+        },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer first");
     });
   });
 
@@ -513,9 +662,19 @@ describe("BugsnagClient", () => {
 
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
-          apiKey: `token ${testToken}`,
+          apiKey: expect.any(Function),
         }),
       );
+
+      // Verify the apiKey function returns the expected token
+      const configCall = MockedConfiguration.mock.calls.find(
+        (call) =>
+          (call[0] as any).basePath === "https://api.bugsnag.com" &&
+          typeof (call[0] as any).apiKey === "function",
+      )?.[0];
+      expect(configCall).toBeDefined();
+      const apiKeyFunc = configCall.apiKey as (name: string) => string;
+      expect(apiKeyFunc("any")).toBe(`token ${testToken}`);
     });
 
     it("should include all required headers", async () => {
@@ -564,7 +723,9 @@ describe("BugsnagClient", () => {
         getCache: vi.fn().mockReturnValue(mockCache),
       } as any;
 
-      await client.configure(mockServer, { auth_token: "test-token" });
+      await client.configure(mockServer, {
+        auth_token: "test-token",
+      });
 
       // Cache should be used in getProjects
       mockCache.get.mockReturnValueOnce(null); // No cached org

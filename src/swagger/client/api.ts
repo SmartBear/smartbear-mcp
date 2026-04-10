@@ -83,11 +83,15 @@ function hasErrorsFound(
 
 export class SwaggerAPI {
   private config: SwaggerConfiguration;
-  private headers: Record<string, string>;
+  private userAgent: string;
 
   constructor(config: SwaggerConfiguration, userAgent: string) {
     this.config = config;
-    this.headers = config.getHeaders(userAgent);
+    this.userAgent = userAgent;
+  }
+
+  private get headers(): Record<string, string> {
+    return this.config.getHeaders(this.userAgent);
   }
 
   /**

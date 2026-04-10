@@ -8,8 +8,8 @@ describe("ReflectClient", () => {
     client = new ReflectClient();
   });
 
-  it("should not be configured before configure()", () => {
-    expect(client.isConfigured()).toBe(false);
+  it("should be configured by default to support dynamic OAuth tokens", () => {
+    expect(client.isConfigured()).toBe(true);
   });
 
   it("should be configured after configure()", async () => {
