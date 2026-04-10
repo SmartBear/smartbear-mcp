@@ -37,7 +37,7 @@ describe("CreateTestSteps", () => {
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Create Test Case Steps");
     expect(instance.specification.summary).toBe(
-      "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI).",
+      "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI). IMPORTANT: Always ask the user which mode to use before calling this tool. `APPEND` adds steps to the end of the existing list. `OVERWRITE` deletes all existing steps and replaces them with the provided ones.",
     );
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
