@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.18.0] - 2026-04-10
+
 ### Changed
 
 - [Portal] Adjusted internal script to recent changes in Portal's API [#404](https://github.com/SmartBear/smartbear-mcp/pull/404)
