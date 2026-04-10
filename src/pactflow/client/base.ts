@@ -1,5 +1,414 @@
 import { z } from "zod";
 
+const HalLinkSchema = z.object({
+  href: z.string(),
+  title: z.string().optional(),
+  name: z.string().optional(),
+  templated: z.boolean().optional(),
+});
+const HalLinksSchema = z.record(
+  z.string(),
+  z.union([HalLinkSchema, z.array(HalLinkSchema)]),
+);
+const HalPaginationSchema = z.object({
+  size: z.number(),
+  totalElements: z.number(),
+  totalPages: z.number(),
+  number: z.number(),
+});
+
+export type HalLink = z.infer<typeof HalLinkSchema>;
+export type HalLinks = z.infer<typeof HalLinksSchema>;
+export type HalPagination = z.infer<typeof HalPaginationSchema>;
+
+const PacticipantSchema = z.object({
+  name: z.string(),
+  displayName: z.string().optional(),
+  mainBranch: z.string().optional(),
+  repositoryName: z.string().optional(),
+  repositoryNamespace: z.string().optional(),
+  repositoryUrl: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const PacticipantsResponseSchema = z.object({
+  _embedded: z.object({ pacticipants: z.array(PacticipantSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+  page: HalPaginationSchema.optional(),
+});
+
+export type Pacticipant = z.infer<typeof PacticipantSchema>;
+export type PacticipantsResponse = z.infer<typeof PacticipantsResponseSchema>;
+
+const BranchSchema = z.object({
+  name: z.string(),
+  _links: HalLinksSchema.optional(),
+});
+const BranchesResponseSchema = z.object({
+  _embedded: z.object({ branches: z.array(BranchSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+  page: HalPaginationSchema.optional(),
+});
+
+export type Branch = z.infer<typeof BranchSchema>;
+export type BranchesResponse = z.infer<typeof BranchesResponseSchema>;
+
+const PacticipantVersionSchema = z.object({
+  number: z.string(),
+  buildUrl: z.string().optional(),
+  branches: z.array(BranchSchema).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const VersionsResponseSchema = z.object({
+  _embedded: z
+    .object({ versions: z.array(PacticipantVersionSchema) })
+    .optional(),
+  _links: HalLinksSchema.optional(),
+  page: HalPaginationSchema.optional(),
+});
+
+export type PacticipantVersion = z.infer<typeof PacticipantVersionSchema>;
+export type VersionsResponse = z.infer<typeof VersionsResponseSchema>;
+
+const EnvironmentSchema = z.object({
+  uuid: z.string(),
+  name: z.string(),
+  displayName: z.string().optional(),
+  production: z.boolean(),
+  teamUuids: z.array(z.string()).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const EnvironmentsResponseSchema = z.object({
+  _embedded: z.object({ environments: z.array(EnvironmentSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type Environment = z.infer<typeof EnvironmentSchema>;
+export type EnvironmentsResponse = z.infer<typeof EnvironmentsResponseSchema>;
+
+const DeployedVersionSchema = z.object({
+  uuid: z.string().optional(),
+  pacticipantVersionNumber: z.string().optional(),
+  applicationInstance: z.string().optional(),
+  currentlyDeployed: z.boolean().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const DeployedVersionsResponseSchema = z.object({
+  _embedded: z
+    .object({ deployedVersions: z.array(DeployedVersionSchema) })
+    .optional(),
+  _links: HalLinksSchema.optional(),
+});
+const ReleasedVersionSchema = z.object({
+  uuid: z.string().optional(),
+  pacticipantVersionNumber: z.string().optional(),
+  currentlySupported: z.boolean().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const ReleasedVersionsResponseSchema = z.object({
+  _embedded: z
+    .object({ releasedVersions: z.array(ReleasedVersionSchema) })
+    .optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type DeployedVersion = z.infer<typeof DeployedVersionSchema>;
+export type DeployedVersionsResponse = z.infer<
+  typeof DeployedVersionsResponseSchema
+>;
+export type ReleasedVersion = z.infer<typeof ReleasedVersionSchema>;
+export type ReleasedVersionsResponse = z.infer<
+  typeof ReleasedVersionsResponseSchema
+>;
+
+const PublishContractsResponseSchema = z.object({
+  pacticipantVersionNumber: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const PublishProviderContractResponseSchema = z.object({
+  _links: HalLinksSchema.optional(),
+});
+
+export type PublishContractsResponse = z.infer<
+  typeof PublishContractsResponseSchema
+>;
+export type PublishProviderContractResponse = z.infer<
+  typeof PublishProviderContractResponseSchema
+>;
+
+const PactsForVerificationResponseSchema = z.object({
+  _embedded: z
+    .object({
+      pacts: z.array(
+        z.object({
+          shortDescription: z.string().optional(),
+          verificationProperties: z.record(z.string(), z.unknown()).optional(),
+          _links: HalLinksSchema.optional(),
+        }),
+      ),
+    })
+    .optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type PactsForVerificationResponse = z.infer<
+  typeof PactsForVerificationResponseSchema
+>;
+
+const BdctProviderContractSchema = z.object({
+  content: z.string().optional(),
+  contentType: z.string().optional(),
+  specification: z.string().optional(),
+  selfVerificationResults: z.record(z.string(), z.unknown()).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const BdctConsumerContractSchema = z.object({
+  content: z.string().optional(),
+  contentType: z.string().optional(),
+  specification: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const BdctVerificationResultsSchema = z.object({
+  success: z.boolean().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const BdctCrossContractVerificationResultsSchema = z.object({
+  success: z.boolean().optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type BdctProviderContract = z.infer<typeof BdctProviderContractSchema>;
+export type BdctConsumerContract = z.infer<typeof BdctConsumerContractSchema>;
+export type BdctVerificationResults = z.infer<
+  typeof BdctVerificationResultsSchema
+>;
+export type BdctCrossContractVerificationResults = z.infer<
+  typeof BdctCrossContractVerificationResultsSchema
+>;
+
+const IntegrationsResponseSchema = z.object({
+  _embedded: z
+    .object({
+      integrations: z.array(z.object({ _links: HalLinksSchema.optional() })),
+    })
+    .optional(),
+  _links: HalLinksSchema.optional(),
+});
+const PacticipantNetworkSchema = z.object({
+  _embedded: z.record(z.string(), z.unknown()).optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type IntegrationsResponse = z.infer<typeof IntegrationsResponseSchema>;
+export type PacticipantNetwork = z.infer<typeof PacticipantNetworkSchema>;
+
+const LabelSchema = z.object({
+  name: z.string(),
+  _links: HalLinksSchema.optional(),
+});
+const LabelsResponseSchema = z.object({
+  _embedded: z.object({ labels: z.array(LabelSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+  page: HalPaginationSchema.optional(),
+});
+const PacticipantsByLabelResponseSchema = z.object({
+  _embedded: z.object({ pacticipants: z.array(PacticipantSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type Label = z.infer<typeof LabelSchema>;
+export type LabelsResponse = z.infer<typeof LabelsResponseSchema>;
+export type PacticipantsByLabelResponse = z.infer<
+  typeof PacticipantsByLabelResponseSchema
+>;
+
+const WebhookSchema = z.object({
+  uuid: z.string().optional(),
+  description: z.string().optional(),
+  enabled: z.boolean().optional(),
+  events: z.array(z.object({ name: z.string() })).optional(),
+  request: z
+    .object({
+      method: z.string(),
+      url: z.string(),
+      headers: z.record(z.string(), z.string()).optional(),
+      body: z.unknown().optional(),
+    })
+    .optional(),
+  consumer: z.object({ name: z.string() }).optional(),
+  provider: z.object({ name: z.string() }).optional(),
+  teamUuid: z.string().nullable().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const WebhooksResponseSchema = z.object({
+  _embedded: z.object({ webhooks: z.array(WebhookSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const WebhookExecutionResponseSchema = z.object({
+  _links: HalLinksSchema.optional(),
+});
+
+export type Webhook = z.infer<typeof WebhookSchema>;
+export type WebhooksResponse = z.infer<typeof WebhooksResponseSchema>;
+export type WebhookExecutionResponse = z.infer<
+  typeof WebhookExecutionResponseSchema
+>;
+
+const SecretSchema = z.object({
+  uuid: z.string().optional(),
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  teamUuid: z.string().nullable().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const SecretsResponseSchema = z.object({
+  _embedded: z.object({ secrets: z.array(SecretSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type Secret = z.infer<typeof SecretSchema>;
+export type SecretsResponse = z.infer<typeof SecretsResponseSchema>;
+
+const CurrentUserSchema = z.object({
+  uuid: z.string().optional(),
+  name: z.string().optional(),
+  email: z.string().optional(),
+  active: z.boolean().optional(),
+  roles: z.array(z.object({ uuid: z.string(), name: z.string() })).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const ApiTokenSchema = z.object({
+  uuid: z.string().optional(),
+  description: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const TokensResponseSchema = z.object({
+  _embedded: z.object({ items: z.array(ApiTokenSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const RegenerateTokenResponseSchema = z.object({
+  uuid: z.string().optional(),
+  value: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type CurrentUser = z.infer<typeof CurrentUserSchema>;
+export type ApiToken = z.infer<typeof ApiTokenSchema>;
+export type TokensResponse = z.infer<typeof TokensResponseSchema>;
+export type RegenerateTokenResponse = z.infer<
+  typeof RegenerateTokenResponseSchema
+>;
+
+const UserPreferencesSchema = z.record(z.string(), z.unknown());
+const SystemPreferencesSchema = z.record(z.string(), z.unknown());
+
+export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
+export type SystemPreferences = z.infer<typeof SystemPreferencesSchema>;
+
+const AuditEventSchema = z.object({
+  id: z.string().optional(),
+  type: z.string().optional(),
+  timestamp: z.string().optional(),
+  userUuid: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const AuditLogResponseSchema = z.object({
+  _embedded: z.object({ events: z.array(AuditEventSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+  page: HalPaginationSchema.optional(),
+});
+
+export type AuditEvent = z.infer<typeof AuditEventSchema>;
+export type AuditLogResponse = z.infer<typeof AuditLogResponseSchema>;
+
+const AdminUserSchema = z.object({
+  uuid: z.string().optional(),
+  name: z.string().optional(),
+  email: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  active: z.boolean().optional(),
+  externalIdpId: z.string().optional(),
+  externalIdpUsername: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const AdminUsersResponseSchema = z.object({
+  _embedded: z.object({ users: z.array(AdminUserSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+  page: HalPaginationSchema.optional(),
+});
+
+export type AdminUser = z.infer<typeof AdminUserSchema>;
+export type AdminUsersResponse = z.infer<typeof AdminUsersResponseSchema>;
+
+const AdminTeamSchema = z.object({
+  uuid: z.string().optional(),
+  name: z.string().optional(),
+  _embedded: z.record(z.string(), z.unknown()).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const AdminTeamsResponseSchema = z.object({
+  _embedded: z.object({ teams: z.array(AdminTeamSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+  page: HalPaginationSchema.optional(),
+});
+const TeamUsersResponseSchema = z.object({
+  _embedded: z.object({ users: z.array(AdminUserSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type AdminTeam = z.infer<typeof AdminTeamSchema>;
+export type AdminTeamsResponse = z.infer<typeof AdminTeamsResponseSchema>;
+export type TeamUsersResponse = z.infer<typeof TeamUsersResponseSchema>;
+
+const PermissionSchema = z.object({
+  scope: z.string(),
+  _links: HalLinksSchema.optional(),
+});
+const AdminRoleSchema = z.object({
+  uuid: z.string().optional(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  permissions: z.array(PermissionSchema).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const AdminRolesResponseSchema = z.object({
+  _embedded: z.object({ roles: z.array(AdminRoleSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+const PermissionsResponseSchema = z.object({
+  _embedded: z.object({ permissions: z.array(PermissionSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type Permission = z.infer<typeof PermissionSchema>;
+export type AdminRole = z.infer<typeof AdminRoleSchema>;
+export type AdminRolesResponse = z.infer<typeof AdminRolesResponseSchema>;
+export type PermissionsResponse = z.infer<typeof PermissionsResponseSchema>;
+
+// ─── System Account response schemas ─────────────────────────────────────────
+
+const SystemAccountSchema = z.object({
+  uuid: z.string().optional(),
+  name: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const SystemAccountTokenSchema = z.object({
+  uuid: z.string().optional(),
+  description: z.string().optional(),
+  value: z.string().optional(),
+  _links: HalLinksSchema.optional(),
+});
+const SystemAccountTokensResponseSchema = z.object({
+  _embedded: z.object({ items: z.array(SystemAccountTokenSchema) }).optional(),
+  _links: HalLinksSchema.optional(),
+});
+
+export type SystemAccount = z.infer<typeof SystemAccountSchema>;
+export type SystemAccountToken = z.infer<typeof SystemAccountTokenSchema>;
+export type SystemAccountTokensResponse = z.infer<
+  typeof SystemAccountTokensResponseSchema
+>;
+
 export interface ProviderState {
   name: string;
   params?: Record<string, any> | null;

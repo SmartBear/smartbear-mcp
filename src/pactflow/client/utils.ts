@@ -3,10 +3,29 @@ import yaml from "js-yaml";
 import Swagger from "swagger-client";
 import { ToolError } from "../../common/tools";
 import {
+  type EndpointMatcher,
   type OpenAPI,
   type RemoteOpenAPIDocument,
   RemoteOpenAPIDocumentSchema,
 } from "./ai";
+
+/**
+ * Builds a URL query string from an object, omitting undefined values.
+ *
+ * @param params - Key-value pairs to encode. Undefined values are omitted.
+ * @returns A query string starting with `?`, or `""` if all values are undefined.
+ */
+export function toQueryString(
+  params: Record<string, string | number | boolean | undefined>,
+): string {
+  const entries = Object.entries(params).filter(
+    (entry): entry is [string, string | number | boolean] =>
+      entry[1] !== undefined,
+  );
+  if (!entries.length) return "";
+  const qs = new URLSearchParams(entries.map(([k, v]) => [k, String(v)]));
+  return `?${qs.toString()}`;
+}
 
 /**
  * Resolve the OpenAPI specification from the provided input.
@@ -45,12 +64,12 @@ export async function resolveOpenAPISpec(
  * Fetch the contents of a remote OpenAPI document.
  *
  * @param openAPISchema The schema for the remote OpenAPI document.
- * @returns A promise that resolves to a map of the OpenAPI document contents.
+ * @returns A promise that resolves to the parsed OpenAPI document contents.
  * @throws Error if the URL is not provided or the fetch fails.
  */
 export async function getRemoteSpecContents(
   openAPISchema: RemoteOpenAPIDocument,
-): Promise<any> {
+): Promise<unknown> {
   if (!openAPISchema.url) {
     throw new ToolError("'url' must be provided.");
   }
@@ -95,13 +114,21 @@ export async function getRemoteSpecContents(
   }
 }
 
+interface OpenAPIWithMatcherRaw {
+  document?: OpenAPI;
+  matcher?: EndpointMatcher;
+  remoteDocument?: RemoteOpenAPIDocument;
+}
+
 /**
  * Adds the OpenAPI specification to the input schema if a remote document is provided.
  *
  * @param inputSchema The input schema to modify.
  * @returns The modified input schema with the OpenAPI specification added.
  */
-export async function addOpenAPISpecToSchema(inputSchema: any) {
+export async function addOpenAPISpecToSchema(
+  inputSchema: OpenAPIWithMatcherRaw,
+): Promise<OpenAPIWithMatcherRaw> {
   if (inputSchema.remoteDocument) {
     const resolvedSpec = await resolveOpenAPISpec(inputSchema.remoteDocument);
     inputSchema.document = resolvedSpec;

@@ -20,7 +20,7 @@ describe("Utility tests", () => {
       const input: OpenApiWithMatcher = {
         matcher: {
           path: "/users",
-          method: "GET",
+          methods: ["GET"],
         },
         remoteDocument: {
           url: "https://api.example.com/openapi.json",
@@ -46,7 +46,7 @@ describe("Utility tests", () => {
       const input: OpenApiWithMatcher = {
         matcher: {
           path: "/users",
-          method: "GET",
+          methods: ["GET"],
         },
         document: {
           openapi: "3.0.0",
@@ -98,6 +98,19 @@ describe("Utility tests", () => {
       );
     });
 
+    it("uses Bearer as default auth scheme when authScheme is not provided", async () => {
+      const url = "https://api.example.com/openapi.json";
+      const mockSpec = { openapi: "3.0.0", paths: {} };
+      fetchMocker.mockOnce(JSON.stringify(mockSpec));
+
+      await getRemoteSpecContents({ url, authToken: "my-token" });
+
+      expect(fetch).toHaveBeenCalledWith(url, {
+        headers: { Authorization: "Bearer my-token" },
+        method: "GET",
+      });
+    });
+
     it("fetches the remote OpenAPI spec which is a yaml", async () => {
       const url = "https://api.example.com/openapi.yaml";
       const yamlSpec = `
@@ -137,6 +150,23 @@ describe("Utility tests", () => {
       await expect(getRemoteSpecContents({ url })).rejects.toThrowError();
     });
 
+    it("throws detailed error with Content-Type when MCP_TRANSPORT is stdio", async () => {
+      const originalTransport = process.env.MCP_TRANSPORT;
+      process.env.MCP_TRANSPORT = "stdio";
+
+      const url = "https://api.example.com/openapi.invalid";
+      const invalidContent = "not: valid: yaml: or: json";
+      fetchMocker.mockOnce(invalidContent, {
+        headers: { "Content-Type": "application/xml" },
+      });
+
+      await expect(getRemoteSpecContents({ url })).rejects.toThrow(
+        "Unsupported Content-Type: application/xml for remote OpenAPI document",
+      );
+
+      process.env.MCP_TRANSPORT = originalTransport;
+    });
+
     it("Throws an error if remote spec file doesn't have a url", async () => {
       await expect(getRemoteSpecContents({})).rejects.toThrowError();
     });
@@ -147,7 +177,7 @@ describe("Utility tests", () => {
       const openApiSpec = {
         matcher: {
           path: "/users",
-          method: "GET",
+          methods: ["GET"],
         },
         document: {
           openapi: "3.0.0",

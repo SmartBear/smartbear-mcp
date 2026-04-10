@@ -86,6 +86,9 @@ export interface PactflowToolParams extends ToolParams {
   tags?: Array<string>;
 }
 
+/** Schema for tools that take no parameters. */
+const NoInputSchema = z.object({});
+
 export const TOOLS: PactflowToolParams[] = [
   {
     title: "Generate Pact Tests",
@@ -174,7 +177,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Fetch metrics across the entire workspace",
     purpose:
       "Fetch metrics across the workspace. Use this to get an overview of contract testing usage, resource consumption and account-wide statistics.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "getMetrics",
     clients: ["pactflow", "pact_broker"],
   },
@@ -183,7 +186,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Fetch metrics for all teams",
     purpose:
       "Fetch metrics for all teams within PactFlow. Use this to get an overview of team-specific contract testing usage, resource consumption and usage statistics.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "getTeamMetrics",
     clients: ["pactflow"],
   },
@@ -253,7 +256,7 @@ export const TOOLS: PactflowToolParams[] = [
       "Retrieve all environments configured in the Pact Broker or PactFlow workspace.",
     purpose:
       "Get the list of deployment environments (e.g. development, staging, production) so you can use their UUIDs in record-deployment and can-i-deploy operations.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "listEnvironments",
     clients: ["pactflow", "pact_broker"],
   },
@@ -443,7 +446,7 @@ export const TOOLS: PactflowToolParams[] = [
       "Retrieve all consumer-provider integrations registered in the workspace.",
     purpose:
       "Get a high-level view of all the consumer-provider pairings that have pacts published. An integration is automatically created when a consumer publishes a pact for a provider.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "listIntegrations",
     clients: ["pactflow", "pact_broker"],
   },
@@ -652,7 +655,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Delete ALL consumer-provider integrations in the workspace.",
     purpose:
       "Bulk-remove all integration records. This is a destructive operation — use only when resetting the workspace.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "deleteAllIntegrations",
     clients: ["pactflow", "pact_broker"],
   },
@@ -661,7 +664,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Retrieve all webhooks configured in the workspace.",
     purpose:
       "Get an overview of all webhook triggers, their target URLs, and enabled/disabled status.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "listWebhooks",
     clients: ["pactflow", "pact_broker"],
   },
@@ -707,7 +710,7 @@ export const TOOLS: PactflowToolParams[] = [
       "Trigger a test execution of all matching webhooks without a real event.",
     purpose:
       "Verify webhook configuration by sending a test request. Useful for debugging URL, auth, or body template issues.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "executeWebhooks",
     clients: ["pactflow", "pact_broker"],
   },
@@ -725,7 +728,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Retrieve all secrets stored in the workspace.",
     purpose:
       "Get an overview of all configured secrets. Note: secret values are never returned — only metadata.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "listSecrets",
     clients: ["pactflow"],
   },
@@ -770,7 +773,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Retrieve the profile of the currently authenticated user.",
     purpose:
       "Check who you are authenticated as, including your UUID, name, email, and roles.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "getCurrentUser",
     clients: ["pactflow"],
   },
@@ -779,7 +782,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Retrieve API tokens for the current user.",
     purpose:
       "List the read-only and read-write API tokens for the authenticated user.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "listTokens",
     clients: ["pactflow"],
   },
@@ -796,7 +799,7 @@ export const TOOLS: PactflowToolParams[] = [
     title: "Get User Preferences",
     summary: "Retrieve the current user's preferences.",
     purpose: "Fetch all preference settings for the authenticated user.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "getUserPreferences",
     clients: ["pactflow"],
   },
@@ -804,7 +807,7 @@ export const TOOLS: PactflowToolParams[] = [
     title: "Get System Preferences",
     summary: "Retrieve system-wide preferences.",
     purpose: "Fetch all system-level preference settings for the workspace.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "getSystemPreferences",
     clients: ["pactflow"],
   },
@@ -997,7 +1000,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "List all roles defined in the workspace (admin).",
     purpose:
       "Get an overview of all role definitions and their associated permissions.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "listAdminRoles",
     clients: ["pactflow"],
   },
@@ -1042,7 +1045,7 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Reset all roles to their factory defaults (admin).",
     purpose:
       "Restore the built-in roles to their original permission sets. Custom roles are removed.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "resetAdminRoles",
     clients: ["pactflow"],
   },
@@ -1050,7 +1053,7 @@ export const TOOLS: PactflowToolParams[] = [
     title: "Admin List Permissions",
     summary: "List all available permission scopes (admin).",
     purpose: "Retrieve all permission scopes that can be assigned to roles.",
-    inputSchema: z.object({}),
+    inputSchema: NoInputSchema,
     handler: "listAdminPermissions",
     clients: ["pactflow"],
   },
