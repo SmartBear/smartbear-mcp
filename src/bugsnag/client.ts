@@ -71,7 +71,7 @@ interface StabilityData {
 }
 
 const ConfigurationSchema = z.object({
-  auth_token: z.string().describe("BugSnag personal access token").optional(),
+  auth_token: z.string().describe("BugSnag personal access token"),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
   endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
 });

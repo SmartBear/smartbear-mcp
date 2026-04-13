@@ -30,7 +30,7 @@ import type { TestPlatform } from "./types/common";
 import type { WebSocketManager } from "./websocket-manager";
 
 const ConfigurationSchema = z.object({
-  api_token: z.string().describe("Reflect API authentication token").optional(),
+  api_token: z.string().describe("Reflect API authentication token"),
 });
 
 // ReflectClient class implementing the Client interface

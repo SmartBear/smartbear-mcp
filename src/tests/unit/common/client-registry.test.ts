@@ -81,7 +81,7 @@ describe("ClientRegistry", () => {
       ).resolves.toBe(1);
     });
 
-    it("skips clients missing required config", async () => {
+    it("skips clients missing required config by default (stdio mode)", async () => {
       const clientA = createMockClient(
         "client-a",
         z.object({ keyA: z.string() }),
@@ -90,6 +90,7 @@ describe("ClientRegistry", () => {
       await expect(
         clientRegistry.configure(mockServer, (_, __) => null),
       ).resolves.toBe(0);
+      expect(clientA.configure).not.toHaveBeenCalled();
     });
 
     it("doesn't skip clients missing optional config", async () => {
@@ -101,6 +102,55 @@ describe("ClientRegistry", () => {
       await expect(
         clientRegistry.configure(mockServer, (_, __) => null),
       ).resolves.toBe(1);
+      expect(clientA.configure).toHaveBeenCalled();
+    });
+
+    it("configures clients missing required config when ignoreMissingRequiredConfigs is true (http mode)", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({ keyA: z.string() }),
+      );
+      clientRegistry.register(clientA);
+      await expect(
+        clientRegistry.configure(mockServer, (_, __) => null, true),
+      ).resolves.toBe(1);
+      expect(clientA.configure).toHaveBeenCalledWith(mockServer, {});
+    });
+
+    it("configures multiple clients missing required config when ignoreMissingRequiredConfigs is true", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({ keyA: z.string() }),
+      );
+      const clientB = createMockClient(
+        "client-b",
+        z.object({ keyB: z.string() }),
+      );
+      clientRegistry.register(clientA);
+      clientRegistry.register(clientB);
+      await expect(
+        clientRegistry.configure(mockServer, (_, __) => null, true),
+      ).resolves.toBe(2);
+      expect(clientA.configure).toHaveBeenCalledWith(mockServer, {});
+      expect(clientB.configure).toHaveBeenCalledWith(mockServer, {});
+    });
+
+    it("skips multiple clients missing required config when ignoreMissingRequiredConfigs is false", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({ keyA: z.string() }),
+      );
+      const clientB = createMockClient(
+        "client-b",
+        z.object({ keyB: z.string() }),
+      );
+      clientRegistry.register(clientA);
+      clientRegistry.register(clientB);
+      await expect(
+        clientRegistry.configure(mockServer, (_, __) => null, false),
+      ).resolves.toBe(0);
+      expect(clientA.configure).not.toHaveBeenCalled();
+      expect(clientB.configure).not.toHaveBeenCalled();
     });
   });
 
