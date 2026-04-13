@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.18.1] - 2026-04-13
 
+### Fixed
+
+- [Common] Fixed an issue with configuring clients excessively when using stdio transport, only configure clients that have authentication provided [#421](https://github.com/SmartBear/smartbear-mcp/pull/421)
+
 ## [0.18.0] - 2026-04-10
 
 ### Added
