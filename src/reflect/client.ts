@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -29,13 +30,12 @@ import type { TestPlatform } from "./types/common";
 import type { WebSocketManager } from "./websocket-manager";
 
 const ConfigurationSchema = z.object({
-  api_token: z.string().describe("Reflect API authentication token"),
+  api_token: z.string().describe("Reflect API authentication token").optional(),
 });
 
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
-  private headers: Record<string, string> = {};
-  private apiToken = "";
+  private _apiToken: string | undefined;
   private activeConnections = new Map<string, WebSocketManager>();
   private sessionStates = new Map<
     string,
@@ -54,24 +54,51 @@ export class ReflectClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
-    this.apiToken = config.api_token;
-    this.headers = {
-      [API_KEY_HEADER]: `${config.api_token}`,
-      "Content-Type": "application/json",
-      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-    };
+    this._apiToken = config.api_token;
+  }
+
+  getAuthToken(): string | null {
+    // 1. Try request context
+    const contextHeader =
+      getRequestHeader("Reflect-Api-Token") ||
+      getRequestHeader("X-API-KEY") ||
+      getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer or token prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+      return token;
+    }
+
+    // 2. Fallback to configured token
+    return this._apiToken || null;
   }
 
   isConfigured(): boolean {
-    return Object.keys(this.headers).length !== 0;
+    return true; // Configured by default to support dynamic OAuth tokens
   }
 
   getApiToken(): string {
-    return this.apiToken;
+    return this.getAuthToken() || "";
   }
 
   getHeaders(): Record<string, string> {
-    return this.headers;
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error("Reflect API token not found");
+    }
+
+    return {
+      [API_KEY_HEADER]: token,
+      "Content-Type": "application/json",
+      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+    };
   }
 
   getSessionState(

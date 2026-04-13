@@ -2,12 +2,32 @@ import { ToolError } from "../../common/tools";
 import { AuthService } from "./auth-service";
 
 export class ApiClient {
-  private readonly baseUrl: string;
-  private readonly defaultHeaders: Record<string, string>;
+  public readonly baseUrl: string;
+  private readonly tokenProvider: () => string | null;
 
-  constructor(bearerToken: string, baseUrl: string) {
+  constructor(
+    tokenOrProvider: string | (() => string | null),
+    baseUrl: string,
+  ) {
     this.baseUrl = baseUrl.trim().replace(/\/$/, "");
-    this.defaultHeaders = new AuthService(bearerToken).getAuthHeaders();
+
+    if (typeof tokenOrProvider === "string") {
+      this.tokenProvider = () => tokenOrProvider;
+    } else {
+      this.tokenProvider = tokenOrProvider;
+    }
+  }
+
+  public get defaultHeaders(): Record<string, string> {
+    return this.getHeaders();
+  }
+
+  private getHeaders(): Record<string, string> {
+    const token = this.tokenProvider();
+    if (!token) {
+      throw new ToolError("Zephyr API token not found");
+    }
+    return new AuthService(token).getAuthHeaders();
   }
 
   getUrl(
@@ -31,7 +51,7 @@ export class ApiClient {
   ): Promise<any> {
     const response = await fetch(this.getUrl(endpoint, params), {
       method: "GET",
-      headers: this.defaultHeaders,
+      headers: this.getHeaders(),
     });
     return await this.validateAndGetResponseBody(response);
   }
@@ -40,7 +60,7 @@ export class ApiClient {
     const response = await fetch(this.getUrl(endpoint), {
       method: "POST",
       headers: {
-        ...this.defaultHeaders,
+        ...this.getHeaders(),
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
@@ -52,7 +72,7 @@ export class ApiClient {
     const response = await fetch(this.getUrl(endpoint), {
       method: "PUT",
       headers: {
-        ...this.defaultHeaders,
+        ...this.getHeaders(),
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),

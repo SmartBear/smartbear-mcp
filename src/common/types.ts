@@ -113,5 +113,10 @@ export interface Client {
   ): Promise<void>;
   registerResources?(register: RegisterResourceFunction): void;
   registerPrompts?(register: RegisterPromptFunction): void;
+  /**
+   * Optional method to retrieve the authentication token for the current request context.
+   * This is used for request-level authentication where the token might change per request.
+   */
+  getAuthToken?(): string | null;
   cleanupSession?(mcpSessionId: string): Promise<void>;
 }

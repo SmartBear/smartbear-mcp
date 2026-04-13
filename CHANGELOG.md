@@ -7,11 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.18.0] - 2026-04-10
+
+### Added
+
+- [Common] Added OAuth token support for HTTP transport clients. [#330](https://github.com/SmartBear/smartbear-mcp/pull/330)
+
+### Changed
+
+- [Portal] Adjusted internal script to recent changes in Portal's API [#404](https://github.com/SmartBear/smartbear-mcp/pull/404)
+
 ## [0.17.1] - 2026-04-09
 
 ### Added
 
 - [Pactflow] Added tools for CRUD over BDCT, Pacticipants, Environments, Permissions management [#414](https://github.com/SmartBear/smartbear-mcp/pull/414)
+
 
 ## [0.17.0] - 2026-04-07
 
