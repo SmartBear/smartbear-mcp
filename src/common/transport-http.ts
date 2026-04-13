@@ -502,20 +502,24 @@ export async function newServer(
     // Run configuration within request context so that client getAuthToken()
     // methods can access request headers via AsyncLocalStorage
     const configuredCount = await withRequestContext(req, () =>
-      clientRegistry.configure(server, (client, key) => {
-        const headerName = getHeaderName(client, key);
-        // Check both original case and lower-case headers for compatibility
-        // (HTTP headers are case-insensitive, but Node.js lowercases them)
-        const value =
-          req.headers[headerName] || req.headers[headerName.toLowerCase()];
-        if (typeof value === "string") {
-          return value;
-        }
+      clientRegistry.configure(
+        server,
+        (client, key) => {
+          const headerName = getHeaderName(client, key);
+          // Check both original case and lower-case headers for compatibility
+          // (HTTP headers are case-insensitive, but Node.js lowercases them)
+          const value =
+            req.headers[headerName] || req.headers[headerName.toLowerCase()];
+          if (typeof value === "string") {
+            return value;
+          }
 
-        // Fall back to environment variable if header is not present
-        const envVarName = getEnvVarName(client, key);
-        return process.env[envVarName] || null;
-      }),
+          // Fall back to environment variable if header is not present
+          const envVarName = getEnvVarName(client, key);
+          return process.env[envVarName] || null;
+        },
+        true, // ignoreMissingRequiredConfigs
+      ),
     );
 
     console.log(

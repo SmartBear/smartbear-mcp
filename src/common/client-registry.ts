@@ -110,6 +110,7 @@ class ClientRegistry {
   async configure(
     server: SmartBearMcpServer,
     getConfigValue: (client: Client, key: string) => string | null,
+    ignoreMissingRequiredConfigs = false,
   ): Promise<number> {
     let configuredCount = 0;
     entryLoop: for (const entry of this.getAll()) {
@@ -120,7 +121,10 @@ class ClientRegistry {
           // validate if a config option is an Allowed Endpoint URL
           this.validateAllowedEndpoint(entry.config.shape[configKey], value);
           config[configKey] = value;
-        } else if (!isOptionalType(entry.config.shape[configKey])) {
+        } else if (
+          !ignoreMissingRequiredConfigs &&
+          !isOptionalType(entry.config.shape[configKey])
+        ) {
           continue entryLoop; // Skip configuring this client - missing required config
         }
       }

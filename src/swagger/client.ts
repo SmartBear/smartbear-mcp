@@ -53,7 +53,7 @@ import type {
 } from "./client/user-management-types";
 
 const ConfigurationSchema = z.object({
-  api_key: z.string().describe("Swagger API key for authentication").optional(),
+  api_key: z.string().describe("Swagger API key for authentication"),
   portal_base_path: z
     .string()
     .optional()
