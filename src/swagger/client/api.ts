@@ -868,23 +868,25 @@ export class SwaggerAPI {
 
   /**
    * Standardize and fix an API definition using AI
-   * @param params Parameters including owner, API name, and version
+   * @param params Parameters including owner, API name, version, and optional newVersion
    * @returns Standardization response with status and fixed definition
    */
   async standardizeApi(
     params: StandardizeApiParams,
   ): Promise<StandardizeApiResponse> {
+    const searchParams = new URLSearchParams();
+    if (params.newVersion) searchParams.set("newVersion", params.newVersion);
+    const queryString = searchParams.toString();
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,
     )}/${encodeURIComponent(params.api)}/${encodeURIComponent(
       params.version,
-    )}/standardize`;
+    )}/standardize${queryString ? `?${queryString}` : ""}`;
 
     const response = await fetch(url, {
       method: "POST",
       headers: this.headers,
     });
-
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(
