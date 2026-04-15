@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.18.2] - 2026-04-15
+
+### Fixed
+
+- [Common] Updated dependencies to address security vulnerabilities [#423](https://github.com/SmartBear/smartbear-mcp/pull/423)
+
 ## [0.18.1] - 2026-04-13
 
 ### Fixed
