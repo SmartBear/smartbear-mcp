@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.18.3] - 2026-04-16
 
-### Fixed
+### Added
 
 - [Zephyr] Add zephyr custom base url for remote mcp config [#428](https://github.com/SmartBear/smartbear-mcp/pull/428)
 
