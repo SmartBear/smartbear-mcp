@@ -72,7 +72,7 @@ export class ZephyrClient implements Client {
     this._apiToken = config.api_token;
     this.apiClient = new ApiClient(
       () => this.getAuthToken(),
-      config.base_url || BASE_URL_DEFAULT,
+      config.base_url || process.env.ZEPHYR_CUSTOM_BASE_URL || BASE_URL_DEFAULT,
     );
   }
 
