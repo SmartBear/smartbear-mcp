@@ -49,14 +49,12 @@ export const GetProjectsBody = zod.object({
     .number()
     .min(PAGINATION.MIN_ALLOWED_RESULTS - 1)
     .default(PAGINATION.DEFAULT_START_AT)
-    .optional()
     .describe(SCHEMA_DESCRIPTIONS.START_AT),
   maxResults: zod
     .number()
     .min(PAGINATION.MIN_ALLOWED_RESULTS)
     .max(PAGINATION.MAX_ALLOWED_RESULTS)
     .default(PAGINATION.DEFAULT_MAX_RESULTS_PROJECTS)
-    .optional()
     .describe(SCHEMA_DESCRIPTIONS.MAX_RESULTS_PROJECTS),
 });
 

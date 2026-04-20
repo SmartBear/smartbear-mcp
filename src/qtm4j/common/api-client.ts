@@ -15,11 +15,33 @@ import {
  */
 export class ApiClient {
   private readonly baseUrl: string;
-  private readonly defaultHeaders: Record<string, string>;
+  private readonly tokenProvider: () => string | null;
 
-  constructor(apiKey: string, baseUrl: string) {
+  constructor(
+    tokenOrProvider: string | (() => string | null),
+    baseUrl: string,
+  ) {
     this.baseUrl = baseUrl.trim().replace(/\/$/, EMPTY_VALUES.STRING);
-    this.defaultHeaders = new AuthService(apiKey).getAuthHeaders();
+
+    if (typeof tokenOrProvider === "string") {
+      this.tokenProvider = () => tokenOrProvider;
+    } else {
+      this.tokenProvider = tokenOrProvider;
+    }
+  }
+
+  /**
+   * Get authentication headers for current request
+   * Calls token provider to support request-scoped credentials
+   * @returns Record of HTTP headers including API key
+   * @throws ToolError if token is not available
+   */
+  private getHeaders(): Record<string, string> {
+    const token = this.tokenProvider();
+    if (!token) {
+      throw new ToolError(ERROR_MESSAGES.CLIENT_NOT_CONFIGURED);
+    }
+    return new AuthService(token).getAuthHeaders();
   }
 
   /**
@@ -55,7 +77,7 @@ export class ApiClient {
   ): Promise<any> {
     const response = await fetch(this.getUrl(endpoint, params), {
       method: HTTP_METHODS.GET,
-      headers: this.defaultHeaders,
+      headers: this.getHeaders(),
     });
     return await this.validateAndGetResponseBody(response);
   }
@@ -70,7 +92,7 @@ export class ApiClient {
     const response = await fetch(this.getUrl(endpoint), {
       method: HTTP_METHODS.POST,
       headers: {
-        ...this.defaultHeaders,
+        ...this.getHeaders(),
         [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
       },
       body: JSON.stringify(body),
@@ -88,7 +110,7 @@ export class ApiClient {
     const response = await fetch(this.getUrl(endpoint), {
       method: HTTP_METHODS.PUT,
       headers: {
-        ...this.defaultHeaders,
+        ...this.getHeaders(),
         [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
       },
       body: JSON.stringify(body),
