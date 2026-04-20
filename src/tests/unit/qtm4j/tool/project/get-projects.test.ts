@@ -109,13 +109,14 @@ describe("GetProjects", () => {
     );
   });
 
-  it("should handle apiClient.post returning unexpected data", async () => {
+  it("should reject when apiClient.post returns invalid data (schema validation)", async () => {
+    // Mock response missing required 'data' field
     mockClient.getApiClient().post.mockResolvedValueOnce({
       total: 1,
-      data: [{ id: 1, key: "A", name: "Alpha" }],
     });
-    const result = await instance.handle({ maxResults: 1 }, {} as any);
-    expect(result.structuredContent).toBeDefined();
+    await expect(
+      instance.handle({ maxResults: 1 }, {} as any),
+    ).rejects.toThrow();
   });
 
   it("should validate response against schema", async () => {

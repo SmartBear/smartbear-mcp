@@ -92,7 +92,9 @@ export class Qtm4jClient implements Client {
   getAuthToken(): string | null {
     // 1. Try request context headers
     const contextHeader =
-      getRequestHeader("Qtm4j-Api-Key") || getRequestHeader("Authorization");
+      getRequestHeader("Qtm4j-Api-Key") ||
+      getRequestHeader("apiKey") ||
+      getRequestHeader("Authorization");
 
     if (contextHeader) {
       let token = Array.isArray(contextHeader)

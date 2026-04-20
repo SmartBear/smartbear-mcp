@@ -55,16 +55,4 @@ describe("Qtm4jClient", () => {
     const token = client.getAuthToken();
     expect(token).toBe("test-token-123");
   });
-
-  it("should handle missing startAt and use default", async () => {
-    const client = new Qtm4jClient();
-    await client.configure({} as any, { api_key: "token" } as any);
-    expect(client.isConfigured()).toBe(true);
-  });
-
-  it("should handle missing maxResults and use default", async () => {
-    const client = new Qtm4jClient();
-    await client.configure({} as any, { api_key: "token" } as any);
-    expect(client.isConfigured()).toBe(true);
-  });
 });

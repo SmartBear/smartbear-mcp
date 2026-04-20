@@ -151,8 +151,7 @@ export const SCHEMA_DESCRIPTIONS = {
     "QTM4J base URL (default: https://qtmcloud.qmetry.com). Can be customized for on-premise installations.",
 
   /** Project ID description */
-  PROJECT_ID:
-    "Project ID (numeric, e.g., 10000) or Project key (string, e.g., 'SCRUM'). String keys are automatically resolved to numeric IDs.",
+  PROJECT_ID: "Numeric project ID (e.g., 10000)",
 
   /** Fields description */
   FIELDS:
@@ -183,7 +182,7 @@ export const SCHEMA_DESCRIPTIONS = {
   TEXT_SEARCH: "Text to search in test case name and description",
 
   /** Project ID filter description */
-  PROJECT_ID_FILTER: "Project ID to filter by",
+  PROJECT_ID_FILTER: "Numeric project ID to filter by",
 
   /** Project keys filter description */
   PROJECT_KEYS: "List of project keys to filter by",
