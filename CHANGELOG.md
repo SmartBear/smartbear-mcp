@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Added optional `newVersion` parameter to the `standardize_api` tool to save the fixed API definition as a new version instead of overwriting the current one
+
 ## [0.18.3] - 2026-04-16
 
 ### Added
