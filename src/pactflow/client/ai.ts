@@ -11,6 +11,7 @@ export const GenerationLanguages = [
   "kotlin",
   "swift",
   "php",
+  "python",
 ] as const;
 
 export type GenerationLanguage = (typeof GenerationLanguages)[number];
