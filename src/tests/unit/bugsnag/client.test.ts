@@ -102,6 +102,7 @@ vi.mock("../../../bugsnag/client/api/index.js", async (importOriginal) => {
         Snooze: "snooze",
         LinkIssue: "link_issue",
         UnlinkIssue: "unlink_issue",
+        Assign: "assign",
       },
     },
   };

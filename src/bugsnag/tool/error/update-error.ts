@@ -17,6 +17,7 @@ const PERMITTED_UPDATE_OPERATIONS = [
   "snooze",
   "link_issue",
   "unlink_issue",
+  "assign",
 ] as const;
 
 const PERMITTED_REOPEN_CONDITIONS = [
@@ -37,6 +38,20 @@ const inputSchema = z.object({
     .optional()
     .describe(
       "The URL of the issue to link to the error - required when operation is 'link_issue'",
+    ),
+  assigned_collaborator_id: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "The ID of the collaborator to assign the error to (use with 'assign' operation)",
+    ),
+  assigned_team_id: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "The ID of the team to assign the error to (use with 'assign' operation)",
     ),
   reopenRules: z
     .object({
@@ -100,6 +115,7 @@ export class UpdateError extends Tool<BugsnagClient> {
       "Discard or un-discard an error",
       "Update the severity of an error",
       "Snooze an error with defined conditions for when it should be reopened",
+      "Assign an error to a team or collaborator",
     ],
     inputSchema,
     examples: [
@@ -171,6 +187,46 @@ export class UpdateError extends Tool<BugsnagClient> {
         expectedOutput:
           "Success response indicating the Jira issue was unlinked from the error",
       },
+      {
+        description: "Assign an error to a collaborator",
+        parameters: {
+          errorId: "6863e2af8c857c0a5023b411",
+          operation: "assign",
+          assigned_collaborator_id: "123456",
+        },
+        expectedOutput:
+          "Success response indicating the error was assigned to the collaborator",
+      },
+      {
+        description: "Assign an error to a team",
+        parameters: {
+          errorId: "6863e2af8c857c0a5023b411",
+          operation: "assign",
+          assigned_team_id: "654321",
+        },
+        expectedOutput:
+          "Success response indicating the error was assigned to the team",
+      },
+      {
+        description: "Unassign an error from a collaborator",
+        parameters: {
+          errorId: "6863e2af8c857c0a5023b411",
+          operation: "assign",
+          assigned_collaborator_id: null,
+        },
+        expectedOutput:
+          "Success response indicating the error was unassigned from the collaborator",
+      },
+      {
+        description: "Unassign an error from a team",
+        parameters: {
+          errorId: "6863e2af8c857c0a5023b411",
+          operation: "assign",
+          assigned_team_id: null,
+        },
+        expectedOutput:
+          "Success response indicating the error was unassigned from the team",
+      },
     ],
     hints: [
       "Only use valid operations - BugSnag may reject invalid values",
@@ -182,6 +238,8 @@ export class UpdateError extends Tool<BugsnagClient> {
       "For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters",
       "For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter",
       "Snoozing temporarily silences an error until the specified reopen condition is met",
+      "'assigned_collaborator_id' and 'assigned_team_id' are mutually exclusive when using 'assign' operation - only one can be provided to assign to either a collaborator or a team",
+      "When asked to assign a user by name use the List Project Collaborators tool to find their ID",
     ],
     readOnly: false,
     idempotent: false,
@@ -208,6 +266,20 @@ export class UpdateError extends Tool<BugsnagClient> {
       throw new ToolError(
         "'issue_url' parameter is required for 'link_issue' operation",
       );
+    }
+
+    // Validate assign operation requirements
+    if (params.operation === "assign") {
+      if (params.assigned_collaborator_id && params.assigned_team_id) {
+        throw new ToolError(
+          "'assigned_collaborator_id' and 'assigned_team_id' parameters are mutually exclusive for 'assign' operation - provide only one to assign to either a collaborator or a team",
+        );
+      }
+      if (params.assigned_collaborator_id === undefined && params.assigned_team_id === undefined) {
+        throw new ToolError(
+          "Either 'assigned_collaborator_id' or 'assigned_team_id' parameter is required for 'assign' operation - provide one to assign to a collaborator or a team",
+        );
+      }
     }
 
     // Validate reopen rule parameters based on reopenIf type
@@ -306,6 +378,14 @@ export class UpdateError extends Tool<BugsnagClient> {
     if (params.operation === "link_issue" && params.issue_url) {
       errorUpdateRequestBody.issue_url = params.issue_url;
       errorUpdateRequestBody.verify_issue_url = true;
+    }
+    if (params.operation === "assign") {
+      if (params.assigned_collaborator_id || params.assigned_collaborator_id === null) {
+        errorUpdateRequestBody.assigned_collaborator_id = params.assigned_collaborator_id;
+      }
+      if (params.assigned_team_id || params.assigned_team_id === null) {
+        errorUpdateRequestBody.assigned_team_id = params.assigned_team_id;
+      }
     }
 
     const result = await this.client.errorsApi.updateErrorOnProject(
