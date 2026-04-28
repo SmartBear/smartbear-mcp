@@ -108,4 +108,18 @@ describe("GetScreenshot", () => {
     const parsed = JSON.parse((result.content[1] as any).text);
     expect(parsed.format).toBe("jpeg");
   });
+
+  it("should use png format when format is png", async () => {
+    const result = await instance.handle(
+      { sessionId: "sess-1", format: "png" },
+      {},
+    );
+
+    expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "mcp:get-screenshot", format: "png" }),
+    );
+    expect((result.content[0] as any).mimeType).toBe("image/png");
+    const parsed = JSON.parse((result.content[1] as any).text);
+    expect(parsed.format).toBe("png");
+  });
 });

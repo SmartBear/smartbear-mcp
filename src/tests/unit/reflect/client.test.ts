@@ -18,11 +18,6 @@ describe("ReflectClient", () => {
     expect(client.isConfigured()).toBe(true);
   });
 
-  it("should expose api token after configure()", async () => {
-    await client.configure({} as any, { api_token: "my-api-key" });
-    expect(client.getApiToken()).toBe("my-api-key");
-  });
-
   it("should return undefined for unregistered session state", () => {
     expect(client.getSessionState("unknown-session")).toBeUndefined();
   });
@@ -52,6 +47,14 @@ describe("ReflectClient", () => {
     it("should return true when Authorization header starts with Bearer", () => {
       const result = requestContextStorage.run(
         { headers: { Authorization: "Bearer oauth-token" } },
+        () => client.isOAuthRequest(),
+      );
+      expect(result).toBe(true);
+    });
+
+    it("should return true when authorization header uses lowercase bearer scheme", () => {
+      const result = requestContextStorage.run(
+        { headers: { authorization: "bearer oauth-token" } },
         () => client.isOAuthRequest(),
       );
       expect(result).toBe(true);

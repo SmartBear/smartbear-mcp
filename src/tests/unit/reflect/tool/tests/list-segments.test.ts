@@ -99,7 +99,7 @@ describe("ListSegments", () => {
     });
     fetchMock.mockResponseOnce(JSON.stringify(segmentsMock));
 
-    await instance.handle({ platform: "web" }, {});
+    const result = await instance.handle({ platform: "web" }, {});
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://app.reflect.run/api/mcp/segments?type=web&offset=0&limit=25",
@@ -109,5 +109,9 @@ describe("ListSegments", () => {
         }),
       }),
     );
+    const parsed = JSON.parse((result.content[0] as any).text);
+    expect(parsed.success).toBe(true);
+    expect(parsed.count).toBe(2);
+    expect(parsed.segments).toHaveLength(2);
   });
 });

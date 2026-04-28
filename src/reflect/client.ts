@@ -10,7 +10,11 @@ import type {
   RegisterPromptFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import { API_KEY_HEADER } from "./config/constants";
+import {
+  API_KEY_HEADER,
+  AUTHORIZATION_HEADER,
+  REFLECT_API_TOKEN_HEADER,
+} from "./config/constants";
 import { SapTest } from "./prompt/sap-test";
 import { AddPromptStep } from "./tool/recording/add-prompt-step";
 import { AddSegment } from "./tool/recording/add-segment";
@@ -60,9 +64,9 @@ export class ReflectClient implements Client {
   getAuthToken(): string | null {
     // 1. Try request context
     const contextHeader =
-      getRequestHeader("Reflect-Api-Token") ||
-      getRequestHeader("X-API-KEY") ||
-      getRequestHeader("Authorization");
+      getRequestHeader(REFLECT_API_TOKEN_HEADER) ||
+      getRequestHeader(API_KEY_HEADER) ||
+      getRequestHeader(AUTHORIZATION_HEADER);
 
     if (contextHeader) {
       let token = Array.isArray(contextHeader)
@@ -84,24 +88,19 @@ export class ReflectClient implements Client {
     return true; // Configured by default to support dynamic OAuth tokens
   }
 
-  getApiToken(): string {
-    return this.getAuthToken() || "";
-  }
-
   isOAuthRequest(): boolean {
     if (
-      getRequestHeader("Reflect-Api-Token") ||
-      getRequestHeader("X-API-KEY")
+      getRequestHeader(REFLECT_API_TOKEN_HEADER) ||
+      getRequestHeader(API_KEY_HEADER)
     ) {
       return false;
     }
-    const authHeader = getRequestHeader("Authorization");
-    return (
-      !!authHeader &&
-      (Array.isArray(authHeader) ? authHeader[0] : authHeader).startsWith(
-        "Bearer ",
-      )
-    );
+    const authHeader = getRequestHeader(AUTHORIZATION_HEADER);
+    if (!authHeader) {
+      return false;
+    }
+    const headerValue = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+    return headerValue.toLowerCase().startsWith("bearer ");
   }
 
   getAuthHeader(): Record<string, string> {
@@ -178,7 +177,8 @@ export class ReflectClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
-    const tools = [
+    // Only available for API key authentication
+    const apiOnlyTools = [
       new ListSuites(this),
       new ListSuiteExecutions(this),
       new GetSuiteExecutionStatus(this),
@@ -187,6 +187,10 @@ export class ReflectClient implements Client {
       new ListTests(this),
       new RunTest(this),
       new GetTestStatus(this),
+    ];
+
+    // Available for both OAuth and API key authentication
+    const oAuthAndAPISupportedTools = [
       new ListSegments(this),
       new ConnectToSession(this),
       new AddPromptStep(this),
@@ -194,6 +198,10 @@ export class ReflectClient implements Client {
       new DeletePreviousStep(this),
       new AddSegment(this),
     ];
+
+    const tools = this.isOAuthRequest()
+      ? oAuthAndAPISupportedTools
+      : [...oAuthAndAPISupportedTools, ...apiOnlyTools];
 
     for (const tool of tools) {
       register(tool.specification, tool.handle);
