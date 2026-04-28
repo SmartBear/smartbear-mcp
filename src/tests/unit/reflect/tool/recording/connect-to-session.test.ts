@@ -32,7 +32,7 @@ describe("ConnectToSession", () => {
       isSessionConnected: vi.fn().mockReturnValue(false),
       getSessionState: vi.fn().mockReturnValue(undefined),
       getWebSocketManager: vi.fn().mockReturnValue(undefined),
-      getApiToken: vi.fn().mockReturnValue("test-api-key"),
+      getAuthHeader: vi.fn().mockReturnValue({ "X-API-KEY": "test-api-key" }),
       registerConnection: vi.fn(),
     };
 

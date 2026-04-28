@@ -4,7 +4,7 @@
  */
 
 import WebSocket from "ws";
-import { API_KEY_HEADER, WEBSOCKET_HOSTNAME } from "./config/constants";
+import { WEBSOCKET_HOSTNAME } from "./config/constants";
 import type { MCPMessage } from "./types/mcp";
 
 interface PendingResponse {
@@ -14,13 +14,13 @@ interface PendingResponse {
 
 export class WebSocketManager {
   private sessionId: string;
-  private apiKey: string;
+  private authHeader: Record<string, string>;
   private mcpSocket: WebSocket | null = null;
   private pendingResponses: Map<string, PendingResponse> = new Map();
 
-  constructor(sessionId: string, apiKey: string) {
+  constructor(sessionId: string, authHeader: Record<string, string>) {
     this.sessionId = sessionId;
-    this.apiKey = apiKey;
+    this.authHeader = authHeader;
   }
 
   async connect(): Promise<void> {
@@ -39,10 +39,9 @@ export class WebSocketManager {
   private async connectMcpSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
       const url = `wss://${WEBSOCKET_HOSTNAME}/websocket/v2/recordings/${this.sessionId}/topics/mcp?sid=${this.sessionId}`;
-
       this.mcpSocket = new WebSocket(url, {
         headers: {
-          [API_KEY_HEADER]: this.apiKey,
+          ...this.authHeader,
         },
       });
 

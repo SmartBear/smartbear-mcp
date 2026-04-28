@@ -88,14 +88,36 @@ export class ReflectClient implements Client {
     return this.getAuthToken() || "";
   }
 
-  getHeaders(): Record<string, string> {
+  isOAuthRequest(): boolean {
+    if (
+      getRequestHeader("Reflect-Api-Token") ||
+      getRequestHeader("X-API-KEY")
+    ) {
+      return false;
+    }
+    const authHeader = getRequestHeader("Authorization");
+    return (
+      !!authHeader &&
+      (Array.isArray(authHeader) ? authHeader[0] : authHeader).startsWith(
+        "Bearer ",
+      )
+    );
+  }
+
+  getAuthHeader(): Record<string, string> {
     const token = this.getAuthToken();
     if (!token) {
       throw new Error("Reflect API token not found");
     }
+    if (this.isOAuthRequest()) {
+      return { Authorization: `Bearer ${token}` };
+    }
+    return { [API_KEY_HEADER]: token };
+  }
 
+  getHeaders(): Record<string, string> {
     return {
-      [API_KEY_HEADER]: token,
+      ...this.getAuthHeader(),
       "Content-Type": "application/json",
       "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     };

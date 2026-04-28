@@ -33,7 +33,11 @@ describe("ListSegments", () => {
     fetchMock.resetMocks();
 
     mockClient = {
-      getApiToken: vi.fn().mockReturnValue("test-api-key"),
+      isOAuthRequest: vi.fn().mockReturnValue(false),
+      getHeaders: vi.fn().mockReturnValue({
+        "X-API-KEY": "test-api-key",
+        "Content-Type": "application/json",
+      }),
     };
 
     instance = new ListSegments(mockClient as any);
@@ -84,6 +88,26 @@ describe("ListSegments", () => {
     fetchMock.mockResponseOnce("Not Found", { status: 404 });
     await expect(instance.handle({ platform: "web" }, {})).rejects.toThrow(
       "Failed to list segments",
+    );
+  });
+
+  it("should use WEB_APP_HOSTNAME URL for OAuth request", async () => {
+    mockClient.isOAuthRequest.mockReturnValue(true);
+    mockClient.getHeaders.mockReturnValue({
+      Authorization: "Bearer oauth-token",
+      "Content-Type": "application/json",
+    });
+    fetchMock.mockResponseOnce(JSON.stringify(segmentsMock));
+
+    await instance.handle({ platform: "web" }, {});
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.reflect.run/api/mcp/segments?type=web&offset=0&limit=25",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer oauth-token",
+        }),
+      }),
     );
   });
 });

@@ -52,7 +52,7 @@ export class ConnectToSession extends Tool<ReflectClient> {
 
     const wsManager = new WebSocketManager(
       sessionId,
-      this.client.getApiToken(),
+      this.client.getAuthHeader(),
     );
 
     try {
