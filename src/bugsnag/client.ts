@@ -23,7 +23,9 @@ import type {
 } from "./client/api/index";
 import { ProjectAPI } from "./client/api/Project";
 import type { FilterObject } from "./client/filters";
+import { CreateErrorComment } from "./tool/error/create-error-comment";
 import { GetError } from "./tool/error/get-error";
+import { ListErrorComments } from "./tool/error/list-error-comments";
 import { ListProjectErrors } from "./tool/error/list-project-errors";
 import { UpdateError } from "./tool/error/update-error";
 import { GetEvent } from "./tool/event/get-event";
@@ -437,6 +439,8 @@ export class BugsnagClient implements Client {
       new GetError(this),
       new ListProjectErrors(this),
       new UpdateError(this, getInput),
+      new ListErrorComments(this),
+      new CreateErrorComment(this),
       new GetEvent(this),
       new GetEventDetailsFromDashboardUrl(this),
       new ListErrorEvents(this),

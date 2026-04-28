@@ -85,6 +85,15 @@ export class BaseAPI {
     this.filterFields = filterFields || [];
   }
 
+  protected resolveAuthHeader(): Record<string, string> {
+    if (!this.configuration.apiKey) return {};
+    const value =
+      typeof this.configuration.apiKey === "function"
+        ? this.configuration.apiKey("Authorization")
+        : this.configuration.apiKey;
+    return { Authorization: value };
+  }
+
   async requestObject<T extends Record<string, any>>(
     url: string,
     options: Record<string, any> = {},
