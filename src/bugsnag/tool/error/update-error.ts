@@ -198,16 +198,6 @@ export class UpdateError extends Tool<BugsnagClient> {
           "Success response indicating the error was assigned to the collaborator",
       },
       {
-        description: "Assign an error to a team",
-        parameters: {
-          errorId: "6863e2af8c857c0a5023b411",
-          operation: "assign",
-          assigned_team_id: "654321",
-        },
-        expectedOutput:
-          "Success response indicating the error was assigned to the team",
-      },
-      {
         description: "Unassign an error from a collaborator",
         parameters: {
           errorId: "6863e2af8c857c0a5023b411",
@@ -216,16 +206,6 @@ export class UpdateError extends Tool<BugsnagClient> {
         },
         expectedOutput:
           "Success response indicating the error was unassigned from the collaborator",
-      },
-      {
-        description: "Unassign an error from a team",
-        parameters: {
-          errorId: "6863e2af8c857c0a5023b411",
-          operation: "assign",
-          assigned_team_id: null,
-        },
-        expectedOutput:
-          "Success response indicating the error was unassigned from the team",
       },
     ],
     hints: [
@@ -238,7 +218,7 @@ export class UpdateError extends Tool<BugsnagClient> {
       "For 'n_occurrences_in_m_hours' reopen rules, specify both 'occurrences' and 'hours' parameters",
       "For 'n_additional_occurrences' reopen rules, specify 'additionalOccurrences' parameter",
       "Snoozing temporarily silences an error until the specified reopen condition is met",
-      "'assigned_collaborator_id' and 'assigned_team_id' are mutually exclusive when using 'assign' operation - only one can be provided to assign to either a collaborator or a team",
+      "'assigned_collaborator_id' and 'assigned_team_id' are mutually exclusive - either assign to a collaborator (user) or a team. Use `null` to unassign.",
       "When asked to assign a user by name use the List Project Collaborators tool to find their ID",
     ],
     readOnly: false,
@@ -275,7 +255,10 @@ export class UpdateError extends Tool<BugsnagClient> {
           "'assigned_collaborator_id' and 'assigned_team_id' parameters are mutually exclusive for 'assign' operation - provide only one to assign to either a collaborator or a team",
         );
       }
-      if (params.assigned_collaborator_id === undefined && params.assigned_team_id === undefined) {
+      if (
+        params.assigned_collaborator_id === undefined &&
+        params.assigned_team_id === undefined
+      ) {
         throw new ToolError(
           "Either 'assigned_collaborator_id' or 'assigned_team_id' parameter is required for 'assign' operation - provide one to assign to a collaborator or a team",
         );
@@ -380,8 +363,12 @@ export class UpdateError extends Tool<BugsnagClient> {
       errorUpdateRequestBody.verify_issue_url = true;
     }
     if (params.operation === "assign") {
-      if (params.assigned_collaborator_id || params.assigned_collaborator_id === null) {
-        errorUpdateRequestBody.assigned_collaborator_id = params.assigned_collaborator_id;
+      if (
+        params.assigned_collaborator_id ||
+        params.assigned_collaborator_id === null
+      ) {
+        errorUpdateRequestBody.assigned_collaborator_id =
+          params.assigned_collaborator_id;
       }
       if (params.assigned_team_id || params.assigned_team_id === null) {
         errorUpdateRequestBody.assigned_team_id = params.assigned_team_id;

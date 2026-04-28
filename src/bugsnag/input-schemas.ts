@@ -69,7 +69,11 @@ export const toolInputParameters = {
     .describe("Field to sort the errors by")
     .default("last_seen"),
   spanGroupId: z.string().describe("ID of the span group"),
-  collaboratorNameOrId: z.string().optional().nullable().describe(
-    "Name or ID of the collaborator to filter by. If a name is provided, it will be matched against collaborator names to find the corresponding ID.",
-  ),
+  collaboratorNameOrId: z
+    .string()
+    .optional()
+    .nullable()
+    .describe(
+      "Name or ID of the collaborator to filter by. If a name is provided, it will be matched against collaborator names to find the corresponding ID.",
+    ),
 };

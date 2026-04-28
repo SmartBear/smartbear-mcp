@@ -13,6 +13,7 @@ import type {
   CurrentUserAPI,
   ErrorAPI,
 } from "../../../bugsnag/client/api/index.js";
+import type { OrganizationAPI } from "../../../bugsnag/client/api/Organization.js";
 import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
 import { BugsnagClient } from "../../../bugsnag/client.js";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
@@ -62,6 +63,10 @@ const mockProjectAPI = {
   listSpansByTraceId: vi.fn(),
 } satisfies Omit<ProjectAPI, keyof BaseAPI>;
 
+const mockOrganizationAPI = {
+  listProjectCollaborators: vi.fn(),
+} satisfies Omit<OrganizationAPI, keyof BaseAPI>;
+
 const mockCache = {
   set: vi.fn(),
   get: vi.fn(),
@@ -78,6 +83,10 @@ vi.mock("../../../bugsnag/client/api/Error.ts", () => ({
 
 vi.mock("../../../bugsnag/client/api/Project.ts", () => ({
   ProjectAPI: vi.fn().mockImplementation(() => mockProjectAPI),
+}));
+
+vi.mock("../../../bugsnag/client/api/Organization.ts", () => ({
+  OrganizationAPI: vi.fn().mockImplementation(() => mockOrganizationAPI),
 }));
 
 vi.mock("../../../bugsnag/client/api/configuration.ts", () => ({
@@ -905,7 +914,8 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("List Trace Fields");
       expect(registeredTools).toContain("Get Network Endpoint Groupings");
       expect(registeredTools).toContain("Set Network Endpoint Groupings");
-      expect(registeredTools.length).toBe(19);
+      expect(registeredTools).toContain("List Collaborators");
+      expect(registeredTools.length).toBe(20);
     });
   });
 
@@ -3113,6 +3123,71 @@ describe("BugsnagClient", () => {
         await expect(
           setNetworkGroupingHandler({ endpoints: ["/api/{id}"] }, {}),
         ).rejects.toThrow("No current project found");
+      });
+    });
+
+    describe("List Collaborators tool handler", () => {
+      it("should return collaborators for explicit project ID", async () => {
+        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const listCollaboratorsHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Collaborators",
+        )?.[1];
+
+        const mockProjects = [
+          { id: "proj-1", name: "Project 1" },
+          { id: "proj-2", name: "Project 2" },
+        ];
+        const mockCollaborators = [
+          { id: "user-1", name: "Alice", email: "alice@example.com" },
+          { id: "user-2", name: "Bob", email: "bob@example.com" },
+        ];
+
+        mockCache.get.mockReturnValueOnce(mockProjects);
+        mockOrganizationAPI.listProjectCollaborators.mockResolvedValue({
+          body: mockCollaborators,
+        });
+
+        const result = await listCollaboratorsHandler(
+          { projectId: "proj-2" },
+          {},
+        );
+
+        expect(
+          mockOrganizationAPI.listProjectCollaborators,
+        ).toHaveBeenCalledWith("proj-2");
+        expect(mockCache.set).toHaveBeenCalledWith("bugsnag_current_project", {
+          id: "proj-2",
+          name: "Project 2",
+        });
+        expect(JSON.parse(result.content[0].text)).toEqual({
+          collaborator_list: mockCollaborators,
+        });
+      });
+
+      it("should throw ToolError when collaborators cannot be fetched", async () => {
+        clientWithNoApiKey.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const listCollaboratorsHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "List Collaborators",
+        )?.[1];
+
+        const mockProjects = [{ id: "proj-1", name: "Project 1" }];
+        mockCache.get.mockReturnValueOnce(mockProjects);
+        mockOrganizationAPI.listProjectCollaborators.mockRejectedValue(
+          new Error("Network error"),
+        );
+
+        const handlerPromise = listCollaboratorsHandler(
+          { projectId: "proj-1" },
+          {},
+        );
+        await expect(handlerPromise).rejects.toThrow(ToolError);
+        await expect(handlerPromise).rejects.toThrow(
+          "Unable to fetch project collaborators",
+        );
+        expect(mockConsole.warn).toHaveBeenCalledWith(
+          "Failed to fetch project collaborators:",
+          expect.any(Error),
+        );
       });
     });
   });

@@ -644,12 +644,12 @@ interface ErrorReopenRules {
  * @interface ProjectRoles
  */
 export interface ProjectRoles {
-    /**
-     *
-     * @type {string}
-     * @memberof ProjectRoles
-     */
-    _515fb9337c1074f6fd000001: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectRoles
+   */
+  [id: string]: string;
 }
 /**
  *
@@ -657,108 +657,108 @@ export interface ProjectRoles {
  * @interface CollaboratorApiView
  */
 export interface CollaboratorApiView {
-    /**
-     *
-     * @type {string}
-     * @memberof CollaboratorApiView
-     */
-    id: string;
-    /**
-     *
-     * @type {string}
-     * @memberof CollaboratorApiView
-     */
-    name?: string;
-    /**
-     *
-     * @type {string}
-     * @memberof CollaboratorApiView
-     */
-    email: string;
-    /**
-     * Not applicable if the user is managed by SmartBear ID.
-     * @type {boolean}
-     * @memberof CollaboratorApiView
-     */
-    two_factor_enabled?: boolean;
-    /**
-     *
-     * @type {string}
-     * @memberof CollaboratorApiView
-     */
-    two_factor_enabled_on?: string;
-    /**
-     * The number of two factor recovery codes the User has left.
-     * @type {number}
-     * @memberof CollaboratorApiView
-     */
-    recovery_codes_remaining?: number;
-    /**
-     * The time the User's password was last changed.
-     * @type {string}
-     * @memberof CollaboratorApiView
-     */
-    password_updated_on?: string;
-    /**
-     * Whether the user has opted to have times displayed in UTC instead of local time.
-     * @type {boolean}
-     * @memberof CollaboratorApiView
-     */
-    show_time_in_utc: boolean;
-    /**
-     *
-     * @type {boolean}
-     * @memberof CollaboratorApiView
-     */
-    heroku: boolean;
-    /**
-     * when the user was created
-     * @type {string}
-     * @memberof CollaboratorApiView
-     */
-    created_at: string;
-    /**
-     * Whether the collaborator has admin permissions for the current organization
-     * @type {boolean}
-     * @memberof CollaboratorApiView
-     */
-    is_admin: boolean;
-    /**
-     * True if the user has not yet accepted their Bugsnag invitation.
-     * @type {boolean}
-     * @memberof CollaboratorApiView
-     */
-    pending_invitation: boolean;
-    /**
-     * The last time the user interacted with the Bugsnag dashboard or related APIs. Null if the user has not interacted with the dashboard before.
-     * @type {string}
-     * @memberof CollaboratorApiView
-     */
-    last_request_at?: string;
-    /**
-     * Deprecated field that returns the ids of all projects the user has access to within the current organization. Consider using `project_roles` instead.
-     * @type {Array<string>}
-     * @memberof CollaboratorApiView
-     */
-    project_ids: Array<string>;
-    /**
-     * Whether the user has Bugsnag dashboard access under the organization's current plan. If this is false for a collaborator, they will see a \"locked out\" message when they attempt to log in to the Bugsnag dashboard. An admin for your organization can resolve this by upgrading the organization's Bugsnag plan.
-     * @type {boolean}
-     * @memberof CollaboratorApiView
-     */
-    paid_for: boolean;
-    /**
-     *
-     * @type {ProjectRoles}
-     * @memberof CollaboratorApiView
-     */
-    project_roles: ProjectRoles;
-    /**
-     * Whether the user is managed by SmartBear ID.
-     * @type {boolean}
-     * @memberof CollaboratorApiView
-     */
-    managed_by_smartbear_id: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof CollaboratorApiView
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CollaboratorApiView
+   */
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CollaboratorApiView
+   */
+  email: string;
+  /**
+   * Not applicable if the user is managed by SmartBear ID.
+   * @type {boolean}
+   * @memberof CollaboratorApiView
+   */
+  two_factor_enabled?: boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof CollaboratorApiView
+   */
+  two_factor_enabled_on?: string;
+  /**
+   * The number of two factor recovery codes the User has left.
+   * @type {number}
+   * @memberof CollaboratorApiView
+   */
+  recovery_codes_remaining?: number;
+  /**
+   * The time the User's password was last changed.
+   * @type {string}
+   * @memberof CollaboratorApiView
+   */
+  password_updated_on?: string;
+  /**
+   * Whether the user has opted to have times displayed in UTC instead of local time.
+   * @type {boolean}
+   * @memberof CollaboratorApiView
+   */
+  show_time_in_utc: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CollaboratorApiView
+   */
+  heroku: boolean;
+  /**
+   * when the user was created
+   * @type {string}
+   * @memberof CollaboratorApiView
+   */
+  created_at: string;
+  /**
+   * Whether the collaborator has admin permissions for the current organization
+   * @type {boolean}
+   * @memberof CollaboratorApiView
+   */
+  is_admin: boolean;
+  /**
+   * True if the user has not yet accepted their Bugsnag invitation.
+   * @type {boolean}
+   * @memberof CollaboratorApiView
+   */
+  pending_invitation: boolean;
+  /**
+   * The last time the user interacted with the Bugsnag dashboard or related APIs. Null if the user has not interacted with the dashboard before.
+   * @type {string}
+   * @memberof CollaboratorApiView
+   */
+  last_request_at?: string;
+  /**
+   * Deprecated field that returns the ids of all projects the user has access to within the current organization. Consider using `project_roles` instead.
+   * @type {Array<string>}
+   * @memberof CollaboratorApiView
+   */
+  project_ids: Array<string>;
+  /**
+   * Whether the user has Bugsnag dashboard access under the organization's current plan. If this is false for a collaborator, they will see a \"locked out\" message when they attempt to log in to the Bugsnag dashboard. An admin for your organization can resolve this by upgrading the organization's Bugsnag plan.
+   * @type {boolean}
+   * @memberof CollaboratorApiView
+   */
+  paid_for: boolean;
+  /**
+   *
+   * @type {ProjectRoles}
+   * @memberof CollaboratorApiView
+   */
+  project_roles: ProjectRoles;
+  /**
+   * Whether the user is managed by SmartBear ID.
+   * @type {boolean}
+   * @memberof CollaboratorApiView
+   */
+  managed_by_smartbear_id: boolean;
 }
 
 /**
@@ -6878,7 +6878,9 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
  * OrganizationsApi - fetch parameter creator
  * @export
  */
-export const OrganizationsApiFetchParamCreator = function (configuration?: Configuration) {
+export const OrganizationsApiFetchParamCreator = function (
+  configuration?: Configuration,
+) {
   return {
     /**
      * List all collaborators that have access to a project.
@@ -6888,33 +6890,53 @@ export const OrganizationsApiFetchParamCreator = function (configuration?: Confi
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    listProjectCollaborators(project_id: string, per_page?: number, options: any = {}): FetchArgs {
+    listProjectCollaborators(
+      project_id: string,
+      per_page?: number,
+      options: any = {},
+    ): FetchArgs {
       // verify required parameter 'project_id' is not null or undefined
       if (project_id === null || project_id === undefined) {
-        throw new RequiredError('project_id','Required parameter project_id was null or undefined when calling listProjectCollaborators.');
+        throw new RequiredError(
+          "project_id",
+          "Required parameter project_id was null or undefined when calling listProjectCollaborators.",
+        );
       }
-      const localVarPath = `/projects/{project_id}/collaborators`.replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)));
+      const localVarPath = `/projects/{project_id}/collaborators`.replace(
+        `{${"project_id"}}`,
+        encodeURIComponent(String(project_id)),
+      );
       const localVarUrlObj = url.parse(localVarPath, true);
-      const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+      const localVarRequestOptions = Object.assign({ method: "GET" }, options);
       const localVarHeaderParameter = {} as any;
       const localVarQueryParameter = {} as any;
 
       // authentication tokenAuth required
       if (configuration && configuration.apiKey) {
-        const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
+        const localVarApiKeyValue =
+          typeof configuration.apiKey === "function"
+            ? configuration.apiKey("Authorization")
+            : configuration.apiKey;
         localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
       }
 
       if (per_page !== undefined) {
-        localVarQueryParameter['per_page'] = per_page;
+        localVarQueryParameter["per_page"] = per_page;
       }
 
-      localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+      localVarUrlObj.query = Object.assign(
+        {},
+        localVarUrlObj.query,
+        localVarQueryParameter,
+        options.query,
+      );
       // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
       localVarUrlObj.search = null;
-      localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+      localVarRequestOptions.headers = Object.assign(
+        {},
+        localVarHeaderParameter,
+        options.headers,
+      );
 
       return {
         url: url.format(localVarUrlObj),
@@ -6931,41 +6953,63 @@ export const OrganizationsApiFetchParamCreator = function (configuration?: Confi
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    listOrganizationTeams(organization_id: string, q?: string, per_page?: number, offset?: string, options: any = {}): FetchArgs {
+    listOrganizationTeams(
+      organization_id: string,
+      q?: string,
+      per_page?: number,
+      offset?: string,
+      options: any = {},
+    ): FetchArgs {
       // verify required parameter 'organization_id' is not null or undefined
       if (organization_id === null || organization_id === undefined) {
-        throw new RequiredError('organization_id','Required parameter organization_id was null or undefined when calling listOrganizationTeams.');
+        throw new RequiredError(
+          "organization_id",
+          "Required parameter organization_id was null or undefined when calling listOrganizationTeams.",
+        );
       }
-      const localVarPath = `/organizations/{organization_id}/teams`.replace(`{${"organization_id"}}`, encodeURIComponent(String(organization_id)));
+      const localVarPath = `/organizations/{organization_id}/teams`.replace(
+        `{${"organization_id"}}`,
+        encodeURIComponent(String(organization_id)),
+      );
       const localVarUrlObj = url.parse(localVarPath, true);
-      const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+      const localVarRequestOptions = Object.assign({ method: "GET" }, options);
       const localVarHeaderParameter = {} as any;
       const localVarQueryParameter = {} as any;
 
       // authentication tokenAuth required
       if (configuration && configuration.apiKey) {
-        const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
+        const localVarApiKeyValue =
+          typeof configuration.apiKey === "function"
+            ? configuration.apiKey("Authorization")
+            : configuration.apiKey;
         localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
       }
 
       if (q !== undefined) {
-        localVarQueryParameter['q'] = q;
+        localVarQueryParameter["q"] = q;
       }
 
       if (per_page !== undefined) {
-        localVarQueryParameter['per_page'] = per_page;
+        localVarQueryParameter["per_page"] = per_page;
       }
 
       if (offset !== undefined) {
-        localVarQueryParameter['offset'] = offset;
+        localVarQueryParameter["offset"] = offset;
       }
 
-      localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+      localVarUrlObj.query = Object.assign(
+        {},
+        localVarUrlObj.query,
+        localVarQueryParameter,
+        options.query,
+      );
       // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
       localVarUrlObj.search = null;
-      localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+      localVarRequestOptions.headers = Object.assign(
+        {},
+        localVarHeaderParameter,
+        options.headers,
+      );
 
       return {
         url: url.format(localVarUrlObj),
@@ -6973,7 +7017,7 @@ export const OrganizationsApiFetchParamCreator = function (configuration?: Confi
       };
     },
   };
-}
+};
 
 /**
  * ProjectsApi - fetch parameter creator

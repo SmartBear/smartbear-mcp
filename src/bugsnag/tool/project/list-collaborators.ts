@@ -25,21 +25,10 @@ export class ListCollaborators extends Tool<BugsnagClient> {
       "Get collaborator details for project management and reporting",
       "Retrieve collaborator information for communication and coordination",
     ],
-    inputSchema,
-    examples: [
-      {
-        description: "Find a collaborator id using their name",
-        parameters: {
-          projectId: "6863e2af8c857c0a5023b411",
-          collaboratorNameOrId: "John Doe",
-        },
-        expectedOutput:
-          "JSON object with collaborator details including name, email, and role",
-      },
-    ],
     hints: [
       "Collaborator name or ID is used to filter the list of collaborators for a project. If a name is provided, it will be matched against collaborator names to find the corresponding ID.",
     ],
+    inputSchema,
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
@@ -49,11 +38,7 @@ export class ListCollaborators extends Tool<BugsnagClient> {
     // Get the list of all collaborators for the project, then filter by the provided collaborator name or ID
     var collaborators = [];
     try {
-      collaborators = (
-        await this.client.getCollaborators(
-          project.id
-        )
-      ).body;
+      collaborators = (await this.client.getCollaborators(project.id)).body;
     } catch (e) {
       console.warn("Failed to fetch project collaborators:", e);
       throw new ToolError("Unable to fetch project collaborators");
