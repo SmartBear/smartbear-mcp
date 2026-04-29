@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.19.0] - 2026-04-29
+
 ### Added
 
+- [Reflect] Add jpeg format support for get-screenshot tool [#435](https://github.com/SmartBear/smartbear-mcp/pull/435)
 - [Swagger] Added optional `newVersion` parameter to the `standardize_api` tool to save the fixed API definition as a new version instead of overwriting the current one
 
 ## [0.18.3] - 2026-04-16
