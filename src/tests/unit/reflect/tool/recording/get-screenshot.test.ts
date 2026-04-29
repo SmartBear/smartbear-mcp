@@ -28,8 +28,10 @@ describe("GetScreenshot", () => {
     expect(instance.specification.title).toBe("Get Screenshot");
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(1);
+    expect(instance.specification.parameters).toHaveLength(2);
     expect(instance.specification.parameters?.[0].name).toBe("sessionId");
+    expect(instance.specification.parameters?.[1].name).toBe("format");
+    expect(instance.specification.parameters?.[1].required).toBe(false);
   });
 
   it("should send get-screenshot message and return image content", async () => {
@@ -83,5 +85,41 @@ describe("GetScreenshot", () => {
     await expect(instance.handle({}, {})).rejects.toThrow(
       "sessionId argument is required",
     );
+  });
+
+  it("should default to png format when format is not specified", async () => {
+    await instance.handle({ sessionId: "sess-1" }, {});
+
+    expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "mcp:get-screenshot", format: "png" }),
+    );
+  });
+
+  it("should use jpeg format when format is jpeg", async () => {
+    const result = await instance.handle(
+      { sessionId: "sess-1", format: "jpeg" },
+      {},
+    );
+
+    expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "mcp:get-screenshot", format: "jpeg" }),
+    );
+    expect((result.content[0] as any).mimeType).toBe("image/jpeg");
+    const parsed = JSON.parse((result.content[1] as any).text);
+    expect(parsed.format).toBe("jpeg");
+  });
+
+  it("should use png format when format is png", async () => {
+    const result = await instance.handle(
+      { sessionId: "sess-1", format: "png" },
+      {},
+    );
+
+    expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "mcp:get-screenshot", format: "png" }),
+    );
+    expect((result.content[0] as any).mimeType).toBe("image/png");
+    const parsed = JSON.parse((result.content[1] as any).text);
+    expect(parsed.format).toBe("png");
   });
 });

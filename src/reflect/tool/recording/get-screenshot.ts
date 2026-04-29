@@ -21,19 +21,30 @@ export class GetScreenshot extends Tool<ReflectClient> {
         description: "The ID of the Reflect recording session",
         required: true,
       },
+      {
+        name: "format",
+        type: z.enum(["png", "jpeg"]),
+        description: "The image format for the screenshot (png or jpeg)",
+        required: false,
+      },
     ],
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { sessionId } = args as { sessionId: string };
+    const { sessionId, format } = args as {
+      sessionId: string;
+      format?: "png" | "jpeg";
+    };
     if (!sessionId) throw new ToolError("sessionId argument is required");
 
+    const imageFormat = format ?? "png";
     const wsManager = this.client.getConnectedSession(sessionId);
 
     const id = randomUUID();
     const responsePromise = wsManager.waitForResponse(id);
     await wsManager.sendMcpMessage({
       type: "mcp:get-screenshot",
+      format: imageFormat,
       id,
     });
 
@@ -49,7 +60,7 @@ export class GetScreenshot extends Tool<ReflectClient> {
         {
           type: "image",
           data: imageBase64,
-          mimeType: "image/png",
+          mimeType: `image/${imageFormat}`,
         },
         {
           type: "text",
@@ -57,6 +68,7 @@ export class GetScreenshot extends Tool<ReflectClient> {
             success: true,
             message: "Screenshot captured",
             state,
+            format: imageFormat,
           }),
         },
       ],
