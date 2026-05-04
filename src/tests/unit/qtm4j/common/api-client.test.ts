@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../../common/tools";
-import { ApiClient } from "../../../../qtm4j/common/api-client";
+import { ApiClient } from "../../../../qtm4j/http/api-client";
 
 // Mock fetch globally
 global.fetch = vi.fn();

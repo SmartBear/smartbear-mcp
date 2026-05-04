@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Qtm4jClient } from "../../../qtm4j/client";
-import { ApiClient } from "../../../qtm4j/common/api-client";
+import { ApiClient } from "../../../qtm4j/http/api-client";
 
 describe("Qtm4jClient", () => {
   it("should set name and prefix", () => {
