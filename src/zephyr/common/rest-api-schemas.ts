@@ -1154,21 +1154,20 @@ export const UpdateTestCaseBody = zod
           .describe("The REST API endpoint to get more resource details."),
       })
       .describe("ID and link to the folder resource."),
-    owner: zod
-      .object({
-        accountId: zod
-          .string()
-          .regex(updateTestCaseBodyOwnerAccountIdRegExp)
-          .nullable()
-          .describe("Atlassian Account ID of the Jira user."),
-        self: zod
-          .string()
-          .url()
-          .optional()
-          .describe(
-            "The Jira REST API endpoint to get the full representation of the Jira user.",
-          ),
-      }),
+    owner: zod.object({
+      accountId: zod
+        .string()
+        .regex(updateTestCaseBodyOwnerAccountIdRegExp)
+        .nullable()
+        .describe("Atlassian Account ID of the Jira user."),
+      self: zod
+        .string()
+        .url()
+        .optional()
+        .describe(
+          "The Jira REST API endpoint to get the full representation of the Jira user.",
+        ),
+    }),
     customFields: zod
       .record(zod.string(), zod.unknown())
       .optional()
@@ -2861,21 +2860,20 @@ export const UpdateTestCycleBody = zod
       .describe(
         "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
       ),
-    owner: zod
-      .object({
-        accountId: zod
-          .string()
-          .regex(updateTestCycleBodyOwnerAccountIdRegExp)
-          .nullable()
-          .describe("Atlassian Account ID of the Jira user."),
-        self: zod
-          .string()
-          .url()
-          .optional()
-          .describe(
-            "The Jira REST API endpoint to get the full representation of the Jira user.",
-          ),
-      }),
+    owner: zod.object({
+      accountId: zod
+        .string()
+        .regex(updateTestCycleBodyOwnerAccountIdRegExp)
+        .nullable()
+        .describe("Atlassian Account ID of the Jira user."),
+      self: zod
+        .string()
+        .url()
+        .optional()
+        .describe(
+          "The Jira REST API endpoint to get the full representation of the Jira user.",
+        ),
+    }),
     customFields: zod
       .record(zod.string(), zod.unknown())
       .optional()
