@@ -1,10 +1,10 @@
+import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
 import { ENDPOINTS, TOOL_NAMES } from "../../config/constants";
 import {
   CommonAttributeField,
   InputField,
-  type ProjectContext,
   SearchableField,
 } from "../../config/field-resolution.types";
 import {
@@ -13,11 +13,9 @@ import {
   type CreateTestCaseResponseType,
 } from "../../schema/test-case.schema";
 import {
-  buildResolvedBody,
   type FieldResolutionConfig,
-  type ResolvedFieldMap,
-} from "../resolution-handler";
-import { ResolvableTool } from "../resolvable-tool";
+  withResolution,
+} from "../../resolver/resolution-helper";
 
 const RESOLUTION_CONFIG: FieldResolutionConfig[] = [
   { inputField: InputField.PRIORITY, fieldKey: CommonAttributeField.PRIORITY },
@@ -43,7 +41,7 @@ const RESOLUTION_CONFIG: FieldResolutionConfig[] = [
  *   - labels     → LAZY
  *   - components → LAZY
  */
-export class CreateTestCase extends ResolvableTool<Qtm4jClient> {
+export class CreateTestCase extends Tool<Qtm4jClient> {
   // ─── Tool Specification ────────────────────────────────────────────────────
 
   specification: ToolParams = {
@@ -131,31 +129,35 @@ export class CreateTestCase extends ResolvableTool<Qtm4jClient> {
       "JSON object with test case ID, key, version number, and summary. Warnings included if any fields were skipped.",
   };
 
-  // ─── Resolution Contract ───────────────────────────────────────────────────
+  // ─── Handle Implementation ──────────────────────────────────────────────────
 
-  readonly schema = CreateTestCaseBody;
+  /**
+   * Handle method: Call withResolution to get ready-to-use body, then execute API call.
+   * Resolution logic is internal - no need to manually merge resolved IDs.
+   */
+  handle = async (rawArgs: any) => {
+    // Get project context to extract projectId
+    const context = this.client.getFieldResolver().requireProjectContext();
 
-  readonly resolutionConfig: FieldResolutionConfig[] = RESOLUTION_CONFIG;
+    // Step 1: Resolve fields and get ready-to-use body
+    const { body, warnings } = await withResolution(
+      () => this.client,
+      CreateTestCaseBody,
+      RESOLUTION_CONFIG,
+      rawArgs,
+      { projectId: String(context.projectId) }, // Extra fields to merge
+    );
 
-  // ─── Business Logic ────────────────────────────────────────────────────────
-
-  async execute(
-    args: Record<string, unknown>,
-    resolved: ResolvedFieldMap,
-    context: ProjectContext,
-    warnings: string[],
-  ) {
-    const body = buildResolvedBody(args, resolved, {
-      projectId: String(context.projectId),
-    });
-
+    // Step 2: Make API call with resolved body
     const response = await this.client
       .getApiClient()
       .post(ENDPOINTS.CREATE_TEST_CASE, body);
 
+    // Step 3: Validate response
     const validated: CreateTestCaseResponseType =
       CreateTestCaseResponse.parse(response);
 
+    // Step 4: Return with warnings if any
     return {
       structuredContent: validated,
       content:
@@ -163,5 +165,5 @@ export class CreateTestCase extends ResolvableTool<Qtm4jClient> {
           ? [{ type: "text" as const, text: `Note: ${warnings.join(" | ")}` }]
           : [],
     };
-  }
+  };
 }
