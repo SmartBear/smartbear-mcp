@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.19.1] - 2026-05-04
+
+### Added
+
+- [Zephyr] Update Zephyr schemas for Rovo [#439](https://github.com/SmartBear/smartbear-mcp/pull/439)
+
 ## [0.19.0] - 2026-04-29
 
 ### Added
