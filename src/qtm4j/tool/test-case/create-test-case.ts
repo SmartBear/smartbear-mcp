@@ -8,14 +8,14 @@ import {
   SearchableField,
 } from "../../config/field-resolution.types";
 import {
+  type FieldResolutionConfig,
+  withResolution,
+} from "../../resolver/resolution-helper";
+import {
   CreateTestCaseBody,
   CreateTestCaseResponse,
   type CreateTestCaseResponseType,
 } from "../../schema/test-case.schema";
-import {
-  type FieldResolutionConfig,
-  withResolution,
-} from "../../resolver/resolution-helper";
 
 const RESOLUTION_CONFIG: FieldResolutionConfig[] = [
   { inputField: InputField.PRIORITY, fieldKey: CommonAttributeField.PRIORITY },

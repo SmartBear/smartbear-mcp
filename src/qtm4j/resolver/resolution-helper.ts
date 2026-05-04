@@ -88,13 +88,7 @@ async function resolveFieldsIntoBody(
     config
       .filter(({ inputField }) => body[inputField] != null)
       .map(({ inputField, fieldKey }) =>
-        resolveFieldIntoBody(
-          resolver,
-          fieldKey,
-          inputField,
-          body,
-          warnings,
-        ),
+        resolveFieldIntoBody(resolver, fieldKey, inputField, body, warnings),
       ),
   );
 
