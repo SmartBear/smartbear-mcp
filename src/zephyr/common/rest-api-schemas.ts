@@ -2819,8 +2819,6 @@ export const UpdateTestCycleBody = zod
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       })
-      // .strict()
-      // .nullish()
       .describe(
         "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
       ),
