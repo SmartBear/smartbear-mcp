@@ -1,0 +1,27 @@
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info";
+import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants";
+
+/**
+ * AuthService handles authentication for QTM4J API requests
+ * QTM4J uses API Key based authentication
+ */
+export class AuthService {
+  private readonly apiKey: string;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey.trim();
+  }
+
+  /**
+   * Get authentication headers for QTM4J API requests
+   * @returns Record of HTTP headers including API key authorization
+   */
+  getAuthHeaders(): Record<string, string> {
+    return {
+      [HTTP_HEADERS.API_KEY]: this.apiKey,
+      [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
+      [HTTP_HEADERS.USER_AGENT]: `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      [HTTP_HEADERS.ACCEPT]: CONTENT_TYPES.JSON,
+    };
+  }
+}

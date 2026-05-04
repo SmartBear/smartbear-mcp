@@ -5,14 +5,15 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import { ApiClient } from "./common/api-client";
 import {
   API_CONFIG,
   CLIENT_CONFIG,
   CONFIG_KEYS,
   ERROR_MESSAGES,
   SCHEMA_DESCRIPTIONS,
-} from "./common/constants";
+} from "./config/constants";
+import { ApiClient } from "./http/api-client";
+import { FieldResolver } from "./resolver";
 
 /**
  * Configuration schema for QTM4J client
@@ -63,6 +64,7 @@ export class Qtm4jClient implements Client {
   private _apiKey: string | undefined;
   private baseUrl: string = API_CONFIG.DEFAULT_BASE_URL;
   private apiClient: ApiClient | undefined;
+  private fieldResolver: FieldResolver | undefined;
 
   /**
    * Configure the QTM4J client with API credentials
@@ -82,6 +84,9 @@ export class Qtm4jClient implements Client {
 
     // Initialize API client with token provider for request-scoped credentials
     this.apiClient = new ApiClient(() => this.getAuthToken(), this.baseUrl);
+
+    // Initialize field resolver with the API client
+    this.fieldResolver = new FieldResolver(this.apiClient);
   }
 
   /**
@@ -133,6 +138,23 @@ export class Qtm4jClient implements Client {
   }
 
   /**
+   * Get the configured FieldResolver instance
+   * @returns FieldResolver instance for resolving field names to IDs
+   * @throws Error if client is not configured
+   */
+  getFieldResolver(): FieldResolver {
+    if (!this.fieldResolver) {
+      throw new Error(ERROR_MESSAGES.CLIENT_NOT_CONFIGURED);
+    }
+    return this.fieldResolver;
+  }
+
+  /** Delegates to FieldResolver — project context lives there. */
+  requireProjectContext() {
+    return this.getFieldResolver().requireProjectContext();
+  }
+
+  /**
    * Register all QTM4J tools with the MCP server
    *
    * This method creates tool instances and registers them with the MCP server.
@@ -145,11 +167,19 @@ export class Qtm4jClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
-    // Import tools dynamically
     const { GetProjects } = await import("./tool/project/get-projects");
+    const { SetProjectContext } = await import(
+      "./tool/project/set-project-context"
+    );
+    const { CreateTestCase } = await import(
+      "./tool/test-case/create-test-case"
+    );
 
-    // Create tool instances
-    const tools = [new GetProjects(this)];
+    const tools = [
+      new GetProjects(this),
+      new SetProjectContext(this),
+      new CreateTestCase(this),
+    ];
 
     // Register each tool with the MCP server
     for (const tool of tools) {
