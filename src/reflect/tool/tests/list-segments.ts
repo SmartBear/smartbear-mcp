@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ReflectClient } from "../../client";
-import { API_HOSTNAME, API_KEY_HEADER } from "../../config/constants";
+import { API_HOSTNAME, WEB_APP_HOSTNAME } from "../../config/constants";
 import type { TestPlatform } from "../../types/common";
 
 export class ListSegments extends Tool<ReflectClient> {
@@ -47,13 +47,13 @@ export class ListSegments extends Tool<ReflectClient> {
       limit?: number;
     };
 
-    const url = `https://${API_HOSTNAME}/v1/segments?type=${platform}&offset=${offset}&limit=${limit}`;
+    const urlPath = this.client.isOAuthRequest()
+      ? `https://${WEB_APP_HOSTNAME}/api/mcp`
+      : `https://${API_HOSTNAME}/v1`;
+    const url = `${urlPath}/segments?type=${platform}&offset=${offset}&limit=${limit}`;
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        [API_KEY_HEADER]: this.client.getApiToken(),
-        "Content-Type": "application/json",
-      },
+      headers: this.client.getHeaders(),
     });
 
     if (!response.ok) {
