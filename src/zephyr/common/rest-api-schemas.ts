@@ -1149,10 +1149,9 @@ export const UpdateTestCaseBody = zod
         "The ID of the folder, to remove folder set it's value to null",
       ),
     owner: zod
-      .number()
-      .min(1)
+      .string()
+      .regex(updateTestCaseBodyOwnerAccountIdRegExp)
       .nullable()
-      .optional()
       .describe("Atlassian Account ID of the Jira user."),
     customFields: zod
       .record(zod.string(), zod.unknown())
@@ -2839,13 +2838,10 @@ export const UpdateTestCycleBody = zod
         "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
       ),
     owner: zod
-      .number()
-      .min(1)
+      .string()
+      .regex(updateTestCycleBodyOwnerAccountIdRegExp)
       .nullable()
-      .optional()
-      .describe(
-        "The Jira REST API endpoint to get the full representation of the Jira user.",
-      ),
+      .describe("Atlassian Account ID of the Jira user."),
     customFields: zod
       .record(zod.string(), zod.unknown())
       .optional()
