@@ -242,11 +242,18 @@ export class PactflowClient implements Client {
    *   entitlements, and user entitlements.
    * @throws Error if the request fails or returns a non-OK response.
    */
-  async checkAIEntitlements(): Promise<Entitlement> {
-    return await this.fetchJson<Entitlement>(`${this.aiBaseUrl}/entitlement`, {
-      method: "GET",
-      errorContext: "PactFlow AI Entitlements Request",
-    });
+  async checkAIEntitlements(): Promise<Entitlement | null> {
+    if (this.aiBaseUrl) {
+      return await this.fetchJson<Entitlement>(
+        `${this.aiBaseUrl}/entitlement`,
+        {
+          method: "GET",
+          errorContext: "PactFlow AI Entitlements Request",
+        },
+      );
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -2359,7 +2366,7 @@ export class PactflowClient implements Client {
     let disablePactflowAItools = false;
     try {
       const entitlement = await this.checkAIEntitlements();
-      if (!entitlement.aiEnabled) {
+      if (!entitlement || !entitlement.aiEnabled) {
         disablePactflowAItools = true;
       }
     } catch (error) {
