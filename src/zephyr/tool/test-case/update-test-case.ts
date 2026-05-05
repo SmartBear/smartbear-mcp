@@ -104,7 +104,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
     }
     if (rawUpdates.owner) {
       //do nothing when null or undefined
-      nullValuesObject.owner = { id: rawUpdates.owner };
+      nullValuesObject.owner = { accountId: rawUpdates.owner };
     }
     if (rawUpdates.component) {
       //do nothing when null or undefined

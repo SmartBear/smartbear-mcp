@@ -104,7 +104,7 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
     }
     if (rawUpdates.owner) {
       //do nothing when null or undefined
-      nullValuesObject.owner = { id: rawUpdates.owner };
+      nullValuesObject.owner = { accountId: rawUpdates.owner };
     }
     if (rawUpdates.jiraProjectVersion) {
       //do nothing when null or undefined
