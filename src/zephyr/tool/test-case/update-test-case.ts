@@ -78,8 +78,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
           "The test case should be updated, but no output is expected.",
       },
       {
-        description:
-          "Remove test case  from folder",
+        description: "Remove test case  from folder",
         parameters: {
           testCaseKey: "SA-T15",
           folder: null,
@@ -95,17 +94,27 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       args,
     );
 
-    const { testCaseKey, ...updates } = parsed;
+    const { testCaseKey, ...rawUpdates } = parsed;
 
-    if (updates.folder) { //do nothing when null or undefined
-      (updates as any).folder =  { id: updates.folder };
+    const nullValuesObject: Record<string, any> = {};
+
+    if (rawUpdates.folder) {
+      //do nothing when null or undefined
+      nullValuesObject.folder = { id: rawUpdates.folder };
     }
-    if (updates.owner) { //do nothing when null or undefined
-      (updates as any).owner =  { id: updates.owner };
+    if (rawUpdates.owner) {
+      //do nothing when null or undefined
+      nullValuesObject.owner = { id: rawUpdates.owner };
     }
-    if (updates.component) { //do nothing when null or undefined
-      (updates as any).component =  { id: updates.component };
+    if (rawUpdates.component) {
+      //do nothing when null or undefined
+      nullValuesObject.component = { id: rawUpdates.component };
     }
+
+    const updates = {
+      ...rawUpdates,
+      ...nullValuesObject,
+    };
 
     // Fetch the existing test case to ensure we have all properties
     // This is necessary because Zephyr's PUT endpoints requires the complete resource

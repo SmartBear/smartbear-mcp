@@ -406,21 +406,15 @@ describe("UpdateTestCycle", () => {
         project: {
           id: 10006,
         },
-        jiraProjectVersion: {
-          id: 10006,
-        },
+        jiraProjectVersion: 10006,
         status: {
           id: 10006,
         },
-        folder: {
-          id: 10006,
-        },
+        folder: 10006,
         description: "Updated description",
         plannedStartDate: "2035-03-19T13:15:13Z",
         plannedEndDate: "2035-05-20T13:15:13Z",
-        owner: {
-          accountId: "9",
-        },
+        owner: 9,
         customFields: {
           Browser: "Safari",
           Implemented: true,
@@ -453,8 +447,9 @@ describe("UpdateTestCycle", () => {
       expect(mergedBody.plannedStartDate).toEqual("2035-03-19T13:15:13Z");
       expect(mergedBody.plannedEndDate).toEqual("2035-05-20T13:15:13Z");
       expect(mergedBody.owner).toEqual({
+        id: 9,
         self: "https://jira.example/rest/api/2/user?accountId=9isdyh",
-        accountId: "9",
+        accountId: "9isdyh",
       });
       expect(mergedBody.customFields).toEqual({
         Environment: "Dev",

@@ -1112,7 +1112,12 @@ export const UpdateTestCaseBody = zod
       .max(updateTestCaseBodyLabelsMax)
       .optional()
       .describe("Array of labels associated to this entity."),
-    component: zod.number().min(1).describe("ID and link to the Jira component resource.").nullable().optional(),
+    component: zod
+      .number()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe("ID and link to the Jira component resource."),
     priority: zod
       .object({
         id: zod.number().min(1).describe("The ID of the entity"),
@@ -1135,8 +1140,20 @@ export const UpdateTestCaseBody = zod
       })
       .strict()
       .describe("ID and link to the status resource."),
-    folder: zod.number().min(1).describe("The ID of the folder, to remove folder set it's value to null").nullable().optional(),
-    owner:  zod.number().min(1).describe("Atlassian Account ID of the Jira user.").nullable().optional(),
+    folder: zod
+      .number()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe(
+        "The ID of the folder, to remove folder set it's value to null",
+      ),
+    owner: zod
+      .number()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe("Atlassian Account ID of the Jira user."),
     customFields: zod
       .record(zod.string(), zod.unknown())
       .optional()
@@ -2778,9 +2795,14 @@ export const UpdateTestCycleBody = zod
       })
       .strict()
       .describe("ID and link relative to Zephyr project."),
-    jiraProjectVersion: zod.number().min(1).describe(
-      "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
-    ).nullable().optional(),
+    jiraProjectVersion: zod
+      .number()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe(
+        "ID and Link to fetch information about Jira Project version. Relates to 'Version' or 'Releases' in Jira projects.",
+      ),
     status: zod
       .object({
         id: zod.number().min(1).describe("The ID of the entity"),
@@ -2792,7 +2814,12 @@ export const UpdateTestCycleBody = zod
       })
       .strict()
       .describe("ID and link to the status resource."),
-    folder: zod.number().min(1).describe("ID and link to the folder resource.").nullable().optional(),
+    folder: zod
+      .number()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe("ID and link to the folder resource."),
     description: zod
       .string()
       .nullish()
@@ -2811,7 +2838,14 @@ export const UpdateTestCycleBody = zod
       .describe(
         "The planned end date of the test cycle. This field cannot be blank. Setting it as null or excluding it from the request will leave the field values unchanged. ISO 8601 Format (i.e., yyyy-MM-dd'T'HH:mm:ss'Z')",
       ),
-    owner: zod.number().min(1).describe("The Jira REST API endpoint to get the full representation of the Jira user.").nullable().optional(),
+    owner: zod
+      .number()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe(
+        "The Jira REST API endpoint to get the full representation of the Jira user.",
+      ),
     customFields: zod
       .record(zod.string(), zod.unknown())
       .optional()
