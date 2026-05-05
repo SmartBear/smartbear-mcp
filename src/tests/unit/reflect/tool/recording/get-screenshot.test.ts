@@ -28,10 +28,6 @@ describe("GetScreenshot", () => {
     expect(instance.specification.title).toBe("Get Screenshot");
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(2);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
-    expect(instance.specification.parameters?.[1].name).toBe("format");
-    expect(instance.specification.parameters?.[1].required).toBe(false);
   });
 
   it("should send get-screenshot message and return image content", async () => {

@@ -108,7 +108,7 @@ export class SmartBearMcpServer extends McpServer {
           {
             title: toolTitle,
             description: this.getDescription(params),
-            inputSchema: this.getInputSchema(params),
+            inputSchema: this.schemaToRawShape(params.inputSchema),
             outputSchema: this.getOutputSchema(params),
             annotations: this.getAnnotations(toolTitle, params),
           },
@@ -251,21 +251,6 @@ export class SmartBearMcpServer extends McpServer {
     return annotations;
   }
 
-  private getInputSchema(params: ToolParams): any {
-    const args: Record<string, ZodType> = {};
-    for (const param of params.parameters ?? []) {
-      args[param.name] = param.type;
-      if (param.description) {
-        args[param.name] = args[param.name].describe(param.description);
-      }
-      if (!param.required) {
-        args[param.name] = args[param.name].optional();
-      }
-    }
-
-    return { ...args, ...this.schemaToRawShape(params.inputSchema) };
-  }
-
   private schemaToRawShape(
     schema: ZodType | undefined,
   ): ZodRawShape | undefined {
@@ -295,26 +280,12 @@ export class SmartBearMcpServer extends McpServer {
       summary,
       useCases,
       examples,
-      parameters,
       inputSchema,
       hints,
       outputDescription,
     } = params;
 
     let description = summary;
-
-    // Parameters if available otherwise use inputSchema
-    if ((parameters ?? []).length > 0) {
-      description += `\n\n**Parameters:**\n${parameters
-        ?.map(
-          (p) =>
-            `- ${p.name} (${this.getReadableTypeName(p.type)})${p.required ? " *required*" : ""}` +
-            `${p.description ? `: ${p.description}` : ""}` +
-            `${p.examples ? ` (e.g. ${p.examples.join(", ")})` : ""}` +
-            `${p.constraints ? `\n  - ${p.constraints.join("\n  - ")}` : ""}`,
-        )
-        .join("\n")}`;
-    }
 
     if (inputSchema && inputSchema instanceof ZodObject) {
       description += "\n\n**Parameters:**\n";

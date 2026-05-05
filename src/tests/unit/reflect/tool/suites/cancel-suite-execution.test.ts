@@ -26,9 +26,6 @@ describe("CancelSuiteExecution", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Cancel Suite Execution");
-    expect(instance.specification.parameters).toHaveLength(2);
-    expect(instance.specification.parameters?.[0].name).toBe("suiteId");
-    expect(instance.specification.parameters?.[1].name).toBe("executionId");
   });
 
   it("should PATCH to cancel execution and return results", async () => {

@@ -26,10 +26,6 @@ describe("AddSegment", () => {
     expect(instance.specification.title).toBe("Add Segment");
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
-    expect(instance.specification.parameters).toHaveLength(2);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
-    expect(instance.specification.parameters?.[1].name).toBe("segmentId");
-    expect(instance.specification.parameters?.[1].required).toBe(true);
   });
 
   it("should send add-segment message and return success", async () => {

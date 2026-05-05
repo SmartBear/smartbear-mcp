@@ -26,9 +26,6 @@ describe("GetSuiteExecutionStatus", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Suite Execution Status");
-    expect(instance.specification.parameters).toHaveLength(2);
-    expect(instance.specification.parameters?.[0].name).toBe("suiteId");
-    expect(instance.specification.parameters?.[1].name).toBe("executionId");
   });
 
   it("should call status API and return results", async () => {

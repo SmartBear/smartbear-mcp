@@ -30,7 +30,6 @@ describe("ListTests", () => {
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("List Tests");
     expect(instance.specification.summary).toBe("List all reflect tests");
-    expect(instance.specification.parameters).toHaveLength(0);
   });
 
   it("should call tests API and return results", async () => {

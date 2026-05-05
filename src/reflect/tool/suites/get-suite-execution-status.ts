@@ -10,20 +10,14 @@ export class GetSuiteExecutionStatus extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Get Suite Execution Status",
     summary: "Get the status of a reflect suite execution",
-    parameters: [
-      {
-        name: "suiteId",
-        type: z.string(),
-        description: "ID of the reflect suite to get execution status for",
-        required: true,
-      },
-      {
-        name: "executionId",
-        type: z.string(),
-        description: "ID of the reflect suite execution to get status for",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      suiteId: z
+        .string()
+        .describe("ID of the reflect suite to get execution status for"),
+      executionId: z
+        .string()
+        .describe("ID of the reflect suite execution to get status for"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

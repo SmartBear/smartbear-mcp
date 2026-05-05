@@ -27,9 +27,6 @@ describe("AddPromptStep", () => {
     expect(instance.specification.title).toBe("Add Prompt Step");
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
-    expect(instance.specification.parameters).toHaveLength(2);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
-    expect(instance.specification.parameters?.[1].name).toBe("prompt");
   });
 
   it("should send add-prompt-step message and return success", async () => {
