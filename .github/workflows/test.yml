@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build
+      - changelog-check
       - coverage
       - format
       - lint
@@ -44,6 +45,30 @@ jobs:
           contains(needs.*.result, 'failure')
           || contains(needs.*.result, 'cancelled')
           || contains(needs.*.result, 'skipped')
+
+  changelog-check:
+    name: CHANGELOG.md updated
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Check CHANGELOG.md is updated when src/ changes
+        if: github.event_name == 'pull_request'
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          SRC_CHANGED=$(echo "$CHANGED" | grep '^src/' || true)
+          CHANGELOG_CHANGED=$(echo "$CHANGED" | grep '^CHANGELOG.md$' || true)
+
+          if [ -n "$SRC_CHANGED" ] && [ -z "$CHANGELOG_CHANGED" ]; then
+            echo "::error::src/ was modified but CHANGELOG.md was not updated. Please add an entry to CHANGELOG.md."
+            exit 1
+          fi
 
   build:
     name: Build on Node.js ${{ matrix.node-version }} / ${{ matrix.os }}
