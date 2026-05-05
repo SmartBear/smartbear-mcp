@@ -1114,15 +1114,14 @@ export const UpdateTestCaseBody = zod
       .describe("Array of labels associated to this entity."),
     component: zod
       .object({
-        id: zod.number().min(1).describe("The ID of the entity"),
+        id: zod.number().min(1).describe("The ID of the entity").optional(),
         self: zod
           .string()
           .url()
           .optional()
           .describe("The REST API endpoint to get more resource details."),
       })
-      .strict()
-      .nullish()
+      .optional()
       .describe("ID and link to the Jira component resource."),
     priority: zod
       .object({
@@ -1146,18 +1145,7 @@ export const UpdateTestCaseBody = zod
       })
       .strict()
       .describe("ID and link to the status resource."),
-    folder: zod
-      .object({
-        id: zod.number().min(1).describe("The ID of the entity"),
-        self: zod
-          .string()
-          .url()
-          .optional()
-          .describe("The REST API endpoint to get more resource details."),
-      })
-      .strict()
-      .nullish()
-      .describe("ID and link to the folder resource."),
+    folder: zod.number().min(1).describe("The ID of the folder").nullable().optional(),
     owner: zod
       .object({
         accountId: zod
@@ -1172,9 +1160,7 @@ export const UpdateTestCaseBody = zod
           .describe(
             "The Jira REST API endpoint to get the full representation of the Jira user.",
           ),
-      })
-      .strict()
-      .nullish(),
+      }).optional(),
     customFields: zod
       .record(zod.string(), zod.unknown())
       .optional()
@@ -2886,7 +2872,6 @@ export const UpdateTestCycleBody = zod
             "The Jira REST API endpoint to get the full representation of the Jira user.",
           ),
       })
-      .strict()
       .nullish(),
     customFields: zod
       .record(zod.string(), zod.unknown())

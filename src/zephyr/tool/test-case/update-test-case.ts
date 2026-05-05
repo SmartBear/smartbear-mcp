@@ -91,7 +91,9 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
     // and will delete any properties that are not included in the request
     const existingTestCase: zod.infer<typeof GetTestCase200Response> =
       await this.client.getApiClient().get(`/testcases/${testCaseKey}`);
-
+    if (updates.folder) {
+      (updates as any).folder =  { id: updates.folder };
+    }
     // Deep merge the updates with the existing test case
     // For nested objects like customFields, we merge instead of replacing
     const mergedBody = deepMerge(existingTestCase, updates);
