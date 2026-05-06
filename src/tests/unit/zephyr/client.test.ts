@@ -3,7 +3,7 @@ import { ZephyrClient } from "../../../zephyr/client";
 import { ApiClient } from "../../../zephyr/common/api-client";
 
 describe("ZephyrClient", () => {
-  it("should set name and prefixs", () => {
+  it("should set name and prefix", () => {
     const client = new ZephyrClient();
     expect(client.name).toBe("Zephyr");
     expect(client.toolPrefix).toBe("zephyr");
