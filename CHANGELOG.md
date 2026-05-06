@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Transport] Streamable HTTP requests carrying an `Mcp-Session-Id` the server doesn't recognize now return `404` (with a JSON-RPC error envelope, code `-32001`) instead of `400`. This aligns with the MCP Streamable HTTP spec's Session Management rules, which require a 404 for requests against a terminated session and oblige clients to respond by sending a fresh `InitializeRequest`. In multi-pod deployments this lets clients transparently re-initialize after a pod restart or routing reshuffle drops the in-memory session, instead of treating it as a permanent protocol error. [#448]([https:](https://github.com/SmartBear/smartbear-mcp/pull/448))
+
 ## [0.19.2] - 2026-05-05
 
 - [Zephyr] fix Zephyr for Rovo Agent (avoid using nullish for update test case and update test cycle tools) [#442](https://github.com/SmartBear/smartbear-mcp/pull/442)

@@ -300,8 +300,11 @@ async function createNewTransport(
  *    - Creates new server + transport, generates session ID
  * 2. Subsequent requests: Include MCP-Session-Id header
  *    - Routes to existing transport for the session
+ *    - Unknown session IDs return 404 per spec, prompting the client to
+ *      re-initialize (important for multi-pod deployments where a session
+ *      may not be known to every pod).
  */
-async function handleStreamableHttpRequest(
+export async function handleStreamableHttpRequest(
   req: IncomingMessage,
   res: ServerResponse,
   transports: Map<
@@ -318,8 +321,25 @@ async function handleStreamableHttpRequest(
 
     let transport: StreamableHTTPServerTransport;
 
-    // Case 1: Existing session - route to existing transport
-    if (sessionId && transports.has(sessionId)) {
+    // Case 1: Unknown session - per MCP Streamable HTTP spec, return 404 so
+    // clients know to re-run `initialize` (e.g. after a pod restart drops the
+    // in-memory session map) rather than treating this as a permanent error.
+    if (sessionId && !transports.has(sessionId)) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          error: {
+            code: -32001,
+            message: "Session not found",
+          },
+          id: null,
+        }),
+      );
+      return;
+    }
+    // Case 2: Existing session - route to existing transport
+    if (sessionId) {
       const existingTransport = getExistingTransport(
         sessionId,
         transports,
@@ -328,9 +348,8 @@ async function handleStreamableHttpRequest(
       if (!existingTransport) return;
       transport = existingTransport;
     }
-    // Case 2: New session - must be an initialize request
+    // Case 3: New session - must be an initialize request
     else if (
-      !sessionId &&
       req.method === "POST" &&
       parsedBody &&
       isInitializeRequest(parsedBody)
@@ -339,7 +358,7 @@ async function handleStreamableHttpRequest(
       if (!newTransport) return;
       transport = newTransport;
     }
-    // Case 3: Invalid request
+    // Case 4: Invalid request
     else {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(
