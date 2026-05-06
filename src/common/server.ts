@@ -108,8 +108,10 @@ export class SmartBearMcpServer extends McpServer {
           {
             title: toolTitle,
             description: this.getDescription(params),
-            inputSchema: this.schemaToRawShape(params.inputSchema),
-            outputSchema: this.getOutputSchema(params),
+            inputSchema: params.inputSchema
+              ? this.schemaToRawShape(params.inputSchema)
+              : {},
+            outputSchema: this.schemaToRawShape(params.outputSchema),
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
@@ -271,10 +273,6 @@ export class SmartBearMcpServer extends McpServer {
     return undefined;
   }
 
-  private getOutputSchema(params: ToolParams): any {
-    return this.schemaToRawShape(params.outputSchema);
-  }
-
   private getDescription(params: ToolParams): string {
     const {
       summary,
@@ -288,12 +286,15 @@ export class SmartBearMcpServer extends McpServer {
     let description = summary;
 
     if (inputSchema && inputSchema instanceof ZodObject) {
-      description += "\n\n**Parameters:**\n";
-      description += Object.keys(inputSchema.shape)
+      let parameters = Object.keys(inputSchema.shape)
         .map((key) =>
           this.formatParameterDescription(key, inputSchema.shape[key]),
         )
         .join("\n");
+      if (parameters.length === 0) {
+        parameters = "None";
+      }
+      description += `\n\n**Parameters:**\n${parameters}`;
     }
 
     if (outputDescription) {

@@ -48,7 +48,7 @@ Expected Output: JSON object with build details including version, source contro
     "description": "Retrieve the 'current' project on which tools should operate by default. This allows BugSnag tools to be called with no projectId parameter.
 
 **Parameters:**
-
+None
 
 **Use Cases:** 1. Understand if a current project has been set
 
@@ -1394,7 +1394,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "List all available permission scopes (admin).
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin List Permissions",
@@ -1409,7 +1410,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "List all roles defined in the workspace (admin).
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin List Roles",
@@ -1550,7 +1552,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Reset all roles to their factory defaults (admin).
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Admin Reset Roles",
@@ -1826,7 +1829,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Delete ALL consumer-provider integrations in the workspace.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Delete All Integrations",
@@ -1960,6 +1964,34 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Execute Webhook",
+  },
+  "contract-testing_generate_pact_tests": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Contract Testing: Generate Pact Tests",
+    },
+    "description": "Generate Pact tests using PactFlow AI. You can provide one or more of the following input types: (1) request/response pairs for specific interactions, (2) code files to analyze and extract interactions from, and/or (3) OpenAPI document to generate tests for specific endpoints. When providing an OpenAPI document, a matcher is required to specify which endpoints to generate tests for.
+
+**Parameters:**
+- language (enum): Target language for the generated Pact tests. If not provided, will be inferred from other inputs.
+- requestResponse (object): Direct request/response pair for a specific interaction. Use this when you have concrete examples of API requests and responses
+- code (array): Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls
+- openapi (any)
+- additionalInstructions (string): Optional free-form instructions to guide the generation process (e.g., 'Focus on error scenarios', 'Include authentication headers', 'Use specific test framework patterns')
+- testTemplate (object): Optional test template to use as a basis for generation. Helps ensure generated tests follow your specific patterns, frameworks, and coding standards",
+    "inputSchema": [
+      "additionalInstructions",
+      "code",
+      "language",
+      "openapi",
+      "requestResponse",
+      "testTemplate",
+    ],
+    "outputSchema": undefined,
+    "title": "Contract Testing: Generate Pact Tests",
   },
   "contract-testing_get_audit_log": {
     "annotations": {
@@ -2267,7 +2299,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve the profile of the currently authenticated user.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Current User",
@@ -2396,7 +2429,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Fetch metrics across the entire workspace
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Metrics",
@@ -2573,7 +2607,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve system-wide preferences.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Get System Preferences",
@@ -2588,7 +2623,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Fetch metrics for all teams
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Get Team Metrics",
@@ -2603,7 +2639,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve the current user's preferences.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Get User Preferences",
@@ -2636,7 +2673,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve API tokens for the current user.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: List API Tokens",
@@ -2675,7 +2713,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve all environments configured in the Pact Broker or PactFlow workspace.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: List Environments",
@@ -2690,7 +2729,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve all consumer-provider integrations registered in the workspace.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: List Integrations",
@@ -2785,7 +2825,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve all secrets stored in the workspace.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: List Secrets",
@@ -2800,7 +2841,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve all webhooks configured in the workspace.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: List Webhooks",
@@ -2997,6 +3039,32 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "outputSchema": undefined,
     "title": "Contract Testing: Remove Label from Pacticipant",
   },
+  "contract-testing_review_pact_tests": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Contract Testing: Review Pact Tests",
+    },
+    "description": "Review Pact tests using PactFlow AI. You can provide the following inputs: (1) Pact tests to be reviewed along with metadata
+
+**Parameters:**
+- pactTests (object) *required*: Primary pact tests that needs to be refined.
+- code (array): Collection of source code files to analyze and extract API interactions from. Include client code, data models, existing tests, or any code that makes API calls
+- userInstructions (string): Optional free-form instructions that provide additional context or specify areas of focus during the refinement process of the Pact test.
+- errorMessages (array): Optional error output from failed contract test runs. These can be used to better understand the context or failures observed and guide the recommendations toward resolving specific issues.
+- openapi (any)",
+    "inputSchema": [
+      "code",
+      "errorMessages",
+      "openapi",
+      "pactTests",
+      "userInstructions",
+    ],
+    "outputSchema": undefined,
+    "title": "Contract Testing: Review Pact Tests",
+  },
   "contract-testing_test_execute_webhooks": {
     "annotations": {
       "destructiveHint": false,
@@ -3007,7 +3075,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Trigger a test execution of all matching webhooks without a real event.
 
-**Parameters:**",
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Contract Testing: Test Execute Webhooks",
@@ -6934,7 +7003,7 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
 
 **Parameters:**
 - sessionId (string) *required*: The ID of the Reflect recording session
-- prompt (string) *required*: The natural language prompt describing the test step. The prompt should describe a single action, assertion, or query. The prompt can only contain literal text; it cannot contain template variables, secrets, or other dynamic syntax. If we are in a Web recording, the prompt can perform browser navigation (e.g. "Click on the back button", "Navigate to https://www.example.com") and use the tab and enter keys to navigate (e.g. "Press the tab key", "Press the enter key").",
+- prompt (string) *required*: The natural language prompt describing the test step. The prompt should describe a single action, assertion, or query. The prompt can only contain literal text; it cannot contain template variables, secrets, or other dynamic syntax. If we are in a Web recording, the prompt can perform browser navigation (e.g. 'Click on the back button', 'Navigate to https://www.example.com') and use the tab and enter keys to navigate (e.g. 'Press the tab key', 'Press the enter key').",
     "inputSchema": [
       "prompt",
       "sessionId",
@@ -7150,7 +7219,10 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
       "readOnlyHint": true,
       "title": "Reflect: List Suites",
     },
-    "description": "Retrieve a list of all reflect suites available",
+    "description": "Retrieve a list of all reflect suites available
+
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Reflect: List Suites",
@@ -7163,7 +7235,10 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
       "readOnlyHint": true,
       "title": "Reflect: List Tests",
     },
-    "description": "List all reflect tests",
+    "description": "List all reflect tests
+
+**Parameters:**
+None",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Reflect: List Tests",
