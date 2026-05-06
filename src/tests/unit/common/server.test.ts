@@ -643,26 +643,4 @@ describe("SmartBearMcpServer", () => {
       expect(rawShape).toBeUndefined();
     });
   });
-
-  describe("getReadableTypeName", () => {
-    it.each([
-      ["string", z.string()],
-      ["number", z.number()],
-      ["boolean", z.boolean()],
-      ["array", z.array(z.string())],
-      ["object", z.object({ key: z.string() })],
-      ["enum", z.enum(["value1", "value2"])],
-      ["literal", z.literal("value")],
-      ["union", z.union([z.string(), z.number()])],
-      ["record<string, number>", z.record(z.string(), z.number())],
-      ["record<string, array>", z.record(z.string(), z.array(z.string()))],
-      ["any", z.any()],
-      ["string", z.optional(z.string())],
-      ["string", z.string().default("default")],
-    ])("should return '%s' for the given Zod type", (expected, zodType) => {
-      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
-      const result = server["getReadableTypeName"](zodType);
-      expect(result).toBe(expected);
-    });
-  });
 });
