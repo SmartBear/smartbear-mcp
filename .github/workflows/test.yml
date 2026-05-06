@@ -63,7 +63,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
-          SRC_CHANGED=$(echo "$CHANGED" | grep '^src/' || true)
+          SRC_CHANGED=$(echo "$CHANGED" | grep '^src/' | grep -v '^src/tests/' || true)
           CHANGELOG_CHANGED=$(echo "$CHANGED" | grep '^CHANGELOG.md$' || true)
 
           if [ -n "$SRC_CHANGED" ] && [ -z "$CHANGELOG_CHANGED" ]; then
