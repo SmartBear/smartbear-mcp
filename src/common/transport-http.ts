@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
+import querystring from "node:querystring";
 
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -505,16 +506,27 @@ export async function newServer(
       clientRegistry.configure(
         server,
         (client, key) => {
+          // 1. Try query string
+          const queryStringName = getQueryStringName(client, key);
+          const queryParams = querystring.parse(req.url?.split("?")[1] || "");
+          let value =
+            queryParams[queryStringName] ||
+            queryParams[queryStringName.toLowerCase()];
+          if (typeof value === "string") {
+            return value;
+          }
+
+          // 2. Try headers
           const headerName = getHeaderName(client, key);
           // Check both original case and lower-case headers for compatibility
           // (HTTP headers are case-insensitive, but Node.js lowercases them)
-          const value =
+          value =
             req.headers[headerName] || req.headers[headerName.toLowerCase()];
           if (typeof value === "string") {
             return value;
           }
 
-          // Fall back to environment variable if header is not present
+          // 3. Fall back to environment variable
           const envVarName = getEnvVarName(client, key);
           return process.env[envVarName] || null;
         },
@@ -597,6 +609,16 @@ export function getHeaderName(client: Client, key: string): string {
         part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
     )
     .join("-")}`;
+}
+
+export function getQueryStringName(client: Client, key: string): string {
+  return `${client.configPrefix.toLowerCase()}${key
+    .split("_")
+    .map(
+      (part: string) =>
+        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+    )
+    .join("")}`;
 }
 
 /**
