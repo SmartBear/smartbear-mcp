@@ -29,9 +29,6 @@ describe("ListSuiteExecutions", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("List Suite Executions");
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("suiteId");
-    expect(instance.specification.parameters?.[0].required).toBe(true);
   });
 
   it("should call suite executions API and return results", async () => {

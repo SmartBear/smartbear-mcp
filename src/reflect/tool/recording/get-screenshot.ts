@@ -14,20 +14,13 @@ export class GetScreenshot extends Tool<ReflectClient> {
       "Capture a screenshot from the current state of an active Reflect recording session",
     readOnly: true,
     idempotent: true,
-    parameters: [
-      {
-        name: "sessionId",
-        type: z.string(),
-        description: "The ID of the Reflect recording session",
-        required: true,
-      },
-      {
-        name: "format",
-        type: z.enum(["png", "jpeg"]),
-        description: "The image format for the screenshot (png or jpeg)",
-        required: false,
-      },
-    ],
+    inputSchema: z.object({
+      sessionId: z.string().describe("The ID of the Reflect recording session"),
+      format: z
+        .enum(["png", "jpeg"])
+        .optional()
+        .describe("The image format for the screenshot (png or jpeg)"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

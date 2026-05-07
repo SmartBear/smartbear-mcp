@@ -72,14 +72,9 @@ describe("SmartBearMcpServer", () => {
         {
           title: "Test Tool",
           summary: "A test tool",
-          parameters: [
-            {
-              name: "p1",
-              type: z.string(),
-              required: true,
-              description: "The input for the tool",
-            },
-          ],
+          inputSchema: z.object({
+            p1: z.string().describe("The input for the tool"),
+          }),
         },
         registerCbMock,
       );
@@ -150,60 +145,23 @@ describe("SmartBearMcpServer", () => {
         {
           title: "Test Tool",
           summary: "A test tool",
-          parameters: [
-            {
-              name: "p1",
-              type: z.string(),
-              required: true,
-              description: "The input for the tool",
-              examples: ["example1", "example2"],
-              constraints: ["constraint1", "constraint2"],
-            },
-            {
-              name: "p2",
-              type: z.number(),
-              required: false,
-              description: "The optional numeric input for the tool",
-            },
-            {
-              name: "p3",
-              type: z.boolean(),
-              required: true,
-            },
-            {
-              name: "p4",
-              type: z.array(z.string()),
-              required: true,
-            },
-            {
-              name: "p5",
-              type: z.object({
-                key1: z.string(),
-                key2: z.number(),
-              }),
-              required: true,
-            },
-            {
-              name: "p6",
-              type: z.enum(["value1", "value2", "value3"]),
-              required: true,
-            },
-            {
-              name: "p7",
-              type: z.literal("value"),
-              required: true,
-            },
-            {
-              name: "p8",
-              type: z.union([z.literal("value1"), z.literal("value2")]),
-              required: true,
-            },
-            {
-              name: "p9",
-              type: z.any(),
-              required: true,
-            },
-          ],
+          inputSchema: z.object({
+            p1: z.string().describe("The input for the tool"),
+            p2: z
+              .number()
+              .describe("The optional numeric input for the tool")
+              .optional(),
+            p3: z.boolean(),
+            p4: z.array(z.string()),
+            p5: z.object({
+              key1: z.string(),
+              key2: z.number(),
+            }),
+            p6: z.enum(["value1", "value2", "value3"]),
+            p7: z.literal("value"),
+            p8: z.union([z.literal("value1"), z.literal("value2")]),
+            p9: z.any(),
+          }),
           purpose: "To test the tool registration process",
           useCases: ["Testing", "Development"],
           examples: [
@@ -240,9 +198,7 @@ describe("SmartBearMcpServer", () => {
       expect(registerToolParams[1].description).toBe(
         "A test tool\n\n" +
           "**Parameters:**\n" +
-          "- p1 (string) *required*: The input for the tool (e.g. example1, example2)\n" +
-          "  - constraint1\n" +
-          "  - constraint2\n" +
+          "- p1 (string) *required*: The input for the tool\n" +
           "- p2 (number): The optional numeric input for the tool\n" +
           "- p3 (boolean) *required*\n" +
           "- p4 (array) *required*\n" +

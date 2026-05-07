@@ -26,8 +26,6 @@ describe("GetTestStatus", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Get Test Status");
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("executionId");
   });
 
   it("should call execution status API with executionId in URL", async () => {

@@ -1,5 +1,5 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
+import { type ZodRawShape, z } from "zod";
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ReflectClient } from "../../client";
@@ -9,7 +9,7 @@ export class ListTests extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "List Tests",
     summary: "List all reflect tests",
-    parameters: [],
+    inputSchema: z.object({}),
   };
 
   handle: ToolCallback<ZodRawShape> = async (_args) => {

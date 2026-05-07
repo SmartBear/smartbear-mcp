@@ -43,9 +43,6 @@ describe("ConnectToSession", () => {
     expect(instance.specification.title).toBe("Connect To Session");
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
-    expect(instance.specification.parameters?.[0].required).toBe(true);
   });
 
   it("should return cached connection if already connected", async () => {

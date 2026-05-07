@@ -10,14 +10,9 @@ export class ExecuteSuite extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Execute Suite",
     summary: "Execute a reflect suite",
-    parameters: [
-      {
-        name: "suiteId",
-        type: z.string(),
-        description: "ID of the reflect suite to execute",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      suiteId: z.string().describe("ID of the reflect suite to execute"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

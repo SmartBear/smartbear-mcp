@@ -108,8 +108,10 @@ export class SmartBearMcpServer extends McpServer {
           {
             title: toolTitle,
             description: this.getDescription(params),
-            inputSchema: this.getInputSchema(params),
-            outputSchema: this.getOutputSchema(params),
+            inputSchema: params.inputSchema
+              ? this.schemaToRawShape(params.inputSchema)
+              : {},
+            outputSchema: this.schemaToRawShape(params.outputSchema),
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
@@ -251,21 +253,6 @@ export class SmartBearMcpServer extends McpServer {
     return annotations;
   }
 
-  private getInputSchema(params: ToolParams): any {
-    const args: Record<string, ZodType> = {};
-    for (const param of params.parameters ?? []) {
-      args[param.name] = param.type;
-      if (param.description) {
-        args[param.name] = args[param.name].describe(param.description);
-      }
-      if (!param.required) {
-        args[param.name] = args[param.name].optional();
-      }
-    }
-
-    return { ...args, ...this.schemaToRawShape(params.inputSchema) };
-  }
-
   private schemaToRawShape(
     schema: ZodType | undefined,
   ): ZodRawShape | undefined {
@@ -286,16 +273,11 @@ export class SmartBearMcpServer extends McpServer {
     return undefined;
   }
 
-  private getOutputSchema(params: ToolParams): any {
-    return this.schemaToRawShape(params.outputSchema);
-  }
-
   private getDescription(params: ToolParams): string {
     const {
       summary,
       useCases,
       examples,
-      parameters,
       inputSchema,
       hints,
       outputDescription,
@@ -303,26 +285,16 @@ export class SmartBearMcpServer extends McpServer {
 
     let description = summary;
 
-    // Parameters if available otherwise use inputSchema
-    if ((parameters ?? []).length > 0) {
-      description += `\n\n**Parameters:**\n${parameters
-        ?.map(
-          (p) =>
-            `- ${p.name} (${this.getReadableTypeName(p.type)})${p.required ? " *required*" : ""}` +
-            `${p.description ? `: ${p.description}` : ""}` +
-            `${p.examples ? ` (e.g. ${p.examples.join(", ")})` : ""}` +
-            `${p.constraints ? `\n  - ${p.constraints.join("\n  - ")}` : ""}`,
-        )
-        .join("\n")}`;
-    }
-
     if (inputSchema && inputSchema instanceof ZodObject) {
-      description += "\n\n**Parameters:**\n";
-      description += Object.keys(inputSchema.shape)
+      let parameters = Object.keys(inputSchema.shape)
         .map((key) =>
           this.formatParameterDescription(key, inputSchema.shape[key]),
         )
         .join("\n");
+      if (parameters.length === 0) {
+        parameters = "None";
+      }
+      description += `\n\n**Parameters:**\n${parameters}`;
     }
 
     if (outputDescription) {

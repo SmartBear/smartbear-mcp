@@ -2366,7 +2366,7 @@ export class PactflowClient implements Client {
     let disablePactflowAItools = false;
     try {
       const entitlement = await this.checkAIEntitlements();
-      if (!entitlement || !entitlement.aiEnabled) {
+      if (entitlement && !entitlement.aiEnabled) {
         disablePactflowAItools = true;
       }
     } catch (error) {

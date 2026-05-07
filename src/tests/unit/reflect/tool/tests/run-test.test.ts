@@ -26,9 +26,6 @@ describe("RunTest", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Run Test");
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("testId");
-    expect(instance.specification.parameters?.[0].required).toBe(true);
   });
 
   it("should POST to run test and return results", async () => {

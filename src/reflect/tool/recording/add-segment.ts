@@ -13,20 +13,10 @@ export class AddSegment extends Tool<ReflectClient> {
       "Insert a reusable test segment into an active Reflect recording session",
     readOnly: false,
     idempotent: false,
-    parameters: [
-      {
-        name: "sessionId",
-        type: z.string(),
-        description: "The ID of the Reflect recording session",
-        required: true,
-      },
-      {
-        name: "segmentId",
-        type: z.number(),
-        description: "The ID of the segment to add",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      sessionId: z.string().describe("The ID of the Reflect recording session"),
+      segmentId: z.number().describe("The ID of the segment to add"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

@@ -10,14 +10,9 @@ export class RunTest extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Run Test",
     summary: "Run a reflect test",
-    parameters: [
-      {
-        name: "testId",
-        type: z.string(),
-        description: "ID of the reflect test to run",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      testId: z.string().describe("ID of the reflect test to run"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
