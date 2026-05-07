@@ -14,6 +14,7 @@ Laravel
 latestby
 Magento
 minidump
+mcpb
 modelcontextprotocol
 Negroni
 onsessioninitialized
