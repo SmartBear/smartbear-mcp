@@ -168,9 +168,7 @@ export class Qtm4jClient implements Client {
     const { CreateTestCase } = await import(
       "./tool/test-case/create-test-case"
     );
-    const { GetTestCases } = await import(
-      "./tool/test-case/get-test-cases"
-    );
+    const { GetTestCases } = await import("./tool/test-case/get-test-cases");
     const { GetTestSteps } = await import("./tool/test-case/get-test-steps");
 
     const tools = [
