@@ -26,9 +26,6 @@ describe("ExecuteSuite", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("Execute Suite");
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("suiteId");
-    expect(instance.specification.parameters?.[0].required).toBe(true);
   });
 
   it("should POST to execute suite and return results", async () => {

@@ -27,8 +27,6 @@ describe("DeletePreviousStep", () => {
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
     expect(instance.specification.destructive).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
   });
 
   it("should send delete-step message and return success", async () => {

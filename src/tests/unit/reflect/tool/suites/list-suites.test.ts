@@ -32,7 +32,6 @@ describe("ListSuites", () => {
     expect(instance.specification.summary).toBe(
       "Retrieve a list of all reflect suites available",
     );
-    expect(instance.specification.parameters).toHaveLength(0);
   });
 
   it("should call suites API and return results", async () => {

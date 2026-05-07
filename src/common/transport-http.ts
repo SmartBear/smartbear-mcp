@@ -11,7 +11,7 @@ import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { getEnvVarName } from "./transport-stdio";
 import type { Client } from "./types";
-import { isOptionalType } from "./zod-utils";
+import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 /**
  * Helper to construct the base URL from the request, respecting proxy headers.
@@ -655,7 +655,7 @@ function getHttpHeadersHelp(): string[] {
         ? " (optional)"
         : " (required)";
       messages.push(
-        `    - ${headerName}${requiredTag}: ${requirement.description}`,
+        `    - ${headerName}${requiredTag}: ${getTypeDescription(requirement)}`,
       );
     }
   }

@@ -1,7 +1,7 @@
 import { type ZodType, ZodURL } from "zod";
 import type { SmartBearMcpServer } from "./server";
 import type { Client } from "./types";
-import { isOptionalType, unwrapZodType } from "./zod-utils";
+import { fullyUnwrapZodType, isOptionalType } from "./zod-utils";
 
 /**
  * Central registry for all MCP clients
@@ -52,7 +52,7 @@ class ClientRegistry {
    * @param value The actual config value to validate
    */
   private validateAllowedEndpoint(zodType: ZodType, value: string): void {
-    if (unwrapZodType(zodType) instanceof ZodURL) {
+    if (fullyUnwrapZodType(zodType) instanceof ZodURL) {
       const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
       if (allowedEndpoints) {
         for (const endpoint of allowedEndpoints) {

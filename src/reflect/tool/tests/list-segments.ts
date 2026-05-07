@@ -14,26 +14,16 @@ export class ListSegments extends Tool<ReflectClient> {
       "Retrieve available reusable test segments for the given platform type. Segments are reusable test steps with an optional set of parameters that can used across multiple tests.",
     readOnly: true,
     idempotent: true,
-    parameters: [
-      {
-        name: "platform",
-        type: z.enum(["api", "native-mobile", "web"]),
-        description: "The platform type to retrieve segments for",
-        required: true,
-      },
-      {
-        name: "offset",
-        type: z.number(),
-        description: "Offset for pagination",
-        required: false,
-      },
-      {
-        name: "limit",
-        type: z.number(),
-        description: "Maximum number of segments to return",
-        required: false,
-      },
-    ],
+    inputSchema: z.object({
+      platform: z
+        .enum(["api", "native-mobile", "web"])
+        .describe("The platform type to retrieve segments for"),
+      offset: z.number().optional().describe("Offset for pagination"),
+      limit: z
+        .number()
+        .optional()
+        .describe("Maximum number of segments to return"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

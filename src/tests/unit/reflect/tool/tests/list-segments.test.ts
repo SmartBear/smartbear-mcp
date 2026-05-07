@@ -47,12 +47,6 @@ describe("ListSegments", () => {
     expect(instance.specification.title).toBe("List Segments");
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(3);
-    expect(instance.specification.parameters?.[0].name).toBe("platform");
-    expect(instance.specification.parameters?.[1].name).toBe("offset");
-    expect(instance.specification.parameters?.[1].required).toBe(false);
-    expect(instance.specification.parameters?.[2].name).toBe("limit");
-    expect(instance.specification.parameters?.[2].required).toBe(false);
   });
 
   it("should call segments API and return results", async () => {

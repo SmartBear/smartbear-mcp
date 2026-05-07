@@ -42,7 +42,6 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "List Portals",
     summary:
       "Search for available portals within Swagger. Only portals where you have at least a designer role, either at the product level or organization level, are returned.",
-    parameters: [],
     handler: "getPortals",
   },
   {

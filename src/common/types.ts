@@ -17,7 +17,6 @@ import type { SmartBearMcpServer } from "./server";
 export interface ToolParams {
   title: string;
   summary: string;
-  parameters?: Parameters; // either 'parameters' or an 'inputSchema' should be present
   inputSchema?: ZodType;
   /**
    * Specifies the type of object returned by the tool. <br>
