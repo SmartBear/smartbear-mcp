@@ -317,14 +317,15 @@ export async function handleStreamableHttpRequest(
 ) {
   try {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    const parsedBody = await parseRequestBody(req);
-
-    let transport: StreamableHTTPServerTransport;
 
     // Case 1: Unknown session - per MCP Streamable HTTP spec, return 404 so
     // clients know to re-run `initialize` (e.g. after a pod restart drops the
     // in-memory session map) rather than treating this as a permanent error.
+    // Reject before buffering the body so a junk session id can't force JSON
+    // parsing of an arbitrary payload; drain the stream so keep-alive sockets
+    // aren't left half-read.
     if (sessionId && !transports.has(sessionId)) {
+      req.resume();
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
@@ -338,6 +339,11 @@ export async function handleStreamableHttpRequest(
       );
       return;
     }
+
+    const parsedBody = await parseRequestBody(req);
+
+    let transport: StreamableHTTPServerTransport;
+
     // Case 2: Existing session - route to existing transport
     if (sessionId) {
       const existingTransport = getExistingTransport(

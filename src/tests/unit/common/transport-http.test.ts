@@ -437,14 +437,23 @@ function fakeStreamRequest(opts: {
 }): IncomingMessage {
   const { method = "POST", headers = {}, body } = opts;
   const listeners: Record<string, ((arg?: any) => void)[]> = {};
+  let emitted = false;
   const req: any = {
     method,
     headers,
+    resume() {
+      // Drain: behave as if data/end fired with no consumers.
+      emitted = true;
+    },
     on(event: string, cb: (arg?: any) => void) {
       if (!listeners[event]) listeners[event] = [];
       listeners[event].push(cb);
-      // Schedule emission of data/end events after listeners have been registered
-      if (event === "end") {
+      // Emit body once on first 'end' subscription. Multiple subscribers see
+      // their callbacks invoked in the same emission cycle; later subscribers
+      // do not retrigger emission (which would duplicate the body and break
+      // JSON parsing).
+      if (event === "end" && !emitted) {
+        emitted = true;
         queueMicrotask(() => {
           if (body !== undefined) {
             const chunk = Buffer.from(JSON.stringify(body));
@@ -524,26 +533,47 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     });
     clientRegistry.getAll = () => [testClient];
 
+    // Capture the connect spy so we can assert dispatch into createNewTransport.
+    let capturedConnect: ReturnType<typeof vi.fn> | undefined;
     const { SmartBearMcpServer } = await import("../../../common/server.js");
-    vi.mocked(SmartBearMcpServer).mockImplementation(
-      () =>
-        ({
-          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
-          addClient: vi.fn(),
-          getClients: () => [testClient],
-          connect: vi.fn(),
-          setSamplingSupported: vi.fn(),
-          setElicitationSupported: vi.fn(),
-          cleanupSession: vi.fn(),
-          server: { elicitInput: vi.fn() },
-        }) as any,
+    vi.mocked(SmartBearMcpServer).mockImplementation(() => {
+      capturedConnect = vi.fn();
+      return {
+        getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+        addClient: vi.fn(),
+        getClients: () => [testClient],
+        connect: capturedConnect,
+        setSamplingSupported: vi.fn(),
+        setElicitationSupported: vi.fn(),
+        cleanupSession: vi.fn(),
+        server: { elicitInput: vi.fn() },
+      } as any;
+    });
+
+    // Stub the SDK transport's handleRequest so we don't run the real
+    // initialize flow against an incomplete fakeResponse stub. The point of
+    // this test is to verify dispatch *into* createNewTransport, not to
+    // exercise the SDK internals.
+    const { StreamableHTTPServerTransport } = await import(
+      "@modelcontextprotocol/sdk/server/streamableHttp.js"
     );
+    const handleRequestSpy = vi
+      .spyOn(StreamableHTTPServerTransport.prototype, "handleRequest")
+      .mockResolvedValue(undefined);
 
-    await handleStreamableHttpRequest(req, res, transports);
+    try {
+      await handleStreamableHttpRequest(req, res, transports);
 
-    // No 4xx error response was written for the initialize-without-session path
-    expect(res._status).not.toBe(400);
-    expect(res._status).not.toBe(404);
+      // Both signals must fire to prove we took the createNewTransport branch:
+      // server.connect(transport) and transport.handleRequest(req, res, body).
+      expect(capturedConnect).toBeDefined();
+      expect(capturedConnect).toHaveBeenCalledOnce();
+      expect(handleRequestSpy).toHaveBeenCalledOnce();
+      // No error response written — guards against 400, 404, AND 500.
+      expect(res._status).toBeNull();
+    } finally {
+      handleRequestSpy.mockRestore();
+    }
   });
 
   it("routes to existing transport when session id is known", async () => {
