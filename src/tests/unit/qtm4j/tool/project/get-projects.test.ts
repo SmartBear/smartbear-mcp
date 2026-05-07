@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
-import {
-  GetProjectsBody,
-  GetProjectsResponse,
-} from "../../../../../qtm4j/schema/project.schema";
+import { GetProjectsResponse } from "../../../../../qtm4j/schema/project.schema";
 import { GetProjects } from "../../../../../qtm4j/tool/project/get-projects";
 
 describe("GetProjects", () => {

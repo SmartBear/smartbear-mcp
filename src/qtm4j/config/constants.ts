@@ -27,6 +27,17 @@ export const ENDPOINTS = {
   /** Create test case endpoint */
   CREATE_TEST_CASE: `${API_CONFIG.API_VERSION}/testcases`,
 
+  /** Search test cases endpoint */
+  SEARCH_TEST_CASES: `${API_CONFIG.API_VERSION}/testcases/search`,
+
+  /** Resolve test case keys → internal UIDs for a given project */
+  RESOLVE_TEST_CASE_IDS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcases/resolve-ids`,
+
+  /** Test steps search endpoint */
+  TEST_STEPS: (id: string, versionNo: number) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/teststeps/search`,
+
   /** Common attributes endpoint (priority, statuses) */
   COMMON_ATTRIBUTES: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/common-attributes`,
@@ -111,10 +122,19 @@ export const PAGINATION = {
   DEFAULT_MAX_RESULTS_PROJECTS: 100,
 
   /** Default maximum results for test cases */
-  DEFAULT_MAX_RESULTS_TEST_CASES: 20,
+  DEFAULT_MAX_RESULTS_TEST_CASES: 50,
 
   /** Maximum allowed results per request */
   MAX_ALLOWED_RESULTS: 100,
+
+  /** Maximum allowed results per request for test cases (backend enforced) */
+  MAX_ALLOWED_RESULTS_TEST_CASES: 50,
+
+  /** Default maximum results for test steps */
+  DEFAULT_MAX_RESULTS_TEST_STEPS: 50,
+
+  /** Maximum allowed results per request for test steps */
+  MAX_ALLOWED_RESULTS_TEST_STEPS: 100,
 
   /** Minimum allowed results per request */
   MIN_ALLOWED_RESULTS: 1,
@@ -155,6 +175,20 @@ export const TOOL_NAMES = {
     TITLE: "Create Test Case",
     SUMMARY:
       "Create a new test case in a QTM4J project. Supports auto-resolving human-readable names for priority, status, labels, and components.",
+  },
+
+  /** Search Test Cases tool */
+  SEARCH_TEST_CASES: {
+    TITLE: "Search Test Cases",
+    SUMMARY:
+      "Search and filter test cases in a QTM4J project with support for pagination, field selection, and sorting.",
+  },
+
+  /** Get Test Steps tool */
+  GET_TEST_STEPS: {
+    TITLE: "Get Test Steps",
+    SUMMARY:
+      "Get test steps for a test case by its key and version. Accepts the human-readable key (e.g. 'SCRUM-TC-145') and resolves it to the internal ID automatically.",
   },
 } as const;
 
@@ -294,6 +328,10 @@ export const RESPONSE_FIELDS = {
 
   /** Data field */
   DATA: "data",
+
+  FIELDS: "fields",
+
+  SORT: "sort",
 } as const;
 
 /**

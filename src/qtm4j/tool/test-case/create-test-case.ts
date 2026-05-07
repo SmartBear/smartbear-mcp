@@ -2,30 +2,20 @@ import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
 import { ENDPOINTS, TOOL_NAMES } from "../../config/constants";
-import {
-  CommonAttributeField,
-  InputField,
-  SearchableField,
-} from "../../config/field-resolution.types";
-import {
-  type FieldResolutionConfig,
-  withResolution,
-} from "../../resolver/resolution-helper";
+import { InputField, ResolverKeys } from "../../config/field-resolution.types";
 import {
   CreateTestCaseBody,
   CreateTestCaseResponse,
   type CreateTestCaseResponseType,
 } from "../../schema/test-case.schema";
 
-const RESOLUTION_CONFIG: FieldResolutionConfig[] = [
-  { inputField: InputField.PRIORITY, fieldKey: CommonAttributeField.PRIORITY },
-  {
-    inputField: InputField.STATUS,
-    fieldKey: CommonAttributeField.TESTCASE_STATUS,
-  },
-  { inputField: InputField.COMPONENTS, fieldKey: SearchableField.COMPONENTS },
-  { inputField: InputField.LABELS, fieldKey: SearchableField.LABEL },
-];
+// Maps each input field to its resolver key. Add entries here to resolve new fields.
+const FIELD_CONFIG: Record<string, string> = {
+  [InputField.PRIORITY]: ResolverKeys.CommonAttribute.PRIORITY,
+  [InputField.STATUS]: ResolverKeys.CommonAttribute.TESTCASE_STATUS,
+  [InputField.COMPONENTS]: ResolverKeys.SearchableField.COMPONENTS,
+  [InputField.LABELS]: ResolverKeys.SearchableField.LABEL,
+};
 
 /**
  * CreateTestCase Tool
@@ -35,7 +25,7 @@ const RESOLUTION_CONFIG: FieldResolutionConfig[] = [
  * Prerequisites:
  *   - Active project MUST be set via set_project_context.
  *
- * Resolved fields (driven entirely by fieldResolutionConfig):
+ * Resolved fields (driven by FIELD_CONFIG):
  *   - priority   → EAGER
  *   - status     → EAGER
  *   - labels     → LAZY
@@ -131,33 +121,29 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
 
   // ─── Handle Implementation ──────────────────────────────────────────────────
 
-  /**
-   * Handle method: Call withResolution to get ready-to-use body, then execute API call.
-   * Resolution logic is internal - no need to manually merge resolved IDs.
-   */
   handle = async (rawArgs: any) => {
-    // Get project context to extract projectId
-    const context = this.client.getFieldResolver().requireProjectContext();
+    const fieldResolver = this.client.getResolverRegistry();
+    const context = fieldResolver.requireProjectContext();
+    const body = {
+      ...(CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>),
+      projectId: String(context.projectId),
+    };
+    const warnings: string[] = [];
 
-    // Step 1: Resolve fields and get ready-to-use body
-    const { body, warnings } = await withResolution(
-      () => this.client,
-      CreateTestCaseBody,
-      RESOLUTION_CONFIG,
-      rawArgs,
-      { projectId: String(context.projectId) }, // Extra fields to merge
+    await Promise.all(
+      Object.entries(FIELD_CONFIG).map(([inputField, resolverKey]) =>
+        fieldResolver
+          .getResolver(resolverKey)
+          .resolve(inputField, resolverKey, body, context, warnings),
+      ),
     );
 
-    // Step 2: Make API call with resolved body
     const response = await this.client
       .getApiClient()
       .post(ENDPOINTS.CREATE_TEST_CASE, body);
-
-    // Step 3: Validate response
     const validated: CreateTestCaseResponseType =
       CreateTestCaseResponse.parse(response);
 
-    // Step 4: Return with warnings if any
     return {
       structuredContent: validated,
       content:

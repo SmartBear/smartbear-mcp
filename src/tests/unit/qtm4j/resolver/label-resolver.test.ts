@@ -1,165 +1,219 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SearchableField } from "../../../../qtm4j/config/field-resolution.types";
-import { FieldMetadataCache } from "../../../../qtm4j/resolver/field-metadata-cache";
-import { FieldMetadataFetcher } from "../../../../qtm4j/resolver/field-metadata-fetcher";
-import { LabelResolver } from "../../../../qtm4j/resolver/label-resolver";
+import { ENDPOINTS } from "../../../../qtm4j/config/constants";
+import {
+  InputField,
+  type ProjectContext,
+  ResolverKeys,
+} from "../../../../qtm4j/config/field-resolution.types";
+import { Cache } from "../../../../qtm4j/resolver/cache/cache";
+import { LabelResolver } from "../../../../qtm4j/resolver/resolvers/label-resolver";
 
-// Mock the dependencies
-vi.mock("../../../../qtm4j/resolver/field-metadata-cache");
-vi.mock("../../../../qtm4j/resolver/field-metadata-fetcher");
+vi.mock("../../../../qtm4j/resolver/cache/cache");
 
 describe("LabelResolver", () => {
   let mockApiClient: any;
   let resolver: LabelResolver;
   let mockCache: any;
-  let mockFetcher: any;
+  const context: ProjectContext = {
+    projectKey: "PROJ",
+    projectId: 10000,
+    projectName: "Project Name",
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockApiClient = {
-      get: vi.fn(),
-    };
+    mockApiClient = { get: vi.fn() };
+    mockCache = { matchValue: vi.fn(), set: vi.fn(), clear: vi.fn() };
 
-    mockCache = {
-      matchValue: vi.fn(),
-      set: vi.fn(),
-      clear: vi.fn(),
-    };
-
-    mockFetcher = {
-      fetchSearchableField: vi.fn(),
-    };
-
-    // Mock constructor implementations
-    vi.mocked(FieldMetadataCache).mockImplementation(() => mockCache);
-    vi.mocked(FieldMetadataFetcher).mockImplementation(() => mockFetcher);
+    vi.mocked(Cache).mockImplementation(() => mockCache);
 
     resolver = new LabelResolver(mockApiClient);
   });
 
   describe("fieldKeys", () => {
     it("should include label field", () => {
-      expect(resolver.fieldKeys).toEqual([SearchableField.LABEL]);
+      expect(resolver.fieldKeys).toEqual([ResolverKeys.SearchableField.LABEL]);
     });
   });
 
-  describe("resolve", () => {
-    it("should return cached value when available", async () => {
+  describe("resolveAndReturn", () => {
+    it("should return cached value without calling API", async () => {
       mockCache.matchValue.mockReturnValueOnce("100");
 
-      const result = await resolver.resolve(
+      const result = await resolver.resolveAndReturn(
         "PROJ",
         10000,
-        SearchableField.LABEL,
+        ResolverKeys.SearchableField.LABEL,
         "Release_1",
       );
 
       expect(result).toBe("100");
-      expect(mockCache.matchValue).toHaveBeenCalledWith(
-        "PROJ",
-        SearchableField.LABEL,
-        "Release_1",
-      );
-      expect(mockFetcher.fetchSearchableField).not.toHaveBeenCalled();
+      expect(mockApiClient.get).not.toHaveBeenCalled();
     });
 
-    it("should fetch and cache values when not in cache", async () => {
+    it("should fetch from API on cache miss and return resolved value", async () => {
       mockCache.matchValue
-        .mockReturnValueOnce(undefined) // First call - not in cache
-        .mockReturnValueOnce("100"); // Second call - after fetch
-
-      mockFetcher.fetchSearchableField.mockResolvedValueOnce({
+        .mockReturnValueOnce(undefined)
+        .mockReturnValueOnce("100");
+      mockApiClient.get.mockResolvedValueOnce({
         release_1: "100",
         "sprint 1": "101",
       });
 
-      const result = await resolver.resolve(
+      const result = await resolver.resolveAndReturn(
         "PROJ",
         10000,
-        SearchableField.LABEL,
+        ResolverKeys.SearchableField.LABEL,
         "Release_1",
       );
 
-      expect(result).toBe("100");
-      expect(mockFetcher.fetchSearchableField).toHaveBeenCalledWith(
-        SearchableField.LABEL,
-        10000,
-        "Release_1",
-      );
+      expect(mockApiClient.get).toHaveBeenCalledWith(ENDPOINTS.LABELS(10000), {
+        search: "Release_1",
+      });
       expect(mockCache.set).toHaveBeenCalledWith(
         "PROJ",
-        SearchableField.LABEL,
-        {
-          release_1: "100",
-          "sprint 1": "101",
-        },
+        ResolverKeys.SearchableField.LABEL,
+        { release_1: "100", "sprint 1": "101" },
       );
+      expect(result).toBe("100");
     });
 
-    it("should return undefined when value not found even after fetch", async () => {
+    it("should return undefined when value not found after fetch", async () => {
       mockCache.matchValue.mockReturnValue(undefined);
+      mockApiClient.get.mockResolvedValueOnce({});
 
-      mockFetcher.fetchSearchableField.mockResolvedValueOnce({
-        release_1: "100",
-      });
-
-      const result = await resolver.resolve(
+      const result = await resolver.resolveAndReturn(
         "PROJ",
         10000,
-        SearchableField.LABEL,
+        ResolverKeys.SearchableField.LABEL,
         "NonExistent",
       );
 
       expect(result).toBeUndefined();
     });
 
-    it("should handle API errors", async () => {
+    it("should propagate API errors", async () => {
       mockCache.matchValue.mockReturnValueOnce(undefined);
-      mockFetcher.fetchSearchableField.mockRejectedValueOnce(
-        new Error("API Error"),
-      );
+      mockApiClient.get.mockRejectedValueOnce(new Error("API Error"));
 
       await expect(
-        resolver.resolve("PROJ", 10000, SearchableField.LABEL, "Release_1"),
+        resolver.resolveAndReturn(
+          "PROJ",
+          10000,
+          ResolverKeys.SearchableField.LABEL,
+          "Release_1",
+        ),
       ).rejects.toThrow("API Error");
-    });
-
-    it("should handle empty search results", async () => {
-      mockCache.matchValue.mockReturnValue(undefined);
-
-      mockFetcher.fetchSearchableField.mockResolvedValueOnce({});
-
-      const result = await resolver.resolve(
-        "PROJ",
-        10000,
-        SearchableField.LABEL,
-        "Release_1",
-      );
-
-      expect(result).toBeUndefined();
     });
   });
 
-  describe("preload", () => {
-    it("should return empty object (labels are lazy-loaded)", async () => {
-      const result = await resolver.preload("PROJ", 10000);
+  describe("resolve", () => {
+    it("should return early when field is not in body", async () => {
+      const body: Record<string, unknown> = {};
+      await resolver.resolve(
+        InputField.LABELS,
+        ResolverKeys.SearchableField.LABEL,
+        body,
+        context,
+        [],
+      );
+      expect(mockCache.matchValue).not.toHaveBeenCalled();
+    });
 
-      expect(result).toEqual({});
-      expect(mockFetcher.fetchSearchableField).not.toHaveBeenCalled();
+    it("should resolve single value and replace in body", async () => {
+      mockCache.matchValue.mockReturnValueOnce("100");
+      const body: Record<string, unknown> = {
+        [InputField.LABELS]: "Release_1",
+      };
+      const warnings: string[] = [];
+
+      await resolver.resolve(
+        InputField.LABELS,
+        ResolverKeys.SearchableField.LABEL,
+        body,
+        context,
+        warnings,
+      );
+
+      expect(body[InputField.LABELS]).toBe(100);
+      expect(warnings).toHaveLength(0);
+    });
+
+    it("should resolve array values and replace with ID array", async () => {
+      mockCache.matchValue
+        .mockReturnValueOnce("100")
+        .mockReturnValueOnce("101");
+      const body: Record<string, unknown> = {
+        [InputField.LABELS]: ["Release_1", "Sprint 1"],
+      };
+
+      await resolver.resolve(
+        InputField.LABELS,
+        ResolverKeys.SearchableField.LABEL,
+        body,
+        context,
+        [],
+      );
+
+      expect(body[InputField.LABELS]).toEqual([100, 101]);
+    });
+
+    it("should push warning for unresolvable name", async () => {
+      mockCache.matchValue.mockReturnValue(undefined);
+      mockApiClient.get.mockResolvedValueOnce({});
+      const body: Record<string, unknown> = {
+        [InputField.LABELS]: "NonExistent",
+      };
+      const warnings: string[] = [];
+
+      await resolver.resolve(
+        InputField.LABELS,
+        ResolverKeys.SearchableField.LABEL,
+        body,
+        context,
+        warnings,
+      );
+
+      expect(body[InputField.LABELS]).toBe("NonExistent");
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("NonExistent");
+    });
+
+    it("should partially resolve array — skip unresolved, warn for each", async () => {
+      mockCache.matchValue
+        .mockReturnValueOnce("100") // "A" hit
+        .mockReturnValueOnce(undefined) // "Bad" miss
+        .mockReturnValueOnce(undefined) // "Bad" after fetch
+        .mockReturnValueOnce("101"); // "B" hit
+      mockApiClient.get.mockResolvedValueOnce({});
+      const body: Record<string, unknown> = {
+        [InputField.LABELS]: ["A", "Bad", "B"],
+      };
+      const warnings: string[] = [];
+
+      await resolver.resolve(
+        InputField.LABELS,
+        ResolverKeys.SearchableField.LABEL,
+        body,
+        context,
+        warnings,
+      );
+
+      expect(body[InputField.LABELS]).toEqual([100, 101]);
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("Bad");
     });
   });
 
   describe("clearCache", () => {
     it("should clear all cache when no projectKey is provided", () => {
       resolver.clearCache();
-
       expect(mockCache.clear).toHaveBeenCalledWith(undefined);
     });
 
     it("should clear cache for specific project", () => {
       resolver.clearCache("PROJ");
-
       expect(mockCache.clear).toHaveBeenCalledWith("PROJ");
     });
   });

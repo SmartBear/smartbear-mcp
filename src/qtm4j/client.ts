@@ -13,7 +13,7 @@ import {
   SCHEMA_DESCRIPTIONS,
 } from "./config/constants";
 import { ApiClient } from "./http/api-client";
-import { FieldResolver } from "./resolver";
+import { ResolverRegistry } from "./resolver/resolver-registry";
 
 /**
  * Configuration schema for QTM4J client
@@ -64,7 +64,7 @@ export class Qtm4jClient implements Client {
   private _apiKey: string | undefined;
   private baseUrl: string = API_CONFIG.DEFAULT_BASE_URL;
   private apiClient: ApiClient | undefined;
-  private fieldResolver: FieldResolver | undefined;
+  private resolverRegistry: ResolverRegistry | undefined;
 
   /**
    * Configure the QTM4J client with API credentials
@@ -85,8 +85,8 @@ export class Qtm4jClient implements Client {
     // Initialize API client with token provider for request-scoped credentials
     this.apiClient = new ApiClient(() => this.getAuthToken(), this.baseUrl);
 
-    // Initialize field resolver with the API client
-    this.fieldResolver = new FieldResolver(this.apiClient);
+    // Initialize resolver registry with the API client
+    this.resolverRegistry = new ResolverRegistry(this.apiClient);
   }
 
   /**
@@ -137,21 +137,15 @@ export class Qtm4jClient implements Client {
     return this.apiClient;
   }
 
-  /**
-   * Get the configured FieldResolver instance
-   * @returns FieldResolver instance for resolving field names to IDs
-   * @throws Error if client is not configured
-   */
-  getFieldResolver(): FieldResolver {
-    if (!this.fieldResolver) {
+  getResolverRegistry(): ResolverRegistry {
+    if (!this.resolverRegistry) {
       throw new Error(ERROR_MESSAGES.CLIENT_NOT_CONFIGURED);
     }
-    return this.fieldResolver;
+    return this.resolverRegistry;
   }
 
-  /** Delegates to FieldResolver — project context lives there. */
   requireProjectContext() {
-    return this.getFieldResolver().requireProjectContext();
+    return this.getResolverRegistry().requireProjectContext();
   }
 
   /**
@@ -174,11 +168,17 @@ export class Qtm4jClient implements Client {
     const { CreateTestCase } = await import(
       "./tool/test-case/create-test-case"
     );
+    const { SearchTestCases } = await import(
+      "./tool/test-case/search-test-cases"
+    );
+    const { GetTestSteps } = await import("./tool/test-case/get-test-steps");
 
     const tools = [
       new GetProjects(this),
       new SetProjectContext(this),
       new CreateTestCase(this),
+      new SearchTestCases(this),
+      new GetTestSteps(this),
     ];
 
     // Register each tool with the MCP server

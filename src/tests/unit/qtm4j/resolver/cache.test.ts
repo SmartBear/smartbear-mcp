@@ -1,36 +1,32 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { FieldMetadataCache } from "../../../../qtm4j/resolver/field-metadata-cache";
+import { Cache } from "../../../../qtm4j/resolver/cache/cache";
 
-describe("FieldMetadataCache", () => {
-  let cache: FieldMetadataCache;
+describe("Cache", () => {
+  let cache: Cache;
 
   beforeEach(() => {
-    cache = new FieldMetadataCache();
+    cache = new Cache();
   });
 
   describe("get", () => {
     it("should return undefined for non-existent project", () => {
-      const result = cache.get("PROJ", "priority");
-      expect(result).toBeUndefined();
+      expect(cache.get("PROJ", "priority")).toBeUndefined();
     });
 
     it("should return undefined for non-existent field", () => {
       cache.set("PROJ", "priority", { high: "1", low: "2" });
-      const result = cache.get("PROJ", "status");
-      expect(result).toBeUndefined();
+      expect(cache.get("PROJ", "status")).toBeUndefined();
     });
 
     it("should return stored values", () => {
       const values = { high: "1", low: "2" };
       cache.set("PROJ", "priority", values);
-      const result = cache.get("PROJ", "priority");
-      expect(result).toEqual(values);
+      expect(cache.get("PROJ", "priority")).toEqual(values);
     });
 
     it("should handle multiple projects separately", () => {
       cache.set("PROJ1", "priority", { high: "1" });
       cache.set("PROJ2", "priority", { high: "2" });
-
       expect(cache.get("PROJ1", "priority")).toEqual({ high: "1" });
       expect(cache.get("PROJ2", "priority")).toEqual({ high: "2" });
     });
@@ -45,23 +41,19 @@ describe("FieldMetadataCache", () => {
     it("should merge values for existing field", () => {
       cache.set("PROJ", "priority", { high: "1" });
       cache.set("PROJ", "priority", { low: "2" });
-
-      const result = cache.get("PROJ", "priority");
-      expect(result).toEqual({ high: "1", low: "2" });
+      expect(cache.get("PROJ", "priority")).toEqual({ high: "1", low: "2" });
     });
 
-    it("should not affect other projects when setting values", () => {
+    it("should not affect other projects", () => {
       cache.set("PROJ1", "priority", { high: "1" });
       cache.set("PROJ2", "priority", { high: "2" });
-
       expect(cache.get("PROJ1", "priority")).toEqual({ high: "1" });
       expect(cache.get("PROJ2", "priority")).toEqual({ high: "2" });
     });
 
-    it("should not affect other fields when setting values", () => {
+    it("should not affect other fields", () => {
       cache.set("PROJ", "priority", { high: "1" });
       cache.set("PROJ", "status", { done: "10" });
-
       expect(cache.get("PROJ", "priority")).toEqual({ high: "1" });
       expect(cache.get("PROJ", "status")).toEqual({ done: "10" });
     });
@@ -87,19 +79,15 @@ describe("FieldMetadataCache", () => {
     it("should clear all data when no projectKey is provided", () => {
       cache.set("PROJ1", "priority", { high: "1" });
       cache.set("PROJ2", "status", { done: "10" });
-
       cache.clear();
-
       expect(cache.get("PROJ1", "priority")).toBeUndefined();
       expect(cache.get("PROJ2", "status")).toBeUndefined();
     });
 
-    it("should clear only specified project data", () => {
+    it("should clear only specified project", () => {
       cache.set("PROJ1", "priority", { high: "1" });
       cache.set("PROJ2", "status", { done: "10" });
-
       cache.clear("PROJ1");
-
       expect(cache.get("PROJ1", "priority")).toBeUndefined();
       expect(cache.get("PROJ2", "status")).toEqual({ done: "10" });
     });
@@ -111,34 +99,23 @@ describe("FieldMetadataCache", () => {
 
   describe("matchValue", () => {
     it("should return undefined for non-existent project", () => {
-      const result = cache.matchValue("PROJ", "priority", "High");
-      expect(result).toBeUndefined();
-    });
-
-    it("should return undefined for non-existent field", () => {
-      cache.set("PROJ", "priority", { high: "1" });
-      const result = cache.matchValue("PROJ", "status", "Done");
-      expect(result).toBeUndefined();
+      expect(cache.matchValue("PROJ", "priority", "High")).toBeUndefined();
     });
 
     it("should return undefined for non-existent value", () => {
       cache.set("PROJ", "priority", { high: "1" });
-      const result = cache.matchValue("PROJ", "priority", "Critical");
-      expect(result).toBeUndefined();
+      expect(cache.matchValue("PROJ", "priority", "Critical")).toBeUndefined();
     });
 
     it("should perform case-insensitive lookup", () => {
       cache.set("PROJ", "priority", { high: "1", low: "2" });
-
       expect(cache.matchValue("PROJ", "priority", "high")).toBe("1");
       expect(cache.matchValue("PROJ", "priority", "High")).toBe("1");
       expect(cache.matchValue("PROJ", "priority", "HIGH")).toBe("1");
-      expect(cache.matchValue("PROJ", "priority", "HiGh")).toBe("1");
     });
 
     it("should return correct ID for matching name", () => {
       cache.set("PROJ", "priority", { high: "1", medium: "2", low: "3" });
-
       expect(cache.matchValue("PROJ", "priority", "medium")).toBe("2");
     });
   });

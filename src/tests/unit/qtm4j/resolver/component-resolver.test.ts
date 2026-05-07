@@ -1,162 +1,217 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SearchableField } from "../../../../qtm4j/config/field-resolution.types";
-import { ComponentResolver } from "../../../../qtm4j/resolver/component-resolver";
-import { FieldMetadataCache } from "../../../../qtm4j/resolver/field-metadata-cache";
-import { FieldMetadataFetcher } from "../../../../qtm4j/resolver/field-metadata-fetcher";
+import { ENDPOINTS } from "../../../../qtm4j/config/constants";
+import {
+  InputField,
+  type ProjectContext,
+  ResolverKeys,
+} from "../../../../qtm4j/config/field-resolution.types";
+import { Cache } from "../../../../qtm4j/resolver/cache/cache";
+import { ComponentResolver } from "../../../../qtm4j/resolver/resolvers/component-resolver";
 
-// Mock the dependencies
-vi.mock("../../../../qtm4j/resolver/field-metadata-cache");
-vi.mock("../../../../qtm4j/resolver/field-metadata-fetcher");
+vi.mock("../../../../qtm4j/resolver/cache/cache");
 
 describe("ComponentResolver", () => {
   let mockApiClient: any;
   let resolver: ComponentResolver;
   let mockCache: any;
-  let mockFetcher: any;
+  const context: ProjectContext = {
+    projectKey: "PROJ",
+    projectId: 10000,
+    projectName: "Project Name",
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockApiClient = {
-      get: vi.fn(),
-    };
+    mockApiClient = { get: vi.fn() };
+    mockCache = { matchValue: vi.fn(), set: vi.fn(), clear: vi.fn() };
 
-    mockCache = {
-      matchValue: vi.fn(),
-      set: vi.fn(),
-      clear: vi.fn(),
-    };
-
-    mockFetcher = {
-      fetchSearchableField: vi.fn(),
-    };
-
-    // Mock constructor implementations
-    vi.mocked(FieldMetadataCache).mockImplementation(() => mockCache);
-    vi.mocked(FieldMetadataFetcher).mockImplementation(() => mockFetcher);
+    vi.mocked(Cache).mockImplementation(() => mockCache);
 
     resolver = new ComponentResolver(mockApiClient);
   });
 
   describe("fieldKeys", () => {
     it("should include components field", () => {
-      expect(resolver.fieldKeys).toEqual([SearchableField.COMPONENTS]);
+      expect(resolver.fieldKeys).toEqual([
+        ResolverKeys.SearchableField.COMPONENTS,
+      ]);
     });
   });
 
-  describe("resolve", () => {
-    it("should return cached value when available", async () => {
+  describe("resolveAndReturn", () => {
+    it("should return cached value without calling API", async () => {
       mockCache.matchValue.mockReturnValueOnce("200");
 
-      const result = await resolver.resolve(
+      const result = await resolver.resolveAndReturn(
         "PROJ",
         10000,
-        SearchableField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
         "UI",
       );
 
       expect(result).toBe("200");
-      expect(mockCache.matchValue).toHaveBeenCalledWith(
-        "PROJ",
-        SearchableField.COMPONENTS,
-        "UI",
-      );
-      expect(mockFetcher.fetchSearchableField).not.toHaveBeenCalled();
+      expect(mockApiClient.get).not.toHaveBeenCalled();
     });
 
-    it("should fetch and cache values when not in cache", async () => {
+    it("should fetch from API on cache miss and return resolved value", async () => {
       mockCache.matchValue
-        .mockReturnValueOnce(undefined) // First call - not in cache
-        .mockReturnValueOnce("200"); // Second call - after fetch
+        .mockReturnValueOnce(undefined)
+        .mockReturnValueOnce("200");
+      mockApiClient.get.mockResolvedValueOnce({ ui: "200", cloud: "201" });
 
-      mockFetcher.fetchSearchableField.mockResolvedValueOnce({
-        ui: "200",
-        cloud: "201",
-      });
-
-      const result = await resolver.resolve(
+      const result = await resolver.resolveAndReturn(
         "PROJ",
         10000,
-        SearchableField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
         "UI",
       );
 
-      expect(result).toBe("200");
-      expect(mockFetcher.fetchSearchableField).toHaveBeenCalledWith(
-        SearchableField.COMPONENTS,
-        10000,
-        "UI",
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        ENDPOINTS.COMPONENTS(10000),
+        { search: "UI" },
       );
       expect(mockCache.set).toHaveBeenCalledWith(
         "PROJ",
-        SearchableField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
         { ui: "200", cloud: "201" },
       );
+      expect(result).toBe("200");
     });
 
-    it("should return undefined when value not found even after fetch", async () => {
+    it("should return undefined when value not found after fetch", async () => {
       mockCache.matchValue.mockReturnValue(undefined);
+      mockApiClient.get.mockResolvedValueOnce({ ui: "200" });
 
-      mockFetcher.fetchSearchableField.mockResolvedValueOnce({
-        ui: "200",
-      });
-
-      const result = await resolver.resolve(
+      const result = await resolver.resolveAndReturn(
         "PROJ",
         10000,
-        SearchableField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
         "NonExistent",
       );
 
       expect(result).toBeUndefined();
     });
 
-    it("should handle API errors", async () => {
+    it("should propagate API errors", async () => {
       mockCache.matchValue.mockReturnValueOnce(undefined);
-      mockFetcher.fetchSearchableField.mockRejectedValueOnce(
-        new Error("API Error"),
-      );
+      mockApiClient.get.mockRejectedValueOnce(new Error("API Error"));
 
       await expect(
-        resolver.resolve("PROJ", 10000, SearchableField.COMPONENTS, "UI"),
+        resolver.resolveAndReturn(
+          "PROJ",
+          10000,
+          ResolverKeys.SearchableField.COMPONENTS,
+          "UI",
+        ),
       ).rejects.toThrow("API Error");
-    });
-
-    it("should handle empty search results", async () => {
-      mockCache.matchValue.mockReturnValue(undefined);
-
-      mockFetcher.fetchSearchableField.mockResolvedValueOnce({});
-
-      const result = await resolver.resolve(
-        "PROJ",
-        10000,
-        SearchableField.COMPONENTS,
-        "UI",
-      );
-
-      expect(result).toBeUndefined();
     });
   });
 
-  describe("preload", () => {
-    it("should return empty object (components are lazy-loaded)", async () => {
-      const result = await resolver.preload("PROJ", 10000);
+  describe("resolve", () => {
+    it("should return early when field is not in body", async () => {
+      const body: Record<string, unknown> = {};
+      await resolver.resolve(
+        InputField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
+        body,
+        context,
+        [],
+      );
+      expect(mockCache.matchValue).not.toHaveBeenCalled();
+    });
 
-      expect(result).toEqual({});
-      expect(mockFetcher.fetchSearchableField).not.toHaveBeenCalled();
+    it("should resolve single value and replace in body", async () => {
+      mockCache.matchValue.mockReturnValueOnce("200");
+      const body: Record<string, unknown> = { [InputField.COMPONENTS]: "UI" };
+      const warnings: string[] = [];
+
+      await resolver.resolve(
+        InputField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
+        body,
+        context,
+        warnings,
+      );
+
+      expect(body[InputField.COMPONENTS]).toBe(200);
+      expect(warnings).toHaveLength(0);
+    });
+
+    it("should resolve array values and replace with ID array", async () => {
+      mockCache.matchValue
+        .mockReturnValueOnce("200")
+        .mockReturnValueOnce("201");
+      const body: Record<string, unknown> = {
+        [InputField.COMPONENTS]: ["UI", "Cloud"],
+      };
+
+      await resolver.resolve(
+        InputField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
+        body,
+        context,
+        [],
+      );
+
+      expect(body[InputField.COMPONENTS]).toEqual([200, 201]);
+    });
+
+    it("should push warning for unresolvable name", async () => {
+      mockCache.matchValue.mockReturnValue(undefined);
+      mockApiClient.get.mockResolvedValueOnce({});
+      const body: Record<string, unknown> = {
+        [InputField.COMPONENTS]: "NonExistent",
+      };
+      const warnings: string[] = [];
+
+      await resolver.resolve(
+        InputField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
+        body,
+        context,
+        warnings,
+      );
+
+      expect(body[InputField.COMPONENTS]).toBe("NonExistent");
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("NonExistent");
+    });
+
+    it("should partially resolve array — skip unresolved, warn for each", async () => {
+      mockCache.matchValue
+        .mockReturnValueOnce("200") // "UI" hit
+        .mockReturnValueOnce(undefined) // "Bad" miss
+        .mockReturnValueOnce(undefined) // "Bad" after fetch
+        .mockReturnValueOnce("201"); // "Cloud" hit
+      mockApiClient.get.mockResolvedValueOnce({});
+      const body: Record<string, unknown> = {
+        [InputField.COMPONENTS]: ["UI", "Bad", "Cloud"],
+      };
+      const warnings: string[] = [];
+
+      await resolver.resolve(
+        InputField.COMPONENTS,
+        ResolverKeys.SearchableField.COMPONENTS,
+        body,
+        context,
+        warnings,
+      );
+
+      expect(body[InputField.COMPONENTS]).toEqual([200, 201]);
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain("Bad");
     });
   });
 
   describe("clearCache", () => {
     it("should clear all cache when no projectKey is provided", () => {
       resolver.clearCache();
-
       expect(mockCache.clear).toHaveBeenCalledWith(undefined);
     });
 
     it("should clear cache for specific project", () => {
       resolver.clearCache("PROJ");
-
       expect(mockCache.clear).toHaveBeenCalledWith("PROJ");
     });
   });

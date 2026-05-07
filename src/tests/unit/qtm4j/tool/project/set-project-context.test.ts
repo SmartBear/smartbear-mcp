@@ -7,21 +7,20 @@ describe("SetProjectContext", () => {
   let mockClient: any;
   let mockApiClient: any;
   let mockFieldResolver: any;
-  let mockCommonAttributes: any;
+  let mockPreload: any;
   let instance: SetProjectContext;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockCommonAttributes = {
-      preload: vi.fn(),
-    };
-
+    mockPreload = vi.fn().mockResolvedValue({});
     mockFieldResolver = {
       requireProjectContext: vi.fn(),
       setProjectContext: vi.fn(),
       clearProjectCache: vi.fn(),
-      commonAttributes: mockCommonAttributes,
+      getCommonAttributeResolver: vi
+        .fn()
+        .mockReturnValue({ preload: mockPreload }),
     };
 
     mockApiClient = {
@@ -30,7 +29,7 @@ describe("SetProjectContext", () => {
 
     mockClient = {
       getApiClient: vi.fn().mockReturnValue(mockApiClient),
-      getFieldResolver: vi.fn().mockReturnValue(mockFieldResolver),
+      getResolverRegistry: vi.fn().mockReturnValue(mockFieldResolver),
     };
 
     instance = new SetProjectContext(mockClient as any);
@@ -72,7 +71,7 @@ describe("SetProjectContext", () => {
       mockFieldResolver.requireProjectContext.mockImplementation(() => {
         throw new Error("No context");
       });
-      mockCommonAttributes.preload.mockResolvedValueOnce(mockAvailableFields);
+      mockPreload.mockResolvedValueOnce(mockAvailableFields);
 
       const result = await instance.handle({ projectKey: "SCRUM" }, {} as any);
 
@@ -86,7 +85,7 @@ describe("SetProjectContext", () => {
         projectKey: "SCRUM",
         projectName: "Scrum Project",
       });
-      expect(mockCommonAttributes.preload).toHaveBeenCalledWith("SCRUM", 10000);
+      expect(mockPreload).toHaveBeenCalledWith("SCRUM", 10000);
       expect(result.structuredContent).toMatchObject({
         projectId: 10000,
         projectKey: "SCRUM",
@@ -113,7 +112,7 @@ describe("SetProjectContext", () => {
       mockFieldResolver.requireProjectContext.mockImplementation(() => {
         throw new Error("No context");
       });
-      mockCommonAttributes.preload.mockResolvedValueOnce({});
+      mockPreload.mockResolvedValueOnce({});
 
       const result = await instance.handle({ projectKey: "scrum" }, {} as any);
 
@@ -145,7 +144,7 @@ describe("SetProjectContext", () => {
         projectId: 10000,
         projectName: "Scrum Project",
       });
-      mockCommonAttributes.preload.mockResolvedValueOnce({});
+      mockPreload.mockResolvedValueOnce({});
 
       await instance.handle({ projectKey: "AD" }, {} as any);
 
@@ -177,7 +176,7 @@ describe("SetProjectContext", () => {
         projectId: 10000,
         projectName: "Scrum Project",
       });
-      mockCommonAttributes.preload.mockResolvedValueOnce({});
+      mockPreload.mockResolvedValueOnce({});
 
       await instance.handle({ projectKey: "SCRUM" }, {} as any);
 
@@ -259,9 +258,7 @@ describe("SetProjectContext", () => {
       mockFieldResolver.requireProjectContext.mockImplementation(() => {
         throw new Error("No context");
       });
-      mockCommonAttributes.preload.mockRejectedValueOnce(
-        new Error("Preload failed"),
-      );
+      mockPreload.mockRejectedValueOnce(new Error("Preload failed"));
 
       const result = await instance.handle({ projectKey: "SCRUM" }, {} as any);
 

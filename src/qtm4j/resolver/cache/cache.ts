@@ -1,16 +1,7 @@
-/**
- * FieldMetadataCache — Extensible In-Memory Cache for Field Metadata
- *
- * Stores both field name→ID mappings AND project context details,
- * all keyed by projectKey. Project details are stored under a reserved field key.
- *
- * Cache structure: Map<projectKey, Map<fieldKey, FieldValues>>
- */
-import type { FieldValues } from "../config/field-resolution.types";
+import type { FieldValues } from "../../config/field-resolution.types";
 
-/** Reserved field key used to store project context details inside the cache. */
-
-export class FieldMetadataCache {
+/** In-memory cache for field metadata, keyed by projectKey → fieldKey → name→ID map. */
+export class Cache {
   private readonly store = new Map<string, Map<string, FieldValues>>();
 
   get(projectKey: string, fieldKey: string): FieldValues | undefined {
@@ -37,7 +28,7 @@ export class FieldMetadataCache {
     }
   }
 
-  /** Case-insensitive lookup of a field name in cache. */
+  /** Case-insensitive lookup of a name within a cached field. */
   matchValue(
     projectKey: string,
     fieldKey: string,

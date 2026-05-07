@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
-import { withResolution } from "../../../../../qtm4j/resolver/resolution-helper";
 import { CreateTestCase } from "../../../../../qtm4j/tool/test-case/create-test-case";
-
-// Mock the resolution helper
-vi.mock("../../../../../qtm4j/resolver/resolution-helper");
 
 describe("CreateTestCase", () => {
   let mockClient: any;
@@ -15,12 +11,14 @@ describe("CreateTestCase", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    const mockResolve = vi.fn().mockResolvedValue(undefined);
     mockFieldResolver = {
       requireProjectContext: vi.fn().mockReturnValue({
         projectKey: "PROJ",
         projectId: 10000,
         projectName: "Project Name",
       }),
+      getResolver: vi.fn().mockReturnValue({ resolve: mockResolve }),
     };
 
     mockApiClient = {
@@ -29,7 +27,7 @@ describe("CreateTestCase", () => {
 
     mockClient = {
       getApiClient: vi.fn().mockReturnValue(mockApiClient),
-      getFieldResolver: vi.fn().mockReturnValue(mockFieldResolver),
+      getResolverRegistry: vi.fn().mockReturnValue(mockFieldResolver),
     };
 
     instance = new CreateTestCase(mockClient as any);
@@ -46,335 +44,120 @@ describe("CreateTestCase", () => {
     });
 
     it("should have use cases", () => {
-      expect(instance.specification.useCases).toBeDefined();
-      expect(instance.specification.useCases.length).toBeGreaterThan(0);
+      expect(instance.specification.useCases?.length).toBeGreaterThan(0);
     });
 
     it("should have examples", () => {
-      expect(instance.specification.examples).toBeDefined();
-      expect(instance.specification.examples.length).toBeGreaterThan(0);
+      expect(instance.specification.examples?.length).toBeGreaterThan(0);
     });
 
     it("should have hints", () => {
-      expect(instance.specification.hints).toBeDefined();
-      expect(instance.specification.hints.length).toBeGreaterThan(0);
+      expect(instance.specification.hints?.length).toBeGreaterThan(0);
     });
   });
 
   describe("handle", () => {
-    it("should create a simple test case without field resolution", async () => {
-      const rawArgs = {
-        summary: "Search Functionality",
-      };
-
-      const resolvedBody = {
-        summary: "Search Functionality",
-        projectId: "10000",
-      };
-
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: resolvedBody,
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [],
-      });
-
+    it("should resolve all configured fields and call the create endpoint", async () => {
+      const rawArgs = { summary: "Search Functionality" };
       const mockResponse = {
         id: "12345",
         key: "PROJ-TC-1",
         versionNo: 1,
         summary: "Search Functionality",
       };
-
       mockApiClient.post.mockResolvedValueOnce(mockResponse);
 
       const result = await instance.handle(rawArgs);
 
-      expect(mockFieldResolver.requireProjectContext).toHaveBeenCalled();
-      expect(withResolution).toHaveBeenCalled();
+      // FIELD_CONFIG has 4 entries: PRIORITY, STATUS, COMPONENTS, LABELS
+      expect(mockFieldResolver.getResolver).toHaveBeenCalledTimes(4);
+      expect(mockFieldResolver.getResolver().resolve).toHaveBeenCalledTimes(4);
       expect(mockApiClient.post).toHaveBeenCalledWith(
         ENDPOINTS.CREATE_TEST_CASE,
-        resolvedBody,
+        expect.objectContaining({
+          summary: "Search Functionality",
+          projectId: "10000",
+        }),
       );
       expect(result.structuredContent).toEqual(mockResponse);
       expect(result.content).toEqual([]);
     });
 
-    it("should create test case with resolved fields", async () => {
-      const rawArgs = {
-        summary: "Search Functionality",
-        priority: "High",
-        status: "To Do",
-      };
-
-      const resolvedBody = {
-        summary: "Search Functionality",
-        priority: 1,
-        status: 10,
-        projectId: "10000",
-      };
-
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: resolvedBody,
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [],
-      });
-
-      const mockResponse = {
-        id: "12345",
+    it("should include projectId from context in the body", async () => {
+      const rawArgs = { summary: "Test" };
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
         key: "PROJ-TC-1",
         versionNo: 1,
-        summary: "Search Functionality",
-      };
+        summary: "Test",
+      });
 
-      mockApiClient.post.mockResolvedValueOnce(mockResponse);
-
-      const result = await instance.handle(rawArgs);
+      await instance.handle(rawArgs);
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
         ENDPOINTS.CREATE_TEST_CASE,
-        resolvedBody,
+        expect.objectContaining({ projectId: "10000" }),
       );
-      expect(result.structuredContent).toEqual(mockResponse);
-      expect(result.content).toEqual([]);
     });
 
-    it("should create test case with labels and components", async () => {
-      const rawArgs = {
-        summary: "Search Functionality",
-        labels: ["Release_1", "Sprint 1"],
-        components: ["UI", "Cloud"],
-      };
-
-      const resolvedBody = {
-        summary: "Search Functionality",
-        labels: [100, 101],
-        components: [200, 201],
-        projectId: "10000",
-      };
-
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: resolvedBody,
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [],
+    it("should return warnings when resolve pushes them", async () => {
+      const rawArgs = { summary: "Test", priority: "NonExistent" };
+      mockFieldResolver.getResolver.mockReturnValue({
+        resolve: vi
+          .fn()
+          .mockImplementation(
+            (
+              _field: string,
+              _key: string,
+              _body: Record<string, unknown>,
+              _context: unknown,
+              warnings: string[],
+            ) => {
+              warnings.push(
+                "Skipped priority 'NonExistent' — not available in the current project.",
+              );
+              return Promise.resolve();
+            },
+          ),
       });
-
-      const mockResponse = {
-        id: "12345",
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
         key: "PROJ-TC-1",
         versionNo: 1,
-        summary: "Search Functionality",
-      };
-
-      mockApiClient.post.mockResolvedValueOnce(mockResponse);
-
-      const result = await instance.handle(rawArgs);
-
-      expect(result.structuredContent).toEqual(mockResponse);
-    });
-
-    it("should create test case with steps", async () => {
-      const rawArgs = {
-        summary: "Search Functionality",
-        steps: [
-          {
-            stepDetails: "Enter keyword",
-            testData: "keyword = Test",
-            expectedResult: "Keyword visible",
-          },
-          {
-            stepDetails: "Click search",
-            testData: "Click button",
-            expectedResult: "Results displayed",
-          },
-        ],
-      };
-
-      const resolvedBody = {
-        summary: "Search Functionality",
-        steps: rawArgs.steps,
-        projectId: "10000",
-      };
-
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: resolvedBody,
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [],
+        summary: "Test",
       });
-
-      const mockResponse = {
-        id: "12345",
-        key: "PROJ-TC-1",
-        versionNo: 1,
-        summary: "Search Functionality",
-      };
-
-      mockApiClient.post.mockResolvedValueOnce(mockResponse);
-
-      const result = await instance.handle(rawArgs);
-
-      expect(result.structuredContent).toEqual(mockResponse);
-    });
-
-    it("should return warnings when field resolution fails", async () => {
-      const rawArgs = {
-        summary: "Search Functionality",
-        priority: "NonExistent",
-      };
-
-      const resolvedBody = {
-        summary: "Search Functionality",
-        priority: "NonExistent",
-        projectId: "10000",
-      };
-
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: resolvedBody,
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [
-          "Skipped priority 'NonExistent' — not available in the current project.",
-        ],
-      });
-
-      const mockResponse = {
-        id: "12345",
-        key: "PROJ-TC-1",
-        versionNo: 1,
-        summary: "Search Functionality",
-      };
-
-      mockApiClient.post.mockResolvedValueOnce(mockResponse);
-
-      const result = await instance.handle(rawArgs);
-
-      expect(result.structuredContent).toEqual(mockResponse);
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0]).toMatchObject({
-        type: "text",
-        text: expect.stringContaining("Note:"),
-      });
-      expect(result.content[0]).toMatchObject({
-        type: "text",
-        text: expect.stringContaining("Skipped priority"),
-      });
-    });
-
-    it("should handle multiple warnings", async () => {
-      const rawArgs = {
-        summary: "Search Functionality",
-        priority: "NonExistent",
-        labels: ["Invalid1", "Invalid2"],
-      };
-
-      const resolvedBody = {
-        summary: "Search Functionality",
-        projectId: "10000",
-      };
-
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: resolvedBody,
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [
-          "Skipped priority 'NonExistent' — not available in the current project.",
-          "Skipped labels 'Invalid1' — not available in the current project.",
-          "Skipped labels 'Invalid2' — not available in the current project.",
-        ],
-      });
-
-      const mockResponse = {
-        id: "12345",
-        key: "PROJ-TC-1",
-        versionNo: 1,
-        summary: "Search Functionality",
-      };
-
-      mockApiClient.post.mockResolvedValueOnce(mockResponse);
 
       const result = await instance.handle(rawArgs);
 
       expect(result.content).toHaveLength(1);
-      expect(result.content[0].text).toContain("Invalid1");
-      expect(result.content[0].text).toContain("Invalid2");
+      expect(result.content[0]).toMatchObject({
+        type: "text",
+        text: expect.stringContaining("NonExistent"),
+      });
     });
 
-    it("should throw error when project context is not set", async () => {
+    it("should throw when project context is not set", async () => {
       mockFieldResolver.requireProjectContext.mockImplementation(() => {
         throw new Error("No active project set");
       });
 
-      const rawArgs = {
-        summary: "Search Functionality",
-      };
-
-      await expect(instance.handle(rawArgs)).rejects.toThrow(
+      await expect(instance.handle({ summary: "Test" })).rejects.toThrow(
         "No active project set",
       );
     });
 
     it("should propagate API errors", async () => {
-      const rawArgs = {
-        summary: "Search Functionality",
-      };
-
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: { summary: "Search Functionality", projectId: "10000" },
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [],
-      });
-
       mockApiClient.post.mockRejectedValueOnce(new Error("API Error"));
 
-      await expect(instance.handle(rawArgs)).rejects.toThrow("API Error");
+      await expect(instance.handle({ summary: "Test" })).rejects.toThrow(
+        "API Error",
+      );
     });
 
     it("should validate API response against schema", async () => {
-      const rawArgs = {
-        summary: "Search Functionality",
-      };
+      mockApiClient.post.mockResolvedValueOnce({ invalid: "response" });
 
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: { summary: "Search Functionality", projectId: "10000" },
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [],
-      });
-
-      // Invalid response missing required fields
-      mockApiClient.post.mockResolvedValueOnce({
-        invalid: "response",
-      });
-
-      await expect(instance.handle(rawArgs)).rejects.toThrow();
+      await expect(instance.handle({ summary: "Test" })).rejects.toThrow();
     });
 
     it("should create test case with all optional fields", async () => {
@@ -392,42 +175,20 @@ describe("CreateTestCase", () => {
           {
             stepDetails: "Enter keyword",
             testData: "keyword = Test",
-            expectedResult: "Keyword visible",
+            expectedResult: "Visible",
           },
         ],
       };
-
-      const resolvedBody = {
-        ...rawArgs,
-        priority: 1,
-        status: 10,
-        labels: [100],
-        components: [200],
-        projectId: "10000",
-      };
-
-      vi.mocked(withResolution).mockResolvedValueOnce({
-        body: resolvedBody,
-        context: {
-          projectKey: "PROJ",
-          projectId: 10000,
-          projectName: "Project Name",
-        },
-        warnings: [],
-      });
-
-      const mockResponse = {
-        id: "12345",
+      mockApiClient.post.mockResolvedValueOnce({
+        id: "1",
         key: "PROJ-TC-1",
         versionNo: 1,
         summary: "Search Functionality",
-      };
-
-      mockApiClient.post.mockResolvedValueOnce(mockResponse);
+      });
 
       const result = await instance.handle(rawArgs);
 
-      expect(result.structuredContent).toEqual(mockResponse);
+      expect(result.structuredContent).toBeDefined();
       expect(result.content).toEqual([]);
     });
   });

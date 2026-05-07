@@ -116,7 +116,7 @@ export class SetProjectContext extends Tool<Qtm4jClient> {
     }
 
     // Step 3: Store project context in the field resolver
-    const fieldResolver = this.client.getFieldResolver();
+    const fieldResolver = this.client.getResolverRegistry();
 
     // If switching to a different project, clear the old project's stale cache
     try {
@@ -134,13 +134,13 @@ export class SetProjectContext extends Tool<Qtm4jClient> {
       projectName: exactMatch.name,
     });
 
-    // Step 4: Load common attributes (priority, statuses) for LLM NLP mapping
+    // Step 4: Eagerly load all common attribute fields (priority, statuses) so the LLM
+    // can map user-friendly names to IDs in subsequent tool calls without a round-trip.
     let availableFields: Record<string, Record<string, string>> = {};
     try {
-      availableFields = await fieldResolver.commonAttributes.preload(
-        exactMatch.key,
-        exactMatch.id,
-      );
+      availableFields = await fieldResolver
+        .getCommonAttributeResolver()
+        .preload(exactMatch.key, exactMatch.id);
     } catch {
       // Silently ignore — fields will be fetched on demand when needed
     }
