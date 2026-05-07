@@ -4,7 +4,7 @@ import { clientRegistry } from "./client-registry";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import { SmartBearMcpServer } from "./server";
 import type { Client } from "./types";
-import { isOptionalType } from "./zod-utils";
+import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 /**
  * Generate a dynamic error message listing all available clients and their required env vars
@@ -19,7 +19,7 @@ function getNoConfigMessage(): string[] {
         ? " (optional)"
         : " (required)";
       messages.push(
-        `    - ${envVarName}${requiredTag}: ${requirement.description}`,
+        `    - ${envVarName}${requiredTag}: ${getTypeDescription(requirement)}`,
       );
     }
   }
@@ -32,6 +32,12 @@ function getNoConfigMessage(): string[] {
 export async function runStdioMode() {
   if (process.argv.includes("--version")) {
     console.log(`${MCP_SERVER_NAME}: v${MCP_SERVER_VERSION}`);
+    process.exit(0);
+  } else if (process.argv.includes("--help")) {
+    console.log(
+      "The following environment variables can be set to configure each of the SmartBear clients:",
+    );
+    console.log(getNoConfigMessage().join("\n"));
     process.exit(0);
   }
 

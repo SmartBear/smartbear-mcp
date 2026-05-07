@@ -7,21 +7,10 @@ import type {
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
 import {
-  ZodAny,
-  ZodArray,
-  ZodBoolean,
-  ZodDefault,
-  ZodEnum,
   ZodIntersection,
-  ZodLiteral,
-  ZodNumber,
   ZodObject,
-  ZodOptional,
   type ZodRawShape,
-  ZodRecord,
-  ZodString,
   type ZodType,
-  ZodUnion,
 } from "zod";
 import Bugsnag from "../common/bugsnag";
 import { CacheService } from "./cache";
@@ -32,7 +21,12 @@ import {
 } from "./pollyfills";
 import { ToolError } from "./tools";
 import type { Client, ToolParams } from "./types";
-import { unwrapZodType } from "./zod-utils";
+import {
+  getDefaultValue,
+  getReadableTypeName,
+  getTypeDescription,
+  isOptionalType,
+} from "./zod-utils";
 
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
@@ -287,9 +281,17 @@ export class SmartBearMcpServer extends McpServer {
 
     if (inputSchema && inputSchema instanceof ZodObject) {
       let parameters = Object.keys(inputSchema.shape)
-        .map((key) =>
-          this.formatParameterDescription(key, inputSchema.shape[key]),
-        )
+        .map((key) => {
+          const field = inputSchema.shape[key];
+          const description = getTypeDescription(field);
+          const defaultValue = getDefaultValue(field);
+          return (
+            `- ${key} (${getReadableTypeName(field)})` +
+            `${isOptionalType(field) ? "" : " *required*"}` +
+            `${description ? `: ${description}` : ""}` +
+            `${defaultValue !== null ? ` (default: ${JSON.stringify(defaultValue)})` : ""}`
+          );
+        })
         .join("\n");
       if (parameters.length === 0) {
         parameters = "None";
@@ -324,62 +326,5 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     return description.trim();
-  }
-
-  private formatParameterDescription(
-    key: string,
-    field: ZodType,
-    description: string | null = null,
-    isOptional = false,
-    defaultValue: string | null = null,
-  ): string {
-    description = description ?? (field.description || null);
-    if (field instanceof ZodOptional) {
-      field = (field as ZodOptional<ZodType>).unwrap();
-      return this.formatParameterDescription(
-        key,
-        field,
-        description,
-        true,
-        defaultValue,
-      );
-    }
-    if (field instanceof ZodDefault) {
-      defaultValue = JSON.stringify(
-        (field as ZodDefault<ZodType>).def.defaultValue,
-      );
-      field = (field as ZodDefault<ZodType>).unwrap();
-      return this.formatParameterDescription(
-        key,
-        field,
-        description,
-        true,
-        defaultValue,
-      );
-    }
-    return (
-      `- ${key} (${this.getReadableTypeName(field)})` +
-      `${isOptional ? "" : " *required*"}` +
-      `${description ? `: ${description}` : ""}` +
-      `${defaultValue ? ` (default: ${defaultValue})` : ""}`
-    );
-  }
-
-  private getReadableTypeName(zodType: ZodType): string {
-    zodType = unwrapZodType(zodType);
-    if (zodType instanceof ZodRecord) {
-      const record = zodType as ZodRecord;
-      return `record<${this.getReadableTypeName(record.def.keyType as ZodType)}, ${this.getReadableTypeName(record.def.valueType as ZodType)}>`;
-    }
-    if (zodType instanceof ZodString) return "string";
-    if (zodType instanceof ZodNumber) return "number";
-    if (zodType instanceof ZodBoolean) return "boolean";
-    if (zodType instanceof ZodArray) return "array";
-    if (zodType instanceof ZodObject) return "object";
-    if (zodType instanceof ZodEnum) return "enum";
-    if (zodType instanceof ZodLiteral) return "literal";
-    if (zodType instanceof ZodUnion) return "union";
-    if (zodType instanceof ZodAny) return "any";
-    return "any";
   }
 }
