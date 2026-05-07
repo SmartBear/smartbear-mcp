@@ -2,8 +2,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clientRegistry } from "../../../common/client-registry";
 import {
+  drainHttpTransport,
   getBaseUrl,
   getHeaderName,
+  handleHealthRequest,
+  handleReadyRequest,
   newServer,
 } from "../../../common/transport-http";
 import type { Client } from "../../../common/types";
@@ -422,5 +425,125 @@ describe("newServer (OAuth flow)", () => {
     expect(res._body).toContain("Configuration error");
     expect(res._body).toContain("HelpTest");
     expect(res._body).toContain("HelpTest-Auth-Token");
+  });
+});
+
+describe("probe endpoints", () => {
+  describe("handleHealthRequest (liveness)", () => {
+    it("returns 200 with no-store cache header", () => {
+      const res = fakeResponse();
+      handleHealthRequest(res);
+      expect(res._status).toBe(200);
+      expect(res._headers["Cache-Control"]).toBe("no-store");
+      expect(res._headers["Content-Type"]).toBe("application/json");
+      const body = JSON.parse(res._body);
+      expect(body.status).toBe("ok");
+      expect(body.timestamp).toEqual(expect.any(String));
+    });
+
+    // Critical regression guard: liveness must NEVER flip during drain. If
+    // it did, the kubelet would kill the pod mid-drain instead of letting
+    // it finish gracefully. /ready is the one that flips.
+    it("does not depend on draining state", () => {
+      const res = fakeResponse();
+      handleHealthRequest(res);
+      // Even though we don't pass a draining function, /health is
+      // unconditional — so this is asserting the contract by absence.
+      expect(res._status).toBe(200);
+    });
+  });
+
+  describe("handleReadyRequest (readiness)", () => {
+    it("returns 200 when not draining", () => {
+      const res = fakeResponse();
+      handleReadyRequest(res, () => false);
+      expect(res._status).toBe(200);
+      expect(res._headers["Cache-Control"]).toBe("no-store");
+      const body = JSON.parse(res._body);
+      expect(body.status).toBe("ready");
+    });
+
+    it("returns 503 with no-store when draining", () => {
+      const res = fakeResponse();
+      handleReadyRequest(res, () => true);
+      expect(res._status).toBe(503);
+      expect(res._headers["Cache-Control"]).toBe("no-store");
+      const body = JSON.parse(res._body);
+      expect(body.status).toBe("draining");
+    });
+  });
+});
+
+describe("drainHttpTransport", () => {
+  function fakeHttpServer(
+    closeBehaviour: "immediate" | "manual" = "immediate",
+  ) {
+    let closeCb: (() => void) | undefined;
+    return {
+      _closeCb: () => closeCb?.(),
+      close: vi.fn().mockImplementation((cb: () => void) => {
+        if (closeBehaviour === "immediate") {
+          cb();
+        } else {
+          closeCb = cb;
+        }
+      }),
+      closeIdleConnections: vi.fn(),
+      closeAllConnections: vi.fn(),
+    };
+  }
+
+  function fakeTransportEntry() {
+    return {
+      server: {} as any,
+      transport: {
+        close: vi.fn().mockResolvedValue(undefined),
+      } as any,
+    };
+  }
+
+  it("closes idle connections, every transport, then awaits server close", async () => {
+    const httpServer = fakeHttpServer("immediate");
+    const a = fakeTransportEntry();
+    const b = fakeTransportEntry();
+    const transports = new Map<string, any>([
+      ["sid-a", a],
+      ["sid-b", b],
+    ]);
+
+    await drainHttpTransport(httpServer as any, transports);
+
+    expect(httpServer.close).toHaveBeenCalled();
+    expect(httpServer.closeIdleConnections).toHaveBeenCalled();
+    expect(a.transport.close).toHaveBeenCalled();
+    expect(b.transport.close).toHaveBeenCalled();
+    expect(httpServer.closeAllConnections).toHaveBeenCalled();
+  });
+
+  it("swallows errors from transport.close so other transports still drain", async () => {
+    const httpServer = fakeHttpServer("immediate");
+    const good = fakeTransportEntry();
+    const bad = fakeTransportEntry();
+    bad.transport.close = vi.fn().mockRejectedValue(new Error("boom"));
+    const transports = new Map<string, any>([
+      ["sid-good", good],
+      ["sid-bad", bad],
+    ]);
+
+    await expect(
+      drainHttpTransport(httpServer as any, transports),
+    ).resolves.toBeUndefined();
+
+    expect(good.transport.close).toHaveBeenCalled();
+    expect(bad.transport.close).toHaveBeenCalled();
+  });
+
+  it("works with an empty transports map", async () => {
+    const httpServer = fakeHttpServer("immediate");
+    const transports = new Map<string, any>();
+    await expect(
+      drainHttpTransport(httpServer as any, transports),
+    ).resolves.toBeUndefined();
+    expect(httpServer.close).toHaveBeenCalled();
   });
 });
