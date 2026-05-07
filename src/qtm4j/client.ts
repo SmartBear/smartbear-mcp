@@ -168,8 +168,8 @@ export class Qtm4jClient implements Client {
     const { CreateTestCase } = await import(
       "./tool/test-case/create-test-case"
     );
-    const { SearchTestCases } = await import(
-      "./tool/test-case/search-test-cases"
+    const { GetTestCases } = await import(
+      "./tool/test-case/get-test-cases"
     );
     const { GetTestSteps } = await import("./tool/test-case/get-test-steps");
 
@@ -177,7 +177,7 @@ export class Qtm4jClient implements Client {
       new GetProjects(this),
       new SetProjectContext(this),
       new CreateTestCase(this),
-      new SearchTestCases(this),
+      new GetTestCases(this),
       new GetTestSteps(this),
     ];
 

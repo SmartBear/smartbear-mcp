@@ -8,7 +8,7 @@ import {
   type SearchTestCaseResponseType,
 } from "../../schema/search-test-case.schema";
 
-export class SearchTestCases extends Tool<Qtm4jClient> {
+export class GetTestCases extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.SEARCH_TEST_CASES.TITLE,
     summary: TOOL_NAMES.SEARCH_TEST_CASES.SUMMARY,

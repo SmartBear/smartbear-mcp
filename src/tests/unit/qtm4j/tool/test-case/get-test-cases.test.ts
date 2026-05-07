@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
-import { SearchTestCases } from "../../../../../qtm4j/tool/test-case/search-test-cases";
+import { GetTestCases } from "../../../../../qtm4j/tool/test-case/get-test-cases";
 
 describe("SearchTestCases", () => {
   let mockClient: any;
   let mockApiClient: any;
   let mockRegistry: any;
-  let instance: SearchTestCases;
+  let instance: GetTestCases;
 
   const mockContext = {
     projectKey: "SCRUM",
@@ -46,7 +46,7 @@ describe("SearchTestCases", () => {
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new SearchTestCases(mockClient as any);
+    instance = new GetTestCases(mockClient as any);
   });
 
   describe("specification", () => {
