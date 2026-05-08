@@ -5,6 +5,7 @@ import {
   drainHttpTransport,
   getBaseUrl,
   getHeaderName,
+  getQueryStringName,
   handleHealthRequest,
   handleReadyRequest,
   newServer,
@@ -187,6 +188,30 @@ describe("transport-http helpers", () => {
     it("should handle different client prefixes", () => {
       const client = fakeClient("Zephyr");
       expect(getHeaderName(client, "api_token")).toBe("Zephyr-Api-Token");
+    });
+  });
+
+  describe("getQueryStringName", () => {
+    it("should convert snake_case key to pascalCase with client prefix", () => {
+      const client = fakeClient("Bugsnag");
+      expect(getQueryStringName(client, "auth_token")).toBe("bugsnagAuthToken");
+    });
+
+    it("should handle single-word keys", () => {
+      const client = fakeClient("Reflect");
+      expect(getQueryStringName(client, "token")).toBe("reflectToken");
+    });
+
+    it("should handle multi-word keys", () => {
+      const client = fakeClient("Bugsnag");
+      expect(getQueryStringName(client, "project_api_key")).toBe(
+        "bugsnagProjectApiKey",
+      );
+    });
+
+    it("should handle different client prefixes", () => {
+      const client = fakeClient("Zephyr");
+      expect(getQueryStringName(client, "api_token")).toBe("zephyrApiToken");
     });
   });
 });
