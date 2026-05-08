@@ -288,7 +288,7 @@ export class GetTestCases extends Tool<Qtm4jClient> {
       "Date format for all filter date fields: 'dd/MMM/yyyy' (e.g., '17/Apr/2026', '01/Jan/2026'). Case-sensitive.",
       "FILTER LOGIC: Multiple values within one filter field use OR (status: ['Done', 'To Do'] = Done OR To Do).",
       "FILTER LOGIC: Different filter fields are combined with AND (status + priority = both must match).",
-      "The 'searchText' filter searches both summary and description fields (case-insensitive).",
+      "The 'searchText' filter searches both summary and description fields (case-insensitive). To get details of a specific test case by its key (e.g., 'SCRUM-TC-145'), pass the key as filter.searchText — there is no separate key filter field.",
       "For assignee/reporter filters, use Jira account IDs (format: '712020:uuid'). Multiple IDs = OR logic.",
       "Omitting filter entirely returns all test cases in the active project (paginated).",
     ],

@@ -34,6 +34,10 @@ export const ENDPOINTS = {
   RESOLVE_TEST_CASE_IDS: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcases/resolve-ids`,
 
+  /** Update test case endpoint */
+  UPDATE_TEST_CASE: (id: string, versionNo: number) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}`,
+
   /** Test steps search endpoint */
   TEST_STEPS: (id: string, versionNo: number) =>
     `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/teststeps/search`,
@@ -189,6 +193,13 @@ export const TOOL_NAMES = {
     TITLE: "Get Test Steps",
     SUMMARY:
       "Get test steps for a test case by its key and version. Accepts the human-readable key (e.g. 'SCRUM-TC-145') and resolves it to the internal ID automatically.",
+  },
+
+  /** Update Test Case tool */
+  UPDATE_TEST_CASE: {
+    TITLE: "Update Test Case",
+    SUMMARY:
+      "Update an existing test case in QTM4J. Supports auto-resolving human-readable names for priority, status, labels, and components. Labels and components support add/delete operations.",
   },
 } as const;
 

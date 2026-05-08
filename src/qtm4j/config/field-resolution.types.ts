@@ -31,6 +31,7 @@ export const ResolverKeys = {
     TEST_PLAN_STATUS: "testplan_status",
     TEST_CYCLE_STATUS: "testcycle_status",
     PRIORITY: "priority",
+    TESTCASE_FOLDER: "testcase_folder",
   } as const,
 
   /**
@@ -67,4 +68,5 @@ export enum InputField {
   STATUS = "status",
   COMPONENTS = "components",
   LABELS = "labels",
+  FOLDER = "folderId",
 }

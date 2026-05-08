@@ -170,6 +170,9 @@ export class Qtm4jClient implements Client {
     );
     const { GetTestCases } = await import("./tool/test-case/get-test-cases");
     const { GetTestSteps } = await import("./tool/test-case/get-test-steps");
+    const { UpdateTestCase } = await import(
+      "./tool/test-case/update-test-case"
+    );
 
     const tools = [
       new GetProjects(this),
@@ -177,6 +180,7 @@ export class Qtm4jClient implements Client {
       new CreateTestCase(this),
       new GetTestCases(this),
       new GetTestSteps(this),
+      new UpdateTestCase(this),
     ];
 
     // Register each tool with the MCP server
