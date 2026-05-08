@@ -183,13 +183,12 @@ export class ShutdownManager {
 
     if (winner === "clean") {
       this.logger.log(`[MCP][shutdown] Drained cleanly in ${durationMs}ms`);
-      return { status: "clean", durationMs, remainingHandlers: [] };
+    } else {
+      this.logger.error(
+        `[MCP][shutdown] Deadline exceeded after ${durationMs}ms, ${remainingHandlers.length} handler(s) outstanding: ${remainingHandlers.join(", ") || "(none)"}`,
+      );
     }
-
-    this.logger.error(
-      `[MCP][shutdown] Deadline exceeded after ${durationMs}ms, ${remainingHandlers.length} handler(s) outstanding: ${remainingHandlers.join(", ") || "(none)"}`,
-    );
-    return { status: "deadline", durationMs, remainingHandlers };
+    return { status: winner, durationMs, remainingHandlers };
   }
 
   /** Exposed for tests; not part of the production call path. */

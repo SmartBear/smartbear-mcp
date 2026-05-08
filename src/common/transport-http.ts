@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
@@ -224,7 +224,7 @@ export async function runHttpMode() {
  *      remaining keep-alive connections as a backstop.
  */
 export async function drainHttpTransport(
-  httpServer: import("node:http").Server,
+  httpServer: Server,
   transports: Map<string, SessionEntry>,
 ): Promise<void> {
   console.log(
