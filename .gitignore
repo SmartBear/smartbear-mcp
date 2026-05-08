@@ -4,3 +4,5 @@ dist
 .idea/
 coverage
 build/
+/smartbear*.mcpb
+/smartbear*.tgz

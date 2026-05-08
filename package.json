@@ -45,7 +45,7 @@
     "test:run": "vitest run",
     "coverage:check": "vitest --coverage --reporter=verbose --config vitest.config.coverage.ts",
     "bump": "node scripts/bump.js",
-    "pack:mcpb": "npm run build && node scripts/pack-mcpb.js"
+    "postpack": "node scripts/pack-mcpb.js"
   },
   "dependencies": {
     "@bugsnag/js": "^8.8.1",

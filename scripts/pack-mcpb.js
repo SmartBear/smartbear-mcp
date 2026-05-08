@@ -4,7 +4,6 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 
 const buildDir = "build/mcpb";
-const outputFile = "smartbear.mcpb";
 
 // Setup build directory
 if (fs.existsSync(buildDir)) {
@@ -26,6 +25,8 @@ fs.writeFileSync(
   `${buildDir}/manifest.json`,
   JSON.stringify(manifest, null, 2),
 );
+
+const outputFile = `smartbear-mcp-${packageJson.version}.mcpb`;
 
 // Copy the build output
 fs.cpSync("dist", `${buildDir}/server`, { recursive: true });
