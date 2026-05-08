@@ -2423,7 +2423,14 @@ export class PactflowClient implements Client {
    */
   registerPrompts(register: RegisterPromptFunction): void {
     PROMPTS.forEach((prompt) => {
-      register(prompt.name, prompt.params, prompt.callback);
+      register(
+        {
+          title: prompt.title,
+          description: prompt.description,
+          argsSchema: prompt.argsSchema,
+        },
+        prompt.callback,
+      );
     });
   }
 }

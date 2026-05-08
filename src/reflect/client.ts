@@ -212,7 +212,7 @@ export class ReflectClient implements Client {
     const prompts = [new SapTest(this)];
 
     for (const prompt of prompts) {
-      register(prompt.name, prompt.params, prompt.callback);
+      register(prompt.specification, prompt.callback);
     }
   }
 }

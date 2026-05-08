@@ -42,13 +42,9 @@ export interface ToolParams {
 }
 
 export interface PromptParams {
-  name: string;
-  callback: any;
-  params: {
-    description?: string;
-    argsSchema?: ZodRawShape;
-    title?: string;
-  };
+  title: string;
+  description?: string;
+  argsSchema?: ZodType;
 }
 
 export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
@@ -63,12 +59,7 @@ export type RegisterResourceFunction = (
 ) => RegisteredResourceTemplate;
 
 export type RegisterPromptFunction = <Args extends ZodRawShape>(
-  name: string,
-  config: {
-    title?: string;
-    description?: string;
-    argsSchema?: Args;
-  },
+  params: PromptParams,
   cb: PromptCallback<Args>,
 ) => RegisteredPrompt;
 

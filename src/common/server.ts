@@ -95,8 +95,8 @@ export class SmartBearMcpServer extends McpServer {
     this.clients.push(client);
     await client.registerTools(
       (params, cb) => {
-        const toolName = `${client.toolPrefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
-        const toolTitle = `${client.name}: ${params.title}`;
+        const toolName = this.getToolName(client, params.title);
+        const toolTitle = this.getToolTitle(client, params.title);
         return super.registerTool(
           toolName,
           {
@@ -205,10 +205,26 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     if (client.registerPrompts) {
-      client.registerPrompts((name, config, cb) => {
-        return super.registerPrompt(name, config, cb);
+      client.registerPrompts((params, cb) => {
+        return super.registerPrompt(
+          this.getToolName(client, params.title),
+          {
+            title: this.getToolTitle(client, params.title),
+            description: params.description,
+            argsSchema: this.schemaToRawShape(params.argsSchema) || {},
+          },
+          (args: any, extra: any) => cb(args, extra),
+        );
       });
     }
+  }
+
+  private getToolTitle(client: Client, title: string): string {
+    return `${client.name}: ${title}`;
+  }
+
+  private getToolName(client: Client, title: string): string {
+    return `${client.toolPrefix}_${title.replace(/\s+/g, "_").toLowerCase()}`;
   }
 
   private validateCallbackResult(result: CallToolResult, params: ToolParams) {
