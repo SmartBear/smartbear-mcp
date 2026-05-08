@@ -69,9 +69,9 @@ describe("CreateTestCase", () => {
 
       const result = await instance.handle(rawArgs);
 
-      // FIELD_CONFIG has 4 entries: PRIORITY, STATUS, COMPONENTS, LABELS
-      expect(mockFieldResolver.getResolver).toHaveBeenCalledTimes(4);
-      expect(mockFieldResolver.getResolver().resolve).toHaveBeenCalledTimes(4);
+      // FIELD_CONFIG has 4 entries: PRIORITY, STATUS, COMPONENTS, LABELS, FOLDER
+      expect(mockFieldResolver.getResolver).toHaveBeenCalledTimes(5);
+      expect(mockFieldResolver.getResolver().resolve).toHaveBeenCalledTimes(5);
       expect(mockApiClient.post).toHaveBeenCalledWith(
         ENDPOINTS.CREATE_TEST_CASE,
         expect.objectContaining({
