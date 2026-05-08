@@ -17,6 +17,19 @@ exports[`server definitions are not changed unexpectedly > registered prompts 1`
 }
 `;
 
+exports[`server definitions are not changed unexpectedly > registered resources 1`] = `
+{
+  "bugsnag_event": {
+    "description": "Retrieve a specific event by its ID.",
+    "title": "BugSnag: event",
+    "url": "bugsnag://event/{id}",
+    "variables": [
+      "id",
+    ],
+  },
+}
+`;
+
 exports[`server definitions are not changed unexpectedly > registered tools 1`] = `
 {
   "bugsnag_get_build": {

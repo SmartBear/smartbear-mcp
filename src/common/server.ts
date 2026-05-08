@@ -172,14 +172,17 @@ export class SmartBearMcpServer extends McpServer {
     );
 
     if (client.registerResources) {
-      client.registerResources((name, path, cb) => {
-        const url = `${client.toolPrefix}://${name}/${path}`;
+      client.registerResources((params, cb) => {
+        const url = `${client.toolPrefix}://${params.name}/${params.path}`;
         return super.registerResource(
-          name,
+          this.getToolName(client, params.name),
           new ResourceTemplate(url, {
             list: undefined,
           }),
-          {},
+          {
+            title: this.getToolTitle(client, params.name),
+            description: params.description,
+          },
           async (url: any, variables: any, extra: any) => {
             try {
               return await cb(url, variables, extra);
@@ -193,7 +196,10 @@ export class SmartBearMcpServer extends McpServer {
                   ) => void;
                   unhandled: boolean;
                 }) => {
-                  event.addMetadata("app", { resource: name, url: url });
+                  event.addMetadata("app", {
+                    resource: this.getToolName(client, params.name),
+                    url: url,
+                  });
                   event.unhandled = true;
                 },
               );

@@ -355,7 +355,14 @@ describe("SmartBearMcpServer", () => {
       // Get the register function passed from the server and execute it with test resource details
       const registerFn = mockClient.registerResources.mock.calls[0][0];
       const registerCbMock = vi.fn();
-      registerFn("test_resource", "{identifier}", registerCbMock);
+      registerFn(
+        {
+          name: "test_resource",
+          path: "{identifier}",
+          description: "A test resource",
+        },
+        registerCbMock,
+      );
 
       expect(superRegisterResourceMock).toHaveBeenCalledExactlyOnceWith(
         expect.any(String),
@@ -366,10 +373,14 @@ describe("SmartBearMcpServer", () => {
 
       // Assert some of the details
       const registerResourceParams = superRegisterResourceMock.mock.calls[0];
-      expect(registerResourceParams[0]).toBe("test_resource");
+      expect(registerResourceParams[0]).toBe("test_product_test_resource");
       expect(registerResourceParams[1].uriTemplate.template).toBe(
         "test_product://test_resource/{identifier}",
       );
+      expect(registerResourceParams[2]).toEqual({
+        description: "A test resource",
+        title: "Test Product: test_resource",
+      });
 
       // Get the wrapper function that will execute the tool and call it
       registerResourceParams[3]();
@@ -402,7 +413,14 @@ describe("SmartBearMcpServer", () => {
       // Get the register function passed from the server and execute it with test resource details
       const registerFn = mockClient.registerResources.mock.calls[0][0];
       const registerCbMock = vi.fn();
-      registerFn("test_resource", "{identifier}", registerCbMock);
+      registerFn(
+        {
+          name: "test_resource",
+          path: "{identifier}",
+          description: "A test resource",
+        },
+        registerCbMock,
+      );
 
       // Make the callback throw an error to test error handling
       registerCbMock.mockImplementation(() => {

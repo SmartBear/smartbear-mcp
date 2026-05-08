@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SmartBearMcpServer } from "../../../common/server";
 
 import "../../../common/register-clients";
+import type { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { clientRegistry } from "../../../common/client-registry";
 
 /**
@@ -62,6 +63,39 @@ describe("server definitions are not changed unexpectedly", () => {
 
     const sorted = Object.fromEntries(
       Object.entries(registeredPrompts).sort(([a], [b]) => a.localeCompare(b)),
+    );
+
+    expect(sorted).toMatchSnapshot();
+  });
+  it("registered resources", async () => {
+    const server = new SmartBearMcpServer();
+
+    const registeredResources: Record<string, any> = {};
+
+    vi.spyOn(
+      Object.getPrototypeOf(Object.getPrototypeOf(server)),
+      "registerResource",
+    ).mockImplementation(((
+      resourceName: string,
+      template: ResourceTemplate,
+      config: any,
+    ) => {
+      registeredResources[resourceName] = {
+        // @ts-expect-error
+        url: template.uriTemplate.template,
+        variables: template.uriTemplate.variableNames,
+        ...config,
+      };
+    }) as any);
+
+    for (const client of clientRegistry.getAll()) {
+      await server.addClient(client);
+    }
+
+    const sorted = Object.fromEntries(
+      Object.entries(registeredResources).sort(([a], [b]) =>
+        a.localeCompare(b),
+      ),
     );
 
     expect(sorted).toMatchSnapshot();

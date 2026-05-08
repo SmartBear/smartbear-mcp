@@ -458,15 +458,22 @@ export class BugsnagClient implements Client {
   }
 
   registerResources(register: RegisterResourceFunction): void {
-    register("event", "{id}", async (uri, variables, _extra) => {
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text: JSON.stringify(await this.getEvent(variables.id as string)),
-          },
-        ],
-      };
-    });
+    register(
+      {
+        name: "event",
+        path: "{id}",
+        description: "Retrieve a specific event by its ID.",
+      },
+      async (uri, variables, _extra) => {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text: JSON.stringify(await this.getEvent(variables.id as string)),
+            },
+          ],
+        };
+      },
+    );
   }
 }

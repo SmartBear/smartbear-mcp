@@ -919,8 +919,11 @@ describe("BugsnagClient", () => {
       client.registerResources(registerResourcesSpy);
 
       expect(registerResourcesSpy).toHaveBeenCalledWith(
-        "event",
-        "{id}",
+        {
+          name: "event",
+          path: "{id}",
+          description: "Retrieve a specific event by its ID.",
+        },
         expect.any(Function),
       );
     });
@@ -3132,7 +3135,7 @@ describe("BugsnagClient", () => {
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
         client.registerResources(registerResourcesSpy);
-        const resourceHandler = registerResourcesSpy.mock.calls[0][2];
+        const resourceHandler = registerResourcesSpy.mock.calls[0][1];
 
         const result = await resourceHandler(
           { href: "bugsnag://event/event-1" },

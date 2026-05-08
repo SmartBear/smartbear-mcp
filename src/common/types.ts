@@ -47,14 +47,19 @@ export interface PromptParams {
   argsSchema?: ZodType;
 }
 
+export interface ResourceParams {
+  name: string;
+  description?: string;
+  path: string;
+}
+
 export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
   params: ToolParams,
   cb: ToolCallback<InputArgs>,
 ) => RegisteredTool;
 
 export type RegisterResourceFunction = (
-  name: string,
-  path: string,
+  params: ResourceParams,
   cb: ReadResourceTemplateCallback,
 ) => RegisteredResourceTemplate;
 
@@ -67,15 +72,6 @@ export type GetInputFunction = (
   params: ElicitRequest["params"],
   options?: RequestOptions,
 ) => Promise<ElicitResult>;
-
-export type Parameters = Array<{
-  name: string;
-  type: ZodType;
-  required: boolean;
-  description?: string;
-  examples?: string[];
-  constraints?: string[];
-}>;
 
 export interface Client {
   /** Human-readable name for the client - usually the product name - used to prefix tool names */
