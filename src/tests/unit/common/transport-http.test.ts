@@ -4,8 +4,8 @@ import { clientRegistry } from "../../../common/client-registry";
 import {
   getBaseUrl,
   getHeaderName,
-  handleStreamableHttpRequest,
   getQueryStringName,
+  handleStreamableHttpRequest,
   newServer,
 } from "../../../common/transport-http";
 import type { Client } from "../../../common/types";
