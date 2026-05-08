@@ -128,7 +128,7 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
     const body = {
       ...(CreateTestCaseBody.parse(rawArgs) as Record<string, unknown>),
       projectId: String(context.projectId),
-      folderId: 'MCP Generated',
+      folderId: "MCP Generated",
     };
     const warnings: string[] = [];
 
