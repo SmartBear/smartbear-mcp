@@ -31,7 +31,7 @@ describe("GetScreenshot", () => {
   });
 
   it("should send get-screenshot message and return image content", async () => {
-    const result = await instance.handle({ sessionId: "sess-1" }, {});
+    const result = await instance.handle({ sessionId: "sess-1" }, {} as any);
 
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -63,28 +63,28 @@ describe("GetScreenshot", () => {
       state: {},
     });
 
-    await expect(instance.handle({ sessionId: "sess-1" }, {})).rejects.toThrow(
-      "No imageBase64",
-    );
+    await expect(
+      instance.handle({ sessionId: "sess-1" }, {} as any),
+    ).rejects.toThrow("No imageBase64");
   });
 
   it("should throw ToolError if session is not connected", async () => {
     mockClient.getConnectedSession.mockImplementation(() => {
       throw new Error("not connected");
     });
-    await expect(instance.handle({ sessionId: "sess-1" }, {})).rejects.toThrow(
-      "not connected",
-    );
+    await expect(
+      instance.handle({ sessionId: "sess-1" }, {} as any),
+    ).rejects.toThrow("not connected");
   });
 
   it("should throw ToolError if sessionId is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow(
+    await expect(instance.handle({}, {} as any)).rejects.toThrow(
       "sessionId argument is required",
     );
   });
 
   it("should default to png format when format is not specified", async () => {
-    await instance.handle({ sessionId: "sess-1" }, {});
+    await instance.handle({ sessionId: "sess-1" }, {} as any);
 
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
       expect.objectContaining({ type: "mcp:get-screenshot", format: "png" }),
@@ -94,7 +94,7 @@ describe("GetScreenshot", () => {
   it("should use jpeg format when format is jpeg", async () => {
     const result = await instance.handle(
       { sessionId: "sess-1", format: "jpeg" },
-      {},
+      {} as any,
     );
 
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
@@ -108,7 +108,7 @@ describe("GetScreenshot", () => {
   it("should use png format when format is png", async () => {
     const result = await instance.handle(
       { sessionId: "sess-1", format: "png" },
-      {},
+      {} as any,
     );
 
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(

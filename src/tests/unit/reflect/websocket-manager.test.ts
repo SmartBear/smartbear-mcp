@@ -24,15 +24,10 @@ vi.mock("ws", () => {
 
 describe("WebSocketManager", () => {
   let manager: WebSocketManager;
-  let _mockWs: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const WebSocket = (await import("ws")).default as any;
     manager = new WebSocketManager("test-session-123", apiKeyHeader());
-
-    // Each new manager will use a new mock instance
-    _mockWs = WebSocket.mock.results[0]?.value;
   });
 
   it("should start disconnected", () => {

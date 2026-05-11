@@ -31,7 +31,7 @@ describe("GetTestStatus", () => {
   it("should call execution status API with executionId in URL", async () => {
     fetchMock.mockResponseOnce(JSON.stringify(statusMock));
 
-    const result = await instance.handle({ executionId: "exec-1" }, {});
+    const result = await instance.handle({ executionId: "exec-1" }, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/executions/exec-1",
@@ -46,15 +46,15 @@ describe("GetTestStatus", () => {
   });
 
   it("should throw ToolError if executionId is missing", async () => {
-    await expect(instance.handle({ testId: "test-1" }, {})).rejects.toThrow(
-      "executionId argument is required",
-    );
+    await expect(
+      instance.handle({ testId: "test-1" }, {} as any),
+    ).rejects.toThrow("executionId argument is required");
   });
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Server Error", { status: 500 });
     await expect(
-      instance.handle({ testId: "test-1", executionId: "exec-1" }, {}),
+      instance.handle({ testId: "test-1", executionId: "exec-1" }, {} as any),
     ).rejects.toThrow("Failed to get test status");
   });
 });

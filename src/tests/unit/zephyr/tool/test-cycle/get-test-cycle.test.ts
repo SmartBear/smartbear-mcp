@@ -94,7 +94,7 @@ describe("GetTestCycle", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCycleIdOrKey: "TEST-R1" };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcycles/TEST-R1",
     );
@@ -104,17 +104,17 @@ describe("GetTestCycle", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ testCycleIdOrKey: "1" }, {}),
+      instance.handle({ testCycleIdOrKey: "1" }, {} as any),
     ).rejects.toThrow("API error");
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ testCycleIdOrKey: "1" }, {});
+    const result = await instance.handle({ testCycleIdOrKey: "1" }, {} as any);
     expect(result.structuredContent).toBeUndefined();
   });
 
   it("should throw validation error if testCycleKey is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow();
+    await expect(instance.handle({}, {} as any)).rejects.toThrow();
   });
 });

@@ -54,7 +54,7 @@ describe("GetTestExecutionLinks", () => {
 
     const args = { testExecutionIdOrKey: "1" };
 
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/1/links",
@@ -89,7 +89,7 @@ describe("GetTestExecutionLinks", () => {
 
     const result = await instance.handle(
       { testExecutionIdOrKey: "PROJ-E123" },
-      {},
+      {} as any,
     );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -103,14 +103,17 @@ describe("GetTestExecutionLinks", () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
 
     await expect(
-      instance.handle({ testExecutionIdOrKey: "PROJ-E123" }, {}),
+      instance.handle({ testExecutionIdOrKey: "PROJ-E123" }, {} as any),
     ).rejects.toThrow("API error");
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
 
-    const result = await instance.handle({ testExecutionIdOrKey: "1" }, {});
+    const result = await instance.handle(
+      { testExecutionIdOrKey: "1" },
+      {} as any,
+    );
 
     expect(result.structuredContent).toBeUndefined();
   });

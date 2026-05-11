@@ -31,7 +31,7 @@
     "mcpServerName": "SmartBear MCP Server"
   },
   "scripts": {
-    "build": "vite build && shx chmod +x dist/*.js",
+    "build": "tsc && vite build && shx chmod +x dist/*.js",
     "lint": "biome lint .",
     "lint:fix": "biome lint . --fix",
     "format": "biome format . --write",

@@ -3345,8 +3345,8 @@ Expected Output: Automated test case runs updated to Pass status with automation
   "entityType": "TCR",
   "qmTsRunId": "2720260",
   "runStatusID": 123266,
-  "username": "dhaval.mistry",
-  "password": "Ispl123#",
+  "username": "test.user",
+  "password": "password",
   "isBulkOperation": false
 }
 \`\`\`
