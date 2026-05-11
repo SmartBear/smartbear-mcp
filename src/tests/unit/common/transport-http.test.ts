@@ -5,6 +5,7 @@ import {
   getBaseUrl,
   getHeaderName,
   getQueryStringName,
+  handleStreamableHttpRequest,
   newServer,
 } from "../../../common/transport-http";
 import type { Client } from "../../../common/types";
@@ -447,5 +448,186 @@ describe("newServer (OAuth flow)", () => {
     expect(res._body).toContain("Configuration error");
     expect(res._body).toContain("HelpTest");
     expect(res._body).toContain("HelpTest-Auth-Token");
+  });
+});
+
+/**
+ * Build a fakeRequest that also acts like a readable stream for parseRequestBody.
+ * If `body` is provided, the request emits "data" then "end" on next tick.
+ */
+function fakeStreamRequest(opts: {
+  method?: string;
+  headers?: Record<string, string | string[] | undefined>;
+  body?: unknown;
+}): IncomingMessage {
+  const { method = "POST", headers = {}, body } = opts;
+  const listeners: Record<string, ((arg?: any) => void)[]> = {};
+  let emitted = false;
+  const req: any = {
+    method,
+    headers,
+    resume() {
+      // Drain: behave as if data/end fired with no consumers.
+      emitted = true;
+    },
+    on(event: string, cb: (arg?: any) => void) {
+      if (!listeners[event]) listeners[event] = [];
+      listeners[event].push(cb);
+      // Emit body once on first 'end' subscription. Multiple subscribers see
+      // their callbacks invoked in the same emission cycle; later subscribers
+      // do not retrigger emission (which would duplicate the body and break
+      // JSON parsing).
+      if (event === "end" && !emitted) {
+        emitted = true;
+        queueMicrotask(() => {
+          if (body !== undefined) {
+            const chunk = Buffer.from(JSON.stringify(body));
+            for (const dataCb of listeners.data || []) dataCb(chunk);
+          }
+          for (const endCb of listeners.end || []) endCb();
+        });
+      }
+      return req;
+    },
+  };
+  return req as IncomingMessage;
+}
+
+describe("handleStreamableHttpRequest (session routing)", () => {
+  it("returns 404 with JSON-RPC -32001 when session id is unknown", async () => {
+    const transports = new Map();
+    const req = fakeStreamRequest({
+      method: "POST",
+      headers: { "mcp-session-id": "does-not-exist" },
+      body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+    });
+    const res = fakeResponse();
+
+    await handleStreamableHttpRequest(req, res, transports);
+
+    expect(res._status).toBe(404);
+    expect(res._headers["Content-Type"]).toBe("application/json");
+    const parsed = JSON.parse(res._body);
+    expect(parsed).toEqual({
+      jsonrpc: "2.0",
+      error: { code: -32001, message: "Session not found" },
+      id: null,
+    });
+  });
+
+  it("returns 400 when no session id is present and body is not an initialize request", async () => {
+    const transports = new Map();
+    const req = fakeStreamRequest({
+      method: "POST",
+      headers: {},
+      body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+    });
+    const res = fakeResponse();
+
+    await handleStreamableHttpRequest(req, res, transports);
+
+    expect(res._status).toBe(400);
+    const parsed = JSON.parse(res._body);
+    expect(parsed.error.code).toBe(-32000);
+    expect(parsed.error.message).toContain("Bad Request");
+  });
+
+  it("creates a new session when initialize request arrives without a session id", async () => {
+    const transports = new Map();
+    const req = fakeStreamRequest({
+      method: "POST",
+      headers: { host: "localhost:3000" },
+      body: {
+        jsonrpc: "2.0",
+        method: "initialize",
+        id: 1,
+        params: {
+          protocolVersion: "2025-06-18",
+          capabilities: {},
+          clientInfo: { name: "test", version: "0.0.0" },
+        },
+      },
+    });
+    const res = fakeResponse();
+
+    // Provide a configured client so newServer() succeeds
+    const testClient = createTestClient({
+      name: "InitTest",
+      configPrefix: "InitTest",
+      hasGetAuthToken: false,
+    });
+    clientRegistry.getAll = () => [testClient];
+
+    // Capture the connect spy so we can assert dispatch into createNewTransport.
+    let capturedConnect: ReturnType<typeof vi.fn> | undefined;
+    const { SmartBearMcpServer } = await import("../../../common/server.js");
+    vi.mocked(SmartBearMcpServer).mockImplementation(() => {
+      capturedConnect = vi.fn();
+      return {
+        getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
+        addClient: vi.fn(),
+        getClients: () => [testClient],
+        connect: capturedConnect,
+        setSamplingSupported: vi.fn(),
+        setElicitationSupported: vi.fn(),
+        cleanupSession: vi.fn(),
+        server: { elicitInput: vi.fn() },
+      } as any;
+    });
+
+    // Stub the SDK transport's handleRequest so we don't run the real
+    // initialize flow against an incomplete fakeResponse stub. The point of
+    // this test is to verify dispatch *into* createNewTransport, not to
+    // exercise the SDK internals.
+    const { StreamableHTTPServerTransport } = await import(
+      "@modelcontextprotocol/sdk/server/streamableHttp.js"
+    );
+    const handleRequestSpy = vi
+      .spyOn(StreamableHTTPServerTransport.prototype, "handleRequest")
+      .mockResolvedValue(undefined);
+
+    try {
+      await handleStreamableHttpRequest(req, res, transports);
+
+      // Both signals must fire to prove we took the createNewTransport branch:
+      // server.connect(transport) and transport.handleRequest(req, res, body).
+      expect(capturedConnect).toBeDefined();
+      expect(capturedConnect).toHaveBeenCalledOnce();
+      expect(handleRequestSpy).toHaveBeenCalledOnce();
+      // No error response written — guards against 400, 404, AND 500.
+      expect(res._status).toBeNull();
+    } finally {
+      handleRequestSpy.mockRestore();
+    }
+  });
+
+  it("routes to existing transport when session id is known", async () => {
+    const transports = new Map();
+    const handleRequest = vi.fn().mockResolvedValue(undefined);
+    // Construct a stand-in for StreamableHTTPServerTransport that satisfies the
+    // instanceof check inside getExistingTransport without spinning up a real one.
+    const { StreamableHTTPServerTransport } = await import(
+      "@modelcontextprotocol/sdk/server/streamableHttp.js"
+    );
+    const fakeTransport = Object.create(
+      StreamableHTTPServerTransport.prototype,
+    );
+    fakeTransport.handleRequest = handleRequest;
+    transports.set("known-session", {
+      server: {} as any,
+      transport: fakeTransport,
+    });
+
+    const req = fakeStreamRequest({
+      method: "POST",
+      headers: { "mcp-session-id": "known-session" },
+      body: { jsonrpc: "2.0", method: "tools/list", id: 1 },
+    });
+    const res = fakeResponse();
+
+    await handleStreamableHttpRequest(req, res, transports);
+
+    expect(handleRequest).toHaveBeenCalledTimes(1);
+    expect(res._status).toBeNull();
   });
 });
