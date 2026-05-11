@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
 - [Common] Add graceful shutdown on SIGTERM/SIGINT in HTTP mode: drains active sessions (closes Streamable HTTP and SSE transports, runs per-client `cleanupSession` hooks including Reflect WebSocket teardown), with a configurable deadline via `MCP_SHUTDOWN_TIMEOUT_MS` (default 25s) [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
 - [Common] Split health/readiness probes: `GET /health` is now liveness-only and always returns 200 when the process is responsive; `GET /ready` is the readiness probe and returns 503 during drain so load balancers stop routing new sessions to draining pods. Both probes set `Cache-Control: no-store`. [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
+
+### Fixed
+
+- [Transport] Streamable HTTP requests carrying an `MCP-Session-Id` the server doesn't recognize now return `404` (with a JSON-RPC error envelope, code `-32001`) instead of `400`. This aligns with the MCP Streamable HTTP spec's Session Management rules, which require a 404 for requests against a terminated session and oblige clients to respond by sending a fresh `InitializeRequest`. In multi-pod deployments this lets clients transparently re-initialize after a pod restart or routing reshuffle drops the in-memory session, instead of treating it as a permanent protocol error. [#449](https://github.com/SmartBear/smartbear-mcp/pull/449)
 - [Common] Configuration options can now be passed in via query string parameters for HTTP transport [#453](https://github.com/SmartBear/smartbear-mcp/pull/453)
 - [Pactflow] Fix bug that prevents MCP server from starting with no configuration (for tool exploration) [#445](https://github.com/SmartBear/smartbear-mcp/pull/445)
 
