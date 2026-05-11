@@ -163,7 +163,7 @@ export class SmartBearMcpServer extends McpServer {
     );
 
     if (client.registerResources) {
-      client.registerResources((params, cb) => {
+      await client.registerResources((params, cb) => {
         const url = `${client.toolPrefix}://${params.name}/${params.path}`;
         return super.registerResource(
           this.getToolName(client, params.name),
@@ -202,7 +202,7 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     if (client.registerPrompts) {
-      client.registerPrompts((params, cb) => {
+      await client.registerPrompts((params, cb) => {
         return super.registerPrompt(
           this.getToolName(client, params.title),
           {

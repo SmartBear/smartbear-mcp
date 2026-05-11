@@ -208,7 +208,7 @@ export class ReflectClient implements Client {
     }
   }
 
-  registerPrompts(register: RegisterPromptFunction): void {
+  async registerPrompts(register: RegisterPromptFunction): Promise<void> {
     const prompts = [new SapTest(this)];
 
     for (const prompt of prompts) {

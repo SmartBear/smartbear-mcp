@@ -97,8 +97,8 @@ export interface Client {
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void>;
-  registerResources?(register: RegisterResourceFunction): void;
-  registerPrompts?(register: RegisterPromptFunction): void;
+  registerResources?(register: RegisterResourceFunction): Promise<void>;
+  registerPrompts?(register: RegisterPromptFunction): Promise<void>;
   /**
    * Optional method to retrieve the authentication token for the current request context.
    * This is used for request-level authentication where the token might change per request.

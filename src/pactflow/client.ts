@@ -2421,7 +2421,7 @@ export class PactflowClient implements Client {
    *
    * @param register - The function used to register prompts.
    */
-  registerPrompts(register: RegisterPromptFunction): void {
+  async registerPrompts(register: RegisterPromptFunction): Promise<void> {
     PROMPTS.forEach((prompt) => {
       register(
         {
