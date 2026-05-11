@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import Bugsnag from "./common/bugsnag";
 import "./common/register-clients"; // Register all available clients
+import { installSignalHandlers } from "./common/shutdown";
 import { runHttpMode } from "./common/transport-http";
 import { runStdioMode } from "./common/transport-stdio";
 
@@ -10,6 +11,10 @@ const McpServerBugsnagAPIKey = process.env.MCP_SERVER_BUGSNAG_API_KEY;
 if (McpServerBugsnagAPIKey) {
   Bugsnag.start(McpServerBugsnagAPIKey);
 }
+
+// Install SIGTERM / SIGINT handlers before any transport starts so that
+// signals received during startup are captured and trigger an orderly drain.
+installSignalHandlers();
 
 async function main() {
   // Determine transport mode from environment variable

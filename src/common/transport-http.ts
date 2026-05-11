@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import querystring from "node:querystring";
 
@@ -10,9 +10,58 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { clientRegistry } from "./client-registry";
 import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
+import { isDraining, registerShutdownHandler } from "./shutdown";
 import { getEnvVarName } from "./transport-stdio";
 import type { Client } from "./types";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
+
+type SessionEntry = {
+  server: SmartBearMcpServer;
+  transport: StreamableHTTPServerTransport | SSEServerTransport;
+};
+
+/**
+ * Common cache-control headers for probe endpoints.
+ */
+const PROBE_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+} as const;
+
+/**
+ * Liveness probe handler. Returns 200 unconditionally as long as the HTTP
+ * server is responsive.
+ */
+export function handleHealthRequest(res: ServerResponse): void {
+  res.writeHead(200, PROBE_HEADERS);
+  res.end(
+    JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+  );
+}
+
+/**
+ * Readiness probe handler. Returns 200 normally, 503 once the process has
+ * received SIGTERM and started draining.
+ */
+export function handleReadyRequest(
+  res: ServerResponse,
+  draining: () => boolean = isDraining,
+): void {
+  if (draining()) {
+    res.writeHead(503, PROBE_HEADERS);
+    res.end(
+      JSON.stringify({
+        status: "draining",
+        timestamp: new Date().toISOString(),
+      }),
+    );
+    return;
+  }
+  res.writeHead(200, PROBE_HEADERS);
+  res.end(
+    JSON.stringify({ status: "ready", timestamp: new Date().toISOString() }),
+  );
+}
 
 /**
  * Helper to construct the base URL from the request, respecting proxy headers.
@@ -40,13 +89,7 @@ export async function runHttpMode() {
   ];
 
   // Store transports by session ID
-  const transports = new Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: StreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >();
+  const transports = new Map<string, SessionEntry>();
 
   // Get dynamic list of allowed headers from registered clients
   const allowedAuthHeaders = getHttpHeaders();
@@ -83,12 +126,15 @@ export async function runHttpMode() {
       const baseUrl = getBaseUrl(req);
       const url = new URL(req.url || "/", baseUrl);
 
-      // HEALTH CHECK ENDPOINT
+      // LIVENESS PROBE — always 200 if the process is responsive.
       if (req.method === "GET" && url.pathname === "/health") {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
-        );
+        handleHealthRequest(res);
+        return;
+      }
+
+      // READINESS PROBE — 200 normally, 503 once draining has started.
+      if (req.method === "GET" && url.pathname === "/ready") {
+        handleReadyRequest(res);
         return;
       }
 
@@ -137,9 +183,8 @@ export async function runHttpMode() {
 
   httpServer.listen(PORT, () => {
     console.log(`[MCP HTTP Server] Listening on http://localhost:${PORT}`);
-    console.log(
-      `[MCP HTTP Server] Health check: http://localhost:${PORT}/health`,
-    );
+    console.log(`[MCP HTTP Server] Liveness:  http://localhost:${PORT}/health`);
+    console.log(`[MCP HTTP Server] Readiness: http://localhost:${PORT}/ready`);
     console.log(
       `[MCP HTTP Server] Modern endpoint: http://localhost:${PORT}/mcp (Streamable HTTP)`,
     );
@@ -158,6 +203,62 @@ export async function runHttpMode() {
       );
     }
   });
+
+  // Register graceful shutdown. Tears down active
+  // transports before any subsystem registered earlier (e.g. logging).
+  registerShutdownHandler("http-transport", async () => {
+    await drainHttpTransport(httpServer, transports);
+  });
+}
+
+/**
+ * Drain the HTTP transport. Called by the shutdown manager on SIGTERM.
+ *
+ * Sequence:
+ *   1. Stop accepting new TCP connections (httpServer.close).
+ *      This does NOT close existing keep-alive / SSE connections.
+ *   2. Close idle keep-alive connections immediately.
+ *   3. Close every active transport, which fires transport.onclose →
+ *      cleanupSession(sessionId) → per-client cleanupSession (e.g. Reflect
+ *      WebSockets).
+ *   4. Wait for httpServer.close() to fully resolve, then force-close any
+ *      remaining keep-alive connections as a backstop.
+ */
+export async function drainHttpTransport(
+  httpServer: Server,
+  transports: Map<string, SessionEntry>,
+): Promise<void> {
+  console.log(
+    `[MCP][shutdown] Draining HTTP transport (${transports.size} active session(s))`,
+  );
+
+  // Stop accepting new connections.
+  const serverClosed = new Promise<void>((resolve) => {
+    httpServer.close(() => resolve());
+  });
+
+  // Close idle keep-alive sockets right away — no in-flight work to lose.
+  httpServer.closeIdleConnections?.();
+
+  // Close every active transport. transport.close() ends SSE streams and
+  // triggers the existing onclose -> cleanupSession chain.
+  const transportCloses = [...transports.values()].map(async (entry) => {
+    try {
+      await entry.transport.close();
+    } catch (err) {
+      console.error("[MCP][shutdown] Error closing transport:", err);
+    }
+  });
+
+  await Promise.all(transportCloses);
+
+  // Backstop: force-close any TCP connections still hanging around so
+  // httpServer.close() can resolve. Safe to call after transport.close()
+  // because all session-aware teardown has already run.
+  httpServer.closeAllConnections?.();
+
+  await serverClosed;
+  console.log("[MCP][shutdown] HTTP transport drained");
 }
 
 /**

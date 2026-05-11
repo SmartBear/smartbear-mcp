@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { clientRegistry } from "./client-registry";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import { SmartBearMcpServer } from "./server";
+import { registerShutdownHandler } from "./shutdown";
 import type { Client } from "./types";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
 
@@ -65,6 +66,30 @@ export async function runStdioMode() {
   }
 
   const transport = new StdioServerTransport();
+
+  // Graceful shutdown: close the transport on SIGTERM/SIGINT.
+  //
+  // Stdio normally exits cleanly when the parent closes stdin. This handler
+  // is only meaningful when the process receives a signal directly (e.g.
+  // the parent kills us hard). It calls transport.close() so the SDK stops
+  // reading stdin promptly.
+  //
+  // Note: there is no per-session `cleanupSession` call here because the
+  // stdio transport has no sessionId — there is exactly one connection per
+  // process lifetime — and tools running over stdio never receive an
+  // mcpSessionId in their `extra` argument, so per-client session maps are
+  // never populated under stdio. Resources held by clients (e.g. Reflect
+  // WebSockets) are released when the process exits. Adding a process-wide
+  // teardown hook for stdio would require extending the Client interface
+  // with a `cleanupAll()`; tracked as a separate enhancement.
+  registerShutdownHandler("stdio-transport", async () => {
+    try {
+      await transport.close();
+    } catch (err) {
+      console.error("[MCP][shutdown] Error closing stdio transport:", err);
+    }
+  });
+
   transport.onmessage = (message) => {
     if ("method" in message && message.method === "initialize") {
       if (message.params?.protocolVersion === "2025-11-25") {
