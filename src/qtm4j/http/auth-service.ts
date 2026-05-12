@@ -1,5 +1,5 @@
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info";
-import { CONTENT_TYPES, HTTP_HEADERS } from "./constants";
+import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants";
 
 /**
  * AuthService handles authentication for QTM4J API requests

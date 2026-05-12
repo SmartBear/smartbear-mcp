@@ -23,6 +23,36 @@ export const API_CONFIG = {
 export const ENDPOINTS = {
   /** Projects endpoint */
   PROJECTS: `${API_CONFIG.API_VERSION}/projects`,
+
+  /** Create test case endpoint */
+  CREATE_TEST_CASE: `${API_CONFIG.API_VERSION}/testcases`,
+
+  /** Search test cases endpoint */
+  SEARCH_TEST_CASES: `${API_CONFIG.API_VERSION}/testcases/search`,
+
+  /** Resolve test case keys → internal UIDs for a given project */
+  RESOLVE_TEST_CASE_IDS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcases/resolve-ids`,
+
+  /** Update test case endpoint */
+  UPDATE_TEST_CASE: (id: string, versionNo: number) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}`,
+
+  /** Test steps search endpoint */
+  TEST_STEPS: (id: string, versionNo: number) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/teststeps/search`,
+
+  /** Common attributes endpoint (priority, statuses) */
+  COMMON_ATTRIBUTES: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/common-attributes`,
+
+  /** Labels search endpoint */
+  LABELS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/labels`,
+
+  /** Components search endpoint */
+  COMPONENTS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/components`,
 } as const;
 
 /**
@@ -96,10 +126,19 @@ export const PAGINATION = {
   DEFAULT_MAX_RESULTS_PROJECTS: 100,
 
   /** Default maximum results for test cases */
-  DEFAULT_MAX_RESULTS_TEST_CASES: 20,
+  DEFAULT_MAX_RESULTS_TEST_CASES: 50,
 
   /** Maximum allowed results per request */
   MAX_ALLOWED_RESULTS: 100,
+
+  /** Maximum allowed results per request for test cases (backend enforced) */
+  MAX_ALLOWED_RESULTS_TEST_CASES: 50,
+
+  /** Default maximum results for test steps */
+  DEFAULT_MAX_RESULTS_TEST_STEPS: 50,
+
+  /** Maximum allowed results per request for test steps */
+  MAX_ALLOWED_RESULTS_TEST_STEPS: 100,
 
   /** Minimum allowed results per request */
   MIN_ALLOWED_RESULTS: 1,
@@ -125,6 +164,42 @@ export const TOOL_NAMES = {
   GET_PROJECTS: {
     TITLE: "Get Projects",
     SUMMARY: "Get all projects from QTM4J with optional filtering",
+  },
+
+  /** Set Project Context tool */
+  SET_PROJECT_CONTEXT: {
+    TITLE: "Set Project Context",
+    SUMMARY:
+      "Set the active QTM4J project for the current session. Must be called before any project-specific operation. " +
+      "Pre-loads priority and status values so you can map user-provided names to valid options via NLP.",
+  },
+
+  /** Create Test Case tool */
+  CREATE_TEST_CASE: {
+    TITLE: "Create Test Case",
+    SUMMARY:
+      "Create a new test case in a QTM4J project. Supports auto-resolving human-readable names for priority, status, labels, and components.",
+  },
+
+  /** Search Test Cases tool */
+  SEARCH_TEST_CASES: {
+    TITLE: "Search Test Cases",
+    SUMMARY:
+      "Search and filter test cases in a QTM4J project with support for pagination, field selection, and sorting.",
+  },
+
+  /** Get Test Steps tool */
+  GET_TEST_STEPS: {
+    TITLE: "Get Test Steps",
+    SUMMARY:
+      "Get test steps for a test case by its key and version. Accepts the human-readable key (e.g. 'SCRUM-TC-145') and resolves it to the internal ID automatically.",
+  },
+
+  /** Update Test Case tool */
+  UPDATE_TEST_CASE: {
+    TITLE: "Update Test Case",
+    SUMMARY:
+      "Update an existing test case in QTM4J. Supports auto-resolving human-readable names for priority, status, labels, and components. Labels and components support add/delete operations.",
   },
 } as const;
 
@@ -264,6 +339,10 @@ export const RESPONSE_FIELDS = {
 
   /** Data field */
   DATA: "data",
+
+  FIELDS: "fields",
+
+  SORT: "sort",
 } as const;
 
 /**

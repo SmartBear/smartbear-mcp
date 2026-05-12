@@ -5,14 +5,15 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import { ApiClient } from "./common/api-client";
 import {
   API_CONFIG,
   CLIENT_CONFIG,
   CONFIG_KEYS,
   ERROR_MESSAGES,
   SCHEMA_DESCRIPTIONS,
-} from "./common/constants";
+} from "./config/constants";
+import { ApiClient } from "./http/api-client";
+import { ResolverRegistry } from "./resolver/resolver-registry";
 
 /**
  * Configuration schema for QTM4J client
@@ -63,6 +64,7 @@ export class Qtm4jClient implements Client {
   private _apiKey: string | undefined;
   private baseUrl: string = API_CONFIG.DEFAULT_BASE_URL;
   private apiClient: ApiClient | undefined;
+  private resolverRegistry: ResolverRegistry | undefined;
 
   /**
    * Configure the QTM4J client with API credentials
@@ -82,6 +84,9 @@ export class Qtm4jClient implements Client {
 
     // Initialize API client with token provider for request-scoped credentials
     this.apiClient = new ApiClient(() => this.getAuthToken(), this.baseUrl);
+
+    // Initialize resolver registry with the API client
+    this.resolverRegistry = new ResolverRegistry(this.apiClient);
   }
 
   /**
@@ -132,6 +137,17 @@ export class Qtm4jClient implements Client {
     return this.apiClient;
   }
 
+  getResolverRegistry(): ResolverRegistry {
+    if (!this.resolverRegistry) {
+      throw new Error(ERROR_MESSAGES.CLIENT_NOT_CONFIGURED);
+    }
+    return this.resolverRegistry;
+  }
+
+  requireProjectContext() {
+    return this.getResolverRegistry().requireProjectContext();
+  }
+
   /**
    * Register all QTM4J tools with the MCP server
    *
@@ -145,11 +161,27 @@ export class Qtm4jClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
-    // Import tools dynamically
     const { GetProjects } = await import("./tool/project/get-projects");
+    const { SetProjectContext } = await import(
+      "./tool/project/set-project-context"
+    );
+    const { CreateTestCase } = await import(
+      "./tool/test-case/create-test-case"
+    );
+    const { GetTestCases } = await import("./tool/test-case/get-test-cases");
+    const { GetTestSteps } = await import("./tool/test-case/get-test-steps");
+    const { UpdateTestCase } = await import(
+      "./tool/test-case/update-test-case"
+    );
 
-    // Create tool instances
-    const tools = [new GetProjects(this)];
+    const tools = [
+      new GetProjects(this),
+      new SetProjectContext(this),
+      new CreateTestCase(this),
+      new GetTestCases(this),
+      new GetTestSteps(this),
+      new UpdateTestCase(this),
+    ];
 
     // Register each tool with the MCP server
     for (const tool of tools) {

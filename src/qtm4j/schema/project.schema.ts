@@ -1,17 +1,11 @@
 /**
- * QTM4J REST API Schemas
+ * QTM4J Project Schemas
  *
- * This file contains Zod schemas for validating QTM4J API requests and responses.
- * Based on QTM4J Cloud REST API documentation.
- *
- * API Documentation: https://app.swaggerhub.com/apis-docs/qmetry-ada/qtm4j_cloud/restapi
+ * Zod schemas for project-related API requests and responses.
  */
 import * as zod from "zod";
-import { PAGINATION, SCHEMA_DESCRIPTIONS } from "./constants";
+import { PAGINATION, SCHEMA_DESCRIPTIONS } from "../config/constants";
 
-/**
- * Schema for Project object
- */
 export const ProjectSchema = zod
   .object({
     id: zod.number().describe("Project ID"),
@@ -34,10 +28,7 @@ export const ProjectSchema = zod
   .passthrough()
   .describe(SCHEMA_DESCRIPTIONS.PROJECT_OBJECT);
 
-/**
- * Schema for Get Projects Request Body
- * POST /rest/api/latest/projects
- */
+/** POST /rest/api/latest/projects */
 export const GetProjectsBody = zod.object({
   projectId: zod.number().optional().describe("Filter by specific project ID"),
   search: zod.string().optional().describe(SCHEMA_DESCRIPTIONS.SEARCH_TEXT),
@@ -58,9 +49,6 @@ export const GetProjectsBody = zod.object({
     .describe(SCHEMA_DESCRIPTIONS.MAX_RESULTS_PROJECTS),
 });
 
-/**
- * Schema for Get Projects Response
- */
 export const GetProjectsResponse = zod.object({
   total: zod
     .number()
@@ -70,3 +58,31 @@ export const GetProjectsResponse = zod.object({
 });
 
 export type GetProjectsResponseType = zod.infer<typeof GetProjectsResponse>;
+
+/** set_project_context input */
+export const SetProjectContextBody = zod.object({
+  projectKey: zod
+    .string()
+    .describe(
+      "Project key (e.g., 'SCRUM'). Use the get_projects tool to discover available project keys.",
+    ),
+});
+
+export const SetProjectContextResponse = zod.object({
+  projectId: zod.number().describe("Numeric project ID"),
+  projectKey: zod.string().describe("Project key"),
+  projectName: zod.string().describe("Project name"),
+  message: zod.string().describe("Confirmation message"),
+  availableFields: zod
+    .record(zod.string(), zod.record(zod.string(), zod.string()))
+    .optional()
+    .describe(
+      "Available field values keyed by field name (e.g. 'priority', 'testcase_status'). " +
+        "Use these to map user input via NLP (e.g. user says 'Major' → send 'High').",
+    ),
+});
+
+export type SetProjectContextBodyType = zod.infer<typeof SetProjectContextBody>;
+export type SetProjectContextResponseType = zod.infer<
+  typeof SetProjectContextResponse
+>;

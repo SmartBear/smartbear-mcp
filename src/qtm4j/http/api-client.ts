@@ -1,5 +1,4 @@
 import { ToolError } from "../../common/tools";
-import { AuthService } from "./auth-service";
 import {
   CONTENT_TYPES,
   EMPTY_VALUES,
@@ -7,7 +6,8 @@ import {
   HTTP_HEADERS,
   HTTP_METHODS,
   HTTP_STATUS,
-} from "./constants";
+} from "../config/constants";
+import { AuthService } from "./auth-service";
 
 /**
  * ApiClient handles HTTP communication with QTM4J REST API

@@ -8,12 +8,12 @@ import {
   PAGINATION,
   RESPONSE_FIELDS,
   TOOL_NAMES,
-} from "../../common/constants";
+} from "../../config/constants";
 import {
   GetProjectsBody,
   GetProjectsResponse,
   type GetProjectsResponseType,
-} from "../../common/rest-api-schemas";
+} from "../../schema/project.schema";
 
 /**
  * GetProjects Tool

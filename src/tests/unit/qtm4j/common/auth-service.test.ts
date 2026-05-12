@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../../common/info";
-import { AuthService } from "../../../../qtm4j/common/auth-service";
 import {
   CONTENT_TYPES,
   HTTP_HEADERS,
-} from "../../../../qtm4j/common/constants";
+} from "../../../../qtm4j/config/constants";
+import { AuthService } from "../../../../qtm4j/http/auth-service";
 
 describe("AuthService", () => {
   it("should create instance with api key", () => {
