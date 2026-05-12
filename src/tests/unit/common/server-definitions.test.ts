@@ -6,7 +6,7 @@ import type { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { clientRegistry } from "../../../common/client-registry";
 
 /**
- * This test verifies that all registered tools from all clients match the expected snapshot.
+ * This test verifies that all registered tools, prompts, and resources from all clients match the expected snapshot.
  * If it fails, verify the diff from the vitest output and, if it's expected, update the snapshot with `vitest -u`.
  */
 describe("server definitions are not changed unexpectedly", () => {

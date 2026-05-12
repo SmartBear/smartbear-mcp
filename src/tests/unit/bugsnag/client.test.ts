@@ -916,7 +916,7 @@ describe("BugsnagClient", () => {
     });
 
     it("should register event resource", async () => {
-      client.registerResources(registerResourcesSpy);
+      await client.registerResources(registerResourcesSpy);
 
       expect(registerResourcesSpy).toHaveBeenCalledWith(
         {
@@ -3134,7 +3134,7 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValueOnce(mockProjects);
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
-        client.registerResources(registerResourcesSpy);
+        await client.registerResources(registerResourcesSpy);
         const resourceHandler = registerResourcesSpy.mock.calls[0][1];
 
         const result = await resourceHandler(
