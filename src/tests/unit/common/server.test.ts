@@ -46,7 +46,7 @@ describe("SmartBearMcpServer", () => {
     beforeEach(() => {
       mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         config: z.object({}),
         registerTools: vi.fn(),
@@ -336,7 +336,7 @@ describe("SmartBearMcpServer", () => {
     it("should register resources when client provides them", async () => {
       const mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: vi.fn(),
@@ -355,7 +355,14 @@ describe("SmartBearMcpServer", () => {
       // Get the register function passed from the server and execute it with test resource details
       const registerFn = mockClient.registerResources.mock.calls[0][0];
       const registerCbMock = vi.fn();
-      registerFn("test_resource", "{identifier}", registerCbMock);
+      registerFn(
+        {
+          title: "Test Resource",
+          path: "{identifier}",
+          description: "A test resource",
+        },
+        registerCbMock,
+      );
 
       expect(superRegisterResourceMock).toHaveBeenCalledExactlyOnceWith(
         expect.any(String),
@@ -366,10 +373,14 @@ describe("SmartBearMcpServer", () => {
 
       // Assert some of the details
       const registerResourceParams = superRegisterResourceMock.mock.calls[0];
-      expect(registerResourceParams[0]).toBe("test_resource");
+      expect(registerResourceParams[0]).toBe("test_product_test_resource");
       expect(registerResourceParams[1].uriTemplate.template).toBe(
         "test_product://test_resource/{identifier}",
       );
+      expect(registerResourceParams[2]).toEqual({
+        description: "A test resource",
+        title: "Test Product: Test Resource",
+      });
 
       // Get the wrapper function that will execute the tool and call it
       registerResourceParams[3]();
@@ -381,7 +392,7 @@ describe("SmartBearMcpServer", () => {
     it("should not register resources when client does not provide them", async () => {
       const mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: undefined,
@@ -402,7 +413,14 @@ describe("SmartBearMcpServer", () => {
       // Get the register function passed from the server and execute it with test resource details
       const registerFn = mockClient.registerResources.mock.calls[0][0];
       const registerCbMock = vi.fn();
-      registerFn("test_resource", "{identifier}", registerCbMock);
+      registerFn(
+        {
+          title: "test_resource",
+          path: "{identifier}",
+          description: "A test resource",
+        },
+        registerCbMock,
+      );
 
       // Make the callback throw an error to test error handling
       registerCbMock.mockImplementation(() => {
@@ -589,7 +607,7 @@ describe("SmartBearMcpServer", () => {
     it("should skip clients without cleanupSession and call those that have it", async () => {
       const clientWithCleanup = {
         name: "Test Product A",
-        toolPrefix: "test_product_a",
+        capabilityPrefix: "test_product_a",
         configPrefix: "test-product-a",
         config: z.object({}),
         registerTools: vi.fn(),
@@ -600,7 +618,7 @@ describe("SmartBearMcpServer", () => {
       };
       const clientWithoutCleanup = {
         name: "Test Product B",
-        toolPrefix: "test_product_b",
+        capabilityPrefix: "test_product_b",
         configPrefix: "test-product-b",
         config: z.object({}),
         registerTools: vi.fn(),

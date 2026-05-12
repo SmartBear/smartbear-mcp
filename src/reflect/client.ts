@@ -48,7 +48,7 @@ export class ReflectClient implements Client {
   private mcpSessionConnections = new Map<string, Set<string>>();
 
   name = "Reflect";
-  toolPrefix = "reflect";
+  capabilityPrefix = "reflect";
   configPrefix = "Reflect";
 
   config = ConfigurationSchema;
@@ -208,11 +208,11 @@ export class ReflectClient implements Client {
     }
   }
 
-  registerPrompts(register: RegisterPromptFunction): void {
+  async registerPrompts(register: RegisterPromptFunction): Promise<void> {
     const prompts = [new SapTest(this)];
 
     for (const prompt of prompts) {
-      register(prompt.name, prompt.params, prompt.callback);
+      register(prompt.specification, prompt.callback);
     }
   }
 }

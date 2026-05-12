@@ -1,6 +1,36 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`tool definitions > all registered tool definitions match the snapshot 1`] = `
+exports[`server definitions are not changed unexpectedly > registered prompts 1`] = `
+{
+  "contract-testing_openapi_matcher_recommendations": {
+    "argsSchema": [
+      "openAPI",
+    ],
+    "description": "Get OpenAPI matcher recommendations using sampling",
+    "title": "Contract Testing: OpenAPI Matcher recommendations",
+  },
+  "reflect_sap_test": {
+    "argsSchema": [],
+    "description": "Guidelines for creating a Reflect test against an SAP S4/HANA or SAP BTP application.",
+    "title": "Reflect: SAP Test",
+  },
+}
+`;
+
+exports[`server definitions are not changed unexpectedly > registered resources 1`] = `
+{
+  "bugsnag_event": {
+    "description": "Retrieve a specific event by its ID.",
+    "title": "BugSnag: Event",
+    "url": "bugsnag://event/{id}",
+    "variables": [
+      "id",
+    ],
+  },
+}
+`;
+
+exports[`server definitions are not changed unexpectedly > registered tools 1`] = `
 {
   "bugsnag_get_build": {
     "annotations": {

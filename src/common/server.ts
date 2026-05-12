@@ -12,7 +12,7 @@ import {
   type ZodRawShape,
   type ZodType,
 } from "zod";
-import Bugsnag from "../common/bugsnag";
+import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import { CacheService } from "./cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import {
@@ -41,20 +41,11 @@ export class SmartBearMcpServer extends McpServer {
         version: MCP_SERVER_VERSION,
       },
       {
-        instructions: `When creating or editing a Reflect test using a connected recording session, follow these guidelines:
-
-1. After connecting to a session, get the list of segments for the session's platform type so you know what actions could be added via segments vs needing to create new steps. Do not list tests, only list segments.
-2. Before performing an action, take a screenshot to understand the current state of the application.
-3. Each add_prompt_step request should perform a single action or assertion. Do not combine multiple actions or assertions into a single step.
-4. Only perform one action at a time unless you're sure the action won't move the application to a different screen. For example, you can send multiple add_prompt_step requests to fill out individual form fields if those fields are visible on the current screen.
-5. Check the list of existing Segments to see if a Segment exists that achieves a similar goal to what you're trying to do next. If so, add the segment instead of creating new steps.
-6. If a step fails, use delete_previous_step to remove it and try a different approach.
-7. After completing a task, if the task required multiple prompt steps, add a final prompt step that validates the current state of the page based on what you see on the screen. In your validation, do not reference information that can change from run to run.`,
         capabilities: {
-          resources: { listChanged: true }, // Server supports dynamic resource lists
           tools: { listChanged: true }, // Server supports dynamic tool lists
+          resources: { listChanged: true }, // Server supports dynamic resource lists
+          prompts: { listChanged: true }, // Server supports sending prompts to Host
           logging: {}, // Server supports logging messages
-          prompts: {}, // Server supports sending prompts to Host
         },
       },
     );
@@ -95,8 +86,8 @@ export class SmartBearMcpServer extends McpServer {
     this.clients.push(client);
     await client.registerTools(
       (params, cb) => {
-        const toolName = `${client.toolPrefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
-        const toolTitle = `${client.name}: ${params.title}`;
+        const toolName = this.getCapabilityName(client, params.title);
+        const toolTitle = this.getCapabilityTitle(client, params.title);
         return super.registerTool(
           toolName,
           {
@@ -134,16 +125,10 @@ export class SmartBearMcpServer extends McpServer {
                   ],
                 };
               } else {
-                Bugsnag.notify(
-                  e as unknown as Error,
-                  (event: {
-                    addMetadata: (arg0: string, arg1: { tool: string }) => void;
-                    unhandled: boolean;
-                  }) => {
-                    event.addMetadata("app", { tool: toolName });
-                    event.unhandled = true;
-                  },
-                );
+                Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                  event.addMetadata("app", { tool: toolName });
+                  event.unhandled = true;
+                });
               }
               throw e;
             }
@@ -172,31 +157,30 @@ export class SmartBearMcpServer extends McpServer {
     );
 
     if (client.registerResources) {
-      client.registerResources((name, path, cb) => {
-        const url = `${client.toolPrefix}://${name}/${path}`;
+      await client.registerResources((params, cb) => {
+        const resourceName = this.getCapabilityName(client, params.title);
+        const slug = params.title.replace(/\s+/g, "_").toLowerCase();
+        const url = `${client.capabilityPrefix}://${slug}/${params.path}`;
         return super.registerResource(
-          name,
+          resourceName,
           new ResourceTemplate(url, {
             list: undefined,
           }),
-          {},
+          {
+            title: this.getCapabilityTitle(client, params.title),
+            description: params.description,
+          },
           async (url: any, variables: any, extra: any) => {
             try {
               return await cb(url, variables, extra);
             } catch (e) {
-              Bugsnag.notify(
-                e as unknown as Error,
-                (event: {
-                  addMetadata: (
-                    arg0: string,
-                    arg1: { resource: string; url: any },
-                  ) => void;
-                  unhandled: boolean;
-                }) => {
-                  event.addMetadata("app", { resource: name, url: url });
-                  event.unhandled = true;
-                },
-              );
+              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                event.addMetadata("app", {
+                  resource: resourceName,
+                  url: url,
+                });
+                event.unhandled = true;
+              });
               throw e;
             }
           },
@@ -205,8 +189,28 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     if (client.registerPrompts) {
-      client.registerPrompts((name, config, cb) => {
-        return super.registerPrompt(name, config, cb);
+      await client.registerPrompts((params, cb) => {
+        return super.registerPrompt(
+          this.getCapabilityName(client, params.title),
+          {
+            title: this.getCapabilityTitle(client, params.title),
+            description: params.description,
+            argsSchema: this.schemaToRawShape(params.argsSchema) || {},
+          },
+          async (args: any, extra: any) => {
+            try {
+              return await cb(args, extra);
+            } catch (e) {
+              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                event.addMetadata("app", {
+                  prompt: this.getCapabilityName(client, params.title),
+                });
+                event.unhandled = true;
+              });
+              throw e;
+            }
+          },
+        );
       });
     }
   }
@@ -265,6 +269,14 @@ export class SmartBearMcpServer extends McpServer {
       }
     }
     return undefined;
+  }
+
+  private getCapabilityTitle(client: Client, title: string): string {
+    return `${client.name}: ${title}`;
+  }
+
+  private getCapabilityName(client: Client, title: string): string {
+    return `${client.capabilityPrefix}_${title.replace(/\s+/g, "_").toLowerCase()}`;
   }
 
   private getDescription(params: ToolParams): string {
