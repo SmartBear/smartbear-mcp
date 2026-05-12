@@ -4,12 +4,16 @@ import { ResolverRegistry } from "../../../../qtm4j/resolver/resolver-registry";
 import { CommonAttributeResolver } from "../../../../qtm4j/resolver/resolvers/common-attribute-resolver";
 import { ComponentResolver } from "../../../../qtm4j/resolver/resolvers/component-resolver";
 import { LabelResolver } from "../../../../qtm4j/resolver/resolvers/label-resolver";
+import { RequirementIdResolver } from "../../../../qtm4j/resolver/resolvers/requirement-id-resolver";
 import { TestCaseUidResolver } from "../../../../qtm4j/resolver/resolvers/test-case-uid-resolver";
+import { TestCycleUidResolver } from "../../../../qtm4j/resolver/resolvers/test-cycle-uid-resolver";
 
 vi.mock("../../../../qtm4j/resolver/resolvers/common-attribute-resolver");
 vi.mock("../../../../qtm4j/resolver/resolvers/label-resolver");
 vi.mock("../../../../qtm4j/resolver/resolvers/component-resolver");
 vi.mock("../../../../qtm4j/resolver/resolvers/test-case-uid-resolver");
+vi.mock("../../../../qtm4j/resolver/resolvers/requirement-id-resolver");
+vi.mock("../../../../qtm4j/resolver/resolvers/test-cycle-uid-resolver");
 
 describe("ResolverRegistry", () => {
   let mockApiClient: any;
@@ -18,6 +22,8 @@ describe("ResolverRegistry", () => {
   let mockLabelResolver: any;
   let mockComponentResolver: any;
   let mockTestCaseUidResolver: any;
+  let mockRequirementIdResolver: any;
+  let mockTestCycleUidResolver: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -45,6 +51,16 @@ describe("ResolverRegistry", () => {
       resolveAndReturn: vi.fn(),
       clearCache: vi.fn(),
     };
+    mockRequirementIdResolver = {
+      fieldKeys: [ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID],
+      resolveAndReturn: vi.fn(),
+      clearCache: vi.fn(),
+    };
+    mockTestCycleUidResolver = {
+      fieldKeys: [ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID],
+      resolveAndReturn: vi.fn(),
+      clearCache: vi.fn(),
+    };
 
     vi.mocked(CommonAttributeResolver).mockImplementation(
       () => mockCommonAttributes,
@@ -56,6 +72,12 @@ describe("ResolverRegistry", () => {
     vi.mocked(TestCaseUidResolver).mockImplementation(
       () => mockTestCaseUidResolver,
     );
+    vi.mocked(RequirementIdResolver).mockImplementation(
+      () => mockRequirementIdResolver,
+    );
+    vi.mocked(TestCycleUidResolver).mockImplementation(
+      () => mockTestCycleUidResolver,
+    );
 
     registry = new ResolverRegistry(mockApiClient);
   });
@@ -66,6 +88,8 @@ describe("ResolverRegistry", () => {
       expect(LabelResolver).toHaveBeenCalledWith(mockApiClient);
       expect(ComponentResolver).toHaveBeenCalledWith(mockApiClient);
       expect(TestCaseUidResolver).toHaveBeenCalledWith(mockApiClient);
+      expect(RequirementIdResolver).toHaveBeenCalledWith(mockApiClient);
+      expect(TestCycleUidResolver).toHaveBeenCalledWith(mockApiClient);
     });
   });
 
@@ -136,6 +160,16 @@ describe("ResolverRegistry", () => {
       expect(
         registry.getResolver(ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID),
       ).toBe(mockTestCaseUidResolver);
+      expect(
+        registry.getResolver(
+          ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID,
+        ),
+      ).toBe(mockRequirementIdResolver);
+      expect(
+        registry.getResolver(
+          ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID,
+        ),
+      ).toBe(mockTestCycleUidResolver);
     });
 
     it("should throw for an unknown resolver key", () => {
@@ -152,6 +186,8 @@ describe("ResolverRegistry", () => {
       expect(mockLabelResolver.clearCache).toHaveBeenCalledWith();
       expect(mockComponentResolver.clearCache).toHaveBeenCalledWith();
       expect(mockTestCaseUidResolver.clearCache).toHaveBeenCalledWith();
+      expect(mockRequirementIdResolver.clearCache).toHaveBeenCalledWith();
+      expect(mockTestCycleUidResolver.clearCache).toHaveBeenCalledWith();
     });
 
     it("should be callable multiple times", () => {
@@ -168,6 +204,8 @@ describe("ResolverRegistry", () => {
       expect(mockLabelResolver.clearCache).toHaveBeenCalledWith("PROJ");
       expect(mockComponentResolver.clearCache).toHaveBeenCalledWith("PROJ");
       expect(mockTestCaseUidResolver.clearCache).toHaveBeenCalledWith("PROJ");
+      expect(mockRequirementIdResolver.clearCache).toHaveBeenCalledWith("PROJ");
+      expect(mockTestCycleUidResolver.clearCache).toHaveBeenCalledWith("PROJ");
     });
 
     it("should work with different project keys", () => {
