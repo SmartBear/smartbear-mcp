@@ -21,7 +21,7 @@ exports[`server definitions are not changed unexpectedly > registered resources 
 {
   "bugsnag_event": {
     "description": "Retrieve a specific event by its ID.",
-    "title": "BugSnag: event",
+    "title": "BugSnag: Event",
     "url": "bugsnag://event/{id}",
     "variables": [
       "id",

@@ -2389,8 +2389,8 @@ export class PactflowClient implements Client {
         continue;
       }
 
-      const { handler, clients: _, formatResponse, ...toolparams } = tool;
-      register(toolparams, async (args, _extra) => {
+      const { handler, clients: _, formatResponse, ...toolParams } = tool;
+      register(toolParams, async (args, _extra) => {
         const handler_fn = (this as any)[handler];
         if (typeof handler_fn !== "function") {
           throw new Error(`Handler '${handler}' not found on PactClient`);
@@ -2422,7 +2422,7 @@ export class PactflowClient implements Client {
    * @param register - The function used to register prompts.
    */
   async registerPrompts(register: RegisterPromptFunction): Promise<void> {
-    PROMPTS.forEach((prompt) => {
+    for (const prompt of PROMPTS) {
       register(
         {
           title: prompt.title,
@@ -2431,6 +2431,6 @@ export class PactflowClient implements Client {
         },
         prompt.callback,
       );
-    });
+    }
   }
 }

@@ -158,15 +158,16 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       await client.registerResources((params, cb) => {
-        const slug = params.name.replace(/\s+/g, "_").toLowerCase();
+        const resourceName = this.getCapabilityName(client, params.title);
+        const slug = params.title.replace(/\s+/g, "_").toLowerCase();
         const url = `${client.capabilityPrefix}://${slug}/${params.path}`;
         return super.registerResource(
-          this.getCapabilityName(client, params.name),
+          resourceName,
           new ResourceTemplate(url, {
             list: undefined,
           }),
           {
-            title: this.getCapabilityTitle(client, params.name),
+            title: this.getCapabilityTitle(client, params.title),
             description: params.description,
           },
           async (url: any, variables: any, extra: any) => {
@@ -175,7 +176,7 @@ export class SmartBearMcpServer extends McpServer {
             } catch (e) {
               Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
                 event.addMetadata("app", {
-                  resource: this.getCapabilityName(client, params.name),
+                  resource: resourceName,
                   url: url,
                 });
                 event.unhandled = true;

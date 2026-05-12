@@ -920,7 +920,7 @@ describe("BugsnagClient", () => {
 
       expect(registerResourcesSpy).toHaveBeenCalledWith(
         {
-          name: "event",
+          title: "Event",
           path: "{id}",
           description: "Retrieve a specific event by its ID.",
         },

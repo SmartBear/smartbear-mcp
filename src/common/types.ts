@@ -48,7 +48,7 @@ export interface PromptParams {
 }
 
 export interface ResourceParams {
-  name: string;
+  title: string;
   description?: string;
   path: string;
 }

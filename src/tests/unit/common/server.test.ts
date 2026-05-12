@@ -357,7 +357,7 @@ describe("SmartBearMcpServer", () => {
       const registerCbMock = vi.fn();
       registerFn(
         {
-          name: "test_resource",
+          title: "Test Resource",
           path: "{identifier}",
           description: "A test resource",
         },
@@ -379,7 +379,7 @@ describe("SmartBearMcpServer", () => {
       );
       expect(registerResourceParams[2]).toEqual({
         description: "A test resource",
-        title: "Test Product: test_resource",
+        title: "Test Product: Test Resource",
       });
 
       // Get the wrapper function that will execute the tool and call it
@@ -415,7 +415,7 @@ describe("SmartBearMcpServer", () => {
       const registerCbMock = vi.fn();
       registerFn(
         {
-          name: "test_resource",
+          title: "test_resource",
           path: "{identifier}",
           description: "A test resource",
         },

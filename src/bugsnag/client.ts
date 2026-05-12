@@ -460,7 +460,7 @@ export class BugsnagClient implements Client {
   async registerResources(register: RegisterResourceFunction): Promise<void> {
     register(
       {
-        name: "event",
+        title: "Event",
         path: "{id}",
         description: "Retrieve a specific event by its ID.",
       },
