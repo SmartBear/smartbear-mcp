@@ -36,7 +36,7 @@ describe("ReflectClient", () => {
   });
 
   it("should have correct tool prefix", () => {
-    expect(client.toolPrefix).toBe("reflect");
+    expect(client.capabilityPrefix).toBe("reflect");
   });
 
   it("should have correct config prefix", () => {

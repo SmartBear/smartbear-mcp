@@ -12,7 +12,7 @@ import {
   type ZodRawShape,
   type ZodType,
 } from "zod";
-import Bugsnag from "../common/bugsnag";
+import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import { CacheService } from "./cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import {
@@ -86,8 +86,8 @@ export class SmartBearMcpServer extends McpServer {
     this.clients.push(client);
     await client.registerTools(
       (params, cb) => {
-        const toolName = this.getToolName(client, params.title);
-        const toolTitle = this.getToolTitle(client, params.title);
+        const toolName = this.getCapabilityName(client, params.title);
+        const toolTitle = this.getCapabilityTitle(client, params.title);
         return super.registerTool(
           toolName,
           {
@@ -125,16 +125,10 @@ export class SmartBearMcpServer extends McpServer {
                   ],
                 };
               } else {
-                Bugsnag.notify(
-                  e as unknown as Error,
-                  (event: {
-                    addMetadata: (arg0: string, arg1: { tool: string }) => void;
-                    unhandled: boolean;
-                  }) => {
-                    event.addMetadata("app", { tool: toolName });
-                    event.unhandled = true;
-                  },
-                );
+                Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                  event.addMetadata("app", { tool: toolName });
+                  event.unhandled = true;
+                });
               }
               throw e;
             }
@@ -164,36 +158,28 @@ export class SmartBearMcpServer extends McpServer {
 
     if (client.registerResources) {
       await client.registerResources((params, cb) => {
-        const url = `${client.toolPrefix}://${params.name}/${params.path}`;
+        const slug = params.name.replace(/\s+/g, "_").toLowerCase();
+        const url = `${client.capabilityPrefix}://${slug}/${params.path}`;
         return super.registerResource(
-          this.getToolName(client, params.name),
+          this.getCapabilityName(client, params.name),
           new ResourceTemplate(url, {
             list: undefined,
           }),
           {
-            title: this.getToolTitle(client, params.name),
+            title: this.getCapabilityTitle(client, params.name),
             description: params.description,
           },
           async (url: any, variables: any, extra: any) => {
             try {
               return await cb(url, variables, extra);
             } catch (e) {
-              Bugsnag.notify(
-                e as unknown as Error,
-                (event: {
-                  addMetadata: (
-                    arg0: string,
-                    arg1: { resource: string; url: any },
-                  ) => void;
-                  unhandled: boolean;
-                }) => {
-                  event.addMetadata("app", {
-                    resource: this.getToolName(client, params.name),
-                    url: url,
-                  });
-                  event.unhandled = true;
-                },
-              );
+              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                event.addMetadata("app", {
+                  resource: this.getCapabilityName(client, params.name),
+                  url: url,
+                });
+                event.unhandled = true;
+              });
               throw e;
             }
           },
@@ -204,24 +190,28 @@ export class SmartBearMcpServer extends McpServer {
     if (client.registerPrompts) {
       await client.registerPrompts((params, cb) => {
         return super.registerPrompt(
-          this.getToolName(client, params.title),
+          this.getCapabilityName(client, params.title),
           {
-            title: this.getToolTitle(client, params.title),
+            title: this.getCapabilityTitle(client, params.title),
             description: params.description,
             argsSchema: this.schemaToRawShape(params.argsSchema) || {},
           },
-          (args: any, extra: any) => cb(args, extra),
+          async (args: any, extra: any) => {
+            try {
+              return await cb(args, extra);
+            } catch (e) {
+              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                event.addMetadata("app", {
+                  prompt: this.getCapabilityName(client, params.title),
+                });
+                event.unhandled = true;
+              });
+              throw e;
+            }
+          },
         );
       });
     }
-  }
-
-  private getToolTitle(client: Client, title: string): string {
-    return `${client.name}: ${title}`;
-  }
-
-  private getToolName(client: Client, title: string): string {
-    return `${client.toolPrefix}_${title.replace(/\s+/g, "_").toLowerCase()}`;
   }
 
   private validateCallbackResult(result: CallToolResult, params: ToolParams) {
@@ -278,6 +268,14 @@ export class SmartBearMcpServer extends McpServer {
       }
     }
     return undefined;
+  }
+
+  private getCapabilityTitle(client: Client, title: string): string {
+    return `${client.name}: ${title}`;
+  }
+
+  private getCapabilityName(client: Client, title: string): string {
+    return `${client.capabilityPrefix}_${title.replace(/\s+/g, "_").toLowerCase()}`;
   }
 
   private getDescription(params: ToolParams): string {

@@ -48,7 +48,7 @@ export class ReflectClient implements Client {
   private mcpSessionConnections = new Map<string, Set<string>>();
 
   name = "Reflect";
-  toolPrefix = "reflect";
+  capabilityPrefix = "reflect";
   configPrefix = "Reflect";
 
   config = ConfigurationSchema;

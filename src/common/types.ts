@@ -74,10 +74,10 @@ export type GetInputFunction = (
 ) => Promise<ElicitResult>;
 
 export interface Client {
-  /** Human-readable name for the client - usually the product name - used to prefix tool names */
+  /** Human-readable name for the client - usually the product name */
   name: string;
-  /** Prefix for tool IDs */
-  toolPrefix: string;
+  /** Prefix for tool, resource and prompt naming */
+  capabilityPrefix: string;
   /** Prefix for configuration (environment variables and http headers) */
   configPrefix: string;
   /**

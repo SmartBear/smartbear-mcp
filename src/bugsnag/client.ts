@@ -107,7 +107,7 @@ export class BugsnagClient implements Client {
   }
 
   name = "BugSnag";
-  toolPrefix = "bugsnag";
+  capabilityPrefix = "bugsnag";
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
 
