@@ -74,7 +74,7 @@ export class SwaggerClient implements Client {
   private _apiKey: string | undefined;
 
   name = "Swagger";
-  toolPrefix = "swagger";
+  capabilityPrefix = "swagger";
   configPrefix = "Swagger";
   config = ConfigurationSchema;
 

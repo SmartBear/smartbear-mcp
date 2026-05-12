@@ -1,19 +1,17 @@
 import type { PromptCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ZodRawShape } from "zod";
+import { type ZodRawShape, z } from "zod";
 import { Prompt } from "../../common/prompts";
 import type { ReflectClient } from "../client";
 
 export class SapTest extends Prompt<ReflectClient> {
-  name = "reflect-sap-test";
-
-  params = {
-    title: "Reflect SAP Test",
+  specification = {
+    title: "SAP Test",
     description:
       "Guidelines for creating a Reflect test against an SAP S4/HANA or SAP BTP application.",
-    argsSchema: {},
+    argsSchema: z.object({}),
   };
 
-  callback: PromptCallback<ZodRawShape> = () => ({
+  callback: PromptCallback<ZodRawShape> = (_args) => ({
     messages: [
       {
         role: "user",

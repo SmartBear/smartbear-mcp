@@ -48,7 +48,7 @@ describe("CollaboratorClient", () => {
 
     it("has correct client properties", () => {
       expect(client.name).toBe("Collaborator");
-      expect(client.toolPrefix).toBe("collaborator");
+      expect(client.capabilityPrefix).toBe("collaborator");
       expect(client.configPrefix).toBe("Collaborator");
     });
   });

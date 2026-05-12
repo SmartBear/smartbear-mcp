@@ -6,7 +6,7 @@ describe("ZephyrClient", () => {
   it("should set name and prefix", () => {
     const client = new ZephyrClient();
     expect(client.name).toBe("Zephyr");
-    expect(client.toolPrefix).toBe("zephyr");
+    expect(client.capabilityPrefix).toBe("zephyr");
     expect(client.configPrefix).toBe("Zephyr");
   });
 
