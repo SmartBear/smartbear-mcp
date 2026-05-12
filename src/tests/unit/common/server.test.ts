@@ -46,7 +46,7 @@ describe("SmartBearMcpServer", () => {
     beforeEach(() => {
       mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         config: z.object({}),
         registerTools: vi.fn(),
@@ -336,7 +336,7 @@ describe("SmartBearMcpServer", () => {
     it("should register resources when client provides them", async () => {
       const mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: vi.fn(),
@@ -392,7 +392,7 @@ describe("SmartBearMcpServer", () => {
     it("should not register resources when client does not provide them", async () => {
       const mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: undefined,
@@ -607,7 +607,7 @@ describe("SmartBearMcpServer", () => {
     it("should skip clients without cleanupSession and call those that have it", async () => {
       const clientWithCleanup = {
         name: "Test Product A",
-        toolPrefix: "test_product_a",
+        capabilityPrefix: "test_product_a",
         configPrefix: "test-product-a",
         config: z.object({}),
         registerTools: vi.fn(),
@@ -618,7 +618,7 @@ describe("SmartBearMcpServer", () => {
       };
       const clientWithoutCleanup = {
         name: "Test Product B",
-        toolPrefix: "test_product_b",
+        capabilityPrefix: "test_product_b",
         configPrefix: "test-product-b",
         config: z.object({}),
         registerTools: vi.fn(),

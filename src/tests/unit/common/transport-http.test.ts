@@ -82,7 +82,7 @@ function createTestClient(
 
   const client: any = {
     name,
-    toolPrefix: name.toLowerCase(),
+    capabilityPrefix: name.toLowerCase(),
     configPrefix,
     config: z.object(shape),
     _configured: false,
