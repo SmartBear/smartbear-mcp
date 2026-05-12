@@ -22,6 +22,8 @@ pacticipant
 pacticipants
 petstore
 qmetry
+qtm4j
+qtmcloud
 Reactnative
 reindexing
 SCIM
