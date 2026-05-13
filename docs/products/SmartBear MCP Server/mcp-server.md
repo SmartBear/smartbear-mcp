@@ -41,7 +41,7 @@ Here's how the MCP Server fits into a real workflow — solving a software bug u
 
 [![MCP-Demo](https://img.youtube.com/vi/NbKnK3rbcFE/0.jpg)](https://www.youtube.com/watch?v=NbKnK3rbcFE)
 
-See the [full capabilities matrix](./../mcp-server-capabilities) for what each integration exposes.
+See the [full capabilities matrix](/smartbear-mcp/docs/mcp-server-capabilities) for what each integration exposes.
 
 ## Next steps
 
