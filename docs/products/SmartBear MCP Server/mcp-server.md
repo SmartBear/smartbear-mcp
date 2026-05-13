@@ -28,7 +28,7 @@ Key benefits of MCP include:
 
 The MCP Server is available in two deployment modes. Pick the one that fits your workflow — see [Getting Started](./getting-started) for a full comparison.
 
-| | [Remote MCP Servers](./remote-mcp-servers) | [Local MCP Server](./local-server) |
+| | [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) | [Local MCP Server](/smartbear-mcp/docs/local-server) |
 |---|---|---|
 | **Products** | Swagger, BugSnag, Zephyr | All products (incl. Reflect, QMetry, PactFlow, Collaborator) |
 | **Setup** | None — add a URL to your MCP client | Install via npm (Node.js 20+) |
