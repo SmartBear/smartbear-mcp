@@ -92,6 +92,14 @@
     },
     {
       "order": 9,
+      "parent": "mcp-server-capabilities",
+      "name": "QTM4J Integration",
+      "slug": "qtm4j-integration",
+      "type": "markdown",
+      "contentUrl": "qtm4j-integration.md"
+    },
+    {
+      "order": 10,
       "parent": "",
       "name": "Getting Started",
       "slug": "getting-started",
@@ -99,7 +107,7 @@
       "contentUrl": "getting-started.md"
     },
     {
-      "order": 10,
+      "order": 11,
       "parent": "",
       "name": "Best Practices",
       "slug": "best-practices",
@@ -107,7 +115,7 @@
       "contentUrl": "best-practices.md"
     },
     {
-      "order": 11,
+      "order": 12,
       "parent": "",
       "name": "Troubleshooting",
       "slug": "troubleshooting",

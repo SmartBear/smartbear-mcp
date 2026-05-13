@@ -1,4 +1,4 @@
-The SmartBear MCP Server provides access to multiple capabilities across our Swagger, Reflect, QMetry, Zephyr, and BugSnag, all through dedicated tools and resources.
+The SmartBear MCP Server provides access to multiple capabilities across our Swagger, Reflect, QMetry, Zephyr, QTM4J and BugSnag, all through dedicated tools and resources.
 
 ![mcp-docs.jpg](./images/embedded/mcp-docs.jpg)
 
@@ -12,3 +12,4 @@ The SmartBear MCP Server provides access to multiple capabilities across our Swa
 -   [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - provides QMetry Test Management capabilities
 -   [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
 -   [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - provides Review and Remote System Configuration management capabilities
+-   [QTM4J](https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration) - provides QMetry Test Management for Jira capabilities

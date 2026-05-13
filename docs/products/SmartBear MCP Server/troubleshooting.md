@@ -11,6 +11,7 @@
   - `SWAGGER_API_KEY` for Swagger
   - `QMETRY_API_KEY` for QMetry
   - `ZEPHYR_API_TOKEN` for Zephyr
+  - `QTM4J_API_KEY` for QTM4J
 - Ensure you have the correct token type (Auth Token vs API Key) for each desired service.
 
 ### Build and Installation Problems
