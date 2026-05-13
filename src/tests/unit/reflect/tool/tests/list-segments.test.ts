@@ -52,7 +52,7 @@ describe("ListSegments", () => {
   it("should call segments API and return results", async () => {
     fetchMock.mockResponseOnce(JSON.stringify(segmentsMock));
 
-    const result = await instance.handle({ platform: "web" }, {});
+    const result = await instance.handle({ platform: "web" }, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/segments?type=web&offset=0&limit=25",
@@ -70,7 +70,7 @@ describe("ListSegments", () => {
   it("should use provided offset and limit", async () => {
     fetchMock.mockResponseOnce(JSON.stringify({ segments: [], count: 0 }));
 
-    await instance.handle({ platform: "web", offset: 10, limit: 5 }, {});
+    await instance.handle({ platform: "web", offset: 10, limit: 5 }, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/segments?type=web&offset=10&limit=5",
@@ -80,9 +80,9 @@ describe("ListSegments", () => {
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Not Found", { status: 404 });
-    await expect(instance.handle({ platform: "web" }, {})).rejects.toThrow(
-      "Failed to list segments",
-    );
+    await expect(
+      instance.handle({ platform: "web" }, {} as any),
+    ).rejects.toThrow("Failed to list segments");
   });
 
   it("should use WEB_APP_HOSTNAME URL for OAuth request", async () => {
@@ -93,7 +93,7 @@ describe("ListSegments", () => {
     });
     fetchMock.mockResponseOnce(JSON.stringify(segmentsMock));
 
-    const result = await instance.handle({ platform: "web" }, {});
+    const result = await instance.handle({ platform: "web" }, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://app.reflect.run/api/mcp/segments?type=web&offset=0&limit=25",

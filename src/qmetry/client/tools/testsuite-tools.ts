@@ -1053,8 +1053,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           entityType: "TCR",
           qmTsRunId: "2720260",
           runStatusID: 123266,
-          username: "dhaval.mistry",
-          password: "Ispl123#",
+          username: "test.user",
+          password: "password",
           isBulkOperation: false,
         },
         expectedOutput:

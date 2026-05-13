@@ -276,7 +276,7 @@ describe("BugsnagClient", () => {
     it("should return null when no auth is available", async () => {
       const client = new BugsnagClient();
       const mockServer = { getCache: () => mockCache } as any;
-      await client.configure(mockServer, {});
+      await client.configure(mockServer, {} as any);
       const { requestContextStorage } = await import(
         "../../../common/request-context.js"
       );
@@ -673,7 +673,7 @@ describe("BugsnagClient", () => {
           typeof (call[0] as any).apiKey === "function",
       )?.[0];
       expect(configCall).toBeDefined();
-      const apiKeyFunc = configCall.apiKey as (name: string) => string;
+      const apiKeyFunc = configCall?.apiKey as (name: string) => string;
       expect(apiKeyFunc("any")).toBe(`token ${testToken}`);
     });
 

@@ -31,7 +31,7 @@ describe("ExecuteSuite", () => {
   it("should POST to execute suite and return results", async () => {
     fetchMock.mockResponseOnce(JSON.stringify(executionMock));
 
-    const result = await instance.handle({ suiteId: "suite-1" }, {});
+    const result = await instance.handle({ suiteId: "suite-1" }, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/suites/suite-1/executions",
@@ -47,15 +47,15 @@ describe("ExecuteSuite", () => {
   });
 
   it("should throw ToolError if suiteId is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow(
+    await expect(instance.handle({}, {} as any)).rejects.toThrow(
       "suiteId argument is required",
     );
   });
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Forbidden", { status: 403 });
-    await expect(instance.handle({ suiteId: "suite-1" }, {})).rejects.toThrow(
-      "Failed to execute suite",
-    );
+    await expect(
+      instance.handle({ suiteId: "suite-1" }, {} as any),
+    ).rejects.toThrow("Failed to execute suite");
   });
 });

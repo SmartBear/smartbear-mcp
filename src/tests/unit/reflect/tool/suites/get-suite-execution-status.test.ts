@@ -33,7 +33,7 @@ describe("GetSuiteExecutionStatus", () => {
 
     const result = await instance.handle(
       { suiteId: "suite-1", executionId: "exec-1" },
-      {},
+      {} as any,
     );
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -50,20 +50,20 @@ describe("GetSuiteExecutionStatus", () => {
 
   it("should throw ToolError if suiteId is missing", async () => {
     await expect(
-      instance.handle({ executionId: "exec-1" }, {}),
+      instance.handle({ executionId: "exec-1" }, {} as any),
     ).rejects.toThrow("Both suiteId and executionId arguments are required");
   });
 
   it("should throw ToolError if executionId is missing", async () => {
-    await expect(instance.handle({ suiteId: "suite-1" }, {})).rejects.toThrow(
-      "Both suiteId and executionId arguments are required",
-    );
+    await expect(
+      instance.handle({ suiteId: "suite-1" }, {} as any),
+    ).rejects.toThrow("Both suiteId and executionId arguments are required");
   });
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Server Error", { status: 500 });
     await expect(
-      instance.handle({ suiteId: "suite-1", executionId: "exec-1" }, {}),
+      instance.handle({ suiteId: "suite-1", executionId: "exec-1" }, {} as any),
     ).rejects.toThrow("Failed to get suite execution status");
   });
 });

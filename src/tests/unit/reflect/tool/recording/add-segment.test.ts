@@ -31,7 +31,7 @@ describe("AddSegment", () => {
   it("should send add-segment message and return success", async () => {
     const result = await instance.handle(
       { sessionId: "sess-1", segmentId: 42 },
-      {},
+      {} as any,
     );
 
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
@@ -51,12 +51,12 @@ describe("AddSegment", () => {
       throw new Error("not connected");
     });
     await expect(
-      instance.handle({ sessionId: "sess-1", segmentId: 1 }, {}),
+      instance.handle({ sessionId: "sess-1", segmentId: 1 }, {} as any),
     ).rejects.toThrow("not connected");
   });
 
   it("should throw ToolError if sessionId is missing", async () => {
-    await expect(instance.handle({ segmentId: 1 }, {})).rejects.toThrow(
+    await expect(instance.handle({ segmentId: 1 }, {} as any)).rejects.toThrow(
       "sessionId argument is required",
     );
   });

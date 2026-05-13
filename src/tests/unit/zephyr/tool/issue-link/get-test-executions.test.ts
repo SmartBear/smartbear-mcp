@@ -50,7 +50,7 @@ describe("GetIssueLinkTestExecutions", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
     const args = { issueKey: "PROJ-123" };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/executions",
@@ -62,7 +62,7 @@ describe("GetIssueLinkTestExecutions", () => {
   it("should handle empty list response", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce([]);
 
-    const result = await instance.handle({ issueKey: "PROJ-123" }, {});
+    const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/issuelinks/PROJ-123/executions",
@@ -74,31 +74,33 @@ describe("GetIssueLinkTestExecutions", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
 
-    await expect(instance.handle({ issueKey: "PROJ-123" }, {})).rejects.toThrow(
-      "API error",
-    );
+    await expect(
+      instance.handle({ issueKey: "PROJ-123" }, {} as any),
+    ).rejects.toThrow("API error");
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
 
-    const result = await instance.handle({ issueKey: "PROJ-123" }, {});
+    const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
     expect(result.structuredContent).toEqual({ testExecutions: undefined });
   });
 
   it("should throw validation error if issueKey is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow();
+    await expect(instance.handle({}, {} as any)).rejects.toThrow();
   });
 
   it("should throw validation error if issueKey format is invalid", async () => {
-    await expect(instance.handle({ issueKey: "PROJT!" }, {})).rejects.toThrow();
+    await expect(
+      instance.handle({ issueKey: "PROJT!" }, {} as any),
+    ).rejects.toThrow();
   });
 
   it("should handle apiClient.get returning non-array data", async () => {
     const responseMock = { key: "PROJ-1", version: 1 };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
-    const result = await instance.handle({ issueKey: "PROJ-123" }, {});
+    const result = await instance.handle({ issueKey: "PROJ-123" }, {} as any);
     expect(result.structuredContent).toEqual({ testExecutions: responseMock });
   });
 });

@@ -28,11 +28,17 @@ describe("ReflectClient", () => {
 
   it("should register and retrieve connection", () => {
     const mockWs = { isConnected: vi.fn().mockReturnValue(true) } as any;
-    client.registerConnection("session-1", mockWs, { platform: "web" });
+    client.registerConnection("session-1", mockWs, {
+      platform: "web",
+      test: { name: "Test 1" },
+    });
 
     expect(client.isSessionConnected("session-1")).toBe(true);
     expect(client.getConnectedSession("session-1")).toBe(mockWs);
-    expect(client.getSessionState("session-1")).toEqual({ platform: "web" });
+    expect(client.getSessionState("session-1")).toEqual({
+      platform: "web",
+      test: { name: "Test 1" },
+    });
   });
 
   it("should have correct tool prefix", () => {
