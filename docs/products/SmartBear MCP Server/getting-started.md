@@ -602,4 +602,3 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "Update the status of SCRUM-TC-145 to Done"
 -   "Add the Release_2 label to SCRUM-TC-145 and remove Release_1"
 -   "Show me the test steps for SCRUM-TC-32"
--   "Get all test cases with status In Progress assigned to me"
