@@ -5,9 +5,9 @@ The SmartBear MCP Server is available in two deployment modes: **remote hosted s
 | | [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) | [Local MCP Server](/smartbear-mcp/docs/local-server) |
 |---|---|---|
 | **Products** | Swagger, BugSnag, Zephyr | All products (incl. Reflect, QMetry, PactFlow, Collaborator) |
-| **Installation** | None — URL only | Node.js 20+ and npm required |
-| **Authentication** | OAuth browser flow | Environment variables (API tokens) |
-| **Updates** | Always on the latest version | Manual `npm update` |
+| **Setup** | None — add a URL to your MCP client | Install via npm (Node.js 20+) |
+| **Authentication** | OAuth browser flow | API tokens via environment variables |
+| **Configuration** | Headers and query string | Environment variables |
 | **Best for** | Quick setup for a single product | Multi-product workflows |
 
 ## Which should I use?
