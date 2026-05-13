@@ -99,13 +99,13 @@ The following environment variables configure the QTM4J integration:
   - Test case summary/title (`summary`)
   - optional description (`description`)
   - optional precondition (`precondition`)
-  - optional priority name (`priority`) — e.g., `"High"`. Use values listed in the `set_project_context` response.
-  - optional status name (`status`) — e.g., `"To Do"`. Use values listed in the `set_project_context` response.
+  - optional priority name (`priority`) — e.g., `["High", "Medium"]`
+  - optional status name (`status`) — e.g., `["Done", "In Progress"]`
   - optional assignee Jira account ID (`assignee`)
   - optional estimated time in HH:MM:SS format (`estimatedTime`) — e.g., `"01:30:00"`
   - optional label names to attach (`labels`) — e.g., `["Release_1", "Sprint 1"]`
   - optional component names to attach (`components`) — e.g., `["UI", "Backend"]`
-  - optional folder ID to place the test case in (`folderId`)
+  - optional folder ID to place the test case in (`folderId`) — defaults to the `MCP Generated` folder if not provided
 - **Returns**: The created test case key (e.g., `SCRUM-TC-146`) and ID.
 - **Use case**: Adding new test cases with metadata, associating them with labels and components, organizing them into folders.
 
@@ -120,8 +120,8 @@ The following environment variables configure the QTM4J integration:
   - optional updated summary (`summary`)
   - optional updated description (`description`)
   - optional updated precondition (`precondition`)
-  - optional priority name (`priority`) — use values listed in the `set_project_context` response
-  - optional status name (`status`) — use values listed in the `set_project_context` response
+  - optional priority name (`priority`)
+  - optional status name (`status`)
   - optional assignee Jira account ID (`assignee`)
   - optional estimated time in HH:MM:SS format (`estimatedTime`)
   - optional labels add/delete object (`labels`):
