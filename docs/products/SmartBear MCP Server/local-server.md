@@ -1,6 +1,6 @@
 This guide walks you through installing and configuring the local SmartBear MCP Server — a single npm package that provides tools for all supported SmartBear products.
 
-> **Looking for a simpler setup?** If you only need Swagger, BugSnag, or Zephyr tools, consider the [Remote MCP Servers](./remote-mcp-servers) instead. They require no installation and authenticate via OAuth.
+> **Looking for a simpler setup?** If you only need Swagger, BugSnag, or Zephyr tools, consider the [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) instead. They require no installation and authenticate via OAuth.
 
 ## Prerequisites
 
