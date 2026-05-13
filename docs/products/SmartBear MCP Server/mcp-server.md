@@ -26,7 +26,7 @@ Key benefits of MCP include:
 
 ## Deployment modes
 
-The MCP Server is available in two deployment modes. Pick the one that fits your workflow — see [Getting Started](./getting-started) for a full comparison.
+The MCP Server is available in two deployment modes. Pick the one that fits your workflow — see [Getting Started](/smartbear-mcp/docs/getting-started) for a full comparison.
 
 | | [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) | [Local MCP Server](/smartbear-mcp/docs/local-server) |
 |---|---|---|
