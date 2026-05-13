@@ -52,7 +52,7 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
 - **BugSnag**
 
-  Generate a new Token from the BugSnag dashboard at [`app.bugsnag.com`](https://app.bugsnag.com/settings/smartbear-software/my-account/auth-tokens).
+  Generate a new Personal Auth Token from your account settings in the BugSnag dashboard at [`app.bugsnag.com`](https://app.bugsnag.com/settings/smartbear-software/my-account/auth-tokens).
 
 - **QMetry**
 
