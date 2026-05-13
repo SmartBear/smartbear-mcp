@@ -6,7 +6,7 @@ This guide is to help you get up and running with our MCP server.
 
 Before setting up and using the SmartBear MCP Server, ensure you have: 
 
--   An active account across our relevant products (e.g. [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Reflect](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), [QTM4J](https://www.qmetry.com/qmetry-test-management-for-jira), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
+-   An active account across our relevant products (e.g. [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Reflect](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
 -   Node.js 20 or later installed on your development machine
 -   A compatible MCP client (Claude Desktop, Cursor, etc.)
 
@@ -64,9 +64,9 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
   Generate an API token from Zephyr by following the instructions [here](https://support.smartbear.com/zephyr/docs/en/rest-api/api-access-tokens-management.html)
 
-- **QTM4J (QMetry Test Management for Jira)**
+- **QTM4J**
 
-  Generate an API key from your QTM4J instance. Refer to the [QMetry Open API documentation](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html) for instructions.
+  Generate your QTM4J API key by following the instructions [here](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html).
 
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products - tokens for unused products can be omitted.
 

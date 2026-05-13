@@ -1,6 +1,6 @@
 ![qtm4j.svg](./images/embedded/qtm4j.svg)
 
-The QTM4J client provides test management capabilities for [QMetry Test Management for Jira](https://www.qmetry.com/qmetry-test-management-for-jira), enabling AI assistants to search, create, and update test cases directly within your Jira-integrated QMetry environment. For full API reference, see the [QMetry Open API documentation](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html).
+The QTM4J client enables AI assistants to interact with QTM4J through available MCP tools for managing test assets, executions, cycles, automation workflows, and more.
 
 # Setup
 
@@ -8,10 +8,10 @@ The QTM4J client provides test management capabilities for [QMetry Test Manageme
 
 The following environment variables configure the QTM4J integration:
 
-- `QTM4J_API_KEY` **required**: The QMetry Test Management for Jira API key for authentication. Generate your API key from within your QTM4J instance — refer to the [QMetry Open API setup guide](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html) for step-by-step instructions.
+- `QTM4J_API_KEY` **required**: The QMetry Test Management for Jira API key for authentication. Generate your API key from your QTM4J instance — refer to the [QMetry Open API setup guide](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html) for step-by-step instructions.
   - Example: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
 
-- `QTM4J_BASE_URL` (optional): The QTM4J base URL. Set based on your region or for on-premise installations.
+- `QTM4J_BASE_URL` (optional): The QTM4J base URL. Set based on your region.
   - US region (default): `https://qtmcloud.qmetry.com`
   - Australia region: `https://syd-qtmcloud.qmetry.com`
 

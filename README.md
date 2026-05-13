@@ -36,8 +36,8 @@ See individual guides for suggested prompts and supported tools and resources:
   - [Contract Testing (PactFlow)](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
-- [QTM4J](https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration) - QMetry Test Management for Jira capabilities
 - [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - Review and Remote System Configuration management capabilities
+- [QTM4J](https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration) - QMetry Test Management for Jira capabilities
 
 
 ## Prerequisites
