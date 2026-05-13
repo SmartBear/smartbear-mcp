@@ -46,6 +46,6 @@ See the [full capabilities matrix](/smartbear-mcp/docs/mcp-server-capabilities) 
 
 ## Next steps
 
-- [Getting Started](./getting-started) — choose remote vs. local
-- [Set up a Remote MCP Server](./remote-mcp-servers) — zero-install, OAuth
-- [Set up the Local MCP Server](./local-server) — npm-based, all products
+- [Getting Started](/smartbear-mcp/docs/getting-started) — choose remote vs. local
+- [Set up a Remote MCP Server](/smartbear-mcp/docs/remote-mcp-servers) — zero-install, OAuth
+- [Set up the Local MCP Server](/smartbear-mcp/docs/local-server) — npm-based, all products
