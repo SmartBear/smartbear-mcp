@@ -8,7 +8,7 @@ For the full list of available tools, see [Zephyr Integration](./zephyr-integrat
 
 Connect your MCP client using the URL above. On first connection, your client will open a browser window to complete a Atlassian OAuth login. No API tokens or environment variables are required.
 
-![zephyr-atlassian-auth.png](./images/zephyr/zephyr-atlassian-auth.png)
+![zephyr-atlassian-auth.png](./images/embedded/zephyr-atlassian-auth.png)
 
 ## MCP Client Configuration
 

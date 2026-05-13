@@ -1,8 +1,9 @@
 The SmartBear MCP Server is a secure bridge between SmartBear platform data and AI-powered development workflows. Built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction), it surfaces rich context from across SmartBear products directly inside your AI assistant or IDE.
 
-![mcp-server.jpg](./images/embedded/mcp-server.jpg)
+![smartbear-mcp-server.jpg](./images/embedded/smartbear-mcp-server.jpg)
 
 > ℹ️ The SmartBear MCP Server is under active development. New features ship regularly — check our [GitHub repository](https://github.com/SmartBear/smartbear-mcp) for the latest updates and compatibility information.
+
 
 Bring SmartBear context into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients:
 

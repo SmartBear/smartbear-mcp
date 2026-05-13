@@ -8,7 +8,7 @@ For the full list of available tools, see [Swagger Portal Integration](./swagger
 
 Connect your MCP client using the URL above. On first connection, your client will open a browser window to complete a SmartBear OAuth login. No API tokens or environment variables are required.
 
-![swagger-sign-in.png](./images/swagger/swagger-sign-in.png)
+![swagger-sign-in.png](./images/embedded/swagger-sign-in.png)
 
 ## MCP Client Configuration
 

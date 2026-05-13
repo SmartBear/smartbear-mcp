@@ -8,11 +8,11 @@ For the full list of available tools, see [BugSnag Integration](./bugsnag-integr
 
 Connect your MCP client using the URL above. On first connection, your client will open a browser window to complete a SmartBear ID OAuth login. No API tokens or environment variables are required.
 
-![bugsnag-sign-in.png](./images/bugsnag/bugsnag-sign-in.png)
+![bugsnag-sign-in.png](./images/embedded/bugsnag-sign-in.png)
 
 After signing in, authorize BugSnag MCP Server:
 
-![bugsnag-auth.png](./images/bugsnag/bugsnag-auth.png)
+![bugsnag-auth.png](./images/embedded/bugsnag-auth.png)
 
 ## MCP Client Configuration
 
