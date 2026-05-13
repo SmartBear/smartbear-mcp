@@ -27,7 +27,7 @@
       "contentUrl": "getting-started.md"
     },
     {
-      "order": 2,
+      "order": 0,
       "parent": "getting-started",
       "name": "Remote MCP Servers",
       "slug": "remote-mcp-servers",
@@ -35,7 +35,7 @@
       "contentUrl": "remote-mcp-servers.md"
     },
     {
-      "order": 3,
+      "order": 0,
       "parent": "remote-mcp-servers",
       "name": "Swagger Remote Server",
       "slug": "remote-swagger",
@@ -43,7 +43,7 @@
       "contentUrl": "remote-swagger.md"
     },
     {
-      "order": 4,
+      "order": 1,
       "parent": "remote-mcp-servers",
       "name": "BugSnag Remote Server",
       "slug": "remote-bugsnag",
@@ -51,7 +51,7 @@
       "contentUrl": "remote-bugsnag.md"
     },
     {
-      "order": 5,
+      "order": 2,
       "parent": "remote-mcp-servers",
       "name": "Zephyr Remote Server",
       "slug": "remote-zephyr",
@@ -59,7 +59,7 @@
       "contentUrl": "remote-zephyr.md"
     },
     {
-      "order": 6,
+      "order": 1,
       "parent": "getting-started",
       "name": "Local MCP Server",
       "slug": "local-server",
@@ -67,7 +67,7 @@
       "contentUrl": "local-server.md"
     },
     {
-      "order": 7,
+      "order": 2,
       "parent": "",
       "name": "MCP Server Capabilities",
       "slug": "mcp-server-capabilities",
@@ -75,7 +75,7 @@
       "contentUrl": "mcp-server-capabilities.md"
     },
     {
-      "order": 8,
+      "order": 0,
       "parent": "mcp-server-capabilities",
       "name": "Swagger Portal Integration",
       "slug": "swagger-portal-integration",
@@ -83,7 +83,7 @@
       "contentUrl": "swagger-portal-integration.md"
     },
     {
-      "order": 9,
+      "order": 1,
       "parent": "mcp-server-capabilities",
       "name": "Swagger Studio Integration",
       "slug": "swagger-studio-integration",
@@ -91,7 +91,7 @@
       "contentUrl": "swagger-studio-integration.md"
     },
     {
-      "order": 10,
+      "order": 2,
       "parent": "mcp-server-capabilities",
       "name": "Reflect Integration",
       "slug": "reflect-integration",
@@ -99,7 +99,7 @@
       "contentUrl": "reflect-integration.md"
     },
     {
-      "order": 11,
+      "order": 3,
       "parent": "mcp-server-capabilities",
       "name": "BugSnag Integration",
       "slug": "bugsnag-integration",
@@ -107,7 +107,7 @@
       "contentUrl": "bugsnag-integration.md"
     },
     {
-      "order": 12,
+      "order": 4,
       "parent": "mcp-server-capabilities",
       "name": "Contract Testing with PactFlow",
       "slug": "contract-testing-with-pactflow",
@@ -115,7 +115,7 @@
       "contentUrl": "contract-testing-with-pactflow.md"
     },
     {
-      "order": 13,
+      "order": 5,
       "parent": "mcp-server-capabilities",
       "name": "QMetry Integration",
       "slug": "qmetry-integration",
@@ -123,7 +123,7 @@
       "contentUrl": "qmetry-integration.md"
     },
     {
-      "order": 14,
+      "order": 6,
       "parent": "mcp-server-capabilities",
       "name": "Zephyr Integration",
       "slug": "zephyr-integration",
@@ -131,7 +131,7 @@
       "contentUrl": "zephyr-integration.md"
     },
     {
-      "order": 15,
+      "order": 7,
       "parent": "mcp-server-capabilities",
       "name": "Collaborator Integration",
       "slug": "collaborator-integration",
@@ -139,7 +139,7 @@
       "contentUrl": "collaborator-integration.md"
     },
     {
-      "order": 16,
+      "order": 3,
       "parent": "",
       "name": "Best Practices",
       "slug": "best-practices",
@@ -147,7 +147,7 @@
       "contentUrl": "best-practices.md"
     },
     {
-      "order": 17,
+      "order": 4,
       "parent": "",
       "name": "Troubleshooting",
       "slug": "troubleshooting",
