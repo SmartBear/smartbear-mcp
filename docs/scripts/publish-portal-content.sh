@@ -204,6 +204,8 @@ function portal_product_load_documentation_images() {
     log_message $DEBUG "Exit portal_product_load_documentation_images"
 }
 
+# Sets the global `replaced_content` with image attachment URLs substituted in.
+# Returns via a global rather than stdout so log_message output isn't captured into the page body.
 function replace_attachments_in_content() {
     local content=$1
     local type=$2
@@ -225,7 +227,7 @@ function replace_attachments_in_content() {
         fi
     done
 
-    printf '%s' "$content"
+    replaced_content=$content
 }
 
 function process_content_item() {
@@ -262,7 +264,8 @@ function process_content_item() {
         fi
 
         local markdownContent="$(cat "$markdown_file")"
-        markdownContent=$(replace_attachments_in_content "$markdownContent" "$type")
+        replace_attachments_in_content "$markdownContent" "$type"
+        markdownContent=$replaced_content
         log_message $DEBUG "Markdown/HTML Content: $markdownContent"
         portal_product_document_markdown_patch "$markdownContent" "$type"
     fi
