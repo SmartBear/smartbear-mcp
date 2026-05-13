@@ -53,6 +53,12 @@ export const ENDPOINTS = {
   /** Components search endpoint */
   COMPONENTS: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/components`,
+
+  /** Automation: initiate result file import — returns pre-signed S3 upload URL + trackingId */
+  AUTOMATION_IMPORT: "/rest/api/automation/importresult",
+
+  /** Automation: poll import progress by trackingId */
+  AUTOMATION_IMPORT_TRACK: "/rest/api/automation/importresult/track",
 } as const;
 
 /**
@@ -81,6 +87,9 @@ export const HTTP_HEADERS = {
 export const CONTENT_TYPES = {
   /** JSON content type */
   JSON: "application/json",
+
+  /** Multipart form-data content type (used for S3 automation file uploads) */
+  MULTIPART: "multipart/form-data",
 } as const;
 
 /**
@@ -154,6 +163,10 @@ export const ERROR_MESSAGES = {
   /** Request failed template */
   REQUEST_FAILED: (status: number, errorText: string) =>
     `Request failed with status ${status}: ${errorText}`,
+
+  /** Automation API key not configured */
+  AUTOMATION_API_KEY_NOT_CONFIGURED:
+    "QTM4J Automation API key not configured. Set the QTM4J_AUTOMATION_API_KEY environment variable or pass the Qtm4j-Automation-Api-Key header.",
 } as const;
 
 /**
@@ -201,6 +214,13 @@ export const TOOL_NAMES = {
     SUMMARY:
       "Update an existing test case in QTM4J. Supports auto-resolving human-readable names for priority, status, labels, and components. Labels and components support add/delete operations.",
   },
+
+  /** Upload Automation Result tool */
+  UPLOAD_AUTOMATION_RESULT: {
+    TITLE: "Upload Automation Result",
+    SUMMARY:
+      "Upload an automation result file to QTM4J and map the results to a test cycle. Supports JUnit XML, TestNG XML, Cucumber JSON, QAF, HP UFT, and SpecFlow formats.",
+  },
 } as const;
 
 /**
@@ -209,6 +229,9 @@ export const TOOL_NAMES = {
 export const CONFIG_KEYS = {
   /** API key configuration key */
   API_KEY: "api_key",
+
+  /** Automation API key configuration key */
+  AUTOMATION_API_KEY: "automation_api_key",
 
   /** Base URL configuration key */
   BASE_URL: "base_url",
@@ -220,6 +243,10 @@ export const CONFIG_KEYS = {
 export const SCHEMA_DESCRIPTIONS = {
   /** API key description */
   API_KEY: "QTM4J API key for authentication",
+
+  /** Automation API key description */
+  AUTOMATION_API_KEY:
+    "QTM4J Automation API key for uploading automation result files. This is a separate key from the regular API key and can be found in QTM4J under Automation settings.",
 
   /** Base URL description */
   BASE_URL:
@@ -316,7 +343,62 @@ export const SCHEMA_DESCRIPTIONS = {
 
   /** Test case object description */
   TEST_CASE_OBJECT: "Test case object",
+
+  /** Automation result file path */
+  AUTOMATION_FILE_PATH:
+    "Absolute or relative path to the automation result file on disk (e.g. './target/surefire-reports/TEST-results.xml'). Supported extensions: .xml, .json, .zip",
+
+  /** Automation result format */
+  AUTOMATION_FORMAT:
+    "Format of the result file. Supported values: cucumber, testng, junit, qaf, hpuft, specflow",
+
+  /** Test cycle to reuse */
+  AUTOMATION_TEST_CYCLE_TO_REUSE:
+    "Work key of an existing test cycle to reuse (e.g. 'TR-PRJ-1'). If omitted, a new test cycle is created.",
+
+  /** Automation environment */
+  AUTOMATION_ENVIRONMENT:
+    "Name of the environment on which the test cycle was executed (e.g. 'Chrome', 'Staging'). Defaults to 'No Environment'.",
+
+  /** Automation build */
+  AUTOMATION_BUILD:
+    "Build name or version for the test cycle execution (e.g. '1.0.0-beta'). Defaults to blank.",
+
+  /** isZip flag */
+  AUTOMATION_IS_ZIP:
+    "Set to true when uploading a ZIP archive containing result files. Required for QAF format.",
+
+  /** attachFile flag */
+  AUTOMATION_ATTACH_FILE:
+    "Set to true to upload attachments referenced in execution results.",
+
+  /** matchTestSteps flag */
+  AUTOMATION_MATCH_TEST_STEPS:
+    "true — match test cases by summary AND test steps. false — match by summary or key only.",
+
+  /** appendTestName flag */
+  AUTOMATION_APPEND_TEST_NAME:
+    "Applicable to JUnit/TestNG only. Appends suite/test name to method name in test case summary.",
+
+  /** fields object */
+  AUTOMATION_FIELDS:
+    "Additional fields to set on the test cycle, test case, and/or test case execution created during import.",
 } as const;
+
+/**
+ * Default directories to search for automation result files when the user
+ * does not provide an explicit file path. Add entries here to support
+ * additional build tools or CI output locations.
+ */
+export const AUTOMATION_RESULT_DIRS = [
+  "target/surefire-reports",
+  "target/failsafe-reports",
+  "build/reports/tests",
+  "build/test-results",
+  "test-results",
+  "reports",
+  "cucumber-reports",
+] as const;
 
 /**
  * Response Field Names
