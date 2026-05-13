@@ -33,6 +33,7 @@ The MCP Server is available in two deployment modes. Pick the one that fits your
 | **Products** | Swagger, BugSnag, Zephyr | All products (incl. Reflect, QMetry, PactFlow, Collaborator) |
 | **Setup** | None — add a URL to your MCP client | Install via npm (Node.js 20+) |
 | **Authentication** | OAuth browser flow | API tokens via environment variables |
+| **Configuration** | Headers and query string | Environment variables |
 | **Best for** | Quick setup for a single product | Multi-product workflows |
 
 ## Example: debugging with BugSnag and Copilot
