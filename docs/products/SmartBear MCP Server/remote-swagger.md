@@ -2,7 +2,7 @@ The Swagger Remote MCP Server gives your AI assistant access to Swagger Portal a
 
 **Server URL:** `https://swagger.mcp.smartbear.com/mcp`
 
-For the full list of available tools, see [Swagger Portal Integration](./swagger-portal-integration) and [Swagger Studio Integration](./swagger-studio-integration).
+For the full list of available tools, see [Swagger Portal Integration](/smartbear-mcp/docs/swagger-portal-integration) and [Swagger Studio Integration](/smartbear-mcp/docs/swagger-studio-integration).
 
 ## Authentication
 
