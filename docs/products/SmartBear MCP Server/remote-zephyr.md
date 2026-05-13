@@ -2,7 +2,7 @@ The Zephyr Remote MCP Server gives your AI assistant access to Zephyr test case,
 
 **Server URL:** `https://zephyr.mcp.smartbear.com/mcp`
 
-For the full list of available tools, see [Zephyr Integration](./zephyr-integration).
+For the full list of available tools, see [Zephyr Integration](/smartbear-mcp/docs/zephyr-integration).
 
 ## Authentication
 
