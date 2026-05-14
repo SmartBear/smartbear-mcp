@@ -277,6 +277,7 @@ function process_content_item() {
 
     if [ "$children_length" -gt 0 ]; then
         log_message $INFO "Recursing into $children_length children of $slug ..."
+        local j
         for ((j=0; j<children_length; j++)); do
             local child=$(jq -c ".[$j]" <<< "$children")
             process_content_item "$child" "$current_toc_id" "$file" "$product_name"
