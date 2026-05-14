@@ -257,5 +257,50 @@ describe("SwaggerAPI", () => {
 
       await expect(api.getPortals()).rejects.toThrow("HTTP 401");
     });
+
+    it("should include detail from application/problem+json error body", async () => {
+      const errorBody = {
+        code: "SB400-01",
+        type: "https://problems-registry.smartbear.com/missing-request-parameter",
+        title: "Missing request parameter",
+        detail: "The request is missing an expected query parameter",
+        status: 400,
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(errorBody), {
+        status: 400,
+        statusText: "",
+        headers: { "content-type": "application/problem+json" },
+      });
+
+      await expect(
+        api.updatePortal("portal-123", { name: "Duplicate Name" }),
+      ).rejects.toThrow(
+        "HTTP 400: The request is missing an expected query parameter",
+      );
+    });
+
+    it("should include message from JSON error body when details is absent", async () => {
+      const errorBody = { message: "Invalid field value" };
+      fetchMock.mockResponseOnce(JSON.stringify(errorBody), {
+        status: 400,
+        statusText: "",
+        headers: { "content-type": "application/json" },
+      });
+
+      await expect(
+        api.updatePortal("portal-123", { name: "Bad Value" }),
+      ).rejects.toThrow("HTTP 400: Invalid field value");
+    });
+
+    it("should not append a trailing colon when status text is empty", async () => {
+      fetchMock.mockResponseOnce("", {
+        status: 400,
+        statusText: "",
+      });
+
+      await expect(
+        api.updatePortal("portal-123", { name: "Bad Value" }),
+      ).rejects.toThrow(/^HTTP 400$/);
+    });
   });
 });
