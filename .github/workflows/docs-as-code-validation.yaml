@@ -9,7 +9,7 @@ on:
 permissions: read-all
 
 env:
-  LOG_LEVEL: ${{ github.event.inputs.log_level }}
+  LOG_LEVEL: ${{ github.event.inputs.log_level || '2' }}
 
 jobs:
   spell-check:

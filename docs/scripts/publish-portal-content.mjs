@@ -27,7 +27,7 @@ import { basename, extname, join } from "node:path";
 const PORTAL_BASE_URL = "https://api.portal.swaggerhub.com/v1";
 const API_KEY = process.env.SWAGGERHUB_API_KEY;
 const PORTAL_SUBDOMAIN = process.env.SWAGGERHUB_PORTAL_SUBDOMAIN;
-const LOG_LEVEL = parseInt(process.env.LOG_LEVEL ?? "2", 10);
+const LOG_LEVEL = parseInt(process.env.LOG_LEVEL || "2", 10);
 const DRY_RUN =
   process.env.DRY_RUN === "true" || process.argv.includes("--dry-run");
 
