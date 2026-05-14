@@ -7387,8 +7387,7 @@ None",
 - slug (string) *required*: URL-friendly identifier for the product - must be unique within the portal, used in URLs (e.g., 'my-api' becomes /my-api). 3-22 characters, lowercase, alphanumeric with hyphens, underscores, or dots
 - description (string): Product description - explains what the API/product does, shown in product listings and cards (max 110 characters)
 - public (boolean): Whether the product is publicly visible to all portal visitors - false means only authenticated users with appropriate roles can access it
-- hidden (boolean): Whether the product is hidden from the portal landing page navigation menus - useful for internal or draft products
-- role (boolean): Whether the product has role-based access restrictions - controls if specific user roles are required to access the product",
+- hidden (boolean): Whether the product is hidden from the portal landing page navigation menus - useful for internal or draft products",
     "inputSchema": [
       "description",
       "hidden",
@@ -7396,7 +7395,6 @@ None",
       "portalId",
       "productId",
       "public",
-      "role",
       "slug",
       "type",
     ],
