@@ -277,6 +277,13 @@ async function loadDocImages(productId, productDir) {
   }
 
   const filenames = await readdir(imagesDir);
+
+  // In dry-run mode, synthesize fake attachment records so replaceAttachmentUrls
+  // can exercise the URL substitution logic without making any API calls.
+  if (DRY_RUN) {
+    return filenames.map((name) => ({ id: `dry-${name}`, name }));
+  }
+
   const attachments = await getDocAttachments(productId);
   let uploaded = false;
 
@@ -349,7 +356,7 @@ async function upsertTocMarkdown(
       title,
       order,
       ...(slug !== existing.slug ? { slug } : {}),
-      ...(parentTocId ? { parentId: parentTocId } : {}),
+      parentId: parentTocId ?? null,
     },
   });
 
@@ -393,7 +400,7 @@ async function upsertTocApiRef(
       order,
       content,
       ...(slug !== existing.slug ? { slug } : {}),
-      ...(parentTocId ? { parentId: parentTocId } : {}),
+      parentId: parentTocId ?? null,
     },
   });
   return existing.id;
@@ -573,6 +580,10 @@ async function processProduct(productDir) {
   const rootItems = contentMetadata
     .filter((item) => !item.parent)
     .sort((a, b) => a.order - b.order);
+
+  if (rootItems.length === 0) {
+    throw new Error(`Product "${productName}" has no root-level content items`);
+  }
 
   for (const item of rootItems) {
     await processContentItem(item, null, ctx);

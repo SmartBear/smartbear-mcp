@@ -13,7 +13,7 @@
  *   - Content files missing from disk (for markdown/html types)
  */
 
-import { existsSync } from "node:fs";
+import { statSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -42,12 +42,24 @@ const PRODUCT_METADATA_REQUIRED = [
   "autoPublish",
   "validateAPIs",
 ];
+const PRODUCT_METADATA_ALLOWED = new Set([
+  "description",
+  "slug",
+  "public",
+  "hidden",
+  "logo",
+  "logoDark",
+  "autoPublish",
+  "validateAPIs",
+]);
 const PRODUCT_METADATA_BOOLEANS = [
   "public",
   "hidden",
   "autoPublish",
   "validateAPIs",
 ];
+const PRODUCT_METADATA_STRINGS = ["description", "slug", "logo", "logoDark"];
+
 const CONTENT_ITEM_REQUIRED = [
   "order",
   "parent",
@@ -56,6 +68,15 @@ const CONTENT_ITEM_REQUIRED = [
   "type",
   "contentUrl",
 ];
+const CONTENT_ITEM_ALLOWED = new Set([
+  "order",
+  "parent",
+  "name",
+  "slug",
+  "type",
+  "contentUrl",
+]);
+const CONTENT_ITEM_STRINGS = ["parent", "name", "slug", "type", "contentUrl"];
 
 function validateManifest(manifest, productDir) {
   const errors = [];
@@ -75,6 +96,16 @@ function validateManifest(manifest, productDir) {
       errors.push(`productMetadata.${field} must be boolean`);
     }
   }
+  for (const field of PRODUCT_METADATA_STRINGS) {
+    if (pm[field] !== undefined && typeof pm[field] !== "string") {
+      errors.push(`productMetadata.${field} must be a string`);
+    }
+  }
+  for (const key of Object.keys(pm)) {
+    if (!PRODUCT_METADATA_ALLOWED.has(key)) {
+      errors.push(`productMetadata has unexpected property "${key}"`);
+    }
+  }
 
   // contentMetadata
   const cm = manifest.contentMetadata;
@@ -83,19 +114,42 @@ function validateManifest(manifest, productDir) {
     return errors;
   }
 
-  const allSlugs = new Set(cm.map((item) => item.slug).filter(Boolean));
+  const allSlugs = new Set(cm.map((item) => item?.slug).filter(Boolean));
   const seenSlugs = new Set();
   // Map of parent slug (or '' for root) → Map of order value → item name
   const ordersByParent = new Map();
 
   for (let i = 0; i < cm.length; i++) {
     const item = cm[i];
+
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      errors.push(`contentMetadata[${i}]: must be an object`);
+      continue;
+    }
+
     const label = `contentMetadata[${i}] ("${item.name ?? "?"}")`;
+
+    // Additional properties
+    for (const key of Object.keys(item)) {
+      if (!CONTENT_ITEM_ALLOWED.has(key)) {
+        errors.push(`${label}: unexpected property "${key}"`);
+      }
+    }
 
     // Required fields
     for (const field of CONTENT_ITEM_REQUIRED) {
       if (item[field] === undefined)
         errors.push(`${label}: "${field}" is required`);
+    }
+
+    // Type checks
+    for (const field of CONTENT_ITEM_STRINGS) {
+      if (item[field] !== undefined && typeof item[field] !== "string") {
+        errors.push(`${label}: "${field}" must be a string`);
+      }
+    }
+    if (item.order !== undefined && !Number.isInteger(item.order)) {
+      errors.push(`${label}: "order" must be an integer`);
     }
 
     // type enum
@@ -140,12 +194,18 @@ function validateManifest(manifest, productDir) {
     }
 
     // Content file exists on disk (not applicable for apiUrl, where contentUrl is a URL)
-    if (item.type !== "apiUrl" && item.contentUrl) {
-      const filePath = join(productDir, item.contentUrl);
-      if (!existsSync(filePath)) {
+    if (item.type !== "apiUrl" && item.contentUrl !== undefined) {
+      if (!item.contentUrl) {
         errors.push(
-          `${label}: contentUrl "${item.contentUrl}" not found at ${filePath}`,
+          `${label}: "contentUrl" must not be empty for type "${item.type}"`,
         );
+      } else {
+        const filePath = join(productDir, item.contentUrl);
+        if (!statSync(filePath, { throwIfNoEntry: false })?.isFile()) {
+          errors.push(
+            `${label}: contentUrl "${item.contentUrl}" not found at ${filePath}`,
+          );
+        }
       }
     }
   }
@@ -173,7 +233,9 @@ async function main() {
       dir: join(productsDir, e.name),
       manifestPath: join(productsDir, e.name, "manifest.json"),
     }))
-    .filter((p) => existsSync(p.manifestPath));
+    .filter((p) =>
+      statSync(p.manifestPath, { throwIfNoEntry: false })?.isFile(),
+    );
 
   if (products.length === 0) {
     info("No manifests found — nothing to validate.");
