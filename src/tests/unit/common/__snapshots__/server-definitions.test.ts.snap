@@ -2099,13 +2099,13 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get BDCT Consumer Contract Verification Results",
   },
-  "contract-testing_get_bdct_consumer_contract_verification_results_by_consumer_version": {
+  "contract-testing_get_bdct_consumer_contract_verification_pair": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Contract Testing: Get BDCT Consumer Contract Verification Results by Consumer Version",
+      "title": "Contract Testing: Get BDCT Consumer Contract Verification Pair",
     },
     "description": "Fetch the consumer contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
 
@@ -2121,7 +2121,7 @@ None",
       "providerVersionNumber",
     ],
     "outputSchema": undefined,
-    "title": "Contract Testing: Get BDCT Consumer Contract Verification Results by Consumer Version",
+    "title": "Contract Testing: Get BDCT Consumer Contract Verification Pair",
   },
   "contract-testing_get_bdct_consumer_contracts": {
     "annotations": {
@@ -2163,13 +2163,13 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get BDCT Cross-Contract Verification Results",
   },
-  "contract-testing_get_bdct_cross-contract_verification_results_by_consumer_version": {
+  "contract-testing_get_bdct_cross-contract_verification_pair": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Contract Testing: Get BDCT Cross-Contract Verification Results by Consumer Version",
+      "title": "Contract Testing: Get BDCT Cross-Contract Verification Pair",
     },
     "description": "Fetch the cross-contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
 
@@ -2185,7 +2185,7 @@ None",
       "providerVersionNumber",
     ],
     "outputSchema": undefined,
-    "title": "Contract Testing: Get BDCT Cross-Contract Verification Results by Consumer Version",
+    "title": "Contract Testing: Get BDCT Cross-Contract Verification Pair",
   },
   "contract-testing_get_bdct_provider_contract": {
     "annotations": {
@@ -2251,13 +2251,13 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get BDCT Provider Contract Verification Results",
   },
-  "contract-testing_get_bdct_provider_contract_verification_results_by_consumer_version": {
+  "contract-testing_get_bdct_provider_contract_verification_pair": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Contract Testing: Get BDCT Provider Contract Verification Results by Consumer Version",
+      "title": "Contract Testing: Get BDCT Provider Contract Verification Pair",
     },
     "description": "Fetch the provider contract self-verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
 
@@ -2273,7 +2273,7 @@ None",
       "providerVersionNumber",
     ],
     "outputSchema": undefined,
-    "title": "Contract Testing: Get BDCT Provider Contract Verification Results by Consumer Version",
+    "title": "Contract Testing: Get BDCT Provider Contract Verification Pair",
   },
   "contract-testing_get_branch": {
     "annotations": {
