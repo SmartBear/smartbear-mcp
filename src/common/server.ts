@@ -33,6 +33,7 @@ export class SmartBearMcpServer extends McpServer {
   private samplingSupported = false;
   private elicitationSupported = false;
   private clients: Client[] = [];
+  private enabledToolsets?: string[];
 
   constructor() {
     super(
@@ -49,6 +50,11 @@ export class SmartBearMcpServer extends McpServer {
       },
     );
     this.cache = new CacheService();
+    if (process.env.MCP_TOOLSETS) {
+      this.enabledToolsets = process.env.MCP_TOOLSETS.toLowerCase()
+        .split(",")
+        .map((s) => s.trim());
+    }
   }
 
   getCache(): CacheService {
@@ -85,6 +91,17 @@ export class SmartBearMcpServer extends McpServer {
     this.clients.push(client);
     await client.registerTools(
       (params, cb) => {
+        // Skip registering tools that are not in an enabled toolset, if toolsets are defined
+        // Tools without a toolset are always registered
+        if (
+          this.enabledToolsets &&
+          params.toolset &&
+          !this.enabledToolsets.includes(
+            this.getToolsetName(client, params.toolset),
+          )
+        ) {
+          return null;
+        }
         const toolName = this.getCapabilityName(client, params.title);
         const toolTitle = this.getCapabilityTitle(client, params.title);
         if (toolName.length > 64) {
@@ -281,6 +298,10 @@ export class SmartBearMcpServer extends McpServer {
 
   private getCapabilityName(client: Client, title: string): string {
     return `${client.capabilityPrefix}_${title.replace(/\s+/g, "_").toLowerCase()}`;
+  }
+
+  private getToolsetName(client: Client, toolset: string): string {
+    return `${client.configPrefix}:${toolset.replace(/[\s\-_]/g, "")}`.toLowerCase();
   }
 
   private getDescription(params: ToolParams): string {

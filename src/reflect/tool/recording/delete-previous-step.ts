@@ -9,6 +9,7 @@ import type { ReflectClient } from "../../client";
 export class DeletePreviousStep extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Delete Previous Step",
+    toolset: "Recording",
     summary:
       "Delete the last step added to an active Reflect recording session",
     readOnly: false,

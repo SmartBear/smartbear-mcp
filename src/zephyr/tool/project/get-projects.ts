@@ -11,6 +11,7 @@ import {
 export class GetProjects extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Projects",
+    toolset: "Projects",
     summary: "Get details of projects in Zephyr",
     readOnly: true,
     idempotent: true,

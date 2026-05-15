@@ -10,6 +10,7 @@ import type { MCPAddPromptStepSuccessResponse } from "../../types/mcp";
 export class AddPromptStep extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Add Prompt Step",
+    toolset: "Recording",
     summary:
       "Add a natural language prompt step to an active Reflect recording session",
     readOnly: false,

@@ -34,6 +34,7 @@ const inputSchema = z.object({
 export class ListReleases extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Releases",
+    toolset: "releases",
     summary: "List releases for a project",
     purpose:
       "Retrieve a list of release summaries to analyze deployment history and associated errors",

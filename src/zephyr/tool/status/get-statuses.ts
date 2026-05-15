@@ -11,6 +11,7 @@ import {
 export class GetStatuses extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Statuses",
+    toolset: "Statuses",
     summary: "Get statuses of different types of test artifacts in Zephyr",
     readOnly: true,
     idempotent: true,

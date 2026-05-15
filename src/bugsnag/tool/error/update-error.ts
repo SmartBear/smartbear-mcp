@@ -92,6 +92,7 @@ export class UpdateError extends Tool<BugsnagClient> {
 
   specification: ToolParams = {
     title: "Update Error",
+    toolset: "errors",
     summary: "Update the status of an error",
     purpose:
       "Change an error's workflow state, such as marking it as resolved or ignored",

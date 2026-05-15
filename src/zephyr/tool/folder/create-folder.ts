@@ -11,6 +11,7 @@ import {
 export class CreateFolder extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Folder",
+    toolset: "Folders",
     summary:
       "Create a folder called 'Axial Pump Tests' in the project SA for organizing test cases",
     readOnly: false,

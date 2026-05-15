@@ -17,6 +17,7 @@ import type { QMetryToolParams } from "./types";
 export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   {
     title: "Create Test Suite",
+    toolset: "Test Suites",
     summary:
       "Create a new test suite in QMetry with metadata and release/cycle mapping.",
     handler: QMetryToolsHandlers.CREATE_TEST_SUITE,
@@ -101,6 +102,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Update Test Suite",
+    toolset: "Test Suites",
     summary:
       "Update an existing QMetry test suite by id(testsuite numeric id), with auto-resolution from entityKey.",
     handler: QMetryToolsHandlers.UPDATE_TEST_SUITE,
@@ -170,6 +172,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Suites",
+    toolset: "Test Suites",
     summary:
       "Fetch QMetry test suites - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_TEST_SUITES,
@@ -288,6 +291,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Suites for Test Case",
+    toolset: "Test Suites",
     summary:
       "Get test suites that can be linked to test cases in QMetry with automatic viewId resolution",
     handler: QMetryToolsHandlers.FETCH_TESTSUITES_FOR_TESTCASE,
@@ -408,6 +412,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Link Test Cases to Test Suite",
+    toolset: "Test Suites",
     summary: "Link test cases to a test suite in QMetry.",
     handler: QMetryToolsHandlers.LINK_TESTCASES_TO_TESTSUITE,
     inputSchema: LinkTestCasesToTestSuiteArgsSchema,
@@ -465,6 +470,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Requirements Linked Test Cases to Test Suite",
+    toolset: "Test Suites",
     summary:
       "Link test cases (including those linked to requirements) to a test suite in QMetry.",
     handler: QMetryToolsHandlers.REQUIREMENTS_LINKED_TESTCASES_TO_TESTSUITE,
@@ -519,6 +525,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Link Platforms to Test Suite",
+    toolset: "Test Suites",
     summary: "Link one or more platforms to a QMetry Test Suite.",
     handler: QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE,
     inputSchema: LinkPlatformsToTestSuiteArgsSchema,
@@ -577,6 +584,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Cases Linked to Test Suite",
+    toolset: "Test Suites",
     summary:
       "Get test cases that are linked (or not linked) to a specific test suite in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASES_BY_TESTSUITE,
@@ -677,6 +685,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Executions by Test Suite",
+    toolset: "Test Suites",
     summary: "Get executions for a given test suite in QMetry",
     handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
     inputSchema: ExecutionsByTestSuiteArgsSchema,
@@ -799,6 +808,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Case Runs by Test Suite Run",
+    toolset: "Test Suites",
     summary:
       "Get test case runs under a specific test suite run execution in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
@@ -956,6 +966,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Bulk Update Test Case Execution Status",
+    toolset: "Test Suites",
     summary:
       "Update execution status for individual or multiple test case runs in bulk",
     handler: QMetryToolsHandlers.BULK_UPDATE_EXECUTION_STATUS,

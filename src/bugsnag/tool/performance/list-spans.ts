@@ -39,6 +39,7 @@ const inputSchema = z.object({
 export class ListSpans extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Spans",
+    toolset: "performance",
     summary: "Get individual spans belonging to a span group",
     purpose: "Examine individual operation instances within a span group",
     useCases: [

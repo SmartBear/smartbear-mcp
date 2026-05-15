@@ -17,6 +17,7 @@ const inputSchema = z.object({
 export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Event Details From Dashboard URL",
+    toolset: "events",
     summary:
       "Get detailed information about a specific event using its dashboard URL",
     purpose:

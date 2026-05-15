@@ -1,5 +1,5 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag";
 import { SmartBearMcpServer } from "../../../common/server";
@@ -635,6 +635,128 @@ describe("SmartBearMcpServer", () => {
       expect(clientWithCleanup.cleanupSession).toHaveBeenCalledWith(
         "session-abc",
       );
+    });
+  });
+
+  describe("toolset filtering", () => {
+    let mockClient: any;
+    let server: SmartBearMcpServer;
+    let registerToolSpy: any;
+    let registerFn: any;
+    let setupServer: () => Promise<void>;
+
+    beforeEach(async () => {
+      mockClient = {
+        name: "Test Product",
+        capabilityPrefix: "test_product",
+        configPrefix: "test-product",
+        config: z.object({}),
+        registerTools: vi.fn(),
+        registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+      };
+
+      setupServer = async () => {
+        server = new SmartBearMcpServer();
+        registerToolSpy = vi
+          .spyOn(
+            Object.getPrototypeOf(Object.getPrototypeOf(server)),
+            "registerTool",
+          )
+          .mockImplementation(vi.fn());
+
+        await server.addClient(mockClient);
+        registerFn = mockClient.registerTools.mock.calls[0][0];
+      };
+    });
+
+    afterEach(() => {
+      delete process.env.MCP_TOOLSETS;
+    });
+
+    it("should register all tools when MCP_TOOLSETS is not set", async () => {
+      await setupServer();
+      // Tool with a toolset
+      const result1 = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+      // Tool without a toolset
+      const result2 = registerFn({ title: "Tool B", summary: "B" }, vi.fn());
+
+      expect(result1).not.toBeNull();
+      expect(result2).not.toBeNull();
+    });
+
+    it("should register tools whose toolset matches MCP_TOOLSETS", async () => {
+      process.env.MCP_TOOLSETS = "test-product:groupa";
+      await setupServer();
+
+      const result = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+
+      expect(result).not.toBeNull();
+      expect(registerToolSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should skip tools whose toolset does not match MCP_TOOLSETS", async () => {
+      process.env.MCP_TOOLSETS = "test-product:groupa";
+      await setupServer();
+      const result = registerFn(
+        { title: "Tool B", summary: "B", toolset: "groupB" },
+        vi.fn(),
+      );
+
+      expect(result).toBeNull();
+      expect(registerToolSpy).not.toHaveBeenCalled();
+    });
+
+    it("should register tools without a toolset when MCP_TOOLSETS is set", async () => {
+      process.env.MCP_TOOLSETS = "test-product:groupa";
+      await setupServer();
+
+      const result = registerFn({ title: "Tool C", summary: "C" }, vi.fn());
+
+      expect(result).not.toBeNull();
+      expect(registerToolSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should support multiple toolsets in MCP_TOOLSETS", async () => {
+      process.env.MCP_TOOLSETS = "test-product:groupa, test-product:groupb";
+      await setupServer();
+
+      const resultA = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+      const resultB = registerFn(
+        { title: "Tool B", summary: "B", toolset: "groupB" },
+        vi.fn(),
+      );
+      const resultC = registerFn(
+        { title: "Tool C", summary: "C", toolset: "groupC" },
+        vi.fn(),
+      );
+
+      expect(resultA).not.toBeNull();
+      expect(resultB).not.toBeNull();
+      expect(resultC).toBeNull();
+      expect(registerToolSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("should match toolsets case-insensitively", async () => {
+      process.env.MCP_TOOLSETS = "Test-Product:GroupA";
+      await setupServer();
+
+      const result = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupa" },
+        vi.fn(),
+      );
+
+      expect(result).not.toBeNull();
     });
   });
 

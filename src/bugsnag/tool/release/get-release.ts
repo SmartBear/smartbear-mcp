@@ -26,6 +26,7 @@ const inputSchema = z.object({
 export class GetRelease extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Release",
+    toolset: "releases",
     summary:
       "Get more details for a specific release by its ID, including source control information and associated builds",
     purpose:

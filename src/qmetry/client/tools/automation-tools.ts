@@ -9,6 +9,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
   {
     handler: QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS,
     title: "Import Automation Test Results",
+    toolset: "Automation",
     summary:
       "Import/Publish automation test results from TestNG, JUnit, Cucumber, Robot, HPUFT, or QAF frameworks into QMetry",
     purpose:
