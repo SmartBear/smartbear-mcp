@@ -6,6 +6,7 @@
 
 - Verify your auth tokens are valid.
 - Check that environment variables are properly set and match the expected names:
+  - `BEARQ_API_TOKEN` for BearQ
   - `BUGSNAG_AUTH_TOKEN` for BugSnag
   - `REFLECT_API_TOKEN` for Reflect
   - `SWAGGER_API_KEY` for Swagger
