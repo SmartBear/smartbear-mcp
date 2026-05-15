@@ -299,12 +299,6 @@ export const CreateProductArgsSchema = PortalArgsSchema.extend({
     .describe(
       "Whether the product is hidden from the portal landing page navigation menus - useful for internal or draft products",
     ),
-  role: z
-    .boolean()
-    .optional()
-    .describe(
-      "Whether the product has role-based access restrictions - controls if specific user roles are required to access the product",
-    ),
 });
 
 export const UpdateProductArgsSchema = ProductArgsSchema.extend({
