@@ -88,6 +88,11 @@ export class SmartBearMcpServer extends McpServer {
       (params, cb) => {
         const toolName = this.getCapabilityName(client, params.title);
         const toolTitle = this.getCapabilityTitle(client, params.title);
+        if (toolName.length > 64) {
+          throw new ToolError(
+            `The tool name "${toolName}" is too long. Tool names must be 64 characters or fewer for client compatibility. https://github.com/anthropics/claude-code/issues/34960`,
+          );
+        }
         return super.registerTool(
           toolName,
           {
