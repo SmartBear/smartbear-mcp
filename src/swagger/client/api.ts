@@ -118,9 +118,12 @@ export class SwaggerAPI {
       return defaultReturn;
     }
 
-    // Check if response is JSON
+    // Check if response is JSON (including application/problem+json)
     const contentType = response.headers.get("content-type");
-    if (contentType?.includes("application/json")) {
+    if (
+      contentType?.includes("application/json") ||
+      contentType?.includes("application/problem+json")
+    ) {
       try {
         return (await response.json()) as T;
       } catch (error) {
@@ -158,7 +161,22 @@ export class SwaggerAPI {
     defaultReturn: T | Record<string, never> = {} as T,
   ): Promise<T | FallbackResponse> {
     if (!response.ok) {
-      throw new ToolError(`HTTP ${response.status}: ${response.statusText}`);
+      const errorBody = await this.parseResponse<Record<string, unknown>>(
+        response,
+        {},
+      );
+      const detail =
+        (typeof errorBody === "object" &&
+          errorBody !== null &&
+          String(
+            (errorBody as Record<string, unknown>).detail ??
+              (errorBody as Record<string, unknown>).message ??
+              "",
+          )) ||
+        response.statusText;
+      throw new ToolError(
+        `HTTP ${response.status}${detail ? `: ${detail}` : ""}`,
+      );
     }
 
     return this.parseResponse<T, T | Record<string, never>>(
