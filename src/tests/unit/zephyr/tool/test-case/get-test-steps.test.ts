@@ -49,7 +49,7 @@ describe("GetTestCaseSteps", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCaseKey: "SA-T1", maxResults: 10, startAt: 0 };
 
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/SA-T1/teststeps",
@@ -83,7 +83,7 @@ describe("GetTestCaseSteps", () => {
       ],
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
-    const result = await instance.handle({ testCaseKey: "SA-T1" }, {});
+    const result = await instance.handle({ testCaseKey: "SA-T1" }, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/SA-T1/teststeps",
       {
@@ -97,7 +97,7 @@ describe("GetTestCaseSteps", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ testCaseKey: "SA-T1", maxResults: 1 }, {}),
+      instance.handle({ testCaseKey: "SA-T1", maxResults: 1 }, {} as any),
     ).rejects.toThrow("API error");
   });
 
@@ -105,7 +105,7 @@ describe("GetTestCaseSteps", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
     const result = await instance.handle(
       { testCaseKey: "SA-T1", maxResults: 1 },
-      {},
+      {} as any,
     );
     expect(result.structuredContent).toBeUndefined();
   });

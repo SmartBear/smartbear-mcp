@@ -10,14 +10,11 @@ export class ListSuiteExecutions extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "List Suite Executions",
     summary: "List all executions for a given suite",
-    parameters: [
-      {
-        name: "suiteId",
-        type: z.string(),
-        description: "ID of the reflect suite to list executions for",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      suiteId: z
+        .string()
+        .describe("ID of the reflect suite to list executions for"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

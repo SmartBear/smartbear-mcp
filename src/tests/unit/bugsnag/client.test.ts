@@ -40,6 +40,7 @@ const mockErrorAPI = {
   listEventsOnProject: vi.fn(),
   viewEventById: vi.fn(),
   listProjectErrors: vi.fn(),
+  listErrorEvents: vi.fn(),
   updateErrorOnProject: vi.fn(),
   getPivotValuesOnAnError: vi.fn(),
 } satisfies Omit<ErrorAPI, keyof BaseAPI>;
@@ -199,7 +200,7 @@ describe("BugsnagClient", () => {
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
           basePath: "https://api.bugsnag.smartbear.com",
-          apiKey: "token test-token",
+          apiKey: expect.any(Function),
           headers: expect.objectContaining({
             "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
             "Content-Type": "application/json",
@@ -208,6 +209,11 @@ describe("BugsnagClient", () => {
           }),
         }),
       );
+
+      // Verify the apiKey function returns the expected token
+      const configCall = MockedConfiguration.mock.calls[0][0];
+      const apiKeyFunc = configCall.apiKey as (name: string) => string;
+      expect(apiKeyFunc("any")).toBe("token test-token");
     });
 
     it("should set project API key when provided", async () => {
@@ -216,6 +222,150 @@ describe("BugsnagClient", () => {
         "test-project-key",
       );
       expect(client).toBeInstanceOf(BugsnagClient);
+    });
+  });
+
+  describe("getAuthToken", () => {
+    it("should return token from Bugsnag-Auth-Token header with 'token' prefix", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": "my-pat" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token my-pat");
+    });
+
+    it("should strip existing 'token ' prefix from header value", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": "token already-prefixed" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token already-prefixed");
+    });
+
+    it("should fall back to Authorization Bearer header for OAuth", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "Bearer oauth-jwt-token" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("Bearer oauth-jwt-token");
+    });
+
+    it("should fall back to configured auth_token with 'token' prefix", async () => {
+      const client = await createConfiguredClient("my-configured-pat");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getAuthToken(),
+      );
+      expect(result).toBe("token my-configured-pat");
+    });
+
+    it("should return null when no auth is available", async () => {
+      const client = new BugsnagClient();
+      const mockServer = { getCache: () => mockCache } as any;
+      await client.configure(mockServer, {} as any);
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getAuthToken(),
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should prefer Bugsnag-Auth-Token over Authorization header", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        {
+          headers: {
+            "Bugsnag-Auth-Token": "pat-value",
+            authorization: "Bearer oauth-value",
+          },
+        },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token pat-value");
+    });
+
+    it("should handle array header values", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": ["first-token", "second-token"] } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token first-token");
+    });
+  });
+
+  describe("getBearerToken", () => {
+    it("should extract Bearer token from Authorization header", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "Bearer my-jwt" } },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer my-jwt");
+    });
+
+    it("should add Bearer prefix when not present", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "raw-token-value" } },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer raw-token-value");
+    });
+
+    it("should return null when no Authorization header", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getBearerToken(),
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should handle array Authorization header values", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        {
+          headers: {
+            authorization: ["Bearer first", "Bearer second"],
+          },
+        },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer first");
     });
   });
 
@@ -512,9 +662,19 @@ describe("BugsnagClient", () => {
 
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
-          apiKey: `token ${testToken}`,
+          apiKey: expect.any(Function),
         }),
       );
+
+      // Verify the apiKey function returns the expected token
+      const configCall = MockedConfiguration.mock.calls.find(
+        (call) =>
+          (call[0] as any).basePath === "https://api.bugsnag.com" &&
+          typeof (call[0] as any).apiKey === "function",
+      )?.[0];
+      expect(configCall).toBeDefined();
+      const apiKeyFunc = configCall?.apiKey as (name: string) => string;
+      expect(apiKeyFunc("any")).toBe(`token ${testToken}`);
     });
 
     it("should include all required headers", async () => {
@@ -563,7 +723,9 @@ describe("BugsnagClient", () => {
         getCache: vi.fn().mockReturnValue(mockCache),
       } as any;
 
-      await client.configure(mockServer, { auth_token: "test-token" });
+      await client.configure(mockServer, {
+        auth_token: "test-token",
+      });
 
       // Cache should be used in getProjects
       mockCache.get.mockReturnValueOnce(null); // No cached org
@@ -729,6 +891,7 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("Get Event");
       expect(registeredTools).toContain("Get Event Details From Dashboard URL");
       expect(registeredTools).toContain("List Project Errors");
+      expect(registeredTools).toContain("Get Events on an Error");
       expect(registeredTools).toContain("List Project Event Filters");
       expect(registeredTools).toContain("Update Error");
       expect(registeredTools).toContain("Get Build");
@@ -741,7 +904,7 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("List Trace Fields");
       expect(registeredTools).toContain("Get Network Endpoint Groupings");
       expect(registeredTools).toContain("Set Network Endpoint Groupings");
-      expect(registeredTools.length).toBe(18);
+      expect(registeredTools.length).toBe(19);
     });
   });
 
@@ -753,11 +916,14 @@ describe("BugsnagClient", () => {
     });
 
     it("should register event resource", async () => {
-      client.registerResources(registerResourcesSpy);
+      await client.registerResources(registerResourcesSpy);
 
       expect(registerResourcesSpy).toHaveBeenCalledWith(
-        "event",
-        "{id}",
+        {
+          title: "Event",
+          path: "{id}",
+          description: "Retrieve a specific event by its ID.",
+        },
         expect.any(Function),
       );
     });
@@ -1268,6 +1434,55 @@ describe("BugsnagClient", () => {
         await expect(toolHandler({ projectId: "no-match" })).rejects.toThrow(
           "Project with ID no-match not found.",
         );
+      });
+    });
+
+    describe("Get Events on an Error tool handler", () => {
+      const mockProject = getMockProject("proj-1", "Project 1");
+
+      it("should list error events with supplied parameters", async () => {
+        const mockEvents: EventApiView[] = [
+          getMockEvent("event-1"),
+          getMockEvent("event-2"),
+        ];
+        const filters = {
+          "event.since": [{ type: "eq" as const, value: "7d" }],
+        };
+
+        mockCache.get.mockReturnValueOnce(mockProject); // current project
+        mockErrorAPI.listErrorEvents.mockResolvedValue({
+          body: mockEvents,
+          totalCount: 2,
+        });
+
+        client.registerTools(registerToolsSpy, getInputFunctionSpy);
+        const toolHandler = registerToolsSpy.mock.calls.find(
+          (call: any) => call[0].title === "Get Events on an Error",
+        )[1];
+
+        const result = await toolHandler({
+          errorId: "error-1",
+          filters,
+          direction: "desc",
+          perPage: 50,
+        });
+
+        expect(mockErrorAPI.listErrorEvents).toHaveBeenCalledWith(
+          "proj-1",
+          "error-1",
+          undefined,
+          "timestamp",
+          "desc",
+          50,
+          filters,
+          undefined,
+        );
+        const expectedResult = {
+          data: mockEvents,
+          data_count: 2,
+          total_count: 2,
+        };
+        expect(result.content[0].text).toBe(JSON.stringify(expectedResult));
       });
     });
 
@@ -2919,8 +3134,8 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValueOnce(mockProjects);
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
-        client.registerResources(registerResourcesSpy);
-        const resourceHandler = registerResourcesSpy.mock.calls[0][2];
+        await client.registerResources(registerResourcesSpy);
+        const resourceHandler = registerResourcesSpy.mock.calls[0][1];
 
         const result = await resourceHandler(
           { href: "bugsnag://event/event-1" },

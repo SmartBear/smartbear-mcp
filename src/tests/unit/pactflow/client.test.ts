@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { PactflowClient } from "../../../pactflow/client";
-import { GenerationInputSchema } from "../../../pactflow/client/ai";
+import {
+  GenerationInputSchema,
+  type GenerationResponse,
+} from "../../../pactflow/client/ai";
 import * as toolsModule from "../../../pactflow/client/tools";
 
 const fetchMock = createFetchMock(vi);
@@ -626,9 +629,9 @@ describe("PactFlowClient", () => {
             headers: client.requestHeaders,
           },
         );
-        expect(result.organizationEntitlements.name).toBe("test-org");
-        expect(result.organizationEntitlements.aiCredits.total).toBe(1000);
-        expect(result.userEntitlements.aiPermissions).toContain("ai:generate");
+        expect(result?.organizationEntitlements.name).toBe("test-org");
+        expect(result?.organizationEntitlements.aiCredits.total).toBe(1000);
+        expect(result?.userEntitlements.aiPermissions).toContain("ai:generate");
       });
 
       it("should handle HTTP errors correctly", async () => {
@@ -653,7 +656,7 @@ describe("PactFlowClient", () => {
         result_url: "https://example.com/api/ai/result/123",
       };
 
-      const mockGenerationResponse = {
+      const mockGenerationResponse: GenerationResponse = {
         language: "javascript",
         code: "const { PactV3 } = require('@pact-foundation/pact');",
       };
@@ -680,8 +683,8 @@ describe("PactFlowClient", () => {
             body: JSON.stringify(mockGenerationInput),
           },
         );
-        expect(result.language).toBe("javascript");
-        expect(result.code).toBeDefined();
+        expect((result as GenerationResponse).language).toBe("javascript");
+        expect((result as GenerationResponse).code).toBeDefined();
       });
 
       it("should handle generation with OpenAPI document and matcher", async () => {
@@ -1318,6 +1321,874 @@ describe("PactFlowClient", () => {
       });
     });
 
+    describe("listPacticipants", () => {
+      it("should retrieve pacticipants without params", async () => {
+        const mockResponse = { pacticipants: [{ name: "ServiceA" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listPacticipants();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.pacticipants).toHaveLength(1);
+      });
+
+      it("should append pagination query params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ pacticipants: [] }));
+
+        await client.listPacticipants({ pageNumber: 2, pageSize: 10 });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants?page=2&size=10",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Unauthorized", {
+          status: 401,
+          statusText: "Unauthorized",
+        });
+        await expect(client.listPacticipants()).rejects.toThrow(
+          "List Pacticipants Failed - status: 401 Unauthorized - Unauthorized",
+        );
+      });
+    });
+
+    describe("getPacticipant", () => {
+      it("should retrieve a pacticipant by name", async () => {
+        const mockResponse = { name: "ServiceA", mainBranch: "main" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getPacticipant({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("ServiceA");
+      });
+
+      it("should URL-encode the pacticipant name", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ name: "Service A/B" }));
+
+        await client.getPacticipant({ pacticipantName: "Service A/B" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/Service%20A%2FB",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("should handle 404 when pacticipant not found", async () => {
+        fetchMock.mockResponseOnce("Not found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(
+          client.getPacticipant({ pacticipantName: "Unknown" }),
+        ).rejects.toThrow(
+          "Get Pacticipant Failed - status: 404 Not Found - Not found",
+        );
+      });
+    });
+
+    describe("listBranches", () => {
+      it("should retrieve branches for a pacticipant", async () => {
+        const mockResponse = { branches: [{ name: "main" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listBranches({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.branches).toHaveLength(1);
+      });
+
+      it("should append filter and pagination query params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ branches: [] }));
+
+        await client.listBranches({
+          pacticipantName: "ServiceA",
+          q: "feat",
+          pageNumber: 1,
+          pageSize: 20,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches?q=feat&pageNumber=1&pageSize=20",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listVersions", () => {
+      it("should retrieve versions for a pacticipant", async () => {
+        const mockResponse = { versions: [{ number: "1.0.0" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listVersions({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.versions).toHaveLength(1);
+      });
+
+      it("should append pagination query params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ versions: [] }));
+
+        await client.listVersions({
+          pacticipantName: "ServiceA",
+          pageNumber: 2,
+          pageSize: 50,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions?page=2&size=50",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getVersion", () => {
+      it("should retrieve a specific version", async () => {
+        const mockResponse = { number: "1.0.0", branch: "main" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getVersion({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.number).toBe("1.0.0");
+      });
+
+      it("should URL-encode version number with special characters", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.getVersion({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0-beta+build.1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0-beta%2Bbuild.1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getLatestVersion", () => {
+      it("should retrieve the latest version without tag", async () => {
+        const mockResponse = { number: "2.0.0" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getLatestVersion({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/latest-version",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.number).toBe("2.0.0");
+      });
+
+      it("should retrieve the latest version filtered by tag", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ number: "1.5.0" }));
+
+        await client.getLatestVersion({
+          pacticipantName: "ServiceA",
+          tag: "prod",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/latest-version/prod",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listEnvironments", () => {
+      it("should retrieve all environments", async () => {
+        const mockResponse = {
+          environments: [{ name: "production", uuid: "env-1" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listEnvironments();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.environments).toHaveLength(1);
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Forbidden", {
+          status: 403,
+          statusText: "Forbidden",
+        });
+        await expect(client.listEnvironments()).rejects.toThrow(
+          "List Environments Failed - status: 403 Forbidden - Forbidden",
+        );
+      });
+    });
+
+    describe("getEnvironment", () => {
+      it("should retrieve an environment by UUID", async () => {
+        const mockResponse = {
+          name: "production",
+          uuid: "env-uuid-1",
+          production: true,
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getEnvironment({
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments/env-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("production");
+        expect(result.production).toBe(true);
+      });
+    });
+
+    describe("recordDeployment", () => {
+      const baseInput = {
+        pacticipantName: "ServiceA",
+        versionNumber: "1.0.0",
+        environmentId: "env-uuid-1",
+      };
+
+      it("should record a deployment without applicationInstance", async () => {
+        const mockResponse = { pacticipant: "ServiceA" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.recordDeployment(baseInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/deployed-versions/environment/env-uuid-1",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+
+      it("should include applicationInstance in the body when provided", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.recordDeployment({
+          ...baseInput,
+          applicationInstance: "blue",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/deployed-versions/environment/env-uuid-1",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ applicationInstance: "blue" }),
+          },
+        );
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Not found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(client.recordDeployment(baseInput)).rejects.toThrow(
+          "Record Deployment Failed - status: 404 Not Found - Not found",
+        );
+      });
+    });
+
+    describe("getCurrentlyDeployed", () => {
+      it("should retrieve currently deployed versions for an environment", async () => {
+        const mockResponse = {
+          deployedVersions: [
+            { pacticipant: { name: "ServiceA" }, version: { number: "1.0.0" } },
+          ],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getCurrentlyDeployed({
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments/env-uuid-1/deployed-versions/currently-deployed",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.deployedVersions).toHaveLength(1);
+      });
+    });
+
+    describe("recordRelease", () => {
+      it("should record a release", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ pacticipant: "ServiceA" }));
+
+        await client.recordRelease({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/released-versions/environment/env-uuid-1",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+    });
+
+    describe("getCurrentlySupported", () => {
+      it("should retrieve currently supported versions for an environment", async () => {
+        const mockResponse = { releasedVersions: [] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getCurrentlySupported({
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments/env-uuid-1/released-versions/currently-supported",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.releasedVersions).toBeDefined();
+      });
+    });
+
+    describe("publishContracts", () => {
+      const mockInput = {
+        pacticipantName: "ConsumerApp",
+        pacticipantVersionNumber: "1.0.0",
+        contracts: [
+          {
+            consumerName: "ConsumerApp",
+            providerName: "ProviderAPI",
+            content: "eyJjb25zdW1lciI6IHsibmFtZSI6ICJDb25zdW1lckFwcCJ9fQ==",
+            contentType: "application/json" as const,
+            specification: "pact" as const,
+          },
+        ],
+        branch: "main",
+      };
+
+      it("should publish consumer contracts", async () => {
+        const mockResponse = { pacticipantVersionNumber: "1.0.0" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.publishContracts(mockInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/contracts/publish",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify(mockInput),
+          },
+        );
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Unprocessable Entity", {
+          status: 422,
+          statusText: "Unprocessable Entity",
+        });
+        await expect(client.publishContracts(mockInput)).rejects.toThrow(
+          "Publish Consumer Contracts Failed - status: 422 Unprocessable Entity",
+        );
+      });
+    });
+
+    describe("publishProviderContract", () => {
+      const mockInput = {
+        providerName: "ProviderAPI",
+        pacticipantVersionNumber: "2.0.0",
+        contract: {
+          content: "eyJvcGVuYXBpIjogIjMuMC4wIn0=",
+          contentType: "application/json" as const,
+          specification: "oas" as const,
+          selfVerificationResults: {
+            success: true,
+            verifier: "dredd",
+          },
+        },
+        branch: "main",
+      };
+
+      it("should publish a provider contract", async () => {
+        const mockResponse = { success: true };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const { providerName, ...bodyWithoutProvider } = mockInput;
+        await client.publishProviderContract(mockInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/provider-contracts/provider/ProviderAPI/publish",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify(bodyWithoutProvider),
+          },
+        );
+      });
+
+      it("should URL-encode the provider name", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.publishProviderContract({
+          ...mockInput,
+          providerName: "Provider API/v2",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/provider-contracts/provider/Provider%20API%2Fv2/publish",
+          expect.objectContaining({ method: "POST" }),
+        );
+      });
+    });
+
+    describe("getPactsForVerification", () => {
+      it("should retrieve pacts for verification", async () => {
+        const mockInput = {
+          providerName: "ProviderAPI",
+          consumerVersionSelectors: [{ mainBranch: true }],
+          includePendingStatus: true,
+        };
+        const mockResponse = { pacts: [] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const { providerName, ...bodyWithoutProvider } = mockInput;
+        await client.getPactsForVerification(mockInput);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacts/provider/ProviderAPI/for-verification",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify(bodyWithoutProvider),
+          },
+        );
+      });
+    });
+
+    describe("BDCT provider-version methods", () => {
+      const bdctInput = {
+        providerName: "ProviderAPI",
+        providerVersionNumber: "2.0.0",
+      };
+      const bdctBase =
+        "https://example.com/contracts/bi-directional/provider/ProviderAPI/version/2.0.0";
+
+      it("getBiDirectionalProviderContract should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalProviderContract(bdctInput);
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/provider-contract`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalProviderContractVerificationResults should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalProviderContractVerificationResults(
+          bdctInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/provider-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalConsumerContract should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalConsumerContract(bdctInput);
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/consumer-contract`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalConsumerContractVerificationResults should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalConsumerContractVerificationResults(
+          bdctInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/consumer-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalCrossContractVerificationResults should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalCrossContractVerificationResults(
+          bdctInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/cross-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("BDCT consumer-version methods", () => {
+      const bdctConsumerInput = {
+        providerName: "ProviderAPI",
+        providerVersionNumber: "2.0.0",
+        consumerName: "ConsumerApp",
+        consumerVersionNumber: "1.0.0",
+      };
+      const bdctBase =
+        "https://example.com/contracts/bi-directional/provider/ProviderAPI/version/2.0.0/consumer/ConsumerApp/version/1.0.0";
+
+      it("getBiDirectionalConsumerContractByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalConsumerContractByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/consumer-contract`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalProviderContractByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalProviderContractByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/provider-contract`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalProviderContractVerificationResultsByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalProviderContractVerificationResultsByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/provider-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalConsumerContractVerificationResultsByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalConsumerContractVerificationResultsByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/consumer-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("getBiDirectionalCrossContractVerificationResultsByConsumer should call correct URL", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+        await client.getBiDirectionalCrossContractVerificationResultsByConsumer(
+          bdctConsumerInput,
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+          `${bdctBase}/cross-contract-verification-results`,
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listIntegrations", () => {
+      it("should retrieve all integrations", async () => {
+        const mockResponse = {
+          integrations: [
+            {
+              consumer: { name: "ConsumerApp" },
+              provider: { name: "ProviderAPI" },
+            },
+          ],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listIntegrations();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/integrations",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.integrations).toHaveLength(1);
+      });
+    });
+
+    describe("getPacticipantNetwork", () => {
+      it("should retrieve the integration network for a pacticipant", async () => {
+        const mockResponse = {
+          pacticipants: [{ name: "ServiceA" }, { name: "ServiceB" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getPacticipantNetwork({
+          pacticipantName: "ServiceA",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipant/ServiceA/network",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.pacticipants).toHaveLength(2);
+      });
+    });
+
+    describe("listLabels", () => {
+      it("should retrieve all labels without params", async () => {
+        const mockResponse = { labels: [{ name: "team-a" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listLabels();
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/labels", {
+          method: "GET",
+          headers: client.requestHeaders,
+        });
+        expect(result.labels).toHaveLength(1);
+      });
+
+      it("should append pagination query params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ labels: [] }));
+
+        await client.listLabels({ pageNumber: 1, pageSize: 10 });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/labels?page=1&size=10",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getPacticipantLabel", () => {
+      it("should retrieve a specific label for a pacticipant", async () => {
+        const mockResponse = { name: "team-a" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getPacticipantLabel({
+          pacticipantName: "ServiceA",
+          labelName: "team-a",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/labels/team-a",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("team-a");
+      });
+
+      it("should handle 404 when label not applied", async () => {
+        fetchMock.mockResponseOnce("Not Found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(
+          client.getPacticipantLabel({
+            pacticipantName: "ServiceA",
+            labelName: "missing-label",
+          }),
+        ).rejects.toThrow(
+          "Get Pacticipant Label Failed - status: 404 Not Found - Not Found",
+        );
+      });
+    });
+
+    describe("listPacticipantsByLabel", () => {
+      it("should retrieve pacticipants with a given label", async () => {
+        const mockResponse = {
+          pacticipants: [{ name: "ServiceA" }, { name: "ServiceB" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listPacticipantsByLabel({
+          labelName: "team-a",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/label/team-a",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.pacticipants).toHaveLength(2);
+      });
+    });
+
+    describe("updatePacticipant", () => {
+      it("should send a PUT request to update pacticipant metadata", async () => {
+        const mockResponse = { name: "ServiceA", mainBranch: "main" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.updatePacticipant({
+          pacticipantName: "ServiceA",
+          mainBranch: "main",
+          displayName: "Service A",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              mainBranch: "main",
+              displayName: "Service A",
+            }),
+          },
+        );
+      });
+    });
+
+    describe("patchPacticipant", () => {
+      it("should send a PATCH request to partially update pacticipant metadata", async () => {
+        const mockResponse = { name: "ServiceA", mainBranch: "develop" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.patchPacticipant({
+          pacticipantName: "ServiceA",
+          mainBranch: "develop",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA",
+          {
+            method: "PATCH",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ mainBranch: "develop" }),
+          },
+        );
+      });
+    });
+
+    describe("updateVersion", () => {
+      it("should send a PUT request to update a version's build URL", async () => {
+        const mockResponse = { number: "1.0.0", buildUrl: "https://ci.com/1" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.updateVersion({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          buildUrl: "https://ci.com/1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ buildUrl: "https://ci.com/1" }),
+          },
+        );
+      });
+    });
+
+    describe("getBranchVersions", () => {
+      it("should retrieve all versions for a branch", async () => {
+        const mockResponse = { versions: [{ number: "1.0.0" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getBranchVersions({
+          pacticipantName: "ServiceA",
+          branchName: "main",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches/main/versions",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.versions).toHaveLength(1);
+      });
+
+      it("should append pagination params", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ versions: [] }));
+
+        await client.getBranchVersions({
+          pacticipantName: "ServiceA",
+          branchName: "main",
+          pageNumber: 2,
+          pageSize: 25,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches/main/versions?page=2&size=25",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getDeployedVersions", () => {
+      it("should retrieve deployment records for a specific version in an environment", async () => {
+        const mockResponse = {
+          deployedVersions: [{ currentlyDeployed: true }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getDeployedVersions({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/deployed-versions/environment/env-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.deployedVersions[0].currentlyDeployed).toBe(true);
+      });
+    });
+
+    describe("getReleasedVersions", () => {
+      it("should retrieve release records for a specific version in an environment", async () => {
+        const mockResponse = {
+          releasedVersions: [{ currentlySupported: true }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getReleasedVersions({
+          pacticipantName: "ServiceA",
+          versionNumber: "1.0.0",
+          environmentId: "env-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/versions/1.0.0/released-versions/environment/env-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.releasedVersions[0].currentlySupported).toBe(true);
+      });
+    });
+
     describe("registerPrompts", () => {
       const mockRegisterPrompt = vi.fn();
 
@@ -1328,6 +2199,1232 @@ describe("PactFlowClient", () => {
       it("should register all prompts from PROMPTS array", async () => {
         client.registerPrompts(mockRegisterPrompt);
         expect(mockRegisterPrompt).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe("createEnvironment", () => {
+      it("should create a new environment", async () => {
+        const mockResponse = { uuid: "env-uuid-1", name: "production" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.createEnvironment({
+          name: "production",
+          displayName: "Production",
+          production: true,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              name: "production",
+              displayName: "Production",
+              production: true,
+            }),
+          },
+        );
+        expect(result.uuid).toBe("env-uuid-1");
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Conflict", {
+          status: 409,
+          statusText: "Conflict",
+        });
+        await expect(
+          client.createEnvironment({
+            name: "production",
+            displayName: "Production",
+            production: true,
+          }),
+        ).rejects.toThrow("Create Environment Failed - status: 409 Conflict");
+      });
+    });
+
+    describe("updateEnvironment", () => {
+      it("should update an environment", async () => {
+        const mockResponse = { uuid: "env-uuid-1", name: "staging" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.updateEnvironment({
+          environmentId: "env-uuid-1",
+          name: "staging",
+          displayName: "Staging",
+          production: false,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments/env-uuid-1",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              name: "staging",
+              displayName: "Staging",
+              production: false,
+            }),
+          },
+        );
+        expect(result).toEqual(mockResponse);
+      });
+    });
+
+    describe("deleteEnvironment", () => {
+      it("should delete an environment", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteEnvironment({ environmentId: "env-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/environments/env-uuid-1",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+
+      it("should handle HTTP errors", async () => {
+        fetchMock.mockResponseOnce("Not Found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(
+          client.deleteEnvironment({ environmentId: "missing-uuid" }),
+        ).rejects.toThrow("Delete Environment Failed - status: 404 Not Found");
+      });
+    });
+
+    describe("createPacticipant", () => {
+      it("should create a new pacticipant", async () => {
+        const mockResponse = { name: "NewService", displayName: "New Service" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.createPacticipant({
+          name: "NewService",
+          displayName: "New Service",
+          mainBranch: "main",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              name: "NewService",
+              displayName: "New Service",
+              mainBranch: "main",
+            }),
+          },
+        );
+        expect(result.name).toBe("NewService");
+      });
+    });
+
+    describe("deletePacticipant", () => {
+      it("should delete a pacticipant", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deletePacticipant({ pacticipantName: "OldService" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/OldService",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+
+      it("should URL-encode pacticipant names with special characters", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deletePacticipant({
+          pacticipantName: "My Service/v2",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/My%20Service%2Fv2",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getBranch", () => {
+      it("should retrieve a specific branch", async () => {
+        const mockResponse = {
+          name: "main",
+          pacticipant: { name: "ServiceA" },
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getBranch({
+          pacticipantName: "ServiceA",
+          branchName: "main",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches/main",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("main");
+      });
+
+      it("should handle not found errors", async () => {
+        fetchMock.mockResponseOnce("Not Found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(
+          client.getBranch({
+            pacticipantName: "ServiceA",
+            branchName: "missing",
+          }),
+        ).rejects.toThrow("Get Branch Failed - status: 404 Not Found");
+      });
+    });
+
+    describe("deleteBranch", () => {
+      it("should delete a branch", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteBranch({
+          pacticipantName: "ServiceA",
+          branchName: "old-feature",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ServiceA/branches/old-feature",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("addLabel", () => {
+      it("should apply a label to a pacticipant", async () => {
+        const mockResponse = {
+          name: "mobile",
+          pacticipant: { name: "ConsumerApp" },
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.addLabel({
+          pacticipantName: "ConsumerApp",
+          labelName: "mobile",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ConsumerApp/labels/mobile",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+    });
+
+    describe("removeLabel", () => {
+      it("should remove a label from a pacticipant", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.removeLabel({
+          pacticipantName: "ConsumerApp",
+          labelName: "mobile",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/pacticipants/ConsumerApp/labels/mobile",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getIntegrationsByTeam", () => {
+      it("should retrieve integrations for a team", async () => {
+        const mockResponse = {
+          integrations: [{ consumer: "App", provider: "API" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getIntegrationsByTeam({
+          teamId: "team-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/integrations/team/team-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.integrations).toHaveLength(1);
+      });
+    });
+
+    describe("deleteIntegration", () => {
+      it("should delete a consumer-provider integration", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteIntegration({
+          providerName: "ProviderAPI",
+          consumerName: "ConsumerApp",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/integrations/provider/ProviderAPI/consumer/ConsumerApp",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("deleteAllIntegrations", () => {
+      it("should delete all integrations", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteAllIntegrations();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/integrations",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listWebhooks", () => {
+      it("should list all webhooks", async () => {
+        const mockResponse = { webhooks: [{ uuid: "wh-uuid-1" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listWebhooks();
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/webhooks", {
+          method: "GET",
+          headers: client.requestHeaders,
+        });
+        expect(result.webhooks).toHaveLength(1);
+      });
+    });
+
+    describe("getWebhook", () => {
+      it("should retrieve a specific webhook", async () => {
+        const mockResponse = {
+          uuid: "wh-uuid-1",
+          request: { url: "https://ci.example.com/trigger" },
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getWebhook({ webhookId: "wh-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/webhooks/wh-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.uuid).toBe("wh-uuid-1");
+      });
+    });
+
+    describe("createWebhook", () => {
+      const mockWebhookBody = {
+        description: "Trigger CI build",
+        events: [{ name: "contract_published" }],
+        request: {
+          method: "POST",
+          url: "https://ci.example.com/trigger",
+          headers: { "Content-Type": "application/json" },
+          body: '{"ref": "main"}',
+        },
+      };
+
+      it("should create a new webhook", async () => {
+        const mockResponse = { uuid: "wh-uuid-2", ...mockWebhookBody };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.createWebhook(mockWebhookBody as any);
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/webhooks", {
+          method: "POST",
+          headers: client.requestHeaders,
+          body: JSON.stringify(mockWebhookBody),
+        });
+        expect(result.uuid).toBe("wh-uuid-2");
+      });
+    });
+
+    describe("updateWebhook", () => {
+      it("should update an existing webhook", async () => {
+        const mockResponse = { uuid: "wh-uuid-1" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.updateWebhook({
+          webhookId: "wh-uuid-1",
+          description: "Updated webhook",
+          events: [{ name: "contract_published" }],
+          request: {
+            method: "POST",
+            url: "https://ci.example.com/new-trigger",
+          },
+        } as any);
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/webhooks/wh-uuid-1",
+          expect.objectContaining({ method: "PUT" }),
+        );
+      });
+    });
+
+    describe("deleteWebhook", () => {
+      it("should delete a webhook", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteWebhook({ webhookId: "wh-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/webhooks/wh-uuid-1",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("executeWebhooks", () => {
+      it("should fire all webhooks", async () => {
+        const mockResponse = { results: [] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.executeWebhooks();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/webhooks/execute",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+    });
+
+    describe("executeWebhook", () => {
+      it("should fire a specific webhook", async () => {
+        const mockResponse = { succeeded: true };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.executeWebhook({ webhookId: "wh-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/webhooks/wh-uuid-1/execute",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+    });
+
+    describe("listSecrets", () => {
+      it("should list all secrets", async () => {
+        const mockResponse = {
+          secrets: [{ uuid: "sec-uuid-1", name: "CI_TOKEN" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listSecrets();
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/secrets", {
+          method: "GET",
+          headers: client.requestHeaders,
+        });
+        expect(result.secrets).toHaveLength(1);
+      });
+    });
+
+    describe("getSecret", () => {
+      it("should retrieve a secret by UUID", async () => {
+        const mockResponse = { uuid: "sec-uuid-1", name: "CI_TOKEN" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getSecret({ secretId: "sec-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/secrets/sec-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.uuid).toBe("sec-uuid-1");
+      });
+    });
+
+    describe("createSecret", () => {
+      it("should create a new secret", async () => {
+        const mockResponse = { uuid: "sec-uuid-2", name: "MY_TOKEN" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.createSecret({
+          name: "MY_TOKEN",
+          description: "CI token",
+          value: "s3cr3t",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/secrets", {
+          method: "POST",
+          headers: client.requestHeaders,
+          body: JSON.stringify({
+            name: "MY_TOKEN",
+            description: "CI token",
+            value: "s3cr3t",
+          }),
+        });
+        expect(result.uuid).toBe("sec-uuid-2");
+      });
+    });
+
+    describe("updateSecret", () => {
+      it("should update a secret", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.updateSecret({
+          secretId: "sec-uuid-1",
+          name: "MY_TOKEN",
+          value: "new-s3cr3t",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/secrets/sec-uuid-1",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ name: "MY_TOKEN", value: "new-s3cr3t" }),
+          },
+        );
+      });
+    });
+
+    describe("deleteSecret", () => {
+      it("should delete a secret", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteSecret({ secretId: "sec-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/secrets/sec-uuid-1",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getCurrentUser", () => {
+      it("should retrieve the current user profile", async () => {
+        const mockResponse = {
+          uuid: "user-uuid-1",
+          email: "user@example.com",
+          active: true,
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getCurrentUser();
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/user", {
+          method: "GET",
+          headers: client.requestHeaders,
+        });
+        expect(result.email).toBe("user@example.com");
+      });
+    });
+
+    describe("listTokens", () => {
+      it("should list all API tokens for the current user", async () => {
+        const mockResponse = {
+          tokens: [{ uuid: "tok-uuid-1", description: "CI token" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listTokens();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/settings/tokens",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.tokens).toHaveLength(1);
+      });
+    });
+
+    describe("regenerateToken", () => {
+      it("should regenerate an API token", async () => {
+        const mockResponse = { uuid: "tok-uuid-1", value: "new-token-value" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.regenerateToken({ tokenId: "tok-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/settings/tokens/tok-uuid-1/regenerate",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+        expect(result.value).toBe("new-token-value");
+      });
+    });
+
+    describe("getUserPreferences", () => {
+      it("should retrieve user preferences", async () => {
+        const mockResponse = { theme: "dark", notifications: true };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getUserPreferences();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/preferences/current-user",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.theme).toBe("dark");
+      });
+    });
+
+    describe("getSystemPreferences", () => {
+      it("should retrieve system preferences", async () => {
+        const mockResponse = { allowGuestAccess: false };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getSystemPreferences();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/preferences/system",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.allowGuestAccess).toBe(false);
+      });
+    });
+
+    describe("getAuditLog", () => {
+      it("should retrieve the audit log with no filters", async () => {
+        const mockResponse = { events: [] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.getAuditLog({});
+
+        expect(fetchMock).toHaveBeenCalledWith("https://example.com/audit", {
+          method: "GET",
+          headers: client.requestHeaders,
+        });
+      });
+
+      it("should pass all filter parameters as query string", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ events: [] }));
+
+        await client.getAuditLog({
+          since: "2024-01-01",
+          userUuid: "user-uuid-1",
+          type: "create",
+          sort: "desc",
+          pageNumber: 2,
+          pageSize: 25,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/audit?since=2024-01-01&userUuid=user-uuid-1&type=create&sort=desc&pageNumber=2&pageSize=25",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listAdminUsers", () => {
+      it("should list admin users with no filters", async () => {
+        const mockResponse = { users: [{ uuid: "user-uuid-1" }] };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listAdminUsers({});
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.users).toHaveLength(1);
+      });
+
+      it("should pass filter parameters as query string", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ users: [] }));
+
+        await client.listAdminUsers({
+          active: true,
+          q: "alice",
+          page: 1,
+          size: 10,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users?active=true&q=alice&page=1&size=10",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getAdminUser", () => {
+      it("should retrieve a user by UUID", async () => {
+        const mockResponse = {
+          uuid: "user-uuid-1",
+          email: "admin@example.com",
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getAdminUser({ userId: "user-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users/user-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.email).toBe("admin@example.com");
+      });
+    });
+
+    describe("createAdminUser", () => {
+      it("should create a new admin user", async () => {
+        const mockResponse = { uuid: "user-uuid-2", email: "new@example.com" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.createAdminUser({
+          email: "new@example.com",
+          name: "New User",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              email: "new@example.com",
+              name: "New User",
+            }),
+          },
+        );
+        expect(result.uuid).toBe("user-uuid-2");
+      });
+    });
+
+    describe("updateAdminUser", () => {
+      it("should update a user profile", async () => {
+        const mockResponse = { uuid: "user-uuid-1", active: false };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.updateAdminUser({
+          userId: "user-uuid-1",
+          name: "Updated Name",
+          active: false,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users/user-uuid-1",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ name: "Updated Name", active: false }),
+          },
+        );
+      });
+    });
+
+    describe("deleteAdminUser", () => {
+      it("should delete a user", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteAdminUser({ userId: "user-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users/user-uuid-1",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("inviteUsers", () => {
+      it("should send invitations to new users", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ invited: 2 }));
+
+        await client.inviteUsers({
+          users: [
+            { name: "example_a", email: "a@example.com" },
+            { name: "example_b", email: "b@example.com" },
+          ],
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users/invite-users",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              users: [
+                { name: "example_a", email: "a@example.com" },
+                { name: "example_b", email: "b@example.com" },
+              ],
+            }),
+          },
+        );
+      });
+    });
+
+    describe("setUserRoles", () => {
+      it("should replace all roles for a user", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.setUserRoles({
+          userId: "user-uuid-1",
+          roles: ["role-uuid-1", "role-uuid-2"],
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users/user-uuid-1/roles",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              roles: ["role-uuid-1", "role-uuid-2"],
+            }),
+          },
+        );
+      });
+    });
+
+    describe("addRoleToUser", () => {
+      it("should add a role to a user", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.addRoleToUser({
+          userId: "user-uuid-1",
+          roleId: "role-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users/user-uuid-1/roles/role-uuid-1",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+    });
+
+    describe("removeRoleFromUser", () => {
+      it("should remove a role from a user", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.removeRoleFromUser({
+          userId: "user-uuid-1",
+          roleId: "role-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/users/user-uuid-1/roles/role-uuid-1",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    // ── Admin Teams ───────────────────────────────────────────────
+
+    describe("listAdminTeams", () => {
+      it("should list all teams with no filters", async () => {
+        const mockResponse = {
+          teams: [{ uuid: "team-uuid-1", name: "Infra" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listAdminTeams({});
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.teams).toHaveLength(1);
+      });
+
+      it("should pass query filters", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ teams: [] }));
+
+        await client.listAdminTeams({ q: "infra", page: 2, size: 5 });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams?q=infra&page=2&size=5",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("getAdminTeam", () => {
+      it("should retrieve a team by UUID", async () => {
+        const mockResponse = { uuid: "team-uuid-1", name: "Infra" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getAdminTeam({ teamId: "team-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams/team-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("Infra");
+      });
+    });
+
+    describe("createAdminTeam", () => {
+      it("should create a new team", async () => {
+        const mockResponse = { uuid: "team-uuid-2", name: "Platform" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.createAdminTeam({ name: "Platform" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ name: "Platform" }),
+          },
+        );
+        expect(result.uuid).toBe("team-uuid-2");
+      });
+    });
+
+    describe("updateAdminTeam", () => {
+      it("should update a team", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ uuid: "team-uuid-1" }));
+
+        await client.updateAdminTeam({
+          teamId: "team-uuid-1",
+          name: "Infra v2",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams/team-uuid-1",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ name: "Infra v2" }),
+          },
+        );
+      });
+    });
+
+    describe("deleteAdminTeam", () => {
+      it("should delete a team", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteAdminTeam({ teamId: "team-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams/team-uuid-1",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("listTeamUsers", () => {
+      it("should list all users in a team", async () => {
+        const mockResponse = {
+          teamMembers: [{ uuid: "user-uuid-1", email: "a@example.com" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listTeamUsers({ teamId: "team-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams/team-uuid-1/users",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.teamMembers).toHaveLength(1);
+      });
+    });
+
+    describe("getTeamUser", () => {
+      it("should verify team membership for a user", async () => {
+        const mockResponse = { uuid: "user-uuid-1" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        await client.getTeamUser({
+          teamId: "team-uuid-1",
+          userId: "user-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams/team-uuid-1/users/user-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+      });
+
+      it("should throw for non-member user", async () => {
+        fetchMock.mockResponseOnce("Not Found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(
+          client.getTeamUser({ teamId: "team-uuid-1", userId: "unknown" }),
+        ).rejects.toThrow("Get Team User Failed - status: 404 Not Found");
+      });
+    });
+
+    describe("setTeamUsers", () => {
+      it("should replace all team members", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.setTeamUsers({
+          teamId: "team-uuid-1",
+          uuids: ["user-uuid-1", "user-uuid-2"],
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams/team-uuid-1/users",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({ uuids: ["user-uuid-1", "user-uuid-2"] }),
+          },
+        );
+      });
+    });
+
+    describe("patchTeamUsers", () => {
+      it("should apply JSON Patch operations to team membership", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        const operations = [
+          {
+            op: "add" as const,
+            path: "/users" as const,
+            value: { uuid: "user-uuid-1" },
+          },
+          {
+            op: "remove" as const,
+            path: "/users" as const,
+            value: { uuid: "user-uuid-2" },
+          },
+        ];
+        await client.patchTeamUsers({
+          teamId: "team-uuid-1",
+          operations,
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams/team-uuid-1/users",
+          {
+            method: "PATCH",
+            headers: client.requestHeaders,
+            body: JSON.stringify(operations),
+          },
+        );
+      });
+    });
+
+    describe("removeUserFromTeam", () => {
+      it("should remove a user from a team", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.removeUserFromTeam({
+          teamId: "team-uuid-1",
+          userId: "user-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/teams/team-uuid-1/users/user-uuid-1",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    // ── Admin Roles ───────────────────────────────────────────────
+
+    describe("listAdminRoles", () => {
+      it("should list all roles", async () => {
+        const mockResponse = {
+          roles: [{ uuid: "role-uuid-1", name: "Administrator" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listAdminRoles();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/roles",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.roles).toHaveLength(1);
+      });
+    });
+
+    describe("getAdminRole", () => {
+      it("should retrieve a role by UUID", async () => {
+        const mockResponse = {
+          uuid: "role-uuid-1",
+          name: "Administrator",
+          permissions: ["contract:read", "contract:write"],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getAdminRole({ roleId: "role-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/roles/role-uuid-1",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.name).toBe("Administrator");
+      });
+    });
+
+    describe("createAdminRole", () => {
+      it("should create a new role", async () => {
+        const mockResponse = { uuid: "role-uuid-2", name: "ReadOnly" };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.createAdminRole({
+          name: "ReadOnly",
+          permissions: [{ scope: "contract:read" }],
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/roles",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              name: "ReadOnly",
+              permissions: [{ scope: "contract:read" }],
+            }),
+          },
+        );
+        expect(result.uuid).toBe("role-uuid-2");
+      });
+    });
+
+    describe("updateAdminRole", () => {
+      it("should update a role", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ uuid: "role-uuid-1" }));
+
+        await client.updateAdminRole({
+          roleId: "role-uuid-1",
+          name: "Super Admin",
+          permissions: [
+            { scope: "contract:read" },
+            { scope: "contract:write" },
+            { scope: "admin:users" },
+          ],
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/roles/role-uuid-1",
+          {
+            method: "PUT",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              name: "Super Admin",
+              permissions: [
+                { scope: "contract:read" },
+                { scope: "contract:write" },
+                { scope: "admin:users" },
+              ],
+            }),
+          },
+        );
+      });
+    });
+
+    describe("deleteAdminRole", () => {
+      it("should delete a role", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({}));
+
+        await client.deleteAdminRole({ roleId: "role-uuid-1" });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/roles/role-uuid-1",
+          { method: "DELETE", headers: client.requestHeaders },
+        );
+      });
+    });
+
+    describe("resetAdminRoles", () => {
+      it("should reset all roles to factory defaults", async () => {
+        fetchMock.mockResponseOnce(JSON.stringify({ reset: true }));
+
+        await client.resetAdminRoles();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/roles/reset",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({}),
+          },
+        );
+      });
+    });
+
+    describe("listAdminPermissions", () => {
+      it("should list all available permission scopes", async () => {
+        const mockResponse = {
+          permissions: [{ name: "contract:read" }, { name: "contract:write" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.listAdminPermissions();
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/permissions",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.permissions).toHaveLength(2);
+      });
+    });
+
+    // ── Admin System Accounts ──────────────────────────────────────
+
+    describe("createSystemAccount", () => {
+      it("should create a new system account", async () => {
+        const mockResponse = {
+          uuid: "sys-uuid-1",
+          name: "CI Bot",
+          tokens: [{ value: "ci-bot-token" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.createSystemAccount({
+          name: "CI Bot",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/system-accounts",
+          {
+            method: "POST",
+            headers: client.requestHeaders,
+            body: JSON.stringify({
+              name: "CI Bot",
+            }),
+          },
+        );
+        expect(result.uuid).toBe("sys-uuid-1");
+      });
+    });
+
+    describe("getSystemAccountTokens", () => {
+      it("should retrieve tokens for a system account", async () => {
+        const mockResponse = {
+          tokens: [{ uuid: "tok-uuid-1", description: "Default token" }],
+        };
+        fetchMock.mockResponseOnce(JSON.stringify(mockResponse));
+
+        const result = await client.getSystemAccountTokens({
+          accountId: "sys-uuid-1",
+        });
+
+        expect(fetchMock).toHaveBeenCalledWith(
+          "https://example.com/admin/system-accounts/sys-uuid-1/tokens",
+          { method: "GET", headers: client.requestHeaders },
+        );
+        expect(result.tokens).toHaveLength(1);
+      });
+
+      it("should handle not found errors", async () => {
+        fetchMock.mockResponseOnce("Not Found", {
+          status: 404,
+          statusText: "Not Found",
+        });
+        await expect(
+          client.getSystemAccountTokens({ accountId: "missing-uuid" }),
+        ).rejects.toThrow(
+          "Get System Account Tokens Failed - status: 404 Not Found",
+        );
       });
     });
   });

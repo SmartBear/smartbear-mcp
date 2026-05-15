@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -9,7 +10,11 @@ import type {
   RegisterPromptFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import { API_KEY_HEADER } from "./config/constants";
+import {
+  API_KEY_HEADER,
+  AUTHORIZATION_HEADER,
+  REFLECT_API_TOKEN_HEADER,
+} from "./config/constants";
 import { SapTest } from "./prompt/sap-test";
 import { AddPromptStep } from "./tool/recording/add-prompt-step";
 import { AddSegment } from "./tool/recording/add-segment";
@@ -34,8 +39,7 @@ const ConfigurationSchema = z.object({
 
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
-  private headers: Record<string, string> = {};
-  private apiToken = "";
+  private _apiToken: string | undefined;
   private activeConnections = new Map<string, WebSocketManager>();
   private sessionStates = new Map<
     string,
@@ -44,7 +48,7 @@ export class ReflectClient implements Client {
   private mcpSessionConnections = new Map<string, Set<string>>();
 
   name = "Reflect";
-  toolPrefix = "reflect";
+  capabilityPrefix = "reflect";
   configPrefix = "Reflect";
 
   config = ConfigurationSchema;
@@ -54,24 +58,68 @@ export class ReflectClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
-    this.apiToken = config.api_token;
-    this.headers = {
-      [API_KEY_HEADER]: `${config.api_token}`,
-      "Content-Type": "application/json",
-      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-    };
+    this._apiToken = config.api_token;
+  }
+
+  getAuthToken(): string | null {
+    // 1. Try request context
+    const contextHeader =
+      getRequestHeader(REFLECT_API_TOKEN_HEADER) ||
+      getRequestHeader(API_KEY_HEADER) ||
+      getRequestHeader(AUTHORIZATION_HEADER);
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer or token prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+      return token;
+    }
+
+    // 2. Fallback to configured token
+    return this._apiToken || null;
   }
 
   isConfigured(): boolean {
-    return Object.keys(this.headers).length !== 0;
+    return true; // Configured by default to support dynamic OAuth tokens
   }
 
-  getApiToken(): string {
-    return this.apiToken;
+  isOAuthRequest(): boolean {
+    if (
+      getRequestHeader(REFLECT_API_TOKEN_HEADER) ||
+      getRequestHeader(API_KEY_HEADER)
+    ) {
+      return false;
+    }
+    const authHeader = getRequestHeader(AUTHORIZATION_HEADER);
+    if (!authHeader) {
+      return false;
+    }
+    const headerValue = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+    return headerValue.toLowerCase().startsWith("bearer ");
+  }
+
+  getAuthHeader(): Record<string, string> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error("Reflect API token not found");
+    }
+    if (this.isOAuthRequest()) {
+      return { Authorization: `Bearer ${token}` };
+    }
+    return { [API_KEY_HEADER]: token };
   }
 
   getHeaders(): Record<string, string> {
-    return this.headers;
+    return {
+      ...this.getAuthHeader(),
+      "Content-Type": "application/json",
+      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+    };
   }
 
   getSessionState(
@@ -129,7 +177,8 @@ export class ReflectClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
-    const tools = [
+    // Only available for API key authentication
+    const apiOnlyTools = [
       new ListSuites(this),
       new ListSuiteExecutions(this),
       new GetSuiteExecutionStatus(this),
@@ -138,6 +187,10 @@ export class ReflectClient implements Client {
       new ListTests(this),
       new RunTest(this),
       new GetTestStatus(this),
+    ];
+
+    // Available for both OAuth and API key authentication
+    const oAuthAndAPISupportedTools = [
       new ListSegments(this),
       new ConnectToSession(this),
       new AddPromptStep(this),
@@ -146,16 +199,20 @@ export class ReflectClient implements Client {
       new AddSegment(this),
     ];
 
+    const tools = this.isOAuthRequest()
+      ? oAuthAndAPISupportedTools
+      : [...oAuthAndAPISupportedTools, ...apiOnlyTools];
+
     for (const tool of tools) {
       register(tool.specification, tool.handle);
     }
   }
 
-  registerPrompts(register: RegisterPromptFunction): void {
+  async registerPrompts(register: RegisterPromptFunction): Promise<void> {
     const prompts = [new SapTest(this)];
 
     for (const prompt of prompts) {
-      register(prompt.name, prompt.params, prompt.callback);
+      register(prompt.specification, prompt.callback);
     }
   }
 }

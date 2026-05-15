@@ -152,7 +152,7 @@ Please follow these steps to create a new release:
   The bump script will help automate some of the steps below:
    - Suggest a version number based on [semantic versioning](https://semver.org/)
    - Create a release branch from `main`
-   - Update the version in `package.json` , `package-lock.json`, `CHANGELOG.md` and `deploy/deployment.yaml` files
+   - Update the version in `package.json` , `package-lock.json` and `CHANGELOG.md` files
    - Commit the changes
    - Push the release branch to GitHub
 
@@ -162,11 +162,11 @@ Please follow these steps to create a new release:
 1. **Create PR to main**
     - Push the changes to GitHub and create a Pull Request from your release branch into `main`
 
-1. **Release**
+2. **Release**
     - Create a new Github release with the version you decided on earlier
     - Changes will be automatically deployed once the Github release is created
 
-1. **Post-Release**
+3. **Post-Release**
     - Check the publish action to make sure all deployments succeeded
     - Check https://developer.smartbear.com/smartbear-mcp/ to ensure the docs have been updated correctly
 

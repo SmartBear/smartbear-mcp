@@ -88,7 +88,7 @@ function readCoverage(coveragePath) {
  * @param {Object} functions - Functions coverage data.
  * @param {Object} branches - Branches coverage data.
  * @param {Object} statements - Statements coverage data.
- * @param {number} threshold - Coverage threshold for passing.
+ * @param {{ lines: number, functions: number, branches: number, statements: number }} thresholds - Per-metric coverage thresholds.
  * @returns {string} Markdown table of coverage metrics.
  */
 function buildCoverageMetricsTable(
@@ -96,17 +96,17 @@ function buildCoverageMetricsTable(
   functions,
   branches,
   statements,
-  threshold = 80,
+  thresholds,
 ) {
   return [
     "### 📈 Coverage Metrics",
     "",
     "| Metric | Coverage | Target | Status |",
     "|--------|----------|--------|--------|",
-    `| **Lines**      | **${formatPercentage(lines.pct)}**      | ${threshold}% | ${getStatusIcon(lines.pct, threshold)}      |`,
-    `| **Functions**  | **${formatPercentage(functions.pct)}**  | ${threshold}% | ${getStatusIcon(functions.pct, threshold)}  |`,
-    `| **Branches**   | **${formatPercentage(branches.pct)}**   | ${threshold}% | ${getStatusIcon(branches.pct, threshold)}   |`,
-    `| **Statements** | **${formatPercentage(statements.pct)}** | ${threshold}% | ${getStatusIcon(statements.pct, threshold)} |`,
+    `| **Lines**      | **${formatPercentage(lines.pct)}**      | ${thresholds.lines}% | ${getStatusIcon(lines.pct, thresholds.lines)}      |`,
+    `| **Functions**  | **${formatPercentage(functions.pct)}**  | ${thresholds.functions}% | ${getStatusIcon(functions.pct, thresholds.functions)}  |`,
+    `| **Branches**   | **${formatPercentage(branches.pct)}**   | ${thresholds.branches}% | ${getStatusIcon(branches.pct, thresholds.branches)}   |`,
+    `| **Statements** | **${formatPercentage(statements.pct)}** | ${thresholds.statements}% | ${getStatusIcon(statements.pct, thresholds.statements)} |`,
   ].join("\n");
 }
 
@@ -157,11 +157,15 @@ function buildUncoveredFilesSection(coverage) {
  */
 function buildCoverageComment(coverage, github, context) {
   const total = coverage.total;
-  const threshold = 80;
-  const overallPass = total.lines.pct >= threshold;
+  const thresholds = { lines: 75, functions: 75, branches: 80, statements: 75 };
+  const overallPass =
+    total.lines.pct >= thresholds.lines &&
+    total.functions.pct >= thresholds.functions &&
+    total.branches.pct >= thresholds.branches &&
+    total.statements.pct >= thresholds.statements;
   const statusIcon = overallPass ? "🎯" : "📊";
   const statusText = overallPass ? "Coverage Target Met!" : "Coverage Report";
-  const workflowLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${github.run_id}`;
+  const workflowLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
   const footerLinks = `[View workflow](${workflowLink})`;
 
   return [
@@ -173,7 +177,7 @@ function buildCoverageComment(coverage, github, context) {
       total.functions,
       total.branches,
       total.statements,
-      threshold,
+      thresholds,
     ),
     "",
     buildTestStatistics(
@@ -195,15 +199,16 @@ function buildCoverageComment(coverage, github, context) {
  * Builds the fallback comment body if coverage report cannot be generated.
  *
  * @param {Error} error - The error encountered while reading coverage.
- * @param {string} COVERAGE_MARKER - Unique marker for identifying coverage comments.
+ * @param {Object} context - GitHub Actions context object.
  * @returns {string} Markdown body for the fallback comment.
  */
-function buildFallbackComment(error) {
+function buildFallbackComment(error, context) {
+  const actionsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions`;
   return [
     COVERAGE_MARKER,
     `❌ **Coverage Report Failed**`,
     `Could not generate coverage report: ${error.message}`,
-    `Please check the [workflow logs](../actions) for more details.`,
+    `Please check the [workflow logs](${actionsUrl}) for more details.`,
   ].join("\n");
 }
 
@@ -245,7 +250,7 @@ export default async function postCoverageComment({ github, context }) {
     await upsertCoverageComment(commentBody, github, context);
   } catch (error) {
     console.log("Could not read coverage report:", error.message);
-    const fallbackBody = buildFallbackComment(error);
+    const fallbackBody = buildFallbackComment(error, context);
     await upsertCoverageComment(fallbackBody, github, context);
   }
 }

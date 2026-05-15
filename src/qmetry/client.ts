@@ -1,4 +1,5 @@
 import z from "zod";
+import { getRequestHeader } from "../common/request-context";
 import type {
   Client,
   GetInputFunction,
@@ -26,7 +27,7 @@ const ConfigurationSchema = z.object({
 
 export class QmetryClient implements Client {
   name = "QMetry";
-  toolPrefix = "qmetry";
+  capabilityPrefix = "qmetry";
   configPrefix = "Qmetry";
   config = ConfigurationSchema;
 
@@ -46,10 +47,21 @@ export class QmetryClient implements Client {
   }
 
   isConfigured(): boolean {
-    return this.token !== undefined;
+    return true;
   }
 
   getToken() {
+    let contextToken =
+      getRequestHeader("Qmetry-Token") || getRequestHeader("apikey");
+
+    if (Array.isArray(contextToken)) {
+      contextToken = contextToken[0];
+    }
+
+    if (contextToken) {
+      return contextToken;
+    }
+
     if (!this.token) throw new Error("Client not configured");
     return this.token;
   }

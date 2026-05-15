@@ -14,26 +14,30 @@ export class GetScreenshot extends Tool<ReflectClient> {
       "Capture a screenshot from the current state of an active Reflect recording session",
     readOnly: true,
     idempotent: true,
-    parameters: [
-      {
-        name: "sessionId",
-        type: z.string(),
-        description: "The ID of the Reflect recording session",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      sessionId: z.string().describe("The ID of the Reflect recording session"),
+      format: z
+        .enum(["png", "jpeg"])
+        .optional()
+        .describe("The image format for the screenshot (png or jpeg)"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { sessionId } = args as { sessionId: string };
+    const { sessionId, format } = args as {
+      sessionId: string;
+      format?: "png" | "jpeg";
+    };
     if (!sessionId) throw new ToolError("sessionId argument is required");
 
+    const imageFormat = format ?? "png";
     const wsManager = this.client.getConnectedSession(sessionId);
 
     const id = randomUUID();
     const responsePromise = wsManager.waitForResponse(id);
     await wsManager.sendMcpMessage({
       type: "mcp:get-screenshot",
+      format: imageFormat,
       id,
     });
 
@@ -49,7 +53,7 @@ export class GetScreenshot extends Tool<ReflectClient> {
         {
           type: "image",
           data: imageBase64,
-          mimeType: "image/png",
+          mimeType: `image/${imageFormat}`,
         },
         {
           type: "text",
@@ -57,6 +61,7 @@ export class GetScreenshot extends Tool<ReflectClient> {
             success: true,
             message: "Screenshot captured",
             state,
+            format: imageFormat,
           }),
         },
       ],

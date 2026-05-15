@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -8,15 +9,19 @@ import type {
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Collaborator server base URL"),
-  username: z.string().describe("Collaborator username for authentication"),
+  username: z
+    .string()
+    .describe("Collaborator username for authentication")
+    .optional(),
   login_ticket: z
     .string()
-    .describe("Collaborator login ticket for authentication"),
+    .describe("Collaborator login ticket for authentication")
+    .optional(),
 });
 
 export class CollaboratorClient implements Client {
   name = "Collaborator";
-  toolPrefix = "collaborator";
+  capabilityPrefix = "collaborator";
   configPrefix = "Collaborator";
   config = ConfigurationSchema;
 
@@ -35,11 +40,7 @@ export class CollaboratorClient implements Client {
   }
 
   isConfigured(): boolean {
-    return (
-      this.baseUrl !== undefined &&
-      this.username !== undefined &&
-      this.loginTicket !== undefined
-    );
+    return this.baseUrl !== undefined;
   }
 
   /**
@@ -49,11 +50,25 @@ export class CollaboratorClient implements Client {
    */
   async call(commands: any[]): Promise<any> {
     const url = `${this.baseUrl}/services/json/v1`;
+
+    let login = this.username;
+    let ticket = this.loginTicket;
+
+    const contextLogin = getRequestHeader("Collaborator-Login");
+    const contextTicket = getRequestHeader("Collaborator-Ticket");
+
+    if (contextLogin) {
+      login = Array.isArray(contextLogin) ? contextLogin[0] : contextLogin;
+    }
+    if (contextTicket) {
+      ticket = Array.isArray(contextTicket) ? contextTicket[0] : contextTicket;
+    }
+
     // Always prepend authentication command automatically
     const body = [
       {
         command: "SessionService.authenticate",
-        args: { login: this.username, ticket: this.loginTicket },
+        args: { login, ticket },
       },
       ...commands,
     ];

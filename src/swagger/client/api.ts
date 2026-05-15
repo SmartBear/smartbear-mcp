@@ -83,11 +83,15 @@ function hasErrorsFound(
 
 export class SwaggerAPI {
   private config: SwaggerConfiguration;
-  private headers: Record<string, string>;
+  private userAgent: string;
 
   constructor(config: SwaggerConfiguration, userAgent: string) {
     this.config = config;
-    this.headers = config.getHeaders(userAgent);
+    this.userAgent = userAgent;
+  }
+
+  private get headers(): Record<string, string> {
+    return this.config.getHeaders(this.userAgent);
   }
 
   /**
@@ -864,23 +868,25 @@ export class SwaggerAPI {
 
   /**
    * Standardize and fix an API definition using AI
-   * @param params Parameters including owner, API name, and version
+   * @param params Parameters including owner, API name, version, and optional newVersion
    * @returns Standardization response with status and fixed definition
    */
   async standardizeApi(
     params: StandardizeApiParams,
   ): Promise<StandardizeApiResponse> {
+    const searchParams = new URLSearchParams();
+    if (params.newVersion) searchParams.set("newVersion", params.newVersion);
+    const queryString = searchParams.toString();
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,
     )}/${encodeURIComponent(params.api)}/${encodeURIComponent(
       params.version,
-    )}/standardize`;
+    )}/standardize${queryString ? `?${queryString}` : ""}`;
 
     const response = await fetch(url, {
       method: "POST",
       headers: this.headers,
     });
-
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(

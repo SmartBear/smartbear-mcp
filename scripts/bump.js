@@ -12,7 +12,6 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "..");
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, "package.json");
 const CHANGELOG_PATH = path.join(ROOT_DIR, "CHANGELOG.md");
-const DEPLOYMENT_PATH = path.join(ROOT_DIR, "deploy", "deployment.yaml");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -74,22 +73,6 @@ const updateChangelog = (newVersion) => {
   console.log(`Updated CHANGELOG.md`);
 };
 
-const updateDeployment = (newVersion) => {
-  let content = fs.readFileSync(DEPLOYMENT_PATH, "utf-8");
-  // Regex to match image: ghcr.io/smartbear/smartbear-mcp:vX.Y.Z
-  const regex = /(image: ghcr\.io\/smartbear\/smartbear-mcp:v)(\d+\.\d+\.\d+)/;
-
-  if (regex.test(content)) {
-    content = content.replace(regex, `$1${newVersion}`);
-    fs.writeFileSync(DEPLOYMENT_PATH, content);
-    console.log(`Updated deploy/deployment.yaml`);
-  } else {
-    console.warn(
-      "Warning: Could not find image tag in deployment.yaml to update.",
-    );
-  }
-};
-
 const main = async () => {
   console.log("🚀 Starting Release Process...");
 
@@ -145,17 +128,12 @@ const main = async () => {
   // 4. Update Changelog
   updateChangelog(newVersion);
 
-  // 5. Update Deployment Manifest
-  updateDeployment(newVersion);
-
-  // 6. Commit Changes
+  // 5. Commit Changes
   console.log("Committing changes...");
-  runCommand(
-    "git add package.json package-lock.json CHANGELOG.md deploy/deployment.yaml",
-  );
+  runCommand("git add package.json package-lock.json CHANGELOG.md");
   runCommand(`git commit -m "release: v${newVersion}"`);
 
-  // 7. Push branch
+  // 6. Push branch
   console.log(`Pushing branch ${branchName} to origin...`);
   runCommand(`git push -u origin ${branchName}`);
 

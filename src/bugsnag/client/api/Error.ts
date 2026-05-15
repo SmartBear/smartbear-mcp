@@ -153,6 +153,61 @@ export class ErrorAPI extends BaseAPI {
   }
 
   /**
+   * List the Events on an Error
+   * GET /projects/{project_id}/errors/{error_id}/events
+   */
+  async listErrorEvents(
+    projectId: string,
+    errorId: string,
+    base?: Date | null,
+    sort?: string,
+    direction?: string,
+    perPage?: number,
+    filters?: FilterObject,
+    nextUrl?: string,
+  ): Promise<ApiResponse<EventApiView[]>> {
+    if (nextUrl) {
+      // Don't allow override of these params when using nextUrl
+      direction = undefined;
+      sort = undefined;
+      base = undefined;
+    }
+    const localVarFetchArgs = ErrorsApiFetchParamCreator(
+      this.configuration,
+    ).listEventsOnError(
+      projectId,
+      errorId,
+      base ?? undefined,
+      sort,
+      direction,
+      undefined,
+      undefined, // Filters are encoded separately below
+      undefined,
+      undefined,
+    );
+
+    const url = new URL(
+      nextUrl ?? localVarFetchArgs.url,
+      this.configuration.basePath,
+    );
+    if (perPage) {
+      // Allow override of per page, even with nextUrl
+      url.searchParams.set("per_page", perPage.toString());
+    }
+    if (!nextUrl && filters) {
+      // Apply our own encoding of filters
+      toUrlSearchParams(filters).forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
+    return await this.requestArray<ErrorApiView>(
+      url.toString(),
+      localVarFetchArgs.options,
+      false, // Paginate results
+    );
+  }
+
+  /**
    * Update an Error on a Project
    * PATCH /projects/{project_id}/errors/{error_id}
    */
