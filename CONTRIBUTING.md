@@ -148,23 +148,20 @@ A release will be carried out by a member of the SmartBear team when a set of re
 
 Please follow these steps to create a new release:
 
-1. **Run bump script**
-  The bump script will help automate some of the steps below:
+1. **Run `npm run bump`** to:
    - Suggest a version number based on [semantic versioning](https://semver.org/)
    - Create a release branch from `main`
    - Update the version in `package.json` , `package-lock.json` and `CHANGELOG.md` files
    - Commit the changes
    - Push the release branch to GitHub
 
-   ```bash
-   npm run bump
-   ```
 1. **Create PR to main**
-    - Push the changes to GitHub and create a Pull Request from your release branch into `main`
+    - Create a Pull Request from your release branch into `main`
+    - Get approval and merge the PR into `main`
 
 2. **Release**
-    - Create a new Github release with the version you decided on earlier
-    - Changes will be automatically deployed once the Github release is created
+    - Create and push a tag for the new release (e.g., `git tag v1.2.3` and `git push origin v1.2.3`)
+    - This will trigger the publish workflow, which will publish the new version to external sites (e.g. npm) and create the GitHub release
 
 3. **Post-Release**
     - Check the publish action to make sure all deployments succeeded

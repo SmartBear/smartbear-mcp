@@ -1,7 +1,7 @@
 name: Publish
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
   packages: write
 
@@ -23,8 +23,14 @@ on:
         required: false
         type: boolean
         default: true
-  release:
-    types: [published]
+      publish_mcpb:
+        description: "Build and attach .mcpb to the latest GitHub release"
+        required: false
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   # Build platform-specific images on native runners
@@ -187,6 +193,7 @@ jobs:
     env:
       RUN_PUBLISH_NPM: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_npm }}
       RUN_PUBLISH_MCP: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_mcp }}
+      RUN_PUBLISH_MCPB: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_mcpb }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -211,7 +218,6 @@ jobs:
             server.json > server.json.tmp && mv server.json.tmp server.json
 
       - name: Install dependencies
-        if: ${{ env.RUN_PUBLISH_NPM == 'true' }}
         run: npm ci
 
       - name: Publish to npm
@@ -234,3 +240,55 @@ jobs:
       - name: Publish to MCP Registry
         if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
         run: ./mcp-publisher publish
+
+      - name: Build and pack .mcpb
+        if: ${{ env.RUN_PUBLISH_MCPB == 'true' }}
+        id: pack
+        run: |
+          npm pack
+          MCPB_FILE=$(ls smartbear-mcp-*.mcpb 2>/dev/null)
+          if [[ -z "$MCPB_FILE" ]]; then
+            echo "::error::No smartbear-mcp-*.mcpb file found after pack"
+            exit 1
+          fi
+          echo "mcpb_file=$MCPB_FILE" >> "$GITHUB_OUTPUT"
+      - name: Get release tag
+        if: ${{ env.RUN_PUBLISH_MCPB == 'true' }}
+        id: get_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG=$(git describe --tags --abbrev=0)
+          fi
+          if [[ -z "$TAG" ]]; then
+            echo "::error::No release tag found"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Create/Update GitHub Release
+        if: ${{ env.RUN_PUBLISH_MCPB == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NOTES=$(awk '/^## \[[0-9]+\.[0-9]+\.[0-9]+/{if(found) exit; found=1; next} found' CHANGELOG.md)
+          if [[ -z "$NOTES" ]]; then
+            echo "::error::No release notes found in CHANGELOG.md"
+            exit 1
+          fi
+          if gh release view "${{ steps.get_tag.outputs.tag }}" &>/dev/null; then
+            echo "::notice::Updating release ${{ steps.get_tag.outputs.tag }}"
+            gh release edit "${{ steps.get_tag.outputs.tag }}" \
+            --notes "$NOTES"
+            else
+            echo "::notice::Creating release ${{ steps.get_tag.outputs.tag }}"
+            gh release create "${{ steps.get_tag.outputs.tag }}" \
+              --title "${{ steps.get_tag.outputs.tag }}" \
+              --notes "$NOTES"
+          fi
+          gh release upload "${{ steps.get_tag.outputs.tag }}" \
+            "${{ steps.pack.outputs.mcpb_file }}" \
+            --clobber
