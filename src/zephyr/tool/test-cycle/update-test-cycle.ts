@@ -13,6 +13,7 @@ import { deepMerge } from "../../common/utils";
 export class UpdateTestCycle extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Update Test Cycle",
+    toolset: "Test Cycles",
     summary:
       "Update an existing Test Cycle in Zephyr. This operation fetches the current test cycle and merges your updates with it to prevent accidental property deletion. To remove a property, set it to null explicitly. The plannedStartDate and plannedEndDate fields cannot be cleared",
     readOnly: false,

@@ -17,6 +17,7 @@ import type { SmartBearMcpServer } from "./server";
 export interface ToolParams {
   title: string;
   summary: string;
+  toolset?: string;
   inputSchema?: ZodType;
   /**
    * Specifies the type of object returned by the tool. <br>
@@ -56,7 +57,7 @@ export interface ResourceParams {
 export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
   params: ToolParams,
   cb: ToolCallback<InputArgs>,
-) => RegisteredTool;
+) => RegisteredTool | null;
 
 export type RegisterResourceFunction = (
   params: ResourceParams,

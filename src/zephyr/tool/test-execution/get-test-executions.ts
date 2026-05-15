@@ -11,6 +11,7 @@ import {
 export class GetTestExecutions extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Executions",
+    toolset: "Test Executions",
     summary: "Get test executions with optional filters",
     readOnly: true,
     idempotent: true,

@@ -22,6 +22,7 @@ const inputSchema = z.object({
 export class SetNetworkEndpointGroupings extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Set Network Endpoint Groupings",
+    toolset: "performance",
     summary: "Set the network endpoint grouping rules for a project",
     purpose:
       "Configure URL patterns to control how network spans are grouped in performance monitoring",

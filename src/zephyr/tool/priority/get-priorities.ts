@@ -11,6 +11,7 @@ import {
 export class GetPriorities extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get priorities",
+    toolset: "Priorities",
     summary: "Get Zephyr Test Case priorities with optional filters",
     readOnly: true,
     idempotent: true,

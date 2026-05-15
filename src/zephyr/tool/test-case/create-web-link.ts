@@ -11,6 +11,7 @@ import {
 export class CreateTestCaseWebLink extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Case Web Link",
+    toolset: "Test Cases",
     summary: "Create a new Web Link for a Test Case in Zephyr",
     readOnly: false,
     idempotent: false,

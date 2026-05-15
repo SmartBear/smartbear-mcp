@@ -11,6 +11,7 @@ import {
 export class CreateTestCase extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Case",
+    toolset: "Test Cases",
     summary: "Create a new Test Case in Zephyr specified project",
     readOnly: false,
     idempotent: false,

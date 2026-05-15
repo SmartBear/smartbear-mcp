@@ -11,6 +11,7 @@ import { WebSocketManager } from "../../websocket-manager";
 export class ConnectToSession extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Connect To Session",
+    toolset: "Recording",
     summary: `Connect to an active Reflect recording session via WebSocket to enable interactive control. When creating or editing a Reflect test using a connected recording session, follow these guidelines:
 
 1. After connecting to a session, get the list of segments for the session's platform type so you know what actions could be added via segments vs needing to create new steps. Do not list tests, only list segments.

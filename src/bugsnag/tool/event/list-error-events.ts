@@ -22,6 +22,7 @@ const inputSchema = z.object({
 export class ListErrorEvents extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Events on an Error",
+    toolset: "events",
     summary: "Gets a list of events that have grouped into the specified error",
     purpose:
       "Show the events that make up an error to see individual occurrences of the error for detailed analysis",

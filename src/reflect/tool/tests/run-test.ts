@@ -9,6 +9,7 @@ import { API_HOSTNAME } from "../../config/constants";
 export class RunTest extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Run Test",
+    toolset: "Tests",
     summary: "Run a reflect test",
     inputSchema: z.object({
       testId: z.string().describe("ID of the reflect test to run"),
