@@ -904,13 +904,13 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "outputSchema": undefined,
     "title": "BugSnag: Update Error",
   },
-  "collaborator_create_collaborator_remote_system_configuration": {
+  "collaborator_create_remote_system_configuration": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Create Collaborator Remote System Configuration",
+      "title": "Collaborator: Create Remote System Configuration",
     },
     "description": "Creates a remote system configuration in Collaborator (e.g., Bitbucket, GitHub, etc).
 
@@ -926,15 +926,15 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "token",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Create Collaborator Remote System Configuration",
+    "title": "Collaborator: Create Remote System Configuration",
   },
-  "collaborator_create_collaborator_review": {
+  "collaborator_create_review": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Create Collaborator Review",
+      "title": "Collaborator: Create Review",
     },
     "description": "Creates a new review in Collaborator. All parameters are optional.
 
@@ -950,15 +950,15 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Create Collaborator Review",
+    "title": "Collaborator: Create Review",
   },
-  "collaborator_delete_collaborator_remote_system_configuration": {
+  "collaborator_delete_remote_system_configuration": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Delete Collaborator Remote System Configuration",
+      "title": "Collaborator: Delete Remote System Configuration",
     },
     "description": "Deletes a remote system configuration in Collaborator by its ID.
 
@@ -968,15 +968,15 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "id",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Delete Collaborator Remote System Configuration",
+    "title": "Collaborator: Delete Remote System Configuration",
   },
-  "collaborator_edit_collaborator_remote_system_configuration": {
+  "collaborator_edit_remote_system_configuration": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Edit Collaborator Remote System Configuration",
+      "title": "Collaborator: Edit Remote System Configuration",
     },
     "description": "Edits parameters of an existing remote system configuration in Collaborator. Only title and config are editable after creation.
 
@@ -992,15 +992,15 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Edit Collaborator Remote System Configuration",
+    "title": "Collaborator: Edit Remote System Configuration",
   },
-  "collaborator_find_collaborator_review_by_id": {
+  "collaborator_find_review_by_id": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Find Collaborator Review By ID",
+      "title": "Collaborator: Find Review By ID",
     },
     "description": "Finds a review in Collaborator by its review ID.
 
@@ -1010,15 +1010,15 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "reviewId",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Find Collaborator Review By ID",
+    "title": "Collaborator: Find Review By ID",
   },
-  "collaborator_get_collaborator_reviews": {
+  "collaborator_get_reviews": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Get Collaborator Reviews",
+      "title": "Collaborator: Get Reviews",
     },
     "description": "Retrieves reviews from Collaborator using ReviewService.getReviews. All parameters are optional and only provided ones are sent.
 
@@ -1040,15 +1040,15 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "toDate",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Get Collaborator Reviews",
+    "title": "Collaborator: Get Reviews",
   },
-  "collaborator_reject_collaborator_review": {
+  "collaborator_reject_review": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Reject Collaborator Review",
+      "title": "Collaborator: Reject Review",
     },
     "description": "Rejects a review in Collaborator by its review ID and reason.
 
@@ -1060,7 +1060,7 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "reviewId",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Reject Collaborator Review",
+    "title": "Collaborator: Reject Review",
   },
   "collaborator_reviewservice_action": {
     "annotations": {
@@ -1082,13 +1082,13 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "outputSchema": undefined,
     "title": "Collaborator: ReviewService Action",
   },
-  "collaborator_test_collaborator_remote_system_configuration_connection": {
+  "collaborator_test_remote_system_configuration_connection": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Test Collaborator Remote System Configuration Connection",
+      "title": "Collaborator: Test Remote System Configuration Connection",
     },
     "description": "Tests the connection for a remote system configuration in Collaborator by its ID.
 
@@ -1098,15 +1098,15 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "id",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Test Collaborator Remote System Configuration Connection",
+    "title": "Collaborator: Test Remote System Configuration Connection",
   },
-  "collaborator_update_collaborator_remote_system_configuration_webhook": {
+  "collaborator_update_remote_system_configuration_webhook": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Collaborator: Update Collaborator Remote System Configuration Webhook",
+      "title": "Collaborator: Update Remote System Configuration Webhook",
     },
     "description": "Updates the webhook for a remote system configuration in Collaborator by its ID.
 
@@ -1116,7 +1116,7 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "id",
     ],
     "outputSchema": undefined,
-    "title": "Collaborator: Update Collaborator Remote System Configuration Webhook",
+    "title": "Collaborator: Update Remote System Configuration Webhook",
   },
   "contract-testing_add_label_to_pacticipant": {
     "annotations": {
@@ -2055,13 +2055,13 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get Audit Log",
   },
-  "contract-testing_get_bdct_consumer_contract_by_consumer_version": {
+  "contract-testing_get_bdct_consumer_by_consumer_version": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Contract Testing: Get BDCT Consumer Contract by Consumer Version",
+      "title": "Contract Testing: Get BDCT Consumer by Consumer Version",
     },
     "description": "Fetch the consumer Pact contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.
 
@@ -2077,7 +2077,7 @@ None",
       "providerVersionNumber",
     ],
     "outputSchema": undefined,
-    "title": "Contract Testing: Get BDCT Consumer Contract by Consumer Version",
+    "title": "Contract Testing: Get BDCT Consumer by Consumer Version",
   },
   "contract-testing_get_bdct_consumer_contract_verification_results": {
     "annotations": {
@@ -2099,30 +2099,6 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get BDCT Consumer Contract Verification Results",
   },
-  "contract-testing_get_bdct_consumer_contract_verification_results_by_consumer_version": {
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-      "title": "Contract Testing: Get BDCT Consumer Contract Verification Results by Consumer Version",
-    },
-    "description": "Fetch the consumer contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
-
-**Parameters:**
-- providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number
-- consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
-    "inputSchema": [
-      "consumerName",
-      "consumerVersionNumber",
-      "providerName",
-      "providerVersionNumber",
-    ],
-    "outputSchema": undefined,
-    "title": "Contract Testing: Get BDCT Consumer Contract Verification Results by Consumer Version",
-  },
   "contract-testing_get_bdct_consumer_contracts": {
     "annotations": {
       "destructiveHint": false,
@@ -2142,6 +2118,30 @@ None",
     ],
     "outputSchema": undefined,
     "title": "Contract Testing: Get BDCT Consumer Contracts",
+  },
+  "contract-testing_get_bdct_consumer_pact_test_results_by_consumer": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Contract Testing: Get BDCT Consumer Pact Test Results by Consumer",
+    },
+    "description": "Fetch the consumer contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
+
+**Parameters:**
+- providerName (string) *required*: Name of the provider
+- providerVersionNumber (string) *required*: Provider version number
+- consumerName (string) *required*: Name of the consumer
+- consumerVersionNumber (string) *required*: Consumer version number",
+    "inputSchema": [
+      "consumerName",
+      "consumerVersionNumber",
+      "providerName",
+      "providerVersionNumber",
+    ],
+    "outputSchema": undefined,
+    "title": "Contract Testing: Get BDCT Consumer Pact Test Results by Consumer",
   },
   "contract-testing_get_bdct_cross-contract_verification_results": {
     "annotations": {
@@ -2163,15 +2163,15 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get BDCT Cross-Contract Verification Results",
   },
-  "contract-testing_get_bdct_cross-contract_verification_results_by_consumer_version": {
+  "contract-testing_get_bdct_provider_by_consumer_version": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Contract Testing: Get BDCT Cross-Contract Verification Results by Consumer Version",
+      "title": "Contract Testing: Get BDCT Provider by Consumer Version",
     },
-    "description": "Fetch the cross-contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
+    "description": "Fetch the provider OpenAPI contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
@@ -2185,7 +2185,31 @@ None",
       "providerVersionNumber",
     ],
     "outputSchema": undefined,
-    "title": "Contract Testing: Get BDCT Cross-Contract Verification Results by Consumer Version",
+    "title": "Contract Testing: Get BDCT Provider by Consumer Version",
+  },
+  "contract-testing_get_bdct_provider_check_results_by_consumer": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Contract Testing: Get BDCT Provider Check Results by Consumer",
+    },
+    "description": "Fetch the provider contract self-verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
+
+**Parameters:**
+- providerName (string) *required*: Name of the provider
+- providerVersionNumber (string) *required*: Provider version number
+- consumerName (string) *required*: Name of the consumer
+- consumerVersionNumber (string) *required*: Consumer version number",
+    "inputSchema": [
+      "consumerName",
+      "consumerVersionNumber",
+      "providerName",
+      "providerVersionNumber",
+    ],
+    "outputSchema": undefined,
+    "title": "Contract Testing: Get BDCT Provider Check Results by Consumer",
   },
   "contract-testing_get_bdct_provider_contract": {
     "annotations": {
@@ -2207,30 +2231,6 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get BDCT Provider Contract",
   },
-  "contract-testing_get_bdct_provider_contract_by_consumer_version": {
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-      "title": "Contract Testing: Get BDCT Provider Contract by Consumer Version",
-    },
-    "description": "Fetch the provider OpenAPI contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.
-
-**Parameters:**
-- providerName (string) *required*: Name of the provider
-- providerVersionNumber (string) *required*: Provider version number
-- consumerName (string) *required*: Name of the consumer
-- consumerVersionNumber (string) *required*: Consumer version number",
-    "inputSchema": [
-      "consumerName",
-      "consumerVersionNumber",
-      "providerName",
-      "providerVersionNumber",
-    ],
-    "outputSchema": undefined,
-    "title": "Contract Testing: Get BDCT Provider Contract by Consumer Version",
-  },
   "contract-testing_get_bdct_provider_contract_verification_results": {
     "annotations": {
       "destructiveHint": false,
@@ -2251,15 +2251,15 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Get BDCT Provider Contract Verification Results",
   },
-  "contract-testing_get_bdct_provider_contract_verification_results_by_consumer_version": {
+  "contract-testing_get_bdct_x-contract_test_results_by_consumer": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "Contract Testing: Get BDCT Provider Contract Verification Results by Consumer Version",
+      "title": "Contract Testing: Get BDCT X-Contract Test Results by Consumer",
     },
-    "description": "Fetch the provider contract self-verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
+    "description": "Fetch the cross-contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
@@ -2273,7 +2273,7 @@ None",
       "providerVersionNumber",
     ],
     "outputSchema": undefined,
-    "title": "Contract Testing: Get BDCT Provider Contract Verification Results by Consumer Version",
+    "title": "Contract Testing: Get BDCT X-Contract Test Results by Consumer",
   },
   "contract-testing_get_branch": {
     "annotations": {
