@@ -62,6 +62,10 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
   Generate an API token from Zephyr by following the instructions [here](https://support.smartbear.com/zephyr/docs/en/rest-api/api-access-tokens-management.html).
 
+- **QTM4J**
+
+  Generate your QTM4J API key by following the instructions [here](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html).
+
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products — tokens for unused products can be omitted.
 
 ## Configure Environment Variables
@@ -102,6 +106,12 @@ export QMETRY_BASE_URL=https://testmanagement.qmetry.com
 export ZEPHYR_API_TOKEN="your-zephyr-api-token"
 # Optional: Set your Zephyr API base URL depending on the region of your Jira instance.
 export ZEPHYR_BASE_URL="https://api.zephyrscale.smartbear.com/v2"
+
+# Required for QTM4J tools
+export QTM4J_API_KEY="your-qtm4j-api-key"
+# Optional: Set your QTM4J base URL based on your region
+# US (default): https://qtmcloud.qmetry.com Australia: https://syd-qtmcloud.qmetry.com
+export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
 ```
 
 > ⚠️ The `MCP_SERVER_BUGSNAG_API_KEY` is used for monitoring the MCP server itself and should be different from your main application's API key.
@@ -136,7 +146,9 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
-        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}"
+        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
+        "QTM4J_API_KEY": "${input:qtm4j_api_key}",
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}"
       }
     }
   },
@@ -212,6 +224,18 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "type": "promptString",
       "description": "By default, connects to https://api.zephyrscale.smartbear.com/v2. Change to a custom server URL if your Jira instance is pinned to a specific region.",
       "password": false
+    },
+    {
+      "id": "qtm4j_api_key",
+      "type": "promptString",
+      "description": "QTM4J API Key",
+      "password": true
+    },
+    {
+      "id": "qtm4j_base_url",
+      "type": "promptString",
+      "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
+      "password": false
     }
   ]
 }
@@ -243,7 +267,9 @@ Add to your `mcp.json` configuration:
         "QMETRY_API_KEY": "your-qmetry-api-key",
         "QMETRY_BASE_URL": "https://testmanagement.qmetry.com",
         "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
-        "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2"
+        "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
+        "QTM4J_API_KEY": "your-qtm4j-api-key",
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
       }
     }
   }
@@ -276,7 +302,9 @@ Edit your `claude_desktop_config.json` file:
         "QMETRY_API_KEY": "your-qmetry-api-key",
         "QMETRY_BASE_URL": "https://testmanagement.qmetry.com",
         "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
-        "ZEPHYR_BASE_URL": "your-zephyr-base-url"
+        "ZEPHYR_BASE_URL": "your-zephyr-base-url",
+        "QTM4J_API_KEY": "your-qtm4j-api-key",
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
       }
     }
   }
@@ -314,6 +342,8 @@ export PACT_BROKER_TOKEN=your-pact-broker-token
 # If using the open source Pact broker, replace the token with:
 # export PACT_BROKER_USERNAME=your-username
 # export PACT_BROKER_PASSWORD=your-password
+export QTM4J_API_KEY="your-qtm4j-api-key"
+export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
 ```
 
 Launch Claude Code with:
@@ -369,7 +399,9 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
-        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}"
+        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
+        "QTM4J_API_KEY": "${input:qtm4j_api_key}",
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}"
       }
     }
   },
@@ -445,6 +477,18 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "type": "promptString",
       "description": "By default, connects to https://api.zephyrscale.smartbear.com/v2. Change to a custom server URL if your Jira instance is pinned to a specific region.",
       "password": false
+    },
+    {
+      "id": "qtm4j_api_key",
+      "type": "promptString",
+      "description": "QTM4J API Key",
+      "password": true
+    },
+    {
+      "id": "qtm4j_base_url",
+      "type": "promptString",
+      "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
+      "password": false
     }
   ]
 }
@@ -465,6 +509,8 @@ QMETRY_API_KEY=your_qmetry_key \
 QMETRY_BASE_URL=https://testmanagement.qmetry.com \
 ZEPHYR_API_TOKEN=your_zephyr_token \
 ZEPHYR_BASE_URL=https://api.zephyrscale.smartbear.com/v2 \
+QTM4J_API_KEY=your_qtm4j_key \
+QTM4J_BASE_URL=https://qtmcloud.qmetry.com \
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
 
@@ -499,3 +545,13 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "List all projects where Zephyr is enabled"
 -   "Get Zephyr test cases from the project with key TEST"
 -   "Get the last executions from the Zephyr Test Cycle TEST-R1"
+
+### QTM4J Test Management
+
+-   "Set up the SCRUM project context in QTM4J"
+-   "Search for all high-priority test cases in the active project"
+-   "Create a new test case for the login functionality with High priority"
+-   "Find test case SCRUM-TC-145 and show its details"
+-   "Update the status of SCRUM-TC-145 to Done"
+-   "Add the Release_2 label to SCRUM-TC-145 and remove Release_1"
+-   "Show me the test steps for SCRUM-TC-32"

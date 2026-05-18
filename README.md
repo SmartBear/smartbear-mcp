@@ -37,7 +37,7 @@ See individual guides for suggested prompts and supported tools and resources:
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
 - [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - Review and Remote System Configuration management capabilities
-- [QTM4J](https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration) - QMetry Test Management for Jira capabilities
+- [QTM4J](https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration) - QTM4J Test Management for Jira capabilities
 
 ## Remote MCP Servers
 
@@ -51,7 +51,7 @@ For BugSnag, Swagger, and Zephyr, SmartBear hosts Remote MCP Servers that you ca
 
 See the [Remote MCP Servers guide](https://developer.smartbear.com/smartbear-mcp/docs/remote-mcp-servers) for per-client setup instructions. You can connect to multiple remote servers at the same time.
 
-> **Need Reflect, QMetry, PactFlow, or Collaborator?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
+> **Need Reflect, QMetry, QTM4J, PactFlow, or Collaborator?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
 
 ## Prerequisites
 
