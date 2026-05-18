@@ -1,10 +1,10 @@
+import { enableCompileCache } from "node:module";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { clientRegistry } from "./client-registry";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
-import type { Client } from "./types";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 /**
@@ -15,7 +15,7 @@ function getNoConfigMessage(): string[] {
   for (const entry of clientRegistry.getAll()) {
     messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
-      const envVarName = getEnvVarName(entry, configKey);
+      const envVarName = getEnvVarName(entry.configPrefix, configKey);
       const requiredTag = isOptionalType(requirement)
         ? " (optional)"
         : " (required)";
@@ -42,13 +42,15 @@ export async function runStdioMode() {
     process.exit(0);
   }
 
-  const server = new SmartBearMcpServer();
+  enableCompileCache();
+
+  const server = new SmartBearMcpServer(process.env.MCP_TOOLSETS);
 
   // Setup clients from environment variables
   const configuredCount = await clientRegistry.configure(
     server,
     (client, key) => {
-      const envVarName = getEnvVarName(client, key);
+      const envVarName = getEnvVarName(client.configPrefix, key);
       return process.env[envVarName] || null;
     },
   );
@@ -114,6 +116,6 @@ export async function runStdioMode() {
   await server.connect(transport);
 }
 
-export function getEnvVarName(client: Client, key: string): string {
-  return `${client.configPrefix.toUpperCase().replace(/-/g, "_")}_${key.toUpperCase()}`;
+export function getEnvVarName(clientPrefix: string, key: string): string {
+  return `${clientPrefix.toUpperCase().replace(/-/g, "_")}_${key.toUpperCase()}`;
 }

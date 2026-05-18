@@ -35,7 +35,7 @@ export class SmartBearMcpServer extends McpServer {
   private clients: Client[] = [];
   private enabledToolsets?: string[];
 
-  constructor() {
+  constructor(enabledToolsets?: string) {
     super(
       {
         name: MCP_SERVER_NAME,
@@ -51,10 +51,10 @@ export class SmartBearMcpServer extends McpServer {
       },
     );
     this.cache = new CacheService();
-    if (process.env.MCP_TOOLSETS) {
-      this.enabledToolsets = process.env.MCP_TOOLSETS.toLowerCase()
+    if (enabledToolsets) {
+      this.enabledToolsets = enabledToolsets
         .split(",")
-        .map((s) => s.trim());
+        .map((s) => s.trim().toLowerCase());
     }
   }
 
@@ -92,15 +92,7 @@ export class SmartBearMcpServer extends McpServer {
     this.clients.push(client);
     await client.registerTools(
       (params, cb) => {
-        // Skip registering tools that are not in an enabled toolset, if toolsets are defined
-        // Tools without a toolset are always registered
-        if (
-          this.enabledToolsets &&
-          params.toolset &&
-          !this.enabledToolsets.includes(
-            this.getToolsetName(client, params.toolset),
-          )
-        ) {
+        if (!this.isToolEnabled(client, params.toolset)) {
           return null;
         }
         const toolName = this.getCapabilityName(client, params.title);
@@ -301,8 +293,35 @@ export class SmartBearMcpServer extends McpServer {
     return `${client.capabilityPrefix}_${title.replace(/\s+/g, "_").toLowerCase()}`;
   }
 
-  private getToolsetName(client: Client, toolset: string): string {
-    return `${client.configPrefix}:${toolset.replace(/[\s\-_]/g, "")}`.toLowerCase();
+  /**
+   * The tool is enabled if:
+   * - No enabled toolsets are defined on the server, or
+   * - The toolset is included in the enabled toolsets list, or
+   * - The toolset is in the client's default list and there is at least one toolset enabled for the client
+   * @param client
+   * @param toolset
+   * @returns whether to register the tool based on enabled toolsets configuration
+   */
+  private isToolEnabled(client: Client, toolset: string): boolean {
+    if (!this.enabledToolsets) {
+      return true;
+    }
+    const toolsetName =
+      `${client.configPrefix}:${toolset.replace(/[\s\-_]/g, "")}`.toLowerCase();
+    if (this.enabledToolsets.includes(toolsetName)) {
+      return true;
+    }
+    const someToolsEnabledForClient = this.enabledToolsets?.some(
+      (ts) =>
+        ts.split(":")[0].toLowerCase() === client.configPrefix.toLowerCase(),
+    );
+    if (
+      someToolsEnabledForClient &&
+      client.defaultToolsets?.includes(toolset)
+    ) {
+      return true;
+    }
+    return false;
   }
 
   private getDescription(params: ToolParams): string {

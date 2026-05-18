@@ -110,6 +110,7 @@ export class BugsnagClient implements Client {
   capabilityPrefix = "bugsnag";
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
+  defaultToolsets = ["Projects"];
 
   async configure(
     server: SmartBearMcpServer,

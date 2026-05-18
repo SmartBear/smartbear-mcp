@@ -287,6 +287,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
   {
     handler: QMetryToolsHandlers.FETCH_AUTOMATION_STATUS,
     title: "Fetch Automation Status",
+    toolset: "Automation",
     summary: "Fetches the status of an automation import job by request ID.",
     purpose:
       "Track the progress and result of an automation import operation in QMetry.",
