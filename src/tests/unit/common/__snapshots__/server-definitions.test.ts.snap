@@ -291,6 +291,8 @@ Expected Output: JSON object with build details including version, source contro
     },
     "description": "Retrieve the 'current' project on which tools should operate by default. This allows BugSnag tools to be called with no projectId parameter.
 
+**Toolset:** Projects
+
 **Parameters:**
 None
 
@@ -727,6 +729,8 @@ Expected Output: JSON object with a list of errors, with a URL to the next page 
     },
     "description": "Get available event filter fields for a project
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
 
@@ -755,6 +759,8 @@ Expected Output: JSON array of EventField objects containing display_id, custom 
       "title": "BugSnag: List Projects",
     },
     "description": "List all projects in the organization that the current user has access to, or find a project matching an API key.
+
+**Toolset:** Projects
 
 **Parameters:**
 - apiKey (string): The API key of the BugSnag project, if known.
@@ -4367,6 +4373,8 @@ Expected Output: Test suite created with details and metadata. Example uses: par
     },
     "description": "Fetches the status of an automation import job by request ID.
 
+**Toolset:** Automation
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -7131,6 +7139,8 @@ Expected Output: Cycle updated with new name and dates successfully
       "title": "QMetry: Update Issue",
     },
     "description": "Update an existing QMetry issue by DefectId and/or entityKey.
+
+**Toolset:** Issues
 
 **Parameters:**
 - DefectId (number) *required*: ID of the defect/issue to be updated

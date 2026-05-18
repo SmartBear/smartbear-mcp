@@ -148,6 +148,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Update Issue",
+    toolset: "Issues",
     summary: "Update an existing QMetry issue by DefectId and/or entityKey.",
     handler: QMetryToolsHandlers.UPDATE_ISSUE,
     inputSchema: UpdateIssueArgsSchema,

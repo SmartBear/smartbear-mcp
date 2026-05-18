@@ -1,5 +1,5 @@
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 import Bugsnag from "../../../common/bugsnag";
 import { SmartBearMcpServer } from "../../../common/server";
@@ -640,10 +640,14 @@ describe("SmartBearMcpServer", () => {
 
   describe("toolset filtering", () => {
     let mockClient: any;
+    let secondMockClient: any;
     let server: SmartBearMcpServer;
     let registerToolSpy: any;
     let registerFn: any;
-    let setupServer: () => Promise<void>;
+    let setupServer: (
+      enabledToolsets?: string,
+      defaultToolsets?: string[],
+    ) => Promise<void>;
 
     beforeEach(async () => {
       mockClient = {
@@ -656,9 +660,22 @@ describe("SmartBearMcpServer", () => {
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
       };
+      secondMockClient = {
+        name: "Another Test Product",
+        capabilityPrefix: "another_test_product",
+        configPrefix: "another-test-product",
+        config: z.object({}),
+        registerTools: vi.fn(),
+        registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+      };
 
-      setupServer = async () => {
-        server = new SmartBearMcpServer();
+      setupServer = async (
+        enabledToolsets?: string,
+        defaultToolsets?: string[],
+      ) => {
+        server = new SmartBearMcpServer(enabledToolsets);
         registerToolSpy = vi
           .spyOn(
             Object.getPrototypeOf(Object.getPrototypeOf(server)),
@@ -666,16 +683,14 @@ describe("SmartBearMcpServer", () => {
           )
           .mockImplementation(vi.fn());
 
+        mockClient.defaultToolsets = defaultToolsets;
         await server.addClient(mockClient);
         registerFn = mockClient.registerTools.mock.calls[0][0];
+        await server.addClient(secondMockClient);
       };
     });
 
-    afterEach(() => {
-      delete process.env.MCP_TOOLSETS;
-    });
-
-    it("should register all tools when MCP_TOOLSETS is not set", async () => {
+    it("should register all tools when enabled toolsets is not set", async () => {
       await setupServer();
       // Tool with a toolset
       const result1 = registerFn(
@@ -689,9 +704,8 @@ describe("SmartBearMcpServer", () => {
       expect(result2).not.toBeNull();
     });
 
-    it("should register tools whose toolset matches MCP_TOOLSETS", async () => {
-      process.env.MCP_TOOLSETS = "test-product:groupa";
-      await setupServer();
+    it("should register tools whose toolset matches enabled toolsets", async () => {
+      await setupServer("test-product:groupa");
 
       const result = registerFn(
         { title: "Tool A", summary: "A", toolset: "groupA" },
@@ -702,9 +716,8 @@ describe("SmartBearMcpServer", () => {
       expect(registerToolSpy).toHaveBeenCalledOnce();
     });
 
-    it("should skip tools whose toolset does not match MCP_TOOLSETS", async () => {
-      process.env.MCP_TOOLSETS = "test-product:groupa";
-      await setupServer();
+    it("should skip tools whose toolset does not match enabled toolsets", async () => {
+      await setupServer("test-product:groupa");
       const result = registerFn(
         { title: "Tool B", summary: "B", toolset: "groupB" },
         vi.fn(),
@@ -714,19 +727,56 @@ describe("SmartBearMcpServer", () => {
       expect(registerToolSpy).not.toHaveBeenCalled();
     });
 
-    it("should register tools without a toolset when MCP_TOOLSETS is set", async () => {
-      process.env.MCP_TOOLSETS = "test-product:groupa";
-      await setupServer();
+    it("should register tools default tools of client", async () => {
+      await setupServer("test-product:groupa", ["default-group"]);
 
-      const result = registerFn({ title: "Tool C", summary: "C" }, vi.fn());
-
+      let result = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupa" },
+        vi.fn(),
+      );
       expect(result).not.toBeNull();
-      expect(registerToolSpy).toHaveBeenCalledOnce();
+
+      result = registerFn(
+        { title: "Default Tool", summary: "Default", toolset: "default-group" },
+        vi.fn(),
+      );
+      expect(result).not.toBeNull();
+
+      expect(registerToolSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("should register tools default tools of client, if other toolsets are enabled", async () => {
+      await setupServer("test-product:groupa", ["default-group"]);
+
+      let result = registerFn(
+        { title: "Tool C", summary: "C", toolset: "groupa" },
+        vi.fn(),
+      );
+      expect(result).not.toBeNull();
+
+      result = registerFn(
+        { title: "Default Tool", summary: "Default", toolset: "default-group" },
+        vi.fn(),
+      );
+      expect(result).not.toBeNull();
+
+      expect(registerToolSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not register default tools of client if no other toolsets are enabled", async () => {
+      await setupServer("another-test-product:groupb", ["default-group"]);
+
+      const result = registerFn(
+        { title: "Default Tool", summary: "Default", toolset: "default-group" },
+        vi.fn(),
+      );
+      expect(result).toBeNull();
+
+      expect(registerToolSpy).not.toHaveBeenCalled();
     });
 
     it("should support multiple toolsets in MCP_TOOLSETS", async () => {
-      process.env.MCP_TOOLSETS = "test-product:groupa, test-product:groupb";
-      await setupServer();
+      await setupServer("test-product:groupa,test-product:groupb");
 
       const resultA = registerFn(
         { title: "Tool A", summary: "A", toolset: "groupA" },
@@ -748,8 +798,7 @@ describe("SmartBearMcpServer", () => {
     });
 
     it("should match toolsets case-insensitively", async () => {
-      process.env.MCP_TOOLSETS = "Test-Product:GroupA";
-      await setupServer();
+      await setupServer("Test-Product:GroupA");
 
       const result = registerFn(
         { title: "Tool A", summary: "A", toolset: "groupa" },
@@ -784,3 +833,5 @@ describe("SmartBearMcpServer", () => {
     });
   });
 });
+
+// cspell:ignore groupa groupb

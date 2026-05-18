@@ -13,6 +13,7 @@ import { toolInputParameters } from "../../input-schemas";
 export class GetCurrentProject extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Current Project",
+    toolset: "Projects",
     summary:
       "Retrieve the 'current' project on which tools should operate by default. This allows BugSnag tools to be called with no projectId parameter.",
     purpose:
