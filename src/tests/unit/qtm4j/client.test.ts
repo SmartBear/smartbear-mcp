@@ -10,13 +10,13 @@ import { getRequestHeader } from "../../../common/request-context";
 
 describe("Qtm4jClient", () => {
   beforeEach(() => {
-    vi.mocked(getRequestHeader).mockReturnValue(null);
+    vi.mocked(getRequestHeader).mockReturnValue(undefined);
   });
 
   it("should set name and prefix", () => {
     const client = new Qtm4jClient();
     expect(client.name).toBe("QTM4J");
-    expect(client.toolPrefix).toBe("qtm4j");
+    expect(client.capabilityPrefix).toBe("qtm4j");
     expect(client.configPrefix).toBe("Qtm4j");
   });
 
