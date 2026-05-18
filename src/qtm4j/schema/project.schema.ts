@@ -15,10 +15,15 @@ export const ProjectSchema = zod
       .boolean()
       .optional()
       .describe("Whether project is marked as favorite"),
-    avatarUrl: zod.string().optional().describe("Project avatar URL"),
+    avatarUrl: zod
+      .string()
+      .optional()
+      .nullable()
+      .describe("Project avatar URL"),
     projectTypeKey: zod
       .string()
       .optional()
+      .nullable()
       .describe("Project type key (e.g., 'software')"),
     qmetryEnabled: zod
       .boolean()
