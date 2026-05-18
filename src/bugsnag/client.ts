@@ -107,7 +107,7 @@ export class BugsnagClient implements Client {
   }
 
   name = "BugSnag";
-  toolPrefix = "bugsnag";
+  capabilityPrefix = "bugsnag";
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
 
@@ -457,16 +457,23 @@ export class BugsnagClient implements Client {
     }
   }
 
-  registerResources(register: RegisterResourceFunction): void {
-    register("event", "{id}", async (uri, variables, _extra) => {
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text: JSON.stringify(await this.getEvent(variables.id as string)),
-          },
-        ],
-      };
-    });
+  async registerResources(register: RegisterResourceFunction): Promise<void> {
+    register(
+      {
+        title: "Event",
+        path: "{id}",
+        description: "Retrieve a specific event by its ID.",
+      },
+      async (uri, variables, _extra) => {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text: JSON.stringify(await this.getEvent(variables.id as string)),
+            },
+          ],
+        };
+      },
+    );
   }
 }

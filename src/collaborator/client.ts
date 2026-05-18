@@ -21,7 +21,7 @@ const ConfigurationSchema = z.object({
 
 export class CollaboratorClient implements Client {
   name = "Collaborator";
-  toolPrefix = "collaborator";
+  capabilityPrefix = "collaborator";
   configPrefix = "Collaborator";
   config = ConfigurationSchema;
 

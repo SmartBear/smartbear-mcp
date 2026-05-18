@@ -28,7 +28,8 @@ if (!fs.existsSync(COVERAGE_SUMMARY_PATH)) {
 }
 const coverage = JSON.parse(fs.readFileSync(COVERAGE_SUMMARY_PATH, "utf8"));
 const pct = coverage.total.lines.pct;
-const color = pct >= 80 ? "brightgreen" : pct >= 60 ? "yellow" : "red";
+const LINES_THRESHOLD = 75; // Match vitest.config.ts thresholds.lines
+const color = pct >= LINES_THRESHOLD ? "brightgreen" : pct >= 60 ? "yellow" : "red";
 const badge = {
   schemaVersion: 1,
   label: "coverage",

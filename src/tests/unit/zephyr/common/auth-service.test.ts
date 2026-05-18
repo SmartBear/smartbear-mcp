@@ -5,7 +5,8 @@ import { AuthService } from "../../../../zephyr/common/auth-service";
 describe("AuthService", () => {
   it("should trim and store the bearer token", () => {
     const service = new AuthService("  token  ");
-    expect(service.bearerToken).toBe("token");
+    // biome-ignore lint/complexity/useLiteralKeys: Access for test purposes
+    expect(service["bearerToken"]).toBe("token");
   });
 
   it("should return correct auth headers", () => {

@@ -109,7 +109,7 @@ describe("GetEnvironments", () => {
       .getApiClient()
       .get.mockResolvedValueOnce(responseFromSpecificProjectMock);
     const args = { projectKey: "PROJ", startAt: 0, maxResults: 10 };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
       args,
@@ -122,7 +122,7 @@ describe("GetEnvironments", () => {
       .getApiClient()
       .get.mockResolvedValueOnce(responseFromAllProjectsMock);
     const args = { startAt: 0, maxResults: 10 };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
       args,
@@ -135,7 +135,7 @@ describe("GetEnvironments", () => {
       .getApiClient()
       .get.mockResolvedValueOnce(responseFromSpecificProjectMock);
     const args = { projectKey: "PROJ", maxResults: 10 };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
       { ...args, startAt: 0 },
@@ -149,7 +149,7 @@ describe("GetEnvironments", () => {
       .get.mockResolvedValueOnce(responseFromSpecificProjectMock);
     const result = await instance.handle(
       { projectKey: "PROJ", startAt: 0 },
-      {},
+      {} as any,
     );
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/environments",
@@ -164,14 +164,14 @@ describe("GetEnvironments", () => {
 
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ maxResults: 1 }, {})).rejects.toThrow(
+    await expect(instance.handle({ maxResults: 1 }, {} as any)).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ maxResults: 1 }, {});
+    const result = await instance.handle({ maxResults: 1 }, {} as any);
     expect(result.structuredContent).toBeUndefined();
   });
 });

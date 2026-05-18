@@ -59,7 +59,7 @@ describe("GetTestExecutionSteps", () => {
       testExecutionIdOrKey: "SA-E1",
     };
 
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/SA-E1/teststeps",
@@ -89,7 +89,10 @@ describe("GetTestExecutionSteps", () => {
 
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
-    const result = await instance.handle({ testExecutionIdOrKey: "SA-E1" }, {});
+    const result = await instance.handle(
+      { testExecutionIdOrKey: "SA-E1" },
+      {} as any,
+    );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/SA-E1/teststeps",
@@ -124,7 +127,10 @@ describe("GetTestExecutionSteps", () => {
 
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
 
-    const result = await instance.handle({ testExecutionIdOrKey: "SA-E1" }, {});
+    const result = await instance.handle(
+      { testExecutionIdOrKey: "SA-E1" },
+      {} as any,
+    );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/SA-E1/teststeps",
@@ -165,7 +171,7 @@ describe("GetTestExecutionSteps", () => {
         startAt: 0,
         testDataRowNumber: 3,
       },
-      {},
+      {} as any,
     );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -205,7 +211,7 @@ describe("GetTestExecutionSteps", () => {
         testExecutionIdOrKey: "12345",
         maxResults: 1,
       },
-      {},
+      {} as any,
     );
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -223,7 +229,10 @@ describe("GetTestExecutionSteps", () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
 
     await expect(
-      instance.handle({ testExecutionIdOrKey: "SA-E1", maxResults: 1 }, {}),
+      instance.handle(
+        { testExecutionIdOrKey: "SA-E1", maxResults: 1 },
+        {} as any,
+      ),
     ).rejects.toThrow("API error");
   });
 
@@ -232,7 +241,7 @@ describe("GetTestExecutionSteps", () => {
 
     const result = await instance.handle(
       { testExecutionIdOrKey: "SA-E1", maxResults: 1 },
-      {},
+      {} as any,
     );
 
     expect(result.structuredContent).toBeUndefined();

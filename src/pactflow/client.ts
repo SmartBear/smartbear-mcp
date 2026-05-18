@@ -75,7 +75,7 @@ const ConfigurationSchema = z.object({
 // Tool definitions for PactFlow AI API client
 export class PactflowClient implements Client {
   name = "Contract Testing";
-  toolPrefix = "contract-testing";
+  capabilityPrefix = "contract-testing";
   configPrefix = "Pact-Broker";
   config = ConfigurationSchema;
 
@@ -242,11 +242,18 @@ export class PactflowClient implements Client {
    *   entitlements, and user entitlements.
    * @throws Error if the request fails or returns a non-OK response.
    */
-  async checkAIEntitlements(): Promise<Entitlement> {
-    return await this.fetchJson<Entitlement>(`${this.aiBaseUrl}/entitlement`, {
-      method: "GET",
-      errorContext: "PactFlow AI Entitlements Request",
-    });
+  async checkAIEntitlements(): Promise<Entitlement | null> {
+    if (this.aiBaseUrl) {
+      return await this.fetchJson<Entitlement>(
+        `${this.aiBaseUrl}/entitlement`,
+        {
+          method: "GET",
+          errorContext: "PactFlow AI Entitlements Request",
+        },
+      );
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -2359,7 +2366,7 @@ export class PactflowClient implements Client {
     let disablePactflowAItools = false;
     try {
       const entitlement = await this.checkAIEntitlements();
-      if (!entitlement.aiEnabled) {
+      if (entitlement && !entitlement.aiEnabled) {
         disablePactflowAItools = true;
       }
     } catch (error) {
@@ -2382,8 +2389,8 @@ export class PactflowClient implements Client {
         continue;
       }
 
-      const { handler, clients: _, formatResponse, ...toolparams } = tool;
-      register(toolparams, async (args, _extra) => {
+      const { handler, clients: _, formatResponse, ...toolParams } = tool;
+      register(toolParams, async (args, _extra) => {
         const handler_fn = (this as any)[handler];
         if (typeof handler_fn !== "function") {
           throw new Error(`Handler '${handler}' not found on PactClient`);
@@ -2414,9 +2421,16 @@ export class PactflowClient implements Client {
    *
    * @param register - The function used to register prompts.
    */
-  registerPrompts(register: RegisterPromptFunction): void {
-    PROMPTS.forEach((prompt) => {
-      register(prompt.name, prompt.params, prompt.callback);
-    });
+  async registerPrompts(register: RegisterPromptFunction): Promise<void> {
+    for (const prompt of PROMPTS) {
+      register(
+        {
+          title: prompt.title,
+          description: prompt.description,
+          argsSchema: prompt.argsSchema,
+        },
+        prompt.callback,
+      );
+    }
   }
 }
