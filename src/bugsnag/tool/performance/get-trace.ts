@@ -23,7 +23,7 @@ const inputSchema = z.object({
 export class GetTrace extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Trace",
-    toolset: "performance",
+    toolset: "Performance",
     summary: "Get all spans within a specific trace",
     purpose: "View the complete trace of operations for a request/transaction",
     useCases: [

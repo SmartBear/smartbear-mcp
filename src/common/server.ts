@@ -308,6 +308,7 @@ export class SmartBearMcpServer extends McpServer {
   private getDescription(params: ToolParams): string {
     const {
       summary,
+      toolset,
       useCases,
       examples,
       inputSchema,
@@ -316,6 +317,10 @@ export class SmartBearMcpServer extends McpServer {
     } = params;
 
     let description = summary;
+
+    if (toolset) {
+      description += `\n\n**Toolset:** ${toolset}`;
+    }
 
     if (inputSchema && inputSchema instanceof ZodObject) {
       let parameters = Object.keys(inputSchema.shape)

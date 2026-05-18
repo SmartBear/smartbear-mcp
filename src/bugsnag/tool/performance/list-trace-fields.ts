@@ -14,7 +14,7 @@ const inputSchema = z.object({
 export class ListTraceFields extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Trace Fields",
-    toolset: "performance",
+    toolset: "Performance",
     summary: "Get available trace fields/attributes for filtering",
     purpose: "Discover what custom attributes are available for filtering",
     useCases: [
