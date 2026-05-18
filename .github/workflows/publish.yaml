@@ -32,9 +32,8 @@ on:
         required: false
         type: boolean
         default: true
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   # Build platform-specific images on native runners
@@ -220,7 +219,7 @@ jobs:
       - name: Resolve release tag
         id: get_tag
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
+          if [[ "${{ github.event_name }}" == "release" ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
           else
             TAG="${{ inputs.tag }}"
