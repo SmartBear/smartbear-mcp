@@ -57,7 +57,7 @@ const ConfigurationSchema = z.object({
  */
 export class Qtm4jClient implements Client {
   name = CLIENT_CONFIG.NAME;
-  toolPrefix = CLIENT_CONFIG.TOOL_PREFIX;
+  capabilityPrefix = CLIENT_CONFIG.TOOL_PREFIX;
   configPrefix = CLIENT_CONFIG.CONFIG_PREFIX;
   config = ConfigurationSchema;
 

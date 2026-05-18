@@ -8,7 +8,7 @@ The SmartBear MCP Server is a secure bridge between SmartBear platform data and 
 Bring SmartBear context into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients:
 
 - **API design & governance** — Swagger definitions, style rules, portal docs
-- **Testing** — Reflect runs, QMetry and Zephyr test outcomes
+- **Testing** — Reflect runs, QMetry, QTM4J and Zephyr test outcomes
 - **Contract testing** — PactFlow interactions and verification results
 - **Error & performance monitoring** — BugSnag error reports and diagnostics
 - **Code review** — Collaborator review context
@@ -28,13 +28,13 @@ Key benefits of MCP include:
 
 The MCP Server is available in two deployment modes. Pick the one that fits your workflow — see [Getting Started](/smartbear-mcp/docs/getting-started) for a full comparison.
 
-| | [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) | [Local MCP Server](/smartbear-mcp/docs/local-server) |
-|---|---|---|
-| **Products** | Swagger, BugSnag, Zephyr | All products (incl. Reflect, QMetry, PactFlow, Collaborator) |
-| **Setup** | None — add a URL to your MCP client | Install via npm (Node.js 20+) |
-| **Authentication** | OAuth browser flow | API tokens via environment variables |
-| **Configuration** | Headers and query string | Environment variables |
-| **Best for** | Quick setup for a single product | Multi-product workflows |
+| | [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) | [Local MCP Server](/smartbear-mcp/docs/local-server)                |
+|---|---|---------------------------------------------------------------------|
+| **Products** | Swagger, BugSnag, Zephyr | All products (incl. Reflect, QMetry, QTM4J, PactFlow, Collaborator) |
+| **Setup** | None — add a URL to your MCP client | Install via npm (Node.js 20+)                                       |
+| **Authentication** | OAuth browser flow | API tokens via environment variables                                |
+| **Configuration** | Headers and query string | Environment variables                                               |
+| **Best for** | Quick setup for a single product | Multi-product workflows                                             |
 
 ## Example: debugging with BugSnag and Copilot
 
