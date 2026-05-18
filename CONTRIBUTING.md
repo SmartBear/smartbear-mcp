@@ -160,8 +160,9 @@ Please follow these steps to create a new release:
     - Get approval and merge the PR into `main`
 
 2. **Release**
-    - Create and push a tag for the new release (e.g., `git tag v1.2.3` and `git push origin v1.2.3`)
-    - This will trigger the publish workflow, which will publish the new version to external sites (e.g. npm) and create the GitHub release
+    - Create a new release on GitHub (or push a new tag) with the version, including the `v` prefix (e.g. `v1.2.3`)
+      - This will trigger the publish workflow, which will publish the new version to external sites (e.g. npm) and update the GitHub release with the changelog details and artifacts
+    - Await/request approval of the publish workflow
 
 3. **Post-Release**
     - Check the publish action to make sure all deployments succeeded
