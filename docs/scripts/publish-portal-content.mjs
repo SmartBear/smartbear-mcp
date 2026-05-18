@@ -246,11 +246,19 @@ async function uploadBrandingImage(portalId, productDir, imagePath) {
   const filename = basename(imagePath);
   info(`Uploading branding image "${filename}"...`);
 
-  const existing = await getBrandingAttachments(portalId);
-  const already = existing.find((a) => a.name === filename);
-  if (already) {
-    info(`Branding image already uploaded: ${already.id}`);
-    return already.id;
+  // Deduplication check — may fail if the API key lacks list permission; in
+  // that case fall through and attempt the upload anyway.
+  try {
+    const existing = await getBrandingAttachments(portalId);
+    const already = existing.find((a) => a.name === filename);
+    if (already) {
+      info(`Branding image already uploaded: ${already.id}`);
+      return already.id;
+    }
+  } catch (err) {
+    debug(
+      `Cannot list branding attachments (${err.message}) — attempting upload anyway`,
+    );
   }
 
   const fullPath = join(productDir, imagePath);
@@ -259,14 +267,19 @@ async function uploadBrandingImage(portalId, productDir, imagePath) {
     return null;
   }
 
-  const buffer = await readFile(fullPath);
-  const data = await portalFetch(
-    "POST",
-    portalUrlQ(`/attachments/branding/${portalId}`, { name: filename }),
-    { binary: buffer, contentType: mimeForFile(filename) },
-  );
-  info(`Uploaded branding image: ${data?.id}`);
-  return data?.id ?? null;
+  try {
+    const buffer = await readFile(fullPath);
+    const data = await portalFetch(
+      "POST",
+      portalUrlQ(`/attachments/branding/${portalId}`, { name: filename }),
+      { binary: buffer, contentType: mimeForFile(filename) },
+    );
+    info(`Uploaded branding image: ${data?.id}`);
+    return data?.id ?? null;
+  } catch (err) {
+    warn(`Branding image upload failed for "${filename}": ${err.message}`);
+    return null;
+  }
 }
 
 async function loadDocImages(productId, productDir) {
