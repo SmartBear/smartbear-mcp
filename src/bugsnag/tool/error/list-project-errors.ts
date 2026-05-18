@@ -23,7 +23,7 @@ const inputSchema = z.object({
 export class ListProjectErrors extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Project Errors",
-    toolset: "errors",
+    toolset: "Errors",
     summary:
       "List and search errors in a project using customizable filters and pagination",
     purpose:
