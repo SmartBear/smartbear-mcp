@@ -32,7 +32,7 @@ describe("ConnectToSession", () => {
       isSessionConnected: vi.fn().mockReturnValue(false),
       getSessionState: vi.fn().mockReturnValue(undefined),
       getWebSocketManager: vi.fn().mockReturnValue(undefined),
-      getApiToken: vi.fn().mockReturnValue("test-api-key"),
+      getAuthHeader: vi.fn().mockReturnValue({ "X-API-KEY": "test-api-key" }),
       registerConnection: vi.fn(),
     };
 
@@ -43,16 +43,13 @@ describe("ConnectToSession", () => {
     expect(instance.specification.title).toBe("Connect To Session");
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
-    expect(instance.specification.parameters?.[0].required).toBe(true);
   });
 
   it("should return cached connection if already connected", async () => {
     mockClient.isSessionConnected.mockReturnValue(true);
     mockClient.getSessionState.mockReturnValue({ platform: "web" });
 
-    const result = await instance.handle({ sessionId: "sess-1" }, {});
+    const result = await instance.handle({ sessionId: "sess-1" }, {} as any);
     expect(result.content[0].type).toBe("text");
     const parsed = JSON.parse((result.content[0] as any).text);
     expect(parsed.success).toBe(true);
@@ -67,7 +64,7 @@ describe("ConnectToSession", () => {
       platform: "native-mobile",
     });
 
-    const result = await instance.handle({ sessionId: "sess-new" }, {});
+    const result = await instance.handle({ sessionId: "sess-new" }, {} as any);
 
     expect(mockWsManager.connect).toHaveBeenCalled();
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
@@ -89,7 +86,7 @@ describe("ConnectToSession", () => {
   });
 
   it("should throw ToolError if sessionId is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow(
+    await expect(instance.handle({}, {} as any)).rejects.toThrow(
       "sessionId argument is required",
     );
   });
@@ -97,7 +94,7 @@ describe("ConnectToSession", () => {
   it("should throw ToolError if connect fails", async () => {
     mockWsManager.connect.mockRejectedValue(new Error("connection refused"));
     await expect(
-      instance.handle({ sessionId: "sess-fail" }, {}),
+      instance.handle({ sessionId: "sess-fail" }, {} as any),
     ).rejects.toThrow("Failed to connect to session");
   });
 });

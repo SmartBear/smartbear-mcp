@@ -1,5 +1,7 @@
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import type { ZodRawShape } from "zod";
 import { CollaboratorClient } from "../../../collaborator/client";
 
 const fetchMock = createFetchMock(vi);
@@ -48,7 +50,7 @@ describe("CollaboratorClient", () => {
 
     it("has correct client properties", () => {
       expect(client.name).toBe("Collaborator");
-      expect(client.toolPrefix).toBe("collaborator");
+      expect(client.capabilityPrefix).toBe("collaborator");
       expect(client.configPrefix).toBe("Collaborator");
     });
   });
@@ -313,12 +315,13 @@ describe("CollaboratorClient", () => {
   });
 
   describe("tool handler direct invocation", () => {
-    let handlers: Record<string, (args: any, extra: any) => Promise<any>> = {};
+    let handlers: Record<string, ToolCallback<ZodRawShape>> = {};
     const mockGetInput = vi.fn();
     beforeEach(() => {
       handlers = {};
       client.registerTools((def, fn) => {
         handlers[def.title] = fn;
+        return {} as any;
       }, mockGetInput);
     });
 
@@ -335,18 +338,18 @@ describe("CollaboratorClient", () => {
       const fakeResult = [{ reviewId: "42", status: "closed" }];
       vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult);
       const handler = handlers["Get Collaborator Reviews"];
-      const result = await handler(args, {});
-      expect(result.content[0].text).toContain("42");
-      expect(result.content[0].text).toContain("closed");
+      const result = await handler(args, {} as any);
+      expect((result.content[0] as any).text).toContain("42");
+      expect((result.content[0] as any).text).toContain("closed");
     });
 
     it("getReviews handler handles missing args", async () => {
       const fakeResult = [{ reviewId: "43", status: "open" }];
       vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult);
       const handler = handlers["Get Collaborator Reviews"];
-      const result = await handler({}, {});
-      expect(result.content[0].text).toContain("43");
-      expect(result.content[0].text).toContain("open");
+      const result = await handler({}, {} as any);
+      expect((result.content[0] as any).text).toContain("43");
+      expect((result.content[0] as any).text).toContain("open");
     });
 
     it("updateWebhook handler processes id as string", async () => {
@@ -354,9 +357,9 @@ describe("CollaboratorClient", () => {
       vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult);
       const handler =
         handlers["Update Collaborator Remote System Configuration Webhook"];
-      const result = await handler({ id: "99" }, {});
-      expect(result.content[0].text).toContain("99");
-      expect(result.content[0].text).toContain("updated");
+      const result = await handler({ id: "99" }, {} as any);
+      expect((result.content[0] as any).text).toContain("99");
+      expect((result.content[0] as any).text).toContain("updated");
     });
 
     it("testConnection handler processes id as number", async () => {
@@ -364,15 +367,15 @@ describe("CollaboratorClient", () => {
       vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult);
       const handler =
         handlers["Test Collaborator Remote System Configuration Connection"];
-      const result = await handler({ id: 100 }, {});
-      expect(result.content[0].text).toContain("100");
-      expect(result.content[0].text).toContain("ok");
+      const result = await handler({ id: 100 }, {} as any);
+      expect((result.content[0] as any).text).toContain("100");
+      expect((result.content[0] as any).text).toContain("ok");
     });
 
     it("getReviews handler propagates errors", async () => {
       vi.spyOn(client, "call").mockRejectedValueOnce(new Error("fail"));
       const handler = handlers["Get Collaborator Reviews"];
-      await expect(handler({}, {})).rejects.toThrow("fail");
+      await expect(handler({}, {} as any)).rejects.toThrow("fail");
     });
 
     it("createIntegration handler processes all arguments", async () => {
@@ -386,9 +389,9 @@ describe("CollaboratorClient", () => {
         config: "{}",
         reviewTemplateId: "template1",
       };
-      const result = await handler(args, {});
-      expect(result.content[0].text).toContain("101");
-      expect(result.content[0].text).toContain("created");
+      const result = await handler(args, {} as any);
+      expect((result.content[0] as any).text).toContain("101");
+      expect((result.content[0] as any).text).toContain("created");
     });
 
     it("editIntegration handler processes all optional arguments", async () => {
@@ -401,9 +404,9 @@ describe("CollaboratorClient", () => {
         config: "{}",
         reviewTemplateId: "template2",
       };
-      const result = await handler(args, {});
-      expect(result.content[0].text).toContain("102");
-      expect(result.content[0].text).toContain("edited");
+      const result = await handler(args, {} as any);
+      expect((result.content[0] as any).text).toContain("102");
+      expect((result.content[0] as any).text).toContain("edited");
     });
 
     it("deleteIntegration handler processes id as string", async () => {
@@ -411,9 +414,9 @@ describe("CollaboratorClient", () => {
       vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult);
       const handler =
         handlers["Delete Collaborator Remote System Configuration"];
-      const result = await handler({ id: "103" }, {});
-      expect(result.content[0].text).toContain("103");
-      expect(result.content[0].text).toContain("deleted");
+      const result = await handler({ id: "103" }, {} as any);
+      expect((result.content[0] as any).text).toContain("103");
+      expect((result.content[0] as any).text).toContain("deleted");
     });
 
     it("rejectReview handler processes all arguments", async () => {
@@ -421,15 +424,17 @@ describe("CollaboratorClient", () => {
       vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult);
       const handler = handlers["Reject Collaborator Review"];
       const args = { reviewId: "104", reason: "Not needed" };
-      const result = await handler(args, {});
-      expect(result.content[0].text).toContain("104");
-      expect(result.content[0].text).toContain("rejected");
+      const result = await handler(args, {} as any);
+      expect((result.content[0] as any).text).toContain("104");
+      expect((result.content[0] as any).text).toContain("rejected");
     });
 
     it("editIntegration handler propagates errors", async () => {
       vi.spyOn(client, "call").mockRejectedValueOnce(new Error("fail-edit"));
       const handler = handlers["Edit Collaborator Remote System Configuration"];
-      await expect(handler({ id: "bad" }, {})).rejects.toThrow("fail-edit");
+      await expect(handler({ id: "bad" }, {} as any)).rejects.toThrow(
+        "fail-edit",
+      );
     });
 
     it("createIntegration handler propagates errors", async () => {
@@ -437,7 +442,7 @@ describe("CollaboratorClient", () => {
       const handler =
         handlers["Create Collaborator Remote System Configuration"];
       await expect(
-        handler({ token: "GITHUB", title: "Test", config: "{}" }, {}),
+        handler({ token: "GITHUB", title: "Test", config: "{}" }, {} as any),
       ).rejects.toThrow("fail-create");
     });
 
@@ -445,7 +450,9 @@ describe("CollaboratorClient", () => {
       vi.spyOn(client, "call").mockRejectedValueOnce(new Error("fail-delete"));
       const handler =
         handlers["Delete Collaborator Remote System Configuration"];
-      await expect(handler({ id: "bad" }, {})).rejects.toThrow("fail-delete");
+      await expect(handler({ id: "bad" }, {} as any)).rejects.toThrow(
+        "fail-delete",
+      );
     });
   });
 });

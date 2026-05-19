@@ -14,26 +14,14 @@ export class AddPromptStep extends Tool<ReflectClient> {
       "Add a natural language prompt step to an active Reflect recording session",
     readOnly: false,
     idempotent: false,
-    parameters: [
-      {
-        name: "sessionId",
-        type: z.string(),
-        description: "The ID of the Reflect recording session",
-        required: true,
-      },
-      {
-        name: "prompt",
-        type: z.string(),
-        description:
-          "The natural language prompt describing the test step. The prompt " +
-          "should describe a single action, assertion, or query. The prompt can only contain literal " +
-          "text; it cannot contain template variables, secrets, or other dynamic syntax. If we are in a " +
-          'Web recording, the prompt can perform browser navigation (e.g. "Click on the back button", ' +
-          '"Navigate to https://www.example.com") and use the tab and enter keys to navigate (e.g. ' +
-          '"Press the tab key", "Press the enter key").',
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      sessionId: z.string().describe("The ID of the Reflect recording session"),
+      prompt: z
+        .string()
+        .describe(
+          "The natural language prompt describing the test step. The prompt should describe a single action, assertion, or query. The prompt can only contain literal text; it cannot contain template variables, secrets, or other dynamic syntax. If we are in a Web recording, the prompt can perform browser navigation (e.g. 'Click on the back button', 'Navigate to https://www.example.com') and use the tab and enter keys to navigate (e.g. 'Press the tab key', 'Press the enter key').",
+        ),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

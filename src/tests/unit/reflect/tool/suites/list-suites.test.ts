@@ -32,13 +32,12 @@ describe("ListSuites", () => {
     expect(instance.specification.summary).toBe(
       "Retrieve a list of all reflect suites available",
     );
-    expect(instance.specification.parameters).toHaveLength(0);
   });
 
   it("should call suites API and return results", async () => {
     fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
 
-    const result = await instance.handle({}, {});
+    const result = await instance.handle({}, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/suites",
@@ -54,7 +53,7 @@ describe("ListSuites", () => {
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
-    await expect(instance.handle({}, {})).rejects.toThrow(
+    await expect(instance.handle({}, {} as any)).rejects.toThrow(
       "Failed to list suites",
     );
   });

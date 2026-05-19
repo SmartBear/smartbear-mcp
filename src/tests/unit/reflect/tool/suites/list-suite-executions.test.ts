@@ -29,15 +29,12 @@ describe("ListSuiteExecutions", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("List Suite Executions");
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("suiteId");
-    expect(instance.specification.parameters?.[0].required).toBe(true);
   });
 
   it("should call suite executions API and return results", async () => {
     fetchMock.mockResponseOnce(JSON.stringify(executionsMock));
 
-    const result = await instance.handle({ suiteId: "suite-1" }, {});
+    const result = await instance.handle({ suiteId: "suite-1" }, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/suites/suite-1/executions",
@@ -52,15 +49,15 @@ describe("ListSuiteExecutions", () => {
   });
 
   it("should throw ToolError if suiteId is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow(
+    await expect(instance.handle({}, {} as any)).rejects.toThrow(
       "suiteId argument is required",
     );
   });
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Not Found", { status: 404 });
-    await expect(instance.handle({ suiteId: "suite-1" }, {})).rejects.toThrow(
-      "Failed to list suite executions",
-    );
+    await expect(
+      instance.handle({ suiteId: "suite-1" }, {} as any),
+    ).rejects.toThrow("Failed to list suite executions");
   });
 });

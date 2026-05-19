@@ -98,7 +98,7 @@ describe("GetTestExecutions", () => {
       startAtId: 0,
       onlyLastExecutions: false,
     };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/nextgen",
       args,
@@ -116,7 +116,7 @@ describe("GetTestExecutions", () => {
       values: [],
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
-    const result = await instance.handle({}, {});
+    const result = await instance.handle({}, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/nextgen",
       {
@@ -131,14 +131,14 @@ describe("GetTestExecutions", () => {
 
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ limit: 1 }, {})).rejects.toThrow(
+    await expect(instance.handle({ limit: 1 }, {} as any)).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ limit: 1 }, {});
+    const result = await instance.handle({ limit: 1 }, {} as any);
     expect(result.structuredContent).toBeUndefined();
   });
 });

@@ -121,7 +121,7 @@ describe("SetProjectContext", () => {
         projectKey: "SCRUM",
         projectName: "Scrum Project",
       });
-      expect(result.structuredContent.projectKey).toBe("SCRUM");
+      expect(result.structuredContent?.projectKey).toBe("SCRUM");
     });
 
     it("should clear previous project cache when switching projects", async () => {

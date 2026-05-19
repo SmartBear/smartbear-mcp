@@ -27,15 +27,12 @@ describe("AddPromptStep", () => {
     expect(instance.specification.title).toBe("Add Prompt Step");
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
-    expect(instance.specification.parameters).toHaveLength(2);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
-    expect(instance.specification.parameters?.[1].name).toBe("prompt");
   });
 
   it("should send add-prompt-step message and return success", async () => {
     const result = await instance.handle(
       { sessionId: "sess-1", prompt: "Click the login button" },
-      {},
+      {} as any,
     );
 
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
@@ -55,19 +52,22 @@ describe("AddPromptStep", () => {
       throw new Error("not connected");
     });
     await expect(
-      instance.handle({ sessionId: "sess-1", prompt: "do something" }, {}),
+      instance.handle(
+        { sessionId: "sess-1", prompt: "do something" },
+        {} as any,
+      ),
     ).rejects.toThrow("not connected");
   });
 
   it("should throw ToolError if sessionId is missing", async () => {
     await expect(
-      instance.handle({ prompt: "do something" }, {}),
+      instance.handle({ prompt: "do something" }, {} as any),
     ).rejects.toThrow("sessionId argument is required");
   });
 
   it("should throw ToolError if prompt is missing", async () => {
-    await expect(instance.handle({ sessionId: "sess-1" }, {})).rejects.toThrow(
-      "prompt argument is required",
-    );
+    await expect(
+      instance.handle({ sessionId: "sess-1" }, {} as any),
+    ).rejects.toThrow("prompt argument is required");
   });
 });

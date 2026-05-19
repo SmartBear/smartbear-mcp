@@ -10,14 +10,11 @@ export class GetTestStatus extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Get Test Status",
     summary: "Get the status of a reflect test execution",
-    parameters: [
-      {
-        name: "executionId",
-        type: z.string(),
-        description: "ID of the reflect test execution to get status for",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      executionId: z
+        .string()
+        .describe("ID of the reflect test execution to get status for"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
