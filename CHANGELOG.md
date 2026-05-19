@@ -12,12 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Common] Split health/readiness probes: `GET /health` is now liveness-only and always returns 200 when the process is responsive; `GET /ready` is the readiness probe and returns 503 during drain so load balancers stop routing new sessions to draining pods. Both probes set `Cache-Control: no-store`. [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
 - [Common] Add product prefix to registered resources and prompts [#458](https://github.com/SmartBear/smartbear-mcp/pull/458)
 - [QTM4J] Add QTM4J (QMetry Test Management for Jira) capabilities to MCP [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
-- [QTM4J] Added a tool `get-projects` for listing QTM4J projects with optional filtering and pagination [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
-- [QTM4J] Added a tool `set-project-context` for setting the active project for the session [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
-- [QTM4J] Added a tool `create-test-case` for creating a Test Case [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
-- [QTM4J] Added a tool `search-test-cases` for filtering and searching Test Cases with sorting and pagination [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
-- [QTM4J] Added a tool `get-test-steps` for retrieving Test Steps for a given Test Case [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
-- [QTM4J] Added a tool `update-test-case` for updating an existing Test Case [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
 
 ### Fixed
 
