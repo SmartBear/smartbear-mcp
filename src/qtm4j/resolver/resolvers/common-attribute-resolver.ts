@@ -1,3 +1,4 @@
+import type { CacheService } from "../../../common/cache";
 import { ENDPOINTS } from "../../config/constants";
 import {
   type FieldValues,
@@ -13,12 +14,13 @@ export class CommonAttributeResolver extends Resolver {
     ResolverKeys.CommonAttribute,
   );
 
-  readonly cache = new Cache();
+  readonly cache: Cache;
   private readonly apiClient: ApiClient;
 
-  constructor(apiClient: ApiClient) {
+  constructor(apiClient: ApiClient, cacheService: CacheService) {
     super();
     this.apiClient = apiClient;
+    this.cache = new Cache(cacheService);
   }
 
   // Priority and status are always single values — no array handling needed.

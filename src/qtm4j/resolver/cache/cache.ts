@@ -1,30 +1,59 @@
+import type { CacheService } from "../../../common/cache";
 import type { FieldValues } from "../../config/field-resolution.types";
 
 /** In-memory cache for field metadata, keyed by projectKey → fieldKey → name→ID map. */
 export class Cache {
-  private readonly store = new Map<string, Map<string, FieldValues>>();
+  private readonly trackedKeys = new Map<string, Set<string>>();
+  private readonly cacheService: CacheService;
+
+  constructor(cacheService: CacheService) {
+    this.cacheService = cacheService;
+  }
+
+  private compositeKey(projectKey: string, fieldKey: string): string {
+    return `qtm4j:${projectKey}:${fieldKey}`;
+  }
 
   get(projectKey: string, fieldKey: string): FieldValues | undefined {
-    return this.store.get(projectKey)?.get(fieldKey);
+    return this.cacheService.get<FieldValues>(
+      this.compositeKey(projectKey, fieldKey),
+    );
   }
 
   set(projectKey: string, fieldKey: string, values: FieldValues): void {
-    if (!this.store.has(projectKey)) {
-      this.store.set(projectKey, new Map());
+    const key = this.compositeKey(projectKey, fieldKey);
+    const existing =
+      this.cacheService.get<FieldValues>(key) ?? ({} as FieldValues);
+    this.cacheService.set(key, { ...existing, ...values });
+    if (!this.trackedKeys.has(projectKey)) {
+      this.trackedKeys.set(projectKey, new Set());
     }
-    const existing = this.store.get(projectKey)?.get(fieldKey) ?? {};
-    this.store.get(projectKey)?.set(fieldKey, { ...existing, ...values });
+    this.trackedKeys.get(projectKey)!.add(key);
   }
 
   has(projectKey: string, fieldKey: string): boolean {
-    return this.store.get(projectKey)?.has(fieldKey) ?? false;
+    return (
+      this.cacheService.get(this.compositeKey(projectKey, fieldKey)) !==
+      undefined
+    );
   }
 
   clear(projectKey?: string): void {
     if (projectKey) {
-      this.store.delete(projectKey);
+      const keys = this.trackedKeys.get(projectKey);
+      if (keys) {
+        for (const key of keys) {
+          this.cacheService.del(key);
+        }
+        this.trackedKeys.delete(projectKey);
+      }
     } else {
-      this.store.clear();
+      for (const keys of this.trackedKeys.values()) {
+        for (const key of keys) {
+          this.cacheService.del(key);
+        }
+      }
+      this.trackedKeys.clear();
     }
   }
 
