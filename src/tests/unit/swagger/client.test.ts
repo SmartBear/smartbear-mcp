@@ -25,7 +25,7 @@ describe("SwaggerClient", () => {
     it("should initialize with correct parameters", () => {
       expect(client).toBeInstanceOf(SwaggerClient);
       expect(client.name).toBe("Swagger");
-      expect(client.toolPrefix).toBe("swagger");
+      expect(client.capabilityPrefix).toBe("swagger");
       expect(client.configPrefix).toBe("Swagger");
     });
 

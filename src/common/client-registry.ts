@@ -1,7 +1,7 @@
 import { type ZodType, ZodURL } from "zod";
 import type { SmartBearMcpServer } from "./server";
 import type { Client } from "./types";
-import { isOptionalType, unwrapZodType } from "./zod-utils";
+import { fullyUnwrapZodType, isOptionalType } from "./zod-utils";
 
 /**
  * Central registry for all MCP clients
@@ -52,7 +52,7 @@ class ClientRegistry {
    * @param value The actual config value to validate
    */
   private validateAllowedEndpoint(zodType: ZodType, value: string): void {
-    if (unwrapZodType(zodType) instanceof ZodURL) {
+    if (fullyUnwrapZodType(zodType) instanceof ZodURL) {
       const allowedEndpoints = process.env.MCP_ALLOWED_ENDPOINTS?.split(",");
       if (allowedEndpoints) {
         for (const endpoint of allowedEndpoints) {
@@ -110,6 +110,7 @@ class ClientRegistry {
   async configure(
     server: SmartBearMcpServer,
     getConfigValue: (client: Client, key: string) => string | null,
+    ignoreMissingRequiredConfigs = false,
   ): Promise<number> {
     let configuredCount = 0;
     entryLoop: for (const entry of this.getAll()) {
@@ -120,7 +121,10 @@ class ClientRegistry {
           // validate if a config option is an Allowed Endpoint URL
           this.validateAllowedEndpoint(entry.config.shape[configKey], value);
           config[configKey] = value;
-        } else if (!isOptionalType(entry.config.shape[configKey])) {
+        } else if (
+          !ignoreMissingRequiredConfigs &&
+          !isOptionalType(entry.config.shape[configKey])
+        ) {
           continue entryLoop; // Skip configuring this client - missing required config
         }
       }

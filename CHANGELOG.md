@@ -7,6 +7,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.20.0] - 2026-05-15
+
+### Added
+- [Common] Add graceful shutdown on SIGTERM/SIGINT in HTTP mode: drains active sessions (closes Streamable HTTP and SSE transports, runs per-client `cleanupSession` hooks including Reflect WebSocket teardown), with a configurable deadline via `MCP_SHUTDOWN_TIMEOUT_MS` (default 25s) [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
+- [Common] Split health/readiness probes: `GET /health` is now liveness-only and always returns 200 when the process is responsive; `GET /ready` is the readiness probe and returns 503 during drain so load balancers stop routing new sessions to draining pods. Both probes set `Cache-Control: no-store`. [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
+- [Common] Add product prefix to registered resources and prompts [#458](https://github.com/SmartBear/smartbear-mcp/pull/458)
+
+### Fixed
+
+- [Common] Streamable HTTP requests carrying an `MCP-Session-Id` the server doesn't recognize now return `404` (with a JSON-RPC error envelope, code `-32001`) instead of `400`. This aligns with the MCP Streamable HTTP spec's Session Management rules, which require a 404 for requests against a terminated session and oblige clients to respond by sending a fresh `InitializeRequest`. In multi-pod deployments this lets clients transparently re-initialize after a pod restart or routing reshuffle drops the in-memory session, instead of treating it as a permanent protocol error. [#449](https://github.com/SmartBear/smartbear-mcp/pull/449)
+- [Common] Configuration options can now be passed in via query string parameters for HTTP transport [#453](https://github.com/SmartBear/smartbear-mcp/pull/453)
+- [Swagger] Remove unused `role` parameter from the `create_portal_product` tool. [#469](https://github.com/SmartBear/smartbear-mcp/pull/469)
+- [Swagger] Portal API error responses now surface the human-readable reason instead of showing `HTTP 400:` with no message. The client reads the `application/problem+json` error body and extracts the `detail` field (RFC 7807); falls back to `message` if absent. [#468](https://github.com/SmartBear/smartbear-mcp/pull/468)
+- [Pactflow][Collaborator] Reduced tool names under the apparent 64 character limit for Claude connectors [#470](https://github.com/SmartBear/smartbear-mcp/pull/470)
+- [Pactflow] Fix bug that prevents MCP server from starting with no configuration (for tool exploration) [#445](https://github.com/SmartBear/smartbear-mcp/pull/445)
+
+## [0.19.2] - 2026-05-05
+
+- [Zephyr] fix Zephyr for Rovo Agent (avoid using nullish for update test case and update test cycle tools) [#442](https://github.com/SmartBear/smartbear-mcp/pull/442)
+
+## [0.19.1] - 2026-05-04
+
+### Added
+
+- [Zephyr] Update Zephyr schemas for Rovo [#439](https://github.com/SmartBear/smartbear-mcp/pull/439)
+
+## [0.19.0] - 2026-04-29
+
+### Added
+
+- [Reflect] Add jpeg format support for get-screenshot tool [#435](https://github.com/SmartBear/smartbear-mcp/pull/435)
+- [Swagger] Added optional `newVersion` parameter to the `standardize_api` tool to save the fixed API definition as a new version instead of overwriting the current one
+
+## [0.18.3] - 2026-04-16
+
+### Added
+
+- [Zephyr] Add zephyr custom base url for remote mcp config [#428](https://github.com/SmartBear/smartbear-mcp/pull/428)
+
+## [0.18.2] - 2026-04-15
+
+### Fixed
+
+- [Common] Updated dependencies to address security vulnerabilities [#423](https://github.com/SmartBear/smartbear-mcp/pull/423)
+
+## [0.18.1] - 2026-04-13
+
+### Fixed
+
+- [Common] Fixed an issue with configuring clients excessively when using stdio transport, only configure clients that have authentication provided [#421](https://github.com/SmartBear/smartbear-mcp/pull/421)
+
+## [0.18.0] - 2026-04-10
+
+### Added
+
+- [Common] Added OAuth token support for HTTP transport clients. [#330](https://github.com/SmartBear/smartbear-mcp/pull/330)
+
+### Changed
+
+- [Portal] Adjusted internal script to recent changes in Portal's API [#404](https://github.com/SmartBear/smartbear-mcp/pull/404)
+
+## [0.17.1] - 2026-04-09
+
+### Added
+
+- [Pactflow] Added tools for CRUD over BDCT, Pacticipants, Environments, Permissions management [#414](https://github.com/SmartBear/smartbear-mcp/pull/414)
+
+
+## [0.17.0] - 2026-04-07
+
+### Added
+
+- [Zephyr] Added a tool `update-test-steps` for updating test execution test steps [#386](https://github.com/SmartBear/smartbear-mcp/pull/386)
+- [BugSnag] Added "Get Events on an Error" tool for listing the events that have grouped into a specified error [#406](https://github.com/SmartBear/smartbear-mcp/pull/406)
+
+### Changed
+
+- [Zephyr] Added context to the `create-test-case` tool description about automatic empty test step creation. [#401](https://github.com/SmartBear/smartbear-mcp/pull/401)
+- [Zephyr] Updated REST schemas - removed read-only fields from UpdateTestCase and UpdateTestCycle operations. [#407](https://github.com/SmartBear/smartbear-mcp/pull/407)
+
+## [0.16.0] - 2026-03-25
+
 ### Added
 
 - [Reflect] Added `list_segments` tool: Lists the reusable test steps in the account, and includes some relevant metadata about each segment to help the Agent understand when a segment could be used as part of accomplishing a task. [#369](https://github.com/SmartBear/smartbear-mcp/pull/369)
@@ -21,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [Zephyr] Enforce strictness of Zephyr's schemas. [#383](https://github.com/SmartBear/smartbear-mcp/pull/383)
+- [Zephyr] Allow the GetTestCaseLinks tool to return invalid-format URLs. [#397](https://github.com/SmartBear/smartbear-mcp/pull/397)
 
 ## [0.15.0] - 2026-03-18
 

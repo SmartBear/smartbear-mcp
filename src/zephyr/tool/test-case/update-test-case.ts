@@ -77,6 +77,15 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
         expectedOutput:
           "The test case should be updated, but no output is expected.",
       },
+      {
+        description: "Remove test case  from folder",
+        parameters: {
+          testCaseKey: "SA-T15",
+          folder: null,
+        },
+        expectedOutput:
+          "The test case should be updated, but no output is expected.",
+      },
     ],
   };
 
@@ -84,7 +93,28 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
     const parsed = UpdateTestCaseParams.and(UpdateTestCaseBody.partial()).parse(
       args,
     );
-    const { testCaseKey, ...updates } = parsed;
+
+    const { testCaseKey, ...rawUpdates } = parsed;
+
+    const nullValuesObject: Record<string, any> = {};
+
+    if (rawUpdates.folder) {
+      //do nothing when null or undefined
+      nullValuesObject.folder = { id: rawUpdates.folder };
+    }
+    if (rawUpdates.owner) {
+      //do nothing when null or undefined
+      nullValuesObject.owner = { accountId: rawUpdates.owner };
+    }
+    if (rawUpdates.component) {
+      //do nothing when null or undefined
+      nullValuesObject.component = { id: rawUpdates.component };
+    }
+
+    const updates = {
+      ...rawUpdates,
+      ...nullValuesObject,
+    };
 
     // Fetch the existing test case to ensure we have all properties
     // This is necessary because Zephyr's PUT endpoints requires the complete resource
@@ -95,6 +125,8 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
     // Deep merge the updates with the existing test case
     // For nested objects like customFields, we merge instead of replacing
     const mergedBody = deepMerge(existingTestCase, updates);
+    delete mergedBody.createdOn;
+    delete mergedBody.links;
 
     await this.client
       .getApiClient()

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocketManager } from "../../../reflect/websocket-manager";
 
+const apiKeyHeader = (key = "test-api-key") => ({ "X-API-KEY": key });
+
 // Mock the ws module
 vi.mock("ws", () => {
   const OPEN = 1;
@@ -22,15 +24,10 @@ vi.mock("ws", () => {
 
 describe("WebSocketManager", () => {
   let manager: WebSocketManager;
-  let _mockWs: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const WebSocket = (await import("ws")).default as any;
-    manager = new WebSocketManager("test-session-123", "test-api-key");
-
-    // Each new manager will use a new mock instance
-    _mockWs = WebSocket.mock.results[0]?.value;
+    manager = new WebSocketManager("test-session-123", apiKeyHeader());
   });
 
   it("should start disconnected", () => {
@@ -52,7 +49,7 @@ describe("WebSocketManager", () => {
       return instance;
     });
 
-    const newManager = new WebSocketManager("session-456", "key");
+    const newManager = new WebSocketManager("session-456", apiKeyHeader("key"));
 
     await newManager.connect();
     expect(newManager.isConnected()).toBe(true);
@@ -70,7 +67,7 @@ describe("WebSocketManager", () => {
       removeAllListeners: vi.fn(),
     }));
 
-    const newManager = new WebSocketManager("session-789", "key");
+    const newManager = new WebSocketManager("session-789", apiKeyHeader("key"));
 
     await newManager.connect();
     await expect(newManager.connect()).rejects.toThrow(
@@ -93,7 +90,10 @@ describe("WebSocketManager", () => {
       removeAllListeners: vi.fn(),
     }));
 
-    const newManager = new WebSocketManager("session-fail", "key");
+    const newManager = new WebSocketManager(
+      "session-fail",
+      apiKeyHeader("key"),
+    );
 
     await newManager.connect();
 
@@ -132,7 +132,7 @@ describe("WebSocketManager", () => {
       removeAllListeners: vi.fn(),
     }));
 
-    const newManager = new WebSocketManager("session-ok", "key");
+    const newManager = new WebSocketManager("session-ok", apiKeyHeader("key"));
 
     await newManager.connect();
 
@@ -158,6 +158,33 @@ describe("WebSocketManager", () => {
     });
   });
 
+  it("should pass Bearer token header to WebSocket for OAuth", async () => {
+    const WebSocket = (await import("ws")).default as any;
+    let capturedOpts: any = null;
+
+    WebSocket.mockImplementationOnce((_url: string, opts: any) => {
+      capturedOpts = opts;
+      return {
+        readyState: 1,
+        on: vi.fn().mockImplementation((event: string, handler: any) => {
+          if (event === "open") setTimeout(() => handler(), 0);
+        }),
+        send: vi.fn(),
+        close: vi.fn(),
+        removeAllListeners: vi.fn(),
+      };
+    });
+
+    const newManager = new WebSocketManager("session-oauth", {
+      Authorization: "Bearer oauth-token",
+    });
+    await newManager.connect();
+
+    expect(capturedOpts.headers).toEqual({
+      Authorization: "Bearer oauth-token",
+    });
+  });
+
   it("should disconnect cleanly", async () => {
     const WebSocket = (await import("ws")).default as any;
     const mockInstance = {
@@ -171,7 +198,10 @@ describe("WebSocketManager", () => {
     };
     WebSocket.mockImplementationOnce(() => mockInstance);
 
-    const newManager = new WebSocketManager("session-disc", "key");
+    const newManager = new WebSocketManager(
+      "session-disc",
+      apiKeyHeader("key"),
+    );
     await newManager.connect();
     await newManager.disconnect();
 

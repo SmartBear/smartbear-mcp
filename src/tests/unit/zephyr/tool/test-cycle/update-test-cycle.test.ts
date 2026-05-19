@@ -142,7 +142,6 @@ describe("UpdateTestCycle", () => {
             id: 10000,
             self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/10000",
           },
-          links: existingTestCycle.links,
         }),
       );
     });
@@ -168,7 +167,6 @@ describe("UpdateTestCycle", () => {
         Browser: "Chrome",
         Implemented: false,
       });
-      expect(mergedBody.links).toEqual(existingTestCycle.links);
     });
 
     it("should handle API errors when fetching not existing test cycle", async () => {
@@ -269,8 +267,6 @@ describe("UpdateTestCycle", () => {
         Region: "US",
         OS: "Windows",
       });
-
-      expect(mergedBody.links).toEqual(existingTestCycle.links);
     });
 
     it("should skip undefined values in updates", async () => {
@@ -410,21 +406,15 @@ describe("UpdateTestCycle", () => {
         project: {
           id: 10006,
         },
-        jiraProjectVersion: {
-          id: 10006,
-        },
+        jiraProjectVersion: 10006,
         status: {
           id: 10006,
         },
-        folder: {
-          id: 10006,
-        },
+        folder: 10006,
         description: "Updated description",
         plannedStartDate: "2035-03-19T13:15:13Z",
         plannedEndDate: "2035-05-20T13:15:13Z",
-        owner: {
-          accountId: "9",
-        },
+        owner: "9",
         customFields: {
           Browser: "Safari",
           Implemented: true,
@@ -467,6 +457,20 @@ describe("UpdateTestCycle", () => {
         Region: "US",
         MultiOptionField: ["Option1", "Option2"],
       });
+    });
+
+    it("Should not include links in the PUT request", async () => {
+      const args = {
+        testCycleIdOrKey: "SA-R40",
+        name: "Updated Name",
+      };
+
+      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+
+      const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
+      expect(mergedBody.links).toBeUndefined();
+      expect(mergedBody.name).toBe("Updated Name");
+      expect(mergedBody.description).toBe("Original description");
     });
   });
 });

@@ -12,12 +12,11 @@ export class CreateTestSteps extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Case Steps",
     summary:
-      "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI).",
+      "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI). Requires a mode: `APPEND` adds steps to the end of the existing list, `OVERWRITE` deletes all existing steps and replaces them with the provided ones. Always ask the user to choose between OVERWRITE or APPEND before calling this tool.",
     readOnly: false,
+    destructive: true,
     idempotent: false,
-    inputSchema: CreateTestCaseTestStepsParams.and(
-      CreateTestCaseTestStepsBody.partial(),
-    ),
+    inputSchema: CreateTestCaseTestStepsParams.and(CreateTestCaseTestStepsBody),
     outputSchema: createTestCaseTestStepsResponse,
     examples: [
       {

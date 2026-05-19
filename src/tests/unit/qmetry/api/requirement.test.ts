@@ -117,7 +117,11 @@ describe("requirement API clients", () => {
     it("should handle API errors gracefully", async () => {
       global.fetch = vi.fn().mockResolvedValue(mockFail(403, "Access denied"));
 
-      const payload = { viewId: 54321, folderPath: "" };
+      const payload = {
+        viewId: 54321,
+        folderPath: "",
+        isFilterSaveRequired: false,
+      };
 
       await expect(
         fetchRequirements(token, baseUrl, projectKey, payload),

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { ReflectClient } from "../../client";
-import { API_HOSTNAME, API_KEY_HEADER } from "../../config/constants";
+import { API_HOSTNAME, WEB_APP_HOSTNAME } from "../../config/constants";
 import type { TestPlatform } from "../../types/common";
 
 export class ListSegments extends Tool<ReflectClient> {
@@ -14,26 +14,16 @@ export class ListSegments extends Tool<ReflectClient> {
       "Retrieve available reusable test segments for the given platform type. Segments are reusable test steps with an optional set of parameters that can used across multiple tests.",
     readOnly: true,
     idempotent: true,
-    parameters: [
-      {
-        name: "platform",
-        type: z.enum(["api", "native-mobile", "web"]),
-        description: "The platform type to retrieve segments for",
-        required: true,
-      },
-      {
-        name: "offset",
-        type: z.number(),
-        description: "Offset for pagination",
-        required: false,
-      },
-      {
-        name: "limit",
-        type: z.number(),
-        description: "Maximum number of segments to return",
-        required: false,
-      },
-    ],
+    inputSchema: z.object({
+      platform: z
+        .enum(["api", "native-mobile", "web"])
+        .describe("The platform type to retrieve segments for"),
+      offset: z.number().optional().describe("Offset for pagination"),
+      limit: z
+        .number()
+        .optional()
+        .describe("Maximum number of segments to return"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
@@ -47,13 +37,13 @@ export class ListSegments extends Tool<ReflectClient> {
       limit?: number;
     };
 
-    const url = `https://${API_HOSTNAME}/v1/segments?type=${platform}&offset=${offset}&limit=${limit}`;
+    const urlPath = this.client.isOAuthRequest()
+      ? `https://${WEB_APP_HOSTNAME}/api/mcp`
+      : `https://${API_HOSTNAME}/v1`;
+    const url = `${urlPath}/segments?type=${platform}&offset=${offset}&limit=${limit}`;
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        [API_KEY_HEADER]: this.client.getApiToken(),
-        "Content-Type": "application/json",
-      },
+      headers: this.client.getHeaders(),
     });
 
     if (!response.ok) {

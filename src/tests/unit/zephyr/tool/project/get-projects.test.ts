@@ -47,7 +47,7 @@ describe("GetProjects", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { maxResults: 10, startAt: 0 };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/projects",
       args,
@@ -72,7 +72,7 @@ describe("GetProjects", () => {
       ],
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
-    const result = await instance.handle({}, {});
+    const result = await instance.handle({}, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/projects", {
       maxResults: 10, // default value
       startAt: 0, // default value
@@ -82,14 +82,14 @@ describe("GetProjects", () => {
 
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
-    await expect(instance.handle({ maxResults: 1 }, {})).rejects.toThrow(
+    await expect(instance.handle({ maxResults: 1 }, {} as any)).rejects.toThrow(
       "API error",
     );
   });
 
   it("should handle apiClient.get returning unexpected data", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
-    const result = await instance.handle({ maxResults: 1 }, {});
+    const result = await instance.handle({ maxResults: 1 }, {} as any);
     expect(result.structuredContent).toBeUndefined();
   });
 });

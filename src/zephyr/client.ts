@@ -1,4 +1,5 @@
 import z from "zod";
+import { getRequestHeader } from "../common/request-context";
 import type {
   Client,
   GetInputFunction,
@@ -40,6 +41,7 @@ import { GetTestExecutionLinks } from "./tool/test-execution/get-test-execution-
 import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
 import { GetTestExecutionSteps } from "./tool/test-execution/get-test-steps.ts";
 import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
+import { UpdateTestExecutionSteps } from "./tool/test-execution/update-test-steps.ts";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
 
@@ -55,9 +57,10 @@ const ConfigurationSchema = z.object({
 
 export class ZephyrClient implements Client {
   private apiClient: ApiClient | undefined;
+  private _apiToken: string | undefined;
 
   name = "Zephyr";
-  toolPrefix = "zephyr";
+  capabilityPrefix = "zephyr";
   configPrefix = "Zephyr";
   config = ConfigurationSchema;
 
@@ -66,10 +69,32 @@ export class ZephyrClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
+    this._apiToken = config.api_token;
     this.apiClient = new ApiClient(
-      config.api_token,
-      config.base_url || BASE_URL_DEFAULT,
+      () => this.getAuthToken(),
+      config.base_url || process.env.ZEPHYR_CUSTOM_BASE_URL || BASE_URL_DEFAULT,
     );
+  }
+
+  getAuthToken(): string | null {
+    // 1. Try request context
+    const contextHeader =
+      getRequestHeader("Zephyr-Api-Token") || getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer or token prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+      return token;
+    }
+
+    // 2. Fallback to configured token
+    return this._apiToken || null;
   }
 
   isConfigured(): boolean {
@@ -117,6 +142,7 @@ export class ZephyrClient implements Client {
       new GetIssueLinkTestCycles(this),
       new GetTestScript(this),
       new CreateTestCycleWebLink(this),
+      new UpdateTestExecutionSteps(this),
       new GetTestExecutionSteps(this),
       new GetTestExecutionLinks(this),
       new GetIssueLinkTestExecutions(this),

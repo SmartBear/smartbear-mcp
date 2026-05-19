@@ -1,15 +1,82 @@
 import { randomUUID } from "node:crypto";
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
+import querystring from "node:querystring";
 
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import { clientRegistry } from "./client-registry";
+import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
+import { isDraining, registerShutdownHandler } from "./shutdown";
+import { getEnvVarName } from "./transport-stdio";
 import type { Client } from "./types";
-import { isOptionalType } from "./zod-utils";
+import { getTypeDescription, isOptionalType } from "./zod-utils";
+
+type SessionEntry = {
+  server: SmartBearMcpServer;
+  transport: StreamableHTTPServerTransport | SSEServerTransport;
+};
+
+/**
+ * Common cache-control headers for probe endpoints.
+ */
+const PROBE_HEADERS = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+} as const;
+
+/**
+ * Liveness probe handler. Returns 200 unconditionally as long as the HTTP
+ * server is responsive.
+ */
+export function handleHealthRequest(res: ServerResponse): void {
+  res.writeHead(200, PROBE_HEADERS);
+  res.end(
+    JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+  );
+}
+
+/**
+ * Readiness probe handler. Returns 200 normally, 503 once the process has
+ * received SIGTERM and started draining.
+ */
+export function handleReadyRequest(
+  res: ServerResponse,
+  draining: () => boolean = isDraining,
+): void {
+  if (draining()) {
+    res.writeHead(503, PROBE_HEADERS);
+    res.end(
+      JSON.stringify({
+        status: "draining",
+        timestamp: new Date().toISOString(),
+      }),
+    );
+    return;
+  }
+  res.writeHead(200, PROBE_HEADERS);
+  res.end(
+    JSON.stringify({ status: "ready", timestamp: new Date().toISOString() }),
+  );
+}
+
+/**
+ * Helper to construct the base URL from the request, respecting proxy headers.
+ * This is critical for cloud deployments where SSL termination happens at the load balancer.
+ * If BASE_URL env var is set, it takes precedence over request headers.
+ */
+export function getBaseUrl(req: IncomingMessage): string {
+  const baseUrlOverride = process.env.BASE_URL;
+  if (baseUrlOverride) {
+    return baseUrlOverride;
+  }
+  const protocol = (req.headers["x-forwarded-proto"] as string) || "http";
+  const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
+  return `${protocol}://${host}`;
+}
 
 /**
  * Run server in HTTP mode with Streamable HTTP transport
@@ -22,13 +89,7 @@ export async function runHttpMode() {
   ];
 
   // Store transports by session ID
-  const transports = new Map<
-    string,
-    {
-      server: SmartBearMcpServer;
-      transport: StreamableHTTPServerTransport | SSEServerTransport;
-    }
-  >();
+  const transports = new Map<string, SessionEntry>();
 
   // Get dynamic list of allowed headers from registered clients
   const allowedAuthHeaders = getHttpHeaders();
@@ -37,6 +98,7 @@ export async function runHttpMode() {
     "Authorization",
     "MCP-Session-Id", // Required for StreamableHTTP
     "x-custom-auth-headers", // used by mcp-inspector
+    "mcp-protocol-version",
     ...allowedAuthHeaders,
   ].join(", ");
 
@@ -60,13 +122,39 @@ export async function runHttpMode() {
         return;
       }
 
-      const url = new URL(req.url || "/", `http://${req.headers.host}`);
+      // Determine the public URL of this server
+      const baseUrl = getBaseUrl(req);
+      const url = new URL(req.url || "/", baseUrl);
 
-      // HEALTH CHECK ENDPOINT
+      // LIVENESS PROBE — always 200 if the process is responsive.
       if (req.method === "GET" && url.pathname === "/health") {
+        handleHealthRequest(res);
+        return;
+      }
+
+      // READINESS PROBE — 200 normally, 503 once draining has started.
+      if (req.method === "GET" && url.pathname === "/ready") {
+        handleReadyRequest(res);
+        return;
+      }
+
+      // PROTECTED RESOURCE METADATA ENDPOINT (RFC 9293)
+      // This endpoint tells the client where to find the Authorization Server.
+      if (
+        req.method === "GET" &&
+        (url.pathname === "/.well-known/oauth-protected-resource" ||
+          url.pathname === "/.well-known/oauth-protected-resource/mcp")
+      ) {
+        // Point the client to the Authorization Server so it can fetch the metadata document
+        const authServerUrl =
+          process.env.OAUTH_AUTHORIZATION_SERVER_URL || "http://localhost:7070";
+
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
-          JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+          JSON.stringify({
+            resource: `${baseUrl}/mcp`,
+            authorization_servers: [authServerUrl],
+          }),
         );
         return;
       }
@@ -95,9 +183,8 @@ export async function runHttpMode() {
 
   httpServer.listen(PORT, () => {
     console.log(`[MCP HTTP Server] Listening on http://localhost:${PORT}`);
-    console.log(
-      `[MCP HTTP Server] Health check: http://localhost:${PORT}/health`,
-    );
+    console.log(`[MCP HTTP Server] Liveness:  http://localhost:${PORT}/health`);
+    console.log(`[MCP HTTP Server] Readiness: http://localhost:${PORT}/ready`);
     console.log(
       `[MCP HTTP Server] Modern endpoint: http://localhost:${PORT}/mcp (Streamable HTTP)`,
     );
@@ -116,6 +203,62 @@ export async function runHttpMode() {
       );
     }
   });
+
+  // Register graceful shutdown. Tears down active
+  // transports before any subsystem registered earlier (e.g. logging).
+  registerShutdownHandler("http-transport", async () => {
+    await drainHttpTransport(httpServer, transports);
+  });
+}
+
+/**
+ * Drain the HTTP transport. Called by the shutdown manager on SIGTERM.
+ *
+ * Sequence:
+ *   1. Stop accepting new TCP connections (httpServer.close).
+ *      This does NOT close existing keep-alive / SSE connections.
+ *   2. Close idle keep-alive connections immediately.
+ *   3. Close every active transport, which fires transport.onclose →
+ *      cleanupSession(sessionId) → per-client cleanupSession (e.g. Reflect
+ *      WebSockets).
+ *   4. Wait for httpServer.close() to fully resolve, then force-close any
+ *      remaining keep-alive connections as a backstop.
+ */
+export async function drainHttpTransport(
+  httpServer: Server,
+  transports: Map<string, SessionEntry>,
+): Promise<void> {
+  console.log(
+    `[MCP][shutdown] Draining HTTP transport (${transports.size} active session(s))`,
+  );
+
+  // Stop accepting new connections.
+  const serverClosed = new Promise<void>((resolve) => {
+    httpServer.close(() => resolve());
+  });
+
+  // Close idle keep-alive sockets right away — no in-flight work to lose.
+  httpServer.closeIdleConnections?.();
+
+  // Close every active transport. transport.close() ends SSE streams and
+  // triggers the existing onclose -> cleanupSession chain.
+  const transportCloses = [...transports.values()].map(async (entry) => {
+    try {
+      await entry.transport.close();
+    } catch (err) {
+      console.error("[MCP][shutdown] Error closing transport:", err);
+    }
+  });
+
+  await Promise.all(transportCloses);
+
+  // Backstop: force-close any TCP connections still hanging around so
+  // httpServer.close() can resolve. Safe to call after transport.close()
+  // because all session-aware teardown has already run.
+  httpServer.closeAllConnections?.();
+
+  await serverClosed;
+  console.log("[MCP][shutdown] HTTP transport drained");
 }
 
 /**
@@ -259,8 +402,11 @@ async function createNewTransport(
  *    - Creates new server + transport, generates session ID
  * 2. Subsequent requests: Include MCP-Session-Id header
  *    - Routes to existing transport for the session
+ *    - Unknown session IDs return 404 per spec, prompting the client to
+ *      re-initialize (important for multi-pod deployments where a session
+ *      may not be known to every pod).
  */
-async function handleStreamableHttpRequest(
+export async function handleStreamableHttpRequest(
   req: IncomingMessage,
   res: ServerResponse,
   transports: Map<
@@ -273,12 +419,35 @@ async function handleStreamableHttpRequest(
 ) {
   try {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
+
+    // Case 1: Unknown session - per MCP Streamable HTTP spec, return 404 so
+    // clients know to re-run `initialize` (e.g. after a pod restart drops the
+    // in-memory session map) rather than treating this as a permanent error.
+    // Reject before buffering the body so a junk session id can't force JSON
+    // parsing of an arbitrary payload; drain the stream so keep-alive sockets
+    // aren't left half-read.
+    if (sessionId && !transports.has(sessionId)) {
+      req.resume();
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          error: {
+            code: -32001,
+            message: "Session not found",
+          },
+          id: null,
+        }),
+      );
+      return;
+    }
+
     const parsedBody = await parseRequestBody(req);
 
     let transport: StreamableHTTPServerTransport;
 
-    // Case 1: Existing session - route to existing transport
-    if (sessionId && transports.has(sessionId)) {
+    // Case 2: Existing session - route to existing transport
+    if (sessionId) {
       const existingTransport = getExistingTransport(
         sessionId,
         transports,
@@ -287,9 +456,8 @@ async function handleStreamableHttpRequest(
       if (!existingTransport) return;
       transport = existingTransport;
     }
-    // Case 2: New session - must be an initialize request
+    // Case 3: New session - must be an initialize request
     else if (
-      !sessionId &&
       req.method === "POST" &&
       parsedBody &&
       isInitializeRequest(parsedBody)
@@ -298,7 +466,7 @@ async function handleStreamableHttpRequest(
       if (!newTransport) return;
       transport = newTransport;
     }
-    // Case 3: Invalid request
+    // Case 4: Invalid request
     else {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(
@@ -315,7 +483,10 @@ async function handleStreamableHttpRequest(
     }
 
     // Delegate to transport to handle the MCP protocol message
-    await transport.handleRequest(req, res, parsedBody);
+    await withRequestContext(
+      req,
+      async () => await transport.handleRequest(req, res, parsedBody),
+    );
   } catch (error) {
     console.error("Error handling StreamableHTTP request:", error);
     res.writeHead(500, { "Content-Type": "text/plain" });
@@ -421,10 +592,14 @@ async function handleLegacyMessageRequest(
     try {
       const parsedBody = JSON.parse(body);
       // Route message to the SSE transport for processing
-      await (session.transport as SSEServerTransport).handlePostMessage(
+      await withRequestContext(
         req,
-        res,
-        parsedBody,
+        async () =>
+          await (session.transport as SSEServerTransport).handlePostMessage(
+            req,
+            res,
+            parsedBody,
+          ),
       );
     } catch (error) {
       console.error("Error handling POST message:", error);
@@ -445,24 +620,73 @@ async function handleLegacyMessageRequest(
  *
  * @returns SmartBearMcpServer instance if successful, null if configuration fails
  */
-async function newServer(
+export async function newServer(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
   const server = new SmartBearMcpServer();
   try {
-    // Configure server with values from HTTP headers
-    await clientRegistry.configure(server, (client, key) => {
-      const headerName = getHeaderName(client, key);
-      // Check both original case and lower-case headers for compatibility
-      // (HTTP headers are case-insensitive, but Node.js lowercases them)
-      const value =
-        req.headers[headerName] || req.headers[headerName.toLowerCase()];
-      if (typeof value === "string") {
-        return value;
-      }
-      return null;
-    });
+    // Run configuration within request context so that client getAuthToken()
+    // methods can access request headers via AsyncLocalStorage
+    const configuredCount = await withRequestContext(req, () =>
+      clientRegistry.configure(
+        server,
+        (client, key) => {
+          // 1. Try query string
+          const queryStringName = getQueryStringName(client, key);
+          const queryParams = querystring.parse(req.url?.split("?")[1] || "");
+          let value =
+            queryParams[queryStringName] ||
+            queryParams[queryStringName.toLowerCase()];
+          if (typeof value === "string") {
+            return value;
+          }
+
+          // 2. Try headers
+          const headerName = getHeaderName(client, key);
+          // Check both original case and lower-case headers for compatibility
+          // (HTTP headers are case-insensitive, but Node.js lowercases them)
+          value =
+            req.headers[headerName] || req.headers[headerName.toLowerCase()];
+          if (typeof value === "string") {
+            return value;
+          }
+
+          // 3. Fall back to environment variable
+          const envVarName = getEnvVarName(client, key);
+          return process.env[envVarName] || null;
+        },
+        true, // ignoreMissingRequiredConfigs
+      ),
+    );
+
+    console.log(
+      `Configured ${configuredCount} clients for new server instance`,
+    );
+
+    if (configuredCount === 0) {
+      throw new Error(
+        "No clients successfully configured. Missing authentication headers.",
+      );
+    }
+
+    // Check if any configured client actually has auth credentials for this request.
+    // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
+    // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
+    const hasAuth = withRequestContext(req, () =>
+      server.getClients().some((client) => {
+        // Client doesn't support dynamic auth — auth was provided at config time
+        if (!client.getAuthToken) return true;
+        // Client supports dynamic auth — check if a token is available
+        return client.getAuthToken() !== null;
+      }),
+    );
+
+    if (!hasAuth) {
+      throw new Error(
+        "No clients have valid authentication credentials. Please authenticate via OAuth or provide alternative auth headers (e.g. API key or personal auth token).",
+      );
+    }
   } catch (error: any) {
     // Configuration failed - provide helpful error message
     const headerHelp = getHttpHeadersHelp();
@@ -471,7 +695,18 @@ async function newServer(
         ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
         : "No clients support HTTP header configuration.";
 
-    res.writeHead(401, { "Content-Type": "text/plain" });
+    const headers: Record<string, string> = {
+      "Content-Type": "text/plain",
+    };
+
+    // Add WWW-Authenticate header to support OAuth discovery flow
+    // This points the client to the Protected Resource Metadata endpoint
+    if (req.headers.host) {
+      headers["WWW-Authenticate"] =
+        `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+    }
+
+    res.writeHead(401, headers);
     res.end(errorMessage);
     return null;
   }
@@ -492,7 +727,7 @@ async function newServer(
  * @param key The config key in snake_case
  * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
  */
-function getHeaderName(client: Client, key: string): string {
+export function getHeaderName(client: Client, key: string): string {
   return `${client.configPrefix}-${key
     .split("_")
     .map(
@@ -500,6 +735,16 @@ function getHeaderName(client: Client, key: string): string {
         part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
     )
     .join("-")}`;
+}
+
+export function getQueryStringName(client: Client, key: string): string {
+  return `${client.configPrefix.toLowerCase()}${key
+    .split("_")
+    .map(
+      (part: string) =>
+        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+    )
+    .join("")}`;
 }
 
 /**
@@ -533,7 +778,7 @@ function getHttpHeadersHelp(): string[] {
         ? " (optional)"
         : " (required)";
       messages.push(
-        `    - ${headerName}${requiredTag}: ${requirement.description}`,
+        `    - ${headerName}${requiredTag}: ${getTypeDescription(requirement)}`,
       );
     }
   }

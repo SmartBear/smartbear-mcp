@@ -1,0 +1,221 @@
+{
+  "manifest_version": "0.3",
+  "name": "SmartBear MCP",
+  "version": "0.0.0",
+  "description": "MCP server for AI access to SmartBear tools, including BugSnag, PactFlow, QMetry, Reflect, Swagger and Zephyr.",
+  "homepage": "https://smartbear.com/ai/mcp-server",
+  "documentation": "https://developer.smartbear.com/smartbear-mcp",
+  "author": {
+    "name": "SmartBear Software",
+    "url": "https://github.com/SmartBear",
+    "email": "support@smartbear.com"
+  },
+  "privacy_policies": ["https://smartbear.com/privacy/"],
+  "support": "https://support.smartbear.com/",
+  "icon": "icon.png",
+  "keywords": [
+    "smartbear",
+    "bugsnag",
+    "collaborator",
+    "pactflow",
+    "qmetry",
+    "reflect",
+    "swagger",
+    "zephyr"
+  ],
+  "tools_generated": true,
+  "prompts_generated": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SmartBear/smartbear-mcp"
+  },
+  "compatibility": {
+    "runtimes": {
+      "node": ">=22.6.0"
+    }
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "BUGSNAG_AUTH_TOKEN": "${user_config.BUGSNAG_AUTH_TOKEN}",
+        "BUGSNAG_ENDPOINT": "${user_config.BUGSNAG_ENDPOINT}",
+        "BUGSNAG_PROJECT_API_KEY": "${user_config.BUGSNAG_PROJECT_API_KEY}",
+        "COLLABORATOR_BASE_URL": "${user_config.COLLABORATOR_BASE_URL}",
+        "COLLABORATOR_LOGIN_TICKET": "${user_config.COLLABORATOR_LOGIN_TICKET}",
+        "COLLABORATOR_USERNAME": "${user_config.COLLABORATOR_USERNAME}",
+        "PACT_BROKER_BASE_URL": "${user_config.PACT_BROKER_BASE_URL}",
+        "PACT_BROKER_PASSWORD": "${user_config.PACT_BROKER_PASSWORD}",
+        "PACT_BROKER_TOKEN": "${user_config.PACT_BROKER_TOKEN}",
+        "PACT_BROKER_USERNAME": "${user_config.PACT_BROKER_USERNAME}",
+        "QMETRY_API_KEY": "${user_config.QMETRY_API_KEY}",
+        "QMETRY_BASE_URL": "${user_config.QMETRY_BASE_URL}",
+        "REFLECT_API_TOKEN": "${user_config.REFLECT_API_TOKEN}",
+        "SWAGGER_API_KEY": "${user_config.SWAGGER_API_KEY}",
+        "SWAGGER_PORTAL_BASE_PATH": "${user_config.SWAGGER_PORTAL_BASE_PATH}",
+        "SWAGGER_REGISTRY_BASE_PATH": "${user_config.SWAGGER_REGISTRY_BASE_PATH}",
+        "SWAGGER_UI_BASE_PATH": "${user_config.SWAGGER_UI_BASE_PATH}",
+        "ZEPHYR_API_TOKEN": "${user_config.ZEPHYR_API_TOKEN}",
+        "ZEPHYR_BASE_URL": "${user_config.ZEPHYR_BASE_URL}"
+      }
+    }
+  },
+  "user_config": {
+    "BUGSNAG_AUTH_TOKEN": {
+      "type": "string",
+      "title": "BugSnag Auth Token",
+      "description": "BugSnag auth token. Leave empty to disable BugSnag tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "BUGSNAG_ENDPOINT": {
+      "type": "string",
+      "title": "BugSnag Endpoint",
+      "description": "BugSnag endpoint URL. (optional; only needed if using a custom BugSnag endpoint). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration#custom-endpoints",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "BUGSNAG_PROJECT_API_KEY": {
+      "type": "string",
+      "title": "BugSnag Project API Key",
+      "description": "BugSnag project API key (optional; narrows interactions to a single project). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "COLLABORATOR_BASE_URL": {
+      "type": "string",
+      "title": "Collaborator Base URL",
+      "description": "Collaborator server base URL. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "COLLABORATOR_LOGIN_TICKET": {
+      "type": "string",
+      "title": "Collaborator Login Ticket",
+      "description": "Collaborator login ticket for authentication. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "COLLABORATOR_USERNAME": {
+      "type": "string",
+      "title": "Collaborator Username",
+      "description": "Collaborator username for authentication. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "PACT_BROKER_BASE_URL": {
+      "type": "string",
+      "title": "Pact Broker Base URL",
+      "description": "PactFlow/Pact Broker base URL. Leave empty to disable Pact tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "PACT_BROKER_PASSWORD": {
+      "type": "string",
+      "title": "Pact Broker Password",
+      "description": "Pact Broker password (alternative to token). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "PACT_BROKER_TOKEN": {
+      "type": "string",
+      "title": "Pact Broker Token",
+      "description": "PactFlow authentication token. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "PACT_BROKER_USERNAME": {
+      "type": "string",
+      "title": "Pact Broker Username",
+      "description": "Pact Broker username (alternative to token). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "QMETRY_API_KEY": {
+      "type": "string",
+      "title": "QMetry API Key",
+      "description": "QMetry API key for authentication. Leave empty to disable QMetry tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "QMETRY_BASE_URL": {
+      "type": "string",
+      "title": "QMetry Base URL",
+      "description": "Optional QMetry base URL for custom or region-specific endpoints. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "REFLECT_API_TOKEN": {
+      "type": "string",
+      "title": "Reflect API Token",
+      "description": "Reflect API token. Leave empty to disable Reflect tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/reflect-integration",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "SWAGGER_API_KEY": {
+      "type": "string",
+      "title": "Swagger API Key",
+      "description": "Swagger API key. Leave empty to disable Swagger tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "SWAGGER_PORTAL_BASE_PATH": {
+      "type": "string",
+      "title": "SwaggerHub Portal Base Path",
+      "description": "Base path for Portal API requests (optional). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "SWAGGER_REGISTRY_BASE_PATH": {
+      "type": "string",
+      "title": "SwaggerHub Registry Base Path",
+      "description": "Base path for Registry API requests (optional). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "SWAGGER_UI_BASE_PATH": {
+      "type": "string",
+      "title": "SwaggerHub UI Base Path",
+      "description": "Base URL for the SwaggerHub UI (optional). Learn more: https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
+    "ZEPHYR_API_TOKEN": {
+      "type": "string",
+      "title": "Zephyr API Token",
+      "description": "The Zephyr Cloud API token for authentication. Learn more: https://support.smartbear.com/zephyr/docs/en/rest-api/api-access-tokens-management.html",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "ZEPHYR_BASE_URL": {
+      "type": "string",
+      "title": "Zephyr Base URL",
+      "description": " The Zephyr Cloud API base url. Should be changed depending on the region of your Jira instance. Learn more: https://support.smartbear.com/zephyr-scale-cloud/api-docs/#section/Authentication/Accessing-the-API",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    }
+  }
+}

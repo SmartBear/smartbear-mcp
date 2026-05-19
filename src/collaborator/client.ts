@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -8,15 +9,19 @@ import type {
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Collaborator server base URL"),
-  username: z.string().describe("Collaborator username for authentication"),
+  username: z
+    .string()
+    .describe("Collaborator username for authentication")
+    .optional(),
   login_ticket: z
     .string()
-    .describe("Collaborator login ticket for authentication"),
+    .describe("Collaborator login ticket for authentication")
+    .optional(),
 });
 
 export class CollaboratorClient implements Client {
   name = "Collaborator";
-  toolPrefix = "collaborator";
+  capabilityPrefix = "collaborator";
   configPrefix = "Collaborator";
   config = ConfigurationSchema;
 
@@ -35,11 +40,7 @@ export class CollaboratorClient implements Client {
   }
 
   isConfigured(): boolean {
-    return (
-      this.baseUrl !== undefined &&
-      this.username !== undefined &&
-      this.loginTicket !== undefined
-    );
+    return this.baseUrl !== undefined;
   }
 
   /**
@@ -49,11 +50,25 @@ export class CollaboratorClient implements Client {
    */
   async call(commands: any[]): Promise<any> {
     const url = `${this.baseUrl}/services/json/v1`;
+
+    let login = this.username;
+    let ticket = this.loginTicket;
+
+    const contextLogin = getRequestHeader("Collaborator-Login");
+    const contextTicket = getRequestHeader("Collaborator-Ticket");
+
+    if (contextLogin) {
+      login = Array.isArray(contextLogin) ? contextLogin[0] : contextLogin;
+    }
+    if (contextTicket) {
+      ticket = Array.isArray(contextTicket) ? contextTicket[0] : contextTicket;
+    }
+
     // Always prepend authentication command automatically
     const body = [
       {
         command: "SessionService.authenticate",
-        args: { login: this.username, ticket: this.loginTicket },
+        args: { login, ticket },
       },
       ...commands,
     ];
@@ -80,7 +95,7 @@ export class CollaboratorClient implements Client {
     // findReviewById tool
     register(
       {
-        title: "Find Collaborator Review By ID",
+        title: "Find Review By ID",
         summary: "Finds a review in Collaborator by its review ID.",
         inputSchema: z.object({
           reviewId: z.string().describe("The Collaborator review ID to find."),
@@ -104,7 +119,7 @@ export class CollaboratorClient implements Client {
     // createReview tool
     register(
       {
-        title: "Create Collaborator Review",
+        title: "Create Review",
         summary:
           "Creates a new review in Collaborator. All parameters are optional.",
         inputSchema: z.object({
@@ -156,7 +171,7 @@ export class CollaboratorClient implements Client {
     // rejectReview tool
     register(
       {
-        title: "Reject Collaborator Review",
+        title: "Reject Review",
         summary:
           "Rejects a review in Collaborator by its review ID and reason.",
         inputSchema: z.object({
@@ -212,7 +227,7 @@ export class CollaboratorClient implements Client {
     // getReviews tool
     register(
       {
-        title: "Get Collaborator Reviews",
+        title: "Get Reviews",
         summary:
           "Retrieves reviews from Collaborator using ReviewService.getReviews. All parameters are optional and only provided ones are sent.",
         inputSchema: z.object({
@@ -272,7 +287,7 @@ export class CollaboratorClient implements Client {
     // createIntegration tool
     register(
       {
-        title: "Create Collaborator Remote System Configuration",
+        title: "Create Remote System Configuration",
         summary:
           "Creates a remote system configuration in Collaborator (e.g., Bitbucket, GitHub, etc).",
         inputSchema: z.object({
@@ -313,7 +328,7 @@ export class CollaboratorClient implements Client {
     // editIntegration tool
     register(
       {
-        title: "Edit Collaborator Remote System Configuration",
+        title: "Edit Remote System Configuration",
         summary:
           "Edits parameters of an existing remote system configuration in Collaborator. Only title and config are editable after creation.",
         inputSchema: z.object({
@@ -357,7 +372,7 @@ export class CollaboratorClient implements Client {
     // deleteIntegration tool
     register(
       {
-        title: "Delete Collaborator Remote System Configuration",
+        title: "Delete Remote System Configuration",
         summary:
           "Deletes a remote system configuration in Collaborator by its ID.",
         inputSchema: z.object({
@@ -388,7 +403,7 @@ export class CollaboratorClient implements Client {
 
     register(
       {
-        title: "Update Collaborator Remote System Configuration Webhook",
+        title: "Update Remote System Configuration Webhook",
         summary:
           "Updates the webhook for a remote system configuration in Collaborator by its ID.",
         inputSchema: z.object({
@@ -422,7 +437,7 @@ export class CollaboratorClient implements Client {
     // Test connection tool
     register(
       {
-        title: "Test Collaborator Remote System Configuration Connection",
+        title: "Test Remote System Configuration Connection",
         summary:
           "Tests the connection for a remote system configuration in Collaborator by its ID.",
         inputSchema: z.object({

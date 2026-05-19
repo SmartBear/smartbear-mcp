@@ -14,14 +14,9 @@ export class DeletePreviousStep extends Tool<ReflectClient> {
     readOnly: false,
     idempotent: false,
     destructive: true,
-    parameters: [
-      {
-        name: "sessionId",
-        type: z.string(),
-        description: "The ID of the Reflect recording session",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      sessionId: z.string().describe("The ID of the Reflect recording session"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

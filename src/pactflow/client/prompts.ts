@@ -1,6 +1,12 @@
-import { z } from "zod";
+import type { PromptCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
+import { type ZodRawShape, z } from "zod";
 import type { PromptParams } from "../../common/types";
 import { EndpointMatcherSchema } from "./ai";
+
+export interface PactflowPromptParams extends PromptParams {
+  callback: PromptCallback<ZodRawShape>;
+}
 
 const OADMatcherPromptOpenAPIDocExample = {
   openapi: "3.1.0",
@@ -110,26 +116,30 @@ Now provided the below OpenAPI document:-
 Give JSON recommendations only provide the JSON block in markdown don't include any additional text.
 `;
 
-export const PROMPTS: PromptParams[] = [
+const argsSchema = z.object({
+  openAPI: z
+    .string()
+    .describe("The OpenAPI document to generate matcher recommendations for"),
+});
+
+export const PROMPTS: PactflowPromptParams[] = [
   {
-    name: "OpenAPI Matcher recommendations",
-    params: {
-      description: "Get OpenAPI matcher recommendations using sampling",
-      title: "OpenAPI Matcher recommendations",
-      argsSchema: {
-        openAPI: z.string(),
-      },
-    },
-    callback: ({ openAPI }: { openAPI: string }): object => ({
-      messages: [
-        {
-          role: "user",
-          content: {
-            type: "text",
-            text: OADMatcherPrompt.replace("{0}", openAPI),
+    title: "OpenAPI Matcher recommendations",
+    description: "Get OpenAPI matcher recommendations using sampling",
+    argsSchema,
+    callback: (args): GetPromptResult => {
+      const params = argsSchema.parse(args);
+      return {
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: OADMatcherPrompt.replace("{0}", params.openAPI),
+            },
           },
-        },
-      ],
-    }),
+        ],
+      };
+    },
   },
 ];

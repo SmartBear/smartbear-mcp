@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CacheService } from "../common/cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -27,6 +28,7 @@ import { ListProjectErrors } from "./tool/error/list-project-errors";
 import { UpdateError } from "./tool/error/update-error";
 import { GetEvent } from "./tool/event/get-event";
 import { GetEventDetailsFromDashboardUrl } from "./tool/event/get-event-details-from-dashboard-url";
+import { ListErrorEvents } from "./tool/event/list-error-events";
 import { GetNetworkEndpointGroupings } from "./tool/performance/get-network-endpoint-groupings";
 import { GetSpanGroup } from "./tool/performance/get-span-group";
 import { GetTrace } from "./tool/performance/get-trace";
@@ -69,7 +71,7 @@ interface StabilityData {
 }
 
 const ConfigurationSchema = z.object({
-  auth_token: z.string().describe("BugSnag personal authentication token"),
+  auth_token: z.string().describe("BugSnag personal access token"),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
   endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
 });
@@ -82,6 +84,7 @@ export class BugsnagClient implements Client {
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
   private _appEndpoint: string | undefined;
+  private _authToken?: string;
 
   get currentUserApi(): CurrentUserAPI {
     if (!this._currentUserApi) throw new Error("Client not configured");
@@ -104,7 +107,7 @@ export class BugsnagClient implements Client {
   }
 
   name = "BugSnag";
-  toolPrefix = "bugsnag";
+  capabilityPrefix = "bugsnag";
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
 
@@ -113,13 +116,75 @@ export class BugsnagClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
     this.cache = server.getCache();
+
     this._appEndpoint = this.getEndpoint(
       "app",
       config.project_api_key,
       config.endpoint,
     );
+    this._projectApiKey = config.project_api_key;
+    this._authToken = config.auth_token;
+
+    // Initialize APIs even if auth_token is missing, to allow request-level auth
+    await this.initializeApis(config);
+  }
+
+  getAuthToken(): string | null {
+    const contextHeader = getRequestHeader("Bugsnag-Auth-Token");
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle token prefix if present
+      if (token.startsWith("token ")) {
+        token = token.substring(6);
+      }
+
+      return `token ${token}`;
+    }
+
+    // Fall back to Authorization header (used by OAuth flow)
+    const bearerToken = this.getBearerToken();
+    if (bearerToken) {
+      return bearerToken;
+    }
+
+    // Fall back to configured token (needs prefix for Authorization header)
+    return this._authToken ? `token ${this._authToken}` : null;
+  }
+
+  getBearerToken(): string | null {
+    const contextHeader = getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+
+      return `Bearer ${token}`;
+    }
+
+    return null;
+  }
+
+  private async initializeApis(config: z.infer<typeof ConfigurationSchema>) {
     const apiConfig = new Configuration({
-      apiKey: `token ${config.auth_token}`,
+      apiKey: (_name: string) => {
+        const authToken = this.getAuthToken();
+        if (authToken) {
+          return authToken;
+        }
+
+        throw new Error(
+          "Authentication token not found in request headers or configuration",
+        );
+      },
       headers: {
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
         "Content-Type": "application/json",
@@ -135,9 +200,7 @@ export class BugsnagClient implements Client {
     this._currentUserApi = new CurrentUserAPI(apiConfig);
     this._errorsApi = new ErrorAPI(apiConfig);
     this._projectApi = new ProjectAPI(apiConfig);
-    this._projectApiKey = config.project_api_key;
     this._isConfigured = true;
-    return;
   }
 
   isConfigured(): boolean {
@@ -376,6 +439,7 @@ export class BugsnagClient implements Client {
       new UpdateError(this, getInput),
       new GetEvent(this),
       new GetEventDetailsFromDashboardUrl(this),
+      new ListErrorEvents(this),
       new ListReleases(this),
       new GetRelease(this),
       new GetBuild(this),
@@ -393,16 +457,23 @@ export class BugsnagClient implements Client {
     }
   }
 
-  registerResources(register: RegisterResourceFunction): void {
-    register("event", "{id}", async (uri, variables, _extra) => {
-      return {
-        contents: [
-          {
-            uri: uri.href,
-            text: JSON.stringify(await this.getEvent(variables.id as string)),
-          },
-        ],
-      };
-    });
+  async registerResources(register: RegisterResourceFunction): Promise<void> {
+    register(
+      {
+        title: "Event",
+        path: "{id}",
+        description: "Retrieve a specific event by its ID.",
+      },
+      async (uri, variables, _extra) => {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              text: JSON.stringify(await this.getEvent(variables.id as string)),
+            },
+          ],
+        };
+      },
+    );
   }
 }

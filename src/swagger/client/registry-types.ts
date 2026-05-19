@@ -115,6 +115,12 @@ export const StandardizeApiParamsSchema = z.object({
     .describe("API owner (organization or user, case-sensitive)"),
   api: z.string().describe("API name (case-sensitive)"),
   version: z.string().describe("Version identifier"),
+  newVersion: z
+    .string()
+    .optional()
+    .describe(
+      "The version to save the fixed definition as (e.g. '1.0.1'). Omitting this will overwrite the current version — prefer providing a patch bump (e.g. '1.0.0' → '1.0.1') unless the user specifies otherwise.",
+    ),
 });
 
 // Registry API types for SwaggerHub Design functionality - generated from Zod schemas
@@ -201,6 +207,7 @@ export interface StandardizeApiResponse {
   message: string;
   errorsFound: number;
   fixedDefinition?: string;
+  savedVersion?: string;
   errors?: Array<{
     description: string;
     line?: number;

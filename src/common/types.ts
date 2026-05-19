@@ -17,7 +17,6 @@ import type { SmartBearMcpServer } from "./server";
 export interface ToolParams {
   title: string;
   summary: string;
-  parameters?: Parameters; // either 'parameters' or an 'inputSchema' should be present
   inputSchema?: ZodType;
   /**
    * Specifies the type of object returned by the tool. <br>
@@ -43,13 +42,15 @@ export interface ToolParams {
 }
 
 export interface PromptParams {
-  name: string;
-  callback: any;
-  params: {
-    description?: string;
-    argsSchema?: ZodRawShape;
-    title?: string;
-  };
+  title: string;
+  description?: string;
+  argsSchema?: ZodType;
+}
+
+export interface ResourceParams {
+  title: string;
+  description?: string;
+  path: string;
 }
 
 export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
@@ -58,18 +59,12 @@ export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
 ) => RegisteredTool;
 
 export type RegisterResourceFunction = (
-  name: string,
-  path: string,
+  params: ResourceParams,
   cb: ReadResourceTemplateCallback,
 ) => RegisteredResourceTemplate;
 
 export type RegisterPromptFunction = <Args extends ZodRawShape>(
-  name: string,
-  config: {
-    title?: string;
-    description?: string;
-    argsSchema?: Args;
-  },
+  params: PromptParams,
   cb: PromptCallback<Args>,
 ) => RegisteredPrompt;
 
@@ -78,20 +73,11 @@ export type GetInputFunction = (
   options?: RequestOptions,
 ) => Promise<ElicitResult>;
 
-export type Parameters = Array<{
-  name: string;
-  type: ZodType;
-  required: boolean;
-  description?: string;
-  examples?: string[];
-  constraints?: string[];
-}>;
-
 export interface Client {
-  /** Human-readable name for the client - usually the product name - used to prefix tool names */
+  /** Human-readable name for the client - usually the product name */
   name: string;
-  /** Prefix for tool IDs */
-  toolPrefix: string;
+  /** Prefix for tool, resource and prompt naming */
+  capabilityPrefix: string;
   /** Prefix for configuration (environment variables and http headers) */
   configPrefix: string;
   /**
@@ -111,7 +97,12 @@ export interface Client {
     register: RegisterToolsFunction,
     getInput: GetInputFunction,
   ): Promise<void>;
-  registerResources?(register: RegisterResourceFunction): void;
-  registerPrompts?(register: RegisterPromptFunction): void;
+  registerResources?(register: RegisterResourceFunction): Promise<void>;
+  registerPrompts?(register: RegisterPromptFunction): Promise<void>;
+  /**
+   * Optional method to retrieve the authentication token for the current request context.
+   * This is used for request-level authentication where the token might change per request.
+   */
+  getAuthToken?(): string | null;
   cleanupSession?(mcpSessionId: string): Promise<void>;
 }

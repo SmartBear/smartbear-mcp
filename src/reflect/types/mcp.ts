@@ -28,6 +28,7 @@ export interface MCPDeleteStepMessage {
 
 export interface MCPGetScreenshotMessage {
   type: "mcp:get-screenshot";
+  format: "png" | "jpeg";
   id: string;
 }
 

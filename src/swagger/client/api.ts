@@ -83,11 +83,15 @@ function hasErrorsFound(
 
 export class SwaggerAPI {
   private config: SwaggerConfiguration;
-  private headers: Record<string, string>;
+  private userAgent: string;
 
   constructor(config: SwaggerConfiguration, userAgent: string) {
     this.config = config;
-    this.headers = config.getHeaders(userAgent);
+    this.userAgent = userAgent;
+  }
+
+  private get headers(): Record<string, string> {
+    return this.config.getHeaders(this.userAgent);
   }
 
   /**
@@ -114,9 +118,12 @@ export class SwaggerAPI {
       return defaultReturn;
     }
 
-    // Check if response is JSON
+    // Check if response is JSON (including application/problem+json)
     const contentType = response.headers.get("content-type");
-    if (contentType?.includes("application/json")) {
+    if (
+      contentType?.includes("application/json") ||
+      contentType?.includes("application/problem+json")
+    ) {
       try {
         return (await response.json()) as T;
       } catch (error) {
@@ -154,7 +161,22 @@ export class SwaggerAPI {
     defaultReturn: T | Record<string, never> = {} as T,
   ): Promise<T | FallbackResponse> {
     if (!response.ok) {
-      throw new ToolError(`HTTP ${response.status}: ${response.statusText}`);
+      const errorBody = await this.parseResponse<Record<string, unknown>>(
+        response,
+        {},
+      );
+      const detail =
+        (typeof errorBody === "object" &&
+          errorBody !== null &&
+          String(
+            (errorBody as Record<string, unknown>).detail ??
+              (errorBody as Record<string, unknown>).message ??
+              "",
+          )) ||
+        response.statusText;
+      throw new ToolError(
+        `HTTP ${response.status}${detail ? `: ${detail}` : ""}`,
+      );
     }
 
     return this.parseResponse<T, T | Record<string, never>>(
@@ -864,23 +886,25 @@ export class SwaggerAPI {
 
   /**
    * Standardize and fix an API definition using AI
-   * @param params Parameters including owner, API name, and version
+   * @param params Parameters including owner, API name, version, and optional newVersion
    * @returns Standardization response with status and fixed definition
    */
   async standardizeApi(
     params: StandardizeApiParams,
   ): Promise<StandardizeApiResponse> {
+    const searchParams = new URLSearchParams();
+    if (params.newVersion) searchParams.set("newVersion", params.newVersion);
+    const queryString = searchParams.toString();
     const url = `${this.config.registryBasePath}/apis/${encodeURIComponent(
       params.owner,
     )}/${encodeURIComponent(params.api)}/${encodeURIComponent(
       params.version,
-    )}/standardize`;
+    )}/standardize${queryString ? `?${queryString}` : ""}`;
 
     const response = await fetch(url, {
       method: "POST",
       headers: this.headers,
     });
-
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       throw new ToolError(

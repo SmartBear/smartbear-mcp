@@ -7,23 +7,12 @@ import type {
   ToolAnnotations,
 } from "@modelcontextprotocol/sdk/types.js";
 import {
-  ZodAny,
-  ZodArray,
-  ZodBoolean,
-  ZodDefault,
-  ZodEnum,
   ZodIntersection,
-  ZodLiteral,
-  ZodNumber,
   ZodObject,
-  ZodOptional,
   type ZodRawShape,
-  ZodRecord,
-  ZodString,
   type ZodType,
-  ZodUnion,
 } from "zod";
-import Bugsnag from "../common/bugsnag";
+import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import { CacheService } from "./cache";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import {
@@ -32,7 +21,12 @@ import {
 } from "./pollyfills";
 import { ToolError } from "./tools";
 import type { Client, ToolParams } from "./types";
-import { unwrapZodType } from "./zod-utils";
+import {
+  getDefaultValue,
+  getReadableTypeName,
+  getTypeDescription,
+  isOptionalType,
+} from "./zod-utils";
 
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
@@ -47,20 +41,11 @@ export class SmartBearMcpServer extends McpServer {
         version: MCP_SERVER_VERSION,
       },
       {
-        instructions: `When creating or editing a Reflect test using a connected recording session, follow these guidelines:
-
-1. After connecting to a session, get the list of segments for the session's platform type so you know what actions could be added via segments vs needing to create new steps. Do not list tests, only list segments.
-2. Before performing an action, take a screenshot to understand the current state of the application.
-3. Each add_prompt_step request should perform a single action or assertion. Do not combine multiple actions or assertions into a single step.
-4. Only perform one action at a time unless you're sure the action won't move the application to a different screen. For example, you can send multiple add_prompt_step requests to fill out individual form fields if those fields are visible on the current screen.
-5. Check the list of existing Segments to see if a Segment exists that achieves a similar goal to what you're trying to do next. If so, add the segment instead of creating new steps.
-6. If a step fails, use delete_previous_step to remove it and try a different approach.
-7. After completing a task, if the task required multiple prompt steps, add a final prompt step that validates the current state of the page based on what you see on the screen. In your validation, do not reference information that can change from run to run.`,
         capabilities: {
-          resources: { listChanged: true }, // Server supports dynamic resource lists
           tools: { listChanged: true }, // Server supports dynamic tool lists
+          resources: { listChanged: true }, // Server supports dynamic resource lists
+          prompts: { listChanged: true }, // Server supports sending prompts to Host
           logging: {}, // Server supports logging messages
-          prompts: {}, // Server supports sending prompts to Host
         },
       },
     );
@@ -87,6 +72,10 @@ export class SmartBearMcpServer extends McpServer {
     return this.elicitationSupported;
   }
 
+  getClients(): Client[] {
+    return this.clients;
+  }
+
   async cleanupSession(mcpSessionId: string): Promise<void> {
     for (const client of this.clients) {
       await client.cleanupSession?.(mcpSessionId);
@@ -97,15 +86,22 @@ export class SmartBearMcpServer extends McpServer {
     this.clients.push(client);
     await client.registerTools(
       (params, cb) => {
-        const toolName = `${client.toolPrefix}_${params.title.replace(/\s+/g, "_").toLowerCase()}`;
-        const toolTitle = `${client.name}: ${params.title}`;
+        const toolName = this.getCapabilityName(client, params.title);
+        const toolTitle = this.getCapabilityTitle(client, params.title);
+        if (toolName.length > 64) {
+          throw new ToolError(
+            `The tool name "${toolName}" is too long. Tool names must be 64 characters or fewer for client compatibility. https://github.com/anthropics/claude-code/issues/34960`,
+          );
+        }
         return super.registerTool(
           toolName,
           {
             title: toolTitle,
             description: this.getDescription(params),
-            inputSchema: this.getInputSchema(params),
-            outputSchema: this.getOutputSchema(params),
+            inputSchema: params.inputSchema
+              ? this.schemaToRawShape(params.inputSchema)
+              : {},
+            outputSchema: this.schemaToRawShape(params.outputSchema),
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {
@@ -134,16 +130,10 @@ export class SmartBearMcpServer extends McpServer {
                   ],
                 };
               } else {
-                Bugsnag.notify(
-                  e as unknown as Error,
-                  (event: {
-                    addMetadata: (arg0: string, arg1: { tool: string }) => void;
-                    unhandled: boolean;
-                  }) => {
-                    event.addMetadata("app", { tool: toolName });
-                    event.unhandled = true;
-                  },
-                );
+                Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                  event.addMetadata("app", { tool: toolName });
+                  event.unhandled = true;
+                });
               }
               throw e;
             }
@@ -172,31 +162,30 @@ export class SmartBearMcpServer extends McpServer {
     );
 
     if (client.registerResources) {
-      client.registerResources((name, path, cb) => {
-        const url = `${client.toolPrefix}://${name}/${path}`;
+      await client.registerResources((params, cb) => {
+        const resourceName = this.getCapabilityName(client, params.title);
+        const slug = params.title.replace(/\s+/g, "_").toLowerCase();
+        const url = `${client.capabilityPrefix}://${slug}/${params.path}`;
         return super.registerResource(
-          name,
+          resourceName,
           new ResourceTemplate(url, {
             list: undefined,
           }),
-          {},
+          {
+            title: this.getCapabilityTitle(client, params.title),
+            description: params.description,
+          },
           async (url: any, variables: any, extra: any) => {
             try {
               return await cb(url, variables, extra);
             } catch (e) {
-              Bugsnag.notify(
-                e as unknown as Error,
-                (event: {
-                  addMetadata: (
-                    arg0: string,
-                    arg1: { resource: string; url: any },
-                  ) => void;
-                  unhandled: boolean;
-                }) => {
-                  event.addMetadata("app", { resource: name, url: url });
-                  event.unhandled = true;
-                },
-              );
+              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                event.addMetadata("app", {
+                  resource: resourceName,
+                  url: url,
+                });
+                event.unhandled = true;
+              });
               throw e;
             }
           },
@@ -205,8 +194,28 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     if (client.registerPrompts) {
-      client.registerPrompts((name, config, cb) => {
-        return super.registerPrompt(name, config, cb);
+      await client.registerPrompts((params, cb) => {
+        return super.registerPrompt(
+          this.getCapabilityName(client, params.title),
+          {
+            title: this.getCapabilityTitle(client, params.title),
+            description: params.description,
+            argsSchema: this.schemaToRawShape(params.argsSchema) || {},
+          },
+          async (args: any, extra: any) => {
+            try {
+              return await cb(args, extra);
+            } catch (e) {
+              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                event.addMetadata("app", {
+                  prompt: this.getCapabilityName(client, params.title),
+                });
+                event.unhandled = true;
+              });
+              throw e;
+            }
+          },
+        );
       });
     }
   }
@@ -247,21 +256,6 @@ export class SmartBearMcpServer extends McpServer {
     return annotations;
   }
 
-  private getInputSchema(params: ToolParams): any {
-    const args: Record<string, ZodType> = {};
-    for (const param of params.parameters ?? []) {
-      args[param.name] = param.type;
-      if (param.description) {
-        args[param.name] = args[param.name].describe(param.description);
-      }
-      if (!param.required) {
-        args[param.name] = args[param.name].optional();
-      }
-    }
-
-    return { ...args, ...this.schemaToRawShape(params.inputSchema) };
-  }
-
   private schemaToRawShape(
     schema: ZodType | undefined,
   ): ZodRawShape | undefined {
@@ -282,8 +276,12 @@ export class SmartBearMcpServer extends McpServer {
     return undefined;
   }
 
-  private getOutputSchema(params: ToolParams): any {
-    return this.schemaToRawShape(params.outputSchema);
+  private getCapabilityTitle(client: Client, title: string): string {
+    return `${client.name}: ${title}`;
+  }
+
+  private getCapabilityName(client: Client, title: string): string {
+    return `${client.capabilityPrefix}_${title.replace(/\s+/g, "_").toLowerCase()}`;
   }
 
   private getDescription(params: ToolParams): string {
@@ -291,7 +289,6 @@ export class SmartBearMcpServer extends McpServer {
       summary,
       useCases,
       examples,
-      parameters,
       inputSchema,
       hints,
       outputDescription,
@@ -299,26 +296,24 @@ export class SmartBearMcpServer extends McpServer {
 
     let description = summary;
 
-    // Parameters if available otherwise use inputSchema
-    if ((parameters ?? []).length > 0) {
-      description += `\n\n**Parameters:**\n${parameters
-        ?.map(
-          (p) =>
-            `- ${p.name} (${this.getReadableTypeName(p.type)})${p.required ? " *required*" : ""}` +
-            `${p.description ? `: ${p.description}` : ""}` +
-            `${p.examples ? ` (e.g. ${p.examples.join(", ")})` : ""}` +
-            `${p.constraints ? `\n  - ${p.constraints.join("\n  - ")}` : ""}`,
-        )
-        .join("\n")}`;
-    }
-
     if (inputSchema && inputSchema instanceof ZodObject) {
-      description += "\n\n**Parameters:**\n";
-      description += Object.keys(inputSchema.shape)
-        .map((key) =>
-          this.formatParameterDescription(key, inputSchema.shape[key]),
-        )
+      let parameters = Object.keys(inputSchema.shape)
+        .map((key) => {
+          const field = inputSchema.shape[key];
+          const description = getTypeDescription(field);
+          const defaultValue = getDefaultValue(field);
+          return (
+            `- ${key} (${getReadableTypeName(field)})` +
+            `${isOptionalType(field) ? "" : " *required*"}` +
+            `${description ? `: ${description}` : ""}` +
+            `${defaultValue !== null ? ` (default: ${JSON.stringify(defaultValue)})` : ""}`
+          );
+        })
         .join("\n");
+      if (parameters.length === 0) {
+        parameters = "None";
+      }
+      description += `\n\n**Parameters:**\n${parameters}`;
     }
 
     if (outputDescription) {
@@ -348,62 +343,5 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     return description.trim();
-  }
-
-  private formatParameterDescription(
-    key: string,
-    field: ZodType,
-    description: string | null = null,
-    isOptional = false,
-    defaultValue: string | null = null,
-  ): string {
-    description = description ?? (field.description || null);
-    if (field instanceof ZodOptional) {
-      field = (field as ZodOptional<ZodType>).unwrap();
-      return this.formatParameterDescription(
-        key,
-        field,
-        description,
-        true,
-        defaultValue,
-      );
-    }
-    if (field instanceof ZodDefault) {
-      defaultValue = JSON.stringify(
-        (field as ZodDefault<ZodType>).def.defaultValue,
-      );
-      field = (field as ZodDefault<ZodType>).unwrap();
-      return this.formatParameterDescription(
-        key,
-        field,
-        description,
-        true,
-        defaultValue,
-      );
-    }
-    return (
-      `- ${key} (${this.getReadableTypeName(field)})` +
-      `${isOptional ? "" : " *required*"}` +
-      `${description ? `: ${description}` : ""}` +
-      `${defaultValue ? ` (default: ${defaultValue})` : ""}`
-    );
-  }
-
-  private getReadableTypeName(zodType: ZodType): string {
-    zodType = unwrapZodType(zodType);
-    if (zodType instanceof ZodRecord) {
-      const record = zodType as ZodRecord;
-      return `record<${this.getReadableTypeName(record.def.keyType as ZodType)}, ${this.getReadableTypeName(record.def.valueType as ZodType)}>`;
-    }
-    if (zodType instanceof ZodString) return "string";
-    if (zodType instanceof ZodNumber) return "number";
-    if (zodType instanceof ZodBoolean) return "boolean";
-    if (zodType instanceof ZodArray) return "array";
-    if (zodType instanceof ZodObject) return "object";
-    if (zodType instanceof ZodEnum) return "enum";
-    if (zodType instanceof ZodLiteral) return "literal";
-    if (zodType instanceof ZodUnion) return "union";
-    if (zodType instanceof ZodAny) return "any";
-    return "any";
   }
 }

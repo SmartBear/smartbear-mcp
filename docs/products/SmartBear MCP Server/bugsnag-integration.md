@@ -25,6 +25,11 @@ If you wish to interact with only one BugSnag project, we also recommend setting
   -   Link to the error on the dashboard.
 -   This tool also takes filter parameters in the same format as List Errors to specialize the results returned in the summaries/pivots.
 
+### Get Events on an Error
+
+-   Retrieves a list of events (occurrences) for a specified error, with complete details for each event.
+-   This tool also takes filter parameters in the same format as List Errors to filter the events returned.
+
 ### Get Event Details
 
 -   Retrieve event (occurrence) details of a specific event by ID.
