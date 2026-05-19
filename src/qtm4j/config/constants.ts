@@ -59,6 +59,9 @@ export const ENDPOINTS = {
 
   /** Automation: poll import progress by trackingId */
   AUTOMATION_IMPORT_TRACK: "/rest/api/automation/importresult/track",
+
+  /** Automation: paginated history of past automation result uploads */
+  AUTOMATION_HISTORY: "/rest/api/automation/importresult/history",
 } as const;
 
 /**
@@ -220,6 +223,13 @@ export const TOOL_NAMES = {
     TITLE: "Upload Automation Result",
     SUMMARY:
       "Upload an automation result file to QTM4J and map the results to a test cycle. Supports JUnit XML, TestNG XML, Cucumber JSON, QAF, HP UFT, and SpecFlow formats.",
+  },
+
+  /** Get Automation History tool */
+  GET_AUTOMATION_HISTORY: {
+    TITLE: "Get Automation History",
+    SUMMARY:
+      "Retrieve a paginated history of past automation result uploads for a QTM4J project. Supports filtering by test cycle, source label, date range, uploader, and status.",
   },
 } as const;
 
@@ -383,6 +393,12 @@ export const SCHEMA_DESCRIPTIONS = {
   /** fields object */
   AUTOMATION_FIELDS:
     "Additional fields to set on the test cycle, test case, and/or test case execution created during import.",
+
+  /** getAutomationHistory — pagination */
+  AUTOMATION_HISTORY_START_AT:
+    "Zero-indexed starting position for pagination (default: 0).",
+  AUTOMATION_HISTORY_MAX_RESULTS:
+    "Maximum number of records to return per page (default: 20, max: 100).",
 } as const;
 
 /**

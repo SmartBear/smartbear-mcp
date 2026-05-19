@@ -104,3 +104,61 @@ export const UploadAutomationResultResponse = zod.object({
 export type UploadAutomationResultResponseType = zod.infer<
   typeof UploadAutomationResultResponse
 >;
+
+/** Input schema for the getAutomationHistory tool */
+export const GetAutomationHistoryBody = zod.object({
+  startAt: zod
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .default(0)
+    .describe(SCHEMA_DESCRIPTIONS.AUTOMATION_HISTORY_START_AT),
+  maxResults: zod
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .default(20)
+    .describe(SCHEMA_DESCRIPTIONS.AUTOMATION_HISTORY_MAX_RESULTS),
+});
+
+export type GetAutomationHistoryBodyType = zod.infer<typeof GetAutomationHistoryBody>;
+
+/** Summary entry within a history record */
+const AutomationHistorySummary = zod.object({
+  testCycle: zod.string().nullable().optional(),
+  testCasesCreated: zod.number().nullable().optional(),
+  testCaseVersionsCreated: zod.number().nullable().optional(),
+  testCaseVersionsReused: zod.number().nullable().optional(),
+  testStepsCreated: zod.number().nullable().optional(),
+  testCycleIssueKey: zod.string().nullable().optional(),
+  testCycleSummary: zod.string().nullable().optional(),
+});
+
+/** A single automation history record */
+export const AutomationHistoryRecord = zod.object({
+  trackingId: zod.string().nullable().optional(),
+  fileName: zod.string().nullable().optional(),
+  format: zod.string().nullable().optional(),
+  processStatus: zod.string().nullable().optional(),
+  importStatus: zod.string().nullable().optional(),
+  startTime: zod.string().nullable().optional(),
+  endTime: zod.string().nullable().optional(),
+  fileSize: zod.number().nullable().optional(),
+  detailedMessage: zod.string().nullable().optional(),
+  extraAttributes: zod.record(zod.string(), zod.any()).nullable().optional(),
+  childFileSummaryResponses: zod.array(zod.any()).nullable().optional(),
+  summary: zod.array(AutomationHistorySummary).nullable().optional(),
+});
+
+/** Response schema for the getAutomationHistory tool */
+export const GetAutomationHistoryResponse = zod.object({
+  startAt: zod.number().nullable().optional(),
+  maxResults: zod.number().nullable().optional(),
+  total: zod.number().nullable().optional(),
+  data: zod.array(AutomationHistoryRecord).nullable().optional(),
+});
+
+export type GetAutomationHistoryResponseType = zod.infer<typeof GetAutomationHistoryResponse>;

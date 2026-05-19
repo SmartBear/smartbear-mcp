@@ -198,6 +198,9 @@ export class Qtm4jClient implements Client {
     const { UploadAutomationResult } = await import(
       "./tool/test-automation/upload-automation-result"
     );
+    const { GetAutomationHistory } = await import(
+      "./tool/test-automation/get-automation-history"
+    );
 
     const tools = [
       new GetProjects(this),
@@ -207,6 +210,7 @@ export class Qtm4jClient implements Client {
       new GetTestSteps(this),
       new UpdateTestCase(this),
       new UploadAutomationResult(this),
+      new GetAutomationHistory(this),
     ];
 
     // Register each tool with the MCP server

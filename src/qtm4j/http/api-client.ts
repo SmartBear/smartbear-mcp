@@ -135,6 +135,24 @@ export class ApiClient {
   }
 
   /**
+   * Perform GET request using the automation API key (QTM4J_AUTOMATION_API_KEY).
+   * Used for automation endpoints that require the automation key instead of the regular API key.
+   * @param endpoint - API endpoint path
+   * @param params - Optional query parameters
+   * @returns Parsed response data
+   */
+  async getAutomation(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<any> {
+    const response = await fetch(this.getUrl(endpoint, params), {
+      method: HTTP_METHODS.GET,
+      headers: this.getAutomationHeaders(),
+    });
+    return await this.validateAndGetResponseBody(response);
+  }
+
+  /**
    * Perform POST request using the automation API key (QTM4J_AUTOMATION_API_KEY).
    * Used for automation import endpoints — same apiKey header as all other APIs,
    * but the value is the automation key instead of the regular API key.
