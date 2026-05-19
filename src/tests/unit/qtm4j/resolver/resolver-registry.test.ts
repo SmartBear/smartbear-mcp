@@ -11,6 +11,23 @@ vi.mock("../../../../qtm4j/resolver/resolvers/label-resolver");
 vi.mock("../../../../qtm4j/resolver/resolvers/component-resolver");
 vi.mock("../../../../qtm4j/resolver/resolvers/test-case-uid-resolver");
 
+function makeMockCacheService() {
+  const store = new Map<string, unknown>();
+  return {
+    get: <T>(key: string): T | undefined => store.get(key) as T | undefined,
+    set: <T>(key: string, value: T): boolean => {
+      store.set(key, value);
+      return true;
+    },
+    del: (key: string): number => {
+      store.delete(key);
+      return 1;
+    },
+    isEnabled: () => true,
+    flushAll: () => {},
+  };
+}
+
 describe("ResolverRegistry", () => {
   let mockApiClient: any;
   let registry: ResolverRegistry;
@@ -57,14 +74,26 @@ describe("ResolverRegistry", () => {
       () => mockTestCaseUidResolver,
     );
 
-    registry = new ResolverRegistry(mockApiClient);
+    registry = new ResolverRegistry(
+      mockApiClient,
+      makeMockCacheService() as any,
+    );
   });
 
   describe("constructor", () => {
     it("should create all resolver instances", () => {
-      expect(CommonAttributeResolver).toHaveBeenCalledWith(mockApiClient);
-      expect(LabelResolver).toHaveBeenCalledWith(mockApiClient);
-      expect(ComponentResolver).toHaveBeenCalledWith(mockApiClient);
+      expect(CommonAttributeResolver).toHaveBeenCalledWith(
+        mockApiClient,
+        expect.any(Object),
+      );
+      expect(LabelResolver).toHaveBeenCalledWith(
+        mockApiClient,
+        expect.any(Object),
+      );
+      expect(ComponentResolver).toHaveBeenCalledWith(
+        mockApiClient,
+        expect.any(Object),
+      );
       expect(TestCaseUidResolver).toHaveBeenCalledWith(mockApiClient);
     });
   });

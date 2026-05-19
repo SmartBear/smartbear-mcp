@@ -10,6 +10,23 @@ import { LabelResolver } from "../../../../qtm4j/resolver/resolvers/label-resolv
 
 vi.mock("../../../../qtm4j/resolver/cache/cache");
 
+function makeMockCacheService() {
+  const store = new Map<string, unknown>();
+  return {
+    get: <T>(key: string): T | undefined => store.get(key) as T | undefined,
+    set: <T>(key: string, value: T): boolean => {
+      store.set(key, value);
+      return true;
+    },
+    del: (key: string): number => {
+      store.delete(key);
+      return 1;
+    },
+    isEnabled: () => true,
+    flushAll: () => {},
+  };
+}
+
 describe("LabelResolver", () => {
   let mockApiClient: any;
   let resolver: LabelResolver;
@@ -28,7 +45,7 @@ describe("LabelResolver", () => {
 
     vi.mocked(Cache).mockImplementation(() => mockCache);
 
-    resolver = new LabelResolver(mockApiClient);
+    resolver = new LabelResolver(mockApiClient, makeMockCacheService() as any);
   });
 
   describe("fieldKeys", () => {

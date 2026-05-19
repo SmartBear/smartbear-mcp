@@ -1,11 +1,26 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { Cache } from "../../../../qtm4j/resolver/cache/cache";
 
+function makeMockCacheService() {
+  const store = new Map<string, unknown>();
+  return {
+    get: <T>(key: string): T | undefined => store.get(key) as T | undefined,
+    set: <T>(key: string, value: T): boolean => {
+      store.set(key, value);
+      return true;
+    },
+    del: (key: string): number => {
+      store.delete(key);
+      return 1;
+    },
+  };
+}
+
 describe("Cache", () => {
   let cache: Cache;
 
   beforeEach(() => {
-    cache = new Cache();
+    cache = new Cache(makeMockCacheService() as any);
   });
 
   describe("get", () => {
