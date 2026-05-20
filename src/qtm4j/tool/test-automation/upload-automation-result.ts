@@ -77,7 +77,7 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     ],
     hints: [
       "NO PROJECT CONTEXT REQUIRED: Do NOT call set_project_context and do NOT ask the user for a project key, project ID, or any other project details. This tool works independently — never prompt the user for project information.",
-      `FILE DISCOVERY: If the user does not provide a file path, search these directories in order: ${AUTOMATION_RESULT_DIRS.join(", ")}. If multiple files are found, present the list and ask the user to choose. If nothing is found, ask the user to provide the path. NEVER pick a file silently.`,
+      `FILE DISCOVERY: ALWAYS perform a fresh directory scan every time this tool is called — never reuse a file path discovered in an earlier turn. If the user does not provide a file path, search these directories in order: ${AUTOMATION_RESULT_DIRS.join(", ")}. If multiple files are found, you MUST list ALL of them and STOP — do NOT pick one, do NOT upload anything until the user explicitly selects a file. If nothing is found, ask the user to provide the path. NEVER pick a file silently.`,
       "FORMAT INFERENCE: .json → cucumber, .zip → qaf (unambiguous). For .xml, infer from the file name — 'junit'/'surefire' → junit, 'testng' → testng, 'specflow' → specflow, 'hpuft'/'uft' → hpuft. If the file name gives no clear signal, ask the user to confirm the format.",
       "TEST CYCLE: Only ask for testCycleToReuse if the user explicitly wants to link to an existing cycle. If not mentioned, omit it — QTM4J creates a new test cycle automatically.",
       "QAF format requires isZip: true and a .zip file.",
