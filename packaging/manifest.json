@@ -7,7 +7,8 @@
   "documentation": "https://developer.smartbear.com/smartbear-mcp",
   "author": {
     "name": "SmartBear Software",
-    "url": "https://smartbear.com"
+    "url": "https://github.com/SmartBear",
+    "email": "support@smartbear.com"
   },
   "privacy_policies": ["https://smartbear.com/privacy/"],
   "support": "https://support.smartbear.com/",

@@ -383,7 +383,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Consumer Contract by Consumer Version",
+    title: "Get BDCT Consumer by Consumer Version",
     summary:
       "Fetch the consumer Pact contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -393,7 +393,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Provider Contract by Consumer Version",
+    title: "Get BDCT Provider by Consumer Version",
     summary:
       "Fetch the provider OpenAPI contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -403,8 +403,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title:
-      "Get BDCT Provider Contract Verification Results by Consumer Version",
+    title: "Get BDCT Provider Check Results by Consumer",
     summary:
       "Fetch the provider contract self-verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -414,8 +413,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title:
-      "Get BDCT Consumer Contract Verification Results by Consumer Version",
+    title: "Get BDCT Consumer Pact Test Results by Consumer",
     summary:
       "Fetch the consumer contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -425,7 +423,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Cross-Contract Verification Results by Consumer Version",
+    title: "Get BDCT X-Contract Test Results by Consumer",
     summary:
       "Fetch the cross-contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
