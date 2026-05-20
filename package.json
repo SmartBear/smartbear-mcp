@@ -9,7 +9,8 @@
     "reflect",
     "swagger",
     "pactflow",
-    "zephyr"
+    "zephyr",
+    "qtm4j"
   ],
   "homepage": "https://developer.smartbear.com/smartbear-mcp",
   "mcpName": "com.smartbear/smartbear-mcp",
