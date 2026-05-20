@@ -3243,6 +3243,22 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Update Webhook",
   },
+  "functional_testing_list_functional_testing_tests": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "SmartBear Functional Testing: List Functional Testing Tests",
+    },
+    "description": "List all SmartBear Functional Testing tests
+
+**Parameters:**
+None",
+    "inputSchema": [],
+    "outputSchema": undefined,
+    "title": "SmartBear Functional Testing: List Functional Testing Tests",
+  },
   "qmetry_bulk_update_test_case_execution_status": {
     "annotations": {
       "destructiveHint": false,

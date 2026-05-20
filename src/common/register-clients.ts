@@ -10,6 +10,7 @@
 
 import { BugsnagClient } from "../bugsnag/client";
 import { CollaboratorClient } from "../collaborator/client";
+import { FunctionalTestingClient } from "../functional-testing/client";
 import { PactflowClient } from "../pactflow/client";
 import { QmetryClient } from "../qmetry/client";
 import { ReflectClient } from "../reflect/client";
@@ -37,3 +38,6 @@ clientRegistry.register(new ZephyrClient());
 
 // Register Collaborator client
 clientRegistry.register(new CollaboratorClient());
+
+// Register SmartBear Functional Testing client
+clientRegistry.register(new FunctionalTestingClient());
