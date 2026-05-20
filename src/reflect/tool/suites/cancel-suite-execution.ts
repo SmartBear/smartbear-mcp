@@ -10,20 +10,14 @@ export class CancelSuiteExecution extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Cancel Suite Execution",
     summary: "Cancel a reflect suite execution",
-    parameters: [
-      {
-        name: "suiteId",
-        type: z.string(),
-        description: "ID of the reflect suite to cancel execution for",
-        required: true,
-      },
-      {
-        name: "executionId",
-        type: z.string(),
-        description: "ID of the reflect suite execution to cancel",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      suiteId: z
+        .string()
+        .describe("ID of the reflect suite to cancel execution for"),
+      executionId: z
+        .string()
+        .describe("ID of the reflect suite execution to cancel"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {

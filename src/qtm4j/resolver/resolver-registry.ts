@@ -1,3 +1,4 @@
+import type { CacheService } from "../../common/cache";
 import type { ProjectContext } from "../config/field-resolution.types";
 import type { ApiClient } from "../http/api-client";
 import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver";
@@ -15,11 +16,14 @@ export class ResolverRegistry {
   private readonly testCaseUidResolver: TestCaseUidResolver;
   private projectContext: ProjectContext | undefined;
 
-  constructor(apiClient: ApiClient) {
-    this.commonAttributes = new CommonAttributeResolver(apiClient);
+  constructor(apiClient: ApiClient, cacheService: CacheService) {
+    this.commonAttributes = new CommonAttributeResolver(
+      apiClient,
+      cacheService,
+    );
     this.testCaseUidResolver = new TestCaseUidResolver(apiClient);
-    const labelResolver = new LabelResolver(apiClient);
-    const componentResolver = new ComponentResolver(apiClient);
+    const labelResolver = new LabelResolver(apiClient, cacheService);
+    const componentResolver = new ComponentResolver(apiClient, cacheService);
 
     this.resolverByKey = new Map();
     for (const resolver of [

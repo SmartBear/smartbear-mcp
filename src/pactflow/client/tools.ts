@@ -114,14 +114,11 @@ export const TOOLS: PactflowToolParams[] = [
     summary: "Retrieve the states of a specific provider",
     purpose:
       "A provider state in Pact defines the specific preconditions that must be met on the provider side before a consumer-provider interaction can be tested. It sets up the provider in the right context—such as ensuring a particular user or record exists—so that the provider can return the response the consumer expects. This makes contract tests reliable, repeatable, and isolated by injecting or configuring the necessary data and conditions directly into the provider before each test runs.",
-    parameters: [
-      {
-        name: "provider",
-        type: z.string(),
-        description: "name of the provider to retrieve states for",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      provider: z
+        .string()
+        .describe("name of the provider to retrieve states for"),
+    }),
     handler: "getProviderStates",
     clients: ["pactflow", "pact_broker"],
   },
@@ -386,7 +383,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Consumer Contract by Consumer Version",
+    title: "Get BDCT Consumer by Consumer Version",
     summary:
       "Fetch the consumer Pact contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -396,7 +393,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Provider Contract by Consumer Version",
+    title: "Get BDCT Provider by Consumer Version",
     summary:
       "Fetch the provider OpenAPI contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -406,8 +403,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title:
-      "Get BDCT Provider Contract Verification Results by Consumer Version",
+    title: "Get BDCT Provider Check Results by Consumer",
     summary:
       "Fetch the provider contract self-verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -417,8 +413,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title:
-      "Get BDCT Consumer Contract Verification Results by Consumer Version",
+    title: "Get BDCT Consumer Pact Test Results by Consumer",
     summary:
       "Fetch the consumer contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -428,7 +423,7 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Cross-Contract Verification Results by Consumer Version",
+    title: "Get BDCT X-Contract Test Results by Consumer",
     summary:
       "Fetch the cross-contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:

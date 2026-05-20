@@ -27,12 +27,10 @@ describe("DeletePreviousStep", () => {
     expect(instance.specification.readOnly).toBe(false);
     expect(instance.specification.idempotent).toBe(false);
     expect(instance.specification.destructive).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
   });
 
   it("should send delete-step message and return success", async () => {
-    const result = await instance.handle({ sessionId: "sess-1" }, {});
+    const result = await instance.handle({ sessionId: "sess-1" }, {} as any);
 
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -49,13 +47,13 @@ describe("DeletePreviousStep", () => {
     mockClient.getConnectedSession.mockImplementation(() => {
       throw new Error("not connected");
     });
-    await expect(instance.handle({ sessionId: "sess-1" }, {})).rejects.toThrow(
-      "not connected",
-    );
+    await expect(
+      instance.handle({ sessionId: "sess-1" }, {} as any),
+    ).rejects.toThrow("not connected");
   });
 
   it("should throw ToolError if sessionId is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow(
+    await expect(instance.handle({}, {} as any)).rejects.toThrow(
       "sessionId argument is required",
     );
   });

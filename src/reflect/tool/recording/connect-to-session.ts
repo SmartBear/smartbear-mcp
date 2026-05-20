@@ -22,14 +22,11 @@ export class ConnectToSession extends Tool<ReflectClient> {
 7. After completing a task, if the task required multiple prompt steps, add a final prompt step that validates the current state of the page based on what you see on the screen. In your validation, do not reference information that can change from run to run.`,
     readOnly: false,
     idempotent: true,
-    parameters: [
-      {
-        name: "sessionId",
-        type: z.string(),
-        description: "The ID of the Reflect recording session to connect to",
-        required: true,
-      },
-    ],
+    inputSchema: z.object({
+      sessionId: z
+        .string()
+        .describe("The ID of the Reflect recording session to connect to"),
+    }),
   };
 
   handle: ToolCallback<ZodRawShape> = async (args, extra) => {
@@ -52,7 +49,7 @@ export class ConnectToSession extends Tool<ReflectClient> {
 
     const wsManager = new WebSocketManager(
       sessionId,
-      this.client.getApiToken(),
+      this.client.getAuthHeader(),
     );
 
     try {

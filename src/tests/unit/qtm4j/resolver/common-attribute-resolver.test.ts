@@ -10,6 +10,23 @@ import { CommonAttributeResolver } from "../../../../qtm4j/resolver/resolvers/co
 
 vi.mock("../../../../qtm4j/resolver/cache/cache");
 
+function makeMockCacheService() {
+  const store = new Map<string, unknown>();
+  return {
+    get: <T>(key: string): T | undefined => store.get(key) as T | undefined,
+    set: <T>(key: string, value: T): boolean => {
+      store.set(key, value);
+      return true;
+    },
+    del: (key: string): number => {
+      store.delete(key);
+      return 1;
+    },
+    isEnabled: () => true,
+    flushAll: () => {},
+  };
+}
+
 describe("CommonAttributeResolver", () => {
   let mockApiClient: any;
   let resolver: CommonAttributeResolver;
@@ -28,7 +45,10 @@ describe("CommonAttributeResolver", () => {
 
     vi.mocked(Cache).mockImplementation(() => mockCache);
 
-    resolver = new CommonAttributeResolver(mockApiClient);
+    resolver = new CommonAttributeResolver(
+      mockApiClient,
+      makeMockCacheService() as any,
+    );
   });
 
   describe("fieldKeys", () => {

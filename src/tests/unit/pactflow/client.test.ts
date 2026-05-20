@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import { PactflowClient } from "../../../pactflow/client";
-import { GenerationInputSchema } from "../../../pactflow/client/ai";
+import {
+  GenerationInputSchema,
+  type GenerationResponse,
+} from "../../../pactflow/client/ai";
 import * as toolsModule from "../../../pactflow/client/tools";
 
 const fetchMock = createFetchMock(vi);
@@ -626,9 +629,9 @@ describe("PactFlowClient", () => {
             headers: client.requestHeaders,
           },
         );
-        expect(result.organizationEntitlements.name).toBe("test-org");
-        expect(result.organizationEntitlements.aiCredits.total).toBe(1000);
-        expect(result.userEntitlements.aiPermissions).toContain("ai:generate");
+        expect(result?.organizationEntitlements.name).toBe("test-org");
+        expect(result?.organizationEntitlements.aiCredits.total).toBe(1000);
+        expect(result?.userEntitlements.aiPermissions).toContain("ai:generate");
       });
 
       it("should handle HTTP errors correctly", async () => {
@@ -653,7 +656,7 @@ describe("PactFlowClient", () => {
         result_url: "https://example.com/api/ai/result/123",
       };
 
-      const mockGenerationResponse = {
+      const mockGenerationResponse: GenerationResponse = {
         language: "javascript",
         code: "const { PactV3 } = require('@pact-foundation/pact');",
       };
@@ -680,8 +683,8 @@ describe("PactFlowClient", () => {
             body: JSON.stringify(mockGenerationInput),
           },
         );
-        expect(result.language).toBe("javascript");
-        expect(result.code).toBeDefined();
+        expect((result as GenerationResponse).language).toBe("javascript");
+        expect((result as GenerationResponse).code).toBeDefined();
       });
 
       it("should handle generation with OpenAPI document and matcher", async () => {
@@ -2934,7 +2937,10 @@ describe("PactFlowClient", () => {
         fetchMock.mockResponseOnce(JSON.stringify({ invited: 2 }));
 
         await client.inviteUsers({
-          users: [{ email: "a@example.com" }, { email: "b@example.com" }],
+          users: [
+            { name: "example_a", email: "a@example.com" },
+            { name: "example_b", email: "b@example.com" },
+          ],
         });
 
         expect(fetchMock).toHaveBeenCalledWith(
@@ -2943,7 +2949,10 @@ describe("PactFlowClient", () => {
             method: "POST",
             headers: client.requestHeaders,
             body: JSON.stringify({
-              users: [{ email: "a@example.com" }, { email: "b@example.com" }],
+              users: [
+                { name: "example_a", email: "a@example.com" },
+                { name: "example_b", email: "b@example.com" },
+              ],
             }),
           },
         );
@@ -2956,7 +2965,7 @@ describe("PactFlowClient", () => {
 
         await client.setUserRoles({
           userId: "user-uuid-1",
-          roles: [{ uuid: "role-uuid-1" }, { uuid: "role-uuid-2" }],
+          roles: ["role-uuid-1", "role-uuid-2"],
         });
 
         expect(fetchMock).toHaveBeenCalledWith(
@@ -2965,7 +2974,7 @@ describe("PactFlowClient", () => {
             method: "PUT",
             headers: client.requestHeaders,
             body: JSON.stringify({
-              roles: [{ uuid: "role-uuid-1" }, { uuid: "role-uuid-2" }],
+              roles: ["role-uuid-1", "role-uuid-2"],
             }),
           },
         );
@@ -3174,8 +3183,16 @@ describe("PactFlowClient", () => {
         fetchMock.mockResponseOnce(JSON.stringify({}));
 
         const operations = [
-          { op: "add", path: "/0", value: { uuid: "user-uuid-3" } },
-          { op: "remove", path: "/1" },
+          {
+            op: "add" as const,
+            path: "/users" as const,
+            value: { uuid: "user-uuid-1" },
+          },
+          {
+            op: "remove" as const,
+            path: "/users" as const,
+            value: { uuid: "user-uuid-2" },
+          },
         ];
         await client.patchTeamUsers({
           teamId: "team-uuid-1",
@@ -3254,7 +3271,7 @@ describe("PactFlowClient", () => {
 
         const result = await client.createAdminRole({
           name: "ReadOnly",
-          permissions: ["contract:read"],
+          permissions: [{ scope: "contract:read" }],
         });
 
         expect(fetchMock).toHaveBeenCalledWith(
@@ -3264,7 +3281,7 @@ describe("PactFlowClient", () => {
             headers: client.requestHeaders,
             body: JSON.stringify({
               name: "ReadOnly",
-              permissions: ["contract:read"],
+              permissions: [{ scope: "contract:read" }],
             }),
           },
         );
@@ -3279,7 +3296,11 @@ describe("PactFlowClient", () => {
         await client.updateAdminRole({
           roleId: "role-uuid-1",
           name: "Super Admin",
-          permissions: ["contract:read", "contract:write", "admin:users"],
+          permissions: [
+            { scope: "contract:read" },
+            { scope: "contract:write" },
+            { scope: "admin:users" },
+          ],
         });
 
         expect(fetchMock).toHaveBeenCalledWith(
@@ -3289,7 +3310,11 @@ describe("PactFlowClient", () => {
             headers: client.requestHeaders,
             body: JSON.stringify({
               name: "Super Admin",
-              permissions: ["contract:read", "contract:write", "admin:users"],
+              permissions: [
+                { scope: "contract:read" },
+                { scope: "contract:write" },
+                { scope: "admin:users" },
+              ],
             }),
           },
         );
@@ -3356,7 +3381,6 @@ describe("PactFlowClient", () => {
 
         const result = await client.createSystemAccount({
           name: "CI Bot",
-          description: "Automated CI system account",
         });
 
         expect(fetchMock).toHaveBeenCalledWith(
@@ -3366,7 +3390,6 @@ describe("PactFlowClient", () => {
             headers: client.requestHeaders,
             body: JSON.stringify({
               name: "CI Bot",
-              description: "Automated CI system account",
             }),
           },
         );

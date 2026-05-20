@@ -204,6 +204,87 @@ function portal_product_load_documentation_images() {
     log_message $DEBUG "Exit portal_product_load_documentation_images"
 }
 
+# Sets the global `replaced_content` with image attachment URLs substituted in.
+# Returns via a global rather than stdout so log_message output isn't captured into the page body.
+function replace_attachments_in_content() {
+    local content=$1
+    local type=$2
+
+    IFS=$'\n'
+    local attachments=($(jq -r '.[] | "\(.id)\t\(.name)"' <<< "$existing_attachments"))
+
+    for attachment in "${attachments[@]}"; do
+        IFS=$'\t' read -r attachment_id attachment_name <<< "$attachment"
+        log_message $DEBUG "Processing attachment: $attachment_id, $attachment_name"
+        local attachment_url="https://$PORTAL_SUBDOMAIN.portal.swaggerhub.com/services/api/attachments/$attachment_id"
+        local escaped_attachment_name=$(escape_sed "$attachment_name")
+        local escaped_attachment_url=$(escape_sed "$attachment_url")
+
+        if [[ "$type" == "html" ]]; then
+            content=$(sed -E "s#src=[\"']\.\/images\/embedded\/${escaped_attachment_name}[\"']#src=\"${attachment_url}\"#g" <<< "$content")
+        else
+            content=$(sed -E "s#\!\[$escaped_attachment_name\]\(\.\/images\/embedded\/$escaped_attachment_name\)#\!\[$escaped_attachment_name\]\($escaped_attachment_url\)#g" <<< "$content")
+        fi
+    done
+
+    replaced_content=$content
+}
+
+function process_content_item() {
+    local item=$1
+    local parent_toc_id=$2
+    local file=$3
+    local product_name=$4
+
+    product_toc_id=""
+
+    local type=$(echo "$item" | jq -r ".type")
+    local order=$(echo "$item" | jq -r ".order")
+    local parent=$(echo "$item" | jq -r ".parent")
+    local name=$(echo "$item" | jq -r ".name")
+    local slug=$(echo "$item" | jq -r ".slug")
+    local contentUrl=$(echo "$item" | jq -r ".contentUrl")
+
+    log_message $INFO "************** Processing content item **************"
+    log_message $INFO "Type: $type, Order: $order, Name: $name, Slug: $slug"
+    log_message $INFO "Parent slug: $parent, Parent TOC ID: $parent_toc_id"
+    log_message $INFO "ContentUrl: $contentUrl"
+    log_message $INFO "******************************************************"
+
+    if [ "${type,,}" == "apiurl" ]; then
+        portal_product_toc_api_reference_upsert "$name" "$slug" $order "$contentUrl" "$parent_toc_id"
+    else
+        portal_product_toc_markdown_upsert "$name" "$slug" $order "$parent_toc_id" "$type"
+        log_message $INFO "Document ID: $document_id"
+
+        local markdown_file="./docs/products/$product_name/$contentUrl"
+        if [ ! -f "$markdown_file" ]; then
+            log_message $ERROR "Markdown/html file not found: $markdown_file"
+            exit 1
+        fi
+
+        local markdownContent="$(cat "$markdown_file")"
+        replace_attachments_in_content "$markdownContent" "$type"
+        markdownContent=$replaced_content
+        log_message $DEBUG "Markdown/HTML Content: $markdownContent"
+        portal_product_document_markdown_patch "$markdownContent" "$type"
+    fi
+
+    local current_toc_id=$product_toc_id
+
+    local children=$(jq --arg parent "$slug" -c '[.contentMetadata[] | select(.parent == $parent)] | sort_by(.order)' "$file")
+    local children_length=$(jq 'length' <<< "$children")
+
+    if [ "$children_length" -gt 0 ]; then
+        log_message $INFO "Recursing into $children_length children of $slug ..."
+        local j
+        for ((j=0; j<children_length; j++)); do
+            local child=$(jq -c ".[$j]" <<< "$children")
+            process_content_item "$child" "$current_toc_id" "$file" "$product_name"
+        done
+    fi
+}
+
 function load_and_process_product_manifest_content_metadata() {
     log_message $DEBUG "Enter load_and_process_product_manifest_content_metadata"
     local file=$1
@@ -225,137 +306,14 @@ function load_and_process_product_manifest_content_metadata() {
         exit 1
     fi
 
-    local items=$(jq -c '[.contentMetadata[] | select(.parent == null or .parent == "")]' "$file")
+    local items=$(jq -c '[.contentMetadata[] | select(.parent == null or .parent == "")] | sort_by(.order)' "$file")
 
     portal_product_load_documentation_images "$product_name"
 
-    IFS=$'\n' # Change the Internal Field Separator to newline
-    for item in $(echo "${items}" | jq -c '.[]'); do
-        product_toc_id=""
-        parent_toc_id=""
-
-        log_message $DEBUG "Item: $item"
-        local type=$(echo "$item" | jq -r ".type")
-        local order=$(echo "$item" | jq -r ".order")
-        local parent=$(echo "$item" | jq -r ".parent")
-        local name=$(echo "$item" | jq -r ".name")
-        local slug=$(echo "$item" | jq -r ".slug")
-        local contentUrl=$(echo "$item" | jq -r ".contentUrl")
-
-        log_message $INFO "************** Processing root-level content item **************"
-        log_message $INFO "Type: $type"
-        log_message $INFO "Order: $order"
-        log_message $INFO "Parent: $parent"
-        log_message $INFO "Name: $name"
-        log_message $INFO "Slug: $slug"
-        log_message $INFO "ContentUrl: $contentUrl"
-        log_message $INFO "****************************************************************"
-
-        if [ "${type,,}" == "apiurl" ]; then
-            portal_product_toc_api_reference_upsert "$name" "$slug" $order "$contentUrl" "$product_toc_id" "$type"
-        else
-            portal_product_toc_markdown_upsert "$name" "$slug" $order "$product_toc_id" "$type"
-            log_message $INFO "Document ID: $document_id"
-
-            local markdown_file="./docs/products/$product_name/$contentUrl"
-            if [ ! -f "$markdown_file" ]; then
-                log_message $ERROR "Markdown/html file not found: $markdown_file"
-                exit 1
-            fi
-
-            local markdownContent="$(cat "$markdown_file")"
-
-            log_message $INFO "Checking for attachments to replace in markdown/html content..."
-            log_message $DEBUG "Existing attachments: $existing_attachments"
-            IFS=$'\n' # set the internal field separator to newline
-            attachments=($(jq -r '.[] | "\(.id)\t\(.name)"' <<< "$existing_attachments"))
-
-            for attachment in "${attachments[@]}"; do
-                IFS=$'\t' read -r attachment_id attachment_name <<< "$attachment"
-                log_message $DEBUG "Processing attachment: $attachment_id, $attachment_name"
-                attachment_url="https://$PORTAL_SUBDOMAIN.portal.swaggerhub.com/services/api/attachments/$attachment_id"
-
-                escaped_attachment_name=$(escape_sed "$attachment_name")
-                escaped_attachment_url=$(escape_sed "$attachment_url")
-
-                if [[ "$type" == "html" ]]; then
-                    # Replace image src in HTML fragments
-                    markdownContent=$(sed -E "s#src=[\"']\.\/images\/embedded\/${escaped_attachment_name}[\"']#src=\"${attachment_url}\"#g" <<< "$markdownContent")
-                else
-                    # Replace markdown image path
-                    markdownContent=$(sed -E "s#\!\[$escaped_attachment_name\]\(\.\/images\/embedded\/$escaped_attachment_name\)#\!\[$escaped_attachment_name\]\($escaped_attachment_url\)#g" <<< "$markdownContent")
-                fi
-            done
-
-            log_message $INFO "Attachment replacement done."
-            log_message $DEBUG "Markdown/HTML Content: $markdownContent"
-            portal_product_document_markdown_patch "$markdownContent" "$type"
-        fi
-
-        log_message $DEBUG "Setting parent_toc_id to $product_toc_id"
-        parent_toc_id=$product_toc_id
-
-        parent=$slug
-
-        local children=$(jq --arg parent "$parent" -c '[.contentMetadata[] | select(.parent == $parent)]' "$file")
-        local children_length=$(jq 'length' <<< "$children")
-        log_message $DEBUG "Children length: $children_length"
-
-        for ((j=0; j<$children_length; j++))
-        do
-            log_message $INFO "Processing nested content item $j of $children_length ..."
-            local child_type=$(jq -r ".[$j].type" <<< "$children")
-            local child_order=$(jq -r ".[$j].order" <<< "$children")
-            local child_name=$(jq -r ".[$j].name" <<< "$children")
-            local child_slug=$(jq -r ".[$j].slug" <<< "$children")
-            local child_contentUrl=$(jq -r ".[$j].contentUrl" <<< "$children")
-
-            if [ "$child_type" == "apiUrl" ]; then
-                log_message $DEBUG "Processing API reference for : $child_name, $child_slug, $child_order, $child_contentUrl, $parent_toc_id"
-                portal_product_toc_api_reference_upsert "$child_name" "$child_slug" $child_order "$child_contentUrl" "$parent_toc_id"
-            else
-                log_message $DEBUG "Processing markdown for : $child_name, $child_slug, $child_order, $parent_toc_id", "$child_type"
-                portal_product_toc_markdown_upsert "$child_name" "$child_slug" $child_order "$parent_toc_id" "$child_type"
-                log_message $INFO "Document ID for CHILD: $document_id"
-
-                local child_markdown_file="./docs/products/$product_name/$child_contentUrl"
-                if [ ! -f "$child_markdown_file" ]; then
-                    log_message $ERROR "Markdown file not found: $child_markdown_file"
-                    exit 1
-                fi
-
-                local markdownChildContent="$(cat "$child_markdown_file")"
-
-                log_message $INFO "Checking for attachments to replace in nested markdown/html content..."
-                log_message $DEBUG "Existing attachments: $existing_attachments"
-                IFS=$'\n' # set the internal field separator to newline
-
-                attachments=($(jq -r '.[] | "\(.id)\t\(.name)"' <<< "$existing_attachments"))
-
-                for attachment in "${attachments[@]}"; do
-                    IFS=$'\t' read -r attachment_id attachment_name <<< "$attachment"
-                    log_message $DEBUG "Processing attachment: $attachment_id, $attachment_name"
-                    attachment_url="https://$PORTAL_SUBDOMAIN.portal.swaggerhub.com/services/api/attachments/$attachment_id"
-
-                    escaped_attachment_name=$(escape_sed "$attachment_name")
-                    escaped_attachment_url=$(escape_sed "$attachment_url")
-
-                    if [[ "$child_type" == "html" ]]; then
-                        # Replace image src in HTML fragments
-                        markdownChildContent=$(sed -E "s#src=[\"']\.\/images\/embedded\/${escaped_attachment_name}[\"']#src=\"${attachment_url}\"#g" <<< "$markdownChildContent")
-                    else
-                        # Replace markdown image path
-                        markdownChildContent=$(sed -E "s#\!\[$escaped_attachment_name\]\(\.\/images\/embedded\/$escaped_attachment_name\)#\!\[$escaped_attachment_name\]\($escaped_attachment_url\)#g" <<< "$markdownChildContent")
-                    fi
-                done
-
-                log_message $INFO "Attachment replacement in nested content done."
-                log_message $INFO "Updating markdown/html content for $child_name"
-                log_message $DEBUG "Markdown Content: $markdownChildContent"
-                portal_product_document_markdown_patch "$markdownChildContent" "$child_type"
-            fi
-        done
-
+    local items_length=$(jq 'length' <<< "$items")
+    for ((i=0; i<items_length; i++)); do
+        local item=$(jq -c ".[$i]" <<< "$items")
+        process_content_item "$item" "" "$file" "$product_name"
     done
 
     log_message $INFO "Done processing contentMetadata from manifest for $product_name."
@@ -551,13 +509,8 @@ function portal_product_toc_get_id() {
         --header "Content-Type: application/json")
 
     if [ $(echo "$response" | jq '.items | length') -gt 0 ]; then
-        product_toc_id=$(echo "$response" | jq -r ".items[] | select(.title == \"$title\") | .id")
-        product_toc_slug=$(echo "$response" | jq -r ".items[] | select(.title == \"$title\") | .slug")
-
-        if [ -z "$product_toc_id" ] || [ "$product_toc_id" == "null" ]; then
-            product_toc_id=$(echo "$response" | jq -r ".items[] | .children[] | select(.title == \"$title\") | .id")
-            product_toc_slug=$(echo "$response" | jq -r ".items[] | .children[] | select(.title == \"$title\") | .slug")
-        fi
+        product_toc_id=$(echo "$response" | jq -r --arg title "$title" '[.. | objects | select(.title? == $title)] | .[0].id // ""')
+        product_toc_slug=$(echo "$response" | jq -r --arg title "$title" '[.. | objects | select(.title? == $title)] | .[0].slug // ""')
 
         log_message $DEBUG "Product TOC ID: $product_toc_id and Product TOC Slug: $product_toc_slug"
     else
@@ -787,11 +740,7 @@ function portal_product_toc_markdown_patch() {
         --header "Authorization: Bearer $SWAGGERHUB_API_KEY" \
         --header "Content-Type: application/json")
 
-    document_id=$(echo "$toc_response" | jq -r ".items[] | select(.title == \"$markdown_title\") | .content.documentId")
-
-    if [ -z "$document_id" ] || [ "$document_id" == "null" ]; then
-        document_id=$(echo "$toc_response" | jq -r ".items[] | .children[] | select(.title == \"$markdown_title\") | .content.documentId")
-    fi
+    document_id=$(echo "$toc_response" | jq -r --arg title "$markdown_title" '[.. | objects | select(.title? == $title)] | .[0].content.documentId // ""')
 
     log_message $DEBUG "PATCH Markdown TOC Response: $response"
     log_message $INFO "Done updating markdown TOC."

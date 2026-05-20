@@ -1,5 +1,6 @@
 import z from "zod";
 import { getRequestHeader } from "../common/request-context";
+import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
   GetInputFunction,
@@ -58,7 +59,7 @@ const ConfigurationSchema = z.object({
  */
 export class Qtm4jClient implements Client {
   name = CLIENT_CONFIG.NAME;
-  toolPrefix = CLIENT_CONFIG.TOOL_PREFIX;
+  capabilityPrefix = CLIENT_CONFIG.TOOL_PREFIX;
   configPrefix = CLIENT_CONFIG.CONFIG_PREFIX;
   config = ConfigurationSchema;
 
@@ -70,14 +71,12 @@ export class Qtm4jClient implements Client {
 
   /**
    * Configure the QTM4J client with API credentials
-   * @param _server - MCP Server instance (not used currently)
+   * @param server - MCP Server instance
    * @param config - Configuration object containing API key and optional base URL
-   * @param _cache - Cache service instance (not used currently)
    */
   async configure(
-    _server: any,
+    server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
     this._apiKey = config[CONFIG_KEYS.API_KEY];
     this._automationApiKey = config[CONFIG_KEYS.AUTOMATION_API_KEY];
@@ -85,17 +84,18 @@ export class Qtm4jClient implements Client {
       this.baseUrl = config[CONFIG_KEYS.BASE_URL];
     }
 
-    // Initialize API client with both token providers — regular and automation
+    // Initialize API client with regular and automation token providers
     this.apiClient = new ApiClient(
       () => this.getAuthToken(),
       this.baseUrl,
-      () => {
-        return this.getAutomationApiKey();
-      },
+      () => this.getAutomationApiKey(),
     );
 
-    // Initialize resolver registry with the API client
-    this.resolverRegistry = new ResolverRegistry(this.apiClient);
+    // Initialize resolver registry with the API client and shared cache
+    this.resolverRegistry = new ResolverRegistry(
+      this.apiClient,
+      server.getCache(),
+    );
   }
 
   /**
@@ -126,11 +126,6 @@ export class Qtm4jClient implements Client {
     return this._apiKey || null;
   }
 
-  /**
-   * Get the automation API key for automation result uploads.
-   * Checks request header first, then falls back to configured value.
-   * @returns Automation API key or null if not configured
-   */
   getAutomationApiKey(): string | null {
     const headerKey = getRequestHeader("Qtm4j-Automation-Api-Key");
     if (headerKey) {

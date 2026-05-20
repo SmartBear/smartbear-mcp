@@ -1,3 +1,4 @@
+import type { CacheService } from "../../../common/cache";
 import { ENDPOINTS } from "../../config/constants";
 import {
   type FieldValues,
@@ -13,12 +14,13 @@ export class ComponentResolver extends Resolver {
     ResolverKeys.SearchableField.COMPONENTS,
   ];
 
-  private readonly cache = new Cache();
+  private readonly cache: Cache;
   private readonly apiClient: ApiClient;
 
-  constructor(apiClient: ApiClient) {
+  constructor(apiClient: ApiClient, cacheService: CacheService) {
     super();
     this.apiClient = apiClient;
+    this.cache = new Cache(cacheService);
   }
 
   async resolve(

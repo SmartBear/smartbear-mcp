@@ -21,13 +21,61 @@
     {
       "order": 1,
       "parent": "",
+      "name": "Getting Started",
+      "slug": "getting-started",
+      "type": "markdown",
+      "contentUrl": "getting-started.md"
+    },
+    {
+      "order": 0,
+      "parent": "getting-started",
+      "name": "Remote MCP Servers",
+      "slug": "remote-mcp-servers",
+      "type": "markdown",
+      "contentUrl": "remote-mcp-servers.md"
+    },
+    {
+      "order": 0,
+      "parent": "remote-mcp-servers",
+      "name": "Swagger Remote Server",
+      "slug": "remote-swagger",
+      "type": "markdown",
+      "contentUrl": "remote-swagger.md"
+    },
+    {
+      "order": 1,
+      "parent": "remote-mcp-servers",
+      "name": "BugSnag Remote Server",
+      "slug": "remote-bugsnag",
+      "type": "markdown",
+      "contentUrl": "remote-bugsnag.md"
+    },
+    {
+      "order": 2,
+      "parent": "remote-mcp-servers",
+      "name": "Zephyr Remote Server",
+      "slug": "remote-zephyr",
+      "type": "markdown",
+      "contentUrl": "remote-zephyr.md"
+    },
+    {
+      "order": 1,
+      "parent": "getting-started",
+      "name": "Local MCP Server",
+      "slug": "local-server",
+      "type": "markdown",
+      "contentUrl": "local-server.md"
+    },
+    {
+      "order": 2,
+      "parent": "",
       "name": "MCP Server Capabilities",
       "slug": "mcp-server-capabilities",
       "type": "markdown",
       "contentUrl": "mcp-server-capabilities.md"
     },
     {
-      "order": 2,
+      "order": 0,
       "parent": "mcp-server-capabilities",
       "name": "Swagger Portal Integration",
       "slug": "swagger-portal-integration",
@@ -35,7 +83,7 @@
       "contentUrl": "swagger-portal-integration.md"
     },
     {
-      "order": 3,
+      "order": 1,
       "parent": "mcp-server-capabilities",
       "name": "Swagger Studio Integration",
       "slug": "swagger-studio-integration",
@@ -43,7 +91,7 @@
       "contentUrl": "swagger-studio-integration.md"
     },
     {
-      "order": 4,
+      "order": 2,
       "parent": "mcp-server-capabilities",
       "name": "Reflect Integration",
       "slug": "reflect-integration",
@@ -51,7 +99,7 @@
       "contentUrl": "reflect-integration.md"
     },
     {
-      "order": 5,
+      "order": 3,
       "parent": "mcp-server-capabilities",
       "name": "BugSnag Integration",
       "slug": "bugsnag-integration",
@@ -59,7 +107,7 @@
       "contentUrl": "bugsnag-integration.md"
     },
     {
-      "order": 6,
+      "order": 4,
       "parent": "mcp-server-capabilities",
       "name": "Contract Testing with PactFlow",
       "slug": "contract-testing-with-pactflow",
@@ -67,7 +115,7 @@
       "contentUrl": "contract-testing-with-pactflow.md"
     },
     {
-      "order": 7,
+      "order": 5,
       "parent": "mcp-server-capabilities",
       "name": "QMetry Integration",
       "slug": "qmetry-integration",
@@ -75,7 +123,7 @@
       "contentUrl": "qmetry-integration.md"
     },
     {
-      "order": 8,
+      "order": 6,
       "parent": "mcp-server-capabilities",
       "name": "Zephyr Integration",
       "slug": "zephyr-integration",
@@ -83,7 +131,7 @@
       "contentUrl": "zephyr-integration.md"
     },
     {
-      "order": 8,
+      "order": 7,
       "parent": "mcp-server-capabilities",
       "name": "Collaborator Integration",
       "slug": "collaborator-integration",
@@ -91,7 +139,7 @@
       "contentUrl": "collaborator-integration.md"
     },
     {
-      "order": 9,
+      "order": 8,
       "parent": "mcp-server-capabilities",
       "name": "QTM4J Integration",
       "slug": "qtm4j-integration",
@@ -99,15 +147,7 @@
       "contentUrl": "qtm4j-integration.md"
     },
     {
-      "order": 10,
-      "parent": "",
-      "name": "Getting Started",
-      "slug": "getting-started",
-      "type": "markdown",
-      "contentUrl": "getting-started.md"
-    },
-    {
-      "order": 11,
+      "order": 3,
       "parent": "",
       "name": "Best Practices",
       "slug": "best-practices",
@@ -115,7 +155,7 @@
       "contentUrl": "best-practices.md"
     },
     {
-      "order": 12,
+      "order": 4,
       "parent": "",
       "name": "Troubleshooting",
       "slug": "troubleshooting",

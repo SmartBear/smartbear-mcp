@@ -33,7 +33,11 @@ describe("ListSegments", () => {
     fetchMock.resetMocks();
 
     mockClient = {
-      getApiToken: vi.fn().mockReturnValue("test-api-key"),
+      isOAuthRequest: vi.fn().mockReturnValue(false),
+      getHeaders: vi.fn().mockReturnValue({
+        "X-API-KEY": "test-api-key",
+        "Content-Type": "application/json",
+      }),
     };
 
     instance = new ListSegments(mockClient as any);
@@ -43,18 +47,12 @@ describe("ListSegments", () => {
     expect(instance.specification.title).toBe("List Segments");
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(3);
-    expect(instance.specification.parameters?.[0].name).toBe("platform");
-    expect(instance.specification.parameters?.[1].name).toBe("offset");
-    expect(instance.specification.parameters?.[1].required).toBe(false);
-    expect(instance.specification.parameters?.[2].name).toBe("limit");
-    expect(instance.specification.parameters?.[2].required).toBe(false);
   });
 
   it("should call segments API and return results", async () => {
     fetchMock.mockResponseOnce(JSON.stringify(segmentsMock));
 
-    const result = await instance.handle({ platform: "web" }, {});
+    const result = await instance.handle({ platform: "web" }, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/segments?type=web&offset=0&limit=25",
@@ -72,7 +70,7 @@ describe("ListSegments", () => {
   it("should use provided offset and limit", async () => {
     fetchMock.mockResponseOnce(JSON.stringify({ segments: [], count: 0 }));
 
-    await instance.handle({ platform: "web", offset: 10, limit: 5 }, {});
+    await instance.handle({ platform: "web", offset: 10, limit: 5 }, {} as any);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.reflect.run/v1/segments?type=web&offset=10&limit=5",
@@ -82,8 +80,32 @@ describe("ListSegments", () => {
 
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Not Found", { status: 404 });
-    await expect(instance.handle({ platform: "web" }, {})).rejects.toThrow(
-      "Failed to list segments",
+    await expect(
+      instance.handle({ platform: "web" }, {} as any),
+    ).rejects.toThrow("Failed to list segments");
+  });
+
+  it("should use WEB_APP_HOSTNAME URL for OAuth request", async () => {
+    mockClient.isOAuthRequest.mockReturnValue(true);
+    mockClient.getHeaders.mockReturnValue({
+      Authorization: "Bearer oauth-token",
+      "Content-Type": "application/json",
+    });
+    fetchMock.mockResponseOnce(JSON.stringify(segmentsMock));
+
+    const result = await instance.handle({ platform: "web" }, {} as any);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.reflect.run/api/mcp/segments?type=web&offset=0&limit=25",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer oauth-token",
+        }),
+      }),
     );
+    const parsed = JSON.parse((result.content[0] as any).text);
+    expect(parsed.success).toBe(true);
+    expect(parsed.count).toBe(2);
+    expect(parsed.segments).toHaveLength(2);
   });
 });

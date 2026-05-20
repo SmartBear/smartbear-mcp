@@ -46,7 +46,7 @@ describe("SmartBearMcpServer", () => {
     beforeEach(() => {
       mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         config: z.object({}),
         registerTools: vi.fn(),
@@ -72,14 +72,9 @@ describe("SmartBearMcpServer", () => {
         {
           title: "Test Tool",
           summary: "A test tool",
-          parameters: [
-            {
-              name: "p1",
-              type: z.string(),
-              required: true,
-              description: "The input for the tool",
-            },
-          ],
+          inputSchema: z.object({
+            p1: z.string().describe("The input for the tool"),
+          }),
         },
         registerCbMock,
       );
@@ -150,60 +145,23 @@ describe("SmartBearMcpServer", () => {
         {
           title: "Test Tool",
           summary: "A test tool",
-          parameters: [
-            {
-              name: "p1",
-              type: z.string(),
-              required: true,
-              description: "The input for the tool",
-              examples: ["example1", "example2"],
-              constraints: ["constraint1", "constraint2"],
-            },
-            {
-              name: "p2",
-              type: z.number(),
-              required: false,
-              description: "The optional numeric input for the tool",
-            },
-            {
-              name: "p3",
-              type: z.boolean(),
-              required: true,
-            },
-            {
-              name: "p4",
-              type: z.array(z.string()),
-              required: true,
-            },
-            {
-              name: "p5",
-              type: z.object({
-                key1: z.string(),
-                key2: z.number(),
-              }),
-              required: true,
-            },
-            {
-              name: "p6",
-              type: z.enum(["value1", "value2", "value3"]),
-              required: true,
-            },
-            {
-              name: "p7",
-              type: z.literal("value"),
-              required: true,
-            },
-            {
-              name: "p8",
-              type: z.union([z.literal("value1"), z.literal("value2")]),
-              required: true,
-            },
-            {
-              name: "p9",
-              type: z.any(),
-              required: true,
-            },
-          ],
+          inputSchema: z.object({
+            p1: z.string().describe("The input for the tool"),
+            p2: z
+              .number()
+              .describe("The optional numeric input for the tool")
+              .optional(),
+            p3: z.boolean(),
+            p4: z.array(z.string()),
+            p5: z.object({
+              key1: z.string(),
+              key2: z.number(),
+            }),
+            p6: z.enum(["value1", "value2", "value3"]),
+            p7: z.literal("value"),
+            p8: z.union([z.literal("value1"), z.literal("value2")]),
+            p9: z.any(),
+          }),
           purpose: "To test the tool registration process",
           useCases: ["Testing", "Development"],
           examples: [
@@ -240,9 +198,7 @@ describe("SmartBearMcpServer", () => {
       expect(registerToolParams[1].description).toBe(
         "A test tool\n\n" +
           "**Parameters:**\n" +
-          "- p1 (string) *required*: The input for the tool (e.g. example1, example2)\n" +
-          "  - constraint1\n" +
-          "  - constraint2\n" +
+          "- p1 (string) *required*: The input for the tool\n" +
           "- p2 (number): The optional numeric input for the tool\n" +
           "- p3 (boolean) *required*\n" +
           "- p4 (array) *required*\n" +
@@ -380,7 +336,7 @@ describe("SmartBearMcpServer", () => {
     it("should register resources when client provides them", async () => {
       const mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: vi.fn(),
@@ -399,7 +355,14 @@ describe("SmartBearMcpServer", () => {
       // Get the register function passed from the server and execute it with test resource details
       const registerFn = mockClient.registerResources.mock.calls[0][0];
       const registerCbMock = vi.fn();
-      registerFn("test_resource", "{identifier}", registerCbMock);
+      registerFn(
+        {
+          title: "Test Resource",
+          path: "{identifier}",
+          description: "A test resource",
+        },
+        registerCbMock,
+      );
 
       expect(superRegisterResourceMock).toHaveBeenCalledExactlyOnceWith(
         expect.any(String),
@@ -410,10 +373,14 @@ describe("SmartBearMcpServer", () => {
 
       // Assert some of the details
       const registerResourceParams = superRegisterResourceMock.mock.calls[0];
-      expect(registerResourceParams[0]).toBe("test_resource");
+      expect(registerResourceParams[0]).toBe("test_product_test_resource");
       expect(registerResourceParams[1].uriTemplate.template).toBe(
         "test_product://test_resource/{identifier}",
       );
+      expect(registerResourceParams[2]).toEqual({
+        description: "A test resource",
+        title: "Test Product: Test Resource",
+      });
 
       // Get the wrapper function that will execute the tool and call it
       registerResourceParams[3]();
@@ -425,7 +392,7 @@ describe("SmartBearMcpServer", () => {
     it("should not register resources when client does not provide them", async () => {
       const mockClient = {
         name: "Test Product",
-        toolPrefix: "test_product",
+        capabilityPrefix: "test_product",
         configPrefix: "test-product",
         registerTools: vi.fn(),
         registerResources: undefined,
@@ -446,7 +413,14 @@ describe("SmartBearMcpServer", () => {
       // Get the register function passed from the server and execute it with test resource details
       const registerFn = mockClient.registerResources.mock.calls[0][0];
       const registerCbMock = vi.fn();
-      registerFn("test_resource", "{identifier}", registerCbMock);
+      registerFn(
+        {
+          title: "test_resource",
+          path: "{identifier}",
+          description: "A test resource",
+        },
+        registerCbMock,
+      );
 
       // Make the callback throw an error to test error handling
       registerCbMock.mockImplementation(() => {
@@ -633,7 +607,7 @@ describe("SmartBearMcpServer", () => {
     it("should skip clients without cleanupSession and call those that have it", async () => {
       const clientWithCleanup = {
         name: "Test Product A",
-        toolPrefix: "test_product_a",
+        capabilityPrefix: "test_product_a",
         configPrefix: "test-product-a",
         config: z.object({}),
         registerTools: vi.fn(),
@@ -644,7 +618,7 @@ describe("SmartBearMcpServer", () => {
       };
       const clientWithoutCleanup = {
         name: "Test Product B",
-        toolPrefix: "test_product_b",
+        capabilityPrefix: "test_product_b",
         configPrefix: "test-product-b",
         config: z.object({}),
         registerTools: vi.fn(),
@@ -685,28 +659,6 @@ describe("SmartBearMcpServer", () => {
       // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
       const rawShape = server["schemaToRawShape"](undefined);
       expect(rawShape).toBeUndefined();
-    });
-  });
-
-  describe("getReadableTypeName", () => {
-    it.each([
-      ["string", z.string()],
-      ["number", z.number()],
-      ["boolean", z.boolean()],
-      ["array", z.array(z.string())],
-      ["object", z.object({ key: z.string() })],
-      ["enum", z.enum(["value1", "value2"])],
-      ["literal", z.literal("value")],
-      ["union", z.union([z.string(), z.number()])],
-      ["record<string, number>", z.record(z.string(), z.number())],
-      ["record<string, array>", z.record(z.string(), z.array(z.string()))],
-      ["any", z.any()],
-      ["string", z.optional(z.string())],
-      ["string", z.string().default("default")],
-    ])("should return '%s' for the given Zod type", (expected, zodType) => {
-      // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
-      const result = server["getReadableTypeName"](zodType);
-      expect(result).toBe(expected);
     });
   });
 });

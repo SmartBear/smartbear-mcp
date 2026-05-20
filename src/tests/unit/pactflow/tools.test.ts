@@ -333,25 +333,23 @@ describe("TOOLS definitions for BDCT tools", () => {
 
   const bdctConsumerTools = [
     {
-      title: "Get BDCT Consumer Contract by Consumer Version",
+      title: "Get BDCT Consumer by Consumer Version",
       handler: "getBiDirectionalConsumerContractByConsumer",
     },
     {
-      title: "Get BDCT Provider Contract by Consumer Version",
+      title: "Get BDCT Provider by Consumer Version",
       handler: "getBiDirectionalProviderContractByConsumer",
     },
     {
-      title:
-        "Get BDCT Provider Contract Verification Results by Consumer Version",
+      title: "Get BDCT Provider Check Results by Consumer",
       handler: "getBiDirectionalProviderContractVerificationResultsByConsumer",
     },
     {
-      title:
-        "Get BDCT Consumer Contract Verification Results by Consumer Version",
+      title: "Get BDCT Consumer Pact Test Results by Consumer",
       handler: "getBiDirectionalConsumerContractVerificationResultsByConsumer",
     },
     {
-      title: "Get BDCT Cross-Contract Verification Results by Consumer Version",
+      title: "Get BDCT X-Contract Test Results by Consumer",
       handler: "getBiDirectionalCrossContractVerificationResultsByConsumer",
     },
   ];

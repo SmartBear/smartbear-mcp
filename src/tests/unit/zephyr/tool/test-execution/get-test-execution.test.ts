@@ -89,7 +89,7 @@ describe("GetTestExecution", () => {
   it("should call apiClient.get with string testExecutionIdOrKey and return formatted content", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testExecutionIdOrKey: "SA-E10" };
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/SA-E10",
     );
@@ -99,7 +99,7 @@ describe("GetTestExecution", () => {
   it("should call apiClient.get with numeric string testExecutionIdOrKey and return formatted content", async () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testExecutionIdOrKey: "1" }; // Pass as string
-    const result = await instance.handle(args, {});
+    const result = await instance.handle(args, {} as any);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testexecutions/1",
     );
@@ -109,11 +109,11 @@ describe("GetTestExecution", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ testExecutionIdOrKey: "1" }, {}),
+      instance.handle({ testExecutionIdOrKey: "1" }, {} as any),
     ).rejects.toThrow("API error");
   });
 
   it("should throw validation error if testExecutionIdOrKey is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow();
+    await expect(instance.handle({}, {} as any)).rejects.toThrow();
   });
 });

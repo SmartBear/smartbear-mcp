@@ -199,6 +199,13 @@ export class ApiClient {
     }
   }
 
+  /**
+   * Validate HTTP response and extract body
+   * Handles various response types: JSON, text, empty responses
+   * @param response - HTTP response object
+   * @returns Parsed response data or error
+   * @throws ToolError if request fails
+   */
   private async validateAndGetResponseBody(response: Response) {
     if (!response.ok) {
       const errorText = await response.text();

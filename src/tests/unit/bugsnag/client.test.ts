@@ -276,7 +276,7 @@ describe("BugsnagClient", () => {
     it("should return null when no auth is available", async () => {
       const client = new BugsnagClient();
       const mockServer = { getCache: () => mockCache } as any;
-      await client.configure(mockServer, {});
+      await client.configure(mockServer, {} as any);
       const { requestContextStorage } = await import(
         "../../../common/request-context.js"
       );
@@ -673,7 +673,7 @@ describe("BugsnagClient", () => {
           typeof (call[0] as any).apiKey === "function",
       )?.[0];
       expect(configCall).toBeDefined();
-      const apiKeyFunc = configCall.apiKey as (name: string) => string;
+      const apiKeyFunc = configCall?.apiKey as (name: string) => string;
       expect(apiKeyFunc("any")).toBe(`token ${testToken}`);
     });
 
@@ -916,11 +916,14 @@ describe("BugsnagClient", () => {
     });
 
     it("should register event resource", async () => {
-      client.registerResources(registerResourcesSpy);
+      await client.registerResources(registerResourcesSpy);
 
       expect(registerResourcesSpy).toHaveBeenCalledWith(
-        "event",
-        "{id}",
+        {
+          title: "Event",
+          path: "{id}",
+          description: "Retrieve a specific event by its ID.",
+        },
         expect.any(Function),
       );
     });
@@ -3131,8 +3134,8 @@ describe("BugsnagClient", () => {
         mockCache.get.mockReturnValueOnce(mockProjects);
         mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
 
-        client.registerResources(registerResourcesSpy);
-        const resourceHandler = registerResourcesSpy.mock.calls[0][2];
+        await client.registerResources(registerResourcesSpy);
+        const resourceHandler = registerResourcesSpy.mock.calls[0][1];
 
         const result = await resourceHandler(
           { href: "bugsnag://event/event-1" },

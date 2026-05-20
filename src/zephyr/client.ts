@@ -60,7 +60,7 @@ export class ZephyrClient implements Client {
   private _apiToken: string | undefined;
 
   name = "Zephyr";
-  toolPrefix = "zephyr";
+  capabilityPrefix = "zephyr";
   configPrefix = "Zephyr";
   config = ConfigurationSchema;
 

@@ -28,12 +28,10 @@ describe("GetScreenshot", () => {
     expect(instance.specification.title).toBe("Get Screenshot");
     expect(instance.specification.readOnly).toBe(true);
     expect(instance.specification.idempotent).toBe(true);
-    expect(instance.specification.parameters).toHaveLength(1);
-    expect(instance.specification.parameters?.[0].name).toBe("sessionId");
   });
 
   it("should send get-screenshot message and return image content", async () => {
-    const result = await instance.handle({ sessionId: "sess-1" }, {});
+    const result = await instance.handle({ sessionId: "sess-1" }, {} as any);
 
     expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -65,23 +63,59 @@ describe("GetScreenshot", () => {
       state: {},
     });
 
-    await expect(instance.handle({ sessionId: "sess-1" }, {})).rejects.toThrow(
-      "No imageBase64",
-    );
+    await expect(
+      instance.handle({ sessionId: "sess-1" }, {} as any),
+    ).rejects.toThrow("No imageBase64");
   });
 
   it("should throw ToolError if session is not connected", async () => {
     mockClient.getConnectedSession.mockImplementation(() => {
       throw new Error("not connected");
     });
-    await expect(instance.handle({ sessionId: "sess-1" }, {})).rejects.toThrow(
-      "not connected",
-    );
+    await expect(
+      instance.handle({ sessionId: "sess-1" }, {} as any),
+    ).rejects.toThrow("not connected");
   });
 
   it("should throw ToolError if sessionId is missing", async () => {
-    await expect(instance.handle({}, {})).rejects.toThrow(
+    await expect(instance.handle({}, {} as any)).rejects.toThrow(
       "sessionId argument is required",
     );
+  });
+
+  it("should default to png format when format is not specified", async () => {
+    await instance.handle({ sessionId: "sess-1" }, {} as any);
+
+    expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "mcp:get-screenshot", format: "png" }),
+    );
+  });
+
+  it("should use jpeg format when format is jpeg", async () => {
+    const result = await instance.handle(
+      { sessionId: "sess-1", format: "jpeg" },
+      {} as any,
+    );
+
+    expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "mcp:get-screenshot", format: "jpeg" }),
+    );
+    expect((result.content[0] as any).mimeType).toBe("image/jpeg");
+    const parsed = JSON.parse((result.content[1] as any).text);
+    expect(parsed.format).toBe("jpeg");
+  });
+
+  it("should use png format when format is png", async () => {
+    const result = await instance.handle(
+      { sessionId: "sess-1", format: "png" },
+      {} as any,
+    );
+
+    expect(mockWsManager.sendMcpMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "mcp:get-screenshot", format: "png" }),
+    );
+    expect((result.content[0] as any).mimeType).toBe("image/png");
+    const parsed = JSON.parse((result.content[1] as any).text);
+    expect(parsed.format).toBe("png");
   });
 });

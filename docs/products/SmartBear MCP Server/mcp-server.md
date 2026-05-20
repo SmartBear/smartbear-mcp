@@ -1,18 +1,17 @@
-> ⚠️ The SmartBear MCP Server is under active development and features may change. Check our [GitHub repository](https://github.com/SmartBear/smartbear-mcp) for the latest updates and compatibility information.
+The SmartBear MCP Server is a secure bridge between SmartBear platform data and AI-powered development workflows. Built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction), it surfaces rich context from across SmartBear products directly inside your AI assistant or IDE.
 
-The SmartBear MCP Server enables a secure and intelligent bridge between SmartBear platform data and AI-powered development workflows. By leveraging the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction), it allows developers to access rich context and capabilities---such as API definitions, governance rules, portal documents, test outcomes, error reports, monitoring insights, and debugging diagnostics---directly within their preferred AI assistants and IDEs.
+![smartbear-mcp-server.jpg](./images/embedded/smartbear-mcp-server.jpg)
 
-![mcp-server.jpg](./images/embedded/mcp-server.jpg)
+> ℹ️ The SmartBear MCP Server is under active development. New features ship regularly — check our [GitHub repository](https://github.com/SmartBear/smartbear-mcp) for the latest updates and compatibility information.
 
-By surfacing actionable context from across Swagger, Reflect, QMetry, QTM4J, Zephyr, and BugSnag into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients, the MCP Server empowers teams to accelerate design, testing, and troubleshooting workflows---all while keeping developers within their natural flow of work.
 
-This integration empowers development teams to accelerate troubleshooting workflows by bringing rich contextual data from BugSnag directly into their development conversations with AI tools like GitHub Co-Pilot, Cursor, Claude, and other MCP-compatible clients.
+Bring SmartBear context into tools like GitHub Copilot, Cursor, Claude, and other MCP-compatible clients:
 
-Here's a quick example of the power we're bringing to your AI development experiences. In this demo, we showcase how you can solve a real software bug using the our BugSnag tools combined with GitHub Co-pilot:
-
-[![MCP-Demo](https://img.youtube.com/vi/NbKnK3rbcFE/0.jpg)](https://www.youtube.com/watch?v=NbKnK3rbcFE)
-
-See our full capabilities [here](./../mcp-server-capabilities).
+- **API design & governance** — Swagger definitions, style rules, portal docs
+- **Testing** — Reflect runs, QMetry, QTM4J and Zephyr test outcomes
+- **Contract testing** — PactFlow interactions and verification results
+- **Error & performance monitoring** — BugSnag error reports and diagnostics
+- **Code review** — Collaborator review context
 
 ## What is the Model Context Protocol?
 
@@ -20,7 +19,33 @@ The Model Context Protocol (MCP) is an open standard that enables secure, struct
 
 Key benefits of MCP include:
 
--   Secure data access - Controlled, authenticated access to sensitive debugging data
--   Real-time context - Fresh data from your applications and services
--   Standardized interface - Works across multiple AI clients and platforms
--   Tool integration - Enables AI to perform actions, not just read data
+- **Secure data access** — controlled, authenticated access to sensitive data
+- **Real-time context** — fresh data from your applications and services
+- **Standardized interface** — works across multiple AI clients and platforms
+- **Tool integration** — enables AI to perform actions, not just read data
+
+## Deployment modes
+
+The MCP Server is available in two deployment modes. Pick the one that fits your workflow — see [Getting Started](/smartbear-mcp/docs/getting-started) for a full comparison.
+
+| | [Remote MCP Servers](/smartbear-mcp/docs/remote-mcp-servers) | [Local MCP Server](/smartbear-mcp/docs/local-server)                |
+|---|---|---------------------------------------------------------------------|
+| **Products** | Swagger, BugSnag, Zephyr | All products (incl. Reflect, QMetry, QTM4J, PactFlow, Collaborator) |
+| **Setup** | None — add a URL to your MCP client | Install via npm (Node.js 20+)                                       |
+| **Authentication** | OAuth browser flow | API tokens via environment variables                                |
+| **Configuration** | Headers and query string | Environment variables                                               |
+| **Best for** | Quick setup for a single product | Multi-product workflows                                             |
+
+## Example: debugging with BugSnag and Copilot
+
+Here's how the MCP Server fits into a real workflow — solving a software bug using the BugSnag tools combined with GitHub Copilot:
+
+[![MCP-Demo](https://img.youtube.com/vi/NbKnK3rbcFE/0.jpg)](https://www.youtube.com/watch?v=NbKnK3rbcFE)
+
+See the [full capabilities matrix](/smartbear-mcp/docs/mcp-server-capabilities) for what each integration exposes.
+
+## Next steps
+
+- [Getting Started](/smartbear-mcp/docs/getting-started) — choose remote vs. local
+- [Set up a Remote MCP Server](/smartbear-mcp/docs/remote-mcp-servers) — zero-install, OAuth
+- [Set up the Local MCP Server](/smartbear-mcp/docs/local-server) — npm-based, all products
