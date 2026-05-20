@@ -15,9 +15,11 @@ The following environment variables configure the QTM4J integration:
   - US region (default): `https://qtmcloud.qmetry.com`
   - Australia region: `https://syd-qtmcloud.qmetry.com`
 
+- `QTM4J_AUTOMATION_API_KEY` (required for automation tools): A separate API key used exclusively by the automation import tools (`qtm4j_upload_automation_result` and `qtm4j_get_automation_history`). Generate your Automation API key from your QTM4J instance — refer to the [QMetry automation help documentation](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html) for setup instructions.
+
 ## Prerequisites
 
-**All tools require an active project context.** Before using any test case operations, call `qtm4j_set_project_context` to set the active project for the session.
+**Most tools require an active project context.** Before using test case operations, call `qtm4j_set_project_context` to set the active project for the session. Automation tools (`qtm4j_upload_automation_result` and `qtm4j_get_automation_history`) do **not** require project context and use `QTM4J_AUTOMATION_API_KEY` instead of `QTM4J_API_KEY`.
 
 # Available Tools
 
@@ -132,3 +134,53 @@ The following environment variables configure the QTM4J integration:
     - names to remove (`delete`) — e.g., `["Legacy"]`
 - **Returns**: Confirmation object with the test case key, version number updated, and `updated: true`. Any unrecognized field values are reported as warnings.
 - **Use case**: Changing priority or status, adding or removing labels/components, updating summary or description, reassigning a test case, setting estimated time.
+
+## Automation
+
+Automation tools do not require an active project context and authenticate using `QTM4J_AUTOMATION_API_KEY` (not `QTM4J_API_KEY`).
+
+### Upload Automation Result
+
+- **Purpose**: Upload an automation result file from disk to QTM4J and map the results to a test cycle. Supports JUnit, TestNG, Cucumber, QAF, HP UFT, and SpecFlow result formats. Import processing is asynchronous — use the returned `trackingId` to poll progress with `qtm4j_get_automation_history`.
+
+#### Providing the result file
+
+You can supply the file in two ways:
+
+1. **Explicit path** — provide the exact file path:
+   > "Upload `./target/surefire-reports/TEST-results.xml` to QTM4J"
+
+2. **Auto-discovery** — if you don't provide a path, the AI automatically scans common build output directories in your workspace (`target/surefire-reports`, `target/failsafe-reports`, `build/reports/tests`, `build/test-results`, `test-results`, `reports`, `cucumber-reports`). If a single file is found it will confirm with you before uploading; if multiple files are found it will list them and ask you to choose.
+
+> For full details on automation import options, formats, and CI/CD integration, see the **Automation & CI/CD** section in your QTM4J Jira app (navigate to your project → **Automation & CI/CD** → **Automation API**).
+
+- **Parameters**:
+  - path to the result file on disk (`filePath`) — `.xml`, `.json`, or `.zip`
+  - result file format (`format`) — one of `junit`, `testng`, `cucumber`, `qaf`, `hpuft`, `specflow`
+  - optional work key of an existing test cycle to reuse (`testCycleToReuse`) — e.g., `SCRUM-TR-5`; if omitted, a new test cycle is created automatically
+  - optional environment name for the test cycle (`environment`)
+  - optional build name for the test cycle (`build`)
+  - optional ZIP upload flag (`isZip`) — must be `true` for QAF format; defaults to `false`
+  - optional flag to upload execution attachments (`attachFile`) — defaults to `false`
+  - optional flag to match test cases by test steps as well as summary (`matchTestSteps`) — defaults to `true`
+  - optional flag to append suite/test name to the method name in the test case summary (`appendTestName`) — JUnit and TestNG only
+  - optional additional fields object (`fields`) with sub-objects for:
+    - `fields.testCycle`: `summary`, `description`, `labels`, `components`, `priority`, `status`, `assignee`, `reporter`, `folderId`, `plannedStartDate`, `plannedEndDate`
+    - `fields.testCase`: `description`, `precondition`, `labels`, `components`, `priority`, `status`, `assignee`, `reporter`, `folderId`, `estimatedTime`
+    - `fields.testCaseExecution`: `comment`, `actualTime`, `executionPlannedDate`, `assignee`
+- **Returns**: `trackingId` for polling import progress, a status message, the uploaded file path, and the format used.
+- **Notes**:
+  - `folderId` is a numeric ID — right-click the target folder in QTM4J and select **Copy Folder Id** to obtain it.
+  - `assignee` and `reporter` require a Jira **Account ID**, not a display name or email address.
+  - `fields.testCycle` is ignored when `testCycleToReuse` is provided.
+  - Date fields (`plannedStartDate`, `plannedEndDate`) accept any natural language or standard date input — e.g., "today", "tomorrow", "2026-05-20 10:30".
+- **Use case**: Importing CI/CD pipeline test results into QTM4J, linking results to an existing test cycle, creating new test cycles with automation results.
+
+### Get Automation History
+
+- **Purpose**: Retrieve the import history of automation result uploads with status and summary for each import record.
+- **Parameters**:
+  - optional zero-indexed starting position for pagination (`startAt`) — defaults to `0`
+  - optional maximum number of records to return (`maxResults`) — defaults to `20`, max `100`
+- **Returns**: A paginated list of import records, each containing: tracking ID, format, process status, import status, start and end times, file size, detailed message, and a summary of test cases created/reused, test case versions, test steps, and the test cycle issue key and summary.
+- **Use case**: Checking whether a previous import succeeded or failed, reviewing the full import history, retrieving the test cycle key created by an automation import.

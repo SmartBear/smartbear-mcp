@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [QTM4J] Add `qtm4j_upload_automation_result` tool — uploads JUnit, TestNG, Cucumber, QAF, HP UFT, and SpecFlow result files to QTM4J via a two-step pre-signed S3 upload. Supports creating or reusing a test cycle, setting metadata (`labels`, `components`, `priority`, `status`, `folderId`, `assignee`, `reporter`, dates, etc.) on the test cycle, test cases, and executions. Returns a `trackingId` for async import polling. Requires `QTM4J_AUTOMATION_API_KEY`.
+- [QTM4J] Add `qtm4j_get_automation_history` tool — retrieves the paginated import history of automation result uploads with per-record status, timestamps, file size, and a summary of test cycles, test cases, and test steps created. Requires `QTM4J_AUTOMATION_API_KEY`.
+
 ## [0.21.0] - 2026-05-20
 
 ### Added
