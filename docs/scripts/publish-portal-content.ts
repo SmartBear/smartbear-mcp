@@ -1,7 +1,3 @@
-#!/usr/bin/env node
-
-// @ts-check
-
 /**
  * Publish Portal Content
  *
@@ -22,12 +18,65 @@ import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface FetchOpts {
+  json?: unknown;
+  binary?: Buffer;
+  contentType?: string;
+}
+
+interface Attachment {
+  id: string;
+  name: string;
+}
+
+interface TocItem {
+  id: string;
+  title: string;
+  slug?: string;
+  content?: { documentId?: string; type?: string; url?: string };
+  children?: TocItem[];
+}
+
+interface ContentItem {
+  name: string;
+  slug: string;
+  order: number;
+  type: string;
+  contentUrl: string;
+  parent?: string;
+}
+
+interface ProductMetadata {
+  description: string;
+  slug: string;
+  public: boolean;
+  hidden: boolean;
+  logo?: string;
+  logoDark?: string;
+  autoPublish: boolean;
+  validateAPIs: boolean;
+}
+
+interface Manifest {
+  productMetadata: ProductMetadata;
+  contentMetadata: ContentItem[];
+}
+
+interface ProcessCtx {
+  sectionId: string;
+  productDir: string;
+  manifest: Manifest;
+  attachments: Attachment[];
+}
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const PORTAL_BASE_URL = "https://api.portal.swaggerhub.com/v1";
 const API_KEY = process.env.SWAGGERHUB_API_KEY;
 const PORTAL_SUBDOMAIN = process.env.SWAGGERHUB_PORTAL_SUBDOMAIN;
-const LOG_LEVEL = parseInt(process.env.LOG_LEVEL || "2", 10);
+const LOG_LEVEL = parseInt(process.env.LOG_LEVEL ?? "2", 10);
 const DRY_RUN =
   process.env.DRY_RUN === "true" || process.argv.includes("--dry-run");
 
@@ -54,25 +103,25 @@ const FAKE = Object.freeze({
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
 
-function ts() {
+function ts(): string {
   return new Date().toISOString().replace("T", " ").slice(0, 19);
 }
-function debug(msg) {
+function debug(msg: string): void {
   if (LOG_LEVEL <= 1) console.log(`${ts()} [DEBUG] ${msg}`);
 }
-function info(msg) {
+function info(msg: string): void {
   if (LOG_LEVEL <= 2) console.log(`${ts()} [INFO] ${msg}`);
 }
-function warn(msg) {
+function warn(msg: string): void {
   if (LOG_LEVEL <= 3) console.warn(`${ts()} [WARNING] ${msg}`);
 }
-function error(msg) {
+function error(msg: string): void {
   console.error(`${ts()} [ERROR] ${msg}`);
 }
 
 // ─── MIME types ───────────────────────────────────────────────────────────────
 
-const MIME_MAP = {
+const MIME_MAP: Record<string, string> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -81,7 +130,7 @@ const MIME_MAP = {
   ".webp": "image/webp",
 };
 
-function mimeForFile(filename) {
+function mimeForFile(filename: string): string {
   return (
     MIME_MAP[extname(filename).toLowerCase()] ?? "application/octet-stream"
   );
@@ -89,12 +138,11 @@ function mimeForFile(filename) {
 
 // ─── HTTP client ──────────────────────────────────────────────────────────────
 
-/**
- * @param {string} method
- * @param {string} url
- * @param {{ json?: unknown, binary?: Buffer, contentType?: string }} [opts]
- */
-async function portalFetch(method, url, opts = {}) {
+async function portalFetch(
+  method: string,
+  url: string,
+  opts: FetchOpts = {},
+): Promise<unknown> {
   if (DRY_RUN) {
     const label = opts.json
       ? ` ${JSON.stringify(opts.json)}`
@@ -106,10 +154,10 @@ async function portalFetch(method, url, opts = {}) {
   }
 
   debug(`${method} ${url}`);
-  const headers = /** @type {Record<string, string>} */ ({
+  const headers: Record<string, string> = {
     Authorization: `Bearer ${API_KEY}`,
-  });
-  let body;
+  };
+  let body: string | Buffer | undefined;
 
   if (opts.json !== undefined) {
     headers["Content-Type"] = "application/json";
@@ -131,7 +179,7 @@ async function portalFetch(method, url, opts = {}) {
 }
 
 /** Returns a plausible fake response so the rest of the script can keep running. */
-function dryRunResponse(method, url) {
+function dryRunResponse(method: string, url: string): unknown {
   if (method === "GET") {
     if (/\/portals(\?|$)/.test(url)) return { items: [{ id: FAKE.PORTAL }] };
     if (/\/products(\?|$)/.test(url)) return { items: [] }; // "not found" → exercises create path
@@ -148,25 +196,24 @@ function dryRunResponse(method, url) {
   return null;
 }
 
-function portalUrl(path) {
+function portalUrl(path: string): string {
   return `${PORTAL_BASE_URL}${path}`;
 }
 
-function portalUrlQ(path, params) {
+function portalUrlQ(path: string, params: Record<string, string>): string {
   const url = new URL(`${PORTAL_BASE_URL}${path}`);
-  for (const [k, v] of Object.entries(params))
-    url.searchParams.set(k, String(v));
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   return url.toString();
 }
 
 // ─── Portal: portal & product ─────────────────────────────────────────────────
 
-async function getPortalId() {
+async function getPortalId(): Promise<string> {
   info(`Fetching portal ID for subdomain "${PORTAL_SUBDOMAIN}"...`);
-  const data = await portalFetch(
+  const data = (await portalFetch(
     "GET",
-    portalUrlQ("/portals", { subdomain: PORTAL_SUBDOMAIN }),
-  );
+    portalUrlQ("/portals", { subdomain: PORTAL_SUBDOMAIN! }),
+  )) as { items?: Array<{ id: string }> };
   const id = data?.items?.[0]?.id;
   if (!id)
     throw new Error(`No portal found for subdomain "${PORTAL_SUBDOMAIN}"`);
@@ -174,21 +221,36 @@ async function getPortalId() {
   return id;
 }
 
-async function getProductId(portalId, productName) {
+async function getProductId(
+  portalId: string,
+  productName: string,
+): Promise<string | null> {
   debug(`Looking up product "${productName}"...`);
-  const data = await portalFetch(
+  const data = (await portalFetch(
     "GET",
     portalUrlQ(`/portals/${portalId}/products`, { name: productName }),
-  );
+  )) as { items?: Array<{ id: string }> };
   return data?.items?.[0]?.id ?? null;
 }
 
 async function createProduct(
-  portalId,
-  { name, description, slug, isPublic, isHidden },
-) {
+  portalId: string,
+  {
+    name,
+    description,
+    slug,
+    isPublic,
+    isHidden,
+  }: {
+    name: string;
+    description: string;
+    slug: string;
+    isPublic: boolean;
+    isHidden: boolean;
+  },
+): Promise<string> {
   info(`Creating product "${name}"...`);
-  const data = await portalFetch(
+  const data = (await portalFetch(
     "POST",
     portalUrl(`/portals/${portalId}/products`),
     {
@@ -201,23 +263,26 @@ async function createProduct(
         hidden: isHidden,
       },
     },
-  );
+  )) as { id: string };
   info(`Created product: ${data.id}`);
   return data.id;
 }
 
-async function patchProduct(productId, fields) {
+async function patchProduct(
+  productId: string,
+  fields: Record<string, unknown>,
+): Promise<void> {
   await portalFetch("PATCH", portalUrl(`/products/${productId}`), {
     json: fields,
   });
 }
 
-async function getDefaultSectionId(productId) {
+async function getDefaultSectionId(productId: string): Promise<string> {
   debug(`Fetching default section for product ${productId}...`);
-  const data = await portalFetch(
+  const data = (await portalFetch(
     "GET",
     portalUrl(`/products/${productId}/sections`),
-  );
+  )) as { items?: Array<{ id: string }> };
   const id = data?.items?.[0]?.id;
   if (!id) throw new Error(`No section found for product ${productId}`);
   info(`Section ID: ${id}`);
@@ -226,23 +291,27 @@ async function getDefaultSectionId(productId) {
 
 // ─── Portal: attachments ──────────────────────────────────────────────────────
 
-async function getBrandingAttachments(portalId) {
+async function getBrandingAttachments(portalId: string): Promise<Attachment[]> {
   const data = await portalFetch(
     "GET",
     portalUrlQ("/attachments", { portalId }),
   );
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? (data as Attachment[]) : [];
 }
 
-async function getDocAttachments(productId) {
+async function getDocAttachments(productId: string): Promise<Attachment[]> {
   const data = await portalFetch(
     "GET",
     portalUrlQ("/attachments", { productId }),
   );
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? (data as Attachment[]) : [];
 }
 
-async function uploadBrandingImage(portalId, productDir, imagePath) {
+async function uploadBrandingImage(
+  portalId: string,
+  productDir: string,
+  imagePath: string,
+): Promise<string | null> {
   const filename = basename(imagePath);
   info(`Uploading branding image "${filename}"...`);
 
@@ -257,7 +326,7 @@ async function uploadBrandingImage(portalId, productDir, imagePath) {
     }
   } catch (err) {
     debug(
-      `Cannot list branding attachments (${err.message}) — attempting upload anyway`,
+      `Cannot list branding attachments (${(err as Error).message}) — attempting upload anyway`,
     );
   }
 
@@ -269,20 +338,25 @@ async function uploadBrandingImage(portalId, productDir, imagePath) {
 
   try {
     const buffer = await readFile(fullPath);
-    const data = await portalFetch(
+    const data = (await portalFetch(
       "POST",
       portalUrlQ(`/attachments/branding/${portalId}`, { name: filename }),
       { binary: buffer, contentType: mimeForFile(filename) },
-    );
+    )) as { id?: string } | null;
     info(`Uploaded branding image: ${data?.id}`);
     return data?.id ?? null;
   } catch (err) {
-    warn(`Branding image upload failed for "${filename}": ${err.message}`);
+    warn(
+      `Branding image upload failed for "${filename}": ${(err as Error).message}`,
+    );
     return null;
   }
 }
 
-async function loadDocImages(productId, productDir) {
+async function loadDocImages(
+  productId: string,
+  productDir: string,
+): Promise<Attachment[]> {
   const imagesDir = join(productDir, "images", "embedded");
   if (!existsSync(imagesDir)) {
     warn(`No images/embedded directory in ${productDir}`);
@@ -320,15 +394,15 @@ async function loadDocImages(productId, productDir) {
 
 // ─── Portal: table of contents ────────────────────────────────────────────────
 
-async function getTocItems(sectionId) {
-  const data = await portalFetch(
+async function getTocItems(sectionId: string): Promise<TocItem[]> {
+  const data = (await portalFetch(
     "GET",
     portalUrl(`/sections/${sectionId}/table-of-contents`),
-  );
+  )) as { items?: TocItem[] };
   return data?.items ?? [];
 }
 
-function findInToc(items, title) {
+function findInToc(items: TocItem[], title: string): TocItem | null {
   for (const item of items) {
     if (item.title === title) return item;
     if (item.children?.length) {
@@ -340,14 +414,26 @@ function findInToc(items, title) {
 }
 
 async function upsertTocMarkdown(
-  sectionId,
-  { title, slug, order, type, parentTocId },
-) {
+  sectionId: string,
+  {
+    title,
+    slug,
+    order,
+    type,
+    parentTocId,
+  }: {
+    title: string;
+    slug: string;
+    order: number;
+    type: string;
+    parentTocId: string | null;
+  },
+): Promise<{ tocId: string | null; documentId: string | null }> {
   info(`Upserting markdown TOC: "${title}"...`);
   const existing = findInToc(await getTocItems(sectionId), title);
 
   if (!existing) {
-    const data = await portalFetch(
+    const data = (await portalFetch(
       "POST",
       portalUrl(`/sections/${sectionId}/table-of-contents`),
       {
@@ -360,7 +446,7 @@ async function upsertTocMarkdown(
           ...(parentTocId ? { parentId: parentTocId } : {}),
         },
       },
-    );
+    )) as { id?: string; documentId?: string } | null;
     return { tocId: data?.id ?? null, documentId: data?.documentId ?? null };
   }
 
@@ -382,15 +468,27 @@ async function upsertTocMarkdown(
 }
 
 async function upsertTocApiRef(
-  sectionId,
-  { title, slug, order, url: apiUrl, parentTocId },
-) {
+  sectionId: string,
+  {
+    title,
+    slug,
+    order,
+    url: apiUrl,
+    parentTocId,
+  }: {
+    title: string;
+    slug: string;
+    order: number;
+    url: string;
+    parentTocId: string | null;
+  },
+): Promise<string | null> {
   info(`Upserting API reference TOC: "${title}"...`);
   const existing = findInToc(await getTocItems(sectionId), title);
   const content = { type: "apiUrl", url: apiUrl };
 
   if (!existing) {
-    const data = await portalFetch(
+    const data = (await portalFetch(
       "POST",
       portalUrl(`/sections/${sectionId}/table-of-contents`),
       {
@@ -403,7 +501,7 @@ async function upsertTocApiRef(
           ...(parentTocId ? { parentId: parentTocId } : {}),
         },
       },
-    );
+    )) as { id?: string } | null;
     return data?.id ?? null;
   }
 
@@ -421,7 +519,11 @@ async function upsertTocApiRef(
 
 // ─── Portal: document content ─────────────────────────────────────────────────
 
-async function updateDocument(documentId, content, type) {
+async function updateDocument(
+  documentId: string | null,
+  content: string,
+  type: string,
+): Promise<void> {
   if (!documentId) {
     info("No document ID — skipping content update.");
     return;
@@ -432,13 +534,16 @@ async function updateDocument(documentId, content, type) {
   });
 }
 
-async function publishPortalProduct(productId, autoPublish) {
+async function publishPortalProduct(
+  productId: string,
+  autoPublish: boolean,
+): Promise<void> {
   const preview = autoPublish ? "false" : "true";
   info(`Publishing product ${productId} (preview=${preview})...`);
-  const data = await portalFetch(
+  const data = (await portalFetch(
     "PUT",
     portalUrlQ(`/products/${productId}/published-content`, { preview }),
-  );
+  )) as { validationMessages?: unknown[] } | null;
   if (data?.validationMessages?.length) {
     throw new Error(
       `Publish validation errors: ${JSON.stringify(data.validationMessages)}`,
@@ -449,7 +554,11 @@ async function publishPortalProduct(productId, autoPublish) {
 
 // ─── Content processing ───────────────────────────────────────────────────────
 
-function replaceAttachmentUrls(content, type, attachments) {
+function replaceAttachmentUrls(
+  content: string,
+  type: string,
+  attachments: Attachment[],
+): string {
   let result = content;
   for (const { id, name } of attachments) {
     const url = `https://${PORTAL_SUBDOMAIN}.portal.swaggerhub.com/services/api/attachments/${id}`;
@@ -472,13 +581,12 @@ function replaceAttachmentUrls(content, type, attachments) {
   return result;
 }
 
-/**
- * @param {{ name: string, slug: string, order: number, type: string, contentUrl: string }} item
- * @param {string | null} parentTocId
- * @param {{ sectionId: string, productDir: string, manifest: any, attachments: any[] }} ctx
- * @param {number} [depth]
- */
-async function processContentItem(item, parentTocId, ctx, depth = 0) {
+async function processContentItem(
+  item: ContentItem,
+  parentTocId: string | null,
+  ctx: ProcessCtx,
+  depth = 0,
+): Promise<void> {
   const { sectionId, productDir, manifest, attachments } = ctx;
   const { name, slug, order, type, contentUrl } = item;
 
@@ -486,7 +594,7 @@ async function processContentItem(item, parentTocId, ctx, depth = 0) {
   info(`${indent}${"─".repeat(Math.max(4, 52 - depth * 2))}`);
   info(`${indent}"${name}" (${type}) order=${order}`);
 
-  let tocId = null;
+  let tocId: string | null = null;
 
   if (type.toLowerCase() === "apiurl") {
     tocId = await upsertTocApiRef(sectionId, {
@@ -508,7 +616,7 @@ async function processContentItem(item, parentTocId, ctx, depth = 0) {
 
     if (contentUrl) {
       const filePath = join(productDir, contentUrl);
-      let rawContent;
+      let rawContent: string;
       try {
         rawContent = await readFile(filePath, "utf8");
       } catch {
@@ -533,9 +641,9 @@ async function processContentItem(item, parentTocId, ctx, depth = 0) {
 
 // ─── Orchestration ────────────────────────────────────────────────────────────
 
-async function processProduct(productDir) {
+async function processProduct(productDir: string): Promise<void> {
   const manifestPath = join(productDir, "manifest.json");
-  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as Manifest;
   const { productMetadata, contentMetadata } = manifest;
   const productName = basename(productDir);
 
@@ -588,7 +696,7 @@ async function processProduct(productDir) {
   const sectionId = await getDefaultSectionId(productId);
   const attachments = await loadDocImages(productId, productDir);
 
-  const ctx = { sectionId, productDir, manifest, attachments };
+  const ctx: ProcessCtx = { sectionId, productDir, manifest, attachments };
 
   const rootItems = contentMetadata
     .filter((item) => !item.parent)
@@ -606,7 +714,7 @@ async function processProduct(productDir) {
   info(`✓ Done: "${productName}"`);
 }
 
-async function main() {
+async function main(): Promise<void> {
   if (DRY_RUN) {
     info("");
     info("┌─────────────────────────────────────────────────┐");
@@ -618,7 +726,7 @@ async function main() {
 
   const productsDir = join(process.cwd(), "docs", "products");
 
-  let productDirs;
+  let productDirs: string[];
   try {
     const entries = await readdir(productsDir, { withFileTypes: true });
     productDirs = entries
@@ -629,7 +737,9 @@ async function main() {
       )
       .map((e) => join(productsDir, e.name));
   } catch (err) {
-    error(`Cannot read products directory "${productsDir}": ${err.message}`);
+    error(
+      `Cannot read products directory "${productsDir}": ${(err as Error).message}`,
+    );
     process.exit(1);
   }
 
@@ -649,7 +759,7 @@ async function main() {
   info("All products published successfully.");
 }
 
-main().catch((err) => {
-  error(err.message ?? String(err));
+main().catch((err: unknown) => {
+  error((err as Error).message ?? String(err));
   process.exit(1);
 });

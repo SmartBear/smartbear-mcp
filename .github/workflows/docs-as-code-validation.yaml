@@ -41,7 +41,7 @@ jobs:
           node-version: '20'
 
       - name: Validate manifests
-        run: node docs/scripts/validate-manifests.mjs
+        run: npx tsx docs/scripts/validate-manifests.ts
 
       - name: Dry run publish
-        run: node docs/scripts/publish-portal-content.mjs --dry-run
+        run: npx tsx docs/scripts/publish-portal-content.ts --dry-run

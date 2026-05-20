@@ -54,7 +54,7 @@ jobs:
           node-version: '20'
 
       - name: Validate manifests
-        run: node docs/scripts/validate-manifests.mjs
+        run: npx tsx docs/scripts/validate-manifests.ts
 
   publish:
     runs-on: ubuntu-latest
@@ -71,7 +71,7 @@ jobs:
           node-version: '20'
 
       - name: Publish docs to Portal
-        run: node docs/scripts/publish-portal-content.mjs
+        run: npx tsx docs/scripts/publish-portal-content.ts
         env:
           SWAGGERHUB_PORTAL_SUBDOMAIN: ${{ vars.SWAGGERHUB_PORTAL_SUBDOMAIN }}
           SWAGGERHUB_API_KEY: ${{ secrets.SWAGGERHUB_API_KEY }}
