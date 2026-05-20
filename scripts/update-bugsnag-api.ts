@@ -1,11 +1,31 @@
+/**
+ * Updates src/bugsnag/client/api/api.ts from the latest BugSnag OpenAPI spec.
+ *
+ * Uses two generators:
+ *  - swagger-codegen v2  → produces FetchParamCreator functions (request builders)
+ *  - openapi-generator   → produces typed model interfaces from the OAS3 components/schemas
+ *
+ * The spec at SwaggerHub is OpenAPI 3.0, which swagger-codegen v2 cannot parse for
+ * model definitions. openapi-generator handles OAS3 and produces individual model files;
+ * this script extracts just the interface/type/enum declarations and inlines them.
+ *
+ * Run: npm run update:bugsnag-api
+ * Then: npm run verify:bugsnag-api
+ */
+
 import { execSync } from "child_process";
 import * as fs from "fs";
-import * as path from "path";
-import { Node, Project, SyntaxKind } from "ts-morph";
 
 const API_FILE_PATH = "src/bugsnag/client/api/api.ts";
+const SPEC_URL =
+  "https://api.swaggerhub.com/apis/smartbear-public/bugsnag-data-access-api/2/swagger.json";
+const SWAGGER_CODEGEN_GEN_URL =
+  "https://generator.swagger.io/api/gen/clients/typescript-fetch";
+const OPENAPI_GEN_URL =
+  "https://api.openapi-generator.tech/api/gen/clients/typescript-fetch";
 
-const HEADER_COMMENT = `/** biome-ignore-all lint/complexity/useLiteralKeys: auto-generated code */
+const HEADER_COMMENT = `// @ts-nocheck
+/** biome-ignore-all lint/complexity/useLiteralKeys: auto-generated code */
 /** biome-ignore-all lint/correctness/noUnusedVariables: auto-generated code */
 /** biome-ignore-all lint/complexity/useOptionalChain: auto-generated code */
 /** biome-ignore-all lint/style/useLiteralEnumMembers: auto-generated code */
@@ -18,71 +38,79 @@ const HEADER_COMMENT = `/** biome-ignore-all lint/complexity/useLiteralKeys: aut
  * https://github.com/swagger-api/swagger-codegen.git
  *
  * To update:
- *   1. Run \`npm run update:bugsnag\` to automatically download and prune unused code
+ *   1. Run \`npm run update:bugsnag-api\` to automatically download and prune unused code
  *   2. Check \`git diff\` to ensure the changes are correct
+ *   3. Run \`npm run verify:bugsnag-api\` to compare exported names with the previous version
+ *
  */
 
 import * as url from "node:url";
 import type { Configuration } from "./configuration";
 `;
 
-async function downloadAndExtractApi() {
-  console.log("Fetching Swagger spec from SmartBear...");
-  const specResponse = await fetch(
-    "https://api.swaggerhub.com/apis/smartbear-public/bugsnag-data-access-api/2/swagger.json",
-  );
-  if (!specResponse.ok) {
-    throw new Error(`Failed to fetch spec: ${specResponse.statusText}`);
-  }
-  const specJson = await specResponse.json();
+async function fetchSpec(): Promise<object> {
+  console.log("Fetching OpenAPI 3.0 spec from SwaggerHub...");
+  const res = await fetch(SPEC_URL);
+  if (!res.ok) throw new Error(`Failed to fetch spec: ${res.statusText}`);
+  return res.json();
+}
 
+async function downloadSwaggerCodegenZip(specJson: object): Promise<string> {
+  console.log("Requesting FetchParamCreator code from swagger-codegen v2...");
+  const genRes = await fetch(SWAGGER_CODEGEN_GEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      options: { modelPropertyNaming: "original" },
+      spec: specJson,
+    }),
+  });
+  if (!genRes.ok)
+    throw new Error(`swagger-codegen request failed: ${genRes.statusText}`);
+  const { link } = await genRes.json();
+  if (!link) throw new Error("No download link from swagger-codegen.");
+
+  const zipPath = "/tmp/bugsnag-swaggercodegen.zip";
+  console.log(`Downloading swagger-codegen zip from ${link}...`);
+  execSync(`curl -s "${link}" -o "${zipPath}"`);
+  return zipPath;
+}
+
+async function downloadOpenApiGeneratorZip(specJson: object): Promise<string> {
   console.log(
-    "Requesting TypeScript client generation from Swagger Generator...",
+    "Requesting model interfaces from openapi-generator (OAS3-compatible)...",
   );
-  const genResponse = await fetch(
-    "https://generator.swagger.io/api/gen/clients/typescript-fetch",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        options: { modelPropertyNaming: "original" },
-        spec: specJson,
-      }),
-    },
-  );
+  const genRes = await fetch(OPENAPI_GEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      options: { modelPropertyNaming: "original" },
+      spec: specJson,
+    }),
+  });
+  if (!genRes.ok)
+    throw new Error(`openapi-generator request failed: ${genRes.statusText}`);
+  const { link } = await genRes.json();
+  if (!link) throw new Error("No download link from openapi-generator.");
 
-  if (!genResponse.ok) {
-    throw new Error(`Failed to generate client: ${genResponse.statusText}`);
-  }
+  const zipPath = "/tmp/bugsnag-openapigens.zip";
+  console.log(`Downloading openapi-generator zip from ${link}...`);
+  execSync(`curl -s "${link}" -o "${zipPath}"`);
+  return zipPath;
+}
 
-  const { link } = await genResponse.json();
-  if (!link) {
-    throw new Error("No download link returned from generator.");
-  }
-
-  console.log(`Downloading generated client from ${link}...`);
-  const zipPath = "/tmp/bugsnag-client.zip";
-  execSync(`curl -s "${link}" -o ${zipPath}`);
-
-  console.log("Extracting api.ts...");
-  const extractedApi = execSync(
-    `unzip -p ${zipPath} typescript-fetch-client/api.ts`,
+/** Extracts FetchParamCreator code from the swagger-codegen v2 api.ts. */
+function extractFetchParamCreatorCode(zipPath: string): string {
+  console.log("Extracting api.ts from swagger-codegen zip...");
+  let rawCode = execSync(
+    `unzip -p "${zipPath}" typescript-fetch-client/api.ts`,
   ).toString("utf-8");
 
-  console.log("Preparing new api.ts content...");
-
-  // Find where the actual code starts (after the generated header and imports)
-  // Typically it starts with `export const BASE_PATH` or `export interface`
-  let rawCode = extractedApi.replace(
+  rawCode = rawCode.replace(
     /\/\/\/ <reference path="\.\/custom\.d\.ts" \/>\n/,
     "",
   );
-  // Remove the generated header comment
   rawCode = rawCode.replace(/\/\*\*[\s\S]*?\*\//, "").trim();
-  // Remove duplicate original imports, as we inject our own with node:url and type imports
   rawCode = rawCode.replace(/import \* as url from "url";\n/, "");
   rawCode = rawCode.replace(
     /import { Configuration } from "\.\/configuration";\n/,
@@ -90,65 +118,151 @@ async function downloadAndExtractApi() {
   );
   rawCode = rawCode.replace(/\/\/ tslint:disable\n/, "");
 
-  fs.writeFileSync(API_FILE_PATH, HEADER_COMMENT + "\n" + rawCode.trimStart());
-  console.log(`Saved newly extracted base code to ${API_FILE_PATH}`);
+  // swagger-codegen v2 does not emit auth code when the spec is OAS3 (it only reads
+  // Swagger 2.0 `definitions.securityDefinitions`).  Inject the tokenAuth block into
+  // every FetchParamCreator method so `configuration` is used and biome --unsafe won't
+  // strip it as an unused parameter.
+  rawCode = rawCode.replace(
+    /( +)const localVarHeaderParameter = \{} as any;/g,
+    (match, indent) =>
+      `${match}\n` +
+      `${indent}// authentication tokenAuth required\n` +
+      `${indent}if (configuration && configuration.apiKey) {\n` +
+      `${indent}  const localVarApiKeyValue =\n` +
+      `${indent}    typeof configuration.apiKey === "function"\n` +
+      `${indent}      ? configuration.apiKey("Authorization")\n` +
+      `${indent}      : configuration.apiKey;\n` +
+      `${indent}  localVarHeaderParameter["Authorization"] = localVarApiKeyValue;\n` +
+      `${indent}}`,
+  );
+
+  return rawCode.trimStart();
 }
 
-async function main() {
-  await downloadAndExtractApi();
+/**
+ * Extracts exported declarations from all openapi-generator model files and
+ * returns them as a single block.  Imports and helper functions (FromJSON/ToJSON
+ * etc.) are omitted because all models will be inlined into one file.
+ *
+ * Handles two patterns generated by openapi-generator:
+ *  - Plain declarations: interface, type alias, enum
+ *  - Const enum objects: `export const Foo = {...} as const` paired with
+ *    `export type Foo = typeof Foo[keyof typeof Foo]`
+ *
+ * Iterates statements in source order (so the const always precedes its type
+ * alias) and uses `getText()` rather than `getFullText()` to check for an
+ * existing `export` keyword — `getFullText()` includes leading JSDoc, which
+ * caused a "duplicate export modifier" TS error when the keyword was already
+ * present after the comment.
+ */
+async function extractModelInterfaces(zipPath: string): Promise<string> {
+  const { Project, SyntaxKind } = await import("ts-morph");
 
-  console.log(`Loading project and analyzing ${API_FILE_PATH}...`);
-  const project = new Project({
-    tsConfigFilePath: "tsconfig.json",
-  });
+  console.log("Extracting model interfaces from openapi-generator models...");
+  const tempDir = "/tmp/bugsnag-oag-models";
+  execSync(`rm -rf "${tempDir}" && mkdir -p "${tempDir}"`);
+  execSync(
+    `unzip -o "${zipPath}" "typescript-fetch-client/models/*.ts" -d "${tempDir}"`,
+    { stdio: "pipe" },
+  );
 
-  // Force a reload from disk since we just modified it
+  const modelDir = `${tempDir}/typescript-fetch-client/models`;
+  const modelFiles = fs
+    .readdirSync(modelDir)
+    .filter((f) => f.endsWith(".ts") && f !== "index.ts")
+    .sort();
+
+  const project = new Project({ useInMemoryFileSystem: true });
+  for (const f of modelFiles) {
+    project.createSourceFile(f, fs.readFileSync(`${modelDir}/${f}`, "utf-8"));
+  }
+
+  const parts: string[] = [];
+  for (const sf of project.getSourceFiles()) {
+    for (const stmt of sf.getStatements()) {
+      const isExportedTypeDecl =
+        (stmt.isKind(SyntaxKind.InterfaceDeclaration) ||
+          stmt.isKind(SyntaxKind.TypeAliasDeclaration) ||
+          stmt.isKind(SyntaxKind.EnumDeclaration)) &&
+        // biome-ignore lint/suspicious/noExplicitAny: ts-morph ExportableNode
+        (stmt as any).isExported();
+
+      // Also capture const enum objects: `export const Foo = {...} as const`
+      const isExportedConst =
+        stmt.isKind(SyntaxKind.VariableStatement) &&
+        // biome-ignore lint/suspicious/noExplicitAny: ts-morph ExportableNode
+        (stmt as any).isExported();
+
+      if (!isExportedTypeDecl && !isExportedConst) continue;
+
+      // getText() = declaration text only (no leading trivia/JSDoc)
+      // getFullText() = declaration + leading whitespace & comments
+      // We check getText() so we don't prepend a second "export" keyword after
+      // an existing one that follows a JSDoc block comment.
+      const fullText = stmt.getFullText().trim();
+      const ownText = stmt.getText().trim();
+      const text = ownText.startsWith("export ")
+        ? fullText
+        : "export " + fullText;
+      parts.push(text);
+    }
+  }
+
+  console.log(`Extracted ${parts.length} declarations from models.`);
+  return parts.join("\n\n") + "\n";
+}
+
+async function assembleAndClean(
+  modelInterfaces: string,
+  fetchParamCreatorCode: string,
+) {
+  const { Project } = await import("ts-morph");
+
+  console.log("Assembling combined api.ts...");
+  const combined =
+    HEADER_COMMENT + "\n" + modelInterfaces + "\n" + fetchParamCreatorCode;
+  fs.writeFileSync(API_FILE_PATH, combined);
+
+  console.log(`Loading project to clean up ${API_FILE_PATH}...`);
+  const project = new Project({ tsConfigFilePath: "tsconfig.json" });
   const sourceFile = project.getSourceFileOrThrow(API_FILE_PATH);
   await sourceFile.refreshFromFileSystem();
 
-  console.log("Removing portable-fetch and isomorphic-fetch imports if any...");
+  console.log("Removing portable-fetch and isomorphic-fetch imports...");
   for (const moduleName of ["isomorphic-fetch", "portable-fetch"]) {
-    const fetchImport = sourceFile.getImportDeclaration(
-      (decl) => decl.getModuleSpecifierValue() === moduleName,
-    );
-    if (fetchImport) {
-      fetchImport.remove();
-    }
+    sourceFile
+      .getImportDeclaration((d) => d.getModuleSpecifierValue() === moduleName)
+      ?.remove();
   }
 
   console.log(
     "Removing Fp and Factory constants, and object-oriented API classes...",
   );
-
   const varsToRemove = [];
   for (const varDecl of sourceFile.getVariableDeclarations()) {
     const name = varDecl.getName();
     if (name.endsWith("ApiFp") || name.endsWith("ApiFactory")) {
       varsToRemove.push(varDecl);
     }
-    // Also remove unused Scim and Integrations creators
+    // Remove SCIM, Integrations, and Organizations (not used by any tool)
+    // Use case-insensitive match to handle naming changes (SCIM vs Scim)
+    const lowerName = name.toLowerCase();
     if (
-      name === "ScimApiFetchParamCreator" ||
-      name === "IntegrationsApiFetchParamCreator"
+      lowerName === "scimapifetchparamcreator" ||
+      lowerName === "integrationsapifetchparamcreator" ||
+      lowerName === "organizationsapifetchparamcreator"
     ) {
       varsToRemove.push(varDecl);
     }
   }
-
-  for (const v of varsToRemove) {
-    v.getVariableStatement()?.remove();
-  }
+  for (const v of varsToRemove) v.getVariableStatement()?.remove();
 
   const classesToRemove = [];
   for (const classDecl of sourceFile.getClasses()) {
     const name = classDecl.getName() || "";
-    if (name.endsWith("Api")) {
-      classesToRemove.push(classDecl);
-    }
+    if (name.endsWith("Api")) classesToRemove.push(classDecl);
   }
-  for (const c of classesToRemove) {
-    c.remove();
-  }
+  for (const c of classesToRemove) c.remove();
 
   console.log(
     "Removing BaseAPI, FetchAPI, BASE_PATH, and COLLECTION_FORMATS...",
@@ -158,48 +272,70 @@ async function main() {
   sourceFile.getVariableStatement("BASE_PATH")?.remove();
   sourceFile.getVariableStatement("COLLECTION_FORMATS")?.remove();
 
-  console.log("Stripping unreferenced exports using ts-morph...");
-  const exportedDeclarations = sourceFile.getExportedDeclarations();
-  let strippedCount = 0;
+  console.log("Saving cleaned api.ts...");
+  await project.save();
+}
 
-  for (const [name, declarations] of exportedDeclarations) {
-    for (const decl of declarations) {
-      if ("setIsExported" in decl && typeof decl.setIsExported === "function") {
-        const referencedNodes = decl.findReferencesAsNodes();
-        const isUsedOutside = referencedNodes.some(
-          (n) => n.getSourceFile().getFilePath() !== sourceFile.getFilePath(),
-        );
+async function main() {
+  console.log("=== BugSnag API Update Script ===\n");
 
-        if (!isUsedOutside) {
-          (decl as any).setIsExported(false);
-          strippedCount++;
-        }
-      }
+  const specJson = await fetchSpec();
+
+  // Run both generators in parallel
+  const [swaggerCodegenZip, openApiGenZip] = await Promise.all([
+    downloadSwaggerCodegenZip(specJson),
+    downloadOpenApiGeneratorZip(specJson),
+  ]);
+
+  const fetchParamCreatorCode = extractFetchParamCreatorCode(swaggerCodegenZip);
+  const modelInterfaces = await extractModelInterfaces(openApiGenZip);
+
+  console.log(`\nBacking up existing ${API_FILE_PATH} to ${API_FILE_PATH}.bak`);
+  fs.copyFileSync(API_FILE_PATH, `${API_FILE_PATH}.bak`);
+
+  await assembleAndClean(modelInterfaces, fetchParamCreatorCode);
+
+  console.log("\nStripping unused exports with tsr (step 8 from procedure)...");
+  try {
+    execSync("npx tsr --write src/index.ts", { stdio: "inherit" });
+    // tsr may modify other src/ files — revert those changes only
+    // (we keep changes to scripts/, package.json, etc. which are intentional)
+    const tsrChanged = execSync("git diff --name-only", { encoding: "utf-8" })
+      .trim()
+      .split("\n")
+      .filter((f) => f && f !== API_FILE_PATH && f.startsWith("src/"));
+    if (tsrChanged.length > 0) {
+      console.log(
+        `Reverting ${tsrChanged.length} other src/ file(s) modified by tsr...`,
+      );
+      execSync(`git checkout -- ${tsrChanged.map((f) => `"${f}"`).join(" ")}`, {
+        stdio: "inherit",
+      });
     }
+  } catch (err) {
+    console.error("Warning: tsr step failed.", err);
   }
 
-  console.log(`Stripped ${strippedCount} unused exports.`);
-
-  console.log("Saving changes...");
-  await project.save();
-
-  console.log("Formatting the file with biome...");
+  console.log("\nFormatting with biome...");
   try {
     execSync(`npx biome check --write --unsafe ${API_FILE_PATH}`, {
       stdio: "inherit",
     });
-  } catch (err) {
-    console.error("Warning: biome format failed.", err);
+  } catch {
+    // biome exits non-zero when it applies fixes — that's expected
   }
 
-  console.log("Running pre-commit hooks on the generated file...");
+  console.log("\nRunning pre-commit hooks on the generated file...");
   try {
     execSync(`prek run --files ${API_FILE_PATH}`, { stdio: "inherit" });
   } catch (err) {
     console.error("Warning: pre-commit hooks failed.", err);
   }
 
-  console.log("BugSnag API update automation completed.");
+  console.log("\n=== BugSnag API update completed ===");
+  console.log(
+    `Run \`npm run verify:bugsnag-api\` to review changes vs the backup.`,
+  );
 }
 
 main().catch(console.error);
