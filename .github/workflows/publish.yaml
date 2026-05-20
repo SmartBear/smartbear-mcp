@@ -280,7 +280,7 @@ jobs:
         if: ${{ env.RUN_PUBLISH_MCPB == 'true' }}
         id: pack
         run: |
-          npm pack
+          npm run build:mcpb
           MCPB_FILE=$(ls smartbear-mcp-*.mcpb 2>/dev/null)
           if [[ -z "$MCPB_FILE" ]]; then
             echo "::error::No smartbear-mcp-*.mcpb file found after pack"
