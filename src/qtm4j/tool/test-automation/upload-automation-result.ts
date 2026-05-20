@@ -84,6 +84,8 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
       "fields.testCycle is ignored when testCycleToReuse is provided — cycle fields are not updated on reuse.",
       "DATE FORMAT: plannedStartDate and plannedEndDate in fields.testCycle MUST be formatted as 'dd/MMM/yyyy HH:mm' (e.g. '14/May/2026 10:30'). Convert any user-provided date (ISO, natural language, relative) to this exact format before sending.",
       "appendTestName applies to JUnit and TestNG only — appends suite/test name to method name in the test case summary.",
+      "FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up.",
+      "ASSIGNEE / REPORTER: assignee and reporter in fields.testCycle and fields.testCase require a Jira Account ID (not a display name or email). Ask the user to provide their Account ID directly.",
       "Import processing is asynchronous — use the returned trackingId to poll progress.",
     ],
     outputDescription:

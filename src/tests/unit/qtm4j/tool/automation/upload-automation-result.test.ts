@@ -148,6 +148,155 @@ describe("UploadAutomationResult", () => {
     });
   });
 
+  // ─── fields passthrough ───────────────────────────────────────────────────
+
+  describe("handle — fields passthrough", () => {
+    it("passes folderId in fields.testCycle to POST body", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        fields: { testCycle: { folderId: 123 } },
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({ fields: { testCycle: { folderId: 123 } } }),
+      );
+    });
+
+    it("passes folderId in fields.testCase to POST body", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        fields: { testCase: { folderId: 456 } },
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({ fields: { testCase: { folderId: 456 } } }),
+      );
+    });
+
+    it("passes assignee and reporter account IDs in fields.testCycle", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        fields: { testCycle: { assignee: "712020:abc123", reporter: "712020:xyz789" } },
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({
+          fields: { testCycle: { assignee: "712020:abc123", reporter: "712020:xyz789" } },
+        }),
+      );
+    });
+
+    it("passes assignee and reporter account IDs in fields.testCase", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        fields: { testCase: { assignee: "712020:abc123", reporter: "712020:xyz789" } },
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({
+          fields: { testCase: { assignee: "712020:abc123", reporter: "712020:xyz789" } },
+        }),
+      );
+    });
+
+    it("passes plannedStartDate and plannedEndDate in fields.testCycle", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        fields: { testCycle: { plannedStartDate: "14/May/2026 10:30", plannedEndDate: "20/May/2026 18:00" } },
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({
+          fields: { testCycle: { plannedStartDate: "14/May/2026 10:30", plannedEndDate: "20/May/2026 18:00" } },
+        }),
+      );
+    });
+
+    it("passes precondition and estimatedTime in fields.testCase", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        fields: { testCase: { precondition: "App is running", estimatedTime: "00:05:00" } },
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({
+          fields: { testCase: { precondition: "App is running", estimatedTime: "00:05:00" } },
+        }),
+      );
+    });
+
+    it("passes testCaseExecution fields to POST body", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        fields: { testCaseExecution: { comment: "Auto run", actualTime: "00:02:30" } },
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({
+          fields: { testCaseExecution: { comment: "Auto run", actualTime: "00:02:30" } },
+        }),
+      );
+    });
+
+    it("passes matchTestSteps: false to POST body", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        matchTestSteps: false,
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({ matchTestSteps: false }),
+      );
+    });
+
+    it("passes attachFile: true to POST body", async () => {
+      await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+        attachFile: true,
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({ attachFile: true }),
+      );
+    });
+
+    it("passes appendTestName: true to POST body for TestNG", async () => {
+      await instance.handle({
+        filePath: "./results/testng.xml",
+        format: "testng",
+        appendTestName: true,
+      });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({ format: "testng", appendTestName: true }),
+      );
+    });
+  });
+
+  // ─── All supported formats ────────────────────────────────────────────────
+
+  describe("handle — all supported formats", () => {
+    it.each(["testng", "hpuft", "specflow"] as const)(
+      "accepts %s format and passes it through",
+      async (format) => {
+        await instance.handle({ filePath: "./results/result.xml", format });
+        expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+          ENDPOINTS.AUTOMATION_IMPORT,
+          expect.objectContaining({ format }),
+        );
+      },
+    );
+  });
+
   // ─── Validation errors ────────────────────────────────────────────────────
 
   describe("handle — validation errors", () => {

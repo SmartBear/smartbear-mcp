@@ -10,8 +10,9 @@ const TestCycleFields = zod
     status: zod.string().nullable().optional(),
     summary: zod.string().nullable().optional(),
     description: zod.string().nullable().optional(),
-    assignee: zod.string().nullable().optional(),
-    reporter: zod.string().nullable().optional(),
+    assignee: zod.string().nullable().optional().describe("Jira Account ID of the assignee. Ask the user to provide their Account ID directly."),
+    reporter: zod.string().nullable().optional().describe("Jira Account ID of the reporter. Ask the user to provide their Account ID directly."),
+    folderId: zod.number().int().nullable().optional().describe("Numeric folder ID to place the test cycle in. Right-click a folder in QTM4J and select 'Copy Folder Id' to get this value."),
     plannedStartDate: zod.string().nullable().optional().describe("Date in 'dd/MMM/yyyy HH:mm' format, e.g. '14/May/2026 10:30'"),
     plannedEndDate: zod.string().nullable().optional().describe("Date in 'dd/MMM/yyyy HH:mm' format, e.g. '14/May/2026 10:30'"),
   })
@@ -27,9 +28,10 @@ const TestCaseFields = zod
     status: zod.string().nullable().optional(),
     description: zod.string().nullable().optional(),
     precondition: zod.string().nullable().optional(),
-    assignee: zod.string().nullable().optional(),
-    reporter: zod.string().nullable().optional(),
+    assignee: zod.string().nullable().optional().describe("Jira Account ID of the assignee. Ask the user to provide their Account ID directly."),
+    reporter: zod.string().nullable().optional().describe("Jira Account ID of the reporter. Ask the user to provide their Account ID directly."),
     estimatedTime: zod.string().nullable().optional(),
+    folderId: zod.number().int().nullable().optional().describe("Numeric folder ID to place the test cases in. Right-click a folder in QTM4J and select 'Copy Folder Id' to get this value."),
   })
   .nullable()
   .optional();
