@@ -6,7 +6,7 @@ This guide walks you through installing and configuring the local SmartBear MCP 
 
 Before setting up and using the SmartBear MCP Server, ensure you have:
 
--   An active account across our relevant products (e.g. [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Reflect](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
+-   An active account across our relevant products (e.g. [BearQ](https://bearq.smartbear.com), [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Reflect](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
 -   Node.js 20 or later installed on your development machine
 -   A compatible MCP client (Claude Desktop, Cursor, etc.)
 
@@ -35,6 +35,10 @@ npm install @smartbear/mcp
 ## Authentication Setup
 
 The SmartBear MCP Server supports multiple SmartBear products, each requiring its own authentication token.
+
+- **BearQ**
+
+  Generate a workspace API token from your BearQ workspace settings. Learn more: [BearQ integration](https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration).
 
 - **Swagger - Portal & Studio**
 
@@ -73,6 +77,11 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 Set the following environment variables for the SmartBear products you want to access:
 
 ```shell
+# Required for BearQ tools
+export BEARQ_API_TOKEN=your-bearq-api-token
+# Optional: Override the BearQ API base URL (defaults to https://api.bearq.smartbear.com)
+export BEARQ_API_BASE_URL=https://api.bearq.smartbear.com
+
 # Required for BugSnag tools
 export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 
@@ -135,6 +144,8 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "@smartbear/mcp@latest"
       ],
       "env": {
+        "BEARQ_API_TOKEN": "${input:bearq_api_token}",
+        "BEARQ_API_BASE_URL": "${input:bearq_api_base_url}",
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
@@ -153,6 +164,18 @@ Create or edit `.vscode/mcp.json` in your workspace:
     }
   },
   "inputs": [
+    {
+      "id": "bearq_api_token",
+      "type": "promptString",
+      "description": "BearQ Workspace API Token",
+      "password": true
+    },
+    {
+      "id": "bearq_api_base_url",
+      "type": "promptString",
+      "description": "BearQ API Base URL (leave blank for default https://api.bearq.smartbear.com)",
+      "password": false
+    },
     {
       "id": "bugsnag_auth_token",
       "type": "promptString",
@@ -255,6 +278,7 @@ Add to your `mcp.json` configuration:
         "@smartbear/mcp@latest"
       ],
       "env": {
+        "BEARQ_API_TOKEN": "your-bearq-api-token",
         "BUGSNAG_AUTH_TOKEN": "your-bugsnag-auth-token",
         "BUGSNAG_PROJECT_API_KEY": "your-bugsnag-project-api-key",
         "REFLECT_API_TOKEN": "your-reflect-api-token",
@@ -290,6 +314,7 @@ Edit your `claude_desktop_config.json` file:
         "@smartbear/mcp@latest"
       ],
       "env": {
+        "BEARQ_API_TOKEN": "your-bearq-api-token",
         "BUGSNAG_AUTH_TOKEN": "your-bugsnag-auth-token",
         "BUGSNAG_PROJECT_API_KEY": "your-bugsnag-project-api-key",
         "REFLECT_API_TOKEN": "your-reflect-api-token",
@@ -328,6 +353,7 @@ claude mcp add --transport stdio smartbear npx mcp
 Then set the required environment variables:
 
 ```shell
+export BEARQ_API_TOKEN=your-bearq-api-token
 export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 export REFLECT_API_TOKEN=your-reflect-api-token
@@ -387,6 +413,8 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "command": "node",
       "args": ["<PATH_TO_SMARTBEAR_MCP>/dist/index.js"],
       "env": {
+        "BEARQ_API_TOKEN": "${input:bearq_api_token}",
+        "BEARQ_API_BASE_URL": "${input:bearq_api_base_url}",
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
@@ -406,6 +434,18 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
     }
   },
   "inputs": [
+    {
+      "id": "bearq_api_token",
+      "type": "promptString",
+      "description": "BearQ Workspace API Token",
+      "password": true
+    },
+    {
+      "id": "bearq_api_base_url",
+      "type": "promptString",
+      "description": "BearQ API Base URL (leave blank for default https://api.bearq.smartbear.com)",
+      "password": false
+    },
     {
       "id": "bugsnag_auth_token",
       "type": "promptString",
@@ -499,6 +539,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
 To test the MCP server locally before integrating with your preferred host, use the MCP Inspector:
 
 ```
+BEARQ_API_TOKEN=your_bearq_token \
 BUGSNAG_AUTH_TOKEN=your_token \
 BUGSNAG_PROJECT_API_KEY=your_project_api_key \
 REFLECT_API_TOKEN=your_reflect_token \
