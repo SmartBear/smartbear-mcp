@@ -17,6 +17,7 @@ import type { SmartBearMcpServer } from "./server";
 export interface ToolParams {
   title: string;
   summary: string;
+  toolset: string;
   inputSchema?: ZodType;
   /**
    * Specifies the type of object returned by the tool. <br>
@@ -56,7 +57,7 @@ export interface ResourceParams {
 export type RegisterToolsFunction = <InputArgs extends ZodRawShape>(
   params: ToolParams,
   cb: ToolCallback<InputArgs>,
-) => RegisteredTool;
+) => RegisteredTool | null;
 
 export type RegisterResourceFunction = (
   params: ResourceParams,
@@ -80,6 +81,8 @@ export interface Client {
   capabilityPrefix: string;
   /** Prefix for configuration (environment variables and http headers) */
   configPrefix: string;
+  /** Toolsets that should always be enabled, regardless of ruleset configuration */
+  defaultToolsets?: string[];
   /**
    * Zod schema defining configuration fields for this client
    * Field names must use snake case to ensure they are mapped to environment variables and HTTP headers correctly.

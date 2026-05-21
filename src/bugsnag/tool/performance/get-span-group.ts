@@ -16,6 +16,7 @@ const inputSchema = z.object({
 export class GetSpanGroup extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Span Group",
+    toolset: "Performance",
     summary: "Get detailed performance metrics for a specific span group",
     purpose: "Analyze performance characteristics of a specific operation",
     useCases: [

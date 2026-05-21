@@ -10,6 +10,7 @@ import type { MCPGetScreenshotSuccessResponse } from "../../types/mcp";
 export class GetScreenshot extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Get Screenshot",
+    toolset: "Recording",
     summary:
       "Capture a screenshot from the current state of an active Reflect recording session",
     readOnly: true,

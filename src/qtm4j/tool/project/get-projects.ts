@@ -8,6 +8,7 @@ import {
   PAGINATION,
   RESPONSE_FIELDS,
   TOOL_NAMES,
+  TOOLSETS,
 } from "../../config/constants";
 import {
   GetProjectsBody,
@@ -23,6 +24,7 @@ import {
 export class GetProjects extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.GET_PROJECTS.TITLE,
+    toolset: TOOLSETS.PROJECTS,
     summary: TOOL_NAMES.GET_PROJECTS.SUMMARY,
     readOnly: true,
     idempotent: true,

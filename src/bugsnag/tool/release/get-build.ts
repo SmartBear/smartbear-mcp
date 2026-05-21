@@ -15,6 +15,7 @@ const inputSchema = z.object({
 export class GetBuild extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Build",
+    toolset: "Releases",
     summary: "Get more details for a specific build by its ID",
     purpose:
       "Retrieve detailed information about a build for analysis and debugging",

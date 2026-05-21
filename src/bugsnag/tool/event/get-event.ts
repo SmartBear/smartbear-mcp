@@ -15,6 +15,7 @@ const inputSchema = z.object({
 export class GetEvent extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Event",
+    toolset: "Events",
     summary: "Get detailed information about a specific event",
     purpose: "Retrieve event details directly from its ID",
     useCases: [
