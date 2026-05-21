@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/ServerDetail",
   "title": "SmartBear MCP",
   "name": "com.smartbear/smartbear-mcp",
-  "description": "MCP server for AI access to SmartBear tools, including BugSnag, Reflect, Swagger, PactFlow.",
+  "description": "MCP server for AI access to SmartBear tools, including BugSnag, Reflect, Swagger, PactFlow, QTM4J.",
   "repository": {
     "url": "https://github.com/SmartBear/smartbear-mcp",
     "source": "github"
@@ -76,6 +76,18 @@
         {
           "name": "ZEPHYR_BASE_URL",
           "description": " The Zephyr Cloud API base url. Should be changed depending on the region of your Jira instance. Learn more: https://support.smartbear.com/zephyr-scale-cloud/api-docs/#section/Authentication/Accessing-the-API",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "QTM4J_API_KEY",
+          "description": "QTM4J (QMetry Test Management for Jira) API key. Leave empty to disable QTM4J tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "QTM4J_BASE_URL",
+          "description": "QTM4J base URL (optional). Defaults to https://qtmcloud.qmetry.com. Override when using a self-hosted or region-specific instance.",
           "isRequired": false,
           "isSecret": false
         }

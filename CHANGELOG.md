@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Common] Add `MCP_TOOLSETS` environment variable to allow tools to be grouped into sets for better organization and client control [#474](https://github.com/SmartBear/smartbear-mcp/pull/474)
 
+## [0.22.0] - 2026-05-21
+
+### Fixed
+
+- [Common] Only advertise prompts and resources capabilities when provided by clients [#480](https://github.com/SmartBear/smartbear-mcp/pull/480)
+
+## [0.21.1] - 2026-05-20
+
+### Added
+
+- [QTM4J] Add QTM4J (QMetry Test Management for Jira) capabilities to MCP [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
+
 ## [0.20.0] - 2026-05-15
 
 ### Added

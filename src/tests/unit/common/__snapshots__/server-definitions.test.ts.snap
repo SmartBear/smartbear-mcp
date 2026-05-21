@@ -7363,6 +7363,795 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
     "outputSchema": undefined,
     "title": "QMetry: Update Test Suite",
   },
+  "qtm4j_create_test_case": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Create Test Case",
+    },
+    "description": "Create a new test case in a QTM4J project. Supports auto-resolving human-readable names for priority, status, labels, and components.
+
+**Parameters:**
+- summary (string) *required*: Test case summary/title
+- description (string): Test case description
+- folderId (number): Folder ID to place the test case in
+- priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.
+- status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.
+- assignee (string): Assignee account ID
+- reporter (string): Reporter account ID
+- components (array): List of component names (e.g., ['UI', 'Cloud']). Auto-resolved to IDs.
+- labels (array): List of label names (e.g., ['Release_1', 'Sprint 1']). Auto-resolved to IDs.
+- steps (array): List of test steps
+
+**Output Description:** JSON object with test case ID, key, version number, and summary. Warnings included if any fields were skipped.
+
+**Use Cases:** 1. Create a basic test case with just a summary 2. Create a test case with priority and status using names from set_project_context response 3. Create a test case with labels and components by exact name 4. Add detailed test steps with step descriptions, test data, and expected results 5. Create a test case in a specific folder using folderId 6. Set assignee and reporter using Jira account IDs 7. Create test cases for manual testing with step-by-step instructions 8. Create test cases with all metadata fields for comprehensive test management
+
+**Examples:**
+1. Create a simple test case (project must be set via set_project_context first)
+\`\`\`json
+{
+  "summary": "Search Functionality"
+}
+\`\`\`
+Expected Output: Test case created with key 'SCRUM-TC-xxx'
+
+2. Create a test case with priority and status
+\`\`\`json
+{
+  "summary": "Search Functionality",
+  "description": "Verify search functionality works correctly",
+  "priority": "High",
+  "status": "To Do"
+}
+\`\`\`
+Expected Output: Test case created with resolved priority and status IDs
+
+3. Create a test case with labels, components, and steps
+\`\`\`json
+{
+  "summary": "Search Functionality",
+  "description": "Search Functionality Test",
+  "priority": "High",
+  "status": "To Do",
+  "labels": [
+    "Release_1",
+    "Sprint 1"
+  ],
+  "components": [
+    "UI",
+    "Cloud"
+  ],
+  "steps": [
+    {
+      "stepDetails": "Enter a keyword in the search box",
+      "testData": "Keyword = \\"Test\\"",
+      "expectedResult": "The keyword should be visible in the search box"
+    },
+    {
+      "stepDetails": "Click on the Search button",
+      "testData": "Click on Search Button",
+      "expectedResult": "Search results matching the keyword should be displayed"
+    },
+    {
+      "stepDetails": "Verify the search results",
+      "testData": "Expected results list",
+      "expectedResult": "Results should be relevant to the entered keyword"
+    }
+  ]
+}
+\`\`\`
+Expected Output: Test case created with resolved labels/components/priority/status and 3 steps
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status values were returned by set_project_context. Use NLP to map user input (e.g., 'Major' → 'High', 'Critical' → 'Blocker'). 3. If priority or status name is not found, the operation proceeds without that field and a warning is returned. 4. Labels and components are resolved on demand. If a name is not found, it is skipped with a warning. 5. Steps: ALWAYS include all three fields — stepDetails, testData, and expectedResult. Generate reasonable values if not provided. 6. folderId is optional. assignee and reporter accept Jira account IDs.",
+    "inputSchema": [
+      "assignee",
+      "components",
+      "description",
+      "folderId",
+      "labels",
+      "priority",
+      "reporter",
+      "status",
+      "steps",
+      "summary",
+    ],
+    "outputSchema": [
+      "id",
+      "key",
+      "summary",
+      "versionNo",
+    ],
+    "title": "QTM4J: Create Test Case",
+  },
+  "qtm4j_get_projects": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Get Projects",
+    },
+    "description": "Get all projects from QTM4J with optional filtering
+
+**Parameters:**
+- projectId (number): Filter by specific project ID
+- search (string): Search text for project key or project name
+- qmetryEnabled (boolean): Filter by QMetry enabled status
+- startAt (number): Zero-indexed starting position for pagination (default: 0)
+- maxResults (number): Maximum number of results per page (1-100) (default: 100)
+
+**Output Description:** JSON object containing paginated list of projects with IDs, keys, names, and QMetry status, along with pagination metadata
+
+**Use Cases:** 1. Discover all projects available in QTM4J instance 2. Get project IDs and keys for reference in other operations 3. Find specific projects by ID 4. Search projects by text in project key or name 5. Filter projects by QMetry integration status 6. List projects with pagination for large QTM4J instances 7. Retrieve complete project details (ID, key, name, avatarUrl, projectTypeKey, qmetryEnabled, favorite) 8. Validate project access and permissions 9. Browse available projects before performing other operations
+
+**Examples:**
+1. Get all projects (default pagination - first 100)
+\`\`\`json
+{}
+\`\`\`
+Expected Output: List of all projects with IDs, keys, and names (first 100 projects)
+
+2. Get the first 10 projects
+\`\`\`json
+{
+  "maxResults": 10
+}
+\`\`\`
+Expected Output: List of first 10 projects with their details
+
+3. Get a specific project by ID
+\`\`\`json
+{
+  "projectId": 10000
+}
+\`\`\`
+Expected Output: Single project with ID 10000 including key, name, and QMetry status
+
+4. Search projects by text in project key or name
+\`\`\`json
+{
+  "search": "SCRUM"
+}
+\`\`\`
+Expected Output: Projects matching 'SCRUM' search text in their project keys or names
+
+5. Get only QMetry-enabled projects
+\`\`\`json
+{
+  "qmetryEnabled": true
+}
+\`\`\`
+Expected Output: List of projects that have QMetry integration enabled
+
+6. Get projects with custom pagination (page 2)
+\`\`\`json
+{
+  "startAt": 50,
+  "maxResults": 50
+}
+\`\`\`
+Expected Output: Second page of projects (items 51-100) with their details
+
+7. Search QMetry-enabled projects by text
+\`\`\`json
+{
+  "search": "TEST",
+  "qmetryEnabled": true
+}
+\`\`\`
+Expected Output: QMetry-enabled projects containing 'TEST' in their project keys
+
+**Hints:** 1. Project IDs are numeric (e.g., 10000), project keys are strings (e.g., 'SCRUM') 2. Use 'projectId' parameter to filter by a specific project ID 3. Use 'search' parameter to search by text in project key or project name 4. Use 'qmetryEnabled' parameter to filter projects by QMetry integration status 5. Response contains complete project details: id, key, name, favorite, avatarUrl, projectTypeKey, qmetryEnabled 6. Pagination: startAt is zero-indexed, maxResults max is 100, default is 100 7. Default (no parameters) returns first 100 projects 8. Use 'isLast' in response to check if more pages are available 9. To get next page: increment startAt by maxResults (0 → 100 → 200) 10. Use 'total' in response for total count of matching projects",
+    "inputSchema": [
+      "maxResults",
+      "projectId",
+      "qmetryEnabled",
+      "search",
+      "startAt",
+    ],
+    "outputSchema": [
+      "data",
+      "total",
+    ],
+    "title": "QTM4J: Get Projects",
+  },
+  "qtm4j_get_test_steps": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Get Test Steps",
+    },
+    "description": "Get test steps for a test case by its key and version. Accepts the human-readable key (e.g. 'SCRUM-TC-145') and resolves it to the internal ID automatically.
+
+**Parameters:**
+- key (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'. PROJECT_KEY is the Jira project key (e.g. 'SCRUM'). The number is the test case counter within that project (auto-incremented, not related to seqNo). Obtain keys from the search_test_cases tool or directly from QTM4J.
+- versionNo (number): Test case version number. Defaults to the latest version if omitted. Obtain from search_test_cases response field: version.versionNo
+- filter (object): Text filters for test steps — each field performs a substring match. Multiple fields are combined with AND.
+- startAt (number): Zero-indexed offset for pagination (URL query param). Default: 0. (default: 0)
+- maxResults (number): Number of steps per page (URL query param). Default: 50. Maximum: 100. (default: 50)
+- sort (string): Sort pattern (URL query param). Format: 'fieldName:order'. Sortable fields: stepDetails, testData, seqNo, expectedResult. Order values: 'asc' or 'desc'. Example: 'seqNo:asc'
+
+**Output Description:** JSON object with total (total matching steps), startAt, maxResults, and data (array of step objects). Each step has: id, seqNo, stepDetails, testData, expectedResult, attachmentCount. Shared steps also have a 'shareable' object containing shareableTestcaseUID and shareableTestSteps array.
+
+**Use Cases:** 1. View all steps of a test case before executing it 2. Review steps for a specific test case version 3. Filter steps by action text, test data, or expected result 4. Get steps for a test case found via search_test_cases 5. Inspect shared (reusable) steps embedded in a test case 6. Sort steps by sequence number to view them in execution order 7. Paginate through test cases that have a large number of steps
+
+**Examples:**
+1. Get all steps for a test case (latest version)
+\`\`\`json
+{
+  "key": "SCRUM-TC-145"
+}
+\`\`\`
+Expected Output: All steps for SCRUM-TC-145 with stepDetails, testData, expectedResult, and any shared step blocks
+
+2. Get steps for a specific version
+\`\`\`json
+{
+  "key": "SCRUM-TC-145",
+  "versionNo": 2
+}
+\`\`\`
+Expected Output: Steps for version 2 of SCRUM-TC-145
+
+3. Get steps in execution order
+\`\`\`json
+{
+  "key": "SCRUM-TC-85",
+  "sort": "seqNo:asc"
+}
+\`\`\`
+Expected Output: All steps sorted by sequence number ascending
+
+4. Filter steps by action text
+\`\`\`json
+{
+  "key": "SCRUM-TC-32",
+  "filter": {
+    "stepDetails": "Open the application"
+  }
+}
+\`\`\`
+Expected Output: Steps whose stepDetails contain 'Open the application'
+
+5. Filter steps by expected result
+\`\`\`json
+{
+  "key": "SCRUM-TC-65",
+  "filter": {
+    "expectedResult": "logged in successfully"
+  }
+}
+\`\`\`
+Expected Output: Steps whose expectedResult contains 'logged in successfully'
+
+6. Filter steps by test data
+\`\`\`json
+{
+  "key": "SCRUM-TC-125",
+  "filter": {
+    "testData": "Username: user1"
+  }
+}
+\`\`\`
+Expected Output: Steps with testData containing 'Username: user1'
+
+7. Paginate through many steps
+\`\`\`json
+{
+  "key": "SCRUM-TC-105",
+  "startAt": 0,
+  "maxResults": 10,
+  "sort": "seqNo:asc"
+}
+\`\`\`
+Expected Output: First 10 steps in sequence order
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. KEY FORMAT: '{PROJECT_KEY}-TC-{number}' — e.g. 'SCRUM-TC-145'. PROJECT_KEY is the Jira project key; the number is the test case counter within that project (auto-incremented, not the same as seqNo). 3. VERSION: versionNo defaults to the latest version. Get the version number from search_test_cases response: version.versionNo. 4. Use search_test_cases to discover test case keys before calling this tool. 5. SHAREABLE STEPS: Steps with a non-null 'shareable' field are references to shared/reusable test cases. The 'shareable.shareableTestSteps' array contains the embedded sub-steps with decimal seqNo values (e.g. '1.1', '1.2'). 6. FILTER: Each filter field is a substring match (case-insensitive). Multiple fields combine with AND. 7. SORT: 'seqNo:asc' shows steps in their natural execution order. Allowed sort fields: stepDetails, testData, seqNo, expectedResult. 8. PAGINATION: startAt and maxResults are URL query params. Default page size is 50, maximum is 100.",
+    "inputSchema": [
+      "filter",
+      "key",
+      "maxResults",
+      "sort",
+      "startAt",
+      "versionNo",
+    ],
+    "outputSchema": [
+      "data",
+      "maxResults",
+      "startAt",
+      "total",
+    ],
+    "title": "QTM4J: Get Test Steps",
+  },
+  "qtm4j_search_test_cases": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Search Test Cases",
+    },
+    "description": "Search and filter test cases in a QTM4J project with support for pagination, field selection, and sorting.
+
+**Parameters:**
+- filter (object): Filter criteria — multiple fields are combined with AND; multiple values within one field use OR.
+- fields (array): Fields to include in each result object. If omitted, all fields are returned. Available fields: key, summary, description, priority, status, assignee, isAutomated, reporter, estimatedTime, labels, components, fixVersions, sprint, folders, updated, created, executed, flakyScore, passRateScore, aiGenerated, precondition, orderNo, seqNo, version. Example: ['key', 'summary', 'status', 'priority', 'assignee']
+- startAt (number): Zero-indexed offset for pagination (URL query param). First page: 0. Second page: 50 (when maxResults=50). Default: 0. (default: 0)
+- maxResults (number): Number of results per page (URL query param). Default: 50. Maximum: 50 (backend enforced). To page through results, increment startAt by 50 until startAt >= total. (default: 50)
+- sort (string): Sort pattern sent as a URL query param. Format: 'fieldName:order'. For multiple fields, comma-separate: 'priority:asc,created:desc'. Order values: 'asc' (oldest/lowest first) or 'desc' (newest/highest first). Sortable fields: key, summary, created, updated, status, priority, executed. Examples: 'created:desc', 'key:asc', 'priority:desc,created:asc'
+
+**Output Description:** JSON object with total (total matching test cases), startAt, maxResults, and data (array of test case objects for this page).
+
+**Use Cases:** 1. Search all test cases in a project 2. Filter test cases by status (e.g., 'Done', 'To Do', 'In Progress') 3. Filter test cases by priority (e.g., 'High', 'Medium', 'Low') 4. Filter test cases by labels and components 5. Search test cases by text in summary and description 6. Filter test cases by assignee or reporter 7. Filter test cases by creation/update date ranges 8. Filter test cases by automation status 9. Request only specific fields to reduce response size 10. Sort results using the sort query param (e.g., 'created:desc', 'priority:asc') 11. Paginate through large result sets using startAt and maxResults 12. Combine multiple filters for complex queries 13. Find all failed test cases that need attention (by status and execution date) 14. Get test cases for sprint planning (filter by sprint and status) 15. Audit test coverage by searching for untested areas (filter by executed date) 16. Find all manual test cases assigned to a specific tester 17. Generate test reports by filtering and sorting test cases 18. Track test case changes over time (filter by update date range) 19. Identify high-priority test cases pending review 20. Search for test cases related to specific features (using searchText) 21. Find duplicate or similar test cases (using searchText) 22. Get automated vs manual test distribution (filter by isAutomated) 23. Monitor test execution trends (filter by executed date ranges) 24. Prepare test execution schedules (filter by assignee and priority)
+
+**Examples:**
+1. Search all test cases in the project
+\`\`\`json
+{}
+\`\`\`
+Expected Output: Paginated list of all test cases with all fields (first 50 results)
+
+2. Filter test cases by status
+\`\`\`json
+{
+  "filter": {
+    "status": [
+      "Done"
+    ]
+  }
+}
+\`\`\`
+Expected Output: List of test cases with 'Done' status
+
+3. Filter by multiple statuses and priorities with specific fields
+\`\`\`json
+{
+  "filter": {
+    "status": [
+      "Done",
+      "To Do"
+    ],
+    "priority": [
+      "High",
+      "Medium"
+    ]
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "priority",
+    "assignee"
+  ]
+}
+\`\`\`
+Expected Output: Test cases matching the filters with only the selected fields returned
+
+4. Search test cases by text in summary/description
+\`\`\`json
+{
+  "filter": {
+    "searchText": "login functionality"
+  }
+}
+\`\`\`
+Expected Output: Test cases containing 'login functionality' in summary or description
+
+5. Filter by labels and components
+\`\`\`json
+{
+  "filter": {
+    "labels": [
+      "Release_1",
+      "Sprint 1"
+    ],
+    "components": [
+      "UI",
+      "Cloud"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Test cases tagged with the specified labels and components
+
+6. Filter by assignee and automation status
+\`\`\`json
+{
+  "filter": {
+    "assignee": [
+      "712020:ddc8e24b-2de7-404b-b9ed-3d7b241e2ced"
+    ],
+    "isAutomated": false
+  }
+}
+\`\`\`
+Expected Output: Manual test cases assigned to the specified user
+
+7. Filter by creation date range
+\`\`\`json
+{
+  "filter": {
+    "createdOnFrom": "01/Jan/2026",
+    "createdOnTo": "31/Dec/2026"
+  }
+}
+\`\`\`
+Expected Output: Test cases created during 2026
+
+8. Paginate and sort by creation date (newest first)
+\`\`\`json
+{
+  "filter": {
+    "status": [
+      "Done"
+    ]
+  },
+  "startAt": 0,
+  "maxResults": 50,
+  "sort": "created:desc"
+}
+\`\`\`
+Expected Output: First 50 'Done' test cases sorted by creation date, newest first
+
+9. Get all available fields for test cases
+\`\`\`json
+{
+  "filter": {},
+  "fields": [
+    "key",
+    "summary",
+    "description",
+    "priority",
+    "status",
+    "assignee",
+    "isAutomated",
+    "reporter",
+    "estimatedTime",
+    "labels",
+    "components",
+    "fixVersions",
+    "sprint",
+    "folders",
+    "updated",
+    "created",
+    "executed",
+    "flakyScore",
+    "passRateScore",
+    "aiGenerated",
+    "precondition",
+    "orderNo",
+    "seqNo",
+    "version"
+  ]
+}
+\`\`\`
+Expected Output: Test cases with all available fields explicitly requested
+
+10. Filter by folder and fix version
+\`\`\`json
+{
+  "filter": {
+    "folders": [
+      123,
+      456
+    ],
+    "fixVersions": [
+      789
+    ]
+  }
+}
+\`\`\`
+Expected Output: Test cases in the specified folders and fix versions
+
+11. Complex filter: multiple criteria combined with multi-field sort
+\`\`\`json
+{
+  "filter": {
+    "status": [
+      "Done",
+      "In Progress"
+    ],
+    "priority": [
+      "High"
+    ],
+    "labels": [
+      "Release_1"
+    ],
+    "isAutomated": false,
+    "createdOnFrom": "01/Apr/2026",
+    "createdOnTo": "30/Apr/2026"
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "priority",
+    "created"
+  ],
+  "sort": "priority:asc,created:desc"
+}
+\`\`\`
+Expected Output: High-priority manual test cases created in April 2026 with 'Done' or 'In Progress' status, sorted by priority ascending then creation date descending
+
+12. Find all automated test cases for CI/CD pipeline
+\`\`\`json
+{
+  "filter": {
+    "isAutomated": true,
+    "status": [
+      "Done",
+      "In Progress"
+    ]
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "labels",
+    "components"
+  ]
+}
+\`\`\`
+Expected Output: Up to 50 automated test cases ready for execution in CI/CD
+
+13. Sprint planning: get pending test cases for a team, sorted by priority
+\`\`\`json
+{
+  "filter": {
+    "status": [
+      "To Do",
+      "In Progress"
+    ],
+    "assignee": [
+      "712020:ddc8e24b-2de7-404b-b9ed-3d7b241e2ced",
+      "712020:b8479b55-6d23-478c-a2ad-4c8ce176e1fc"
+    ],
+    "priority": [
+      "High",
+      "Medium"
+    ]
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "priority",
+    "assignee",
+    "estimatedTime"
+  ],
+  "sort": "priority:desc"
+}
+\`\`\`
+Expected Output: Pending high and medium priority test cases assigned to the team, sorted by priority descending
+
+14. Test coverage report: find completed cases sorted oldest first
+\`\`\`json
+{
+  "filter": {
+    "status": [
+      "Done"
+    ]
+  },
+  "fields": [
+    "key",
+    "summary",
+    "priority",
+    "created",
+    "assignee"
+  ],
+  "sort": "created:asc"
+}
+\`\`\`
+Expected Output: Completed test cases sorted by creation date, oldest first
+
+15. Find test cases by keyword for regression testing
+\`\`\`json
+{
+  "filter": {
+    "searchText": "authentication login",
+    "status": [
+      "Done"
+    ]
+  },
+  "fields": [
+    "key",
+    "summary",
+    "description",
+    "labels",
+    "components"
+  ]
+}
+\`\`\`
+Expected Output: All completed test cases related to authentication/login functionality
+
+16. Weekly test execution summary
+\`\`\`json
+{
+  "filter": {
+    "executedOnFrom": "27/Apr/2026",
+    "executedOnTo": "03/May/2026"
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "executed",
+    "passRateScore",
+    "flakyScore"
+  ],
+  "sort": "executed:desc"
+}
+\`\`\`
+Expected Output: Test cases executed in the past week with their pass rates and flaky scores, sorted most-recent first
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. REQUEST STRUCTURE: filter goes in the request body; fields, sort, startAt, and maxResults are URL query parameters. 3. The 'projectId' inside filter is auto-populated from the active project context if not provided. 4. All filter values accept string names directly — no ID resolution needed (e.g., status: ['Done'], priority: ['High']). 5. FIELDS: Pass as an array (sent as comma-separated URL param). Example: { fields: ['key', 'summary', 'status'] }. Omit to return all fields. 6. Available fields: key, summary, description, priority, status, assignee, isAutomated, reporter, estimatedTime, labels, components, fixVersions, sprint, folders, updated, created, executed, flakyScore, passRateScore, aiGenerated, precondition, orderNo, seqNo, version 7. SORTING: Use 'sort' with format 'fieldName:order' (asc/desc). Multiple fields: 'priority:asc,created:desc'. Sortable fields: key, summary, created, updated, status, priority, executed. 8. PAGINATION: startAt (default: 0) and maxResults (default: 50, max: 50) are sent as URL query params. Increment startAt by 50 to get the next page. Stop when startAt >= total. 9. Date format for all filter date fields: 'dd/MMM/yyyy' (e.g., '17/Apr/2026', '01/Jan/2026'). Case-sensitive. 10. FILTER LOGIC: Multiple values within one filter field use OR (status: ['Done', 'To Do'] = Done OR To Do). 11. FILTER LOGIC: Different filter fields are combined with AND (status + priority = both must match). 12. The 'searchText' filter searches both summary and description fields (case-insensitive). To get details of a specific test case by its key (e.g., 'SCRUM-TC-145'), pass the key as filter.searchText — there is no separate key filter field. 13. For assignee/reporter filters, use Jira account IDs (format: '712020:uuid'). Multiple IDs = OR logic. 14. Omitting filter entirely returns all test cases in the active project (paginated).",
+    "inputSchema": [
+      "fields",
+      "filter",
+      "maxResults",
+      "sort",
+      "startAt",
+    ],
+    "outputSchema": [
+      "data",
+      "maxResults",
+      "startAt",
+      "total",
+    ],
+    "title": "QTM4J: Search Test Cases",
+  },
+  "qtm4j_set_project_context": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Set Project Context",
+    },
+    "description": "Set the active QTM4J project for the current session. Must be called before any project-specific operation. Pre-loads priority and status values so you can map user-provided names to valid options via NLP.
+
+**Parameters:**
+- projectKey (string) *required*: Project key (e.g., 'SCRUM'). Use the get_projects tool to discover available project keys.
+
+**Output Description:** JSON object with projectId, projectKey, projectName, confirmation message, and availableFields. availableFields contains priority and status options for NLP mapping in subsequent tool calls.
+
+**Use Cases:** 1. Set the active project at the start of a new conversation 2. Switch to a different project mid-conversation 3. Validate that a project key exists before performing operations 4. Establish project context required by all project-specific tools
+
+**Examples:**
+1. Set SCRUM project as active
+\`\`\`json
+{
+  "projectKey": "SCRUM"
+}
+\`\`\`
+Expected Output: Project context set to SCRUM (ID: 10000)
+
+2. Switch to AD project
+\`\`\`json
+{
+  "projectKey": "AD"
+}
+\`\`\`
+Expected Output: Project context switched to AD
+
+**Hints:** 1. CRITICAL: This tool MUST be called before ANY project-specific tool. 2. NEVER auto-select a project. If the user does not specify a project key, call get_projects first, present the list to the user and ask them to choose. Do NOT pick one on their behalf. 3. The project key must be an exact match (e.g., 'SCRUM', not 'scrum project'). 4. After calling this tool, use the availableFields in the response to map user input via NLP (e.g. user says 'Major' → send 'High', user says 'Critical' → send 'Blocker'). 5. Switching projects clears the cached field metadata of the previous project only. 6. If this tool is called again in the same session, it resets the context to the new project.",
+    "inputSchema": [
+      "projectKey",
+    ],
+    "outputSchema": [
+      "availableFields",
+      "message",
+      "projectId",
+      "projectKey",
+      "projectName",
+    ],
+    "title": "QTM4J: Set Project Context",
+  },
+  "qtm4j_update_test_case": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Update Test Case",
+    },
+    "description": "Update an existing test case in QTM4J. Supports auto-resolving human-readable names for priority, status, labels, and components. Labels and components support add/delete operations.
+
+**Parameters:**
+- key (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'. Automatically resolved to the internal ID and latest version.
+- versionNo (number): Test case version number to update. Defaults to the latest version if omitted.
+- summary (string): Updated test case summary/title.
+- description (string): Updated test case description.
+- precondition (string): Updated precondition — conditions that must be true before the test is executed.
+- priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID. Use values from set_project_context response.
+- status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID. Use values from set_project_context response.
+- assignee (string): Assignee Jira account ID (e.g., '5b10a2844c20165700ede21f').
+- estimatedTime (string): Estimated time in HH:MM:SS format (e.g., '02:30:00').
+- labels (object): Labels to add or remove by name. Each name is auto-resolved to its ID.
+- components (object): Components to add or remove by name. Each name is auto-resolved to its ID.
+
+**Output Description:** Confirmation object with the test case key, versionNo updated, and updated: true. Warnings are included if any field names could not be resolved.
+
+**Use Cases:** 1. Change the priority of a test case (e.g., escalate to 'High') 2. Update the status of a test case after review 3. Add new labels or remove outdated ones without affecting other labels 4. Add or remove components from a test case 5. Update summary, description, or precondition text 6. Reassign a test case to a different team member 7. Set or update the estimated time for a test case 8. Batch-update metadata as part of sprint planning
+
+**Examples:**
+1. Change the priority of a test case
+\`\`\`json
+{
+  "key": "SCRUM-TC-145",
+  "priority": "High"
+}
+\`\`\`
+Expected Output: Test case updated with new priority
+
+2. Add a label and remove an old one
+\`\`\`json
+{
+  "key": "SCRUM-TC-145",
+  "labels": {
+    "add": [
+      "Release_2"
+    ],
+    "delete": [
+      "Release_1"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Test case updated — Release_2 added, Release_1 removed
+
+3. Update summary, status, and add a component
+\`\`\`json
+{
+  "key": "SCRUM-TC-32",
+  "summary": "Verify login with MFA enabled",
+  "status": "In Progress",
+  "components": {
+    "add": [
+      "Auth"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Test case summary and status updated, Auth component added
+
+4. Update a specific version
+\`\`\`json
+{
+  "key": "SCRUM-TC-85",
+  "versionNo": 2,
+  "assignee": "5b10a2844c20165700ede21f",
+  "estimatedTime": "01:30:00"
+}
+\`\`\`
+Expected Output: Version 2 of test case updated with new assignee and estimated time
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. KEY FORMAT: '{PROJECT_KEY}-TC-{number}' — e.g. 'SCRUM-TC-145'. 3. Priority and status values come from set_project_context. Use NLP to map user intent to available names. 4. If priority or status name is not found, the field is skipped with a warning and other fields are still updated. 5. Labels and components use add/delete — you can add and delete in a single call. Names are auto-resolved. 6. To delete ALL current entries of any add/delete field: first call search_test_cases with filter.searchText set to the test case key and include the relevant field in the fields list, extract all current names from the response, then pass them in the delete array of this tool. 7. Only provide the fields you want to change. Omitted fields remain unchanged on the server. 8. estimatedTime must be in HH:MM:SS format (e.g., '02:30:00'). 9. versionNo defaults to the latest version. Use search_test_cases to find available versions if needed.",
+    "inputSchema": [
+      "assignee",
+      "components",
+      "description",
+      "estimatedTime",
+      "key",
+      "labels",
+      "precondition",
+      "priority",
+      "status",
+      "summary",
+      "versionNo",
+    ],
+    "outputSchema": [
+      "key",
+      "updated",
+      "versionNo",
+    ],
+    "title": "QTM4J: Update Test Case",
+  },
   "reflect_add_prompt_step": {
     "annotations": {
       "destructiveHint": false,

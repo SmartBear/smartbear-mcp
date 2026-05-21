@@ -12,6 +12,7 @@ import { BugsnagClient } from "../bugsnag/client";
 import { CollaboratorClient } from "../collaborator/client";
 import { PactflowClient } from "../pactflow/client";
 import { QmetryClient } from "../qmetry/client";
+import { Qtm4jClient } from "../qtm4j/client";
 import { ReflectClient } from "../reflect/client";
 import { SwaggerClient } from "../swagger/client";
 import { ZephyrClient } from "../zephyr/client";
@@ -34,6 +35,9 @@ clientRegistry.register(new QmetryClient());
 
 // Register Zephyr client
 clientRegistry.register(new ZephyrClient());
+
+// Register QTM4J client
+clientRegistry.register(new Qtm4jClient());
 
 // Register Collaborator client
 clientRegistry.register(new CollaboratorClient());

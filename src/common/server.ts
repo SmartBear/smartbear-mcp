@@ -43,9 +43,8 @@ export class SmartBearMcpServer extends McpServer {
       },
       {
         capabilities: {
+          // resources and prompts are supported by some but not all clients
           tools: { listChanged: true }, // Server supports dynamic tool lists
-          resources: { listChanged: true }, // Server supports dynamic resource lists
-          prompts: { listChanged: true }, // Server supports sending prompts to Host
           logging: {}, // Server supports logging messages
         },
       },
