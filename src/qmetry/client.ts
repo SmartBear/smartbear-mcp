@@ -1,5 +1,5 @@
 import z from "zod";
-import { getRequestHeader } from "../common/request-context";
+import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
   GetInputFunction,
@@ -15,7 +15,6 @@ import { TOOLS } from "./client/tools/index";
 import { QMETRY_DEFAULTS } from "./config/constants";
 
 const ConfigurationSchema = z.object({
-  api_key: z.string().describe("QMetry API key for authentication"),
   base_url: z
     .string()
     .url()
@@ -25,45 +24,47 @@ const ConfigurationSchema = z.object({
     ),
 });
 
+const AuthenticationSchema = z.object({
+  api_key: z.string().describe("QMetry API key for authentication").optional(),
+});
+
 export class QmetryClient implements Client {
   name = "QMetry";
   capabilityPrefix = "qmetry";
   configPrefix = "Qmetry";
   config = ConfigurationSchema;
+  authenticationFields = AuthenticationSchema;
 
-  private token: string | undefined;
   private projectApiKey: string = QMETRY_DEFAULTS.PROJECT_KEY;
   private endpoint: string = QMETRY_DEFAULTS.BASE_URL;
+  private server?: SmartBearMcpServer;
 
   async configure(
-    _server: any,
+    server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
-    this.token = config.api_key;
+    this.server = server;
     if (config.base_url) {
       this.endpoint = config.base_url;
     }
   }
 
   isConfigured(): boolean {
-    return true;
+    return !!this.server;
   }
 
-  getToken() {
-    let contextToken =
-      getRequestHeader("Qmetry-Token") || getRequestHeader("apikey");
+  hasAuth(): boolean {
+    return this.isConfigured() && !!this.getAuthToken();
+  }
 
-    if (Array.isArray(contextToken)) {
-      contextToken = contextToken[0];
-    }
+  getAuthToken() {
+    return this.server?.getEnv("api_key", this);
+  }
 
-    if (contextToken) {
-      return contextToken;
-    }
-
-    if (!this.token) throw new Error("Client not configured");
-    return this.token;
+  getAuthTokenOrThrow() {
+    const token = this.getAuthToken();
+    if (!token) throw new Error("Client not configured");
+    return token;
   }
 
   getBaseUrl() {
@@ -137,7 +138,7 @@ export class QmetryClient implements Client {
               let projectInfo: any;
               try {
                 projectInfo = (await getProjectInfo(
-                  this.getToken(),
+                  this.getAuthTokenOrThrow(),
                   baseUrl,
                   projectKey,
                 )) as any;
@@ -165,7 +166,7 @@ export class QmetryClient implements Client {
           const { projectKey: _, baseUrl: __, ...cleanArgs } = a;
 
           const result = await handlerFn(
-            this.getToken(),
+            this.getAuthTokenOrThrow(),
             baseUrl,
             projectKey,
             cleanArgs,

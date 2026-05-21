@@ -20,7 +20,7 @@ import {
   isElicitationPolyfillResult,
 } from "./pollyfills";
 import { ToolError } from "./tools";
-import type { Client, ToolParams } from "./types";
+import type { Client, GetEnvFn, ToolParams } from "./types";
 import {
   getDefaultValue,
   getReadableTypeName,
@@ -34,8 +34,9 @@ export class SmartBearMcpServer extends McpServer {
   private elicitationSupported = false;
   private clients: Client[] = [];
   private enabledToolsets?: string[];
+  private getEnvFn: GetEnvFn;
 
-  constructor(enabledToolsets?: string) {
+  constructor(getEnvFn: GetEnvFn, enabledToolsets?: string) {
     super(
       {
         name: MCP_SERVER_NAME,
@@ -49,6 +50,7 @@ export class SmartBearMcpServer extends McpServer {
         },
       },
     );
+    this.getEnvFn = getEnvFn;
     this.cache = new CacheService();
     if (enabledToolsets) {
       this.enabledToolsets = enabledToolsets
@@ -60,6 +62,21 @@ export class SmartBearMcpServer extends McpServer {
   getCache(): CacheService {
     return this.cache;
   }
+
+  /**
+   * Makes the server's getEnv function available to clients, validating that it is defined in the client's authentication fields if a client is provided
+   */
+  getEnv: GetEnvFn = (key, client) => {
+    if (
+      client &&
+      !Object.keys(client.authenticationFields.shape).includes(key)
+    ) {
+      throw new Error(
+        `Environment variable "${key}" is not defined in the ${client.name} client's authentication schema.`,
+      );
+    }
+    return this.getEnvFn(key, client);
+  };
 
   setSamplingSupported(supported: boolean): void {
     this.samplingSupported = supported;

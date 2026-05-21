@@ -12,14 +12,13 @@ describe("ZephyrClient", () => {
 
   it("should initialize ApiClient with default baseUrl", async () => {
     const client = new ZephyrClient();
-    await client.configure({} as any, { api_token: "token", base_url: "" });
+    await client.configure({} as any, { base_url: "" });
     expect(client.getApiClient()).toBeInstanceOf(ApiClient);
   });
 
   it("should initialize ApiClient with custom baseUrl", async () => {
     const client = new ZephyrClient();
     await client.configure({} as any, {
-      api_token: "token",
       base_url: "http://custom",
     });
     expect(client.getApiClient()).toBeInstanceOf(ApiClient);
@@ -27,7 +26,7 @@ describe("ZephyrClient", () => {
 
   it("should register tools and call register", async () => {
     const client = new ZephyrClient();
-    await client.configure({} as any, { api_token: "token", base_url: "" });
+    await client.configure({} as any, { base_url: "" });
     const register = vi.fn();
     const getInput = vi.fn();
     client.registerTools(register, getInput);
