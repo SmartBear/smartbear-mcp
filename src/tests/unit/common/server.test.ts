@@ -18,7 +18,7 @@ describe("SmartBearMcpServer", () => {
   let superRegisterResourceMock: any;
 
   beforeEach(() => {
-    server = new SmartBearMcpServer();
+    server = new SmartBearMcpServer(vi.fn());
     // This approach is required to mock the super call - other techniques result in mocking the actual server
     superRegisterToolMock = vi
       .spyOn(
@@ -343,6 +343,7 @@ describe("SmartBearMcpServer", () => {
         config: z.object({}),
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
+        hasAuth: vi.fn().mockReturnValue(true),
       };
 
       await server.addClient(mockClient);
@@ -399,6 +400,7 @@ describe("SmartBearMcpServer", () => {
         config: z.object({}),
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
+        hasAuth: vi.fn().mockReturnValue(true),
       };
 
       await server.addClient(mockClient);
@@ -615,6 +617,7 @@ describe("SmartBearMcpServer", () => {
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
         cleanupSession: vi.fn().mockResolvedValue(undefined),
+        hasAuth: vi.fn().mockReturnValue(true),
       };
       const clientWithoutCleanup = {
         name: "Test Product B",
@@ -625,6 +628,7 @@ describe("SmartBearMcpServer", () => {
         registerResources: vi.fn(),
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
+        hasAuth: vi.fn().mockReturnValue(true),
       };
 
       await server.addClient(clientWithCleanup);

@@ -1,5 +1,5 @@
 interface ConfigurationParameters {
-  apiKey?: string | ((name: string) => string);
+  apiKey: (name?: string) => string;
   basePath: string;
   headers?: Record<string, string>; // Additional headers for API requests
 }
@@ -10,7 +10,7 @@ export class Configuration {
    * @param name security name
    * @memberof Configuration
    */
-  apiKey?: string | ((name: string) => string);
+  apiKey: (name?: string) => string;
   /**
    * override base path
    *

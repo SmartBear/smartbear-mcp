@@ -4,7 +4,7 @@ import { clientRegistry } from "./client-registry";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
-import type { Client } from "./types";
+import type { Client, GetEnvFn } from "./types";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 /**
@@ -15,7 +15,7 @@ function getNoConfigMessage(): string[] {
   for (const entry of clientRegistry.getAll()) {
     messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
-      const envVarName = getEnvVarName(entry, configKey);
+      const envVarName = getEnvVarName(configKey, entry);
       const requiredTag = isOptionalType(requirement)
         ? " (optional)"
         : " (required)";
@@ -42,27 +42,29 @@ export async function runStdioMode() {
     process.exit(0);
   }
 
-  const server = new SmartBearMcpServer();
+  const configFn: GetEnvFn = (key, client) => {
+    const envVarName = getEnvVarName(key, client);
+    return process.env[envVarName];
+  };
+
+  const server = new SmartBearMcpServer(configFn);
 
   // Setup clients from environment variables
-  const configuredCount = await clientRegistry.configure(
+  const addedCount = await clientRegistry.registerAll(
     server,
-    (client, key) => {
-      const envVarName = getEnvVarName(client, key);
-      return process.env[envVarName] || null;
-    },
+    configFn,
+    true,
+    true,
   );
-  if (configuredCount === 0) {
+  if (addedCount === 0) {
     const message = getNoConfigMessage();
     console.warn(
       message.length > 0
         ? `No clients configured. Please provide valid environment variables for at least one client:\n${message.join("\n")}`
         : "No clients support environment variable configuration.",
     );
-    // Add non-configured clients to server to allow listing available tools
-    for (const entry of clientRegistry.getAll()) {
-      await server.addClient(entry);
-    }
+    // Add clients without configuration/authorization to allow listing available tools
+    await clientRegistry.registerAll(server, configFn, false, false);
   }
 
   const transport = new StdioServerTransport();
@@ -114,6 +116,9 @@ export async function runStdioMode() {
   await server.connect(transport);
 }
 
-export function getEnvVarName(client: Client, key: string): string {
-  return `${client.configPrefix.toUpperCase().replace(/-/g, "_")}_${key.toUpperCase()}`;
+export function getEnvVarName(key: string, client?: Client): string {
+  return `${client?.configPrefix.toUpperCase()}-${key.toUpperCase()}`.replace(
+    /[\s-_]/g,
+    "_",
+  );
 }

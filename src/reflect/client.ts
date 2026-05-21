@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
-import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -10,11 +9,7 @@ import type {
   RegisterPromptFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import {
-  API_KEY_HEADER,
-  AUTHORIZATION_HEADER,
-  REFLECT_API_TOKEN_HEADER,
-} from "./config/constants";
+import { API_KEY_HEADER, AUTHORIZATION_HEADER } from "./config/constants";
 import { SapTest } from "./prompt/sap-test";
 import { AddPromptStep } from "./tool/recording/add-prompt-step";
 import { AddSegment } from "./tool/recording/add-segment";
@@ -33,13 +28,11 @@ import { RunTest } from "./tool/tests/run-test";
 import type { TestPlatform } from "./types/common";
 import type { WebSocketManager } from "./websocket-manager";
 
-const ConfigurationSchema = z.object({
-  api_token: z.string().describe("Reflect API authentication token"),
-});
+const ConfigurationSchema = z.object({});
 
 // ReflectClient class implementing the Client interface
 export class ReflectClient implements Client {
-  private _apiToken: string | undefined;
+  private _server: SmartBearMcpServer | undefined;
   private activeConnections = new Map<string, WebSocketManager>();
   private sessionStates = new Map<
     string,
@@ -54,53 +47,47 @@ export class ReflectClient implements Client {
   config = ConfigurationSchema;
 
   async configure(
-    _server: SmartBearMcpServer,
-    config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
+    server: SmartBearMcpServer,
+    _config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
-    this._apiToken = config.api_token;
+    this._server = server;
   }
 
   getAuthToken(): string | null {
-    // 1. Try request context
     const contextHeader =
-      getRequestHeader(REFLECT_API_TOKEN_HEADER) ||
-      getRequestHeader(API_KEY_HEADER) ||
-      getRequestHeader(AUTHORIZATION_HEADER);
+      this._server?.getEnv("api_token", this) ||
+      this._server?.getEnv(API_KEY_HEADER) ||
+      this._server?.getEnv(AUTHORIZATION_HEADER);
 
     if (contextHeader) {
-      let token = Array.isArray(contextHeader)
-        ? contextHeader[0]
-        : contextHeader;
-
-      // Handle Bearer or token prefix if present
-      if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
-      }
-      return token;
+      return contextHeader;
     }
 
-    // 2. Fallback to configured token
-    return this._apiToken || null;
+    throw new Error(
+      "Authentication token not found in request headers or configuration",
+    );
   }
 
   isConfigured(): boolean {
-    return true; // Configured by default to support dynamic OAuth tokens
+    return !!this._server;
+  }
+
+  hasAuth(): boolean {
+    try {
+      return this.isConfigured() && !!this.getAuthToken();
+    } catch {
+      return false;
+    }
   }
 
   isOAuthRequest(): boolean {
     if (
-      getRequestHeader(REFLECT_API_TOKEN_HEADER) ||
-      getRequestHeader(API_KEY_HEADER)
+      this._server?.getEnv("api_token", this) ||
+      this._server?.getEnv(API_KEY_HEADER, this)
     ) {
       return false;
     }
-    const authHeader = getRequestHeader(AUTHORIZATION_HEADER);
-    if (!authHeader) {
-      return false;
-    }
-    const headerValue = Array.isArray(authHeader) ? authHeader[0] : authHeader;
-    return headerValue.toLowerCase().startsWith("bearer ");
+    return !!this._server?.getEnv(AUTHORIZATION_HEADER);
   }
 
   getAuthHeader(): Record<string, string> {

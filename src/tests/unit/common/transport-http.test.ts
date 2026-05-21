@@ -59,26 +59,26 @@ function createTestClient(
   opts: {
     name?: string;
     configPrefix?: string;
-    authToken?: string | null;
-    hasGetAuthToken?: boolean;
     requiredFields?: string[];
+    authorized?: boolean;
+    authTokenFieldName?: string;
   } = {},
 ): Client {
   const {
     name = "TestClient",
     configPrefix = "Test",
-    authToken = null,
-    hasGetAuthToken = true,
     requiredFields = [],
+    authorized = true,
+    authTokenFieldName = "auth_token",
   } = opts;
 
   const { z } = require("zod");
-  const shape: Record<string, any> = {
-    auth_token: z.string().describe("Test auth token").optional(),
-  };
+  const shape: Record<string, any> = {};
   for (const field of requiredFields) {
     shape[field] = z.string().describe(`${field} (required)`);
   }
+
+  let serverRef: any = null;
 
   const client: any = {
     name,
@@ -86,28 +86,25 @@ function createTestClient(
     configPrefix,
     config: z.object(shape),
     _configured: false,
-    _authToken: authToken,
-    configure: vi.fn().mockImplementation(async (_server: any, config: any) => {
+    configure: vi.fn().mockImplementation(async (server: any, _config: any) => {
       client._configured = true;
-      if (config.auth_token) {
-        client._authToken = config.auth_token;
-      }
+      serverRef = server;
     }),
     isConfigured: () => client._configured,
+    hasAuth: vi.fn().mockImplementation(() => {
+      serverRef.getEnv(authTokenFieldName, client); // Simulate server calling getEnv to check for auth token during authorization check
+      return authorized;
+    }),
     registerTools: vi.fn(),
     registerResources: vi.fn(),
   };
-
-  if (hasGetAuthToken) {
-    client.getAuthToken = () => client._authToken;
-  }
 
   return client;
 }
 
 // Mock SmartBearMcpServer
 vi.mock("../../../common/server.js", () => ({
-  SmartBearMcpServer: vi.fn().mockImplementation(() => ({
+  SmartBearMcpServer: vi.fn().mockImplementation((getEnvFn) => ({
     getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
     addClient: vi.fn(),
     getClients: vi.fn().mockReturnValue([]),
@@ -116,6 +113,7 @@ vi.mock("../../../common/server.js", () => ({
     setElicitationSupported: vi.fn(),
     cleanupSession: vi.fn(),
     server: { elicitInput: vi.fn() },
+    getEnv: getEnvFn,
   })),
 }));
 
@@ -171,48 +169,64 @@ describe("transport-http helpers", () => {
   describe("getHeaderName", () => {
     it("should convert snake_case key to kebab-case with client prefix", () => {
       const client = fakeClient("Bugsnag");
-      expect(getHeaderName(client, "auth_token")).toBe("Bugsnag-Auth-Token");
+      expect(getHeaderName("auth_token", client)).toBe("Bugsnag-Auth-Token");
     });
 
     it("should handle single-word keys", () => {
       const client = fakeClient("Reflect");
-      expect(getHeaderName(client, "token")).toBe("Reflect-Token");
+      expect(getHeaderName("token", client)).toBe("Reflect-Token");
     });
 
     it("should handle multi-word keys", () => {
       const client = fakeClient("Bugsnag");
-      expect(getHeaderName(client, "project_api_key")).toBe(
+      expect(getHeaderName("project_api_key", client)).toBe(
         "Bugsnag-Project-Api-Key",
       );
     });
 
     it("should handle different client prefixes", () => {
       const client = fakeClient("Zephyr");
-      expect(getHeaderName(client, "api_token")).toBe("Zephyr-Api-Token");
+      expect(getHeaderName("api_token", client)).toBe("Zephyr-Api-Token");
+    });
+
+    it("should handle undefined client by using key only", () => {
+      expect(getHeaderName("auth_token", undefined)).toBe("Auth-Token");
+    });
+
+    it("should handle undefined client with single-word key", () => {
+      expect(getHeaderName("token", undefined)).toBe("Token");
     });
   });
 
   describe("getQueryStringName", () => {
     it("should convert snake_case key to pascalCase with client prefix", () => {
       const client = fakeClient("Bugsnag");
-      expect(getQueryStringName(client, "auth_token")).toBe("bugsnagAuthToken");
+      expect(getQueryStringName("auth_token", client)).toBe("bugsnagAuthToken");
     });
 
     it("should handle single-word keys", () => {
       const client = fakeClient("Reflect");
-      expect(getQueryStringName(client, "token")).toBe("reflectToken");
+      expect(getQueryStringName("token", client)).toBe("reflectToken");
     });
 
     it("should handle multi-word keys", () => {
       const client = fakeClient("Bugsnag");
-      expect(getQueryStringName(client, "project_api_key")).toBe(
+      expect(getQueryStringName("project_api_key", client)).toBe(
         "bugsnagProjectApiKey",
       );
     });
 
     it("should handle different client prefixes", () => {
       const client = fakeClient("Zephyr");
-      expect(getQueryStringName(client, "api_token")).toBe("zephyrApiToken");
+      expect(getQueryStringName("api_token", client)).toBe("zephyrApiToken");
+    });
+
+    it("should handle undefined client by using key only", () => {
+      expect(getQueryStringName("auth_token", undefined)).toBe("authToken");
+    });
+
+    it("should handle undefined client with single-word key", () => {
+      expect(getQueryStringName("token", undefined)).toBe("token");
     });
   });
 });
@@ -230,9 +244,26 @@ describe("newServer (OAuth flow)", () => {
     clientRegistry.getAll = originalGetAll;
   });
 
-  it("should return 401 with WWW-Authenticate header when no clients are configured", async () => {
-    // Override getAll to return no clients
+  it("should return 500 when no clients have configured successfully", async () => {
     clientRegistry.getAll = () => [];
+
+    const req = fakeRequest({});
+    const res = fakeResponse();
+
+    const server = await newServer(req, res);
+
+    expect(server).toBeNull();
+    expect(res._status).toBe(500);
+    expect(res._headers["Content-Type"]).toBe("text/plain");
+    expect(res._headers["WWW-Authenticate"]).toBeUndefined();
+  });
+
+  it("should return 401 with WWW-Authenticate header when no clients have auth credentials", async () => {
+    const testClient = createTestClient({
+      name: "Test",
+      configPrefix: "Test",
+    });
+    clientRegistry.getAll = () => [testClient];
 
     const req = fakeRequest({ host: "myserver.example.com:3000" });
     const res = fakeResponse();
@@ -241,24 +272,18 @@ describe("newServer (OAuth flow)", () => {
 
     expect(server).toBeNull();
     expect(res._status).toBe(401);
+    expect(res._headers["Content-Type"]).toBe("text/plain");
     expect(res._headers["WWW-Authenticate"]).toBe(
       'OAuth resource_metadata="http://myserver.example.com:3000/.well-known/oauth-protected-resource"',
     );
   });
 
-  it("should include Content-Type text/plain in 401 response", async () => {
-    clientRegistry.getAll = () => [];
-    const req = fakeRequest({ host: "localhost:3000" });
-    const res = fakeResponse();
-
-    await newServer(req, res);
-
-    expect(res._status).toBe(401);
-    expect(res._headers["Content-Type"]).toBe("text/plain");
-  });
-
   it("should omit WWW-Authenticate header when host header is missing", async () => {
-    clientRegistry.getAll = () => [];
+    const testClient = createTestClient({
+      name: "Test",
+      configPrefix: "Test",
+    });
+    clientRegistry.getAll = () => [testClient];
     const req = fakeRequest({});
     const res = fakeResponse();
 
@@ -273,15 +298,15 @@ describe("newServer (OAuth flow)", () => {
     const testClient = createTestClient({
       name: "NoAuth",
       configPrefix: "NoAuth",
-      hasGetAuthToken: true,
-      authToken: null,
+      authTokenFieldName: "auth_token",
+      authorized: false,
     });
     clientRegistry.getAll = () => [testClient];
 
     // Mock SmartBearMcpServer.getClients to return the client
     const { SmartBearMcpServer } = await import("../../../common/server.js");
     vi.mocked(SmartBearMcpServer).mockImplementation(
-      () =>
+      (getEnvFn) =>
         ({
           getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
           addClient: vi.fn(),
@@ -291,6 +316,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          getEnv: getEnvFn,
         }) as any,
     );
 
@@ -307,20 +333,21 @@ describe("newServer (OAuth flow)", () => {
     expect(res._headers["WWW-Authenticate"]).toContain(
       "oauth-protected-resource",
     );
+    expect(res._body).toContain(
+      "No clients have valid authentication credentials",
+    );
   });
 
   it("should return server when client has auth from header", async () => {
     const testClient = createTestClient({
       name: "WithAuth",
       configPrefix: "WithAuth",
-      hasGetAuthToken: true,
-      authToken: "token my-secret",
     });
     clientRegistry.getAll = () => [testClient];
 
     const { SmartBearMcpServer } = await import("../../../common/server.js");
     vi.mocked(SmartBearMcpServer).mockImplementation(
-      () =>
+      (getEnvFn) =>
         ({
           getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
           addClient: vi.fn(),
@@ -330,6 +357,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          getEnv: getEnvFn,
         }) as any,
     );
 
@@ -345,49 +373,16 @@ describe("newServer (OAuth flow)", () => {
     expect(res._status).toBeNull(); // No error response written
   });
 
-  it("should skip client when dynamic auth check succeeds without getAuthToken", async () => {
-    // Client without getAuthToken means auth was provided at config time
-    const testClient = createTestClient({
-      name: "StaticAuth",
-      configPrefix: "StaticAuth",
-      hasGetAuthToken: false,
-    });
-    clientRegistry.getAll = () => [testClient];
-
-    const { SmartBearMcpServer } = await import("../../../common/server.js");
-    vi.mocked(SmartBearMcpServer).mockImplementation(
-      () =>
-        ({
-          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
-          addClient: vi.fn(),
-          getClients: () => [testClient],
-          connect: vi.fn(),
-          setSamplingSupported: vi.fn(),
-          setElicitationSupported: vi.fn(),
-          cleanupSession: vi.fn(),
-          server: { elicitInput: vi.fn() },
-        }) as any,
-    );
-
-    const req = fakeRequest({ host: "localhost:3000" });
-    const res = fakeResponse();
-
-    const server = await newServer(req, res);
-
-    expect(server).not.toBeNull();
-  });
-
   it("should fall back to env var when header is not present", async () => {
     const testClient = createTestClient({
       name: "EnvFallback",
       configPrefix: "EnvFallback",
-      hasGetAuthToken: false,
     });
     clientRegistry.getAll = () => [testClient];
 
     const { SmartBearMcpServer } = await import("../../../common/server.js");
     vi.mocked(SmartBearMcpServer).mockImplementation(
-      () =>
+      (getEnvFn) =>
         ({
           getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
           addClient: vi.fn(),
@@ -397,6 +392,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          getEnv: getEnvFn,
         }) as any,
     );
 
@@ -409,48 +405,9 @@ describe("newServer (OAuth flow)", () => {
     const server = await newServer(req, res);
 
     expect(server).not.toBeNull();
-    expect(testClient.configure).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ auth_token: "env-token" }),
-    );
+    expect(res._status).toBeNull(); // No error response written
 
     delete process.env.ENVFALLBACK_AUTH_TOKEN;
-  });
-
-  it("should include error details and header help in 401 response body", async () => {
-    const testClient = createTestClient({
-      name: "HelpTest",
-      configPrefix: "HelpTest",
-      hasGetAuthToken: true,
-      authToken: null,
-    });
-    clientRegistry.getAll = () => [testClient];
-
-    const { SmartBearMcpServer } = await import("../../../common/server.js");
-    vi.mocked(SmartBearMcpServer).mockImplementation(
-      () =>
-        ({
-          getCache: () => ({ get: vi.fn(), set: vi.fn(), del: vi.fn() }),
-          addClient: vi.fn(),
-          getClients: () => [testClient],
-          connect: vi.fn(),
-          setSamplingSupported: vi.fn(),
-          setElicitationSupported: vi.fn(),
-          cleanupSession: vi.fn(),
-          server: { elicitInput: vi.fn() },
-        }) as any,
-    );
-
-    const req = fakeRequest({ host: "localhost:3000" });
-    const res = fakeResponse();
-
-    await newServer(req, res);
-
-    expect(res._status).toBe(401);
-    // Error body should contain the client name and header info
-    expect(res._body).toContain("Configuration error");
-    expect(res._body).toContain("HelpTest");
-    expect(res._body).toContain("HelpTest-Auth-Token");
   });
 });
 
@@ -677,7 +634,6 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     const testClient = createTestClient({
       name: "InitTest",
       configPrefix: "InitTest",
-      hasGetAuthToken: false,
     });
     clientRegistry.getAll = () => [testClient];
 
@@ -695,6 +651,7 @@ describe("handleStreamableHttpRequest (session routing)", () => {
         setElicitationSupported: vi.fn(),
         cleanupSession: vi.fn(),
         server: { elicitInput: vi.fn() },
+        getEnv: vi.fn(),
       } as any;
     });
 

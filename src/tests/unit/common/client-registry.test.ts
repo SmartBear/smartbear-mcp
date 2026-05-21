@@ -18,7 +18,7 @@ describe("ClientRegistry", () => {
       addClient: vi.fn(),
     } as any;
 
-    // Spy on console.warn to verify warning messages
+    // Spy on console.warn/error to verify warning messages
     consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Clear environment variables
@@ -35,20 +35,23 @@ describe("ClientRegistry", () => {
   function createMockClient(
     name: string,
     configSchema: z.ZodObject<any>,
+    isConfigured = true,
+    hasAuth = true,
   ): Client {
     return {
       name,
       capabilityPrefix: name,
       configPrefix: name,
       config: configSchema,
-      configure: vi.fn().mockResolvedValue(true),
-      isConfigured: vi.fn().mockReturnValue(true),
+      configure: vi.fn().mockResolvedValue(void 0),
       registerTools: vi.fn(),
+      isConfigured: vi.fn().mockReturnValue(isConfigured),
+      hasAuth: vi.fn().mockReturnValue(hasAuth),
     };
   }
 
   describe("configure", () => {
-    it("configures and counts multiple clients correctly", async () => {
+    it("adds and counts multiple clients correctly", async () => {
       const clientA = createMockClient(
         "client-a",
         z.object({ keyA: z.string() }),
@@ -60,7 +63,12 @@ describe("ClientRegistry", () => {
       clientRegistry.register(clientA);
       clientRegistry.register(clientB);
       await expect(
-        clientRegistry.configure(mockServer, () => "https://example.com"),
+        clientRegistry.registerAll(
+          mockServer,
+          () => "https://example.com",
+          true,
+          true,
+        ),
       ).resolves.toBe(2);
     });
 
@@ -77,20 +85,13 @@ describe("ClientRegistry", () => {
       clientRegistry.register(clientA);
       clientRegistry.register(clientB);
       await expect(
-        clientRegistry.configure(mockServer, () => "https://example.com"),
+        clientRegistry.registerAll(
+          mockServer,
+          () => "https://example.com",
+          true,
+          true,
+        ),
       ).resolves.toBe(1);
-    });
-
-    it("skips clients missing required config by default (stdio mode)", async () => {
-      const clientA = createMockClient(
-        "client-a",
-        z.object({ keyA: z.string() }),
-      );
-      clientRegistry.register(clientA);
-      await expect(
-        clientRegistry.configure(mockServer, (_, __) => null),
-      ).resolves.toBe(0);
-      expect(clientA.configure).not.toHaveBeenCalled();
     });
 
     it("doesn't skip clients missing optional config", async () => {
@@ -100,24 +101,34 @@ describe("ClientRegistry", () => {
       );
       clientRegistry.register(clientA);
       await expect(
-        clientRegistry.configure(mockServer, (_, __) => null),
+        clientRegistry.registerAll(
+          mockServer,
+          (_, __) => undefined,
+          true,
+          true,
+        ),
       ).resolves.toBe(1);
       expect(clientA.configure).toHaveBeenCalled();
     });
 
-    it("configures clients missing required config when ignoreMissingRequiredConfigs is true (http mode)", async () => {
+    it("adds clients missing required config when configure is false", async () => {
       const clientA = createMockClient(
         "client-a",
         z.object({ keyA: z.string() }),
       );
       clientRegistry.register(clientA);
       await expect(
-        clientRegistry.configure(mockServer, (_, __) => null, true),
+        clientRegistry.registerAll(
+          mockServer,
+          (_, __) => undefined,
+          false,
+          false,
+        ),
       ).resolves.toBe(1);
-      expect(clientA.configure).toHaveBeenCalledWith(mockServer, {});
+      expect(clientA.configure).not.toHaveBeenCalled();
     });
 
-    it("configures multiple clients missing required config when ignoreMissingRequiredConfigs is true", async () => {
+    it("adds multiple clients missing required config when configure is true", async () => {
       const clientA = createMockClient(
         "client-a",
         z.object({ keyA: z.string() }),
@@ -126,31 +137,107 @@ describe("ClientRegistry", () => {
         "client-b",
         z.object({ keyB: z.string() }),
       );
-      clientRegistry.register(clientA);
-      clientRegistry.register(clientB);
-      await expect(
-        clientRegistry.configure(mockServer, (_, __) => null, true),
-      ).resolves.toBe(2);
-      expect(clientA.configure).toHaveBeenCalledWith(mockServer, {});
-      expect(clientB.configure).toHaveBeenCalledWith(mockServer, {});
-    });
-
-    it("skips multiple clients missing required config when ignoreMissingRequiredConfigs is false", async () => {
-      const clientA = createMockClient(
-        "client-a",
-        z.object({ keyA: z.string() }),
-      );
-      const clientB = createMockClient(
-        "client-b",
-        z.object({ keyB: z.string() }),
+      const clientC = createMockClient(
+        "client-c",
+        z.object({ keyC: z.string() }),
       );
       clientRegistry.register(clientA);
       clientRegistry.register(clientB);
+      clientRegistry.register(clientC);
+      const getEnvMock = vi
+        .fn()
+        .mockReturnValueOnce(undefined)
+        .mockReturnValueOnce(undefined)
+        .mockReturnValueOnce("value");
       await expect(
-        clientRegistry.configure(mockServer, (_, __) => null, false),
-      ).resolves.toBe(0);
+        clientRegistry.registerAll(mockServer, getEnvMock, true, false),
+      ).resolves.toBe(1);
       expect(clientA.configure).not.toHaveBeenCalled();
       expect(clientB.configure).not.toHaveBeenCalled();
+      expect(clientC.configure).toHaveBeenCalled();
+    });
+
+    it("handles clients failing to configure", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({}),
+        false, // isConfigured
+      );
+      clientRegistry.register(clientA);
+      await expect(
+        clientRegistry.registerAll(
+          mockServer,
+          (_, __) => undefined,
+          true,
+          false,
+        ),
+      ).resolves.toBe(0);
+      expect(clientA.configure).toHaveBeenCalledOnce();
+      expect(clientA.hasAuth).not.toHaveBeenCalled();
+    });
+
+    it("adds clients without authorization if authorization is not required", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({}),
+        true, // isConfigured
+        false, // hasAuth
+      );
+      clientRegistry.register(clientA);
+      await expect(
+        clientRegistry.registerAll(
+          mockServer,
+          (_, __) => undefined,
+          true,
+          false,
+        ),
+      ).resolves.toBe(1);
+      expect(clientA.configure).toHaveBeenCalledOnce();
+      expect(clientA.hasAuth).not.toHaveBeenCalled();
+    });
+
+    it("handles clients without authorization", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({}),
+        true, // isConfigured
+        false, // hasAuth
+      );
+      clientRegistry.register(clientA);
+      await expect(
+        clientRegistry.registerAll(
+          mockServer,
+          (_, __) => undefined,
+          true,
+          true,
+        ),
+      ).resolves.toBe(0);
+      expect(clientA.configure).toHaveBeenCalledOnce();
+      expect(clientA.hasAuth).toHaveBeenCalledOnce();
+    });
+
+    it("handles clients passed invalid configuration", async () => {
+      const clientA = createMockClient(
+        "client-a",
+        z.object({
+          fieldA: z.boolean(),
+        }),
+        true, // isConfigured
+        false, // hasAuth
+      );
+      clientRegistry.register(clientA);
+      await expect(
+        clientRegistry.registerAll(
+          mockServer,
+          (_, __) => "not a boolean",
+          true,
+          true,
+        ),
+      ).resolves.toBe(0);
+      expect(clientA.configure).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Configuration for client client-a is invalid"),
+      );
     });
   });
 
@@ -166,9 +253,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
           () => "https://example.com/api",
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -191,9 +280,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
           () => "https://api.bugsnag.com",
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -215,9 +306,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
           () => "https://api.swaggerhub.com",
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -237,9 +330,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
           () => "https://api.bugsnag.com",
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -259,7 +354,12 @@ describe("ClientRegistry", () => {
         clientRegistry.register(mockClient);
 
         await expect(
-          clientRegistry.configure(mockServer, () => "https://evil.com"),
+          clientRegistry.registerAll(
+            mockServer,
+            () => "https://evil.com",
+            true,
+            true,
+          ),
         ).rejects.toThrow("URL https://evil.com is not allowed");
 
         expect(mockClient.configure).not.toHaveBeenCalled();
@@ -280,9 +380,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
           () => "https://api.bugsnag.com",
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -302,9 +404,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
           () => "https://api.example.com",
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -324,9 +428,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
           () => "https://api.pactflow.com",
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -346,9 +452,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
           () => "https://api.example.com/v2/users",
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -371,7 +479,12 @@ describe("ClientRegistry", () => {
 
         // This should NOT match because dots are properly escaped
         await expect(
-          clientRegistry.configure(mockServer, () => "https://apiaexampleacom"),
+          clientRegistry.registerAll(
+            mockServer,
+            () => "https://apiaexampleacom",
+            true,
+            true,
+          ),
         ).rejects.toThrow("URL https://apiaexampleacom is not allowed");
 
         expect(mockClient.configure).not.toHaveBeenCalled();
@@ -391,7 +504,12 @@ describe("ClientRegistry", () => {
         clientRegistry.register(mockClient);
 
         await expect(
-          clientRegistry.configure(mockServer, () => "https://evil.com"),
+          clientRegistry.registerAll(
+            mockServer,
+            () => "https://evil.com",
+            true,
+            true,
+          ),
         ).rejects.toThrow("URL https://evil.com is not allowed");
 
         expect(mockClient.configure).not.toHaveBeenCalled();
@@ -410,7 +528,12 @@ describe("ClientRegistry", () => {
         clientRegistry.register(mockClient);
 
         await expect(
-          clientRegistry.configure(mockServer, () => "https://api.bugsnag.com"),
+          clientRegistry.registerAll(
+            mockServer,
+            () => "https://api.bugsnag.com",
+            true,
+            true,
+          ),
         ).rejects.toThrow("URL https://api.bugsnag.com is not allowed");
 
         expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -437,9 +560,11 @@ describe("ClientRegistry", () => {
         clientRegistry.register(mockClient);
 
         // Test exact match
-        let result = await clientRegistry.configure(
+        let result = await clientRegistry.registerAll(
           mockServer,
           () => "https://exact-match.com",
+          true,
+          true,
         );
         expect(result).toBe(1);
 
@@ -448,9 +573,11 @@ describe("ClientRegistry", () => {
         vi.mocked(mockServer.addClient).mockClear();
 
         // Test regex match
-        result = await clientRegistry.configure(
+        result = await clientRegistry.registerAll(
           mockServer,
           () => "https://api.example.com",
+          true,
+          true,
         );
         expect(result).toBe(1);
       });
@@ -469,7 +596,12 @@ describe("ClientRegistry", () => {
         clientRegistry.register(mockClient);
 
         await expect(
-          clientRegistry.configure(mockServer, () => "https://evil.com"),
+          clientRegistry.registerAll(
+            mockServer,
+            () => "https://evil.com",
+            true,
+            true,
+          ),
         ).rejects.toThrow("URL https://evil.com is not allowed");
       });
     });
@@ -488,9 +620,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
-          (_client, key) => (key === "api_key" ? "test-key" : null),
+          (key, _client) => (key === "api_key" ? "test-key" : undefined),
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -512,7 +646,12 @@ describe("ClientRegistry", () => {
         clientRegistry.register(mockClient);
 
         await expect(
-          clientRegistry.configure(mockServer, () => "https://evil.com"),
+          clientRegistry.registerAll(
+            mockServer,
+            () => "https://evil.com",
+            true,
+            true,
+          ),
         ).rejects.toThrow("URL https://evil.com is not allowed");
 
         expect(mockClient.configure).not.toHaveBeenCalled();
@@ -533,9 +672,11 @@ describe("ClientRegistry", () => {
 
         clientRegistry.register(mockClient);
 
-        const result = await clientRegistry.configure(
+        const result = await clientRegistry.registerAll(
           mockServer,
-          (_client, key) => (key === "api_key" ? "test-key" : "test-user"),
+          (key, _client) => (key === "api_key" ? "test-key" : "test-user"),
+          true,
+          true,
         );
 
         expect(result).toBe(1);
@@ -570,10 +711,14 @@ describe("ClientRegistry", () => {
         // The configure method will process both clients
         // Valid client should be configured, invalid one should be skipped
         await expect(
-          clientRegistry.configure(mockServer, (client) =>
-            client.name === "valid-client"
-              ? "https://api.bugsnag.com"
-              : "https://evil.com",
+          clientRegistry.registerAll(
+            mockServer,
+            (_key, client) =>
+              client?.name === "valid-client"
+                ? "https://api.bugsnag.com"
+                : "https://evil.com",
+            true,
+            true,
           ),
         ).rejects.toThrow("URL https://evil.com is not allowed");
 
@@ -584,6 +729,165 @@ describe("ClientRegistry", () => {
         // Invalid client should not be configured
         expect(invalidClient.configure).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe("MCP_CLIENTS filtering", () => {
+    /**
+     * Since ClientRegistry reads MCP_CLIENTS in its constructor and only a
+     * singleton is exported, we dynamically re-import the module with the
+     * env var set to get a fresh instance for each test.
+     */
+    async function createRegistryWithMcpClients(value: string | undefined) {
+      const prev = process.env.MCP_CLIENTS;
+      if (value === undefined) {
+        delete process.env.MCP_CLIENTS;
+      } else {
+        process.env.MCP_CLIENTS = value;
+      }
+
+      // Force a fresh module evaluation
+      const modulePath = "../../../common/client-registry";
+      vi.resetModules();
+      const mod = await import(modulePath);
+
+      // Restore original value
+      if (prev === undefined) {
+        delete process.env.MCP_CLIENTS;
+      } else {
+        process.env.MCP_CLIENTS = prev;
+      }
+
+      return mod.clientRegistry;
+    }
+
+    it("should return all clients when MCP_CLIENTS is not set", async () => {
+      const registry = await createRegistryWithMcpClients(undefined);
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+
+      expect(registry.getAll()).toEqual([clientA, clientB]);
+    });
+
+    it("should return all clients when MCP_CLIENTS is empty", async () => {
+      const registry = await createRegistryWithMcpClients("");
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+
+      expect(registry.getAll()).toEqual([clientA, clientB]);
+    });
+
+    it("should return all clients when MCP_CLIENTS is whitespace only", async () => {
+      const registry = await createRegistryWithMcpClients("   ");
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+
+      expect(registry.getAll()).toEqual([clientA, clientB]);
+    });
+
+    it("should filter to only the specified client", async () => {
+      const registry = await createRegistryWithMcpClients("Bugsnag");
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+
+      expect(registry.getAll()).toEqual([clientA]);
+    });
+
+    it("should filter to multiple specified clients", async () => {
+      const registry = await createRegistryWithMcpClients("Bugsnag,Swagger");
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      const clientC = createMockClient("Reflect", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+      registry.register(clientC);
+
+      expect(registry.getAll()).toEqual([clientA, clientB]);
+    });
+
+    it("should match client names case-insensitively", async () => {
+      const registry = await createRegistryWithMcpClients("bugsnag,SWAGGER");
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      const clientC = createMockClient("Reflect", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+      registry.register(clientC);
+
+      expect(registry.getAll()).toEqual([clientA, clientB]);
+    });
+
+    it("should handle whitespace around client names", async () => {
+      const registry = await createRegistryWithMcpClients(
+        "  Bugsnag , Swagger  ",
+      );
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      const clientC = createMockClient("Reflect", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+      registry.register(clientC);
+
+      expect(registry.getAll()).toEqual([clientA, clientB]);
+    });
+
+    it("should return no clients when MCP_CLIENTS contains no matching names", async () => {
+      const registry = await createRegistryWithMcpClients("NonExistent");
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+
+      expect(registry.getAll()).toEqual([]);
+    });
+
+    it("should ignore empty entries from extra commas", async () => {
+      const registry = await createRegistryWithMcpClients(",Bugsnag,,Swagger,");
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      const clientC = createMockClient("Reflect", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+      registry.register(clientC);
+
+      expect(registry.getAll()).toEqual([clientA, clientB]);
+    });
+
+    it("should only register filtered clients via registerAll", async () => {
+      const registry = await createRegistryWithMcpClients("Bugsnag");
+
+      const clientA = createMockClient("Bugsnag", z.object({}));
+      const clientB = createMockClient("Swagger", z.object({}));
+      registry.register(clientA);
+      registry.register(clientB);
+
+      const count = await registry.registerAll(
+        mockServer,
+        () => "value",
+        true,
+        false,
+      );
+
+      expect(count).toBe(1);
+      expect(clientA.configure).toHaveBeenCalled();
+      expect(clientB.configure).not.toHaveBeenCalled();
     });
   });
 });

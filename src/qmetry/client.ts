@@ -1,5 +1,5 @@
 import z from "zod";
-import { getRequestHeader } from "../common/request-context";
+import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
   GetInputFunction,
@@ -15,7 +15,6 @@ import { TOOLS } from "./client/tools/index";
 import { QMETRY_DEFAULTS } from "./config/constants";
 
 const ConfigurationSchema = z.object({
-  api_key: z.string().describe("QMetry API key for authentication"),
   base_url: z
     .string()
     .url()
@@ -31,39 +30,37 @@ export class QmetryClient implements Client {
   configPrefix = "Qmetry";
   config = ConfigurationSchema;
 
-  private token: string | undefined;
   private projectApiKey: string = QMETRY_DEFAULTS.PROJECT_KEY;
   private endpoint: string = QMETRY_DEFAULTS.BASE_URL;
+  private server?: SmartBearMcpServer;
 
   async configure(
-    _server: any,
+    server: any,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
-    this.token = config.api_key;
+    this.server = server;
     if (config.base_url) {
       this.endpoint = config.base_url;
     }
   }
 
   isConfigured(): boolean {
-    return true;
+    return !!this.server;
+  }
+
+  hasAuth(): boolean {
+    try {
+      return !!this.getToken();
+    } catch {
+      return false;
+    }
   }
 
   getToken() {
-    let contextToken =
-      getRequestHeader("Qmetry-Token") || getRequestHeader("apikey");
-
-    if (Array.isArray(contextToken)) {
-      contextToken = contextToken[0];
-    }
-
-    if (contextToken) {
-      return contextToken;
-    }
-
-    if (!this.token) throw new Error("Client not configured");
-    return this.token;
+    const token =
+      this.server?.getEnv("Token", this) || this.server?.getEnv("apikey");
+    if (!token) throw new Error("Client not configured");
+    return token;
   }
 
   getBaseUrl() {
