@@ -73,6 +73,8 @@ export type GetInputFunction = (
   options?: RequestOptions,
 ) => Promise<ElicitResult>;
 
+export type GetEnvFn = (key: string, client?: Client) => string | undefined;
+
 export interface Client {
   /** Human-readable name for the client - usually the product name */
   name: string;
@@ -100,9 +102,8 @@ export interface Client {
   registerResources?(register: RegisterResourceFunction): Promise<void>;
   registerPrompts?(register: RegisterPromptFunction): Promise<void>;
   /**
-   * Optional method to retrieve the authentication token for the current request context.
-   * This is used for request-level authentication where the token might change per request.
+   * Whether the client is currently authorized to make API requests.
    */
-  getAuthToken?(): string | null;
+  hasAuth(): boolean;
   cleanupSession?(mcpSessionId: string): Promise<void>;
 }

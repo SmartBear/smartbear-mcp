@@ -8,7 +8,7 @@ export interface SwaggerConfigurationParameters {
 }
 
 export class SwaggerConfiguration {
-  private tokenProvider: () => string | null;
+  tokenProvider: () => string | null;
   portalBasePath: string;
   registryBasePath: string;
   uiBasePath: string;

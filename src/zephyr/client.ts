@@ -1,10 +1,11 @@
 import z from "zod";
-import { getRequestHeader } from "../common/request-context";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types";
+
 import { ApiClient } from "./common/api-client";
 
 import { GetEnvironments } from "./tool/environment/get-environments";
@@ -43,21 +44,17 @@ import { GetTestExecutionSteps } from "./tool/test-execution/get-test-steps.ts";
 import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
 import { UpdateTestExecutionSteps } from "./tool/test-execution/update-test-steps.ts";
 
-const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
-
 const ConfigurationSchema = z.object({
-  api_token: z.string().describe("Zephyr Scale API token for authentication"),
   base_url: z
-    .string()
     .url()
     .optional()
     .describe("Zephyr Scale API base URL")
-    .default(BASE_URL_DEFAULT),
+    .default("https://api.zephyrscale.smartbear.com/v2"),
 });
 
 export class ZephyrClient implements Client {
   private apiClient: ApiClient | undefined;
-  private _apiToken: string | undefined;
+  private server?: SmartBearMcpServer;
 
   name = "Zephyr";
   capabilityPrefix = "zephyr";
@@ -65,40 +62,36 @@ export class ZephyrClient implements Client {
   config = ConfigurationSchema;
 
   async configure(
-    _server: any,
+    server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
-    this._apiToken = config.api_token;
-    this.apiClient = new ApiClient(
-      () => this.getAuthToken(),
-      config.base_url || process.env.ZEPHYR_CUSTOM_BASE_URL || BASE_URL_DEFAULT,
-    );
+    this.server = server;
+    this.apiClient = new ApiClient(() => this.getAuthToken(), config.base_url);
   }
 
-  getAuthToken(): string | null {
-    // 1. Try request context
-    const contextHeader =
-      getRequestHeader("Zephyr-Api-Token") || getRequestHeader("Authorization");
-
-    if (contextHeader) {
-      let token = Array.isArray(contextHeader)
-        ? contextHeader[0]
-        : contextHeader;
-
-      // Handle Bearer or token prefix if present
-      if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
-      }
+  getAuthToken(): string {
+    const token =
+      this.server?.getEnv("Api-Token", this) ||
+      this.server?.getEnv("Authorization");
+    if (token) {
       return token;
     }
 
-    // 2. Fallback to configured token
-    return this._apiToken || null;
+    throw new Error(
+      "Authentication token not found in request headers or configuration",
+    );
   }
 
   isConfigured(): boolean {
-    return this.apiClient !== undefined;
+    return !!this.apiClient;
+  }
+
+  hasAuth(): boolean {
+    try {
+      return this.isConfigured() && !!this.getAuthToken();
+    } catch {
+      return false;
+    }
   }
 
   getApiClient() {

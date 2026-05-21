@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
-import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -53,7 +52,6 @@ import type {
 } from "./client/user-management-types";
 
 const ConfigurationSchema = z.object({
-  api_key: z.string().describe("Swagger API key for authentication"),
   portal_base_path: z
     .string()
     .optional()
@@ -70,8 +68,7 @@ const ConfigurationSchema = z.object({
 
 // Tool definitions for API Hub API client
 export class SwaggerClient implements Client {
-  private api: SwaggerAPI | undefined;
-  private _apiKey: string | undefined;
+  private apiConfig?: SwaggerConfiguration;
 
   name = "Swagger";
   capabilityPrefix = "swagger";
@@ -79,50 +76,46 @@ export class SwaggerClient implements Client {
   config = ConfigurationSchema;
 
   async configure(
-    _server: SmartBearMcpServer,
+    server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
-    this._apiKey = config.api_key;
-    this.api = new SwaggerAPI(
-      new SwaggerConfiguration({
-        token: () => this.getAuthToken(),
-        portalBasePath: config.portal_base_path,
-        registryBasePath: config.registry_base_path,
-        uiBasePath: config.ui_base_path,
-      }),
-      `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-    );
-  }
+    this.apiConfig = new SwaggerConfiguration({
+      token: () => {
+        const contextHeader =
+          server.getEnv("api_key", this) || server.getEnv("Authorization");
 
-  getAuthToken(): string | null {
-    // 1. Try request context
-    const contextHeader =
-      getRequestHeader("Swagger-Api-Key") || getRequestHeader("Authorization");
+        if (contextHeader) {
+          return contextHeader;
+        }
 
-    if (contextHeader) {
-      let token = Array.isArray(contextHeader)
-        ? contextHeader[0]
-        : contextHeader;
-
-      // Handle Bearer or token prefix if present
-      if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
-      }
-      return token;
-    }
-
-    // 2. Fallback to configured token
-    return this._apiKey || null;
+        throw new Error(
+          "Authentication token not found in request headers or configuration",
+        );
+      },
+      portalBasePath: config.portal_base_path,
+      registryBasePath: config.registry_base_path,
+      uiBasePath: config.ui_base_path,
+    });
   }
 
   isConfigured(): boolean {
-    return this.api !== undefined;
+    return this.apiConfig !== undefined;
+  }
+
+  hasAuth(): boolean {
+    try {
+      return this.isConfigured() && !!this.apiConfig?.tokenProvider();
+    } catch {
+      return false;
+    }
   }
 
   getApi(): SwaggerAPI {
-    if (!this.api) throw new Error("Client not configured");
-    return this.api;
+    if (!this.apiConfig) throw new Error("Client not configured");
+    return new SwaggerAPI(
+      this.apiConfig,
+      `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+    );
   }
 
   // Delegate API methods to the SwaggerAPI instance

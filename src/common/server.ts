@@ -20,7 +20,7 @@ import {
   isElicitationPolyfillResult,
 } from "./pollyfills";
 import { ToolError } from "./tools";
-import type { Client, ToolParams } from "./types";
+import type { Client, GetEnvFn, ToolParams } from "./types";
 import {
   getDefaultValue,
   getReadableTypeName,
@@ -33,8 +33,9 @@ export class SmartBearMcpServer extends McpServer {
   private samplingSupported = false;
   private elicitationSupported = false;
   private clients: Client[] = [];
+  private getEnvFn: GetEnvFn;
 
-  constructor() {
+  constructor(getEnvFn: GetEnvFn) {
     super(
       {
         name: MCP_SERVER_NAME,
@@ -49,11 +50,17 @@ export class SmartBearMcpServer extends McpServer {
       },
     );
     this.cache = new CacheService();
+    this.getEnvFn = getEnvFn;
   }
 
   getCache(): CacheService {
     return this.cache;
   }
+
+  /**
+   * Makes the server's getEnv function available to clients
+   */
+  getEnv: GetEnvFn = (key, client) => this.getEnvFn(key, client);
 
   setSamplingSupported(supported: boolean): void {
     this.samplingSupported = supported;

@@ -1,5 +1,4 @@
 import z from "zod";
-import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -20,7 +19,6 @@ import { ResolverRegistry } from "./resolver/resolver-registry";
  * Configuration schema for QTM4J client
  */
 const ConfigurationSchema = z.object({
-  [CONFIG_KEYS.API_KEY]: z.string().describe(SCHEMA_DESCRIPTIONS.API_KEY),
   [CONFIG_KEYS.BASE_URL]: z
     .string()
     .url()
@@ -62,7 +60,6 @@ export class Qtm4jClient implements Client {
   configPrefix = CLIENT_CONFIG.CONFIG_PREFIX;
   config = ConfigurationSchema;
 
-  private _apiKey: string | undefined;
   private baseUrl: string = API_CONFIG.DEFAULT_BASE_URL;
   private apiClient: ApiClient | undefined;
   private resolverRegistry: ResolverRegistry | undefined;
@@ -76,13 +73,23 @@ export class Qtm4jClient implements Client {
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
-    this._apiKey = config[CONFIG_KEYS.API_KEY];
     if (config[CONFIG_KEYS.BASE_URL]) {
       this.baseUrl = config[CONFIG_KEYS.BASE_URL];
     }
 
     // Initialize API client with token provider for request-scoped credentials
-    this.apiClient = new ApiClient(() => this.getAuthToken(), this.baseUrl);
+    this.apiClient = new ApiClient(() => {
+      const contextHeader =
+        server.getEnv("api-key", this) || server.getEnv("Authorization");
+
+      if (contextHeader) {
+        return contextHeader;
+      }
+
+      throw new Error(
+        "Authentication token not found in request headers or configuration",
+      );
+    }, this.baseUrl);
 
     // Initialize resolver registry with the API client and shared cache
     this.resolverRegistry = new ResolverRegistry(
@@ -92,39 +99,19 @@ export class Qtm4jClient implements Client {
   }
 
   /**
-   * Get authentication token with request-scoped override support
-   * Checks request headers first, then falls back to configured API key
-   * @returns API key or null if not found
-   */
-  getAuthToken(): string | null {
-    // 1. Try request context headers
-    const contextHeader =
-      getRequestHeader("Qtm4j-Api-Key") ||
-      getRequestHeader("apiKey") ||
-      getRequestHeader("Authorization");
-
-    if (contextHeader) {
-      let token = Array.isArray(contextHeader)
-        ? contextHeader[0]
-        : contextHeader;
-
-      // Handle Bearer prefix if present
-      if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
-      }
-      return token;
-    }
-
-    // 2. Fallback to configured API key
-    return this._apiKey || null;
-  }
-
-  /**
    * Check if the client is properly configured
    * @returns true if API key is set and client is ready
    */
   isConfigured(): boolean {
-    return this.apiClient !== undefined;
+    return !!this.apiClient;
+  }
+
+  hasAuth(): boolean {
+    try {
+      return !!this.getApiClient().getHeaders();
+    } catch {
+      return false;
+    }
   }
 
   /**

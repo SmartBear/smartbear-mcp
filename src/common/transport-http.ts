@@ -8,17 +8,18 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import { clientRegistry } from "./client-registry";
-import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { isDraining, registerShutdownHandler } from "./shutdown";
 import { getEnvVarName } from "./transport-stdio";
-import type { Client } from "./types";
+import type { Client, GetEnvFn } from "./types";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 type SessionEntry = {
   server: SmartBearMcpServer;
   transport: StreamableHTTPServerTransport | SSEServerTransport;
 };
+
+export class AuthorizationError extends Error {}
 
 /**
  * Common cache-control headers for probe endpoints.
@@ -483,10 +484,7 @@ export async function handleStreamableHttpRequest(
     }
 
     // Delegate to transport to handle the MCP protocol message
-    await withRequestContext(
-      req,
-      async () => await transport.handleRequest(req, res, parsedBody),
-    );
+    await transport.handleRequest(req, res, parsedBody);
   } catch (error) {
     console.error("Error handling StreamableHTTP request:", error);
     res.writeHead(500, { "Content-Type": "text/plain" });
@@ -592,14 +590,10 @@ async function handleLegacyMessageRequest(
     try {
       const parsedBody = JSON.parse(body);
       // Route message to the SSE transport for processing
-      await withRequestContext(
+      await (session.transport as SSEServerTransport).handlePostMessage(
         req,
-        async () =>
-          await (session.transport as SSEServerTransport).handlePostMessage(
-            req,
-            res,
-            parsedBody,
-          ),
+        res,
+        parsedBody,
       );
     } catch (error) {
       console.error("Error handling POST message:", error);
@@ -624,93 +618,94 @@ export async function newServer(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
-  const server = new SmartBearMcpServer();
+  const configFn: GetEnvFn = (key, client) => {
+    // 1. Try query string
+    const queryStringName = getQueryStringName(key, client);
+    const queryParams = querystring.parse(req.url?.split("?")[1] || "");
+    let value =
+      queryParams[queryStringName] ||
+      queryParams[queryStringName.toLowerCase()];
+    if (typeof value === "string") {
+      return value;
+    }
+
+    // 2. Try headers
+    const headerName = getHeaderName(key, client);
+    // Check both original case and lower-case headers for compatibility
+    // (HTTP headers are case-insensitive, but Node.js lowercases them)
+    value = req.headers[headerName] || req.headers[headerName.toLowerCase()];
+    if (typeof value === "string") {
+      if (value.toLowerCase().startsWith("bearer ")) {
+        value = value.slice("bearer ".length);
+      } else if (value.toLowerCase().startsWith("token ")) {
+        value = value.slice("token ".length);
+      } else if (value.toLowerCase().startsWith("basic ")) {
+        value = value.slice("basic ".length);
+      }
+      return value;
+    }
+
+    // 3. Fall back to environment variable
+    const envVarName = getEnvVarName(key, client);
+    return process.env[envVarName];
+  };
+
+  const server = new SmartBearMcpServer(configFn);
   try {
-    // Run configuration within request context so that client getAuthToken()
-    // methods can access request headers via AsyncLocalStorage
-    const configuredCount = await withRequestContext(req, () =>
-      clientRegistry.configure(
-        server,
-        (client, key) => {
-          // 1. Try query string
-          const queryStringName = getQueryStringName(client, key);
-          const queryParams = querystring.parse(req.url?.split("?")[1] || "");
-          let value =
-            queryParams[queryStringName] ||
-            queryParams[queryStringName.toLowerCase()];
-          if (typeof value === "string") {
-            return value;
-          }
-
-          // 2. Try headers
-          const headerName = getHeaderName(client, key);
-          // Check both original case and lower-case headers for compatibility
-          // (HTTP headers are case-insensitive, but Node.js lowercases them)
-          value =
-            req.headers[headerName] || req.headers[headerName.toLowerCase()];
-          if (typeof value === "string") {
-            return value;
-          }
-
-          // 3. Fall back to environment variable
-          const envVarName = getEnvVarName(client, key);
-          return process.env[envVarName] || null;
-        },
-        true, // ignoreMissingRequiredConfigs
-      ),
+    const configuredCount = await clientRegistry.registerAll(
+      server,
+      configFn,
+      true,
+      false,
     );
+
+    if (configuredCount === 0) {
+      throw new Error(
+        "No clients successfully configured. The request headers are missing the required configuration.",
+      );
+    }
 
     console.log(
       `Configured ${configuredCount} clients for new server instance`,
     );
 
-    if (configuredCount === 0) {
-      throw new Error(
-        "No clients successfully configured. Missing authentication headers.",
-      );
-    }
-
     // Check if any configured client actually has auth credentials for this request.
     // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
     // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
-    const hasAuth = withRequestContext(req, () =>
-      server.getClients().some((client) => {
-        // Client doesn't support dynamic auth — auth was provided at config time
-        if (!client.getAuthToken) return true;
-        // Client supports dynamic auth — check if a token is available
-        return client.getAuthToken() !== null;
-      }),
-    );
-
-    if (!hasAuth) {
-      throw new Error(
+    const hasNoAuth = !server.getClients().some((client) => client.hasAuth());
+    if (hasNoAuth) {
+      throw new AuthorizationError(
         "No clients have valid authentication credentials. Please authenticate via OAuth or provide alternative auth headers (e.g. API key or personal auth token).",
       );
     }
-  } catch (error: any) {
-    // Configuration failed - provide helpful error message
-    const headerHelp = getHttpHeadersHelp();
-    const errorMessage =
-      headerHelp.length > 0
-        ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
-        : "No clients support HTTP header configuration.";
 
+    return server;
+  } catch (error: any) {
     const headers: Record<string, string> = {
       "Content-Type": "text/plain",
     };
-
-    // Add WWW-Authenticate header to support OAuth discovery flow
-    // This points the client to the Protected Resource Metadata endpoint
-    if (req.headers.host) {
-      headers["WWW-Authenticate"] =
-        `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+    if (error instanceof AuthorizationError) {
+      // Add WWW-Authenticate header to support OAuth discovery flow
+      // This points the client to the Protected Resource Metadata endpoint
+      if (req.headers.host) {
+        headers["WWW-Authenticate"] =
+          `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+      }
+      res.writeHead(401, headers);
+      res.end(String(error));
+    } else {
+      // Configuration failed - provide helpful error message
+      const headerHelp = getHttpHeadersHelp();
+      let errorMessage = `Configuration error: ${error instanceof Error ? error.message : String(error)}.`;
+      if (headerHelp.length > 0) {
+        errorMessage += ` Please provide valid headers:\n${headerHelp.join("\n")}`;
+      }
+      res.writeHead(500, headers);
+      res.end(errorMessage);
     }
 
-    res.writeHead(401, headers);
-    res.end(errorMessage);
     return null;
   }
-  return server;
 }
 
 /**
@@ -727,24 +722,27 @@ export async function newServer(
  * @param key The config key in snake_case
  * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
  */
-export function getHeaderName(client: Client, key: string): string {
-  return `${client.configPrefix}-${key
-    .split("_")
+export function getHeaderName(key: string, client?: Client): string {
+  const prefix = `${client ? `${client.configPrefix}-${key}` : key}`;
+  return prefix
+    .split(/[\s-_]/)
     .map(
       (part: string) =>
         part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
     )
-    .join("-")}`;
+    .join("-");
 }
 
-export function getQueryStringName(client: Client, key: string): string {
-  return `${client.configPrefix.toLowerCase()}${key
-    .split("_")
-    .map(
-      (part: string) =>
-        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+export function getQueryStringName(key: string, client?: Client): string {
+  const prefix = `${client ? `${client.configPrefix}-${key}` : key}`;
+  return prefix
+    .split(/[\s-_]/)
+    .map((part, i) =>
+      i === 0
+        ? part.toLowerCase()
+        : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
     )
-    .join("")}`;
+    .join("");
 }
 
 /**
@@ -757,7 +755,7 @@ function getHttpHeaders(): string[] {
   // Use getAll() to respect MCP_ENABLED_CLIENTS filtering
   for (const entry of clientRegistry.getAll()) {
     for (const configKey of Object.keys(entry.config.shape)) {
-      headers.add(getHeaderName(entry, configKey));
+      headers.add(getHeaderName(configKey, entry));
     }
   }
 
@@ -773,7 +771,7 @@ function getHttpHeadersHelp(): string[] {
   for (const entry of clientRegistry.getAll()) {
     messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
-      const headerName = getHeaderName(entry, configKey);
+      const headerName = getHeaderName(configKey, entry);
       const requiredTag = isOptionalType(requirement)
         ? " (optional)"
         : " (required)";
