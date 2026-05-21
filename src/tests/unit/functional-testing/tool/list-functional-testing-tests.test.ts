@@ -29,8 +29,11 @@ describe("ListFunctionalTestingTests", () => {
 
   it("should set specification correctly", () => {
     expect(instance.specification.title).toBe("List Functional Testing Tests");
-    expect(instance.specification.summary).toBe(
-      "List all SmartBear Functional Testing tests",
+    expect(instance.specification.summary).toContain(
+      "Lists all API tests available in your SmartBear Functional Testing account",
+    );
+    expect(instance.specification.summary).toContain(
+      "Do not use this tool to retrieve test execution results or history",
     );
   });
 
@@ -49,6 +52,13 @@ describe("ListFunctionalTestingTests", () => {
 
     const parsed = JSON.parse((result.content[0] as any).text);
     expect(parsed).toHaveLength(2);
+  });
+
+  it("should return empty array when no tests exist", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify([]));
+    const result = await instance.handle({}, {} as any);
+    const parsed = JSON.parse((result.content[0] as any).text);
+    expect(parsed).toHaveLength(0);
   });
 
   it("should throw ToolError if fetch fails", async () => {

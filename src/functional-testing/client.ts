@@ -27,6 +27,7 @@ export class FunctionalTestingClient implements Client {
   async configure(
     _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
   ): Promise<void> {
     this._apiToken = config.api_token;
   }
@@ -40,7 +41,7 @@ export class FunctionalTestingClient implements Client {
   }
 
   isConfigured(): boolean {
-    return true;
+    return this._apiToken !== undefined || getRequestHeader(API_KEY_HEADER) !== undefined;
   }
 
   getHeaders(): Record<string, string> {

@@ -3251,7 +3251,7 @@ None",
       "readOnlyHint": true,
       "title": "SmartBear Functional Testing: List Functional Testing Tests",
     },
-    "description": "List all SmartBear Functional Testing tests
+    "description": "Lists all API tests available in your SmartBear Functional Testing account. Use this tool when you need to discover available tests before running them or checking their status. Do not use this tool to retrieve test execution results or history.
 
 **Parameters:**
 None",
