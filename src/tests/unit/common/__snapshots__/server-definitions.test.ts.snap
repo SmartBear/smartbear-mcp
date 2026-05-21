@@ -7373,6 +7373,8 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
     },
     "description": "Create a new test case in a QTM4J project. Supports auto-resolving human-readable names for priority, status, labels, and components.
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - summary (string) *required*: Test case summary/title
 - description (string): Test case description
@@ -7476,6 +7478,8 @@ Expected Output: Test case created with resolved labels/components/priority/stat
     },
     "description": "Get all projects from QTM4J with optional filtering
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectId (number): Filter by specific project ID
 - search (string): Search text for project key or project name
@@ -7567,6 +7571,8 @@ Expected Output: QMetry-enabled projects containing 'TEST' in their project keys
       "title": "QTM4J: Get Test Steps",
     },
     "description": "Get test steps for a test case by its key and version. Accepts the human-readable key (e.g. 'SCRUM-TC-145') and resolves it to the internal ID automatically.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - key (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'. PROJECT_KEY is the Jira project key (e.g. 'SCRUM'). The number is the test case counter within that project (auto-incremented, not related to seqNo). Obtain keys from the search_test_cases tool or directly from QTM4J.
@@ -7677,6 +7683,8 @@ Expected Output: First 10 steps in sequence order
       "title": "QTM4J: Search Test Cases",
     },
     "description": "Search and filter test cases in a QTM4J project with support for pagination, field selection, and sorting.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - filter (object): Filter criteria — multiple fields are combined with AND; multiple values within one field use OR.
@@ -8015,6 +8023,8 @@ Expected Output: Test cases executed in the past week with their pass rates and 
     },
     "description": "Set the active QTM4J project for the current session. Must be called before any project-specific operation. Pre-loads priority and status values so you can map user-provided names to valid options via NLP.
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectKey (string) *required*: Project key (e.g., 'SCRUM'). Use the get_projects tool to discover available project keys.
 
@@ -8061,6 +8071,8 @@ Expected Output: Project context switched to AD
       "title": "QTM4J: Update Test Case",
     },
     "description": "Update an existing test case in QTM4J. Supports auto-resolving human-readable names for priority, status, labels, and components. Labels and components support add/delete operations.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - key (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'. Automatically resolved to the internal ID and latest version.

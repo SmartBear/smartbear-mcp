@@ -1,7 +1,12 @@
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, RESPONSE_FIELDS, TOOL_NAMES } from "../../config/constants";
+import {
+  ENDPOINTS,
+  RESPONSE_FIELDS,
+  TOOL_NAMES,
+  TOOLSETS,
+} from "../../config/constants";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import type { ResolvedTestCase } from "../../resolver/resolvers/test-case-uid-resolver.ts";
 import {
@@ -13,6 +18,7 @@ import {
 export class GetTestSteps extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.GET_TEST_STEPS.TITLE,
+    toolset: TOOLSETS.TEST_CASES,
     summary: TOOL_NAMES.GET_TEST_STEPS.SUMMARY,
     readOnly: true,
     idempotent: true,
