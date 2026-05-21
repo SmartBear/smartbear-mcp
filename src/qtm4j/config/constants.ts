@@ -284,6 +284,16 @@ export const TOOL_NAMES = {
 } as const;
 
 /**
+ * Toolsets
+ */
+export const TOOLSETS = {
+  /** Test Cases toolset */
+  TEST_CASES: "Test Cases",
+  /** Projects toolset */
+  PROJECTS: "Projects",
+} as const;
+
+/**
  * Configuration Keys
  */
 export const CONFIG_KEYS = {

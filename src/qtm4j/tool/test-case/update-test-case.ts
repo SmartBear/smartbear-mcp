@@ -1,7 +1,7 @@
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES } from "../../config/constants";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
 import {
   InputField,
   type ProjectContext,
@@ -77,6 +77,7 @@ async function resolveAddDelete(
 export class UpdateTestCase extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.UPDATE_TEST_CASE.TITLE,
+    toolset: TOOLSETS.TEST_CASES,
     summary: TOOL_NAMES.UPDATE_TEST_CASE.SUMMARY,
     readOnly: false,
     idempotent: true,
