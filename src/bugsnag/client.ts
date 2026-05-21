@@ -13,6 +13,7 @@ import type {
 import { CurrentUserAPI } from "./client/api/CurrentUser";
 import { Configuration } from "./client/api/configuration";
 import { ErrorAPI } from "./client/api/Error";
+import { OrganizationAPI } from "./client/api/Organization";
 import type {
   Build,
   EventField,
@@ -42,6 +43,7 @@ import { ListProjects } from "./tool/project/list-projects";
 import { GetBuild } from "./tool/release/get-build";
 import { GetRelease } from "./tool/release/get-release";
 import { ListReleases } from "./tool/release/list-releases";
+import { ListCollaborators } from "./tool/project/list-collaborators";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -83,6 +85,7 @@ export class BugsnagClient implements Client {
   private _currentUserApi: CurrentUserAPI | undefined;
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
+  private _organizationApi: OrganizationAPI | undefined;
   private _appEndpoint: string | undefined;
   private _authToken?: string;
 
@@ -104,6 +107,11 @@ export class BugsnagClient implements Client {
   get appEndpoint(): string {
     if (!this._appEndpoint) throw new Error("Client not configured");
     return this._appEndpoint;
+  }
+
+  get organizationApi(): OrganizationAPI {
+    if (!this._organizationApi) throw new Error("Client not configured");
+    return this._organizationApi;
   }
 
   name = "BugSnag";
@@ -200,6 +208,7 @@ export class BugsnagClient implements Client {
     this._currentUserApi = new CurrentUserAPI(apiConfig);
     this._errorsApi = new ErrorAPI(apiConfig);
     this._projectApi = new ProjectAPI(apiConfig);
+    this._organizationApi = new OrganizationAPI(apiConfig);
     this._isConfigured = true;
   }
 
@@ -346,6 +355,10 @@ export class BugsnagClient implements Client {
     return projectEvents.find((event) => event && !!event.body)?.body || null;
   }
 
+  async getCollaborators(projectId: string): Promise<any> {
+    return await this.organizationApi.listProjectCollaborators(projectId);
+  }
+
   public async validateEventFields(project: Project, fields?: FilterObject) {
     if (fields) {
       const eventFields = await this.getProjectEventFields(project);
@@ -450,6 +463,7 @@ export class BugsnagClient implements Client {
       new ListTraceFields(this),
       new GetNetworkEndpointGroupings(this),
       new SetNetworkEndpointGroupings(this),
+      new ListCollaborators(this),
     ];
 
     for (const tool of tools) {
