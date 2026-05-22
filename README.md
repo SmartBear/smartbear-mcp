@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [Swagger](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [Swagger](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [QTM4J](https://www.qmetry.com/qmetry-test-management-for-jira), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
 
 ## What is MCP?
 
@@ -37,6 +37,7 @@ See individual guides for suggested prompts and supported tools and resources:
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
 - [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - Review and Remote System Configuration management capabilities
+- [QTM4J](https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration) - QTM4J Test Management for Jira capabilities
 
 ## Remote MCP Servers
 
@@ -50,12 +51,12 @@ For BugSnag, Swagger, and Zephyr, SmartBear hosts Remote MCP Servers that you ca
 
 See the [Remote MCP Servers guide](https://developer.smartbear.com/smartbear-mcp/docs/remote-mcp-servers) for per-client setup instructions. You can connect to multiple remote servers at the same time.
 
-> **Need Reflect, QMetry, PactFlow, or Collaborator?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
+> **Need Reflect, QMetry, QTM4J, PactFlow, or Collaborator?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
 
 ## Prerequisites
 
 - Node.js 20+ and npm
-- Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, or Zephyr)
+- Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, QTM4J or Zephyr)
 - Valid API tokens for the products you want to integrate
 
 ## Local MCP Server Installation (npm)
@@ -101,7 +102,9 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "COLLABORATOR_BASE_URL": "${input:collab_base_url}",
         "COLLABORATOR_USERNAME": "${input:collab_username}",
-        "COLLABORATOR_LOGIN_TICKET": "${input:collab_login_ticket}"
+        "COLLABORATOR_LOGIN_TICKET": "${input:collab_login_ticket}",
+        "QTM4J_API_KEY": "${input:qtm4j_api_key}",
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}"
       }
     }
   },
@@ -213,7 +216,19 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
           "type": "promptString",
           "description": "Collab login ticket",
           "password": true
-      }
+      },
+      {
+          "id": "qtm4j_api_key",
+          "type": "promptString",
+          "description": "QTM4J API Key",
+          "password": true
+    },
+    {
+          "id": "qtm4j_base_url",
+          "type": "promptString",
+          "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
+          "password": false
+    }
   ]
 }
 ```
@@ -250,7 +265,9 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
         "COLLABORATOR_BASE_URL": "your collab base url",
         "COLLABORATOR_USERNAME": "your collab user name",
-        "COLLABORATOR_LOGIN_TICKET": "your collab login ticket"
+        "COLLABORATOR_LOGIN_TICKET": "your collab login ticket",
+        "QTM4J_API_KEY": "your_qtm4j_key",
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
       }
     }
   }

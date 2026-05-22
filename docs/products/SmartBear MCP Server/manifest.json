@@ -139,6 +139,14 @@
       "contentUrl": "collaborator-integration.md"
     },
     {
+      "order": 8,
+      "parent": "mcp-server-capabilities",
+      "name": "QTM4J Integration",
+      "slug": "qtm4j-integration",
+      "type": "markdown",
+      "contentUrl": "qtm4j-integration.md"
+    },
+    {
       "order": 3,
       "parent": "",
       "name": "Best Practices",
