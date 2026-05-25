@@ -7336,6 +7336,81 @@ Expected Output: Test case created with resolved labels/components/priority/stat
     ],
     "title": "QTM4J: Create Test Case",
   },
+  "qtm4j_create_test_cycle": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Create Test Cycle",
+    },
+    "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.
+
+**Parameters:**
+- summary (string) *required*: Short title of the test cycle. Must not be blank. Max 255 chars.
+- description (string): Detailed description of the test cycle. Max 65 535 characters.
+- priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID via set_project_context.
+- status (string): Status name (e.g., 'To Do', 'In Progress'). Auto-resolved to ID via set_project_context.
+- assignee (string): Assignee account ID
+- reporter (string): Jira account UUID of the reporter. Default: the calling user.
+- labels (array): List of label names (e.g., ['Release_1', 'Sprint 1']). Auto-resolved to IDs.
+- components (array): List of component names (e.g., ['UI', 'Cloud']). Auto-resolved to IDs.
+- plannedStartDate (string): Planned start date. Format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Must be ≤ plannedEndDate when both are provided.
+- plannedEndDate (string): Planned end date. Format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 00:00'. Must be ≥ plannedStartDate when both are provided.
+
+**Output Description:** JSON object with the new test cycle's id and key (e.g. 'TRWT-TR-218'). Warnings included if any fields were skipped.
+
+**Use Cases:** 1. Create a test cycle with summary, priority, status, labels, or components 2. Set planned start and end dates on a new test cycle
+
+**Examples:**
+1. Create a simple test cycle (project must be set via set_project_context first)
+\`\`\`json
+{
+  "summary": "Smoke Test Cycle"
+}
+\`\`\`
+Expected Output: Test cycle created with key 'SCRUM-TR-xxx'
+
+2. Create a test cycle with priority, status, labels, and components
+\`\`\`json
+{
+  "summary": "Regression Suite – Sprint 42",
+  "description": "End-to-end regression covering payment and checkout modules.",
+  "priority": "High",
+  "status": "To Do",
+  "labels": [
+    "Release_1",
+    "Sprint 1"
+  ],
+  "components": [
+    "UI",
+    "Cloud"
+  ],
+  "plannedStartDate": "10/May/2026 00:00",
+  "plannedEndDate": "15/May/2026 00:00"
+}
+\`\`\`
+Expected Output: Test cycle created with resolved priority, status, labels, and components
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status are resolved from names loaded by set_project_context. Unresolvable names are skipped with a warning; the cycle is still created. 3. Labels and components are resolved on demand. Unresolvable names are skipped with a warning. 4. All cycles are placed in the 'MCP Generated' folder — do not pass folderId. 5. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
+    "inputSchema": [
+      "assignee",
+      "components",
+      "description",
+      "labels",
+      "plannedEndDate",
+      "plannedStartDate",
+      "priority",
+      "reporter",
+      "status",
+      "summary",
+    ],
+    "outputSchema": [
+      "id",
+      "key",
+    ],
+    "title": "QTM4J: Create Test Cycle",
+  },
   "qtm4j_get_projects": {
     "annotations": {
       "destructiveHint": false,
@@ -7875,6 +7950,178 @@ Expected Output: Test cases executed in the past week with their pass rates and 
     ],
     "title": "QTM4J: Search Test Cases",
   },
+  "qtm4j_search_test_cycles": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Search Test Cycles",
+    },
+    "description": "Search for test cycles in a QTM4J project by status, owner, folder, date range, or keyword. projectId is injected automatically from the active project context.
+
+**Parameters:**
+- filter (object): Filter criteria — fields are combined with AND; multiple values within one field use OR.
+- fields (array): Fields to include in each result object. If omitted, server returns its default set (NOTE: plannedStartDate and plannedEndDate are NOT in the default response — include them explicitly when needed). Available fields: key, summary, description, status, priority, assignee, reporter, isAutomated, plannedStartDate, plannedEndDate, labels, components, fixVersions, sprint, defectCount, estimatedTime, actualTime, created, updated. Example: ['key', 'summary', 'status', 'assignee', 'plannedStartDate', 'plannedEndDate']
+- startAt (number): Zero-based page offset. Default: 0. (default: 0)
+- maxResults (number): Results per page. Default: 20. Maximum: 100. (default: 20)
+- sort (string): Sort expression. Format: '<fieldName>:<asc|desc>'. Default: 'key:asc'. Allowed fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. Example: 'plannedStartDate:asc' (default: "key:asc")
+
+**Output Description:** JSON object with total (matching cycles across all pages), startAt, maxResults, and data (array of test cycle objects for this page). Each item always has id and key. Other fields depend on what was requested via the fields parameter.
+
+**Use Cases:** 1. Find test cycles by status, priority, assignee, reporter, or folder 2. Find test cycles by planned execution date range (plannedStartDate / plannedEndDate) 3. Find test cycles created or updated within a date range (createdOn / updatedOn) 4. Search test cycles by keyword across key, summary, and description 5. Paginate, sort, and select specific response fields
+
+**Examples:**
+1. Find all in-progress and to-do cycles
+\`\`\`json
+{
+  "filter": {
+    "status": [
+      "In Progress",
+      "To Do"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Paginated list of matching test cycles
+
+2. Find cycles owned by a specific user
+\`\`\`json
+{
+  "filter": {
+    "assignee": [
+      "5b10a2844c20165700ede21f"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Test cycles assigned to that user
+
+3. Find cycles with planned start date in a range, requesting date fields explicitly
+\`\`\`json
+{
+  "filter": {
+    "plannedStartDate": "01/Apr/2026,30/Apr/2026"
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "assignee",
+    "plannedStartDate",
+    "plannedEndDate"
+  ]
+}
+\`\`\`
+Expected Output: Cycles with planned start date in April 2026 including date fields
+
+4. Keyword search with sort, pagination, and selected fields
+\`\`\`json
+{
+  "filter": {
+    "searchText": "regression"
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "assignee"
+  ],
+  "sort": "plannedStartDate:asc",
+  "startAt": 0,
+  "maxResults": 25
+}
+\`\`\`
+Expected Output: Cycles matching 'regression', sorted by planned start date
+
+5. Find cycles created last week
+\`\`\`json
+{
+  "filter": {
+    "createdOn": "01/May/2026,07/May/2026"
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "assignee"
+  ],
+  "sort": "key:asc"
+}
+\`\`\`
+Expected Output: Test cycles created between 01 May and 07 May 2026
+
+6. Find high-priority cycles updated recently by reporter
+\`\`\`json
+{
+  "filter": {
+    "priority": [
+      "High"
+    ],
+    "reporter": [
+      "5b10a2844c20165700ede21f"
+    ],
+    "updatedOn": "01/May/2026,21/May/2026"
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "priority",
+    "assignee"
+  ]
+}
+\`\`\`
+Expected Output: High-priority cycles updated in May 2026 reported by that user
+
+7. All filters combined with explicit field selection
+\`\`\`json
+{
+  "filter": {
+    "status": [
+      "In Progress"
+    ],
+    "priority": [
+      "High",
+      "Medium"
+    ],
+    "assignee": [
+      "5b10a2844c20165700ede21f"
+    ],
+    "folderId": 109987,
+    "plannedStartDate": "02/Apr/2026,15/May/2026",
+    "searchText": "regression"
+  },
+  "fields": [
+    "key",
+    "summary",
+    "status",
+    "priority",
+    "assignee",
+    "plannedStartDate"
+  ],
+  "sort": "plannedStartDate:asc",
+  "maxResults": 25
+}
+\`\`\`
+Expected Output: Test cycles matching all specified filters with selected fields
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. SUPPORTED FILTER FIELDS: status, priority, assignee, reporter, folderId, labels, components, plannedStartDate, plannedEndDate, searchText, createdOn, updatedOn, isAutomated, aiGenerated. Do NOT use any other filter field names. 3. DATE FILTERS: createdOn = creation date; updatedOn = last-updated date; plannedStartDate / plannedEndDate = planned execution window. Format: 'dd/MMM/yyyy,dd/MMM/yyyy' e.g. '01/May/2026,21/May/2026'. Month is case-sensitive. 'Created last week' → createdOn, NOT plannedStartDate. 4. FIELDS: Pass as an array to select what to return. plannedStartDate and plannedEndDate are NOT in the default response — include them explicitly. Available: key, summary, description, status, priority, assignee, reporter, isAutomated, plannedStartDate, plannedEndDate, labels, components, fixVersions, sprint, defectCount, estimatedTime, actualTime, created, updated. 5. REQUEST STRUCTURE: filter → request body; fields, sort, startAt, maxResults → URL query params. 6. SORT: Allowed fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. Format: '<field>:<asc|desc>'. created and updated are NOT valid sort fields. 7. FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up.",
+    "inputSchema": [
+      "fields",
+      "filter",
+      "maxResults",
+      "sort",
+      "startAt",
+    ],
+    "outputSchema": [
+      "data",
+      "maxResults",
+      "startAt",
+      "total",
+    ],
+    "title": "QTM4J: Search Test Cycles",
+  },
   "qtm4j_set_project_context": {
     "annotations": {
       "destructiveHint": false,
@@ -8021,6 +8268,142 @@ Expected Output: Version 2 of test case updated with new assignee and estimated 
       "versionNo",
     ],
     "title": "QTM4J: Update Test Case",
+  },
+  "qtm4j_update_test_cycle": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Update Test Cycle",
+    },
+    "description": "Update an existing test cycle in QTM4J by its human-readable key (e.g. 'SCRUM-TR-101'). Supports auto-resolving human-readable names for status and priority. Labels and components support add/delete operations. Only the fields you provide are changed — omitted fields are left as-is. projectId is injected automatically from the active project context.
+
+**Parameters:**
+- key (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
+- summary (string): Updated test cycle name / title. Max 255 characters.
+- description (string): Updated description. Pass null to clear the existing value. Max 65 535 characters.
+- status (string): Status name (e.g., 'To Do', 'In Progress'). Auto-resolved to ID. Pass null to clear.
+- priority (string): Priority name (e.g., 'High', 'Medium'). Auto-resolved to ID. Pass null to reset to project default.
+- plannedStartDate (string): Format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 09:00'. Month must be capitalised (May not may). Pass null to clear the existing value.
+- plannedEndDate (string): Format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 09:00'. Month must be capitalised (May not may). Pass null to clear the existing value.
+- assignee (string): Assignee Jira account ID (e.g., '5b10a2844c20165700ede21f'). Pass null to unassign.
+- reporter (string): Reporter Jira account ID (e.g., '5b10a2844c20165700ede21f'). Pass null to clear.
+- labels (object): Labels to add or remove by name. Each name is auto-resolved to its ID.
+- components (object): Components to add or remove by name. Each name is auto-resolved to its ID.
+
+**Output Description:** Confirmation object with the test cycle UID, key, and updated: true. Warnings are included if any field names could not be resolved.
+
+**Use Cases:** 1. Update summary, status, priority, planned dates, assignee, or reporter 2. Clear a nullable field by passing null (e.g. description: null removes text, assignee: null unassigns owner) 3. Add or remove labels and components atomically without affecting other entries 4. Apply multiple field updates in a single call
+
+**Examples:**
+1. Rename a test cycle
+\`\`\`json
+{
+  "key": "SCRUM-TR-101",
+  "summary": "Regression Cycle - Sprint 12 Updated"
+}
+\`\`\`
+Expected Output: Test cycle updated with new summary
+
+2. Change status and update planned dates
+\`\`\`json
+{
+  "key": "SCRUM-TR-101",
+  "status": "In Progress",
+  "plannedStartDate": "01/May/2026 09:00",
+  "plannedEndDate": "31/May/2026 18:00"
+}
+\`\`\`
+Expected Output: Test cycle status and planned dates updated
+
+3. Add a label and remove an old one
+\`\`\`json
+{
+  "key": "SCRUM-TR-101",
+  "labels": {
+    "add": [
+      "Regression",
+      "Smoke"
+    ],
+    "delete": [
+      "Sprint1"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Test cycle updated — Regression and Smoke labels added, Sprint1 removed
+
+4. Clear the description text
+\`\`\`json
+{
+  "key": "SCRUM-TR-101",
+  "description": null
+}
+\`\`\`
+Expected Output: Test cycle description cleared
+
+5. Unassign the owner and clear planned dates
+\`\`\`json
+{
+  "key": "SCRUM-TR-101",
+  "assignee": null,
+  "plannedStartDate": null,
+  "plannedEndDate": null
+}
+\`\`\`
+Expected Output: Test cycle owner unassigned and planned dates cleared
+
+6. Full update with all fields
+\`\`\`json
+{
+  "key": "SCRUM-TR-101",
+  "summary": "Final Regression Cycle",
+  "description": "Updated for sprint 12.",
+  "status": "In Progress",
+  "priority": "High",
+  "plannedStartDate": "15/May/2026 09:00",
+  "plannedEndDate": "30/May/2026 18:00",
+  "assignee": "5b10a2844c20165700ede21f",
+  "labels": {
+    "add": [
+      "Regression"
+    ],
+    "delete": [
+      "Sprint1"
+    ]
+  },
+  "components": {
+    "add": [
+      "Backend"
+    ],
+    "delete": [
+      "Frontend"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Test cycle updated with all specified fields
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. KEY FORMAT: '{PROJECT_KEY}-TR-{number}' — e.g. 'SCRUM-TR-101'. 3. Pass explicit null to CLEAR a nullable field — e.g. description: null removes the description text, assignee: null unassigns the owner, plannedStartDate: null removes the date. Omitting a field leaves it unchanged. 4. Status and priority are auto-resolved from human-readable names loaded by set_project_context. Unresolvable names are skipped with a warning; remaining fields still update. 5. Labels and components use add/delete — names are auto-resolved to IDs. Both operations can be combined in a single call. 6. Date format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 09:00'. Month must be capitalised (May not may or MAY). 7. Archived test cycles cannot be updated — the server returns 400. Unarchive first if needed.",
+    "inputSchema": [
+      "assignee",
+      "components",
+      "description",
+      "key",
+      "labels",
+      "plannedEndDate",
+      "plannedStartDate",
+      "priority",
+      "reporter",
+      "status",
+      "summary",
+    ],
+    "outputSchema": [
+      "key",
+      "updated",
+    ],
+    "title": "QTM4J: Update Test Cycle",
   },
   "reflect_add_prompt_step": {
     "annotations": {
