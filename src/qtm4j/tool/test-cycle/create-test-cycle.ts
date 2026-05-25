@@ -9,7 +9,7 @@ import {
   type CreateTestCycleResponseType,
 } from "../../schema/test-cycle.schema";
 
-// Maps each input field to its resolver key.
+// Maps each input field to its resolver key. Add entries here to resolve new fields.
 const FIELD_CONFIG: Record<string, string> = {
   [InputField.PRIORITY]: ResolverKeys.CommonAttribute.PRIORITY,
   [InputField.STATUS]: ResolverKeys.CommonAttribute.TEST_CYCLE_STATUS,
@@ -18,6 +18,22 @@ const FIELD_CONFIG: Record<string, string> = {
   [InputField.COMPONENTS]: ResolverKeys.SearchableField.COMPONENTS,
 };
 
+/**
+ * CreateTestCycle Tool
+ *
+ * Creates a new test cycle in QTM4J. All cycles are placed in the
+ * 'MCP Generated' folder automatically.
+ *
+ * Resolved fields (driven by FIELD_CONFIG):
+ *   - priority → numeric ID via CommonAttribute resolver
+ *   - status → numeric ID via TEST_CYCLE_STATUS resolver
+ *   - folderId → resolved to 'MCP Generated' folder ID
+ *   - labels → numeric IDs via SearchableField resolver
+ *   - components → numeric IDs via SearchableField resolver
+ *
+ * Safety: scalar (priority, status) and array (labels, components) fields that
+ * fail to resolve are deleted from the body before the API call to prevent 400s.
+ */
 export class CreateTestCycle extends Tool<Qtm4jClient> {
   // ─── Tool Specification ────────────────────────────────────────────────────
 
@@ -77,6 +93,8 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
   handle = async (rawArgs: any) => {
     const fieldResolver = this.client.getResolverRegistry();
     const context = fieldResolver.requireProjectContext();
+
+    // Inject projectId and default folderId before resolution.
     const body: Record<string, unknown> = {
       ...(CreateTestCycleBody.parse(rawArgs) as Record<string, unknown>),
       projectId: context.projectId,
@@ -84,6 +102,7 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
     };
     const warnings: string[] = [];
 
+    // Resolve all configured fields (priority, status, folderId, labels, components).
     await Promise.all(
       Object.entries(FIELD_CONFIG).map(([inputField, resolverKey]) =>
         fieldResolver
@@ -92,11 +111,11 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
       ),
     );
 
-    // Remove scalar fields that failed to resolve (still a string = no ID found)
+    // Remove scalar fields that failed to resolve (still a string = no ID found).
     for (const field of [InputField.PRIORITY, InputField.STATUS]) {
       if (typeof body[field] === "string") delete body[field];
     }
-    // Remove array fields that failed to resolve (still strings = no IDs found)
+    // Remove array fields that failed to resolve (still strings = no IDs found).
     for (const field of [InputField.LABELS, InputField.COMPONENTS]) {
       const val = body[field];
       if (Array.isArray(val) && val.length > 0 && typeof val[0] === "string")

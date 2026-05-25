@@ -26,7 +26,7 @@ const ADD_DELETE_FIELD_CONFIG: Record<string, string> = {
 };
 
 /**
- * Resolves a { add?, delete? } object of name strings to { add?, delete? } of
+ * Resolves a { add? delete? } object of name strings to { add? delete? } of
  * numeric IDs. Names that cannot be resolved are skipped with a warning.
  */
 async function resolveAddDelete(
@@ -61,6 +61,18 @@ async function resolveAddDelete(
   return result;
 }
 
+/**
+ * UpdateTestCycle Tool
+ *
+ * Updates an existing test cycle via PUT /testcycles/{key}.
+ * The human-readable key (e.g. 'SCRUM-TR-101') is used directly as the path param —
+ * no UID resolution step is required for test cycles.
+ * Only the fields provided in the request are changed; omitted fields remain as-is.
+ * Resolves human-readable names to IDs for priority and status.
+ * Labels and components use the add/delete pattern to atomically add or remove entries.
+ * Nullable fields (description, assignee, reporter, plannedStartDate, plannedEndDate)
+ * accept explicit null to clear the value on the server.
+ */
 export class UpdateTestCycle extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.UPDATE_TEST_CYCLE.TITLE,
@@ -162,7 +174,8 @@ export class UpdateTestCycle extends Tool<Qtm4jClient> {
     const context = fieldResolver.requireProjectContext();
     const warnings: string[] = [];
 
-    // Build scalar body (exclude key and add/delete fields)
+    // Separate path param (key) and add/delete fields from scalar body fields.
+    // undefined values are stripped automatically by JSON.stringify before the request.
     const { key: _key, labels, components, ...scalarArgs } = args;
     const body: Record<string, unknown> = { ...scalarArgs };
 
@@ -175,12 +188,12 @@ export class UpdateTestCycle extends Tool<Qtm4jClient> {
           .resolve(inputField, resolverKey, body, context, warnings),
       ),
     );
-    // Remove any scalar field that failed to resolve (still a string after a resolution attempt)
+    // Remove any scalar field that failed to resolve (still a string, not a valid ID).
     for (const field of Object.keys(SIMPLE_FIELD_CONFIG)) {
       if (typeof body[field] === "string") delete body[field];
     }
 
-    // Resolve add/delete metadata fields (labels, components)
+    // Resolve add/delete metadata fields (labels, components).
     for (const [inputField, resolverKey] of Object.entries(
       ADD_DELETE_FIELD_CONFIG,
     )) {

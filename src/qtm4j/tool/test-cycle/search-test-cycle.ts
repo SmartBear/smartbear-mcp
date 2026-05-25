@@ -13,6 +13,13 @@ import {
   type SearchTestCycleResponseType,
 } from "../../schema/search-test-cycle.schema";
 
+/**
+ * SearchTestCycles Tool
+ *
+ * Searches and filters test cycles in a QTM4J project.
+ * Filter fields are sent in the POST body; pagination, sort, and field-selection
+ * are passed as URL query parameters — the same pattern as SearchTestCases.
+ */
 export class SearchTestCycles extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.SEARCH_TEST_CYCLES.TITLE,
@@ -138,9 +145,11 @@ export class SearchTestCycles extends Tool<Qtm4jClient> {
     const args = SearchTestCycleBody.parse(rawArgs);
     const context = this.client.getResolverRegistry().requireProjectContext();
 
+    // Inject projectId into the filter body — never exposed to the LLM.
     if (!args.filter) args.filter = {};
     args.filter.projectId = context.projectId;
 
+    // Pagination, sort, and field selection are URL query params, not body fields.
     const params = new URLSearchParams();
     if (args.fields?.length)
       params.set(RESPONSE_FIELDS.FIELDS, args.fields.join(","));
