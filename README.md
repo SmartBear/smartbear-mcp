@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BearQ](https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration), [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [Swagger](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [QTM4J](https://www.qmetry.com/qmetry-test-management-for-jira), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BearQ](https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration), [BugSnag](https://www.bugsnag.com/), [LoadNinja](https://loadninja.com/), [Reflect](https://reflect.run), [Swagger](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [QTM4J](https://www.qmetry.com/qmetry-test-management-for-jira), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
 
 ## What is MCP?
 
@@ -30,6 +30,7 @@ See individual guides for suggested prompts and supported tools and resources:
 
 - [BearQ](https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration) - AI-powered QA test management and execution capabilities
 - [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - Comprehensive error monitoring and debugging capabilities
+- [LoadNinja](https://loadninja.com/) - Load testing project management, scenario inspection, and test run monitoring
 - [Reflect](https://developer.smartbear.com/smartbear-mcp/docs/reflect-integration) - Test management and execution capabilities
 - **Swagger**
   - [Portal](https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration) - Portal and product management capabilities
@@ -52,12 +53,12 @@ For BugSnag, Swagger, and Zephyr, SmartBear hosts Remote MCP Servers that you ca
 
 See the [Remote MCP Servers guide](https://developer.smartbear.com/smartbear-mcp/docs/remote-mcp-servers) for per-client setup instructions. You can connect to multiple remote servers at the same time.
 
-> **Need BearQ, Reflect, QMetry, QTM4J, PactFlow, or Collaborator?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
+> **Need BearQ, LoadNinja, Reflect, QMetry, QTM4J, PactFlow, or Collaborator?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
 
 ## Prerequisites
 
 - Node.js 20+ and npm
-- Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, QTM4J or Zephyr)
+- Access to SmartBear products (BugSnag, LoadNinja, Reflect, Swagger, QMetry, QTM4J or Zephyr)
 - Valid API tokens for the products you want to integrate
 
 ## Local MCP Server Installation (npm)
@@ -90,6 +91,8 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "BEARQ_API_BASE_URL": "${input:bearq_api_base_url}",
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
+        "LOADNINJA_API_KEY": "${input:loadninja_api_key}",
+        "LOADNINJA_API_BASE_URL": "${input:loadninja_api_base_url}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
         "SWAGGER_API_KEY": "${input:swagger_api_key}",
         "SWAGGER_PORTAL_BASE_PATH": "${input:swagger_portal_base_path}",
@@ -134,6 +137,18 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
          "id": "bugsnag_project_api_key",
          "type": "promptString",
          "description": "BugSnag Project API Key - for single project interactions",
+         "password": false
+      },
+      {
+         "id": "loadninja_api_key",
+         "type": "promptString",
+         "description": "LoadNinja API key - leave blank to disable LoadNinja tools",
+         "password": true
+      },
+      {
+         "id": "loadninja_api_base_url",
+         "type": "promptString",
+         "description": "LoadNinja API base URL - leave blank to use the default (https://api.loadninja.com/v1)",
          "password": false
       },
       {
@@ -266,6 +281,8 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "BEARQ_API_TOKEN": "your_bearq_api_token",
         "BUGSNAG_AUTH_TOKEN": "your_personal_auth_token",
         "BUGSNAG_PROJECT_API_KEY": "your_project_api_key",
+        "LOADNINJA_API_KEY": "your_loadninja_api_key",
+        "LOADNINJA_API_BASE_URL": "https://api.loadninja.com/v1",
         "REFLECT_API_TOKEN": "your_reflect_token",
         "SWAGGER_API_KEY": "your_swagger_key",
         "SWAGGER_PORTAL_BASE_PATH": "https://api.portal.swaggerhub.com/v1",

@@ -3455,6 +3455,94 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Update Webhook",
   },
+  "loadninja_create_project": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "LoadNinja: Create Project",
+    },
+    "description": "Creates a new project in the LoadNinja account.
+
+**Parameters:**
+- name (string) *required*: Project name. Must be unique within the account.
+- description (string) *required*: Project description.
+
+**Examples:**
+1. Create a new project
+\`\`\`json
+{
+  "name": "My Load Tests",
+  "description": "Performance tests for the checkout flow"
+}
+\`\`\`",
+    "inputSchema": [
+      "description",
+      "name",
+    ],
+    "outputSchema": undefined,
+    "title": "LoadNinja: Create Project",
+  },
+  "loadninja_get_scenario": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "LoadNinja: Get Scenario",
+    },
+    "description": "Returns details of a load test scenario, including virtual user configuration, duration/iteration settings, and assigned scripts.
+
+**Parameters:**
+- scenarioId (string) *required*: Unique ID of the scenario to retrieve.
+
+**Use Cases:** 1. Inspect scenario configuration before starting a test run 2. Verify virtual user count and script assignments
+
+**Hints:** 1. Scenario IDs can be found by listing projects — each project contains its scenarios 2. A scenario is either duration-based (durationBased=true, durationM field) or iteration-based (durationBased=false, iterations field)",
+    "inputSchema": [
+      "scenarioId",
+    ],
+    "outputSchema": undefined,
+    "title": "LoadNinja: Get Scenario",
+  },
+  "loadninja_get_test_run_status": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "LoadNinja: Get Test Run Status",
+    },
+    "description": "Returns the current status of a test run, including the number of requested and registered cloud machines and completed tests.
+
+**Parameters:**
+- testRunId (string) *required*: Unique ID of the test run.
+
+**Use Cases:** 1. Monitor a running test to check progress 2. Verify whether a test run has completed
+
+**Hints:** 1. The status field indicates the test state (e.g. TEST_COMPLETE) 2. Use this to poll test progress after starting a test run",
+    "inputSchema": [
+      "testRunId",
+    ],
+    "outputSchema": undefined,
+    "title": "LoadNinja: Get Test Run Status",
+  },
+  "loadninja_list_projects": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "LoadNinja: List Projects",
+    },
+    "description": "Returns all projects available to the authenticated LoadNinja account.
+
+**Use Cases:** 1. Browse available projects to find a project ID for further operations 2. List all projects to get an overview of the LoadNinja account",
+    "inputSchema": [],
+    "outputSchema": undefined,
+    "title": "LoadNinja: List Projects",
+  },
   "qmetry_bulk_update_test_case_execution_status": {
     "annotations": {
       "destructiveHint": false,
