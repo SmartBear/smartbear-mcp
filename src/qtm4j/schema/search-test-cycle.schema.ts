@@ -1,3 +1,12 @@
+/**
+ * QTM4J Search Test Cycles Schemas
+ *
+ * POST /rest/api/latest/testcycles/search
+ *
+ * Filter fields are sent in the POST body; pagination (startAt, maxResults),
+ * field selection, and sort are URL query parameters.
+ * projectId is auto-injected by the tool — never passed by the LLM.
+ */
 import * as zod from "zod";
 import { PAGINATION, SORT_DEFAULTS } from "../config/constants";
 
