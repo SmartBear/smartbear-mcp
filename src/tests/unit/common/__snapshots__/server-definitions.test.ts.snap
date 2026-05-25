@@ -7336,6 +7336,68 @@ Expected Output: Test case created with resolved labels/components/priority/stat
     ],
     "title": "QTM4J: Create Test Case",
   },
+  "qtm4j_get_automation_history": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Get Automation History",
+    },
+    "description": "Retrieve a paginated history of past automation result uploads for a QTM4J project. Supports filtering by test cycle, source label, date range, uploader, and status.
+
+**Parameters:**
+- startAt (number): Zero-indexed starting position for pagination (default: 0). (default: 0)
+- maxResults (number): Maximum number of records to return per page (default: 20, max: 100). (default: 20)
+
+**Output Description:** Paginated list of automation import history. Each record includes: format, processStatus, importStatus, startTime, endTime, trackingId, detailedMessage, and a summary array. summary[0] contains: testCycleIssueKey, testCycleSummary, testCasesCreated, testCaseVersionsCreated, testCaseVersionsReused, testStepsCreated. Render as individual cards separated by dividers, NOT a table. Show '1–N of total' count above. Never show raw fileName.
+
+**Use Cases:** 1. Review past automation result uploads for a project 2. Check the status of recent automation imports 3. Audit CI/CD automation upload history 4. Paginate through all historical automation uploads
+
+**Examples:**
+1. Get the first page of automation upload history (default page size 20)
+\`\`\`json
+{}
+\`\`\`
+Expected Output: Paginated list of automation history records with upload status and metadata
+
+2. Get the second page of automation upload history
+\`\`\`json
+{
+  "startAt": 20,
+  "maxResults": 20
+}
+\`\`\`
+Expected Output: Next 20 automation history records
+
+3. Get up to 50 records starting from the beginning
+\`\`\`json
+{
+  "startAt": 0,
+  "maxResults": 50
+}
+\`\`\`
+Expected Output: Up to 50 automation history records
+
+**Hints:** 1. NO PROJECT CONTEXT REQUIRED: Do NOT call set_project_context and do NOT ask the user for a project key, project ID, or any other project details. This tool works independently. 2. PAGINATION: startAt is zero-indexed (default: 0), maxResults controls page size (default: 20, max: 100). Increment startAt by maxResults to fetch the next page. 3. Returns an empty data array (not an error) when no history records exist. 4. DISPLAY FORMAT: Show '1–N of <total>' above all cards. Render each record as a card separated by --- dividers. Each card has two sections:
+
+PRIMARY SECTION (always first): heading with status emoji (✅ SUCCESS / ❌ FAILED) + test cycle key and name; then format, start→end time, message, summary stats (test cases/versions created/reused/test steps), tracking ID.
+
+EXTRA DETAILS SECTION (at the bottom of the card, under a 'Details' sub-label): any remaining non-null fields from the record such as fileSize, extraAttributes values, etc.
+
+Skip any field that is null, missing, or false. NEVER show the raw fileName. NEVER use a table.",
+    "inputSchema": [
+      "maxResults",
+      "startAt",
+    ],
+    "outputSchema": [
+      "data",
+      "maxResults",
+      "startAt",
+      "total",
+    ],
+    "title": "QTM4J: Get Automation History",
+  },
   "qtm4j_get_projects": {
     "annotations": {
       "destructiveHint": false,
@@ -8021,6 +8083,94 @@ Expected Output: Version 2 of test case updated with new assignee and estimated 
       "versionNo",
     ],
     "title": "QTM4J: Update Test Case",
+  },
+  "qtm4j_upload_automation_result": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Upload Automation Result",
+    },
+    "description": "Upload an automation result file to QTM4J and map the results to a test cycle. Supports JUnit XML, TestNG XML, Cucumber JSON, QAF, HP UFT, and SpecFlow formats.
+
+**Parameters:**
+- filePath (string) *required*: Absolute or relative path to the automation result file on disk (e.g. './target/surefire-reports/TEST-results.xml'). Supported extensions: .xml, .json, .zip
+- format (enum) *required*: Format of the result file. Supported values: cucumber, testng, junit, qaf, hpuft, specflow
+- testCycleToReuse (string): Work key of an existing test cycle to reuse (e.g. 'TR-PRJ-1'). If omitted, a new test cycle is created.
+- environment (string): Name of the environment on which the test cycle was executed (e.g. 'Chrome', 'Staging'). Defaults to 'No Environment'.
+- build (string): Build name or version for the test cycle execution (e.g. '1.0.0-beta'). Defaults to blank.
+- isZip (boolean): Set to true when uploading a ZIP archive containing result files. Required for QAF format. (default: false)
+- attachFile (boolean): Set to true to upload attachments referenced in execution results. (default: false)
+- matchTestSteps (boolean): true — match test cases by summary AND test steps. false — match by summary or key only. (default: true)
+- appendTestName (boolean): Applicable to JUnit/TestNG only. Appends suite/test name to method name in test case summary.
+- fields (object): Additional fields to set on the test cycle, test case, and/or test case execution created during import.
+
+**Output Description:** trackingId to poll import status, a message from the API, the filePath uploaded, and the format used.
+
+**Use Cases:** 1. Upload automation results to QTM4J 2. Import test results from a CI/CD pipeline run 3. Link test results to an existing test cycle 4. Create a new test cycle from automation results 5. Upload JUnit, TestNG, Cucumber, QAF, HP UFT, or SpecFlow result files
+
+**Examples:**
+1. User says 'upload my test results to QTM4J' — scan workspace, find single result file, confirm and upload
+\`\`\`json
+{
+  "filePath": "./target/surefire-reports/TEST-results.xml",
+  "format": "junit"
+}
+\`\`\`
+Expected Output: trackingId returned; import processing started in QTM4J
+
+2. User wants results linked to an existing test cycle
+\`\`\`json
+{
+  "filePath": "./reports/cucumber.json",
+  "format": "cucumber",
+  "testCycleToReuse": "TR-PRJ-5",
+  "environment": "Chrome",
+  "build": "2.1.0"
+}
+\`\`\`
+Expected Output: Results mapped to test cycle TR-PRJ-5
+
+3. Upload QAF ZIP and set test cycle metadata
+\`\`\`json
+{
+  "filePath": "./results/qaf-results.zip",
+  "format": "qaf",
+  "isZip": true,
+  "fields": {
+    "testCycle": {
+      "summary": "Regression Run 2024-Q1",
+      "labels": [
+        "regression"
+      ],
+      "priority": "High"
+    }
+  }
+}
+\`\`\`
+Expected Output: ZIP uploaded; test cycle created with summary, labels, and priority
+
+**Hints:** 1. NO PROJECT CONTEXT REQUIRED: Do NOT call set_project_context and do NOT ask the user for a project key, project ID, or any other project details. This tool works independently — never prompt the user for project information. 2. FILE DISCOVERY: Always do a fresh scan — never reuse a path from a previous turn. If no path is provided, search in order: target/surefire-reports, target/failsafe-reports, build/reports/tests, build/test-results, test-results, reports, cucumber-reports. If multiple files are found, list them all and wait for the user to pick one before uploading. If nothing is found, ask for the path. Never pick silently. 3. FORMAT INFERENCE: .json → cucumber, .zip → qaf (unambiguous). For .xml, infer from the file name — 'junit'/'surefire' → junit, 'testng' → testng, 'specflow' → specflow, 'hpuft'/'uft' → hpuft. If the file name gives no clear signal, ask the user to confirm the format. 4. TEST CYCLE: Only ask for testCycleToReuse if the user explicitly wants to link to an existing cycle. If not mentioned, omit it — QTM4J creates a new test cycle automatically. 5. DATE FORMAT: plannedStartDate and plannedEndDate in fields.testCycle MUST be formatted as 'dd/MMM/yyyy HH:mm' (e.g. '14/May/2026 10:30'). Convert any user-provided date (ISO, natural language, relative) to this exact format before sending. 6. FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up. 7. ASSIGNEE / REPORTER: assignee and reporter in fields.testCycle and fields.testCase require a Jira Account ID (not a display name or email). Ask the user to provide their Account ID directly. 8. Import processing is asynchronous — use the returned trackingId to poll progress.",
+    "inputSchema": [
+      "appendTestName",
+      "attachFile",
+      "build",
+      "environment",
+      "fields",
+      "filePath",
+      "format",
+      "isZip",
+      "matchTestSteps",
+      "testCycleToReuse",
+    ],
+    "outputSchema": [
+      "filePath",
+      "format",
+      "message",
+      "trackingId",
+    ],
+    "title": "QTM4J: Upload Automation Result",
   },
   "reflect_add_prompt_step": {
     "annotations": {

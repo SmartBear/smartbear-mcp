@@ -19,7 +19,8 @@ describe("UploadAutomationResult", () => {
   const fakeBuffer = Buffer.from("<testsuites></testsuites>");
   const fakeInitResponse = {
     url: "https://s3.example.com/upload?X-Amz-Signature=abc",
-    message: "Generated Upload URL is valid for one time use and will expire in 5 minutes.",
+    message:
+      "Generated Upload URL is valid for one time use and will expire in 5 minutes.",
     trackingId: "f52a7866-a345-4cad-b93e-a930135868d7",
   };
 
@@ -123,7 +124,11 @@ describe("UploadAutomationResult", () => {
         filePath: "./results/junit.xml",
         format: "junit",
         fields: {
-          testCycle: { summary: "Regression Q1", labels: ["regression"], priority: "High" },
+          testCycle: {
+            summary: "Regression Q1",
+            labels: ["regression"],
+            priority: "High",
+          },
           testCase: { priority: "Blocker", status: "Done", labels: ["label1"] },
         },
       });
@@ -132,8 +137,16 @@ describe("UploadAutomationResult", () => {
         ENDPOINTS.AUTOMATION_IMPORT,
         expect.objectContaining({
           fields: {
-            testCycle: { summary: "Regression Q1", labels: ["regression"], priority: "High" },
-            testCase: { priority: "Blocker", status: "Done", labels: ["label1"] },
+            testCycle: {
+              summary: "Regression Q1",
+              labels: ["regression"],
+              priority: "High",
+            },
+            testCase: {
+              priority: "Blocker",
+              status: "Done",
+              labels: ["label1"],
+            },
           },
         }),
       );
@@ -179,12 +192,16 @@ describe("UploadAutomationResult", () => {
       await instance.handle({
         filePath: "./results/junit.xml",
         format: "junit",
-        fields: { testCycle: { assignee: "712020:abc123", reporter: "712020:xyz789" } },
+        fields: {
+          testCycle: { assignee: "712020:abc123", reporter: "712020:xyz789" },
+        },
       });
       expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
         ENDPOINTS.AUTOMATION_IMPORT,
         expect.objectContaining({
-          fields: { testCycle: { assignee: "712020:abc123", reporter: "712020:xyz789" } },
+          fields: {
+            testCycle: { assignee: "712020:abc123", reporter: "712020:xyz789" },
+          },
         }),
       );
     });
@@ -193,12 +210,16 @@ describe("UploadAutomationResult", () => {
       await instance.handle({
         filePath: "./results/junit.xml",
         format: "junit",
-        fields: { testCase: { assignee: "712020:abc123", reporter: "712020:xyz789" } },
+        fields: {
+          testCase: { assignee: "712020:abc123", reporter: "712020:xyz789" },
+        },
       });
       expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
         ENDPOINTS.AUTOMATION_IMPORT,
         expect.objectContaining({
-          fields: { testCase: { assignee: "712020:abc123", reporter: "712020:xyz789" } },
+          fields: {
+            testCase: { assignee: "712020:abc123", reporter: "712020:xyz789" },
+          },
         }),
       );
     });
@@ -207,12 +228,22 @@ describe("UploadAutomationResult", () => {
       await instance.handle({
         filePath: "./results/junit.xml",
         format: "junit",
-        fields: { testCycle: { plannedStartDate: "14/May/2026 10:30", plannedEndDate: "20/May/2026 18:00" } },
+        fields: {
+          testCycle: {
+            plannedStartDate: "14/May/2026 10:30",
+            plannedEndDate: "20/May/2026 18:00",
+          },
+        },
       });
       expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
         ENDPOINTS.AUTOMATION_IMPORT,
         expect.objectContaining({
-          fields: { testCycle: { plannedStartDate: "14/May/2026 10:30", plannedEndDate: "20/May/2026 18:00" } },
+          fields: {
+            testCycle: {
+              plannedStartDate: "14/May/2026 10:30",
+              plannedEndDate: "20/May/2026 18:00",
+            },
+          },
         }),
       );
     });
@@ -221,12 +252,22 @@ describe("UploadAutomationResult", () => {
       await instance.handle({
         filePath: "./results/junit.xml",
         format: "junit",
-        fields: { testCase: { precondition: "App is running", estimatedTime: "00:05:00" } },
+        fields: {
+          testCase: {
+            precondition: "App is running",
+            estimatedTime: "00:05:00",
+          },
+        },
       });
       expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
         ENDPOINTS.AUTOMATION_IMPORT,
         expect.objectContaining({
-          fields: { testCase: { precondition: "App is running", estimatedTime: "00:05:00" } },
+          fields: {
+            testCase: {
+              precondition: "App is running",
+              estimatedTime: "00:05:00",
+            },
+          },
         }),
       );
     });
@@ -235,12 +276,16 @@ describe("UploadAutomationResult", () => {
       await instance.handle({
         filePath: "./results/junit.xml",
         format: "junit",
-        fields: { testCaseExecution: { comment: "Auto run", actualTime: "00:02:30" } },
+        fields: {
+          testCaseExecution: { comment: "Auto run", actualTime: "00:02:30" },
+        },
       });
       expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
         ENDPOINTS.AUTOMATION_IMPORT,
         expect.objectContaining({
-          fields: { testCaseExecution: { comment: "Auto run", actualTime: "00:02:30" } },
+          fields: {
+            testCaseExecution: { comment: "Auto run", actualTime: "00:02:30" },
+          },
         }),
       );
     });
@@ -285,16 +330,17 @@ describe("UploadAutomationResult", () => {
   // ─── All supported formats ────────────────────────────────────────────────
 
   describe("handle — all supported formats", () => {
-    it.each(["testng", "hpuft", "specflow"] as const)(
-      "accepts %s format and passes it through",
-      async (format) => {
-        await instance.handle({ filePath: "./results/result.xml", format });
-        expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
-          ENDPOINTS.AUTOMATION_IMPORT,
-          expect.objectContaining({ format }),
-        );
-      },
-    );
+    it.each([
+      "testng",
+      "hpuft",
+      "specflow",
+    ] as const)("accepts %s format and passes it through", async (format) => {
+      await instance.handle({ filePath: "./results/result.xml", format });
+      expect(mockApiClient.postAutomation).toHaveBeenCalledWith(
+        ENDPOINTS.AUTOMATION_IMPORT,
+        expect.objectContaining({ format }),
+      );
+    });
   });
 
   // ─── Validation errors ────────────────────────────────────────────────────
@@ -312,11 +358,19 @@ describe("UploadAutomationResult", () => {
 
     it("rejects QAF format without isZip: true", async () => {
       await expect(
-        instance.handle({ filePath: "./results/qaf.zip", format: "qaf", isZip: false }),
+        instance.handle({
+          filePath: "./results/qaf.zip",
+          format: "qaf",
+          isZip: false,
+        }),
       ).rejects.toThrow(ToolError);
 
       await expect(
-        instance.handle({ filePath: "./results/qaf.zip", format: "qaf", isZip: false }),
+        instance.handle({
+          filePath: "./results/qaf.zip",
+          format: "qaf",
+          isZip: false,
+        }),
       ).rejects.toThrow("QAF format requires a ZIP file");
     });
 
@@ -331,7 +385,9 @@ describe("UploadAutomationResult", () => {
     });
 
     it("throws ToolError when file cannot be read", async () => {
-      mockReadFile.mockRejectedValue(new Error("ENOENT: no such file or directory"));
+      mockReadFile.mockRejectedValue(
+        new Error("ENOENT: no such file or directory"),
+      );
 
       await expect(
         instance.handle({ filePath: "./missing/file.xml", format: "junit" }),
@@ -339,7 +395,10 @@ describe("UploadAutomationResult", () => {
     });
 
     it("throws ToolError when API does not return a valid upload URL", async () => {
-      mockApiClient.postAutomation.mockResolvedValue({ message: "error", trackingId: null });
+      mockApiClient.postAutomation.mockResolvedValue({
+        message: "error",
+        trackingId: null,
+      });
 
       await expect(
         instance.handle({ filePath: "./results/junit.xml", format: "junit" }),

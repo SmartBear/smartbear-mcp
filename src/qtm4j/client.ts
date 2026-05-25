@@ -21,7 +21,10 @@ import { ResolverRegistry } from "./resolver/resolver-registry";
  */
 const ConfigurationSchema = z.object({
   [CONFIG_KEYS.API_KEY]: z.string().describe(SCHEMA_DESCRIPTIONS.API_KEY),
-  [CONFIG_KEYS.AUTOMATION_API_KEY]: z.string().optional().describe(SCHEMA_DESCRIPTIONS.AUTOMATION_API_KEY),
+  [CONFIG_KEYS.AUTOMATION_API_KEY]: z
+    .string()
+    .optional()
+    .describe(SCHEMA_DESCRIPTIONS.AUTOMATION_API_KEY),
   [CONFIG_KEYS.BASE_URL]: z
     .string()
     .url()

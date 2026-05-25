@@ -39,12 +39,14 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     ],
     examples: [
       {
-        description: "User says 'upload my test results to QTM4J' — scan workspace, find single result file, confirm and upload",
+        description:
+          "User says 'upload my test results to QTM4J' — scan workspace, find single result file, confirm and upload",
         parameters: {
           filePath: "./target/surefire-reports/TEST-results.xml",
           format: "junit",
         },
-        expectedOutput: "trackingId returned; import processing started in QTM4J",
+        expectedOutput:
+          "trackingId returned; import processing started in QTM4J",
       },
       {
         description: "User wants results linked to an existing test cycle",
@@ -71,7 +73,8 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
             },
           },
         },
-        expectedOutput: "ZIP uploaded; test cycle created with summary, labels, and priority",
+        expectedOutput:
+          "ZIP uploaded; test cycle created with summary, labels, and priority",
       },
     ],
     hints: [
@@ -146,7 +149,9 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
 
     const result: UploadAutomationResultResponseType = {
       trackingId,
-      message: initResponse.message ?? "File uploaded successfully. Import is processing.",
+      message:
+        initResponse.message ??
+        "File uploaded successfully. Import is processing.",
       filePath,
       format,
     };

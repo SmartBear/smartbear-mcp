@@ -84,7 +84,11 @@ describe("GetAutomationHistory", () => {
         startAt: 0,
         maxResults: 20,
         total: 1,
-        data: [expect.objectContaining({ trackingId: "924b5e8c-758c-434c-8fc0-f56c8d9aba31" })],
+        data: [
+          expect.objectContaining({
+            trackingId: "924b5e8c-758c-434c-8fc0-f56c8d9aba31",
+          }),
+        ],
       });
     });
 
@@ -111,7 +115,7 @@ describe("GetAutomationHistory", () => {
 
     it("maps all record fields correctly", async () => {
       const result = await instance.handle({});
-      const record = result.structuredContent.data![0];
+      const record = result.structuredContent.data?.[0];
 
       expect(record).toMatchObject({
         format: "CUCUMBER",

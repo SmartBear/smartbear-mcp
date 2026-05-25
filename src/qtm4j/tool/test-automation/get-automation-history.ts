@@ -28,9 +28,11 @@ export class GetAutomationHistory extends Tool<Qtm4jClient> {
     ],
     examples: [
       {
-        description: "Get the first page of automation upload history (default page size 20)",
+        description:
+          "Get the first page of automation upload history (default page size 20)",
         parameters: {},
-        expectedOutput: "Paginated list of automation history records with upload status and metadata",
+        expectedOutput:
+          "Paginated list of automation history records with upload status and metadata",
       },
       {
         description: "Get the second page of automation upload history",
@@ -54,9 +56,9 @@ export class GetAutomationHistory extends Tool<Qtm4jClient> {
       "PAGINATION: startAt is zero-indexed (default: 0), maxResults controls page size (default: 20, max: 100). Increment startAt by maxResults to fetch the next page.",
       "Returns an empty data array (not an error) when no history records exist.",
       "DISPLAY FORMAT: Show '1–N of <total>' above all cards. Render each record as a card separated by --- dividers. Each card has two sections:\n\n" +
-      "PRIMARY SECTION (always first): heading with status emoji (✅ SUCCESS / ❌ FAILED) + test cycle key and name; then format, start→end time, message, summary stats (test cases/versions created/reused/test steps), tracking ID.\n\n" +
-      "EXTRA DETAILS SECTION (at the bottom of the card, under a 'Details' sub-label): any remaining non-null fields from the record such as fileSize, extraAttributes values, etc.\n\n" +
-      "Skip any field that is null, missing, or false. NEVER show the raw fileName. NEVER use a table.",
+        "PRIMARY SECTION (always first): heading with status emoji (✅ SUCCESS / ❌ FAILED) + test cycle key and name; then format, start→end time, message, summary stats (test cases/versions created/reused/test steps), tracking ID.\n\n" +
+        "EXTRA DETAILS SECTION (at the bottom of the card, under a 'Details' sub-label): any remaining non-null fields from the record such as fileSize, extraAttributes values, etc.\n\n" +
+        "Skip any field that is null, missing, or false. NEVER show the raw fileName. NEVER use a table.",
     ],
     outputDescription:
       "Paginated list of automation import history. Each record includes: format, processStatus, importStatus, startTime, endTime, trackingId, detailedMessage, and a summary array. " +
@@ -68,10 +70,13 @@ export class GetAutomationHistory extends Tool<Qtm4jClient> {
     const args = GetAutomationHistoryBody.parse(rawArgs);
     const apiClient = this.client.getApiClient();
 
-    const response = await apiClient.getAutomation(ENDPOINTS.AUTOMATION_HISTORY, {
-      startAt: args.startAt,
-      maxResults: args.maxResults,
-    });
+    const response = await apiClient.getAutomation(
+      ENDPOINTS.AUTOMATION_HISTORY,
+      {
+        startAt: args.startAt,
+        maxResults: args.maxResults,
+      },
+    );
 
     const result: GetAutomationHistoryResponseType =
       GetAutomationHistoryResponse.parse(response);
