@@ -29,14 +29,13 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
       "Upload an automation result file from disk to QTM4J and map results to a test cycle. " +
       `When the user asks to upload or import automation results, search these directories: ${AUTOMATION_RESULT_DIRS.join(", ")}. ` +
       "Infer the format from the file name where possible; confirm with the user only when the format is ambiguous. " +
-      "Returns a trackingId to track the asynchronous import progress. " +
-      "No set_project_context call is required — do NOT ask the user for project details.",
+      "Returns a trackingId to track the asynchronous import progress. ",
     useCases: [
-      "User asks to upload or import automation results to QTM4J",
-      "User asks to import test results from a CI/CD pipeline run",
-      "User asks to link test results to an existing test cycle in QTM4J",
-      "User asks to create a new test cycle from automation results",
-      "User asks to upload JUnit, TestNG, Cucumber, QAF, HP UFT, or SpecFlow results",
+      "Upload automation results to QTM4J",
+      "Import test results from a CI/CD pipeline run",
+      "Link test results to an existing test cycle",
+      "Create a new test cycle from automation results",
+      "Upload JUnit, TestNG, Cucumber, QAF, HP UFT, or SpecFlow result files",
     ],
     examples: [
       {
@@ -77,13 +76,10 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     ],
     hints: [
       "NO PROJECT CONTEXT REQUIRED: Do NOT call set_project_context and do NOT ask the user for a project key, project ID, or any other project details. This tool works independently — never prompt the user for project information.",
-      `FILE DISCOVERY: ALWAYS perform a fresh directory scan every time this tool is called — never reuse a file path discovered in an earlier turn. If the user does not provide a file path, search these directories in order: ${AUTOMATION_RESULT_DIRS.join(", ")}. If multiple files are found, you MUST list ALL of them and STOP — do NOT pick one, do NOT upload anything until the user explicitly selects a file. If nothing is found, ask the user to provide the path. NEVER pick a file silently.`,
+      `FILE DISCOVERY: Always do a fresh scan — never reuse a path from a previous turn. If no path is provided, search in order: ${AUTOMATION_RESULT_DIRS.join(", ")}. If multiple files are found, list them all and wait for the user to pick one before uploading. If nothing is found, ask for the path. Never pick silently.`,
       "FORMAT INFERENCE: .json → cucumber, .zip → qaf (unambiguous). For .xml, infer from the file name — 'junit'/'surefire' → junit, 'testng' → testng, 'specflow' → specflow, 'hpuft'/'uft' → hpuft. If the file name gives no clear signal, ask the user to confirm the format.",
       "TEST CYCLE: Only ask for testCycleToReuse if the user explicitly wants to link to an existing cycle. If not mentioned, omit it — QTM4J creates a new test cycle automatically.",
-      "QAF format requires isZip: true and a .zip file.",
-      "fields.testCycle is ignored when testCycleToReuse is provided — cycle fields are not updated on reuse.",
       "DATE FORMAT: plannedStartDate and plannedEndDate in fields.testCycle MUST be formatted as 'dd/MMM/yyyy HH:mm' (e.g. '14/May/2026 10:30'). Convert any user-provided date (ISO, natural language, relative) to this exact format before sending.",
-      "appendTestName applies to JUnit and TestNG only — appends suite/test name to method name in the test case summary.",
       "FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up.",
       "ASSIGNEE / REPORTER: assignee and reporter in fields.testCycle and fields.testCase require a Jira Account ID (not a display name or email). Ask the user to provide their Account ID directly.",
       "Import processing is asynchronous — use the returned trackingId to poll progress.",
