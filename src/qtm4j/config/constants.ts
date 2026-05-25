@@ -356,7 +356,7 @@ export const SCHEMA_DESCRIPTIONS = {
 
   /** Automation result file path */
   AUTOMATION_FILE_PATH:
-    "Absolute or relative path to the automation result file on disk (e.g. './target/surefire-reports/TEST-results.xml'). Supported extensions: .xml, .json, .zip",
+    "Path to the automation result file on disk. Filesystem contents can change between turns — always resolve this from a fresh scan, never from a previously seen path. Supported extensions: .xml, .json, .zip",
 
   /** Automation result format */
   AUTOMATION_FORMAT:
