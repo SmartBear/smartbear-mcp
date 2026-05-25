@@ -42,6 +42,8 @@
       "command": "node",
       "args": ["${__dirname}/server/index.js"],
       "env": {
+        "BEARQ_API_TOKEN": "${user_config.BEARQ_API_TOKEN}",
+        "BEARQ_API_BASE_URL": "${user_config.BEARQ_API_BASE_URL}",
         "BUGSNAG_AUTH_TOKEN": "${user_config.BUGSNAG_AUTH_TOKEN}",
         "BUGSNAG_ENDPOINT": "${user_config.BUGSNAG_ENDPOINT}",
         "BUGSNAG_PROJECT_API_KEY": "${user_config.BUGSNAG_PROJECT_API_KEY}",
@@ -65,6 +67,22 @@
     }
   },
   "user_config": {
+    "BEARQ_API_TOKEN": {
+      "type": "string",
+      "title": "BearQ API Token",
+      "description": "BearQ workspace API token. Leave empty to disable BearQ tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration",
+      "required": false,
+      "sensitive": true,
+      "default": ""
+    },
+    "BEARQ_API_BASE_URL": {
+      "type": "string",
+      "title": "BearQ API Base URL",
+      "description": "Override the BearQ public API base URL (optional). Defaults to https://api.bearq.smartbear.com",
+      "required": false,
+      "sensitive": false,
+      "default": ""
+    },
     "BUGSNAG_AUTH_TOKEN": {
       "type": "string",
       "title": "BugSnag Auth Token",
