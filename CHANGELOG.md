@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.23.0] - 2026-05-22
+
+### Added
+
+- [BearQ] Add BearQ integration with 11 tools for AI-powered QA: run regression tests, run/refine test cases and functional areas, expand the application model, chat with the QA lead agent, and manage async tasks (`get_task`, `get_task_status`, `wait_for_task`, `stop_task`) [#479](https://github.com/SmartBear/smartbear-mcp/pull/479)
+
+## [0.22.0] - 2026-05-21
+
 ### Fixed
 
 - [Common] Only advertise prompts and resources capabilities when provided by clients [#480](https://github.com/SmartBear/smartbear-mcp/pull/480)

@@ -20,6 +20,18 @@
       "packageArguments": [],
       "environmentVariables": [
         {
+          "name": "BEARQ_API_TOKEN",
+          "description": "BearQ workspace API token. Leave empty to disable BearQ tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "BEARQ_API_BASE_URL",
+          "description": "Override the BearQ public API base URL (optional). Defaults to https://api.bearq.smartbear.com",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
           "name": "BUGSNAG_AUTH_TOKEN",
           "description": "BugSnag auth token. Leave empty to disable BugSnag tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration",
           "isRequired": false,

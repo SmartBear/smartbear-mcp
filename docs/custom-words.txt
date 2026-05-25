@@ -1,4 +1,6 @@
 armeabi
+bearq
+BEARQ
 Asgi
 Aspnet
 autoplay

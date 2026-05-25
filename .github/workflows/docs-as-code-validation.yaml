@@ -9,7 +9,7 @@ on:
 permissions: read-all
 
 env:
-  LOG_LEVEL: ${{ github.event.inputs.log_level }}
+  LOG_LEVEL: ${{ github.event.inputs.log_level || '2' }}
 
 jobs:
   spell-check:
@@ -41,17 +41,7 @@ jobs:
           node-version: '20'
 
       - name: Validate manifests
-        run: |
-          . ./docs/scripts/utilities.sh
-          for product in ./docs/products/*; do
-            if [[ -d "$product" ]]; then
-              product_name=${product#./docs/products/}
-              manifest="./docs/products/$product_name/manifest.json"
-              if [[ -f "$manifest" ]]; then
-                # Further actions...
-                log_message $INFO "Validating manifest in product: $product_name"
-                log_message $DEBUG "Validating manifest: $manifest"
-                npx -y ajv-cli validate -s ./docs/schemas/manifest.schema.json -d "$manifest" --spec=draft2020
-              fi
-            fi
-          done
+        run: npx tsx docs/scripts/validate-manifests.ts
+
+      - name: Dry run publish
+        run: npx tsx docs/scripts/publish-portal-content.ts --dry-run
