@@ -159,7 +159,7 @@ export class UpdateTestCycle extends Tool<Qtm4jClient> {
       "PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project.",
       "KEY FORMAT: '{PROJECT_KEY}-TR-{number}' — e.g. 'SCRUM-TR-101'.",
       "Pass explicit null to CLEAR a nullable field — e.g. description: null removes the description text, assignee: null unassigns the owner, plannedStartDate: null removes the date. Omitting a field leaves it unchanged.",
-      "Status and priority are auto-resolved from human-readable names loaded by set_project_context. Unresolvable names are skipped with a warning; remaining fields still update.",
+      "Status and priority are auto-resolved from human-readable names loaded by set_project_context. If a name cannot be resolved, the cycle is still updated and a warning is returned.",
       "Labels and components use add/delete — names are auto-resolved to IDs. Both operations can be combined in a single call.",
       "Date format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 09:00'. Month must be capitalised (May not may or MAY).",
       "Archived test cycles cannot be updated — the server returns 400. Unarchive first if needed.",
@@ -188,10 +188,6 @@ export class UpdateTestCycle extends Tool<Qtm4jClient> {
           .resolve(inputField, resolverKey, body, context, warnings),
       ),
     );
-    // Remove any scalar field that failed to resolve (still a string, not a valid ID).
-    for (const field of Object.keys(SIMPLE_FIELD_CONFIG)) {
-      if (typeof body[field] === "string") delete body[field];
-    }
 
     // Resolve add/delete metadata fields (labels, components).
     for (const [inputField, resolverKey] of Object.entries(

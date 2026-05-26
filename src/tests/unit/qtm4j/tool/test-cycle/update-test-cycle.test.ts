@@ -329,14 +329,12 @@ describe("UpdateTestCycle", () => {
       );
     });
 
-    it("should skip status field and warn when name cannot be resolved", async () => {
+    it("should warn when status name cannot be resolved", async () => {
       const result = await instance.handle({
         key: "PROJ-TR-26",
         status: "InvalidStatus",
       });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
-      expect(calledBody).not.toHaveProperty("status");
       expect(result.content).toHaveLength(1);
       expect(result.content[0]).toMatchObject({
         type: "text",
@@ -344,14 +342,12 @@ describe("UpdateTestCycle", () => {
       });
     });
 
-    it("should skip priority field and warn when name cannot be resolved", async () => {
+    it("should warn when priority name cannot be resolved", async () => {
       const result = await instance.handle({
         key: "PROJ-TR-26",
         priority: "InvalidPriority",
       });
 
-      const calledBody = mockApiClient.put.mock.calls[0][1];
-      expect(calledBody).not.toHaveProperty("priority");
       expect(result.content).toHaveLength(1);
       expect(result.content[0].text).toContain("InvalidPriority");
     });

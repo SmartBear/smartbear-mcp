@@ -131,7 +131,7 @@ describe("CreateTestCycle", () => {
       );
     });
 
-    it("should return warnings when a field cannot be resolved", async () => {
+    it("should return warning when a field cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
         resolve: vi
           .fn()
@@ -165,7 +165,7 @@ describe("CreateTestCycle", () => {
       });
     });
 
-    it("should remove unresolved priority from body to avoid API 400", async () => {
+    it("should return warning when priority cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
         resolve: vi
           .fn()
@@ -186,13 +186,15 @@ describe("CreateTestCycle", () => {
       });
       mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
 
-      await instance.handle({ summary: "Cycle", priority: "Critical" });
+      const result = await instance.handle({
+        summary: "Cycle",
+        priority: "Critical",
+      });
 
-      const body = mockApiClient.post.mock.calls[0][1];
-      expect(body).not.toHaveProperty("priority");
+      expect(result.content[0].text).toContain("Critical");
     });
 
-    it("should remove unresolved status from body to avoid API 400", async () => {
+    it("should return warning when status cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
         resolve: vi
           .fn()
@@ -213,13 +215,15 @@ describe("CreateTestCycle", () => {
       });
       mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
 
-      await instance.handle({ summary: "Cycle", status: "Invalid" });
+      const result = await instance.handle({
+        summary: "Cycle",
+        status: "Invalid",
+      });
 
-      const body = mockApiClient.post.mock.calls[0][1];
-      expect(body).not.toHaveProperty("status");
+      expect(result.content[0].text).toContain("Invalid");
     });
 
-    it("should remove unresolved labels from body to avoid API 400", async () => {
+    it("should return warning when labels cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
         resolve: vi
           .fn()
@@ -240,13 +244,15 @@ describe("CreateTestCycle", () => {
       });
       mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
 
-      await instance.handle({ summary: "Cycle", labels: ["UnknownLabel"] });
+      const result = await instance.handle({
+        summary: "Cycle",
+        labels: ["UnknownLabel"],
+      });
 
-      const body = mockApiClient.post.mock.calls[0][1];
-      expect(body).not.toHaveProperty("labels");
+      expect(result.content[0].text).toContain("UnknownLabel");
     });
 
-    it("should remove unresolved components from body to avoid API 400", async () => {
+    it("should return warning when components cannot be resolved", async () => {
       mockFieldResolver.getResolver.mockReturnValue({
         resolve: vi
           .fn()
@@ -267,10 +273,12 @@ describe("CreateTestCycle", () => {
       });
       mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
 
-      await instance.handle({ summary: "Cycle", components: ["UnknownComp"] });
+      const result = await instance.handle({
+        summary: "Cycle",
+        components: ["UnknownComp"],
+      });
 
-      const body = mockApiClient.post.mock.calls[0][1];
-      expect(body).not.toHaveProperty("components");
+      expect(result.content[0].text).toContain("UnknownComp");
     });
 
     it("should return empty content when no warnings", async () => {

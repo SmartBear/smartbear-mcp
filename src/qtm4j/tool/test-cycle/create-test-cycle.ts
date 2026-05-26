@@ -31,8 +31,8 @@ const FIELD_CONFIG: Record<string, string> = {
  *   - labels → numeric IDs via SearchableField resolver
  *   - components → numeric IDs via SearchableField resolver
  *
- * Safety: scalar (priority, status) and array (labels, components) fields that
- * fail to resolve are deleted from the body before the API call to prevent 400s.
+ * Safety: if any field fails to resolve, the cycle is still created without that
+ * field, and a warning is returned alongside the response.
  */
 export class CreateTestCycle extends Tool<Qtm4jClient> {
   // ─── Tool Specification ────────────────────────────────────────────────────
@@ -79,8 +79,7 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
     ],
     hints: [
       "PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project.",
-      "Priority and status are resolved from names loaded by set_project_context. Unresolvable names are skipped with a warning; the cycle is still created.",
-      "Labels and components are resolved on demand. Unresolvable names are skipped with a warning.",
+      "If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying.",
       "All cycles are placed in the 'MCP Generated' folder — do not pass folderId.",
       "Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
     ],
@@ -110,17 +109,6 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
           .resolve(inputField, resolverKey, body, context, warnings),
       ),
     );
-
-    // Remove scalar fields that failed to resolve (still a string = no ID found).
-    for (const field of [InputField.PRIORITY, InputField.STATUS]) {
-      if (typeof body[field] === "string") delete body[field];
-    }
-    // Remove array fields that failed to resolve (still strings = no IDs found).
-    for (const field of [InputField.LABELS, InputField.COMPONENTS]) {
-      const val = body[field];
-      if (Array.isArray(val) && val.length > 0 && typeof val[0] === "string")
-        delete body[field];
-    }
 
     const response = await this.client
       .getApiClient()

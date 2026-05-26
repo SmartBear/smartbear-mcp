@@ -1,12 +1,7 @@
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import {
-  ENDPOINTS,
-  RESPONSE_FIELDS,
-  SORT_DEFAULTS,
-  TOOL_NAMES,
-} from "../../config/constants";
+import { ENDPOINTS, RESPONSE_FIELDS, TOOL_NAMES } from "../../config/constants";
 import {
   SearchTestCycleBody,
   SearchTestCycleResponse,
@@ -133,7 +128,7 @@ export class SearchTestCycles extends Tool<Qtm4jClient> {
       "DATE FILTERS: createdOn = creation date; updatedOn = last-updated date; plannedStartDate / plannedEndDate = planned execution window. Format: 'dd/MMM/yyyy,dd/MMM/yyyy' e.g. '01/May/2026,21/May/2026'. Month is case-sensitive. 'Created last week' → createdOn, NOT plannedStartDate.",
       "FIELDS: Pass as an array to select what to return. plannedStartDate and plannedEndDate are NOT in the default response — include them explicitly. Available: key, summary, description, status, priority, assignee, reporter, isAutomated, plannedStartDate, plannedEndDate, labels, components, fixVersions, sprint, defectCount, estimatedTime, actualTime, created, updated.",
       "REQUEST STRUCTURE: filter → request body; fields, sort, startAt, maxResults → URL query params.",
-      "SORT: Allowed fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. Format: '<field>:<asc|desc>'. created and updated are NOT valid sort fields.",
+      "SORT: Allowed fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. Format: 'fieldName:asc' or 'fieldName:desc' e.g. 'plannedStartDate:asc'.",
       "FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up.",
     ],
     outputDescription:
@@ -155,7 +150,7 @@ export class SearchTestCycles extends Tool<Qtm4jClient> {
       params.set(RESPONSE_FIELDS.FIELDS, args.fields.join(","));
     params.set(RESPONSE_FIELDS.START_AT, String(args.startAt));
     params.set(RESPONSE_FIELDS.MAX_RESULTS, String(args.maxResults));
-    params.set(RESPONSE_FIELDS.SORT, args.sort ?? SORT_DEFAULTS.TEST_CYCLES);
+    params.set(RESPONSE_FIELDS.SORT, args.sort);
 
     const endpoint = `${ENDPOINTS.SEARCH_TEST_CYCLES}?${params.toString()}`;
     const response = await this.client
