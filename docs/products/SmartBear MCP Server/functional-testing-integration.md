@@ -1,4 +1,4 @@
-The SmartBear Functional Testing client provides tools for discovering and managing API tests. Tools for SmartBear Functional Testing require a `FUNCTIONAL_TESTING_API_TOKEN`.
+The SmartBear Functional Testing client provides tools for discovering API tests. Tools for SmartBear Functional Testing require a `FUNCTIONAL_TESTING_API_TOKEN`.
 
 ## Available Tools
 

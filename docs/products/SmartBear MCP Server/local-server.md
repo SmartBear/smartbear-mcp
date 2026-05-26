@@ -167,7 +167,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
-        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functionaltesting_api_token}"
+        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functional_testing_api_token}"
       }
     }
   },
@@ -269,7 +269,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "password": false
     },
     {
-      "id": "functionaltesting_api_token",
+      "id": "functional_testing_api_token",
       "type": "promptString",
       "description": "SmartBear Functional Testing API Token",
       "password": true
@@ -447,7 +447,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
-        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functionaltesting_api_token}"
+        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functional_testing_api_token}"
       }
     }
   },
@@ -549,7 +549,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "password": false
     },
     {
-      "id": "functionaltesting_api_token",
+      "id": "functional_testing_api_token",
       "type": "promptString",
       "description": "SmartBear Functional Testing API Token",
       "password": true

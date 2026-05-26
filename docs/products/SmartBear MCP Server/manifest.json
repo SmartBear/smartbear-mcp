@@ -147,7 +147,7 @@
       "contentUrl": "qtm4j-integration.md"
     },
     {
-      "order": 8,
+      "order": 9,
       "parent": "mcp-server-capabilities",
       "name": "Functional Testing Integration",
       "slug": "functional-testing-integration",
