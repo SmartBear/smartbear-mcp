@@ -58,14 +58,14 @@ export const UpdateTestCycleBody = zod.object({
     .nullable()
     .optional()
     .describe(
-      "Status name (e.g., 'To Do', 'In Progress'). Auto-resolved to ID. Pass null to clear.",
+      "Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID. Use values from set_project_context response. Pass null to clear.",
     ),
   priority: zod
     .string()
     .nullable()
     .optional()
     .describe(
-      "Priority name (e.g., 'High', 'Medium'). Auto-resolved to ID. Pass null to reset to project default.",
+      "Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID. Use values from set_project_context response. Pass null to clear.",
     ),
   plannedStartDate: zod
     .string()

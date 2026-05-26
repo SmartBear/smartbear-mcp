@@ -29,43 +29,51 @@ export const SearchTestCycleFilter = zod
       .array(zod.string())
       .optional()
       .describe(
-        "Status names to include (OR logic). Example: ['In Progress', 'To Do']",
+        "Status names to include (OR logic within array). Examples: ['In Progress', 'To Do']. " +
+          "Common values: 'To Do', 'In Progress', 'Done'.",
       ),
     priority: zod
       .array(zod.string())
       .optional()
       .describe(
-        "Priority names to include (OR logic). Example: ['High', 'Medium']",
+        "Priority names to include (OR logic within array). Examples: ['High'], ['High', 'Medium']. " +
+          "Common values: 'High', 'Medium', 'Low'.",
       ),
     assignee: zod
       .array(zod.string())
       .optional()
       .describe(
-        "Jira account IDs of assignees (OR logic). Example: ['5b10a2844c20165700ede21f']",
+        "Jira account IDs of assignees (OR logic within array). " +
+          "Example: ['5b10a2844c20165700ede21f']. " +
+          "Multiple IDs match test cycles assigned to any of them.",
       ),
     reporter: zod
       .array(zod.string())
       .optional()
       .describe(
-        "Jira account IDs of reporters (OR logic). Example: ['5b10a2844c20165700ede21f']",
+        "Jira account IDs of reporters (OR logic within array). " +
+          "Example: ['5b10a2844c20165700ede21f'].",
       ),
     folderId: zod
       .number()
       .optional()
       .describe(
-        "Folder ID to restrict results to. Obtain from GET /testcycles/folders?projectId=<id>.",
+        "Folder ID to restrict results to (numeric). " +
+          "Right-click a folder in QTM4J and select 'Copy Folder Id'.",
       ),
     labels: zod
       .array(zod.string())
       .optional()
       .describe(
-        "Label names to include (OR logic). Example: ['Release_1', 'Sprint 1']. Use exact label names.",
+        "Label names to include (OR logic within array). Example: ['Release_1', 'Sprint 1']. " +
+          "Use exact label names as configured in the project.",
       ),
     components: zod
       .array(zod.string())
       .optional()
       .describe(
-        "Component names to include (OR logic). Example: ['UI', 'Cloud']. Use exact component names.",
+        "Component names to include (OR logic within array). Example: ['UI', 'Cloud']. " +
+          "Use exact component names as configured in the project.",
       ),
     plannedStartDate: zod
       .string()
@@ -87,7 +95,7 @@ export const SearchTestCycleFilter = zod
       .string()
       .optional()
       .describe(
-        "Free-text keyword search across key, summary, and description. Case-insensitive.",
+        "Free-text search across key, summary, and description. Case-insensitive. Example: 'regression sprint'",
       ),
     createdOn: zod
       .string()
@@ -114,17 +122,17 @@ export const SearchTestCycleFilter = zod
       .boolean()
       .optional()
       .describe(
-        "Automation status filter: true = automated only, false = manual only. Omit to include both.",
+        "Automation status filter: true = automated tests only, false = manual tests only. Omit to include both.",
       ),
     aiGenerated: zod
       .boolean()
       .optional()
       .describe(
-        "AI generation flag: true = AI-generated only, false = human-authored only. Omit to include both.",
+        "AI generation flag: true = AI-generated test cycles only, false = human-authored only. Omit to include both.",
       ),
   })
   .describe(
-    "Filter criteria — fields are combined with AND; multiple values within one field use OR.",
+    "Filter criteria — multiple fields are combined with AND; multiple values within one field use OR.",
   );
 
 const FIELDS_DESCRIPTION =
@@ -143,7 +151,9 @@ export const SearchTestCycleBody = zod.object({
     .min(0)
     .optional()
     .default(PAGINATION.DEFAULT_START_AT)
-    .describe("Zero-based page offset. Default: 0."),
+    .describe(
+      "Zero-indexed offset for pagination (URL query param). Default: 0.",
+    ),
   maxResults: zod
     .number()
     .min(PAGINATION.MIN_ALLOWED_RESULTS)
@@ -151,16 +161,18 @@ export const SearchTestCycleBody = zod.object({
     .optional()
     .default(PAGINATION.DEFAULT_MAX_RESULTS_TEST_CYCLES)
     .describe(
-      `Results per page. Default: ${PAGINATION.DEFAULT_MAX_RESULTS_TEST_CYCLES}. Maximum: ${PAGINATION.MAX_ALLOWED_RESULTS_TEST_CYCLES}.`,
+      `Number of results per page (URL query param). Default: ${PAGINATION.DEFAULT_MAX_RESULTS_TEST_CYCLES}. Maximum: ${PAGINATION.MAX_ALLOWED_RESULTS_TEST_CYCLES}. ` +
+        `To page through results, increment startAt by ${PAGINATION.DEFAULT_MAX_RESULTS_TEST_CYCLES} until startAt >= total.`,
     ),
   sort: zod
     .string()
     .optional()
     .default(SORT_DEFAULTS.TEST_CYCLES)
     .describe(
-      `Sort expression. Format: '<fieldName>:<asc|desc>'. Default: '${SORT_DEFAULTS.TEST_CYCLES}'. ` +
-        "Allowed fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. " +
-        "Example: 'plannedStartDate:asc'",
+      `Sort pattern sent as a URL query param. Format: 'fieldName:order'. Default: '${SORT_DEFAULTS.TEST_CYCLES}'. ` +
+        "Order values: 'asc' (lowest/oldest first) or 'desc' (highest/newest first). " +
+        "Sortable fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. " +
+        "Examples: 'key:asc', 'plannedStartDate:desc'",
     ),
 });
 

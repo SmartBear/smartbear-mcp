@@ -27,19 +27,16 @@ export const CreateTestCycleBody = zod.object({
     .string()
     .optional()
     .describe(
-      "Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID via set_project_context.",
+      "Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.",
     ),
   status: zod
     .string()
     .optional()
     .describe(
-      "Status name (e.g., 'To Do', 'In Progress'). Auto-resolved to ID via set_project_context.",
+      "Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.",
     ),
   assignee: zod.string().optional().describe("Assignee account ID"),
-  reporter: zod
-    .string()
-    .optional()
-    .describe("Jira account UUID of the reporter. Default: the calling user."),
+  reporter: zod.string().optional().describe("Reporter account ID"),
   labels: zod
     .array(zod.string())
     .optional()
