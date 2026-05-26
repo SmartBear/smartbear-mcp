@@ -10,10 +10,7 @@ import {
 } from "./common";
 
 export interface FetchRequirementsPayload
-  extends PaginationPayload,
-    FilterPayload,
-    FolderPayload,
-    SortPayload {
+  extends PaginationPayload, FilterPayload, FolderPayload, SortPayload {
   viewId: number; // required
   folderPath: string; // required
   udfFilter?: string; // user-defined field filter
@@ -32,8 +29,7 @@ export interface FetchRequirementDetailsPayload {
 }
 
 export interface FetchRequirementsLinkedToTestCasePayload
-  extends PaginationPayload,
-    FilterPayload {
+  extends PaginationPayload, FilterPayload {
   tcID: number; // required - Test Case numeric ID
   getLinked?: boolean; // true to get linked requirements, false to get unlinked
   rqFolderPath?: string; // folder path for requirements

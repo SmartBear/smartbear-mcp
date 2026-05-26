@@ -23,13 +23,18 @@ export async function qmetryRequest<T>({
 }: RequestOptions): Promise<T> {
   const url: string = `${baseUrl}${path}`;
   const headers: Record<string, string> = {
-    apikey: token,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
     "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     "qmetry-source": "smartbear-mcp",
   };
   if (body) {
     headers["Content-Type"] = "application/json";
+  }
+  const transportMode = process.env.MCP_TRANSPORT?.toLowerCase() || "stdio";
+  if (transportMode === "http") {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    headers["apikey"] = token;
   }
   const init: RequestInit = {
     method,

@@ -1,5 +1,5 @@
 export const QMETRY_DEFAULTS = {
-  BASE_URL: "https://testmanagement.qmetry.com",
+  BASE_URL: process.env.QMETRY_BASE_URL || "https://testmanagement.qmetry.com",
   PROJECT_KEY: "default",
 };
 
@@ -44,4 +44,5 @@ export const QMetryToolsHandlers = {
   CREATE_RELEASE: "createRelease",
   CREATE_CYCLE: "createCycle",
   UPDATE_CYCLE: "updateCycle",
+  EXECUTE_ANALYTICS_QUERY: "executeAnalyticsQuery",
 };

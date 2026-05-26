@@ -1,4 +1,5 @@
 import { QMetryToolsHandlers } from "../config/constants";
+import { executeAnalyticsQuery } from "./analytics";
 import { getAutomationStatus, importAutomationResults } from "./automation";
 import {
   createIssue,
@@ -112,4 +113,5 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
   [QMetryToolsHandlers.FETCH_AUTOMATION_STATUS]: getAutomationStatus,
+  [QMetryToolsHandlers.EXECUTE_ANALYTICS_QUERY]: executeAnalyticsQuery,
 };

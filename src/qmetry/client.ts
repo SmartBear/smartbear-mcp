@@ -15,7 +15,12 @@ import { TOOLS } from "./client/tools/index";
 import { QMETRY_DEFAULTS } from "./config/constants";
 
 const ConfigurationSchema = z.object({
-  api_key: z.string().describe("QMetry API key for authentication"),
+  api_key: z
+    .string()
+    .optional()
+    .describe(
+      "QMetry API key for authentication (not required when using OAuth)",
+    ),
   base_url: z
     .string()
     .url()
@@ -50,8 +55,29 @@ export class QmetryClient implements Client {
     return true;
   }
 
+  getAuthToken(): string | null {
+    try {
+      return this.getToken();
+    } catch {
+      return null;
+    }
+  }
+
   getToken() {
-    let contextToken =
+    // 1. OAuth Bearer token (from authorization server)
+    let contextToken = getRequestHeader("Authorization");
+    if (contextToken) {
+      const token = Array.isArray(contextToken)
+        ? contextToken[0]
+        : contextToken;
+      if (token.startsWith("Bearer ")) {
+        return token.substring(7);
+      }
+      return token;
+    }
+
+    // 2. Direct Qmetry API key headers
+    contextToken =
       getRequestHeader("Qmetry-Token") || getRequestHeader("apikey");
 
     if (Array.isArray(contextToken)) {

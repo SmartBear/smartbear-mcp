@@ -1333,3 +1333,26 @@ export const FetchAutomationStatusPayloadSchema = z.object({
     .number()
     .describe("Numeric request ID from import automation response"),
 });
+
+export const AnalyticsQueryArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  query: z
+    .string()
+    .describe(
+      "SQL query to execute against QMetry analytics. " +
+        "Supports tables like requirements, testcases, testexecutions, testsuites, issues, " +
+        "and their relationship tables (requirementtestcase, testexecutionissue, etc.). " +
+        "Use JOINs to combine data across entities for custom reporting.",
+    ),
+  page: z
+    .number()
+    .optional()
+    .describe("Page number for pagination (starts from 0)")
+    .default(0),
+  filterValue: z
+    .array(z.any())
+    .optional()
+    .describe("Filter values for parameterized queries")
+    .default([]),
+});

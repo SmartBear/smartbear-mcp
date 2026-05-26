@@ -1,3 +1,4 @@
+export { ANALYTICS_TOOLS } from "./analytics-tools";
 export { AUTOMATION_TOOLS } from "./automation-tools";
 export { ISSUE_TOOLS } from "./issue-tools";
 export { PROJECT_TOOLS } from "./project-tools";
@@ -6,6 +7,7 @@ export { TESTCASE_TOOLS } from "./testcase-tools";
 export { TESTSUITE_TOOLS } from "./testsuite-tools";
 export type { QMetryToolParams } from "./types";
 
+import { ANALYTICS_TOOLS } from "./analytics-tools";
 import { AUTOMATION_TOOLS } from "./automation-tools";
 import { ISSUE_TOOLS } from "./issue-tools";
 import { PROJECT_TOOLS } from "./project-tools";
@@ -21,4 +23,5 @@ export const TOOLS: QMetryToolParams[] = [
   ...TESTSUITE_TOOLS,
   ...ISSUE_TOOLS,
   ...AUTOMATION_TOOLS,
+  ...ANALYTICS_TOOLS,
 ];
