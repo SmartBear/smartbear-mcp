@@ -147,6 +147,14 @@
       "contentUrl": "qtm4j-integration.md"
     },
     {
+      "order": 9,
+      "parent": "mcp-server-capabilities",
+      "name": "BearQ Integration",
+      "slug": "bearq-integration",
+      "type": "markdown",
+      "contentUrl": "bearq-integration.md"
+    },
+    {
       "order": 3,
       "parent": "",
       "name": "Best Practices",
