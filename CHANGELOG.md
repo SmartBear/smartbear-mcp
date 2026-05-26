@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.24.0] - 2026-05-26
+
+### Added
+
+- [Functional Testing] Add SmartBear Functional Testing integration with `list_functional_testing_tests` tool for discovering available API tests
+
 ## [0.23.0] - 2026-05-22
 
 ### Added

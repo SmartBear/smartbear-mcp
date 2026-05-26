@@ -20,7 +20,7 @@ export class FunctionalTestingClient implements Client {
 
   name = "SmartBear Functional Testing";
   capabilityPrefix = "functional_testing";
-  configPrefix = "FunctionalTesting";
+  configPrefix = "Functional-Testing";
 
   config = ConfigurationSchema;
 
@@ -41,7 +41,10 @@ export class FunctionalTestingClient implements Client {
   }
 
   isConfigured(): boolean {
-    return this._apiToken !== undefined || getRequestHeader(API_KEY_HEADER) !== undefined;
+    return (
+      this._apiToken !== undefined ||
+      getRequestHeader(API_KEY_HEADER) !== undefined
+    );
   }
 
   getHeaders(): Record<string, string> {

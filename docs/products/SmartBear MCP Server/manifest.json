@@ -147,6 +147,14 @@
       "contentUrl": "qtm4j-integration.md"
     },
     {
+      "order": 8,
+      "parent": "mcp-server-capabilities",
+      "name": "Functional Testing Integration",
+      "slug": "functional-testing-integration",
+      "type": "markdown",
+      "contentUrl": "functional-testing-integration.md"
+    },
+    {
       "order": 3,
       "parent": "",
       "name": "Best Practices",

@@ -70,6 +70,10 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
   Generate your QTM4J API key by following the instructions [here](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html).
 
+- **SmartBear Functional Testing**
+
+  Generate an API key from your SmartBear Functional Testing account dashboard at [`app.reflect.run`](https://app.reflect.run/settings/account).
+
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products — tokens for unused products can be omitted.
 
 ## Configure Environment Variables
@@ -121,6 +125,9 @@ export QTM4J_API_KEY="your-qtm4j-api-key"
 # Optional: Set your QTM4J base URL based on your region
 # US (default): https://qtmcloud.qmetry.com Australia: https://syd-qtmcloud.qmetry.com
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
+
+# Required for SmartBear Functional Testing tools
+export FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
 > ⚠️ The `MCP_SERVER_BUGSNAG_API_KEY` is used for monitoring the MCP server itself and should be different from your main application's API key.
@@ -159,7 +166,8 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
-        "QTM4J_BASE_URL": "${input:qtm4j_base_url}"
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functionaltesting_api_token}"
       }
     }
   },
@@ -259,6 +267,12 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "type": "promptString",
       "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
       "password": false
+    },
+    {
+      "id": "functionaltesting_api_token",
+      "type": "promptString",
+      "description": "SmartBear Functional Testing API Token",
+      "password": true
     }
   ]
 }
@@ -293,7 +307,8 @@ Add to your `mcp.json` configuration:
         "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
         "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
         "QTM4J_API_KEY": "your-qtm4j-api-key",
-        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
   }
@@ -329,7 +344,8 @@ Edit your `claude_desktop_config.json` file:
         "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
         "ZEPHYR_BASE_URL": "your-zephyr-base-url",
         "QTM4J_API_KEY": "your-qtm4j-api-key",
-        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
   }
@@ -370,6 +386,7 @@ export PACT_BROKER_TOKEN=your-pact-broker-token
 # export PACT_BROKER_PASSWORD=your-password
 export QTM4J_API_KEY="your-qtm4j-api-key"
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
+export FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
 Launch Claude Code with:
@@ -429,7 +446,8 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
-        "QTM4J_BASE_URL": "${input:qtm4j_base_url}"
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functionaltesting_api_token}"
       }
     }
   },
@@ -529,6 +547,12 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "type": "promptString",
       "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
       "password": false
+    },
+    {
+      "id": "functionaltesting_api_token",
+      "type": "promptString",
+      "description": "SmartBear Functional Testing API Token",
+      "password": true
     }
   ]
 }
@@ -552,6 +576,7 @@ ZEPHYR_API_TOKEN=your_zephyr_token \
 ZEPHYR_BASE_URL=https://api.zephyrscale.smartbear.com/v2 \
 QTM4J_API_KEY=your_qtm4j_key \
 QTM4J_BASE_URL=https://qtmcloud.qmetry.com \
+FUNCTIONAL_TESTING_API_TOKEN=your_functional_testing_token \
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
 
