@@ -69,7 +69,7 @@ describe("LinkTestCasesToCycle", () => {
   describe("handle", () => {
     it("should resolve cycle key and link test cases by key", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-CY-1": { uid: "cycle-uid-abc" },
+        "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
       mockTcResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TC-10": { uid: "uid-tc-10", latestVersion: 1 },
@@ -77,12 +77,12 @@ describe("LinkTestCasesToCycle", () => {
       });
 
       const result = await instance.handle({
-        cycleKey: "SCRUM-CY-1",
+        cycleKey: "SCRUM-TR-1",
         testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-11"],
       });
 
       expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
-        "SCRUM-CY-1",
+        "SCRUM-TR-1",
       ]);
       expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
         "SCRUM-TC-10",
@@ -98,7 +98,7 @@ describe("LinkTestCasesToCycle", () => {
         }),
       );
       expect(result.structuredContent).toEqual({
-        cycleKey: "SCRUM-CY-1",
+        cycleKey: "SCRUM-TR-1",
         linked: true,
       });
       expect(result.content).toEqual([]);
@@ -106,11 +106,11 @@ describe("LinkTestCasesToCycle", () => {
 
     it("should link test cases via filter with auto-injected projectId", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-CY-1": { uid: "cycle-uid-abc" },
+        "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
 
       await instance.handle({
-        cycleKey: "SCRUM-CY-1",
+        cycleKey: "SCRUM-TR-1",
         filter: { priority: ["High"], status: ["To Do"] },
       });
 
@@ -124,14 +124,14 @@ describe("LinkTestCasesToCycle", () => {
 
     it("should pass optional top-level params into body", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-CY-1": { uid: "cycle-uid-abc" },
+        "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
       mockTcResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TC-10": { uid: "uid-tc-10", latestVersion: 1 },
       });
 
       await instance.handle({
-        cycleKey: "SCRUM-CY-1",
+        cycleKey: "SCRUM-TR-1",
         testCaseKeys: ["SCRUM-TC-10"],
         assignee: "5b10a2844c20165700ede21f",
         startNewExecution: true,
@@ -150,14 +150,14 @@ describe("LinkTestCasesToCycle", () => {
 
     it("should warn and skip unresolvable test case keys", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-CY-1": { uid: "cycle-uid-abc" },
+        "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
       mockTcResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TC-10": { uid: "uid-tc-10", latestVersion: 1 },
       });
 
       const result = await instance.handle({
-        cycleKey: "SCRUM-CY-1",
+        cycleKey: "SCRUM-TR-1",
         testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-999"],
       });
 
@@ -179,7 +179,7 @@ describe("LinkTestCasesToCycle", () => {
 
       await expect(
         instance.handle({
-          cycleKey: "SCRUM-CY-999",
+          cycleKey: "SCRUM-TR-999",
           testCaseKeys: ["SCRUM-TC-10"],
         }),
       ).rejects.toThrow(ToolError);
@@ -187,10 +187,10 @@ describe("LinkTestCasesToCycle", () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({});
       await expect(
         instance.handle({
-          cycleKey: "SCRUM-CY-999",
+          cycleKey: "SCRUM-TR-999",
           testCaseKeys: ["SCRUM-TC-10"],
         }),
-      ).rejects.toThrow("SCRUM-CY-999");
+      ).rejects.toThrow("SCRUM-TR-999");
     });
 
     it("should throw when project context not set", async () => {
@@ -198,7 +198,7 @@ describe("LinkTestCasesToCycle", () => {
         throw new Error("No active project set");
       });
 
-      await expect(instance.handle({ cycleKey: "SCRUM-CY-1" })).rejects.toThrow(
+      await expect(instance.handle({ cycleKey: "SCRUM-TR-1" })).rejects.toThrow(
         "No active project set",
       );
     });
@@ -210,7 +210,7 @@ describe("LinkTestCasesToCycle", () => {
 
       await expect(
         instance.handle({
-          cycleKey: "SCRUM-CY-1",
+          cycleKey: "SCRUM-TR-1",
           testCaseKeys: ["SCRUM-TC-10"],
         }),
       ).rejects.toThrow("Resolver Error");
@@ -218,7 +218,7 @@ describe("LinkTestCasesToCycle", () => {
 
     it("should propagate API errors from post", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-CY-1": { uid: "cycle-uid-abc" },
+        "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
       mockTcResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TC-10": { uid: "uid-tc-10", latestVersion: 1 },
@@ -227,7 +227,7 @@ describe("LinkTestCasesToCycle", () => {
 
       await expect(
         instance.handle({
-          cycleKey: "SCRUM-CY-1",
+          cycleKey: "SCRUM-TR-1",
           testCaseKeys: ["SCRUM-TC-10"],
         }),
       ).rejects.toThrow("API Error");

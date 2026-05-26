@@ -30,34 +30,34 @@ describe("TestCycleUidResolver", () => {
 
     it("should call resolve-test-cycle-ids endpoint with joined keys", async () => {
       const mockResponse = {
-        "SCRUM-CY-1": { uid: "cycle-uid-abc" },
-        "SCRUM-CY-2": { uid: "cycle-uid-def" },
+        "SCRUM-TR-1": { uid: "cycle-uid-abc" },
+        "SCRUM-TR-2": { uid: "cycle-uid-def" },
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
       const result = await resolver.resolveAndReturn(10000, [
-        "SCRUM-CY-1",
-        "SCRUM-CY-2",
+        "SCRUM-TR-1",
+        "SCRUM-TR-2",
       ]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
         ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(10000),
-        { keys: "SCRUM-CY-1,SCRUM-CY-2" },
+        { keys: "SCRUM-TR-1,SCRUM-TR-2" },
       );
       expect(result).toEqual(mockResponse);
     });
 
     it("should handle a single key", async () => {
       const mockResponse = {
-        "SCRUM-CY-10": { uid: "cycle-uid-xyz" },
+        "SCRUM-TR-10": { uid: "cycle-uid-xyz" },
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(10000, ["SCRUM-CY-10"]);
+      const result = await resolver.resolveAndReturn(10000, ["SCRUM-TR-10"]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
         ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(10000),
-        { keys: "SCRUM-CY-10" },
+        { keys: "SCRUM-TR-10" },
       );
       expect(result).toEqual(mockResponse);
     });
@@ -65,7 +65,7 @@ describe("TestCycleUidResolver", () => {
     it("should use provided projectId in endpoint", async () => {
       mockApiClient.get.mockResolvedValueOnce({});
 
-      await resolver.resolveAndReturn(99999, ["SCRUM-CY-1"]);
+      await resolver.resolveAndReturn(99999, ["SCRUM-TR-1"]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
         ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(99999),
@@ -94,7 +94,7 @@ describe("TestCycleUidResolver", () => {
       mockApiClient.get.mockRejectedValueOnce(new Error("Network Error"));
 
       await expect(
-        resolver.resolveAndReturn(10000, ["SCRUM-CY-1"]),
+        resolver.resolveAndReturn(10000, ["SCRUM-TR-1"]),
       ).rejects.toThrow("Network Error");
     });
   });

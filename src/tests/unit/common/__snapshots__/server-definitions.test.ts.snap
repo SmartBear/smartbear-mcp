@@ -7392,6 +7392,60 @@ Expected Output: Requirements linked to version 2 of the test case
     ],
     "title": "QTM4J: Get Linked Requirements",
   },
+  "qtm4j_get_linked_requirements_for_test_cycle": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Get Linked Requirements for Test Cycle",
+    },
+    "description": "Retrieve Jira requirements linked to a QTM4J test cycle. Test cycle key is resolved to internal UID automatically.
+
+**Parameters:**
+- cycleKey (string) *required*: Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
+- maxResults (number): Maximum results per page (1-100). Default: 50. (default: 50)
+- startAt (number): Zero-indexed offset for pagination. Default: 0. (default: 0)
+- sort (string): Sort pattern in 'field:asc|desc' format. Allowed fields: key, status, priority. Default: 'key:desc'.
+
+**Output Description:** Paginated result with total, startAt, maxResults, and data array of linked requirement objects (id, key, summary, status, priority, issueType).
+
+**Use Cases:** 1. Check which Jira stories or bugs are covered by a test cycle 2. Audit requirement traceability for a test cycle 3. Retrieve requirement keys linked to a cycle before a release 4. Verify correct requirements are linked to a test cycle
+
+**Examples:**
+1. Get all requirements linked to a test cycle
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-1"
+}
+\`\`\`
+Expected Output: Paginated list of linked requirements with Jira metadata
+
+2. Get requirements sorted by priority with custom page size
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-5",
+  "sort": "priority:asc",
+  "maxResults": 20
+}
+\`\`\`
+Expected Output: Requirements linked to cycle sorted by priority ascending
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. CYCLE KEY FORMAT: '{PROJECT_KEY}-TR-{id}' — e.g. 'SCRUM-TR-1'. Resolved to internal UID automatically. 3. Allowed sort fields: key, status, priority. Default sort: 'key:desc'. 4. Paginate using startAt — increment by maxResults until startAt >= total.",
+    "inputSchema": [
+      "cycleKey",
+      "maxResults",
+      "sort",
+      "startAt",
+    ],
+    "outputSchema": [
+      "data",
+      "maxResults",
+      "startAt",
+      "total",
+    ],
+    "title": "QTM4J: Get Linked Requirements for Test Cycle",
+  },
   "qtm4j_get_linked_test_cases_for_requirement": {
     "annotations": {
       "destructiveHint": false,
@@ -7737,6 +7791,61 @@ Expected Output: Requirement linked to version 2 of test case
     ],
     "title": "QTM4J: Link Requirements to Test Case",
   },
+  "qtm4j_link_requirements_to_test_cycle": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Link Requirements to Test Cycle",
+    },
+    "description": "Link one or more Jira requirements to a QTM4J test cycle by requirement keys or JQL filter. Requirement keys are resolved to internal IDs automatically.
+
+**Parameters:**
+- cycleKey (string) *required*: Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
+- requirementKeys (array): List of Jira requirement keys to link (e.g., ['SCRUM-1', 'SCRUM-2']). Resolved to internal IDs automatically. Provide this OR filter.jql — not both.
+- filter (object): JQL filter to select requirements to link. Use instead of requirementKeys when filtering by JQL.
+
+**Output Description:** Confirmation with the cycle key and linked: true. Warnings are included if any requirements could not be resolved or linked.
+
+**Use Cases:** 1. Link one or more Jira requirements (stories, bugs, epics) to a test cycle 2. Associate requirements with a test cycle using a JQL filter 3. Build traceability between requirements and a test cycle 4. Link all stories from a sprint to a test cycle using JQL
+
+**Examples:**
+1. Link two requirements by key
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-1",
+  "requirementKeys": [
+    "SCRUM-1",
+    "SCRUM-2"
+  ]
+}
+\`\`\`
+Expected Output: Requirements SCRUM-1 and SCRUM-2 linked to test cycle
+
+2. Link requirements by JQL filter
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-1",
+  "filter": {
+    "jql": "project = DEMO AND issuetype = Story"
+  }
+}
+\`\`\`
+Expected Output: Requirements matched by JQL linked to test cycle
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. CYCLE KEY FORMAT: '{PROJECT_KEY}-TR-{id}' — e.g. 'SCRUM-TR-1'. Resolved to internal UID automatically. 3. Requirement keys follow Jira issue key format: '{PROJECT_KEY}-{number}' (e.g. 'SCRUM-1'). 4. Provide either requirementKeys or filter.jql — not both. 5. If a requirement key cannot be resolved or linked, it is reported in warnings and other requirements are still linked.",
+    "inputSchema": [
+      "cycleKey",
+      "filter",
+      "requirementKeys",
+    ],
+    "outputSchema": [
+      "cycleKey",
+      "linked",
+    ],
+    "title": "QTM4J: Link Requirements to Test Cycle",
+  },
   "qtm4j_link_test_cases_to_requirement": {
     "annotations": {
       "destructiveHint": false,
@@ -7824,7 +7933,7 @@ Expected Output: Folder test cases linked to requirement
     "description": "Link test cases to a QTM4J test cycle by test case keys or filter criteria. Test case keys are resolved to internal IDs and latest versions automatically.
 
 **Parameters:**
-- cycleKey (string) *required*: Test Cycle key (e.g., 'SCRUM-CY-1'). Resolved to the internal cycle UID automatically.
+- cycleKey (string) *required*: Test Cycle key (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
 - testCaseKeys (array): Test case keys to link (e.g., ['SCRUM-TC-1', 'SCRUM-TC-2']). Resolved to internal IDs and latest versions automatically. Provide this OR filter — not both.
 - filter (object): Filter criteria to select test cases to link. projectId is auto-filled from the active project context.
 - sort (string): Sort order in 'field:asc|desc' format (e.g., 'createdOn:desc'). Default is 'createdOn:desc'.
@@ -7844,7 +7953,7 @@ Expected Output: Folder test cases linked to requirement
 1. Link two test cases by key
 \`\`\`json
 {
-  "cycleKey": "SCRUM-CY-1",
+  "cycleKey": "SCRUM-TR-1",
   "testCaseKeys": [
     "SCRUM-TC-10",
     "SCRUM-TC-11"
@@ -7856,7 +7965,7 @@ Expected Output: Test cases linked to test cycle
 2. Link test cases matching a filter with assignee
 \`\`\`json
 {
-  "cycleKey": "SCRUM-CY-1",
+  "cycleKey": "SCRUM-TR-1",
   "filter": {
     "priority": [
       "High"
@@ -7874,7 +7983,7 @@ Expected Output: Filtered test cases linked to cycle with assignee
 3. Link test cases in a folder to a cycle with planned date
 \`\`\`json
 {
-  "cycleKey": "SCRUM-CY-5",
+  "cycleKey": "SCRUM-TR-5",
   "filter": {
     "folderId": 42,
     "withChild": true
@@ -7885,7 +7994,7 @@ Expected Output: Filtered test cases linked to cycle with assignee
 \`\`\`
 Expected Output: Folder test cases linked to cycle with planned date
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. CYCLE KEY FORMAT: '{PROJECT_KEY}-CY-{number}' — e.g. 'SCRUM-CY-1'. Resolved to internal UID automatically. 3. TEST CASE KEY FORMAT: '{PROJECT_KEY}-TC-{number}' — e.g. 'SCRUM-TC-145'. 4. Provide either testCaseKeys or filter — not both. 5. projectId in filter is auto-filled from the active project context — do not set it manually. 6. filter.excludeCycleId excludes test cases already in another cycle. 7. startNewExecution: true creates a fresh execution record for each linked test case. 8. executionPlannedDate must be in yyyy-MM-dd format (e.g., '2024-03-31'). 9. actualTime must be in HH:mm format (e.g., '02:30'). 10. If a test case key cannot be resolved, it is reported in warnings and others are still linked.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. CYCLE KEY FORMAT: '{PROJECT_KEY}-TR-{id}' — e.g. 'SCRUM-TR-1'. Resolved to internal UID automatically. 3. TEST CASE KEY FORMAT: '{PROJECT_KEY}-TC-{number}' — e.g. 'SCRUM-TC-145'. 4. Provide either testCaseKeys or filter — not both. 5. projectId in filter is auto-filled from the active project context — do not set it manually. 6. filter.excludeCycleId excludes test cases already in another cycle. 7. startNewExecution: true creates a fresh execution record for each linked test case. 8. executionPlannedDate must be in yyyy-MM-dd format (e.g., '2024-03-31'). 9. actualTime must be in HH:mm format (e.g., '02:30'). 10. If a test case key cannot be resolved, it is reported in warnings and others are still linked.",
     "inputSchema": [
       "actualTime",
       "assignee",
@@ -7905,6 +8014,112 @@ Expected Output: Folder test cases linked to cycle with planned date
       "unlinked",
     ],
     "title": "QTM4J: Link Test Cases to Test Cycle",
+  },
+  "qtm4j_search_linked_test_cases_in_test_cycle": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Search Linked Test Cases in Test Cycle",
+    },
+    "description": "Search and filter test case executions linked to a QTM4J test cycle. Supports pagination, field selection, sorting, and rich filter criteria.
+
+**Parameters:**
+- cycleKey (string) *required*: Test Cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
+- fields (array): Fields to include in each result object. Allowed: id, key, summary, description, executionResult, status, priority, environment, tcWithDefects, estimatedTime, actualTime, createdOn, updatedOn, sprint, seqNo, latestTcExecutionId, customFields, flakyScore, passRateScore. Omit to return all fields.
+- maxResults (number): Maximum results per page (1-100). Default: 50. (default: 50)
+- sort (string): Sort pattern in 'field:asc|desc' format (e.g., 'key:desc'). Allowed sort fields: id, key, summary, description, executionResult, status, priority, environment, tcWithDefects, estimatedTime, actualTime, createdOn, updatedOn, sprint, flakyScore, passRateScore.
+- startAt (number): Zero-indexed offset for pagination. Default: 0. (default: 0)
+- filter (object): Optional filter criteria to narrow down results. projectId is auto-filled from the active project context.
+
+**Output Description:** JSON object with total (total matching executions), startAt, maxResults, and data (array of test case execution objects for this page).
+
+**Use Cases:** 1. List all test cases linked to a test cycle 2. Find failed or blocked test case executions in a cycle 3. Search for test cases in a cycle by execution result (Pass, Fail, Blocked) 4. Filter test cases in a cycle by priority or status 5. Retrieve test cases assigned to a specific executor in a cycle 6. Get test cases with defects in a cycle 7. Paginate through large test cycle execution lists 8. Request only specific fields to reduce response size
+
+**Examples:**
+1. List all test cases in a cycle
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-1"
+}
+\`\`\`
+Expected Output: Paginated list of test case executions in the cycle (first 50 results)
+
+2. Find failed test cases in a cycle
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-1",
+  "filter": {
+    "executionResult": [
+      "Fail"
+    ]
+  },
+  "fields": [
+    "key",
+    "summary",
+    "executionResult",
+    "priority"
+  ]
+}
+\`\`\`
+Expected Output: Test case executions with Fail result
+
+3. Search with pagination and sort
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-5",
+  "maxResults": 25,
+  "startAt": 0,
+  "sort": "key:asc",
+  "filter": {
+    "status": [
+      "To Do"
+    ]
+  }
+}
+\`\`\`
+Expected Output: First 25 To Do test cases in the cycle sorted by key ascending
+
+4. Filter by execution assignee and environment
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-2",
+  "filter": {
+    "executionAssignee": [
+      "5b10a2844c20165700ede21f"
+    ],
+    "environment": [
+      "Staging"
+    ]
+  },
+  "fields": [
+    "key",
+    "summary",
+    "executionResult",
+    "environment",
+    "actualTime"
+  ]
+}
+\`\`\`
+Expected Output: Test cases assigned to the specified user in the Staging environment
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. CYCLE KEY FORMAT: '{PROJECT_KEY}-TR-{id}' — e.g. 'SCRUM-TR-1'. Resolved to internal UID automatically. 3. projectId in filter is auto-filled from the active project context — do not set it manually. 4. fields is sent as a query parameter; filter is sent in the request body. 5. Allowed fields: id, key, summary, description, executionResult, status, priority, environment, tcWithDefects, estimatedTime, actualTime, createdOn, updatedOn, sprint, seqNo, latestTcExecutionId, customFields, flakyScore, passRateScore. 6. Allowed sort fields: id, key, summary, description, executionResult, status, priority, environment, tcWithDefects, estimatedTime, actualTime, createdOn, updatedOn, sprint, flakyScore, passRateScore. 7. Date range format for filter fields: 'dd/mmm/yyyy,dd/mmm/yyyy' (e.g., '01/Jan/2024,31/Mar/2024'). 8. maxResults defaults to 50, maximum is 100. Use startAt to paginate. 9. executionResult filter accepts values like 'Pass', 'Fail', 'Blocked', 'Unexecuted'.",
+    "inputSchema": [
+      "cycleKey",
+      "fields",
+      "filter",
+      "maxResults",
+      "sort",
+      "startAt",
+    ],
+    "outputSchema": [
+      "data",
+      "maxResults",
+      "startAt",
+      "total",
+    ],
+    "title": "QTM4J: Search Linked Test Cases in Test Cycle",
   },
   "qtm4j_search_test_cases": {
     "annotations": {
@@ -8358,6 +8573,59 @@ Expected Output: Requirement unlinked from version 2 of test case
     ],
     "title": "QTM4J: Unlink Requirements from Test Case",
   },
+  "qtm4j_unlink_requirements_from_test_cycle": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Unlink Requirements from Test Cycle",
+    },
+    "description": "Unlink one or more Jira requirements from a QTM4J test cycle by requirement keys, or unlink all requirements at once with unLinkAll.
+
+**Parameters:**
+- cycleKey (string) *required*: Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
+- requirementKeys (array): List of Jira requirement keys to unlink (e.g., ['SCRUM-1', 'SCRUM-2']). Resolved to internal IDs automatically. Provide this OR unLinkAll — not both.
+- unLinkAll (boolean): If true, all requirements are unlinked from the cycle. Ignores requirementKeys.
+
+**Output Description:** Confirmation with the cycle key and unlinked: true. Warnings are included if any requirements could not be resolved or unlinked.
+
+**Use Cases:** 1. Remove one or more Jira requirements from a test cycle by key 2. Unlink all requirements from a test cycle at once 3. Clean up requirement links before repopulating a test cycle
+
+**Examples:**
+1. Unlink two requirements by key
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-1",
+  "requirementKeys": [
+    "SCRUM-1",
+    "SCRUM-2"
+  ]
+}
+\`\`\`
+Expected Output: Requirements SCRUM-1 and SCRUM-2 unlinked from test cycle
+
+2. Unlink all requirements from a cycle
+\`\`\`json
+{
+  "cycleKey": "SCRUM-TR-1",
+  "unLinkAll": true
+}
+\`\`\`
+Expected Output: All requirements unlinked from test cycle
+
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. CYCLE KEY FORMAT: '{PROJECT_KEY}-TR-{id}' — e.g. 'SCRUM-TR-1'. Resolved to internal UID automatically. 3. Requirement keys follow Jira issue key format: '{PROJECT_KEY}-{number}' (e.g. 'SCRUM-1'). 4. Provide either requirementKeys or unLinkAll: true — not both. 5. unLinkAll: true removes every requirement from the cycle — no need to list them individually. 6. If a requirement key cannot be resolved or unlinked, it is reported in warnings and other requirements are still unlinked.",
+    "inputSchema": [
+      "cycleKey",
+      "requirementKeys",
+      "unLinkAll",
+    ],
+    "outputSchema": [
+      "cycleKey",
+      "unlinked",
+    ],
+    "title": "QTM4J: Unlink Requirements from Test Cycle",
+  },
   "qtm4j_unlink_test_cases_from_requirement": {
     "annotations": {
       "destructiveHint": false,
@@ -8430,7 +8698,7 @@ Expected Output: Filtered test cases unlinked from requirement
     "description": "Unlink test cases from a QTM4J test cycle by test case keys, filter criteria, or all at once with unlinkAll.
 
 **Parameters:**
-- cycleKey (string) *required*: Test Cycle key (e.g., 'SCRUM-CY-1'). Resolved to the internal cycle UID automatically.
+- cycleKey (string) *required*: Test Cycle key (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
 - testCaseKeys (array): Test case keys to unlink (e.g., ['SCRUM-TC-1', 'SCRUM-TC-2']). Resolved to internal IDs and latest versions automatically. Provide this OR filter or unlinkAll — not combined.
 - unlinkAll (boolean): If true, all test cases are unlinked from the cycle. Ignores testCaseKeys and filter.
 - filter (object): Filter criteria to select test cases to unlink. projectId is auto-filled from the active project context.
@@ -8443,7 +8711,7 @@ Expected Output: Filtered test cases unlinked from requirement
 1. Unlink two specific test cases
 \`\`\`json
 {
-  "cycleKey": "SCRUM-CY-1",
+  "cycleKey": "SCRUM-TR-1",
   "testCaseKeys": [
     "SCRUM-TC-10",
     "SCRUM-TC-11"
@@ -8455,7 +8723,7 @@ Expected Output: Test cases unlinked from test cycle
 2. Unlink all test cases from a cycle
 \`\`\`json
 {
-  "cycleKey": "SCRUM-CY-1",
+  "cycleKey": "SCRUM-TR-1",
   "unlinkAll": true
 }
 \`\`\`
@@ -8464,7 +8732,7 @@ Expected Output: All test cases unlinked from cycle
 3. Unlink test cases matching a status filter
 \`\`\`json
 {
-  "cycleKey": "SCRUM-CY-5",
+  "cycleKey": "SCRUM-TR-5",
   "filter": {
     "status": [
       "Done"
@@ -8477,7 +8745,7 @@ Expected Output: All test cases unlinked from cycle
 \`\`\`
 Expected Output: Filtered test cases unlinked from cycle
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. CYCLE KEY FORMAT: '{PROJECT_KEY}-CY-{number}' — e.g. 'SCRUM-CY-1'. Resolved to internal UID automatically. 3. TEST CASE KEY FORMAT: '{PROJECT_KEY}-TC-{number}' — e.g. 'SCRUM-TC-145'. 4. Provide exactly one of: testCaseKeys, unlinkAll, or filter. 5. unlinkAll: true removes every test case from the cycle — no need to list them individually. 6. projectId in filter is auto-filled from the active project context — do not set it manually. 7. If a test case key cannot be resolved, it is reported in warnings and others are still unlinked.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. CYCLE KEY FORMAT: '{PROJECT_KEY}-TR-{id}' — e.g. 'SCRUM-TR-1'. Resolved to internal UID automatically. 3. TEST CASE KEY FORMAT: '{PROJECT_KEY}-TC-{number}' — e.g. 'SCRUM-TC-145'. 4. Provide exactly one of: testCaseKeys, unlinkAll, or filter. 5. unlinkAll: true removes every test case from the cycle — no need to list them individually. 6. projectId in filter is auto-filled from the active project context — do not set it manually. 7. If a test case key cannot be resolved, it is reported in warnings and others are still unlinked.",
     "inputSchema": [
       "cycleKey",
       "filter",

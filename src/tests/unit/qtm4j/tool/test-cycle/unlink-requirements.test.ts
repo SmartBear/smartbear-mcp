@@ -2,15 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../../../common/tools";
 import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
 import { ResolverKeys } from "../../../../../qtm4j/config/field-resolution.types";
-import { UnlinkTestCasesFromCycle } from "../../../../../qtm4j/tool/test-cycle/unlink-testcases";
+import { UnlinkRequirementsFromCycle } from "../../../../../qtm4j/tool/test-cycle/unlink-requirements";
 
-describe("UnlinkTestCasesFromCycle", () => {
+describe("UnlinkRequirementsFromCycle", () => {
   let mockClient: any;
   let mockApiClient: any;
   let mockRegistry: any;
   let mockCycleResolver: any;
-  let mockTcResolver: any;
-  let instance: UnlinkTestCasesFromCycle;
+  let mockReqResolver: any;
+  let instance: UnlinkRequirementsFromCycle;
 
   const mockContext = {
     projectKey: "SCRUM",
@@ -22,32 +22,32 @@ describe("UnlinkTestCasesFromCycle", () => {
     vi.clearAllMocks();
 
     mockCycleResolver = { resolveAndReturn: vi.fn() };
-    mockTcResolver = { resolveAndReturn: vi.fn() };
+    mockReqResolver = { resolveAndReturn: vi.fn() };
 
     mockRegistry = {
       requireProjectContext: vi.fn().mockReturnValue(mockContext),
       getResolver: vi.fn().mockImplementation((key: string) => {
         if (key === ResolverKeys.SearchableField.TEST_CYCLE_KEY_TO_UID)
           return mockCycleResolver;
-        if (key === ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID)
-          return mockTcResolver;
+        if (key === ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID)
+          return mockReqResolver;
         throw new Error(`Unexpected resolver key: ${key}`);
       }),
     };
 
-    mockApiClient = { delete: vi.fn().mockResolvedValue({}) };
+    mockApiClient = { post: vi.fn().mockResolvedValue({}) };
     mockClient = {
       getApiClient: vi.fn().mockReturnValue(mockApiClient),
       getResolverRegistry: vi.fn().mockReturnValue(mockRegistry),
     };
 
-    instance = new UnlinkTestCasesFromCycle(mockClient as any);
+    instance = new UnlinkRequirementsFromCycle(mockClient as any);
   });
 
   describe("specification", () => {
     it("should have correct tool metadata", () => {
       expect(instance.specification.title).toBe(
-        "Unlink Test Cases from Test Cycle",
+        "Unlink Requirements from Test Cycle",
       );
       expect(instance.specification.readOnly).toBe(false);
       expect(instance.specification.idempotent).toBe(false);
@@ -67,35 +67,30 @@ describe("UnlinkTestCasesFromCycle", () => {
   });
 
   describe("handle", () => {
-    it("should resolve cycle key and unlink test cases by key", async () => {
+    it("should resolve cycle and requirement keys and unlink", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
-      mockTcResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-TC-10": { uid: "uid-tc-10", latestVersion: 1 },
-        "SCRUM-TC-11": { uid: "uid-tc-11", latestVersion: 2 },
+      mockReqResolver.resolveAndReturn.mockResolvedValueOnce({
+        "SCRUM-1": { id: "10001" },
+        "SCRUM-2": { id: "10002" },
       });
 
       const result = await instance.handle({
         cycleKey: "SCRUM-TR-1",
-        testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-11"],
+        requirementKeys: ["SCRUM-1", "SCRUM-2"],
       });
 
       expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
         "SCRUM-TR-1",
       ]);
-      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
-        "SCRUM-TC-10",
-        "SCRUM-TC-11",
+      expect(mockReqResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+        "SCRUM-1",
+        "SCRUM-2",
       ]);
-      expect(mockApiClient.delete).toHaveBeenCalledWith(
-        ENDPOINTS.UNLINK_TESTCASES_FROM_CYCLE("cycle-uid-abc"),
-        {
-          testCases: [
-            { id: "uid-tc-10", versionNo: 1 },
-            { id: "uid-tc-11", versionNo: 2 },
-          ],
-        },
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.UNLINK_REQUIREMENTS_FROM_CYCLE("cycle-uid-abc"),
+        { requirementIds: [10001, 10002] },
       );
       expect(result.structuredContent).toEqual({
         cycleKey: "SCRUM-TR-1",
@@ -104,62 +99,40 @@ describe("UnlinkTestCasesFromCycle", () => {
       expect(result.content).toEqual([]);
     });
 
-    it("should unlink all test cases when unlinkAll is true", async () => {
+    it("should unlink all when unLinkAll is true", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
 
-      await instance.handle({ cycleKey: "SCRUM-TR-1", unlinkAll: true });
+      await instance.handle({ cycleKey: "SCRUM-TR-1", unLinkAll: true });
 
-      expect(mockTcResolver.resolveAndReturn).not.toHaveBeenCalled();
-      expect(mockApiClient.delete).toHaveBeenCalledWith(
-        ENDPOINTS.UNLINK_TESTCASES_FROM_CYCLE("cycle-uid-abc"),
-        { unlinkAll: true },
+      expect(mockReqResolver.resolveAndReturn).not.toHaveBeenCalled();
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        ENDPOINTS.UNLINK_REQUIREMENTS_FROM_CYCLE("cycle-uid-abc"),
+        { unLinkAll: true },
       );
     });
 
-    it("should unlink via filter with auto-injected projectId", async () => {
-      mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-TR-5": { uid: "cycle-uid-xyz" },
-      });
-
-      await instance.handle({
-        cycleKey: "SCRUM-TR-5",
-        filter: { executionResult: ["PASS"], labels: ["Deprecated"] },
-      });
-
-      expect(mockApiClient.delete).toHaveBeenCalledWith(
-        ENDPOINTS.UNLINK_TESTCASES_FROM_CYCLE("cycle-uid-xyz"),
-        {
-          filter: {
-            executionResult: ["PASS"],
-            labels: ["Deprecated"],
-            projectId: 10000,
-          },
-        },
-      );
-    });
-
-    it("should warn and skip unresolvable test case keys", async () => {
+    it("should warn and skip unresolvable requirement keys", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
-      mockTcResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-TC-10": { uid: "uid-tc-10", latestVersion: 1 },
+      mockReqResolver.resolveAndReturn.mockResolvedValueOnce({
+        "SCRUM-1": { id: "10001" },
       });
 
       const result = await instance.handle({
         cycleKey: "SCRUM-TR-1",
-        testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-999"],
+        requirementKeys: ["SCRUM-1", "SCRUM-999"],
       });
 
       expect(result.content).toHaveLength(1);
       expect(result.content[0]).toMatchObject({
         type: "text",
-        text: expect.stringContaining("SCRUM-TC-999"),
+        text: expect.stringContaining("SCRUM-999"),
       });
-      expect(mockApiClient.delete).toHaveBeenCalledWith(expect.any(String), {
-        testCases: [{ id: "uid-tc-10", versionNo: 1 }],
+      expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
+        requirementIds: [10001],
       });
     });
 
@@ -169,7 +142,7 @@ describe("UnlinkTestCasesFromCycle", () => {
       await expect(
         instance.handle({
           cycleKey: "SCRUM-TR-999",
-          testCaseKeys: ["SCRUM-TC-10"],
+          requirementKeys: ["SCRUM-1"],
         }),
       ).rejects.toThrow(ToolError);
 
@@ -177,7 +150,7 @@ describe("UnlinkTestCasesFromCycle", () => {
       await expect(
         instance.handle({
           cycleKey: "SCRUM-TR-999",
-          testCaseKeys: ["SCRUM-TC-10"],
+          requirementKeys: ["SCRUM-1"],
         }),
       ).rejects.toThrow("SCRUM-TR-999");
     });
@@ -200,31 +173,31 @@ describe("UnlinkTestCasesFromCycle", () => {
       await expect(
         instance.handle({
           cycleKey: "SCRUM-TR-1",
-          testCaseKeys: ["SCRUM-TC-10"],
+          requirementKeys: ["SCRUM-1"],
         }),
       ).rejects.toThrow("Resolver Error");
     });
 
-    it("should propagate API errors from delete", async () => {
+    it("should propagate API errors", async () => {
       mockCycleResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TR-1": { uid: "cycle-uid-abc" },
       });
-      mockTcResolver.resolveAndReturn.mockResolvedValueOnce({
-        "SCRUM-TC-10": { uid: "uid-tc-10", latestVersion: 1 },
+      mockReqResolver.resolveAndReturn.mockResolvedValueOnce({
+        "SCRUM-1": { id: "10001" },
       });
-      mockApiClient.delete.mockRejectedValueOnce(new Error("API Error"));
+      mockApiClient.post.mockRejectedValueOnce(new Error("API Error"));
 
       await expect(
         instance.handle({
           cycleKey: "SCRUM-TR-1",
-          testCaseKeys: ["SCRUM-TC-10"],
+          requirementKeys: ["SCRUM-1"],
         }),
       ).rejects.toThrow("API Error");
     });
 
     it("should throw on missing required cycleKey", async () => {
       await expect(
-        instance.handle({ testCaseKeys: ["SCRUM-TC-10"] }),
+        instance.handle({ requirementKeys: ["SCRUM-1"] }),
       ).rejects.toThrow();
     });
   });

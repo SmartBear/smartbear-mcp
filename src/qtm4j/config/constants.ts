@@ -77,6 +77,22 @@ export const ENDPOINTS = {
   UNLINK_TESTCASES_FROM_CYCLE: (cycleId: string) =>
     `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases`,
 
+  /** Search test cases linked to a test cycle endpoint */
+  SEARCH_LINKED_TESTCASES_IN_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases/search`,
+
+  /** Get linked requirements for a test cycle endpoint */
+  GET_LINKED_REQUIREMENTS_FOR_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements`,
+
+  /** Link requirements to test cycle endpoint */
+  LINK_REQUIREMENTS_TO_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements/link`,
+
+  /** Unlink requirements from test cycle endpoint */
+  UNLINK_REQUIREMENTS_FROM_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements/unlink`,
+
   /** Test steps search endpoint */
   TEST_STEPS: (id: string, versionNo: number) =>
     `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/teststeps/search`,
@@ -295,6 +311,34 @@ export const TOOL_NAMES = {
     TITLE: "Unlink Test Cases from Test Cycle",
     SUMMARY:
       "Unlink test cases from a QTM4J test cycle by test case keys, filter criteria, or all at once with unlinkAll.",
+  },
+
+  /** Search Linked Test Cases in Test Cycle tool */
+  SEARCH_LINKED_TESTCASES_IN_CYCLE: {
+    TITLE: "Search Linked Test Cases in Test Cycle",
+    SUMMARY:
+      "Search and filter test case executions linked to a QTM4J test cycle. Supports pagination, field selection, sorting, and rich filter criteria.",
+  },
+
+  /** Get Linked Requirements for Test Cycle tool */
+  GET_LINKED_REQUIREMENTS_FOR_CYCLE: {
+    TITLE: "Get Linked Requirements for Test Cycle",
+    SUMMARY:
+      "Retrieve Jira requirements linked to a QTM4J test cycle. Test cycle key is resolved to internal UID automatically.",
+  },
+
+  /** Link Requirements to Test Cycle tool */
+  LINK_REQUIREMENTS_TO_CYCLE: {
+    TITLE: "Link Requirements to Test Cycle",
+    SUMMARY:
+      "Link one or more Jira requirements to a QTM4J test cycle by requirement keys or JQL filter. Requirement keys are resolved to internal IDs automatically.",
+  },
+
+  /** Unlink Requirements from Test Cycle tool */
+  UNLINK_REQUIREMENTS_FROM_CYCLE: {
+    TITLE: "Unlink Requirements from Test Cycle",
+    SUMMARY:
+      "Unlink one or more Jira requirements from a QTM4J test cycle by requirement keys, or unlink all requirements at once with unLinkAll.",
   },
 } as const;
 

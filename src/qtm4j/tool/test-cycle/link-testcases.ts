@@ -20,7 +20,7 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
     outputSchema: TestCycleLinkResponse,
     purpose:
       "Link test cases to a QTM4J test cycle using the cycle's human-readable key. " +
-      "The cycle key (e.g. 'SCRUM-CY-1') is resolved to the internal UID automatically. " +
+      "The cycle key (e.g. 'SCRUM-TR-1') is resolved to the internal UID automatically. " +
       "Test cases can be specified by their human-readable keys (e.g. 'SCRUM-TC-1'), which are also resolved to internal IDs and latest versions automatically. " +
       "Alternatively, use a filter object to select test cases by criteria such as status, priority, labels, or folder. " +
       "The active project ID is injected automatically into the filter. " +
@@ -36,7 +36,7 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
       {
         description: "Link two test cases by key",
         parameters: {
-          cycleKey: "SCRUM-CY-1",
+          cycleKey: "SCRUM-TR-1",
           testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-11"],
         },
         expectedOutput: "Test cases linked to test cycle",
@@ -44,7 +44,7 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
       {
         description: "Link test cases matching a filter with assignee",
         parameters: {
-          cycleKey: "SCRUM-CY-1",
+          cycleKey: "SCRUM-TR-1",
           filter: { priority: ["High"], status: ["To Do"] },
           assignee: "5b10a2844c20165700ede21f",
           startNewExecution: true,
@@ -54,7 +54,7 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
       {
         description: "Link test cases in a folder to a cycle with planned date",
         parameters: {
-          cycleKey: "SCRUM-CY-5",
+          cycleKey: "SCRUM-TR-5",
           filter: { folderId: 42, withChild: true },
           executionPlannedDate: "2024-03-31",
           sort: "key:asc",
@@ -64,7 +64,7 @@ export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
     ],
     hints: [
       "PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project.",
-      "CYCLE KEY FORMAT: '{PROJECT_KEY}-CY-{number}' — e.g. 'SCRUM-CY-1'. Resolved to internal UID automatically.",
+      "CYCLE KEY FORMAT: '{PROJECT_KEY}-TR-{id}' — e.g. 'SCRUM-TR-1'. Resolved to internal UID automatically.",
       "TEST CASE KEY FORMAT: '{PROJECT_KEY}-TC-{number}' — e.g. 'SCRUM-TC-145'.",
       "Provide either testCaseKeys or filter — not both.",
       "projectId in filter is auto-filled from the active project context — do not set it manually.",

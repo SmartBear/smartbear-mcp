@@ -200,6 +200,18 @@ export class Qtm4jClient implements Client {
     const { UnlinkTestCasesFromCycle } = await import(
       "./tool/test-cycle/unlink-testcases"
     );
+    const { SearchLinkedTestCasesInCycle } = await import(
+      "./tool/test-cycle/search-linked-testcases"
+    );
+    const { LinkRequirementsToCycle } = await import(
+      "./tool/test-cycle/link-requirements"
+    );
+    const { UnlinkRequirementsFromCycle } = await import(
+      "./tool/test-cycle/unlink-requirements"
+    );
+    const { GetLinkedRequirementsForCycle } = await import(
+      "./tool/test-cycle/get-linked-requirements"
+    );
 
     const tools = [
       new GetProjects(this),
@@ -216,6 +228,10 @@ export class Qtm4jClient implements Client {
       new GetLinkedTestCasesForRequirement(this),
       new LinkTestCasesToCycle(this),
       new UnlinkTestCasesFromCycle(this),
+      new SearchLinkedTestCasesInCycle(this),
+      new LinkRequirementsToCycle(this),
+      new UnlinkRequirementsFromCycle(this),
+      new GetLinkedRequirementsForCycle(this),
     ];
 
     // Register each tool with the MCP server

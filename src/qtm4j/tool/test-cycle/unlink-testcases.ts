@@ -20,7 +20,7 @@ export class UnlinkTestCasesFromCycle extends Tool<Qtm4jClient> {
     outputSchema: TestCycleLinkResponse,
     purpose:
       "Unlink test cases from a QTM4J test cycle using the cycle's human-readable key. " +
-      "The cycle key (e.g. 'SCRUM-CY-1') is resolved to the internal UID automatically. " +
+      "The cycle key (e.g. 'SCRUM-TR-1') is resolved to the internal UID automatically. " +
       "Test cases can be specified by their human-readable keys (e.g. 'SCRUM-TC-1'), which are also resolved to internal IDs and latest versions automatically. " +
       "Alternatively, set unlinkAll to true to remove all test cases from the cycle in one call, " +
       "or use a filter to select which test cases to unlink by criteria. " +
@@ -36,20 +36,20 @@ export class UnlinkTestCasesFromCycle extends Tool<Qtm4jClient> {
       {
         description: "Unlink two specific test cases",
         parameters: {
-          cycleKey: "SCRUM-CY-1",
+          cycleKey: "SCRUM-TR-1",
           testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-11"],
         },
         expectedOutput: "Test cases unlinked from test cycle",
       },
       {
         description: "Unlink all test cases from a cycle",
-        parameters: { cycleKey: "SCRUM-CY-1", unlinkAll: true },
+        parameters: { cycleKey: "SCRUM-TR-1", unlinkAll: true },
         expectedOutput: "All test cases unlinked from cycle",
       },
       {
         description: "Unlink test cases matching a status filter",
         parameters: {
-          cycleKey: "SCRUM-CY-5",
+          cycleKey: "SCRUM-TR-5",
           filter: { status: ["Done"], labels: ["Deprecated"] },
         },
         expectedOutput: "Filtered test cases unlinked from cycle",
@@ -57,7 +57,7 @@ export class UnlinkTestCasesFromCycle extends Tool<Qtm4jClient> {
     ],
     hints: [
       "PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project.",
-      "CYCLE KEY FORMAT: '{PROJECT_KEY}-CY-{number}' — e.g. 'SCRUM-CY-1'. Resolved to internal UID automatically.",
+      "CYCLE KEY FORMAT: '{PROJECT_KEY}-TR-{id}' — e.g. 'SCRUM-TR-1'. Resolved to internal UID automatically.",
       "TEST CASE KEY FORMAT: '{PROJECT_KEY}-TC-{number}' — e.g. 'SCRUM-TC-145'.",
       "Provide exactly one of: testCaseKeys, unlinkAll, or filter.",
       "unlinkAll: true removes every test case from the cycle — no need to list them individually.",

@@ -205,7 +205,7 @@ export const LinkTestCasesToCycleBody = z.object({
   cycleKey: z
     .string()
     .describe(
-      "Test Cycle key (e.g., 'SCRUM-CY-1'). Resolved to the internal cycle UID automatically.",
+      "Test Cycle key (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.",
     ),
   testCaseKeys: z
     .array(z.string())
@@ -261,7 +261,7 @@ export const UnlinkTestCasesFromCycleBody = z.object({
   cycleKey: z
     .string()
     .describe(
-      "Test Cycle key (e.g., 'SCRUM-CY-1'). Resolved to the internal cycle UID automatically.",
+      "Test Cycle key (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.",
     ),
   testCaseKeys: z
     .array(z.string())
@@ -285,4 +285,261 @@ export const TestCycleLinkResponse = z.object({
   cycleKey: z.string(),
   linked: z.literal(true).optional(),
   unlinked: z.literal(true).optional(),
+});
+
+// ─── Search Linked Test Cases in Test Cycle ───────────────────────────────────
+
+/**
+ * Filter object for searching test cases linked to a test cycle.
+ * projectId is always auto-filled from the active project context.
+ */
+export const SearchLinkedTestCasesInCycleFilter = z.object({
+  key: z.string().optional().describe("Jira issue key (e.g., 'PROJ-123')."),
+  summary: z.string().optional().describe("Test case summary text."),
+  description: z.string().optional().describe("Test case description text."),
+  searchText: z.string().optional().describe("Free-text search within fields."),
+  searchInFields: z
+    .array(z.string())
+    .optional()
+    .describe("Fields to search in (e.g., ['summary', 'description'])."),
+  assignee: z
+    .array(z.string())
+    .optional()
+    .describe("Jira user UUIDs of assignees."),
+  reporter: z
+    .array(z.string())
+    .optional()
+    .describe("Jira user UUIDs of reporters."),
+  labels: z.array(z.string()).optional().describe("Label names."),
+  components: z.array(z.string()).optional().describe("Component names."),
+  fixVersions: z.array(z.string()).optional().describe("Fix version names."),
+  status: z.array(z.string()).optional().describe("Test case status names."),
+  priority: z
+    .array(z.string())
+    .optional()
+    .describe("Priority names (e.g., ['High', 'Low'])."),
+  executionResult: z
+    .array(z.string())
+    .optional()
+    .describe("Execution result values (e.g., ['Pass', 'Fail', 'Blocked'])."),
+  environment: z.array(z.string()).optional().describe("Environment names."),
+  tcWithDefects: z
+    .boolean()
+    .optional()
+    .describe("Filter test cases that have defects linked."),
+  isAutomated: z.boolean().optional().describe("Filter automated test cases."),
+  folderId: z.number().int().optional().describe("Folder ID to filter by."),
+  executionAssignee: z
+    .array(z.string())
+    .optional()
+    .describe("Jira user UUIDs of execution assignees."),
+  executionPlannedDate: z
+    .string()
+    .optional()
+    .describe(
+      "Planned execution date range in 'dd/mmm/yyyy,dd/mmm/yyyy' format.",
+    ),
+  createdOn: z
+    .string()
+    .optional()
+    .describe("Creation date range in 'dd/mmm/yyyy,dd/mmm/yyyy' format."),
+  updatedOn: z
+    .string()
+    .optional()
+    .describe("Last-updated date range in 'dd/mmm/yyyy,dd/mmm/yyyy' format."),
+  createdBy: z
+    .array(z.string())
+    .optional()
+    .describe("Jira user UUIDs of creators."),
+  updatedBy: z
+    .array(z.string())
+    .optional()
+    .describe("Jira user UUIDs of last updaters."),
+  aiGenerated: z
+    .boolean()
+    .optional()
+    .describe("Filter AI-generated test cases."),
+  filterId: z.number().int().optional().describe("Saved filter ID."),
+});
+
+/** User-facing input for searching test cases linked to a test cycle. */
+export const SearchLinkedTestCasesInCycleBody = z.object({
+  cycleKey: z
+    .string()
+    .describe(
+      "Test Cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.",
+    ),
+  fields: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Fields to include in each result object. Allowed: id, key, summary, description, executionResult, status, priority, environment, tcWithDefects, estimatedTime, actualTime, createdOn, updatedOn, sprint, seqNo, latestTcExecutionId, customFields, flakyScore, passRateScore. Omit to return all fields.",
+    ),
+  maxResults: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .default(50)
+    .describe("Maximum results per page (1-100). Default: 50."),
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      "Sort pattern in 'field:asc|desc' format (e.g., 'key:desc'). Allowed sort fields: id, key, summary, description, executionResult, status, priority, environment, tcWithDefects, estimatedTime, actualTime, createdOn, updatedOn, sprint, flakyScore, passRateScore.",
+    ),
+  startAt: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .default(0)
+    .describe("Zero-indexed offset for pagination. Default: 0."),
+  filter: SearchLinkedTestCasesInCycleFilter.optional().describe(
+    "Optional filter criteria to narrow down results. projectId is auto-filled from the active project context.",
+  ),
+});
+
+/** A single test case execution entry in a test cycle. */
+const TestCycleExecutionSchema = z
+  .object({
+    id: z.string().optional().describe("Internal test case execution ID."),
+    key: z
+      .string()
+      .optional()
+      .describe("Test case key (e.g., 'SCRUM-TC-145')."),
+    summary: z.string().optional().describe("Test case summary."),
+    description: z.string().nullable().optional(),
+    executionResult: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("Execution result (e.g., 'Pass', 'Fail', 'Blocked')."),
+    status: z.any().optional().describe("Test case status."),
+    priority: z.any().optional().describe("Test case priority."),
+    environment: z.string().nullable().optional(),
+    tcWithDefects: z.boolean().optional(),
+    estimatedTime: z.string().nullable().optional(),
+    actualTime: z.string().nullable().optional(),
+    createdOn: z.string().nullable().optional(),
+    updatedOn: z.string().nullable().optional(),
+    sprint: z.any().nullable().optional(),
+    seqNo: z.number().nullable().optional(),
+    latestTcExecutionId: z.string().nullable().optional(),
+    customFields: z.any().nullable().optional(),
+    flakyScore: z.number().nullable().optional(),
+    passRateScore: z.number().nullable().optional(),
+  })
+  .passthrough();
+
+/** Paginated response for searching test cases linked to a test cycle. */
+export const SearchLinkedTestCasesInCycleResponse = z.object({
+  total: z
+    .number()
+    .int()
+    .describe(
+      "Total test case executions matching the filter (across all pages).",
+    ),
+  startAt: z.number().int().describe("Offset of this page."),
+  maxResults: z.number().int().describe("Page size used for this response."),
+  data: z
+    .array(TestCycleExecutionSchema)
+    .describe("Test case execution entries on this page."),
+});
+
+// ─── Get Linked Requirements for Test Cycle ───────────────────────────────────
+
+/** User-facing input for retrieving requirements linked to a test cycle. */
+export const GetLinkedRequirementsForCycleBody = z.object({
+  cycleKey: z
+    .string()
+    .describe(
+      "Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.",
+    ),
+  maxResults: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .default(50)
+    .describe("Maximum results per page (1-100). Default: 50."),
+  startAt: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .default(0)
+    .describe("Zero-indexed offset for pagination. Default: 0."),
+  sort: z
+    .string()
+    .optional()
+    .describe(
+      "Sort pattern in 'field:asc|desc' format. Allowed fields: key, status, priority. Default: 'key:desc'.",
+    ),
+});
+
+// ─── Link Requirements to Test Cycle ─────────────────────────────────────────
+
+/** User-facing input for linking requirements to a test cycle. */
+export const LinkRequirementsToCycleBody = z.object({
+  cycleKey: z
+    .string()
+    .describe(
+      "Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.",
+    ),
+  requirementKeys: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "List of Jira requirement keys to link (e.g., ['SCRUM-1', 'SCRUM-2']). Resolved to internal IDs automatically. Provide this OR filter.jql — not both.",
+    ),
+  filter: z
+    .object({
+      jql: z
+        .string()
+        .describe(
+          'JQL query to filter requirements to link (e.g., "project = DEMO AND issuetype = Story").',
+        ),
+    })
+    .optional()
+    .describe(
+      "JQL filter to select requirements to link. Use instead of requirementKeys when filtering by JQL.",
+    ),
+});
+
+/** Response for link requirements ↔ test cycle operation. */
+export const LinkRequirementsToCycleResponse = z.object({
+  cycleKey: z.string(),
+  linked: z.literal(true),
+});
+
+// ─── Unlink Requirements from Test Cycle ─────────────────────────────────────
+
+/** User-facing input for unlinking requirements from a test cycle. */
+export const UnlinkRequirementsFromCycleBody = z.object({
+  cycleKey: z
+    .string()
+    .describe(
+      "Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.",
+    ),
+  requirementKeys: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "List of Jira requirement keys to unlink (e.g., ['SCRUM-1', 'SCRUM-2']). Resolved to internal IDs automatically. Provide this OR unLinkAll — not both.",
+    ),
+  unLinkAll: z
+    .boolean()
+    .optional()
+    .describe(
+      "If true, all requirements are unlinked from the cycle. Ignores requirementKeys.",
+    ),
+});
+
+/** Response for unlink requirements ↔ test cycle operation. */
+export const UnlinkRequirementsFromCycleResponse = z.object({
+  cycleKey: z.string(),
+  unlinked: z.literal(true),
 });
