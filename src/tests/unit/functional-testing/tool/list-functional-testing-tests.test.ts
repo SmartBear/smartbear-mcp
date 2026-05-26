@@ -28,9 +28,9 @@ describe("ListFunctionalTestingTests", () => {
   });
 
   it("should set specification correctly", () => {
-    expect(instance.specification.title).toBe("List Functional Testing Tests");
+    expect(instance.specification.title).toBe("List Tests");
     expect(instance.specification.summary).toContain(
-      "Lists all API tests available in your SmartBear Functional Testing account",
+      "Lists all API tests available in your Swagger Functional Testing account",
     );
     expect(instance.specification.summary).toContain(
       "Do not use this tool to retrieve test execution results or history",

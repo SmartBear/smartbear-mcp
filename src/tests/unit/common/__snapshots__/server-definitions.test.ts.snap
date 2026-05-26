@@ -3455,21 +3455,21 @@ None",
     "outputSchema": undefined,
     "title": "Contract Testing: Update Webhook",
   },
-  "functional_testing_list_functional_testing_tests": {
+  "functional_testing_list_tests": {
     "annotations": {
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true,
-      "title": "SmartBear Functional Testing: List Functional Testing Tests",
+      "title": "Swagger Functional Testing: List Tests",
     },
-    "description": "Lists all API tests available in your SmartBear Functional Testing account. Use this tool when you need to discover available tests before running them or checking their status. Do not use this tool to retrieve test execution results or history.
+    "description": "Lists all API tests available in your Swagger Functional Testing account. Use this tool when you need to discover available tests before running them or checking their status. Do not use this tool to retrieve test execution results or history.
 
 **Parameters:**
 None",
     "inputSchema": [],
     "outputSchema": undefined,
-    "title": "SmartBear Functional Testing: List Functional Testing Tests",
+    "title": "Swagger Functional Testing: List Tests",
   },
   "qmetry_bulk_update_test_case_execution_status": {
     "annotations": {

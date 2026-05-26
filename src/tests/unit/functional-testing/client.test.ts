@@ -85,7 +85,7 @@ describe("FunctionalTestingClient", () => {
     it("should throw when no token is available", () => {
       expect(() =>
         requestContextStorage.run({ headers: {} }, () => client.getHeaders()),
-      ).toThrow("SmartBear Functional Testing API token not found");
+      ).toThrow("Swagger Functional Testing API token not found");
     });
   });
 });

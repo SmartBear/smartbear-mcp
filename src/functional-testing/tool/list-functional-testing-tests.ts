@@ -7,9 +7,9 @@ import { API_HOSTNAME } from "../config/constants";
 
 export class ListFunctionalTestingTests extends Tool<FunctionalTestingClient> {
   specification: ToolParams = {
-    title: "List Functional Testing Tests",
+    title: "List Tests",
     summary:
-      "Lists all API tests available in your SmartBear Functional Testing account. " +
+      "Lists all API tests available in your Swagger Functional Testing account. " +
       "Use this tool when you need to discover available tests before running them or checking their status. " +
       "Do not use this tool to retrieve test execution results or history.",
     inputSchema: z.object({}),

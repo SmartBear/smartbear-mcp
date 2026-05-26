@@ -12,13 +12,13 @@ import { API_KEY_HEADER } from "./config/constants";
 import { ListFunctionalTestingTests } from "./tool/list-functional-testing-tests";
 
 const ConfigurationSchema = z.object({
-  api_token: z.string().describe("SmartBear Functional Testing API token"),
+  api_token: z.string().describe("Swagger Functional Testing API token"),
 });
 
 export class FunctionalTestingClient implements Client {
   private _apiToken: string | undefined;
 
-  name = "SmartBear Functional Testing";
+  name = "Swagger Functional Testing";
   capabilityPrefix = "functional_testing";
   configPrefix = "Functional-Testing";
 
@@ -50,7 +50,7 @@ export class FunctionalTestingClient implements Client {
   getHeaders(): Record<string, string> {
     const token = this.getAuthToken();
     if (!token) {
-      throw new Error("SmartBear Functional Testing API token not found");
+      throw new Error("Swagger Functional Testing API token not found");
     }
     return {
       [API_KEY_HEADER]: token,
