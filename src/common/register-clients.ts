@@ -8,6 +8,7 @@
  * 3. Specify if the client needs the MCP server instance or async initialization
  */
 
+import { BearQClient } from "../bearq/client";
 import { BugsnagClient } from "../bugsnag/client";
 import { CollaboratorClient } from "../collaborator/client";
 import { FunctionalTestingClient } from "../functional-testing/client";
@@ -18,6 +19,9 @@ import { ReflectClient } from "../reflect/client";
 import { SwaggerClient } from "../swagger/client";
 import { ZephyrClient } from "../zephyr/client";
 import { clientRegistry } from "./client-registry";
+
+// Register BearQ client
+clientRegistry.register(new BearQClient());
 
 // Register Reflect client
 clientRegistry.register(new ReflectClient());

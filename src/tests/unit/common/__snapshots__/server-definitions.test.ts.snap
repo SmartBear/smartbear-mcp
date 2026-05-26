@@ -32,6 +32,218 @@ exports[`server definitions are not changed unexpectedly > registered resources 
 
 exports[`server definitions are not changed unexpectedly > registered tools 1`] = `
 {
+  "bearq_chat_with_qa_lead": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Chat with QA Lead",
+    },
+    "description": "Sends an open-ended instruction to BearQ's QA lead agent. Use this when no other BearQ tool fits — the QA lead can list, create, and update test cases, manage functional areas, and read the application model, and acts as a general-purpose escape hatch.
+
+**Parameters:**
+- instruction (string) *required*: Natural language instruction to send to the BearQ QA lead agent.",
+    "inputSchema": [
+      "instruction",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Chat with QA Lead",
+  },
+  "bearq_expand_application_model": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Expand Application Model",
+    },
+    "description": "Explores the live application to discover or update its pages and elements in BearQ's application model. Optionally scope to a single functional area.
+
+**Parameters:**
+- functionalArea (union): Functional area to scope the exploration to, by ID or name. Omit to explore the entire application.",
+    "inputSchema": [
+      "functionalArea",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Expand Application Model",
+  },
+  "bearq_get_task": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Get Task",
+    },
+    "description": "Retrieves a task's current state, metadata, and activity log. Returns immediately with whatever's available — does not block on the task completing.
+
+**Parameters:**
+- taskId (number) *required*: BearQ task ID.",
+    "inputSchema": [
+      "taskId",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Get Task",
+  },
+  "bearq_get_task_status": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Get Task Status",
+    },
+    "description": "Retrieves the status of a task (running / complete / error / cancelled). Cheaper than fetching full task details.
+
+**Parameters:**
+- taskId (number) *required*: BearQ task ID.",
+    "inputSchema": [
+      "taskId",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Get Task Status",
+  },
+  "bearq_refine_all_draft_tests": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Refine All Draft Tests",
+    },
+    "description": "Refines every draft test case in the workspace. Use to push an entire draft backlog forward; may take multiple passes before all drafts are ready to be promoted to regression tests.
+
+**Parameters:**
+None",
+    "inputSchema": [],
+    "outputSchema": undefined,
+    "title": "BearQ: Refine All Draft Tests",
+  },
+  "bearq_refine_test_cases": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Refine Test Cases",
+    },
+    "description": "Refines specific BearQ draft test cases — improves their steps so they can eventually be promoted to regression tests. Use when a draft is incomplete or has drifted from its intent.
+
+**Parameters:**
+- testCaseIds (array) *required*: IDs of BearQ draft test cases to refine.",
+    "inputSchema": [
+      "testCaseIds",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Refine Test Cases",
+  },
+  "bearq_refine_tests_in_functional_areas": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Refine Tests in Functional Areas",
+    },
+    "description": "Refines every draft test case tagged with one or more functional areas. Functional areas can be given by ID or name. May take multiple passes before drafts are ready to be promoted to regression tests.
+
+**Parameters:**
+- functionalAreas (array) *required*: Functional areas to target, by ID or name.",
+    "inputSchema": [
+      "functionalAreas",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Refine Tests in Functional Areas",
+  },
+  "bearq_run_regression_tests": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Run Regression Tests",
+    },
+    "description": "Runs the full BearQ regression suite — every regression-ready test case in the workspace. Use for CI/CD or pre-release smoke.
+
+**Parameters:**
+None",
+    "inputSchema": [],
+    "outputSchema": undefined,
+    "title": "BearQ: Run Regression Tests",
+  },
+  "bearq_run_test_cases": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Run Test Cases",
+    },
+    "description": "Runs specific BearQ regression test cases by ID. Targets only regression-ready cases — drafts will be rejected.
+
+**Parameters:**
+- testCaseIds (array) *required*: IDs of BearQ regression test cases to run.",
+    "inputSchema": [
+      "testCaseIds",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Run Test Cases",
+  },
+  "bearq_run_tests_in_functional_areas": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Run Tests in Functional Areas",
+    },
+    "description": "Runs every regression test case tagged with one or more functional areas. Functional areas can be given by ID or name.
+
+**Parameters:**
+- functionalAreas (array) *required*: Functional areas to target, by ID or name.",
+    "inputSchema": [
+      "functionalAreas",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Run Tests in Functional Areas",
+  },
+  "bearq_stop_task": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Stop Task",
+    },
+    "description": "Cancels a running task.
+
+**Parameters:**
+- taskId (number) *required*: BearQ task ID to cancel.",
+    "inputSchema": [
+      "taskId",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Stop Task",
+  },
+  "bearq_wait_for_task": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: Wait For Task",
+    },
+    "description": "Blocks until a BearQ task reaches a terminal state (completed / failed / cancelled) or the stream times out, then returns the full ordered sequence of SSE events from the public API (metadata, activityLogEntries, and a terminal done or timeout event) verbatim. Blocks for the lifetime of the task — for a quick check use bearq_get_task_status instead.
+
+**Parameters:**
+- taskId (number) *required*: BearQ task ID.",
+    "inputSchema": [
+      "taskId",
+    ],
+    "outputSchema": undefined,
+    "title": "BearQ: Wait For Task",
+  },
   "bugsnag_get_build": {
     "annotations": {
       "destructiveHint": false,
