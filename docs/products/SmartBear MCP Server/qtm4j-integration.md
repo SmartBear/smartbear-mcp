@@ -132,3 +132,135 @@ The following environment variables configure the QTM4J integration:
     - names to remove (`delete`) — e.g., `["Legacy"]`
 - **Returns**: Confirmation object with the test case key, version number updated, and `updated: true`. Any unrecognized field values are reported as warnings.
 - **Use case**: Changing priority or status, adding or removing labels/components, updating summary or description, reassigning a test case, setting estimated time.
+
+### Link Operations
+
+#### Get Linked Requirements
+
+- **Purpose**: Retrieve all Jira requirements linked to a specific test case.
+- **Parameters:**
+  - Test case key (`key`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-145`
+  - optional test case version number (`versionNo`) — defaults to latest version
+  - optional sort pattern (`sort`)
+  - optional starting position for pagination (`startAt`)
+  - optional max results to return (`maxResults`)
+- **Returns**: A paginated list of linked Jira requirements with their key, summary, status, priority, and issue type.
+- **Use case**: Auditing which Jira stories or bugs a test case covers; verifying requirement coverage before a release.
+
+#### Link Requirements to Test Case
+
+- **Purpose**: Link one or more Jira requirements to a test case.
+- **Parameters:**
+  - Test case key (`key`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-145`
+  - optional test case version number (`versionNo`) — defaults to latest version
+  - optional list of Jira issue keys to link (`requirementKeys`) — e.g., `["SCRUM-1", "SCRUM-2"]`
+  - optional JQL filter to select requirements by query (`filter.jql`) — e.g., `"project = DEMO AND issuetype = Story"`
+- **Returns**: Confirmation with the test case key, version number, and `linked: true`. Requirements that could not be linked are reported as warnings.
+- **Use case**: Linking Jira stories or bugs to a test case; linking all stories from a sprint using JQL.
+- **Note**: Provide either `requirementKeys` or `filter.jql` — not both.
+
+#### Unlink Requirements from Test Case
+
+- **Purpose**: Remove one or more Jira requirements from a test case, or remove all linked requirements at once.
+- **Parameters:**
+  - Test case key (`key`) — format: `{PROJECT_KEY}-TC-{number}`, e.g., `SCRUM-TC-145`
+  - optional test case version number (`versionNo`) — defaults to latest version
+  - optional list of Jira issue keys to remove (`requirementKeys`) — e.g., `["SCRUM-1", "SCRUM-2"]`
+  - optional flag to remove all linked requirements at once (`unLinkAll`)
+- **Returns**: Confirmation with the test case key, version number, and `unlinked: true`. Requirements that could not be removed are reported as warnings.
+- **Use case**: Removing incorrect requirement links from a test case; clearing all linked requirements before relinking.
+- **Note**: Provide either `requirementKeys` or set `unLinkAll: true` — not both.
+
+## Requirements
+
+### Retrieval Operations
+
+#### Get Linked Test Cases for Requirement
+
+- **Purpose**: Retrieve all test cases linked to a specific Jira requirement.
+- **Parameters:**
+  - Jira issue key (`requirementKey`) — format: `{PROJECT_KEY}-{number}`, e.g., `SCRUM-1`
+  - optional filter object (`filter`) with:
+    - status names to include (`status`) — e.g., `["Done", "In Progress"]`
+    - priority names to include (`priority`) — e.g., `["High", "Medium"]`
+    - label names to include (`labels`) — e.g., `["Release_1"]`
+    - folder ID to filter by (`folderId`)
+    - archive state of test cases (`testCaseStatus`) — `"active"`, `"archived"`, or `"deleted"`
+  - optional comma-separated fields to include in results (`fields`) — omit to return all fields
+  - optional sort pattern (`sort`)
+  - optional starting position for pagination (`startAt`)
+  - optional max results per page (`maxResults`)
+- **Returns**: A paginated list of linked test cases with their metadata, including `total`, `startAt`, `maxResults`, and a `data` array.
+- **Use case**: Checking test coverage for a Jira story or bug; filtering linked test cases by status or priority before a release.
+
+### Link Operations
+
+#### Link Test Cases to Requirement
+
+- **Purpose**: Link one or more test cases to a Jira requirement.
+- **Parameters:**
+  - Jira issue key (`requirementKey`) — format: `{PROJECT_KEY}-{number}`, e.g., `SCRUM-1`
+  - optional list of test case keys to link (`testCaseKeys`) — e.g., `["SCRUM-TC-10", "SCRUM-TC-11"]`
+  - optional filter to select test cases by criteria (`filter`) with:
+    - status names to include (`status`)
+    - priority names to include (`priority`)
+    - label names to include (`labels`)
+    - folder ID to filter by (`folderId`)
+    - flag to include test cases in child folders (`withChild`)
+  - optional sort pattern for filter results (`sort`)
+- **Returns**: Confirmation with the requirement key and `linked: true`. Test cases that could not be linked are reported as warnings.
+- **Use case**: Linking test cases to a Jira story or bug; linking all high-priority test cases to a requirement.
+- **Note**: Provide either `testCaseKeys` or `filter` — not both.
+
+#### Unlink Test Cases from Requirement
+
+- **Purpose**: Remove one or more test cases from a Jira requirement.
+- **Parameters:**
+  - Jira issue key (`requirementKey`) — format: `{PROJECT_KEY}-{number}`, e.g., `SCRUM-1`
+  - optional list of test case keys to remove (`testCaseKeys`) — e.g., `["SCRUM-TC-10", "SCRUM-TC-11"]`
+  - optional filter to select test cases to remove by criteria (`filter`) with:
+    - status names to include (`status`)
+    - priority names to include (`priority`)
+    - label names to include (`labels`)
+- **Returns**: Confirmation with the requirement key and `unlinked: true`. Test cases that could not be removed are reported as warnings.
+- **Use case**: Removing stale test case links from a requirement; cleaning up after sprint changes.
+- **Note**: Provide either `testCaseKeys` or `filter` — not both.
+
+## Test Cycles
+
+### Link Operations
+
+#### Link Test Cases to Test Cycle
+
+- **Purpose**: Add one or more test cases to a QTM4J test cycle.
+- **Parameters:**
+  - Test cycle key (`cycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-1`
+  - optional list of test case keys to add (`testCaseKeys`) — e.g., `["SCRUM-TC-10", "SCRUM-TC-11"]`
+  - optional filter to select test cases by criteria (`filter`) with:
+    - status names to include (`status`)
+    - priority names to include (`priority`)
+    - label names to include (`labels`)
+    - folder ID to filter by (`folderId`)
+    - flag to include test cases in child folders (`withChild`)
+  - optional Jira account ID to assign executions to (`assignee`)
+  - optional flag to create a fresh execution record for each test case added (`startNewExecution`)
+  - optional planned execution date in `yyyy-MM-dd` format (`executionPlannedDate`) — e.g., `"2024-03-31"`
+  - optional actual time in `HH:mm` format (`actualTime`) — e.g., `"02:30"`
+  - optional sort pattern for filter results (`sort`)
+- **Returns**: Confirmation with the cycle key and `linked: true`. Test cases that could not be added are reported as warnings.
+- **Use case**: Populating a test cycle before a release; adding all high-priority test cases to a cycle using a filter.
+- **Note**: Provide either `testCaseKeys` or `filter` — not both.
+
+#### Unlink Test Cases to Test Cycle
+
+- **Purpose**: Remove one or more test cases from a QTM4J test cycle, or remove all at once.
+- **Parameters:**
+  - Test cycle key (`cycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-1`
+  - optional list of test case keys to remove (`testCaseKeys`) — e.g., `["SCRUM-TC-10", "SCRUM-TC-11"]`
+  - optional flag to remove all test cases from the cycle at once (`unlinkAll`)
+  - optional filter to select test cases to remove by criteria (`filter`) with:
+    - status names to include (`status`)
+    - label names to include (`labels`)
+- **Returns**: Confirmation with the cycle key and `unlinked: true`. Test cases that could not be removed are reported as warnings.
+- **Use case**: Clearing a test cycle before repopulating it; removing completed test cases after a release.
+- **Note**: Provide exactly one of `testCaseKeys`, `unlinkAll`, or `filter`.
