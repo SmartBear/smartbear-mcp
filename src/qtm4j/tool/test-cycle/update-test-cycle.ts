@@ -165,7 +165,7 @@ export class UpdateTestCycle extends Tool<Qtm4jClient> {
       "Archived test cycles cannot be updated — the server returns 400. Unarchive first if needed.",
     ],
     outputDescription:
-      "Confirmation object with the test cycle UID, key, and updated: true. Warnings are included if any field names could not be resolved.",
+      "Confirmation object with the test cycle key and updated: true. Warnings are included if any field names could not be resolved.",
   };
 
   handle = async (rawArgs: any) => {

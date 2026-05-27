@@ -195,12 +195,6 @@ describe("UpdateTestCycle", () => {
         expect.any(Object),
       );
     });
-
-    it("should not call getTestCycleUidResolver (key is used directly)", async () => {
-      await instance.handle({ key: "PROJ-TR-26", summary: "Updated" });
-
-      expect(mockRegistry.getTestCycleUidResolver).toBeUndefined();
-    });
   });
 
   // ---------------------------------------------------------------------------
