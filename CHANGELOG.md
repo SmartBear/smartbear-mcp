@@ -11,12 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [QTM4J] Add QTM4J test automation capabilities — upload result files and retrieve import history via `qtm4j_upload_automation_result` and `qtm4j_get_automation_history`. Requires `QTM4J_AUTOMATION_API_KEY`.
 
-## [0.21.0] - 2026-05-20
+### Fixed
+
+- [PactFlow] Remove `.email()` Zod validator from PactFlow admin user tool schemas — the generated JSON Schema pattern used regex lookahead which is rejected by strict JSON Schema validators (e.g. OpenAI gpt-5.5) [#491](https://github.com/SmartBear/smartbear-mcp/issues/491)
+- [BearQ] Fix BearQ integration page not appearing in live docs [#496](https://github.com/SmartBear/smartbear-mcp/pull/496)
+- [Swagger]  Add constraint in the create_portal tool schema description, that allows only one Portal per organization.
+
 ## [0.23.0] - 2026-05-22
 
 ### Added
 
-- [BearQ] Add BearQ integration with 11 tools for AI-powered QA: run regression tests, run/refine test cases and functional areas, expand the application model, chat with the QA lead agent, and manage async tasks (`get_task`, `get_task_status`, `wait_for_task`, `stop_task`) [#479](https://github.com/SmartBear/smartbear-mcp/pull/479)
+- [BearQ] Add BearQ integration with 11 tools for AI-powered QA: run regression tests, run/refine test cases and functional areas, expand the application model, chat with the QA lead agent, and manage async tasks (`get_task`, `get_task_status`, `wait_for_task`, `stop_task`) [#485](https://github.com/SmartBear/smartbear-mcp/pull/485)
 
 ## [0.22.0] - 2026-05-21
 

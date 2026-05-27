@@ -662,7 +662,7 @@ export const AdminUserIdSchema = z.object({
 export type AdminUserIdInput = z.infer<typeof AdminUserIdSchema>;
 
 export const CreateAdminUserSchema = z.object({
-  email: z.string().email().describe("Email address of the new user"),
+  email: z.string().describe("Email address of the new user"),
   name: z.string().describe("Display name of the new user"),
   firstName: z.string().optional().describe("First name"),
   lastName: z.string().optional().describe("Last name"),
@@ -680,7 +680,7 @@ export type CreateAdminUserInput = z.infer<typeof CreateAdminUserSchema>;
 export const UpdateAdminUserSchema = z.object({
   userId: z.string().describe("UUID of the user to update"),
   active: z.boolean().optional().describe("Whether the user is active"),
-  email: z.string().email().optional().describe("New email address"),
+  email: z.string().optional().describe("New email address"),
   firstName: z.string().optional().describe("First name"),
   lastName: z.string().optional().describe("Last name"),
   name: z.string().optional().describe("Display name"),
@@ -691,7 +691,7 @@ export const InviteUsersSchema = z.object({
   users: z
     .array(
       z.object({
-        email: z.string().email().describe("Email address"),
+        email: z.string().describe("Email address"),
         name: z.string().min(1).describe("Display name"),
       }),
     )

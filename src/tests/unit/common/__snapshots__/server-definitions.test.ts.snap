@@ -8504,7 +8504,7 @@ None",
 - offline (boolean): If true, the portal will not be visible to customers - useful for development/staging environments. Defaults to false
 - routing (string): Routing strategy for the portal - either 'browser' (client-side routing) or 'proxy' (server-side routing). Defaults to 'browser'
 - credentialsEnabled (boolean): Whether authentication credentials are enabled for accessing the portal. When true, users can authenticate to access private content. Defaults to true
-- swaggerHubOrganizationId (string) *required*: The corresponding SwaggerHub organization UUID - required for portal creation. This links the portal to your SwaggerHub organization
+- swaggerHubOrganizationId (string) *required*: The corresponding Swagger organization UUID - required for portal creation. This links the portal to your Swagger organization. Only one Portal per Swagger organization is allowed.
 - openapiRenderer (string): OpenAPI renderer type: 'SWAGGER_UI' (Swagger UI), 'ELEMENTS' (Stoplight Elements), or 'TOGGLE' (allows switching between both with Elements as default). Defaults to 'TOGGLE'
 - pageContentFormat (string): Format for page content rendering - determines how documentation pages are processed: 'HTML', 'MARKDOWN', or 'BOTH'. Defaults to 'HTML'",
     "inputSchema": [
