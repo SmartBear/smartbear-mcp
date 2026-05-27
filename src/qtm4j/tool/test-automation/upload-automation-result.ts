@@ -27,9 +27,10 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     outputSchema: UploadAutomationResultResponse,
     purpose:
       "Upload an automation result file from disk to QTM4J and map results to a test cycle. " +
+      "No set_project_context call is required — this tool works independently of any project context. " +
       `When the user asks to upload or import automation results, search these directories: ${AUTOMATION_RESULT_DIRS.join(", ")}. ` +
       "Infer the format from the file name where possible; confirm with the user only when the format is ambiguous. " +
-      "Returns a trackingId to track the asynchronous import progress. ",
+      "Returns a trackingId to track the asynchronous import progress.",
     useCases: [
       "Upload automation results to QTM4J",
       "Import test results from a CI/CD pipeline run",
@@ -76,16 +77,28 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
         expectedOutput:
           "ZIP uploaded; test cycle created with summary, labels, and priority",
       },
+      {
+        description:
+          "User provides an unrecognised priority value — do NOT silently map to a similar word; ask the user first",
+        parameters: {
+          filePath: "./reports/cucumber.json",
+          format: "cucumber",
+          fields: { testCycle: { priority: "critical" } },
+        },
+        expectedOutput:
+          "Tool is NOT called yet. Inform the user that 'critical' was not recognised as a valid priority and ask them to confirm the correct value (e.g. from the available options). Do not map 'critical' to 'Blocker' or any other value without explicit user confirmation.",
+      },
     ],
     hints: [
       "NO PROJECT CONTEXT REQUIRED: Do NOT call set_project_context and do NOT ask the user for a project key, project ID, or any other project details. This tool works independently — never prompt the user for project information.",
-      `FILE DISCOVERY: Always do a fresh scan — never reuse a path from a previous turn. If no path is provided, search in order: ${AUTOMATION_RESULT_DIRS.join(", ")}. If multiple files are found, list them all and wait for the user to pick one before uploading. If nothing is found, ask for the path. Never pick silently.`,
-      "FORMAT INFERENCE: .json → cucumber, .zip → qaf (unambiguous). For .xml, infer from the file name — 'junit'/'surefire' → junit, 'testng' → testng, 'specflow' → specflow, 'hpuft'/'uft' → hpuft. If the file name gives no clear signal, ask the user to confirm the format.",
+      `FILE DISCOVERY: Always do a fresh scan — never reuse a path from a previous turn. If no path is provided, search in order: ${AUTOMATION_RESULT_DIRS.join(", ")}. If exactly one file is found, show the path and inferred format to the user and confirm before uploading. If multiple files are found, list them all and wait for the user to pick one. If nothing is found, ask for the path. Never pick or upload silently.`,
+      "FORMAT INFERENCE: .json → cucumber (unambiguous). For .xml, infer from the file name — 'junit'/'surefire' → junit, 'testng' → testng, 'specflow' → specflow, 'hpuft'/'uft' → hpuft. For .zip, ALWAYS set isZip: true, but do NOT assume qaf — the zip could contain junit, testng, or cucumber results; if the format cannot be determined from the file name, ask the user. If the file name gives no clear signal for .xml either, ask the user to confirm the format.",
       "TEST CYCLE: Only ask for testCycleToReuse if the user explicitly wants to link to an existing cycle. If not mentioned, omit it — QTM4J creates a new test cycle automatically.",
       "DATE FORMAT: plannedStartDate and plannedEndDate in fields.testCycle MUST be formatted as 'dd/MMM/yyyy HH:mm' (e.g. '14/May/2026 10:30'). Convert any user-provided date (ISO, natural language, relative) to this exact format before sending.",
-      "FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up.",
+      "FOLDER ID: folderId is a numeric ID. Apply it ONLY to the level the user specifies; if unspecified, default to fields.testCycle only — never copy it to both levels. Get the ID from the user directly (right-click folder in QTM4J → 'Copy Folder Id').",
       "ASSIGNEE / REPORTER: assignee and reporter in fields.testCycle and fields.testCase require a Jira Account ID (not a display name or email). Ask the user to provide their Account ID directly.",
-      "Import processing is asynchronous — use the returned trackingId to poll progress.",
+      "FIELD MAPPING CONFIRMATION: Apply formatting transformations (case correction, date/time conversion) automatically. Only ask for user confirmation when you cannot find a recognised match and need to substitute an unrecognised value with a guessed alternative — never silently substitute in that case.",
+      "TRACKING: Import processing is asynchronous. To check status, call get_automation_history and find the record whose trackingId matches the one returned from this tool.",
     ],
     outputDescription:
       "trackingId to poll import status, a message from the API, the filePath uploaded, and the format used.",
