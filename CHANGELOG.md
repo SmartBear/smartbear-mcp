@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Functional Testing] Add Swagger Functional Testing integration with `list_functional_testing_tests` tool for discovering available API tests ([#493](https://github.com/SmartBear/smartbear-mcp/pull/493))
+- [Functional Testing] Add Swagger Functional Testing integration with `list_functional_testing_tests` tool for discovering available API tests ([#499](https://github.com/SmartBear/smartbear-mcp/pull/499))
 
 ### Fixed
 
