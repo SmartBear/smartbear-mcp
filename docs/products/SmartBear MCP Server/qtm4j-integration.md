@@ -141,7 +141,7 @@ Automation tools do not require an active project context and authenticate using
 
 ### Upload Automation Result
 
-- **Purpose**: Upload an automation result file from disk to QTM4J and map the results to a test cycle. Supports JUnit, TestNG, Cucumber, QAF, HP UFT, and SpecFlow result formats. Import processing is asynchronous — use the returned `trackingId` to poll progress with `qtm4j_get_automation_history`.
+- **Purpose**: Upload an automation result file from disk to QTM4J and map the results to a test cycle. Supports JUnit, TestNG, Cucumber, QAF, HP UFT, and SpecFlow result formats. Import processing is asynchronous — use the returned `trackingId` to locate the corresponding import record in `qtm4j_get_automation_history` once it appears.
 
 #### Providing the result file
 
