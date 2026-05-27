@@ -3,12 +3,12 @@ import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types";
-import { ToolError } from "../common/tools";
 import { API_KEY_HEADER } from "./config/constants";
 import { ListFunctionalTestingTests } from "./tool/list-functional-testing-tests";
 
