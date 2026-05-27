@@ -228,6 +228,46 @@ The following environment variables configure the QTM4J integration:
 
 ## Test Cycles
 
+### Retrieval Operations
+
+#### Search Test Cases in Test Cycle
+
+- **Purpose**: Search and filter test case executions within a QTM4J test cycle.
+- **Parameters:**
+  - Test cycle key (`cycleKey`) — format: `{PROJECT_KEY}-TR-{id}`, e.g., `SCRUM-TR-1`
+  - optional fields to include in each result (`fields`) — omit to return all fields; allowed values: `id`, `key`, `summary`, `description`, `executionResult`, `status`, `priority`, `environment`, `tcWithDefects`, `estimatedTime`, `actualTime`, `createdOn`, `updatedOn`, `sprint`, `seqNo`, `flakyScore`, `passRateScore`
+  - optional sort pattern (`sort`) — format: `field:asc|desc`, e.g., `key:desc`; allowed fields match the `fields` list above
+  - optional starting position for pagination (`startAt`) — default: `0`
+  - optional max results per page (`maxResults`) — max 100, default 50
+  - optional filter object (`filter`) with:
+    - execution result values to include (`executionResult`) — e.g., `["Pass", "Fail", "Blocked"]`
+    - status names to include (`status`)
+    - priority names to include (`priority`)
+    - environment names to include (`environment`)
+    - execution assignee Jira account IDs (`executionAssignee`)
+    - label names to include (`labels`)
+    - component names to include (`components`)
+    - flag to filter test cases with defects linked (`tcWithDefects`)
+    - automation status (`isAutomated`)
+    - folder ID to filter by (`folderId`)
+    - planned execution date range (`executionPlannedDate`) — format: `dd/mmm/yyyy,dd/mmm/yyyy`
+    - creation date range (`createdOn`) — format: `dd/mmm/yyyy,dd/mmm/yyyy`
+    - last-updated date range (`updatedOn`) — format: `dd/mmm/yyyy,dd/mmm/yyyy`
+    - free-text search (`searchText`)
+- **Returns**: A paginated result with `total`, `startAt`, `maxResults`, and `data` array of test case execution objects.
+- **Use case**: Listing all test cases in a cycle; finding failed or blocked executions; filtering by execution result, priority, or assignee before a release.
+
+#### Get Linked Requirements
+
+- **Purpose**: Retrieve all Jira requirements linked to a QTM4J test cycle.
+- **Parameters:**
+  - Test cycle key (`cycleKey`) — format: `{PROJECT_KEY}-TR-{id}`, e.g., `SCRUM-TR-1`
+  - optional sort pattern (`sort`) — allowed fields: `key`, `status`, `priority`; default: `key:desc`
+  - optional starting position for pagination (`startAt`) — default: `0`
+  - optional max results per page (`maxResults`) — max 100, default 50
+- **Returns**: A paginated list of linked Jira requirements with their key, summary, status, priority, and issue type.
+- **Use case**: Auditing which Jira stories or bugs a test cycle covers; verifying requirement coverage before a release.
+
 ### Link Operations
 
 #### Link Test Cases to Test Cycle
@@ -251,7 +291,7 @@ The following environment variables configure the QTM4J integration:
 - **Use case**: Populating a test cycle before a release; adding all high-priority test cases to a cycle using a filter.
 - **Note**: Provide either `testCaseKeys` or `filter` — not both.
 
-#### Unlink Test Cases to Test Cycle
+#### Unlink Test Cases from Test Cycle
 
 - **Purpose**: Remove one or more test cases from a QTM4J test cycle, or remove all at once.
 - **Parameters:**
@@ -264,3 +304,25 @@ The following environment variables configure the QTM4J integration:
 - **Returns**: Confirmation with the cycle key and `unlinked: true`. Test cases that could not be removed are reported as warnings.
 - **Use case**: Clearing a test cycle before repopulating it; removing completed test cases after a release.
 - **Note**: Provide exactly one of `testCaseKeys`, `unlinkAll`, or `filter`.
+
+#### Link Requirements to Test Cycle
+
+- **Purpose**: Link one or more Jira requirements to a QTM4J test cycle.
+- **Parameters:**
+  - Test cycle key (`cycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-1`
+  - optional list of Jira issue keys to link (`requirementKeys`) — e.g., `["SCRUM-1", "SCRUM-2"]`
+  - optional JQL filter to select requirements by query (`filter.jql`) — e.g., `"project = DEMO AND issuetype = Story"`
+- **Returns**: Confirmation with the cycle key and `linked: true`. Requirements that could not be linked are reported as warnings.
+- **Use case**: Linking Jira stories or bugs to a test cycle; linking all stories from a sprint to a cycle using JQL.
+- **Note**: Provide either `requirementKeys` or `filter.jql` — not both.
+
+#### Unlink Requirements from Test Cycle
+
+- **Purpose**: Remove one or more Jira requirements from a QTM4J test cycle, or remove all at once.
+- **Parameters:**
+  - Test cycle key (`cycleKey`) — format: `{PROJECT_KEY}-TR-{number}`, e.g., `SCRUM-TR-1`
+  - optional list of Jira issue keys to remove (`requirementKeys`) — e.g., `["SCRUM-1", "SCRUM-2"]`
+  - optional flag to remove all linked requirements at once (`unLinkAll`)
+- **Returns**: Confirmation with the cycle key and `unlinked: true`. Requirements that could not be removed are reported as warnings.
+- **Use case**: Removing incorrect requirement links from a test cycle; clearing all linked requirements before relinking.
+- **Note**: Provide either `requirementKeys` or set `unLinkAll: true` — not both.
