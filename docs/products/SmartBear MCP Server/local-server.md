@@ -616,11 +616,5 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "Update the status of SCRUM-TC-145 to Done"
 -   "Add the Release_2 label to SCRUM-TC-145 and remove Release_1"
 -   "Show me the test steps for SCRUM-TC-32"
-
-### QTM4J Automation
-
--   "Upload my JUnit test results from ./target/surefire-reports/TEST-results.xml to QTM4J"
--   "Import my Cucumber JSON results and link them to test cycle SCRUM-TR-5"
--   "Upload my TestNG results and place the test cycle in folder 1042 with High priority"
--   "Show me the automation import history"
--   "Check whether my last automation import succeeded"
+-   "Upload JUnit test results to QTM4J"
+-   "Check whether last automation import succeeded"
