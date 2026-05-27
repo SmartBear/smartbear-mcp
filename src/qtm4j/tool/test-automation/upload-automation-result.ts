@@ -27,9 +27,9 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     outputSchema: UploadAutomationResultResponse,
     purpose:
       "Upload an automation result file from disk to QTM4J and map results to a test cycle. " +
-      `Filesystem state can change between turns, so always scan fresh before every call — never reuse a path from prior turns — searching: ${AUTOMATION_RESULT_DIRS.join(", ")}. ` +
+      `When the user asks to upload or import automation results, search these directories: ${AUTOMATION_RESULT_DIRS.join(", ")}. ` +
       "Infer the format from the file name where possible; confirm with the user only when the format is ambiguous. " +
-      "Returns a trackingId to track the asynchronous import progress.",
+      "Returns a trackingId to track the asynchronous import progress. ",
     useCases: [
       "Upload automation results to QTM4J",
       "Import test results from a CI/CD pipeline run",
@@ -79,9 +79,8 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     ],
     hints: [
       "NO PROJECT CONTEXT REQUIRED: Do NOT call set_project_context and do NOT ask the user for a project key, project ID, or any other project details. This tool works independently — never prompt the user for project information.",
-      `FILE DISCOVERY: Always scan fresh before every upload — never reuse a path from any prior turn. Scan: ${AUTOMATION_RESULT_DIRS.join(", ")}. Skip scan only if user provides a path in their current message. If multiple files found, list all of them and do NOT call this tool until the user explicitly selects one — do not auto-select by recency, size, or any other criteria. If none found, ask for the path.`,
+      `FILE DISCOVERY: Always do a fresh scan — never reuse a path from a previous turn. If no path is provided, search in order: ${AUTOMATION_RESULT_DIRS.join(", ")}. If multiple files are found, list them all and wait for the user to pick one before uploading. If nothing is found, ask for the path. Never pick silently.`,
       "FORMAT INFERENCE: .json → cucumber, .zip → qaf (unambiguous). For .xml, infer from the file name — 'junit'/'surefire' → junit, 'testng' → testng, 'specflow' → specflow, 'hpuft'/'uft' → hpuft. If the file name gives no clear signal, ask the user to confirm the format.",
-      "UNSUPPORTED VALUES: If a field value is completely unrecognized (not a case issue), inform the user, suggest the closest valid alternative, and wait for confirmation before retrying.",
       "TEST CYCLE: Only ask for testCycleToReuse if the user explicitly wants to link to an existing cycle. If not mentioned, omit it — QTM4J creates a new test cycle automatically.",
       "DATE FORMAT: plannedStartDate and plannedEndDate in fields.testCycle MUST be formatted as 'dd/MMM/yyyy HH:mm' (e.g. '14/May/2026 10:30'). Convert any user-provided date (ISO, natural language, relative) to this exact format before sending.",
       "FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up.",
