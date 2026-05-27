@@ -8,6 +8,7 @@ import type {
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types";
+import { ToolError } from "../common/tools";
 import { API_KEY_HEADER } from "./config/constants";
 import { ListFunctionalTestingTests } from "./tool/list-functional-testing-tests";
 
@@ -50,7 +51,7 @@ export class FunctionalTestingClient implements Client {
   getHeaders(): Record<string, string> {
     const token = this.getAuthToken();
     if (!token) {
-      throw new Error("Swagger Functional Testing API token not found");
+      throw new ToolError("Swagger Functional Testing API token not found");
     }
     return {
       [API_KEY_HEADER]: token,

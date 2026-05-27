@@ -70,7 +70,7 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
   Generate your QTM4J API key by following the instructions [here](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html).
 
-- **SmartBear Functional Testing**
+- **Swagger Functional Testing**
 
   Generate an API key from your SmartBear Functional Testing account dashboard at [`app.reflect.run`](https://app.reflect.run/settings/account).
 
