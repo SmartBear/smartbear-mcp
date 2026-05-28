@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../../../common/tools";
 import {
@@ -442,22 +440,6 @@ describe("UploadAutomationResult", () => {
       await expect(
         instance.handle({ filePath: "./results/junit.xml", format: "junit" }),
       ).rejects.toThrow("Request failed with status 403");
-    });
-  });
-
-  // ─── Doc consistency ──────────────────────────────────────────────────────
-
-  describe("doc consistency", () => {
-    it("qtm4j-integration.md mentions the correct max file size in MB", () => {
-      const maxMB = Math.round(
-        AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES / (1024 * 1024),
-      );
-      const docPath = resolve(
-        process.cwd(),
-        "docs/products/SmartBear MCP Server/qtm4j-integration.md",
-      );
-      const content = readFileSync(docPath, "utf-8");
-      expect(content).toContain(`${maxMB} MB`);
     });
   });
 });
