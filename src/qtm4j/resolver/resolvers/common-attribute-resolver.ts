@@ -43,6 +43,7 @@ export class CommonAttributeResolver extends Resolver {
     if (id !== undefined) {
       body[inputField] = Number(id);
     } else {
+      delete body[inputField];
       warnings.push(
         `Skipped ${inputField} '${name}' — not available in the current project.`,
       );

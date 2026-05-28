@@ -596,3 +596,6 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "Update the status of SCRUM-TC-145 to Done"
 -   "Add the Release_2 label to SCRUM-TC-145 and remove Release_1"
 -   "Show me the test steps for SCRUM-TC-32"
+-   "Create a test cycle called 'Regression Suite' with High priority"
+-   "Find all in-progress test cycles in the active project"
+-   "Update the status of SCRUM-TR-101 to In Progress"

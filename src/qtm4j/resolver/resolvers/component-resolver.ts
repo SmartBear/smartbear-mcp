@@ -55,6 +55,8 @@ export class ComponentResolver extends Resolver {
 
     if (ids.length > 0) {
       body[inputField] = isArray ? ids : ids[0];
+    } else {
+      delete body[inputField];
     }
   }
 
