@@ -253,7 +253,7 @@ export const TOOL_NAMES = {
   GET_AUTOMATION_HISTORY: {
     TITLE: "Get Automation History",
     SUMMARY:
-      "Retrieve a paginated history of past automation result uploads for a QTM4J project."
+      "Retrieve a paginated history of past automation result uploads for a QTM4J project.",
   },
 
   /** Search Test Cycles tool */
