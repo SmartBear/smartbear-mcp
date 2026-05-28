@@ -135,6 +135,82 @@ The following environment variables configure the QTM4J integration:
 - **Returns**: Confirmation object with the test case key, version number updated, and `updated: true`. Any unrecognized field values are reported as warnings.
 - **Use case**: Changing priority or status, adding or removing labels/components, updating summary or description, reassigning a test case, setting estimated time.
 
+## Test Cycles
+
+### Retrieval Operations
+
+#### Search Test Cycles
+
+- **Purpose**: Search and filter test cycles within the active QTM4J project using a rich set of criteria.
+- **Parameters**:
+  - optional filter object (`filter`) containing:
+    - free-text search across key, summary, and description (`searchText`)
+    - status names to include (`status`) — e.g., `["In Progress", "To Do"]`
+    - priority names to include (`priority`) — e.g., `["High", "Medium"]`
+    - label names to include (`labels`) — e.g., `["Release_1", "Sprint 1"]`
+    - component names to include (`components`) — e.g., `["UI", "Cloud"]`
+    - folder ID to filter by (`folderId`) — numeric ID; right-click a folder in QTM4J and select "Copy Folder Id"
+    - assignee Jira account IDs (`assignee`)
+    - reporter Jira account IDs (`reporter`)
+    - automation status (`isAutomated`) — `true` for automated only, `false` for manual only
+    - planned start date range (`plannedStartDate`) — format: `dd/MMM/yyyy,dd/MMM/yyyy` e.g., `"01/Apr/2026,30/Apr/2026"`
+    - planned end date range (`plannedEndDate`) — format: `dd/MMM/yyyy,dd/MMM/yyyy`
+    - creation date range (`createdOn`) — format: `dd/MMM/yyyy,dd/MMM/yyyy`
+    - last-updated date range (`updatedOn`) — format: `dd/MMM/yyyy,dd/MMM/yyyy`
+    - AI-generated flag (`aiGenerated`)
+  - optional fields to include in each result (`fields`) — omit to return server default fields. Available: `key`, `summary`, `description`, `status`, `priority`, `assignee`, `reporter`, `isAutomated`, `plannedStartDate`, `plannedEndDate`, `labels`, `components`, `fixVersions`, `sprint`, `defectCount`, `estimatedTime`, `actualTime`, `created`, `updated`. Note: `plannedStartDate` and `plannedEndDate` are **not** in the default response — include them explicitly when needed.
+  - optional sort pattern (`sort`) — format: `fieldName:asc|desc` (default: `key:asc`). Allowed fields: `key`, `summary`, `status`, `plannedStartDate`, `plannedEndDate`, `defectCount`.
+  - optional starting position for pagination (`startAt`)
+  - optional max results per page (`maxResults`) — max 100
+- **Returns**: A paginated result with `total`, `startAt`, `maxResults`, and `data` array of test cycle objects. Each item always includes `id` and `key`; other fields depend on what was requested via `fields`.
+- **Use case**: Finding test cycles by status, priority, labels, components, or owner; filtering by planned or creation date range; searching by keyword; paginating through large result sets.
+- **Note**: Multiple values within the same filter field use OR logic; different filter fields are combined with AND.
+
+### Creation Operations
+
+#### Create Test Cycle
+
+- **Purpose**: Create a new test cycle in the active QTM4J project to group test cases for a specific execution context (sprint, release, environment, etc.).
+- **Parameters**:
+  - Test cycle summary/title (`summary`)
+  - optional description (`description`)
+  - optional priority name (`priority`) — e.g., `["High", "Medium"]`
+  - optional status name (`status`) — e.g., `["To Do", "In Progress"]`
+  - optional assignee Jira account ID (`assignee`)
+  - optional reporter Jira account ID (`reporter`)
+  - optional label names to attach (`labels`) — e.g., `["Release_1", "Sprint 1"]`
+  - optional component names to attach (`components`) — e.g., `["UI", "Cloud"]`
+  - optional planned start date (`plannedStartDate`) — format: `dd/MMM/yyyy HH:mm` e.g., `"10/May/2026 00:00"`
+  - optional planned end date (`plannedEndDate`) — format: `dd/MMM/yyyy HH:mm`
+- **Returns**: The created test cycle key (e.g., `SCRUM-TR-218`) and ID.
+- **Use case**: Creating sprint cycles, release cycles, or environment-specific cycles; organizing test cases for a planned execution window.
+- **Note**: All cycles are placed in the `MCP Generated` folder automatically.
+
+### Update Operations
+
+#### Update Test Cycle
+
+- **Purpose**: Update an existing test cycle in QTM4J using its human-readable key.
+- **Parameters**:
+  - Test cycle key in `{PROJECT_KEY}-TR-{number}` format (`key`) — e.g., `SCRUM-TR-101`. **Required.**
+  - optional updated summary (`summary`)
+  - optional updated description (`description`) — pass `null` to clear
+  - optional priority name (`priority`) — pass `null` to clear
+  - optional status name (`status`) — pass `null` to clear
+  - optional planned start date (`plannedStartDate`) — format: `dd/MMM/yyyy HH:mm`; pass `null` to clear
+  - optional planned end date (`plannedEndDate`) — format: `dd/MMM/yyyy HH:mm`; pass `null` to clear
+  - optional assignee Jira account ID (`assignee`) — pass `null` to unassign
+  - optional reporter Jira account ID (`reporter`) — pass `null` to clear
+  - optional labels add/delete object (`labels`):
+    - names to add (`add`) — e.g., `["Release_2"]`
+    - names to remove (`delete`) — e.g., `["Sprint1"]`
+  - optional components add/delete object (`components`):
+    - names to add (`add`) — e.g., `["Auth"]`
+    - names to remove (`delete`) — e.g., `["Legacy"]`
+- **Returns**: Confirmation object with the test cycle key and `updated: true`. Any unrecognized field values are reported as warnings.
+- **Use case**: Changing status or priority, updating planned dates, reassigning ownership, adding or removing labels/components, renaming a cycle, clearing a description.
+- **Note**: Only the fields you provide are changed — omitted fields are left as-is. Archived test cycles cannot be updated.
+
 ## Automation
 
 Automation tools authenticate using `QTM4J_AUTOMATION_API_KEY` and do not require an active project context.

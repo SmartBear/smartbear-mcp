@@ -200,6 +200,16 @@ export class Qtm4jClient implements Client {
       "./tool/test-automation/get-automation-history"
     );
 
+    const { CreateTestCycle } = await import(
+      "./tool/test-cycle/create-test-cycle"
+    );
+    const { SearchTestCycles } = await import(
+      "./tool/test-cycle/search-test-cycle"
+    );
+    const { UpdateTestCycle } = await import(
+      "./tool/test-cycle/update-test-cycle"
+    );
+
     const tools = [
       new GetProjects(this),
       new SetProjectContext(this),
@@ -207,6 +217,9 @@ export class Qtm4jClient implements Client {
       new GetTestCases(this),
       new GetTestSteps(this),
       new UpdateTestCase(this),
+      new CreateTestCycle(this),
+      new SearchTestCycles(this),
+      new UpdateTestCycle(this),
       new UploadAutomationResult(this),
       new GetAutomationHistory(this),
     ];

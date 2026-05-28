@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [QTM4J] Added test cycle management capabilities including create, search, and update operations.
 - [QTM4J] Add QTM4J test automation capabilities — upload result files and retrieve import history via `qtm4j_upload_automation_result` and `qtm4j_get_automation_history`. Requires `QTM4J_AUTOMATION_API_KEY`.
 
 ### Fixed

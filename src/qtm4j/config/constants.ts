@@ -34,6 +34,16 @@ export const ENDPOINTS = {
   RESOLVE_TEST_CASE_IDS: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcases/resolve-ids`,
 
+  /** Update test cycle endpoint */
+  UPDATE_TEST_CYCLE: (id: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${id}`,
+
+  /** Create test cycle endpoint */
+  CREATE_TEST_CYCLE: `${API_CONFIG.API_VERSION}/testcycles`,
+
+  /** Search test cycles endpoint */
+  SEARCH_TEST_CYCLES: `${API_CONFIG.API_VERSION}/testcycles/search`,
+
   /** Update test case endpoint */
   UPDATE_TEST_CASE: (id: string, versionNo: number) =>
     `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}`,
@@ -152,6 +162,12 @@ export const PAGINATION = {
   /** Maximum allowed results per request for test steps */
   MAX_ALLOWED_RESULTS_TEST_STEPS: 100,
 
+  /** Default maximum results for test cycles */
+  DEFAULT_MAX_RESULTS_TEST_CYCLES: 20,
+
+  /** Maximum allowed results per request for test cycles */
+  MAX_ALLOWED_RESULTS_TEST_CYCLES: 100,
+
   /** Minimum allowed results per request */
   MIN_ALLOWED_RESULTS: 1,
 } as const;
@@ -238,6 +254,32 @@ export const TOOL_NAMES = {
     TITLE: "Get Automation History",
     SUMMARY:
       "Retrieve a paginated history of past automation result uploads for a QTM4J project."
+  },
+
+  /** Search Test Cycles tool */
+  SEARCH_TEST_CYCLES: {
+    TITLE: "Search Test Cycles",
+    SUMMARY:
+      "Search for test cycles in a QTM4J project by status, owner, folder, date range, or keyword. " +
+      "projectId is injected automatically from the active project context.",
+  },
+
+  /** Create Test Cycle tool */
+  CREATE_TEST_CYCLE: {
+    TITLE: "Create Test Cycle",
+    SUMMARY:
+      "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.",
+  },
+
+  /** Update Test Cycle tool */
+  UPDATE_TEST_CYCLE: {
+    TITLE: "Update Test Cycle",
+    SUMMARY:
+      "Update an existing test cycle in QTM4J by its human-readable key (e.g. 'SCRUM-TR-101'). " +
+      "Supports auto-resolving human-readable names for status and priority. " +
+      "Labels and components support add/delete operations. " +
+      "Only the fields you provide are changed — omitted fields are left as-is. " +
+      "projectId is injected automatically from the active project context.",
   },
 } as const;
 
@@ -449,6 +491,14 @@ export const RESPONSE_FIELDS = {
   FIELDS: "fields",
 
   SORT: "sort",
+} as const;
+
+/**
+ * Sort Defaults
+ */
+export const SORT_DEFAULTS = {
+  /** Default sort expression for test cycle search */
+  TEST_CYCLES: "key:asc",
 } as const;
 
 /**
