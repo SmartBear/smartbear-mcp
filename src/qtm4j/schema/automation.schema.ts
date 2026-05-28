@@ -146,7 +146,7 @@ export const UploadAutomationResultResponse = zod.object({
   trackingId: zod.string(),
   message: zod.string(),
   filePath: zod.string(),
-  format: zod.string(),
+  format: zod.enum(["cucumber", "testng", "junit", "qaf", "hpuft", "specflow"]),
 });
 
 export type UploadAutomationResultResponseType = zod.infer<
