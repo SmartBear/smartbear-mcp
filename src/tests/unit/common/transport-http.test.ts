@@ -281,6 +281,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -320,6 +321,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -356,6 +358,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -387,6 +390,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -428,6 +432,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -685,6 +690,7 @@ describe("handleStreamableHttpRequest (session routing)", () => {
         setElicitationSupported: vi.fn(),
         cleanupSession: vi.fn(),
         server: { elicitInput: vi.fn() },
+        isClientEnabled: () => true,
       } as any;
     });
 
