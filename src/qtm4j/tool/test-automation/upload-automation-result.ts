@@ -4,6 +4,7 @@ import { Tool, ToolError } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
 import type { Qtm4jClient } from "../../client.ts";
 import {
+  AUTOMATION_LIMITS,
   AUTOMATION_RESULT_DIRS,
   ENDPOINTS,
   TOOL_NAMES,
@@ -130,6 +131,14 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     } catch (err: any) {
       throw new ToolError(
         `Could not read file at '${filePath}': ${err.message}`,
+      );
+    }
+
+    // Enforce maximum file size
+    if (fileBuffer.byteLength > AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES) {
+      const sizeMB = (fileBuffer.byteLength / (1024 * 1024)).toFixed(2);
+      throw new ToolError(
+        `File is too large (${sizeMB} MB). Maximum allowed size is 10 MB.`,
       );
     }
 

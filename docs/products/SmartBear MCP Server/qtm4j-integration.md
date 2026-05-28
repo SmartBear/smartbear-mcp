@@ -163,6 +163,7 @@ Automation tools authenticate using `QTM4J_AUTOMATION_API_KEY` and do not requir
     1. **Explicit path**: provide the exact file path, e.g. `"./target/surefire-reports/TEST-results.xml"`
     2. **Auto-discovery**: omit `filePath` and the AI scans common directories (`target/surefire-reports`, `build/reports/tests`, `reports`, `cucumber-reports`, and more). A single match is confirmed before uploading; multiple matches are listed for you to choose.
     3. **Drag and drop**: drag the result file directly into the chat — the AI will read its contents and upload it automatically.
+  - Maximum file size is **10 MB**. Files exceeding this limit will be rejected before upload.
   - `folderId` is a numeric ID — right-click the target folder in QTM4J and select **Copy Folder Id**.
   - `assignee` and `reporter` require a Jira **Account ID**, not a display name or email.
   - `fields.testCycle` is ignored when `testCycleToReuse` is provided.

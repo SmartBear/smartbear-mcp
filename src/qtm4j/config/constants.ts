@@ -157,6 +157,14 @@ export const PAGINATION = {
 } as const;
 
 /**
+ * Automation Upload Limits
+ */
+export const AUTOMATION_LIMITS = {
+  /** Maximum allowed upload file size in bytes (10 MB) */
+  MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024,
+} as const;
+
+/**
  * Error Messages
  */
 export const ERROR_MESSAGES = {
