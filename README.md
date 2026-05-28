@@ -107,7 +107,8 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "COLLABORATOR_USERNAME": "${input:collab_username}",
         "COLLABORATOR_LOGIN_TICKET": "${input:collab_login_ticket}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
-        "QTM4J_BASE_URL": "${input:qtm4j_base_url}"
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}"
       }
     }
   },
@@ -243,6 +244,12 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
           "type": "promptString",
           "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
           "password": false
+    },
+    {
+          "id": "qtm4j_automation_api_key",
+          "type": "promptString",
+          "description": "QTM4J Automation API Key - required for automation tools, leave blank to disable them",
+          "password": true
     }
   ]
 }
@@ -283,7 +290,8 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "COLLABORATOR_USERNAME": "your collab user name",
         "COLLABORATOR_LOGIN_TICKET": "your collab login ticket",
         "QTM4J_API_KEY": "your_qtm4j_key",
-        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "QTM4J_AUTOMATION_API_KEY": "your_qtm4j_automation_api_key"
       }
     }
   }
