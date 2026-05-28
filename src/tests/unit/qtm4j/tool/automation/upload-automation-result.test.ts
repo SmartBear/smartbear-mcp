@@ -453,8 +453,8 @@ describe("UploadAutomationResult", () => {
         AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES / (1024 * 1024),
       );
       const docPath = resolve(
-        __dirname,
-        "../../../../../../docs/products/SmartBear MCP Server/qtm4j-integration.md",
+        process.cwd(),
+        "docs/products/SmartBear MCP Server/qtm4j-integration.md",
       );
       const content = readFileSync(docPath, "utf-8");
       expect(content).toContain(`${maxMB} MB`);
