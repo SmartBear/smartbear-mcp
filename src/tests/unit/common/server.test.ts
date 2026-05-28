@@ -797,6 +797,30 @@ describe("SmartBearMcpServer", () => {
       expect(registerToolSpy).toHaveBeenCalledTimes(2);
     });
 
+    it("should register all tools when just the client name is in toolsets", async () => {
+      await setupServer("test-product");
+
+      const resultA = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+
+      expect(resultA).not.toBeNull();
+      expect(registerToolSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not register any tools when a different client is enabled in toolsets", async () => {
+      await setupServer("another-test-product");
+
+      const resultA = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+
+      expect(resultA).toBeNull();
+      expect(registerToolSpy).not.toHaveBeenCalled();
+    });
+
     it("should match toolsets case-insensitively", async () => {
       await setupServer("Test-Product:GroupA");
 
@@ -830,6 +854,76 @@ describe("SmartBearMcpServer", () => {
       // biome-ignore lint/complexity/useLiteralKeys: accessing internal method for test
       const rawShape = server["schemaToRawShape"](undefined);
       expect(rawShape).toBeUndefined();
+    });
+  });
+
+  describe("isToolEnabled", () => {
+    const mockClient = {
+      name: "Test Product",
+      configPrefix: "test-product",
+      capabilityPrefix: "test_product",
+      config: z.object({}),
+      configure: vi.fn(),
+      isConfigured: vi.fn(),
+      registerTools: vi.fn(),
+    };
+
+    it("should enable all tools when no toolsets are configured", () => {
+      const server = new SmartBearMcpServer();
+      expect(server.isToolEnabled(mockClient, "anything")).toBe(true);
+    });
+
+    it("should enable tool when client is listed", () => {
+      const server = new SmartBearMcpServer("test-product");
+      expect(server.isToolEnabled(mockClient, "anything")).toBe(true);
+    });
+
+    it("should enable tool when its toolset matches an enabled entry", () => {
+      const server = new SmartBearMcpServer("test-product:errors");
+      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
+    });
+
+    it("should disable tool when its toolset does not match any enabled entry", () => {
+      const server = new SmartBearMcpServer("test-product:errors");
+      expect(server.isToolEnabled(mockClient, "releases")).toBe(false);
+    });
+
+    it("should disable tool when client prefix does not match any enabled toolset", () => {
+      const server = new SmartBearMcpServer("other-product:errors");
+      expect(server.isToolEnabled(mockClient, "errors")).toBe(false);
+    });
+
+    it("should handle toolset name normalization (spaces, hyphens, underscores)", () => {
+      const server = new SmartBearMcpServer("test-product:mytools");
+      expect(server.isToolEnabled(mockClient, "my-tools")).toBe(true);
+      expect(server.isToolEnabled(mockClient, "my_tools")).toBe(true);
+      expect(server.isToolEnabled(mockClient, "my tools")).toBe(true);
+    });
+
+    it("should be case-insensitive", () => {
+      const server = new SmartBearMcpServer("Test-Product:Errors");
+      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
+    });
+
+    it("should enable default toolsets when specific toolsets are configured for the client", () => {
+      const client = { ...mockClient, defaultToolsets: ["default-set"] };
+      const server = new SmartBearMcpServer("test-product:errors");
+      expect(server.isToolEnabled(client, "default-set")).toBe(true);
+    });
+
+    it("should not enable default toolsets when no specific toolsets are configured for the client", () => {
+      const client = { ...mockClient, defaultToolsets: ["default-set"] };
+      const server = new SmartBearMcpServer("other-product:errors");
+      expect(server.isToolEnabled(client, "default-set")).toBe(false);
+    });
+
+    it("should support multiple toolset entries for the same client", () => {
+      const server = new SmartBearMcpServer(
+        "test-product:errors,test-product:releases",
+      );
+      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
+      expect(server.isToolEnabled(mockClient, "releases")).toBe(true);
+      expect(server.isToolEnabled(mockClient, "other")).toBe(false);
     });
   });
 });

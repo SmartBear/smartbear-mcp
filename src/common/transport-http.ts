@@ -761,7 +761,7 @@ export function getQueryStringName(clientPrefix: string, key: string): string {
 function getHttpHeaders(): string[] {
   const headers = new Set<string>();
 
-  // Use getAll() to respect MCP_ENABLED_CLIENTS filtering
+  // Use getAll() to respect client filtering
   for (const entry of clientRegistry.getAll()) {
     for (const configKey of Object.keys(entry.config.shape)) {
       headers.add(getHeaderName(entry.configPrefix, configKey));

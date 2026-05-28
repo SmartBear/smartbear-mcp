@@ -9,36 +9,43 @@ import { fullyUnwrapZodType, isOptionalType } from "./zod-utils";
  */
 class ClientRegistry {
   private entries: Client[] = [];
-  private enabledClients: Set<string> | null = null;
+  private enabledClients: Set<string>;
 
   /**
-   * Configure which clients should be enabled based on MCP_CLIENTS env var
+   * Configure which clients should be enabled based on MCP_CLIENTS env var and MCP_TOOLSETS (to enable any referenced clients)
    * If not set or empty, all clients are enabled
    * If set, should be comma-separated list of client names (case-insensitive)
    */
   constructor() {
-    const enabledClientsEnv = process.env.MCP_CLIENTS?.trim();
-
-    if (!enabledClientsEnv) {
-      // Empty or not set = all clients enabled
-      this.enabledClients = null;
-      return;
+    let enabledClientsStr = "";
+    if (process.env.MCP_CLIENTS) {
+      enabledClientsStr = process.env.MCP_CLIENTS.trim();
+    }
+    enabledClientsStr += ",";
+    if (process.env.MCP_TOOLSETS) {
+      enabledClientsStr += process.env.MCP_TOOLSETS.trim();
     }
 
     // Parse comma-separated list and normalize to lowercase for comparison
     this.enabledClients = new Set(
-      enabledClientsEnv
+      enabledClientsStr
+        .trim()
         .split(",")
-        .map((name) => name.trim().toLowerCase())
+        .map((name) => {
+          if (name.includes(":")) {
+            return name.split(":")[0].trim().toLowerCase();
+          }
+          return name.trim().toLowerCase();
+        })
         .filter((name) => name.length > 0),
     );
   }
 
   /**
-   * Check if a client is enabled based on MCP_CLIENTS configuration
+   * Check if a client is enabled based on client filtering configuration
    */
   private isClientEnabled(name: string): boolean {
-    if (this.enabledClients === null) {
+    if (this.enabledClients.size === 0) {
       return true; // All clients enabled
     }
     return this.enabledClients.has(name.toLowerCase());
