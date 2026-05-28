@@ -287,8 +287,12 @@ export const TOOL_NAMES = {
  * Toolsets
  */
 export const TOOLSETS = {
+  /** Test Automation toolset */
+  TEST_AUTOMATION: "Test Automation",
   /** Test Cases toolset */
   TEST_CASES: "Test Cases",
+  /** Test Cycle Management toolset */
+  TEST_CYCLES: "Test Cycles",
   /** Projects toolset */
   PROJECTS: "Projects",
 } as const;

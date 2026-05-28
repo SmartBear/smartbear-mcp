@@ -1,7 +1,7 @@
 import { Tool } from "../../../common/tools.ts";
 import type { ToolParams } from "../../../common/types.ts";
 import type { Qtm4jClient } from "../../client.ts";
-import { ENDPOINTS, TOOL_NAMES } from "../../config/constants.ts";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants.ts";
 import {
   GetAutomationHistoryBody,
   GetAutomationHistoryResponse,
@@ -11,6 +11,7 @@ import {
 export class GetAutomationHistory extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.GET_AUTOMATION_HISTORY.TITLE,
+    toolset: TOOLSETS.TEST_AUTOMATION,
     summary: TOOL_NAMES.GET_AUTOMATION_HISTORY.SUMMARY,
     readOnly: true,
     idempotent: true,
