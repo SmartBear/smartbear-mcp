@@ -7349,10 +7349,10 @@ Expected Output: Test case created with resolved labels/components/priority/stat
 **Parameters:**
 - summary (string) *required*: Short title of the test cycle. Must not be blank. Max 255 chars.
 - description (string): Detailed description of the test cycle. Max 65 535 characters.
-- priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID via set_project_context.
-- status (string): Status name (e.g., 'To Do', 'In Progress'). Auto-resolved to ID via set_project_context.
+- priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID.
+- status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID.
 - assignee (string): Assignee account ID
-- reporter (string): Jira account UUID of the reporter. Default: the calling user.
+- reporter (string): Reporter account ID
 - labels (array): List of label names (e.g., ['Release_1', 'Sprint 1']). Auto-resolved to IDs.
 - components (array): List of component names (e.g., ['UI', 'Cloud']). Auto-resolved to IDs.
 - plannedStartDate (string): Planned start date. Format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Must be ≤ plannedEndDate when both are provided.
@@ -7392,7 +7392,7 @@ Expected Output: Test cycle created with key 'SCRUM-TR-xxx'
 \`\`\`
 Expected Output: Test cycle created with resolved priority, status, labels, and components
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. Priority and status are resolved from names loaded by set_project_context. Unresolvable names are skipped with a warning; the cycle is still created. 3. Labels and components are resolved on demand. Unresolvable names are skipped with a warning. 4. All cycles are placed in the 'MCP Generated' folder — do not pass folderId. 5. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. If any priority, status, label, or component name cannot be resolved, the cycle is still created but a warning is returned. Suggest the closest available value from the set_project_context response and ask the user to confirm before retrying. 3. All cycles are placed in the 'MCP Generated' folder — do not pass folderId. 4. Date format: 'dd/MMM/yyyy HH:mm' e.g. '10/May/2026 00:00'. Month must be capitalised. plannedStartDate must be ≤ plannedEndDate.",
     "inputSchema": [
       "assignee",
       "components",
@@ -7419,7 +7419,7 @@ Expected Output: Test cycle created with resolved priority, status, labels, and 
       "readOnlyHint": true,
       "title": "QTM4J: Get Automation History",
     },
-    "description": "Retrieve a paginated history of past automation result uploads for a QTM4J project. Supports filtering by test cycle, source label, date range, uploader, and status.
+    "description": "Retrieve a paginated history of past automation result uploads for a QTM4J project.
 
 **Parameters:**
 - startAt (number): Zero-indexed starting position for pagination (default: 0). (default: 0)
@@ -8023,11 +8023,11 @@ Expected Output: Test cases executed in the past week with their pass rates and 
     "description": "Search for test cycles in a QTM4J project by status, owner, folder, date range, or keyword. projectId is injected automatically from the active project context.
 
 **Parameters:**
-- filter (object): Filter criteria — fields are combined with AND; multiple values within one field use OR.
+- filter (object): Filter criteria — multiple fields are combined with AND; multiple values within one field use OR.
 - fields (array): Fields to include in each result object. If omitted, server returns its default set (NOTE: plannedStartDate and plannedEndDate are NOT in the default response — include them explicitly when needed). Available fields: key, summary, description, status, priority, assignee, reporter, isAutomated, plannedStartDate, plannedEndDate, labels, components, fixVersions, sprint, defectCount, estimatedTime, actualTime, created, updated. Example: ['key', 'summary', 'status', 'assignee', 'plannedStartDate', 'plannedEndDate']
-- startAt (number): Zero-based page offset. Default: 0. (default: 0)
-- maxResults (number): Results per page. Default: 20. Maximum: 100. (default: 20)
-- sort (string): Sort expression. Format: '<fieldName>:<asc|desc>'. Default: 'key:asc'. Allowed fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. Example: 'plannedStartDate:asc' (default: "key:asc")
+- startAt (number): Zero-indexed offset for pagination (URL query param). Default: 0. (default: 0)
+- maxResults (number): Number of results per page (URL query param). Default: 20. Maximum: 100. To page through results, increment startAt by 20 until startAt >= total. (default: 20)
+- sort (string): Sort pattern sent as a URL query param. Format: 'fieldName:order'. Default: 'key:asc'. Order values: 'asc' (lowest/oldest first) or 'desc' (highest/newest first). Sortable fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. Examples: 'key:asc', 'plannedStartDate:desc' (default: "key:asc")
 
 **Output Description:** JSON object with total (matching cycles across all pages), startAt, maxResults, and data (array of test cycle objects for this page). Each item always has id and key. Other fields depend on what was requested via the fields parameter.
 
@@ -8168,7 +8168,7 @@ Expected Output: High-priority cycles updated in May 2026 reported by that user
 \`\`\`
 Expected Output: Test cycles matching all specified filters with selected fields
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. SUPPORTED FILTER FIELDS: status, priority, assignee, reporter, folderId, labels, components, plannedStartDate, plannedEndDate, searchText, createdOn, updatedOn, isAutomated, aiGenerated. Do NOT use any other filter field names. 3. DATE FILTERS: createdOn = creation date; updatedOn = last-updated date; plannedStartDate / plannedEndDate = planned execution window. Format: 'dd/MMM/yyyy,dd/MMM/yyyy' e.g. '01/May/2026,21/May/2026'. Month is case-sensitive. 'Created last week' → createdOn, NOT plannedStartDate. 4. FIELDS: Pass as an array to select what to return. plannedStartDate and plannedEndDate are NOT in the default response — include them explicitly. Available: key, summary, description, status, priority, assignee, reporter, isAutomated, plannedStartDate, plannedEndDate, labels, components, fixVersions, sprint, defectCount, estimatedTime, actualTime, created, updated. 5. REQUEST STRUCTURE: filter → request body; fields, sort, startAt, maxResults → URL query params. 6. SORT: Allowed fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. Format: '<field>:<asc|desc>'. created and updated are NOT valid sort fields. 7. FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. SUPPORTED FILTER FIELDS: status, priority, assignee, reporter, folderId, labels, components, plannedStartDate, plannedEndDate, searchText, createdOn, updatedOn, isAutomated, aiGenerated. Do NOT use any other filter field names. 3. DATE FILTERS: createdOn = creation date; updatedOn = last-updated date; plannedStartDate / plannedEndDate = planned execution window. Format: 'dd/MMM/yyyy,dd/MMM/yyyy' e.g. '01/May/2026,21/May/2026'. Month is case-sensitive. 'Created last week' → createdOn, NOT plannedStartDate. 4. FIELDS: Pass as an array to select what to return. plannedStartDate and plannedEndDate are NOT in the default response — include them explicitly. Available: key, summary, description, status, priority, assignee, reporter, isAutomated, plannedStartDate, plannedEndDate, labels, components, fixVersions, sprint, defectCount, estimatedTime, actualTime, created, updated. 5. REQUEST STRUCTURE: filter → request body; fields, sort, startAt, maxResults → URL query params. 6. SORT: Allowed fields: key, summary, status, plannedStartDate, plannedEndDate, defectCount. Format: 'fieldName:asc' or 'fieldName:desc' e.g. 'plannedStartDate:asc'. 7. FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up.",
     "inputSchema": [
       "fields",
       "filter",
@@ -8345,8 +8345,8 @@ Expected Output: Version 2 of test case updated with new assignee and estimated 
 - key (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
 - summary (string): Updated test cycle name / title. Max 255 characters.
 - description (string): Updated description. Pass null to clear the existing value. Max 65 535 characters.
-- status (string): Status name (e.g., 'To Do', 'In Progress'). Auto-resolved to ID. Pass null to clear.
-- priority (string): Priority name (e.g., 'High', 'Medium'). Auto-resolved to ID. Pass null to reset to project default.
+- status (string): Status name (e.g., 'To Do', 'In Progress', 'Done'). Auto-resolved to ID. Use values from set_project_context response. Pass null to clear.
+- priority (string): Priority name (e.g., 'High', 'Medium', 'Low'). Auto-resolved to ID. Use values from set_project_context response. Pass null to clear.
 - plannedStartDate (string): Format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 09:00'. Month must be capitalised (May not may). Pass null to clear the existing value.
 - plannedEndDate (string): Format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 09:00'. Month must be capitalised (May not may). Pass null to clear the existing value.
 - assignee (string): Assignee Jira account ID (e.g., '5b10a2844c20165700ede21f'). Pass null to unassign.
@@ -8354,7 +8354,7 @@ Expected Output: Version 2 of test case updated with new assignee and estimated 
 - labels (object): Labels to add or remove by name. Each name is auto-resolved to its ID.
 - components (object): Components to add or remove by name. Each name is auto-resolved to its ID.
 
-**Output Description:** Confirmation object with the test cycle UID, key, and updated: true. Warnings are included if any field names could not be resolved.
+**Output Description:** Confirmation object with the test cycle key and updated: true. Warnings are included if any field names could not be resolved.
 
 **Use Cases:** 1. Update summary, status, priority, planned dates, assignee, or reporter 2. Clear a nullable field by passing null (e.g. description: null removes text, assignee: null unassigns owner) 3. Add or remove labels and components atomically without affecting other entries 4. Apply multiple field updates in a single call
 
@@ -8447,7 +8447,7 @@ Expected Output: Test cycle owner unassigned and planned dates cleared
 \`\`\`
 Expected Output: Test cycle updated with all specified fields
 
-**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. KEY FORMAT: '{PROJECT_KEY}-TR-{number}' — e.g. 'SCRUM-TR-101'. 3. Pass explicit null to CLEAR a nullable field — e.g. description: null removes the description text, assignee: null unassigns the owner, plannedStartDate: null removes the date. Omitting a field leaves it unchanged. 4. Status and priority are auto-resolved from human-readable names loaded by set_project_context. Unresolvable names are skipped with a warning; remaining fields still update. 5. Labels and components use add/delete — names are auto-resolved to IDs. Both operations can be combined in a single call. 6. Date format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 09:00'. Month must be capitalised (May not may or MAY). 7. Archived test cycles cannot be updated — the server returns 400. Unarchive first if needed.",
+**Hints:** 1. PREREQUISITE: set_project_context must be called before this tool. NEVER auto-select a project. 2. KEY FORMAT: '{PROJECT_KEY}-TR-{number}' — e.g. 'SCRUM-TR-101'. 3. Pass explicit null to CLEAR a nullable field — e.g. description: null removes the description text, assignee: null unassigns the owner, plannedStartDate: null removes the date. Omitting a field leaves it unchanged. 4. Status and priority are auto-resolved from human-readable names loaded by set_project_context. If a name cannot be resolved, the cycle is still updated and a warning is returned. 5. Labels and components use add/delete — names are auto-resolved to IDs. Both operations can be combined in a single call. 6. Date format: 'dd/MMM/yyyy HH:mm' e.g. '15/May/2026 09:00'. Month must be capitalised (May not may or MAY). 7. Archived test cycles cannot be updated — the server returns 400. Unarchive first if needed.",
     "inputSchema": [
       "assignee",
       "components",
@@ -8478,7 +8478,7 @@ Expected Output: Test cycle updated with all specified fields
     "description": "Upload an automation result file to QTM4J and map the results to a test cycle. Supports JUnit XML, TestNG XML, Cucumber JSON, QAF, HP UFT, and SpecFlow formats.
 
 **Parameters:**
-- filePath (string) *required*: Absolute or relative path to the automation result file on disk (e.g. './target/surefire-reports/TEST-results.xml'). Supported extensions: .xml, .json, .zip
+- filePath (string) *required*: Path to the automation result file on disk. Filesystem contents can change between turns — always resolve this from a fresh scan, never from a previously seen path. Supported extensions: .xml, .json, .zip
 - format (enum) *required*: Format of the result file. Supported values: cucumber, testng, junit, qaf, hpuft, specflow
 - testCycleToReuse (string): Work key of an existing test cycle to reuse (e.g. 'TR-PRJ-1'). If omitted, a new test cycle is created.
 - environment (string): Name of the environment on which the test cycle was executed (e.g. 'Chrome', 'Staging'). Defaults to 'No Environment'.
@@ -8534,7 +8534,21 @@ Expected Output: Results mapped to test cycle TR-PRJ-5
 \`\`\`
 Expected Output: ZIP uploaded; test cycle created with summary, labels, and priority
 
-**Hints:** 1. NO PROJECT CONTEXT REQUIRED: Do NOT call set_project_context and do NOT ask the user for a project key, project ID, or any other project details. This tool works independently — never prompt the user for project information. 2. FILE DISCOVERY: Always do a fresh scan — never reuse a path from a previous turn. If no path is provided, search in order: target/surefire-reports, target/failsafe-reports, build/reports/tests, build/test-results, test-results, reports, cucumber-reports. If multiple files are found, list them all and wait for the user to pick one before uploading. If nothing is found, ask for the path. Never pick silently. 3. FORMAT INFERENCE: .json → cucumber, .zip → qaf (unambiguous). For .xml, infer from the file name — 'junit'/'surefire' → junit, 'testng' → testng, 'specflow' → specflow, 'hpuft'/'uft' → hpuft. If the file name gives no clear signal, ask the user to confirm the format. 4. TEST CYCLE: Only ask for testCycleToReuse if the user explicitly wants to link to an existing cycle. If not mentioned, omit it — QTM4J creates a new test cycle automatically. 5. DATE FORMAT: plannedStartDate and plannedEndDate in fields.testCycle MUST be formatted as 'dd/MMM/yyyy HH:mm' (e.g. '14/May/2026 10:30'). Convert any user-provided date (ISO, natural language, relative) to this exact format before sending. 6. FOLDER ID: folderId in fields.testCycle and fields.testCase is a numeric ID. Tell the user they can get it by right-clicking the target folder in QTM4J and selecting 'Copy Folder Id'. Always ask the user for the numeric ID directly — never try to look it up. 7. ASSIGNEE / REPORTER: assignee and reporter in fields.testCycle and fields.testCase require a Jira Account ID (not a display name or email). Ask the user to provide their Account ID directly. 8. Import processing is asynchronous — use the returned trackingId to poll progress.",
+4. User provides an unrecognised priority value — do NOT silently map to a similar word; ask the user first
+\`\`\`json
+{
+  "filePath": "./reports/cucumber.json",
+  "format": "cucumber",
+  "fields": {
+    "testCycle": {
+      "priority": "critical"
+    }
+  }
+}
+\`\`\`
+Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not recognised as a valid priority and ask them to confirm the correct value (e.g. from the available options). Do not map 'critical' to 'Blocker' or any other value without explicit user confirmation.
+
+**Hints:** 1. NO PROJECT CONTEXT REQUIRED: Do NOT call set_project_context and do NOT ask the user for a project key, project ID, or any other project details. This tool works independently — never prompt the user for project information. 2. FILE DISCOVERY: Always do a fresh scan — never reuse a path from a previous turn. If no path is provided, search in order: target/surefire-reports, target/failsafe-reports, build/reports/tests, build/test-results, test-results, reports, cucumber-reports. If exactly one file is found, show the path and inferred format to the user and confirm before uploading. If multiple files are found, list them all and wait for the user to pick one. If nothing is found, ask for the path. Never pick or upload silently. 3. FORMAT INFERENCE: .json → cucumber (unambiguous). For .xml, infer from the file name — 'junit'/'surefire' → junit, 'testng' → testng, 'specflow' → specflow, 'hpuft'/'uft' → hpuft. For .zip, ALWAYS set isZip: true, but do NOT assume qaf — the zip could contain junit, testng, or cucumber results; if the format cannot be determined from the file name, ask the user. If the file name gives no clear signal for .xml either, ask the user to confirm the format. 4. TEST CYCLE: Only ask for testCycleToReuse if the user explicitly wants to link to an existing cycle. If not mentioned, omit it — QTM4J creates a new test cycle automatically. 5. DATE FORMAT: plannedStartDate and plannedEndDate in fields.testCycle MUST be formatted as 'dd/MMM/yyyy HH:mm' (e.g. '14/May/2026 10:30'). Convert any user-provided date (ISO, natural language, relative) to this exact format before sending. 6. FOLDER ID: folderId is a numeric ID. Apply it ONLY to the level the user specifies; if unspecified, default to fields.testCycle only — never copy it to both levels. Get the ID from the user directly (right-click folder in QTM4J → 'Copy Folder Id'). 7. ASSIGNEE / REPORTER: assignee and reporter in fields.testCycle and fields.testCase require a Jira Account ID (not a display name or email). Ask the user to provide their Account ID directly. 8. FIELD MAPPING CONFIRMATION: Apply formatting transformations (case correction, date/time conversion) automatically. Only ask for user confirmation when you cannot find a recognised match and need to substitute an unrecognised value with a guessed alternative — never silently substitute in that case. 9. TRACKING: Import processing is asynchronous. To check status, call get_automation_history and find the record whose trackingId matches the one returned from this tool.",
     "inputSchema": [
       "appendTestName",
       "attachFile",
