@@ -42,6 +42,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     },
     "description": "Sends an open-ended instruction to BearQ's QA lead agent. Use this when no other BearQ tool fits — the QA lead can list, create, and update test cases, manage functional areas, and read the application model, and acts as a general-purpose escape hatch.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - instruction (string) *required*: Natural language instruction to send to the BearQ QA lead agent.",
     "inputSchema": [
@@ -59,6 +61,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
       "title": "BearQ: Expand Application Model",
     },
     "description": "Explores the live application to discover or update its pages and elements in BearQ's application model. Optionally scope to a single functional area.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - functionalArea (union): Functional area to scope the exploration to, by ID or name. Omit to explore the entire application.",
@@ -78,6 +82,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     },
     "description": "Retrieves a task's current state, metadata, and activity log. Returns immediately with whatever's available — does not block on the task completing.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - taskId (number) *required*: BearQ task ID.",
     "inputSchema": [
@@ -95,6 +101,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
       "title": "BearQ: Get Task Status",
     },
     "description": "Retrieves the status of a task (running / complete / error / cancelled). Cheaper than fetching full task details.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - taskId (number) *required*: BearQ task ID.",
@@ -114,6 +122,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     },
     "description": "Refines every draft test case in the workspace. Use to push an entire draft backlog forward; may take multiple passes before all drafts are ready to be promoted to regression tests.
 
+**Toolset:** Tasks
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -129,6 +139,8 @@ None",
       "title": "BearQ: Refine Test Cases",
     },
     "description": "Refines specific BearQ draft test cases — improves their steps so they can eventually be promoted to regression tests. Use when a draft is incomplete or has drifted from its intent.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - testCaseIds (array) *required*: IDs of BearQ draft test cases to refine.",
@@ -148,6 +160,8 @@ None",
     },
     "description": "Refines every draft test case tagged with one or more functional areas. Functional areas can be given by ID or name. May take multiple passes before drafts are ready to be promoted to regression tests.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - functionalAreas (array) *required*: Functional areas to target, by ID or name.",
     "inputSchema": [
@@ -166,6 +180,8 @@ None",
     },
     "description": "Runs the full BearQ regression suite — every regression-ready test case in the workspace. Use for CI/CD or pre-release smoke.
 
+**Toolset:** Tasks
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -181,6 +197,8 @@ None",
       "title": "BearQ: Run Test Cases",
     },
     "description": "Runs specific BearQ regression test cases by ID. Targets only regression-ready cases — drafts will be rejected.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - testCaseIds (array) *required*: IDs of BearQ regression test cases to run.",
@@ -200,6 +218,8 @@ None",
     },
     "description": "Runs every regression test case tagged with one or more functional areas. Functional areas can be given by ID or name.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - functionalAreas (array) *required*: Functional areas to target, by ID or name.",
     "inputSchema": [
@@ -218,6 +238,8 @@ None",
     },
     "description": "Cancels a running task.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - taskId (number) *required*: BearQ task ID to cancel.",
     "inputSchema": [
@@ -235,6 +257,8 @@ None",
       "title": "BearQ: Wait For Task",
     },
     "description": "Blocks until a BearQ task reaches a terminal state (completed / failed / cancelled) or the stream times out, then returns the full ordered sequence of SSE events from the public API (metadata, activityLogEntries, and a terminal done or timeout event) verbatim. Blocks for the lifetime of the task — for a quick check use bearq_get_task_status instead.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - taskId (number) *required*: BearQ task ID.",
@@ -7690,6 +7714,8 @@ Expected Output: Test case created with resolved labels/components/priority/stat
     },
     "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - summary (string) *required*: Short title of the test cycle. Must not be blank. Max 255 chars.
 - description (string): Detailed description of the test cycle. Max 65 535 characters.
@@ -7764,6 +7790,8 @@ Expected Output: Test cycle created with resolved priority, status, labels, and 
       "title": "QTM4J: Get Automation History",
     },
     "description": "Retrieve a paginated history of past automation result uploads for a QTM4J project.
+
+**Toolset:** Test Automation
 
 **Parameters:**
 - startAt (number): Zero-indexed starting position for pagination (default: 0). (default: 0)
@@ -8372,6 +8400,8 @@ Expected Output: Test cases executed in the past week with their pass rates and 
     },
     "description": "Search for test cycles in a QTM4J project by status, owner, folder, date range, or keyword. projectId is injected automatically from the active project context.
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - filter (object): Filter criteria — multiple fields are combined with AND; multiple values within one field use OR.
 - fields (array): Fields to include in each result object. If omitted, server returns its default set (NOTE: plannedStartDate and plannedEndDate are NOT in the default response — include them explicitly when needed). Available fields: key, summary, description, status, priority, assignee, reporter, isAutomated, plannedStartDate, plannedEndDate, labels, components, fixVersions, sprint, defectCount, estimatedTime, actualTime, created, updated. Example: ['key', 'summary', 'status', 'assignee', 'plannedStartDate', 'plannedEndDate']
@@ -8695,6 +8725,8 @@ Expected Output: Version 2 of test case updated with new assignee and estimated 
     },
     "description": "Update an existing test cycle in QTM4J by its human-readable key (e.g. 'SCRUM-TR-101'). Supports auto-resolving human-readable names for status and priority. Labels and components support add/delete operations. Only the fields you provide are changed — omitted fields are left as-is. projectId is injected automatically from the active project context.
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - key (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
 - summary (string): Updated test cycle name / title. Max 255 characters.
@@ -8830,6 +8862,8 @@ Expected Output: Test cycle updated with all specified fields
       "title": "QTM4J: Upload Automation Result",
     },
     "description": "Upload an automation result file to QTM4J and map the results to a test cycle. Supports JUnit XML, TestNG XML, Cucumber JSON, QAF, HP UFT, and SpecFlow formats.
+
+**Toolset:** Test Automation
 
 **Parameters:**
 - filePath (string) *required*: Path to the automation result file on disk. Filesystem contents can change between turns — always resolve this from a fresh scan, never from a previously seen path. Supported extensions: .xml, .json, .zip
