@@ -21,7 +21,8 @@
     "qmetry",
     "reflect",
     "swagger",
-    "zephyr"
+    "zephyr",
+    "qtm4j"
   ],
   "tools_generated": true,
   "prompts_generated": true,
