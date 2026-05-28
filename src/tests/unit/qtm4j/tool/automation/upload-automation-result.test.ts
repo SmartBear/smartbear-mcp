@@ -1,6 +1,11 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../../../common/tools";
-import { ENDPOINTS } from "../../../../../qtm4j/config/constants";
+import {
+  AUTOMATION_LIMITS,
+  ENDPOINTS,
+} from "../../../../../qtm4j/config/constants";
 import { UploadAutomationResult } from "../../../../../qtm4j/tool/test-automation/upload-automation-result";
 
 vi.mock("node:fs/promises", () => ({
@@ -394,6 +399,30 @@ describe("UploadAutomationResult", () => {
       ).rejects.toThrow("Could not read file");
     });
 
+    it("throws ToolError when file exceeds the maximum size limit", async () => {
+      const oversizedBuffer = Buffer.alloc(
+        AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES + 1,
+      );
+      mockReadFile.mockResolvedValue(oversizedBuffer as any);
+
+      await expect(
+        instance.handle({ filePath: "./results/large.xml", format: "junit" }),
+      ).rejects.toThrow(ToolError);
+
+      await expect(
+        instance.handle({ filePath: "./results/large.xml", format: "junit" }),
+      ).rejects.toThrow("Maximum allowed size is 10 MB");
+    });
+
+    it("accepts a file exactly at the maximum size limit", async () => {
+      const exactBuffer = Buffer.alloc(AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES);
+      mockReadFile.mockResolvedValue(exactBuffer as any);
+
+      await expect(
+        instance.handle({ filePath: "./results/exact.xml", format: "junit" }),
+      ).resolves.not.toThrow();
+    });
+
     it("throws ToolError when API does not return a valid upload URL", async () => {
       mockApiClient.postAutomation.mockResolvedValue({
         message: "error",
@@ -413,6 +442,22 @@ describe("UploadAutomationResult", () => {
       await expect(
         instance.handle({ filePath: "./results/junit.xml", format: "junit" }),
       ).rejects.toThrow("Request failed with status 403");
+    });
+  });
+
+  // ─── Doc consistency ──────────────────────────────────────────────────────
+
+  describe("doc consistency", () => {
+    it("qtm4j-integration.md mentions the correct max file size in MB", () => {
+      const maxMB = Math.round(
+        AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES / (1024 * 1024),
+      );
+      const docPath = resolve(
+        __dirname,
+        "../../../../../../docs/products/SmartBear MCP Server/qtm4j-integration.md",
+      );
+      const content = readFileSync(docPath, "utf-8");
+      expect(content).toContain(`${maxMB} MB`);
     });
   });
 });
