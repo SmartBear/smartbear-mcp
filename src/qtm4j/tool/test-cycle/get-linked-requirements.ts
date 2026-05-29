@@ -5,7 +5,7 @@ import { ENDPOINTS, TOOL_NAMES } from "../../config/constants";
 import { ResolverKeys } from "../../config/field-resolution.types";
 import type { ResolvedTestCycle } from "../../resolver/resolvers/test-cycle-uid-resolver";
 import { GetLinkedRequirementsResponse } from "../../schema/linked-items.schema";
-import { GetLinkedRequirementsForCycleBody } from "../../schema/test-cycle.schema";
+import { GetLinkedRequirementsForCycleBody } from "../../schema/test-cycle.link.schema.ts";
 
 export class GetLinkedRequirementsForCycle extends Tool<Qtm4jClient> {
   specification: ToolParams = {

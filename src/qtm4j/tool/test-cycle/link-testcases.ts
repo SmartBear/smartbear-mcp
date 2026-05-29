@@ -8,7 +8,7 @@ import type { ResolvedTestCycle } from "../../resolver/resolvers/test-cycle-uid-
 import {
   LinkTestCasesToCycleBody,
   TestCycleLinkResponse,
-} from "../../schema/test-cycle.schema";
+} from "../../schema/test-cycle.link.schema.ts";
 
 export class LinkTestCasesToCycle extends Tool<Qtm4jClient> {
   specification: ToolParams = {

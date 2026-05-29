@@ -7,7 +7,7 @@ import type { ResolvedTestCycle } from "../../resolver/resolvers/test-cycle-uid-
 import {
   SearchLinkedTestCasesInCycleBody,
   SearchLinkedTestCasesInCycleResponse,
-} from "../../schema/test-cycle.schema";
+} from "../../schema/test-cycle.link.schema.ts";
 
 export class SearchLinkedTestCasesInCycle extends Tool<Qtm4jClient> {
   specification: ToolParams = {
