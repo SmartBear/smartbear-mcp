@@ -21,7 +21,8 @@
     "qmetry",
     "reflect",
     "swagger",
-    "zephyr"
+    "zephyr",
+    "qtm4j"
   ],
   "tools_generated": true,
   "prompts_generated": true,
@@ -62,7 +63,10 @@
         "SWAGGER_REGISTRY_BASE_PATH": "${user_config.SWAGGER_REGISTRY_BASE_PATH}",
         "SWAGGER_UI_BASE_PATH": "${user_config.SWAGGER_UI_BASE_PATH}",
         "ZEPHYR_API_TOKEN": "${user_config.ZEPHYR_API_TOKEN}",
-        "ZEPHYR_BASE_URL": "${user_config.ZEPHYR_BASE_URL}"
+        "ZEPHYR_BASE_URL": "${user_config.ZEPHYR_BASE_URL}",
+        "QTM4J_API_KEY": "${user_config.QTM4J_API_KEY}",
+        "QTM4J_BASE_URL": "${user_config.QTM4J_BASE_URL}",
+        "QTM4J_AUTOMATION_API_KEY": "${user_config.QTM4J_AUTOMATION_API_KEY}"
       }
     }
   },
@@ -249,6 +253,14 @@
       "description": " QTM4J base URL (optional). Defaults to https://qtmcloud.qmetry.com. Override when using a self-hosted or region-specific instance.",
       "required": false,
       "sensitive": false,
+      "default": ""
+    },
+    "QTM4J_AUTOMATION_API_KEY": {
+      "type": "string",
+      "title": "QTM4J Automation API Key",
+      "description": "QTM4J Automation API key used exclusively by the automation import tools. Leave empty to disable automation tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration",
+      "required": false,
+      "sensitive": true,
       "default": ""
     }
   }

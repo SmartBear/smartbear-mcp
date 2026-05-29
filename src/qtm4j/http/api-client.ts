@@ -16,10 +16,12 @@ import { AuthService } from "./auth-service";
 export class ApiClient {
   private readonly baseUrl: string;
   private readonly tokenProvider: () => string | null;
+  private readonly automationTokenProvider?: () => string | null;
 
   constructor(
     tokenOrProvider: string | (() => string | null),
     baseUrl: string,
+    automationTokenProvider?: () => string | null,
   ) {
     this.baseUrl = baseUrl.trim().replace(/\/$/, EMPTY_VALUES.STRING);
 
@@ -28,6 +30,8 @@ export class ApiClient {
     } else {
       this.tokenProvider = tokenOrProvider;
     }
+
+    this.automationTokenProvider = automationTokenProvider;
   }
 
   /**
@@ -40,6 +44,18 @@ export class ApiClient {
     const token = this.tokenProvider();
     if (!token) {
       throw new ToolError(ERROR_MESSAGES.CLIENT_NOT_CONFIGURED);
+    }
+    return new AuthService(token).getAuthHeaders();
+  }
+
+  /**
+   * Get authentication headers using the automation API key.
+   * @throws ToolError if automation API key is not configured
+   */
+  private getAutomationHeaders(): Record<string, string> {
+    const token = this.automationTokenProvider?.();
+    if (!token) {
+      throw new ToolError(ERROR_MESSAGES.AUTOMATION_API_KEY_NOT_CONFIGURED);
     }
     return new AuthService(token).getAuthHeaders();
   }
@@ -124,6 +140,46 @@ export class ApiClient {
   }
 
   /**
+   * Perform GET request using the automation API key (QTM4J_AUTOMATION_API_KEY).
+   * Used for automation endpoints that require the automation key instead of the regular API key.
+   * @param endpoint - API endpoint path
+   * @param params - Optional query parameters
+   * @returns Parsed response data
+   */
+  async getAutomation(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<any> {
+    const response = await fetch(this.getUrl(endpoint, params), {
+      method: HTTP_METHODS.GET,
+      headers: this.getAutomationHeaders(),
+    });
+    return await this.validateAndGetResponseBody(response);
+  }
+
+  /**
+   * Perform POST request using the automation API key (QTM4J_AUTOMATION_API_KEY).
+   * Used for automation import endpoints — same apiKey header as all other APIs,
+   * but the value is the automation key instead of the regular API key.
+   * @param endpoint - API endpoint path
+   * @param body - Request body object
+   * @returns Parsed response data
+   */
+  async postAutomation(endpoint: string, body: object): Promise<any> {
+    const url = this.getUrl(endpoint);
+    const requestHeaders = {
+      ...this.getAutomationHeaders(),
+      [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
+    };
+    const response = await fetch(url, {
+      method: HTTP_METHODS.POST,
+      headers: requestHeaders,
+      body: JSON.stringify(body),
+    });
+    return await this.validateAndGetResponseBody(response);
+  }
+
+  /**
    * Perform DELETE request with optional body
    * @param endpoint - API endpoint path
    * @param body - Optional request body object
@@ -139,6 +195,31 @@ export class ApiClient {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     return await this.validateAndGetResponseBody(response);
+  }
+
+  /**
+   * Upload a file as multipart/form-data using the automation API key.
+   * Content-Type is not set manually — fetch sets it with the correct multipart boundary.
+   * @param uploadUrl - Full URL returned by the automation import initiation step
+   * @param fileBuffer - Raw file contents as a Buffer
+   */
+  async uploadFileMultipart(
+    uploadUrl: string,
+    fileBuffer: Buffer,
+  ): Promise<void> {
+    const response = await fetch(uploadUrl, {
+      method: HTTP_METHODS.PUT,
+      headers: {
+        [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.MULTIPART,
+      },
+      body: new Uint8Array(fileBuffer),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ToolError(
+        ERROR_MESSAGES.REQUEST_FAILED(response.status, errorText),
+      );
+    }
   }
 
   /**

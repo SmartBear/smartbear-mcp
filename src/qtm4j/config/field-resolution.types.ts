@@ -32,6 +32,7 @@ export const ResolverKeys = {
     TEST_CYCLE_STATUS: "testcycle_status",
     PRIORITY: "priority",
     TESTCASE_FOLDER: "testcase_folder",
+    TEST_CYCLE_FOLDER: "testcycle_folder",
   } as const,
 
   /**

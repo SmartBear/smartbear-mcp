@@ -28,7 +28,7 @@ export class Cache {
     if (!this.trackedKeys.has(projectKey)) {
       this.trackedKeys.set(projectKey, new Set());
     }
-    this.trackedKeys.get(projectKey)!.add(key);
+    this.trackedKeys.get(projectKey)?.add(key);
   }
 
   has(projectKey: string, fieldKey: string): boolean {

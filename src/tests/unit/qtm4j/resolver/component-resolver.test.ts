@@ -193,7 +193,7 @@ describe("ComponentResolver", () => {
         warnings,
       );
 
-      expect(body[InputField.COMPONENTS]).toBe("NonExistent");
+      expect(body).not.toHaveProperty(InputField.COMPONENTS);
       expect(warnings).toHaveLength(1);
       expect(warnings[0]).toContain("NonExistent");
     });

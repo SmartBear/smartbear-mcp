@@ -60,4 +60,5 @@ Schemathesis
 Visualise
 artefacts
 behaviour
+specflow
 issuetype
