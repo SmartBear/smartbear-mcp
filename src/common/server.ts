@@ -33,8 +33,9 @@ export class SmartBearMcpServer extends McpServer {
   private samplingSupported = false;
   private elicitationSupported = false;
   private clients: Client[] = [];
+  private enabledToolsets?: string[];
 
-  constructor() {
+  constructor(enabledToolsets?: string) {
     super(
       {
         name: MCP_SERVER_NAME,
@@ -49,6 +50,11 @@ export class SmartBearMcpServer extends McpServer {
       },
     );
     this.cache = new CacheService();
+    if (enabledToolsets) {
+      this.enabledToolsets = enabledToolsets
+        .split(",")
+        .map((s) => s.trim().toLowerCase());
+    }
   }
 
   getCache(): CacheService {
@@ -85,6 +91,9 @@ export class SmartBearMcpServer extends McpServer {
     this.clients.push(client);
     await client.registerTools(
       (params, cb) => {
+        if (!this.isToolEnabled(client, params.toolset)) {
+          return null;
+        }
         const toolName = this.getCapabilityName(client, params.title);
         const toolTitle = this.getCapabilityTitle(client, params.title);
         if (toolName.length > 64) {
@@ -283,9 +292,48 @@ export class SmartBearMcpServer extends McpServer {
     return `${client.capabilityPrefix}_${title.replace(/\s+/g, "_").toLowerCase()}`;
   }
 
+  /**
+   * The tool is enabled if:
+   * - No enabled toolsets are defined on the server, or
+   * - The client is included in the enabled toolsets list, or
+   * - The toolset is included in the enabled toolsets list, or
+   * - The toolset is in the client's default list and there is at least one specific toolset enabled for the client
+   * @param client
+   * @param toolset
+   * @returns whether to register the tool based on enabled toolsets configuration
+   */
+  isToolEnabled(client: Client, toolset: string): boolean {
+    if (!this.enabledToolsets) {
+      return true;
+    }
+    const clientPrefix = client.configPrefix.toLowerCase();
+    const clientIsEnabled = this.enabledToolsets.some(
+      (ts) => !ts.includes(":") && ts === clientPrefix,
+    );
+    if (clientIsEnabled) {
+      return true;
+    }
+
+    const toolsetEntries = this.enabledToolsets.filter(
+      (ts) => ts.includes(":") && ts.split(":")[0] === clientPrefix,
+    );
+    if (toolsetEntries.length === 0) {
+      return false;
+    }
+
+    const toolsetName =
+      `${clientPrefix}:${toolset.replace(/[\s\-_]/g, "")}`.toLowerCase();
+
+    return (
+      toolsetEntries.includes(toolsetName) ||
+      (client.defaultToolsets || [])?.includes(toolset)
+    );
+  }
+
   private getDescription(params: ToolParams): string {
     const {
       summary,
+      toolset,
       useCases,
       examples,
       inputSchema,
@@ -294,6 +342,10 @@ export class SmartBearMcpServer extends McpServer {
     } = params;
 
     let description = summary;
+
+    if (toolset) {
+      description += `\n\n**Toolset:** ${toolset}`;
+    }
 
     if (inputSchema && inputSchema instanceof ZodObject) {
       let parameters = Object.keys(inputSchema.shape)

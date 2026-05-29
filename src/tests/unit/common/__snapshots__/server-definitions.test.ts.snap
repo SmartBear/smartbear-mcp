@@ -42,6 +42,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     },
     "description": "Sends an open-ended instruction to BearQ's QA lead agent. Use this when no other BearQ tool fits — the QA lead can list, create, and update test cases, manage functional areas, and read the application model, and acts as a general-purpose escape hatch.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - instruction (string) *required*: Natural language instruction to send to the BearQ QA lead agent.",
     "inputSchema": [
@@ -59,6 +61,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
       "title": "BearQ: Expand Application Model",
     },
     "description": "Explores the live application to discover or update its pages and elements in BearQ's application model. Optionally scope to a single functional area.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - functionalArea (union): Functional area to scope the exploration to, by ID or name. Omit to explore the entire application.",
@@ -78,6 +82,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     },
     "description": "Retrieves a task's current state, metadata, and activity log. Returns immediately with whatever's available — does not block on the task completing.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - taskId (number) *required*: BearQ task ID.",
     "inputSchema": [
@@ -95,6 +101,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
       "title": "BearQ: Get Task Status",
     },
     "description": "Retrieves the status of a task (running / complete / error / cancelled). Cheaper than fetching full task details.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - taskId (number) *required*: BearQ task ID.",
@@ -114,6 +122,8 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     },
     "description": "Refines every draft test case in the workspace. Use to push an entire draft backlog forward; may take multiple passes before all drafts are ready to be promoted to regression tests.
 
+**Toolset:** Tasks
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -129,6 +139,8 @@ None",
       "title": "BearQ: Refine Test Cases",
     },
     "description": "Refines specific BearQ draft test cases — improves their steps so they can eventually be promoted to regression tests. Use when a draft is incomplete or has drifted from its intent.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - testCaseIds (array) *required*: IDs of BearQ draft test cases to refine.",
@@ -148,6 +160,8 @@ None",
     },
     "description": "Refines every draft test case tagged with one or more functional areas. Functional areas can be given by ID or name. May take multiple passes before drafts are ready to be promoted to regression tests.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - functionalAreas (array) *required*: Functional areas to target, by ID or name.",
     "inputSchema": [
@@ -166,6 +180,8 @@ None",
     },
     "description": "Runs the full BearQ regression suite — every regression-ready test case in the workspace. Use for CI/CD or pre-release smoke.
 
+**Toolset:** Tasks
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -181,6 +197,8 @@ None",
       "title": "BearQ: Run Test Cases",
     },
     "description": "Runs specific BearQ regression test cases by ID. Targets only regression-ready cases — drafts will be rejected.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - testCaseIds (array) *required*: IDs of BearQ regression test cases to run.",
@@ -200,6 +218,8 @@ None",
     },
     "description": "Runs every regression test case tagged with one or more functional areas. Functional areas can be given by ID or name.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - functionalAreas (array) *required*: Functional areas to target, by ID or name.",
     "inputSchema": [
@@ -217,6 +237,8 @@ None",
       "title": "BearQ: Stop Task",
     },
     "description": "Cancels a running task.
+
+**Toolset:** Tasks
 
 **Parameters:**
 - taskId (number) *required*: BearQ task ID to cancel.",
@@ -236,6 +258,8 @@ None",
     },
     "description": "Blocks until a BearQ task reaches a terminal state (completed / failed / cancelled) or the stream times out, then returns the full ordered sequence of SSE events from the public API (metadata, activityLogEntries, and a terminal done or timeout event) verbatim. Blocks for the lifetime of the task — for a quick check use bearq_get_task_status instead.
 
+**Toolset:** Tasks
+
 **Parameters:**
 - taskId (number) *required*: BearQ task ID.",
     "inputSchema": [
@@ -253,6 +277,8 @@ None",
       "title": "BugSnag: Get Build",
     },
     "description": "Get more details for a specific build by its ID
+
+**Toolset:** Releases
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -289,6 +315,8 @@ Expected Output: JSON object with build details including version, source contro
     },
     "description": "Retrieve the 'current' project on which tools should operate by default. This allows BugSnag tools to be called with no projectId parameter.
 
+**Toolset:** Projects
+
 **Parameters:**
 None
 
@@ -308,6 +336,8 @@ None
       "title": "BugSnag: Get Error",
     },
     "description": "Get full details on an error, including aggregated and summarized data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.
+
+**Toolset:** Errors
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -346,6 +376,8 @@ Expected Output: JSON object with error details including message, stack trace, 
     },
     "description": "Get detailed information about a specific event
 
+**Toolset:** Events
+
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
 - eventId (string) *required*: Unique identifier of the event
@@ -377,6 +409,8 @@ Expected Output: JSON object with complete event details including stack trace (
     },
     "description": "Get detailed information about a specific event using its dashboard URL
 
+**Toolset:** Events
+
 **Parameters:**
 - link (string) *required*: Full URL to the event details page in the BugSnag dashboard (web interface), containing project slug and event_id parameter.
 
@@ -407,6 +441,8 @@ Expected Output: JSON object with complete event details including stack trace, 
       "title": "BugSnag: Get Events on an Error",
     },
     "description": "Gets a list of events that have grouped into the specified error
+
+**Toolset:** Events
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -448,6 +484,8 @@ Expected Output: A list of events, ordered by timestamp, with complete details i
     },
     "description": "Get the network endpoint grouping rules for a project
 
+**Toolset:** Performance
+
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
 
@@ -476,6 +514,8 @@ Expected Output: Array of endpoint URL patterns
       "title": "BugSnag: Get Release",
     },
     "description": "Get more details for a specific release by its ID, including source control information and associated builds
+
+**Toolset:** Releases
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -511,6 +551,8 @@ Expected Output: JSON object with release details including version, source cont
       "title": "BugSnag: Get Span Group",
     },
     "description": "Get detailed performance metrics for a specific span group
+
+**Toolset:** Performance
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -562,6 +604,8 @@ Expected Output: Statistics filtered for Chrome browser only
       "title": "BugSnag: Get Trace",
     },
     "description": "Get all spans within a specific trace
+
+**Toolset:** Performance
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -619,6 +663,8 @@ Expected Output: Array of up to 50 spans focused around the target span
       "title": "BugSnag: List Project Errors",
     },
     "description": "List and search errors in a project using customizable filters and pagination
+
+**Toolset:** Errors
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -707,6 +753,8 @@ Expected Output: JSON object with a list of errors, with a URL to the next page 
     },
     "description": "Get available event filter fields for a project
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
 
@@ -736,6 +784,8 @@ Expected Output: JSON array of EventField objects containing display_id, custom 
     },
     "description": "List all projects in the organization that the current user has access to, or find a project matching an API key.
 
+**Toolset:** Projects
+
 **Parameters:**
 - apiKey (string): The API key of the BugSnag project, if known.
 
@@ -757,6 +807,8 @@ Expected Output: JSON array of EventField objects containing display_id, custom 
       "title": "BugSnag: List Releases",
     },
     "description": "List releases for a project
+
+**Toolset:** Releases
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -812,6 +864,8 @@ Expected Output: JSON array of release objects with metadata from the next page
       "title": "BugSnag: List Span Groups",
     },
     "description": "List span groups (operations) tracked for performance monitoring
+
+**Toolset:** Performance
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -873,6 +927,8 @@ Expected Output: Array of starred span groups filtered by category
       "title": "BugSnag: List Spans",
     },
     "description": "Get individual spans belonging to a span group
+
+**Toolset:** Performance
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -938,6 +994,8 @@ Expected Output: Array of spans from iOS devices with next page navigation
     },
     "description": "Get available trace fields/attributes for filtering
 
+**Toolset:** Performance
+
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
 
@@ -966,6 +1024,8 @@ Expected Output: Array of field names and types available for filtering
       "title": "BugSnag: Set Network Endpoint Groupings",
     },
     "description": "Set the network endpoint grouping rules for a project
+
+**Toolset:** Performance
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -1026,6 +1086,8 @@ Expected Output: Success response confirming the update
       "title": "BugSnag: Update Error",
     },
     "description": "Update the status of an error
+
+**Toolset:** Errors
 
 **Parameters:**
 - projectId (string): Unique identifier of the project. This is optional if a current project is set and is used to set the current project for BugSnag tools.
@@ -1126,6 +1188,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Creates a remote system configuration in Collaborator (e.g., Bitbucket, GitHub, etc).
 
+**Toolset:** Remote System Configuration Management
+
 **Parameters:**
 - token (string) *required*: Remote system token, e.g., BITBUCKET, GITHUB, etc.
 - title (string) *required*: Remote system title.
@@ -1149,6 +1213,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Collaborator: Create Review",
     },
     "description": "Creates a new review in Collaborator. All parameters are optional.
+
+**Toolset:** Review Management
 
 **Parameters:**
 - creator (string): Collaborator username of the review creator. Optional. Default: currently logged in user.
@@ -1174,6 +1240,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Deletes a remote system configuration in Collaborator by its ID.
 
+**Toolset:** Remote System Configuration Management
+
 **Parameters:**
 - id (union) *required*: ID of the remote system Configuration to delete.",
     "inputSchema": [
@@ -1191,6 +1259,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Collaborator: Edit Remote System Configuration",
     },
     "description": "Edits parameters of an existing remote system configuration in Collaborator. Only title and config are editable after creation.
+
+**Toolset:** Remote System Configuration Management
 
 **Parameters:**
 - id (string) *required*: ID of the remote system Configuration to edit.
@@ -1216,6 +1286,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Finds a review in Collaborator by its review ID.
 
+**Toolset:** Review Management
+
 **Parameters:**
 - reviewId (string) *required*: The Collaborator review ID to find.",
     "inputSchema": [
@@ -1233,6 +1305,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Collaborator: Get Reviews",
     },
     "description": "Retrieves reviews from Collaborator using ReviewService.getReviews. All parameters are optional and only provided ones are sent.
+
+**Toolset:** Review Management
 
 **Parameters:**
 - login (string): Collaborator username to filter reviews.
@@ -1264,6 +1338,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Rejects a review in Collaborator by its review ID and reason.
 
+**Toolset:** Review Management
+
 **Parameters:**
 - reviewId (union) *required*: The Collaborator review ID to reject.
 - reason (string) *required*: Reason for rejecting the review.",
@@ -1283,6 +1359,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Collaborator: ReviewService Action",
     },
     "description": "Invoke any ReviewService method by name and arguments. For finishReviewPhase and waitOnPhase, provide reviewId (required) and until (optional, defaults to 'ANY').
+
+**Toolset:** Review Management
 
 **Parameters:**
 - action (enum) *required*
@@ -1304,6 +1382,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Tests the connection for a remote system configuration in Collaborator by its ID.
 
+**Toolset:** Remote System Configuration Management
+
 **Parameters:**
 - id (union) *required*: ID of the remote system Configuration to test connection for.",
     "inputSchema": [
@@ -1322,6 +1402,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Updates the webhook for a remote system configuration in Collaborator by its ID.
 
+**Toolset:** Remote System Configuration Management
+
 **Parameters:**
 - id (union) *required*: ID of the remote system Configuration to update the webhook for.",
     "inputSchema": [
@@ -1339,6 +1421,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Contract Testing: Add Label to Pacticipant",
     },
     "description": "Apply a label to a pacticipant.
+
+**Toolset:** Labels
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -1360,6 +1444,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Add a single role to a user (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - userId (string) *required*: UUID of the user
 - roleId (string) *required*: UUID of the role",
@@ -1379,6 +1465,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Contract Testing: Admin Create Role",
     },
     "description": "Create a new role with specific permissions (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - name (string) *required*: Name of the role
@@ -1402,6 +1490,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Create a new system account (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - name (string) *required*: Name of the system account",
     "inputSchema": [
@@ -1419,6 +1509,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Contract Testing: Admin Create Team",
     },
     "description": "Create a new team (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - name (string) *required*: Name of the team
@@ -1443,6 +1535,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Contract Testing: Admin Create User",
     },
     "description": "Create a new user account (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - email (string) *required*: Email address of the new user
@@ -1472,6 +1566,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Delete a role (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - roleId (string) *required*: UUID of the role",
     "inputSchema": [
@@ -1489,6 +1585,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Contract Testing: Admin Delete Team",
     },
     "description": "Delete a team (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - teamId (string) *required*: UUID of the team",
@@ -1508,6 +1606,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Delete a user account (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - userId (string) *required*: UUID of the user",
     "inputSchema": [
@@ -1525,6 +1625,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Contract Testing: Admin Get Role",
     },
     "description": "Retrieve details for a specific role by UUID (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - roleId (string) *required*: UUID of the role",
@@ -1544,6 +1646,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve API tokens for a system account (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - accountId (string) *required*: UUID of the system account",
     "inputSchema": [
@@ -1562,6 +1666,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve details for a specific team by UUID (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - teamId (string) *required*: UUID of the team",
     "inputSchema": [
@@ -1579,6 +1685,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Contract Testing: Admin Get Team User",
     },
     "description": "Check if a specific user is a member of a team (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - teamId (string) *required*: UUID of the team
@@ -1600,6 +1708,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "Retrieve details for a specific user by UUID (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - userId (string) *required*: UUID of the user",
     "inputSchema": [
@@ -1617,6 +1727,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
       "title": "Contract Testing: Admin Invite Users",
     },
     "description": "Send invitations to new users (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - users (array) *required*: List of users to invite",
@@ -1636,6 +1748,8 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     },
     "description": "List all available permission scopes (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -1652,6 +1766,8 @@ None",
     },
     "description": "List all roles defined in the workspace (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -1667,6 +1783,8 @@ None",
       "title": "Contract Testing: Admin List Team Users",
     },
     "description": "List all users in a specific team (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - teamId (string) *required*: UUID of the team",
@@ -1685,6 +1803,8 @@ None",
       "title": "Contract Testing: Admin List Teams",
     },
     "description": "List all teams in the workspace (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - q (string): Filter teams by name
@@ -1707,6 +1827,8 @@ None",
       "title": "Contract Testing: Admin List Users",
     },
     "description": "List all users in the workspace (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - active (boolean): Filter by active/inactive status
@@ -1734,6 +1856,8 @@ None",
     },
     "description": "Add or remove individual users from a team using JSON Patch (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - teamId (string) *required*: UUID of the team
 - operations (array) *required*: JSON Patch operations to apply",
@@ -1753,6 +1877,8 @@ None",
       "title": "Contract Testing: Admin Remove Role from User",
     },
     "description": "Remove a single role from a user (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - userId (string) *required*: UUID of the user
@@ -1774,6 +1900,8 @@ None",
     },
     "description": "Remove a specific user from a team (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - teamId (string) *required*: UUID of the team
 - userId (string) *required*: UUID of the user",
@@ -1794,6 +1922,8 @@ None",
     },
     "description": "Reset all roles to their factory defaults (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -1809,6 +1939,8 @@ None",
       "title": "Contract Testing: Admin Set Team Users",
     },
     "description": "Replace all members of a team (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - teamId (string) *required*: UUID of the team
@@ -1830,6 +1962,8 @@ None",
     },
     "description": "Replace all roles assigned to a user (admin).
 
+**Toolset:** Admin
+
 **Parameters:**
 - userId (string) *required*: UUID of the user
 - roles (array) *required*: Array of role UUIDs to assign",
@@ -1849,6 +1983,8 @@ None",
       "title": "Contract Testing: Admin Update Role",
     },
     "description": "Update an existing role's name and permissions (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - roleId (string) *required*: UUID of the role to update
@@ -1873,6 +2009,8 @@ None",
       "title": "Contract Testing: Admin Update Team",
     },
     "description": "Replace a team's configuration (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - teamId (string) *required*: UUID of the team to update
@@ -1899,6 +2037,8 @@ None",
       "title": "Contract Testing: Admin Update User",
     },
     "description": "Update a user's profile or active status (admin).
+
+**Toolset:** Admin
 
 **Parameters:**
 - userId (string) *required*: UUID of the user to update
@@ -1928,6 +2068,8 @@ None",
     },
     "description": "Performs a comprehensive compatibility check to determine whether a specific version of a service (pacticipant) can be safely deployed into a given environment. It analyzes the complete contract matrix of consumer-provider relationships to confirm that all required integrations are verified and compatible.
 
+**Toolset:** Can I Deploy
+
 **Parameters:**
 - pacticipant (string) *required*: The name of the pacticipant (application/service) being evaluated for deployment
 - version (string) *required*: The version of the pacticipant that you want to check if it's safe to deploy
@@ -1950,6 +2092,8 @@ None",
     },
     "description": "Check your PactFlow AI entitlements and credit balance if you encounter 401 Unauthorized errors or permission/credit issues when using PactFlow AI features.
 
+**Toolset:** PactFlow AI Status
+
 **Use Cases:** 1. Diagnose 401 unauthorized errors when attempting to use PactFlow AI features 2. Check remaining AI credits when PactFlow AI operations are rejected due to insufficient credits 3. Verify account entitlements when users receive permission denied errors for PactFlow AI functionality 4. Troubleshoot PactFlow AI access issues by retrieving current entitlement status and credit balance 5. Provide detailed error context when PactFlow AI features are unavailable due to account limitations",
     "inputSchema": [],
     "outputSchema": undefined,
@@ -1964,6 +2108,8 @@ None",
       "title": "Contract Testing: Create Environment",
     },
     "description": "Create a new deployment environment in PactFlow.
+
+**Toolset:** Environments and Deployments
 
 **Parameters:**
 - name (string) *required*: Unique name for the environment (e.g. 'production', 'staging')
@@ -1988,6 +2134,8 @@ None",
       "title": "Contract Testing: Create Pacticipant",
     },
     "description": "Register a new application/service (pacticipant) in the workspace.
+
+**Toolset:** Pacticipants
 
 **Parameters:**
 - name (string) *required*: Name of the pacticipant (cannot be changed after creation)
@@ -2017,6 +2165,8 @@ None",
     },
     "description": "Create a new secret for use in webhook authentication.
 
+**Toolset:** Secrets
+
 **Parameters:**
 - name (string) *required*: Name of the secret
 - value (string) *required*: Value of the secret
@@ -2040,6 +2190,8 @@ None",
       "title": "Contract Testing: Create Webhook",
     },
     "description": "Create a new webhook to trigger on contract events.
+
+**Toolset:** Webhooks
 
 **Parameters:**
 - description (string) *required*: Human-readable description of the webhook
@@ -2071,6 +2223,8 @@ None",
     },
     "description": "Delete ALL consumer-provider integrations in the workspace.
 
+**Toolset:** Integrations and Network
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -2086,6 +2240,8 @@ None",
       "title": "Contract Testing: Delete Branch",
     },
     "description": "Delete a branch from a pacticipant.
+
+**Toolset:** Branches and Versions
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -2107,6 +2263,8 @@ None",
     },
     "description": "Delete an environment by UUID.
 
+**Toolset:** Environments and Deployments
+
 **Parameters:**
 - environmentId (string) *required*: UUID of the environment",
     "inputSchema": [
@@ -2124,6 +2282,8 @@ None",
       "title": "Contract Testing: Delete Integration",
     },
     "description": "Delete a specific consumer-provider integration.
+
+**Toolset:** Integrations and Network
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
@@ -2145,6 +2305,8 @@ None",
     },
     "description": "Delete a pacticipant and all its associated data.
 
+**Toolset:** Pacticipants
+
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant to delete",
     "inputSchema": [
@@ -2162,6 +2324,8 @@ None",
       "title": "Contract Testing: Delete Secret",
     },
     "description": "Delete a secret by UUID.
+
+**Toolset:** Secrets
 
 **Parameters:**
 - secretId (string) *required*: UUID of the secret",
@@ -2181,6 +2345,8 @@ None",
     },
     "description": "Delete a webhook by UUID.
 
+**Toolset:** Webhooks
+
 **Parameters:**
 - webhookId (string) *required*: UUID of the webhook",
     "inputSchema": [
@@ -2199,6 +2365,8 @@ None",
     },
     "description": "Trigger a test execution of a specific webhook.
 
+**Toolset:** Webhooks
+
 **Parameters:**
 - webhookId (string) *required*: UUID of the webhook",
     "inputSchema": [
@@ -2216,6 +2384,8 @@ None",
       "title": "Contract Testing: Generate Pact Tests",
     },
     "description": "Generate Pact tests using PactFlow AI. You can provide one or more of the following input types: (1) request/response pairs for specific interactions, (2) code files to analyze and extract interactions from, and/or (3) OpenAPI document to generate tests for specific endpoints. When providing an OpenAPI document, a matcher is required to specify which endpoints to generate tests for.
+
+**Toolset:** Generate Pact Tests
 
 **Parameters:**
 - language (enum): Target language for the generated Pact tests. If not provided, will be inferred from other inputs.
@@ -2244,6 +2414,8 @@ None",
       "title": "Contract Testing: Get Audit Log",
     },
     "description": "Retrieve the audit log of events in the workspace.
+
+**Toolset:** Audit
 
 **Parameters:**
 - since (string): Only include events at or after this ISO 8601 timestamp
@@ -2277,6 +2449,8 @@ None",
     },
     "description": "Fetch the consumer Pact contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.
 
+**Toolset:** Bi-Directional Contract Testing
+
 **Parameters:**
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
@@ -2301,6 +2475,8 @@ None",
     },
     "description": "Fetch the consumer contract verification results for a given provider version in Bi-Directional Contract Testing.
 
+**Toolset:** Bi-Directional Contract Testing
+
 **Parameters:**
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number",
@@ -2321,6 +2497,8 @@ None",
     },
     "description": "Fetch all consumer Pact contracts relevant to a given provider version in Bi-Directional Contract Testing.
 
+**Toolset:** Bi-Directional Contract Testing
+
 **Parameters:**
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number",
@@ -2340,6 +2518,8 @@ None",
       "title": "Contract Testing: Get BDCT Consumer Pact Test Results by Consumer",
     },
     "description": "Fetch the consumer contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
+
+**Toolset:** Bi-Directional Contract Testing
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
@@ -2365,6 +2545,8 @@ None",
     },
     "description": "Fetch the cross-contract verification results for a given provider version in Bi-Directional Contract Testing.
 
+**Toolset:** Bi-Directional Contract Testing
+
 **Parameters:**
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number",
@@ -2384,6 +2566,8 @@ None",
       "title": "Contract Testing: Get BDCT Provider by Consumer Version",
     },
     "description": "Fetch the provider OpenAPI contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.
+
+**Toolset:** Bi-Directional Contract Testing
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
@@ -2409,6 +2593,8 @@ None",
     },
     "description": "Fetch the provider contract self-verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
 
+**Toolset:** Bi-Directional Contract Testing
+
 **Parameters:**
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number
@@ -2433,6 +2619,8 @@ None",
     },
     "description": "Fetch the provider OpenAPI contract for a given provider version in Bi-Directional Contract Testing.
 
+**Toolset:** Bi-Directional Contract Testing
+
 **Parameters:**
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number",
@@ -2453,6 +2641,8 @@ None",
     },
     "description": "Fetch the self-verification results for a provider contract version in Bi-Directional Contract Testing.
 
+**Toolset:** Bi-Directional Contract Testing
+
 **Parameters:**
 - providerName (string) *required*: Name of the provider
 - providerVersionNumber (string) *required*: Provider version number",
@@ -2472,6 +2662,8 @@ None",
       "title": "Contract Testing: Get BDCT X-Contract Test Results by Consumer",
     },
     "description": "Fetch the cross-contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.
+
+**Toolset:** Bi-Directional Contract Testing
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider
@@ -2497,6 +2689,8 @@ None",
     },
     "description": "Retrieve details for a specific branch of a pacticipant.
 
+**Toolset:** Branches and Versions
+
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
 - branchName (string) *required*: Name of the branch",
@@ -2516,6 +2710,8 @@ None",
       "title": "Contract Testing: Get Branch Versions",
     },
     "description": "Retrieve all versions published from a specific branch of a pacticipant.
+
+**Toolset:** Branches and Versions
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -2541,6 +2737,8 @@ None",
     },
     "description": "Retrieve the profile of the currently authenticated user.
 
+**Toolset:** User, Tokens and Preferences
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -2556,6 +2754,8 @@ None",
       "title": "Contract Testing: Get Currently Deployed Versions",
     },
     "description": "Retrieve all versions currently deployed to a given environment.
+
+**Toolset:** Environments and Deployments
 
 **Parameters:**
 - environmentId (string) *required*: UUID of the environment",
@@ -2575,6 +2775,8 @@ None",
     },
     "description": "Retrieve all versions currently released and supported in a given environment.
 
+**Toolset:** Environments and Deployments
+
 **Parameters:**
 - environmentId (string) *required*: UUID of the environment",
     "inputSchema": [
@@ -2592,6 +2794,8 @@ None",
       "title": "Contract Testing: Get Deployed Versions for Version",
     },
     "description": "Retrieve deployment records for a specific pacticipant version in a specific environment.
+
+**Toolset:** Environments and Deployments
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -2615,6 +2819,8 @@ None",
     },
     "description": "Retrieve details for a specific environment by UUID.
 
+**Toolset:** Environments and Deployments
+
 **Parameters:**
 - environmentId (string) *required*: UUID of the environment",
     "inputSchema": [
@@ -2633,6 +2839,8 @@ None",
     },
     "description": "Retrieve all consumer-provider integrations belonging to a specific team.
 
+**Toolset:** Integrations and Network
+
 **Parameters:**
 - teamId (string) *required*: UUID of the team",
     "inputSchema": [
@@ -2650,6 +2858,8 @@ None",
       "title": "Contract Testing: Get Latest Pacticipant Version",
     },
     "description": "Retrieve the latest version of a pacticipant, optionally filtered by tag.
+
+**Toolset:** Branches and Versions
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -2671,6 +2881,8 @@ None",
     },
     "description": "Fetch metrics across the entire workspace
 
+**Toolset:** Metrics
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -2686,6 +2898,8 @@ None",
       "title": "Contract Testing: Get Pacticipant",
     },
     "description": "Retrieve details for a specific pacticipant by name.
+
+**Toolset:** Pacticipants
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant (application or service)",
@@ -2704,6 +2918,8 @@ None",
       "title": "Contract Testing: Get Pacticipant Label",
     },
     "description": "Check whether a specific label is applied to a pacticipant.
+
+**Toolset:** Labels
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -2725,6 +2941,8 @@ None",
     },
     "description": "Retrieve the integration network graph for a specific pacticipant.
 
+**Toolset:** Integrations and Network
+
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant to get network for",
     "inputSchema": [
@@ -2742,6 +2960,8 @@ None",
       "title": "Contract Testing: Get Pacticipant Version",
     },
     "description": "Retrieve details for a specific version of a pacticipant.
+
+**Toolset:** Branches and Versions
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -2762,6 +2982,8 @@ None",
       "title": "Contract Testing: Get Pacts for Verification",
     },
     "description": "Retrieve the pacts that a provider should verify, based on consumer version selectors and WIP/pending pact configuration.
+
+**Toolset:** Contracts
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider to get pacts for
@@ -2791,6 +3013,8 @@ None",
     },
     "description": "Retrieve the states of a specific provider
 
+**Toolset:** Fetch Provider States
+
 **Parameters:**
 - provider (string) *required*: name of the provider to retrieve states for",
     "inputSchema": [
@@ -2808,6 +3032,8 @@ None",
       "title": "Contract Testing: Get Released Versions for Version",
     },
     "description": "Retrieve release records for a specific pacticipant version in a specific environment.
+
+**Toolset:** Environments and Deployments
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -2831,6 +3057,8 @@ None",
     },
     "description": "Retrieve metadata for a specific secret by UUID.
 
+**Toolset:** Secrets
+
 **Parameters:**
 - secretId (string) *required*: UUID of the secret",
     "inputSchema": [
@@ -2849,6 +3077,8 @@ None",
     },
     "description": "Retrieve system-wide preferences.
 
+**Toolset:** User, Tokens and Preferences
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -2864,6 +3094,8 @@ None",
       "title": "Contract Testing: Get Team Metrics",
     },
     "description": "Fetch metrics for all teams
+
+**Toolset:** Metrics
 
 **Parameters:**
 None",
@@ -2881,6 +3113,8 @@ None",
     },
     "description": "Retrieve the current user's preferences.
 
+**Toolset:** User, Tokens and Preferences
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -2896,6 +3130,8 @@ None",
       "title": "Contract Testing: Get Webhook",
     },
     "description": "Retrieve details for a specific webhook by UUID.
+
+**Toolset:** Webhooks
 
 **Parameters:**
 - webhookId (string) *required*: UUID of the webhook",
@@ -2915,6 +3151,8 @@ None",
     },
     "description": "Retrieve API tokens for the current user.
 
+**Toolset:** User, Tokens and Preferences
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -2930,6 +3168,8 @@ None",
       "title": "Contract Testing: List Branches",
     },
     "description": "Retrieve all branches for a given pacticipant, with optional filtering and pagination.
+
+**Toolset:** Branches and Versions
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -2955,6 +3195,8 @@ None",
     },
     "description": "Retrieve all environments configured in the Pact Broker or PactFlow workspace.
 
+**Toolset:** Environments and Deployments
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -2971,6 +3213,8 @@ None",
     },
     "description": "Retrieve all consumer-provider integrations registered in the workspace.
 
+**Toolset:** Integrations and Network
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -2986,6 +3230,8 @@ None",
       "title": "Contract Testing: List Labels",
     },
     "description": "Retrieve all labels used across the workspace.
+
+**Toolset:** Labels
 
 **Parameters:**
 - pageNumber (number): Page number
@@ -3006,6 +3252,8 @@ None",
       "title": "Contract Testing: List Pacticipant Versions",
     },
     "description": "Retrieve all versions for a given pacticipant.
+
+**Toolset:** Branches and Versions
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -3029,6 +3277,8 @@ None",
     },
     "description": "Retrieve all pacticipants (applications/services) registered in the Pact Broker or PactFlow workspace.
 
+**Toolset:** Pacticipants
+
 **Parameters:**
 - pageNumber (number): Page number (default: 1)
 - pageSize (number): Number of results per page",
@@ -3049,6 +3299,8 @@ None",
     },
     "description": "Retrieve all pacticipants that have a specific label applied.
 
+**Toolset:** Labels
+
 **Parameters:**
 - labelName (string) *required*: Label name to filter by",
     "inputSchema": [
@@ -3067,6 +3319,8 @@ None",
     },
     "description": "Retrieve all secrets stored in the workspace.
 
+**Toolset:** Secrets
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -3083,6 +3337,8 @@ None",
     },
     "description": "Retrieve all webhooks configured in the workspace.
 
+**Toolset:** Webhooks
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -3098,6 +3354,8 @@ None",
       "title": "Contract Testing: Matrix",
     },
     "description": "Retrieve the comprehensive contract verification matrix that shows the relationship between consumer and provider versions, their associated pact files, and verification results stored in the Pact Broker or Pactflow. The matrix provides detailed visibility into which consumer and provider versions have been successfully verified against each other, and highlights failures with detailed information about the cause.
+
+**Toolset:** Matrix
 
 **Parameters:**
 - latestby (string): This property removes the rows for the overridden pacts/verifications from the results. The options are cvp (show only the latest row for each consumer version and provider) and cvpv (show only the latest row each consumer version and provider version). For a can-i-deploy query with one selector, it should be set to cvp. For a can-i-deploy query with two selectors, it should be set to cvpv.
@@ -3122,6 +3380,8 @@ None",
       "title": "Contract Testing: Patch Pacticipant",
     },
     "description": "Partially update a pacticipant's metadata — only fields provided are changed.
+
+**Toolset:** Pacticipants
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant to update
@@ -3151,6 +3411,8 @@ None",
     },
     "description": "Publish one or more consumer Pact contracts to the Pact Broker or PactFlow, with branch and tag metadata.
 
+**Toolset:** Contracts
+
 **Parameters:**
 - pacticipantName (string) *required*: Name of the consumer application
 - pacticipantVersionNumber (string) *required*: Version number of the consumer
@@ -3178,6 +3440,8 @@ None",
       "title": "Contract Testing: Publish Provider Contract",
     },
     "description": "Publish a provider OpenAPI contract and self-verification results to PactFlow (Bi-Directional Contract Testing).
+
+**Toolset:** Contracts
 
 **Parameters:**
 - providerName (string) *required*: Name of the provider application
@@ -3207,6 +3471,8 @@ None",
     },
     "description": "Record that a version of a pacticipant has been deployed to an environment.
 
+**Toolset:** Environments and Deployments
+
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant that was deployed
 - versionNumber (string) *required*: Version number that was deployed
@@ -3231,6 +3497,8 @@ None",
     },
     "description": "Record that a version of a pacticipant has been released to an environment (for mobile/library release workflows).
 
+**Toolset:** Environments and Deployments
+
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant that was released
 - versionNumber (string) *required*: Version number that was released
@@ -3253,6 +3521,8 @@ None",
     },
     "description": "Regenerate (rotate) an API token by ID.
 
+**Toolset:** User, Tokens and Preferences
+
 **Parameters:**
 - tokenId (string) *required*: ID of the token to regenerate",
     "inputSchema": [
@@ -3270,6 +3540,8 @@ None",
       "title": "Contract Testing: Remove Label from Pacticipant",
     },
     "description": "Remove a label from a pacticipant.
+
+**Toolset:** Labels
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
@@ -3290,6 +3562,8 @@ None",
       "title": "Contract Testing: Review Pact Tests",
     },
     "description": "Review Pact tests using PactFlow AI. You can provide the following inputs: (1) Pact tests to be reviewed along with metadata
+
+**Toolset:** Review Pact Tests
 
 **Parameters:**
 - pactTests (object) *required*: Primary pact tests that needs to be refined.
@@ -3317,6 +3591,8 @@ None",
     },
     "description": "Trigger a test execution of all matching webhooks without a real event.
 
+**Toolset:** Webhooks
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -3332,6 +3608,8 @@ None",
       "title": "Contract Testing: Update Environment",
     },
     "description": "Update an existing environment's metadata.
+
+**Toolset:** Environments and Deployments
 
 **Parameters:**
 - environmentId (string) *required*: UUID of the environment to update
@@ -3358,6 +3636,8 @@ None",
       "title": "Contract Testing: Update Pacticipant",
     },
     "description": "Fully replace a pacticipant's metadata (display name, main branch, repository URL, etc.).
+
+**Toolset:** Pacticipants
 
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant to update
@@ -3387,6 +3667,8 @@ None",
     },
     "description": "Update metadata for a specific pacticipant version.
 
+**Toolset:** Branches and Versions
+
 **Parameters:**
 - pacticipantName (string) *required*: Name of the pacticipant
 - versionNumber (string) *required*: Version number to update
@@ -3408,6 +3690,8 @@ None",
       "title": "Contract Testing: Update Secret",
     },
     "description": "Update an existing secret's name, value, or description.
+
+**Toolset:** Secrets
 
 **Parameters:**
 - secretId (string) *required*: UUID of the secret to update
@@ -3432,6 +3716,8 @@ None",
       "title": "Contract Testing: Update Webhook",
     },
     "description": "Update an existing webhook's configuration.
+
+**Toolset:** Webhooks
 
 **Parameters:**
 - webhookId (string) *required*: UUID of the webhook to update
@@ -3464,6 +3750,8 @@ None",
       "title": "QMetry: Bulk Update Test Case Execution Status",
     },
     "description": "Update execution status for individual or multiple test case runs in bulk
+
+**Toolset:** Test Suites
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -3606,6 +3894,8 @@ Expected Output: Execution 1/4 updated. The MCP Agent will automatically repeat 
     },
     "description": "Create a new cycle within an existing release in QMetry for test execution planning
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -3690,6 +3980,8 @@ Expected Output: Cycle 'Sprint 3 - Feature Testing' created with dates and proje
       "title": "QMetry: Create Defect or Issue",
     },
     "description": "Create a new defect/issue internally in QMetry.
+
+**Toolset:** Issues
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -3829,6 +4121,8 @@ Expected Output: Issue created in summary details with release and cycles
     },
     "description": "Create a new release in QMetry with optional cycle for test planning and execution tracking
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -3915,6 +4209,8 @@ Expected Output: Release 'Summer 2024 Release' created with dates and 'Beta Test
       "title": "QMetry: Create Test Case",
     },
     "description": "Create a new test case in QMetry with steps, metadata, and release/cycle mapping.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - tcFolderID (string) *required*
@@ -4023,6 +4319,8 @@ Expected Output: Test case created with steps and metadata
     },
     "description": "Create a new test suite in QMetry with metadata and release/cycle mapping.
 
+**Toolset:** Test Suites
+
 **Parameters:**
 - parentFolderId (string) *required*
 - name (string) *required*
@@ -4099,6 +4397,8 @@ Expected Output: Test suite created with details and metadata. Example uses: par
     },
     "description": "Fetches the status of an automation import job by request ID.
 
+**Toolset:** Automation
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -4131,6 +4431,8 @@ Expected Output: Status, progress, and details of the automation import job for 
       "title": "QMetry: Fetch Builds",
     },
     "description": "Fetch QMetry builds from the current project
+
+**Toolset:** Projects
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -4198,6 +4500,8 @@ Expected Output: List of builds filtered by archive status (archived and non-arc
       "title": "QMetry: Fetch Defects or Issues",
     },
     "description": "Fetch QMetry defects or issues - automatically handles viewId resolution based on project
+
+**Toolset:** Issues
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -4317,6 +4621,8 @@ Expected Output: Issues matching any of the specified entity keys
     },
     "description": "Get executions for a given test suite in QMetry
 
+**Toolset:** Test Suites
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -4415,6 +4721,8 @@ Expected Output: Paginated list of executions with 25 items per page using speci
       "title": "QMetry: Fetch Issues Linked to Test Case",
     },
     "description": "Get issues that are linked (or not linked) to a specific test case in QMetry
+
+**Toolset:** Issues
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -4520,6 +4828,8 @@ Expected Output: Issues linked to version 2 of the test case execution
       "title": "QMetry: Fetch Linked Issues of Test Case Run",
     },
     "description": "Get issues that are linked (or not linked) to a specific test case run in QMetry
+
+**Toolset:** Issues
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -4628,6 +4938,8 @@ Expected Output: Issues owned by specific user and created in QMetry
     },
     "description": "Fetch QMetry platforms from the current project
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -4721,6 +5033,8 @@ Expected Output: List of platforms sorted by name in ascending order
     },
     "description": "Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -4807,6 +5121,8 @@ Expected Output: List of projects filtered by project key (e.g. 'MAC', 'UT', etc
     },
     "description": "Fetch QMetry project information including viewId and folderPath needed for other operations
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 
@@ -4845,6 +5161,8 @@ Expected Output: MAC project configuration with available views and folders
       "title": "QMetry: Fetch Releases and Cycles",
     },
     "description": "Fetch QMetry releases and cycles from the current project
+
+**Toolset:** Projects
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -4895,6 +5213,8 @@ Expected Output: List of all releases and cycles including archived ones (showAr
     },
     "description": "Get detailed information for a specific QMetry requirement by numeric ID
 
+**Toolset:** Requirements
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -4934,6 +5254,8 @@ Expected Output: Detailed requirement information including summary, description
       "title": "QMetry: Fetch Requirements",
     },
     "description": "Fetch QMetry requirements - automatically handles viewId resolution based on project
+
+**Toolset:** Requirements
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -5140,6 +5462,8 @@ Expected Output: All requirements associated with Release 8.12 (ID: 55178)
     },
     "description": "Get requirements that are linked (or not linked) to a specific test case in QMetry
 
+**Toolset:** Requirements
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -5270,6 +5594,8 @@ Expected Output: Linked requirements in Release 8.12 and Cycle 8.12.1
     },
     "description": "Get detailed information for a specific QMetry test case by numeric ID - USE THIS for single test case lookup
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -5312,6 +5638,8 @@ Expected Output: Detailed test case information including summary, description, 
       "title": "QMetry: Fetch Test Case Executions",
     },
     "description": "Get execution records for a specific test case by numeric ID
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -5416,6 +5744,8 @@ Expected Output: Execution records executed by specific user
     },
     "description": "Get test case runs under a specific test suite run execution in QMetry
 
+**Toolset:** Test Suites
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -5485,6 +5815,8 @@ Expected Output: Test case runs from the specified test suite run execution
     },
     "description": "Get detailed test case steps for a specific test case by numeric ID
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -5530,6 +5862,8 @@ Expected Output: Detailed steps with actions and expected results for test case 
     },
     "description": "Get QMetry test case details for a specific version by numeric ID
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -5571,6 +5905,8 @@ Expected Output: Version 2 details for test case 123
       "title": "QMetry: Fetch Test Cases",
     },
     "description": "Fetch QMetry test cases - automatically handles viewId resolution based on project
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -5707,6 +6043,8 @@ Expected Output: Test cases matching any of the specified entity keys
       "title": "QMetry: Fetch Test Cases Linked to Requirement",
     },
     "description": "Get test cases that are linked (or not linked) to a specific requirement in QMetry
+
+**Toolset:** Requirements
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -5895,6 +6233,8 @@ Expected Output: Active, high priority, automated test cases linked to requireme
     },
     "description": "Get test cases that are linked (or not linked) to a specific test suite in QMetry
 
+**Toolset:** Test Suites
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -5989,6 +6329,8 @@ Expected Output: Active test cases linked to the test suite
       "title": "QMetry: Fetch Test Suites",
     },
     "description": "Fetch QMetry test suites - automatically handles viewId resolution based on project
+
+**Toolset:** Test Suites
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -6116,6 +6458,8 @@ Expected Output: Test suites matching any of the specified entity keys
     },
     "description": "Get test suites that can be linked to test cases in QMetry with automatic viewId resolution
 
+**Toolset:** Test Suites
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -6228,6 +6572,8 @@ Expected Output: Test suites available in specific folder ID 42 for test case li
       "title": "QMetry: Import Automation Test Results",
     },
     "description": "Import/Publish automation test results from TestNG, JUnit, Cucumber, Robot, HPUFT, or QAF frameworks into QMetry
+
+**Toolset:** Automation
 
 **Parameters:**
 - file (string) *required*: Base64 encoded file content or file path. User must upload result file (.json, .xml, .zip up to 30 MB)
@@ -6405,6 +6751,8 @@ Expected Output: Test suite and test cases created with custom fields and UDFs
     },
     "description": "Link one or more issues to a QMetry Testcase Run (execution).
 
+**Toolset:** Issues
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -6459,6 +6807,8 @@ Expected Output: Issues 5054834, 5054835 linked to testcase run 567890 successfu
     },
     "description": "Link one or more platforms to a QMetry Test Suite.
 
+**Toolset:** Test Suites
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 - baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
@@ -6508,6 +6858,8 @@ Expected Output: Platforms 63004, 63005, 63006 linked to test suite 1511970 succ
     },
     "description": "Link one or more requirements to a test case by entityKey and version IDs.
 
+**Toolset:** Requirements
+
 **Parameters:**
 - tcID (string) *required*: EntityKey of Testcase (e.g. 'COD-TC-29')
 - tcVersionId (number) *required*: Test Case version number. This is the internal numeric identifier for the version.
@@ -6546,6 +6898,8 @@ Expected Output: Requirements linked to test case VT-TC-26 successfully.
       "title": "QMetry: Link Test Cases to Test Suite",
     },
     "description": "Link test cases to a test suite in QMetry.
+
+**Toolset:** Test Suites
 
 **Parameters:**
 - tsID (number) *required*: Id of Test Suite (required)
@@ -6617,6 +6971,8 @@ Expected Output: Test cases VT-TC-4, VT-TC-1, VT-TC-101, and VT-TC-22 linked to 
     },
     "description": "Link test cases (including those linked to requirements) to a test suite in QMetry.
 
+**Toolset:** Test Suites
+
 **Parameters:**
 - tsID (number) *required*: Id of Test Suite (required)
 - tcvdIDs (array) *required*: Array of Test Case Version IDs (required if fromReqs is true)
@@ -6687,6 +7043,8 @@ Expected Output: Test cases VT-TC-4, VT-TC-1, VT-TC-101, and VT-TC-22 linked to 
     },
     "description": "Set current QMetry project for your account
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
 
@@ -6735,6 +7093,8 @@ Expected Output: Project context set to 'MAC' with viewIds and folder structure
       "title": "QMetry: Update Cycle",
     },
     "description": "Update an existing cycle in QMetry for test execution planning
+
+**Toolset:** Projects
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -6803,6 +7163,8 @@ Expected Output: Cycle updated with new name and dates successfully
       "title": "QMetry: Update Issue",
     },
     "description": "Update an existing QMetry issue by DefectId and/or entityKey.
+
+**Toolset:** Issues
 
 **Parameters:**
 - DefectId (number) *required*: ID of the defect/issue to be updated
@@ -6880,6 +7242,8 @@ Expected Output: Affected release updated successfully.
       "title": "QMetry: Update Test Case",
     },
     "description": "Update an existing QMetry test case OR create a new version by tcID and tcVersionID, with auto-resolution from entityKey.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
@@ -7172,6 +7536,8 @@ Expected Output: New version 3 created successfully from version 2. Test case no
     },
     "description": "Update an existing QMetry test suite by id(testsuite numeric id), with auto-resolution from entityKey.
 
+**Toolset:** Test Suites
+
 **Parameters:**
 - id (number) *required*: Id of Test Suite to be updated (required)
 - TsFolderID (number) *required*: Folder ID where Test Suite resides (required)
@@ -7242,6 +7608,8 @@ Expected Output: description updated only. Field IDs auto-resolved from project 
       "title": "QTM4J: Create Test Case",
     },
     "description": "Create a new test case in a QTM4J project. Supports auto-resolving human-readable names for priority, status, labels, and components.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - summary (string) *required*: Test case summary/title
@@ -7346,6 +7714,8 @@ Expected Output: Test case created with resolved labels/components/priority/stat
     },
     "description": "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - summary (string) *required*: Short title of the test cycle. Must not be blank. Max 255 chars.
 - description (string): Detailed description of the test cycle. Max 65 535 characters.
@@ -7421,6 +7791,8 @@ Expected Output: Test cycle created with resolved priority, status, labels, and 
     },
     "description": "Retrieve a paginated history of past automation result uploads for a QTM4J project.
 
+**Toolset:** Test Automation
+
 **Parameters:**
 - startAt (number): Zero-indexed starting position for pagination (default: 0). (default: 0)
 - maxResults (number): Maximum number of records to return per page (default: 20, max: 100). (default: 20)
@@ -7482,6 +7854,8 @@ Skip any field that is null, missing, or false. NEVER show the raw fileName. NEV
       "title": "QTM4J: Get Projects",
     },
     "description": "Get all projects from QTM4J with optional filtering
+
+**Toolset:** Projects
 
 **Parameters:**
 - projectId (number): Filter by specific project ID
@@ -7574,6 +7948,8 @@ Expected Output: QMetry-enabled projects containing 'TEST' in their project keys
       "title": "QTM4J: Get Test Steps",
     },
     "description": "Get test steps for a test case by its key and version. Accepts the human-readable key (e.g. 'SCRUM-TC-145') and resolves it to the internal ID automatically.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - key (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'. PROJECT_KEY is the Jira project key (e.g. 'SCRUM'). The number is the test case counter within that project (auto-incremented, not related to seqNo). Obtain keys from the search_test_cases tool or directly from QTM4J.
@@ -7684,6 +8060,8 @@ Expected Output: First 10 steps in sequence order
       "title": "QTM4J: Search Test Cases",
     },
     "description": "Search and filter test cases in a QTM4J project with support for pagination, field selection, and sorting.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - filter (object): Filter criteria — multiple fields are combined with AND; multiple values within one field use OR.
@@ -8022,6 +8400,8 @@ Expected Output: Test cases executed in the past week with their pass rates and 
     },
     "description": "Search for test cycles in a QTM4J project by status, owner, folder, date range, or keyword. projectId is injected automatically from the active project context.
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - filter (object): Filter criteria — multiple fields are combined with AND; multiple values within one field use OR.
 - fields (array): Fields to include in each result object. If omitted, server returns its default set (NOTE: plannedStartDate and plannedEndDate are NOT in the default response — include them explicitly when needed). Available fields: key, summary, description, status, priority, assignee, reporter, isAutomated, plannedStartDate, plannedEndDate, labels, components, fixVersions, sprint, defectCount, estimatedTime, actualTime, created, updated. Example: ['key', 'summary', 'status', 'assignee', 'plannedStartDate', 'plannedEndDate']
@@ -8194,6 +8574,8 @@ Expected Output: Test cycles matching all specified filters with selected fields
     },
     "description": "Set the active QTM4J project for the current session. Must be called before any project-specific operation. Pre-loads priority and status values so you can map user-provided names to valid options via NLP.
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectKey (string) *required*: Project key (e.g., 'SCRUM'). Use the get_projects tool to discover available project keys.
 
@@ -8240,6 +8622,8 @@ Expected Output: Project context switched to AD
       "title": "QTM4J: Update Test Case",
     },
     "description": "Update an existing test case in QTM4J. Supports auto-resolving human-readable names for priority, status, labels, and components. Labels and components support add/delete operations.
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - key (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'. Automatically resolved to the internal ID and latest version.
@@ -8340,6 +8724,8 @@ Expected Output: Version 2 of test case updated with new assignee and estimated 
       "title": "QTM4J: Update Test Cycle",
     },
     "description": "Update an existing test cycle in QTM4J by its human-readable key (e.g. 'SCRUM-TR-101'). Supports auto-resolving human-readable names for status and priority. Labels and components support add/delete operations. Only the fields you provide are changed — omitted fields are left as-is. projectId is injected automatically from the active project context.
+
+**Toolset:** Test Cycles
 
 **Parameters:**
 - key (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
@@ -8477,6 +8863,8 @@ Expected Output: Test cycle updated with all specified fields
     },
     "description": "Upload an automation result file to QTM4J and map the results to a test cycle. Supports JUnit XML, TestNG XML, Cucumber JSON, QAF, HP UFT, and SpecFlow formats.
 
+**Toolset:** Test Automation
+
 **Parameters:**
 - filePath (string) *required*: Path to the automation result file on disk. Filesystem contents can change between turns — always resolve this from a fresh scan, never from a previously seen path. Supported extensions: .xml, .json, .zip
 - format (enum) *required*: Format of the result file. Supported values: cucumber, testng, junit, qaf, hpuft, specflow
@@ -8579,6 +8967,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     },
     "description": "Add a natural language prompt step to an active Reflect recording session
 
+**Toolset:** Recording
+
 **Parameters:**
 - sessionId (string) *required*: The ID of the Reflect recording session
 - prompt (string) *required*: The natural language prompt describing the test step. The prompt should describe a single action, assertion, or query. The prompt can only contain literal text; it cannot contain template variables, secrets, or other dynamic syntax. If we are in a Web recording, the prompt can perform browser navigation (e.g. 'Click on the back button', 'Navigate to https://www.example.com') and use the tab and enter keys to navigate (e.g. 'Press the tab key', 'Press the enter key').",
@@ -8599,6 +8989,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     },
     "description": "Insert a reusable test segment into an active Reflect recording session
 
+**Toolset:** Recording
+
 **Parameters:**
 - sessionId (string) *required*: The ID of the Reflect recording session
 - segmentId (number) *required*: The ID of the segment to add",
@@ -8618,6 +9010,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
       "title": "Reflect: Cancel Suite Execution",
     },
     "description": "Cancel a reflect suite execution
+
+**Toolset:** Suites
 
 **Parameters:**
 - suiteId (string) *required*: ID of the reflect suite to cancel execution for
@@ -8647,6 +9041,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
 6. If a step fails, use delete_previous_step to remove it and try a different approach.
 7. After completing a task, if the task required multiple prompt steps, add a final prompt step that validates the current state of the page based on what you see on the screen. In your validation, do not reference information that can change from run to run.
 
+**Toolset:** Recording
+
 **Parameters:**
 - sessionId (string) *required*: The ID of the Reflect recording session to connect to",
     "inputSchema": [
@@ -8664,6 +9060,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
       "title": "Reflect: Delete Previous Step",
     },
     "description": "Delete the last step added to an active Reflect recording session
+
+**Toolset:** Recording
 
 **Parameters:**
 - sessionId (string) *required*: The ID of the Reflect recording session",
@@ -8683,6 +9081,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     },
     "description": "Execute a reflect suite
 
+**Toolset:** Suites
+
 **Parameters:**
 - suiteId (string) *required*: ID of the reflect suite to execute",
     "inputSchema": [
@@ -8700,6 +9100,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
       "title": "Reflect: Get Screenshot",
     },
     "description": "Capture a screenshot from the current state of an active Reflect recording session
+
+**Toolset:** Recording
 
 **Parameters:**
 - sessionId (string) *required*: The ID of the Reflect recording session
@@ -8721,6 +9123,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     },
     "description": "Get the status of a reflect suite execution
 
+**Toolset:** Suites
+
 **Parameters:**
 - suiteId (string) *required*: ID of the reflect suite to get execution status for
 - executionId (string) *required*: ID of the reflect suite execution to get status for",
@@ -8741,6 +9145,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     },
     "description": "Get the status of a reflect test execution
 
+**Toolset:** Tests
+
 **Parameters:**
 - executionId (string) *required*: ID of the reflect test execution to get status for",
     "inputSchema": [
@@ -8758,6 +9164,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
       "title": "Reflect: List Segments",
     },
     "description": "Retrieve available reusable test segments for the given platform type. Segments are reusable test steps with an optional set of parameters that can used across multiple tests.
+
+**Toolset:** Tests
 
 **Parameters:**
 - platform (enum) *required*: The platform type to retrieve segments for
@@ -8781,6 +9189,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     },
     "description": "List all executions for a given suite
 
+**Toolset:** Suites
+
 **Parameters:**
 - suiteId (string) *required*: ID of the reflect suite to list executions for",
     "inputSchema": [
@@ -8799,6 +9209,8 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     },
     "description": "Retrieve a list of all reflect suites available
 
+**Toolset:** Suites
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -8815,6 +9227,8 @@ None",
     },
     "description": "List all reflect tests
 
+**Toolset:** Tests
+
 **Parameters:**
 None",
     "inputSchema": [],
@@ -8830,6 +9244,8 @@ None",
       "title": "Reflect: Run Test",
     },
     "description": "Run a reflect test
+
+**Toolset:** Tests
 
 **Parameters:**
 - testId (string) *required*: ID of the reflect test to run",
@@ -8848,6 +9264,8 @@ None",
       "title": "Swagger: Create API from Prompt",
     },
     "description": "Generate and save an API definition based on a prompt using SmartBear AI. This tool automatically applies organization governance and standardization rules during API generation. The specType parameter determines the format of the generated definition. Use: 'openapi20' for OpenAPI 2.0, 'openapi30x' for OpenAPI 3.0.x, 'openapi31x' for OpenAPI 3.1.x, 'asyncapi2xx' for AsyncAPI 2.x, 'asyncapi30x' for AsyncAPI 3.0.x. Use this tool when creating APIs that comply with governance policies or when generating APIs from natural language descriptions. Use this tool when users ask to create, generate, or design APIs with governance or standardization requirements. Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.
+
+**Toolset:** Registry API
 
 **Parameters:**
 - owner (string) *required*: API owner (organization or user, case-sensitive)
@@ -8873,6 +9291,8 @@ None",
     },
     "description": "Create a new API or update an existing API in SwaggerHub Registry for Swagger Studio. The API specification type (OpenAPI, AsyncAPI) is automatically detected from the definition content. APIs are always created with fixed values: version 1.0.0, private visibility, and automock disabled (these values cannot be changed). Returns HTTP 201 for creation, HTTP 200 for update. Response includes 'operation' field indicating whether it was a 'create' or 'update' operation along with API details and SwaggerHub URL.
 
+**Toolset:** Registry API
+
 **Parameters:**
 - owner (string) *required*: Organization name (owner of the API)
 - apiName (string) *required*: API name
@@ -8894,6 +9314,8 @@ None",
       "title": "Swagger: Create Portal",
     },
     "description": "Create a new portal within Swagger.
+
+**Toolset:** Portals
 
 **Parameters:**
 - name (string): The display name for the portal - shown to users and in branding (3-40 characters)
@@ -8927,6 +9349,8 @@ None",
     },
     "description": "Create a new product for a specific portal.
 
+**Toolset:** Products
+
 **Parameters:**
 - portalId (string) *required*: Portal UUID or subdomain - unique identifier for the portal instance
 - type (string) *required*: Product creation type - 'new' to create from scratch or 'copy' to duplicate an existing product
@@ -8959,6 +9383,8 @@ None",
     },
     "description": "Create a new table of contents item in a portal product section. Supports API references, HTML content, and Markdown content types.
 
+**Toolset:** Table Of Contents
+
 **Parameters:**
 - sectionId (string) *required*: Section ID - unique identifier for the section within the product
 - type (enum) *required*: Type of table of contents creation - 'new' to create from scratch or 'copy' to duplicate an existing one
@@ -8989,6 +9415,8 @@ None",
     },
     "description": "Delete a product from a specific portal
 
+**Toolset:** Products
+
 **Parameters:**
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product",
     "inputSchema": [
@@ -9006,6 +9434,8 @@ None",
       "title": "Swagger: Delete Table Of Contents",
     },
     "description": "Delete table of contents entry. Performs a soft-delete of an entry from the table of contents. Supports recursive deletion of nested items.
+
+**Toolset:** Table Of Contents
 
 **Parameters:**
 - tableOfContentsId (string) *required*: The table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'
@@ -9026,6 +9456,8 @@ None",
       "title": "Swagger: Get API Definition",
     },
     "description": "Fetch resolved API definition from SwaggerHub Registry based on owner, API name, and version.
+
+**Toolset:** Registry API
 
 **Parameters:**
 - owner (string) *required*: API owner (organization or user, case-sensitive)
@@ -9053,6 +9485,8 @@ None",
     },
     "description": "Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.
 
+**Toolset:** Documents
+
 **Parameters:**
 - documentId (string) *required*: Document UUID - unique identifier for the document",
     "inputSchema": [
@@ -9070,6 +9504,8 @@ None",
       "title": "Swagger: Get Portal",
     },
     "description": "Retrieve information about a specific portal.
+
+**Toolset:** Portals
 
 **Parameters:**
 - portalId (string) *required*: Portal UUID or subdomain - unique identifier for the portal instance",
@@ -9089,6 +9525,8 @@ None",
     },
     "description": "Retrieve information about a specific product resource.
 
+**Toolset:** Products
+
 **Parameters:**
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product",
     "inputSchema": [
@@ -9106,6 +9544,8 @@ None",
       "title": "Swagger: List Organizations",
     },
     "description": "Get organizations for a user. Returns a list of organizations that the authenticating user is a member of. On-Premise admin gets a list of all organizations in the system.
+
+**Toolset:** Registry API
 
 **Parameters:**
 - q (string): Search organizations by partial or full name (case-insensitive)
@@ -9133,6 +9573,8 @@ None",
     },
     "description": "Get sections for a specific product within a portal.
 
+**Toolset:** Sections
+
 **Parameters:**
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product
 - embed (array): List of related entities to embed in the response - e.g., ['tableOfContents', 'tableOfContents.swaggerhubApi'] to include table of contents and SwaggerHub API details
@@ -9157,6 +9599,8 @@ None",
     },
     "description": "Get products for a specific portal that match your criteria.
 
+**Toolset:** Products
+
 **Parameters:**
 - portalId (string) *required*: Portal UUID or subdomain - unique identifier for the portal instance",
     "inputSchema": [
@@ -9173,7 +9617,9 @@ None",
       "readOnlyHint": true,
       "title": "Swagger: List Portals",
     },
-    "description": "Search for available portals within Swagger. Only portals where you have at least a designer role, either at the product level or organization level, are returned.",
+    "description": "Search for available portals within Swagger. Only portals where you have at least a designer role, either at the product level or organization level, are returned.
+
+**Toolset:** Portals",
     "inputSchema": [],
     "outputSchema": undefined,
     "title": "Swagger: List Portals",
@@ -9187,6 +9633,8 @@ None",
       "title": "Swagger: List Table Of Contents",
     },
     "description": "Get table of contents for a section of a product within a portal.
+
+**Toolset:** Table Of Contents
 
 **Parameters:**
 - sectionId (string) *required*: Section ID - unique identifier for the section within the product
@@ -9212,6 +9660,8 @@ None",
     },
     "description": "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.
 
+**Toolset:** Products
+
 **Parameters:**
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product
 - preview (boolean): Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) (default: false)",
@@ -9232,6 +9682,8 @@ None",
     },
     "description": "Run a standardization scan against an API definition using the organization's governance and standardization rules. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of standardization errors and validation issues. Use this tool when users ask to validate, scan, or check API governance or standardization.
 
+**Toolset:** Registry API
+
 **Parameters:**
 - orgName (string) *required*: The organization name to use for standardization rules
 - definition (string) *required*: API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format) to scan for standardization errors",
@@ -9251,6 +9703,8 @@ None",
       "title": "Swagger: Search APIs and Domains",
     },
     "description": "Search for APIs and Domains in SwaggerHub Registry using the comprehensive /specs endpoint and retrieve metadata including owner, name, description, summary, version, and specification.
+
+**Toolset:** Registry API
 
 **Parameters:**
 - query (string): Search query to filter APIs by name, description, or content
@@ -9286,6 +9740,8 @@ None",
     },
     "description": "Standardize and fix an API definition using AI to ensure compliance with governance policies. Scans the API definition for standardization errors and automatically fixes them using SmartBear AI. Optionally provide 'newVersion' (e.g. patch bump '1.0.0' → '1.0.1') to save the fixed definition as a new version — omitting it will overwrite the current version. Returns the number of errors found and the fixed definition if successful. Use this tool when users ask to standardize, fix, govern, or ensure governance compliance of APIs.
 
+**Toolset:** Registry API
+
 **Parameters:**
 - owner (string) *required*: API owner (organization or user, case-sensitive)
 - api (string) *required*: API name (case-sensitive)
@@ -9310,6 +9766,8 @@ None",
     },
     "description": "Update the content or source of an existing document. Supports both HTML and Markdown content types.
 
+**Toolset:** Documents
+
 **Parameters:**
 - documentId (string) *required*: Document UUID - unique identifier for the document
 - content (string): The document content to update (HTML or Markdown based on document type)
@@ -9333,6 +9791,8 @@ None",
       "title": "Swagger: Update Portal",
     },
     "description": "Update a specific portal's configuration.
+
+**Toolset:** Portals
 
 **Parameters:**
 - portalId (string) *required*: Portal UUID or subdomain - unique identifier for the portal instance
@@ -9370,6 +9830,8 @@ None",
     },
     "description": "Update a product's settings within a specific portal.
 
+**Toolset:** Products
+
 **Parameters:**
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product
 - name (string): Update product display name - changes how it appears to users in navigation and listings (3-40 characters)
@@ -9397,6 +9859,8 @@ None",
       "title": "Zephyr: Create Folder",
     },
     "description": "Create a folder called 'Axial Pump Tests' in the project SA for organizing test cases
+
+**Toolset:** Folders
 
 **Parameters:**
 - parentId (number): Folder ID of the parent folder. Must be \`null\` for root folders.
@@ -9458,6 +9922,8 @@ Expected Output: The newly created Folder with its ID and self link",
       "title": "Zephyr: Create Test Case",
     },
     "description": "Create a new Test Case in Zephyr specified project
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - projectKey (string) *required*: Jira project key.
@@ -9558,6 +10024,8 @@ Expected Output: The newly created Test Case with its details and key",
     },
     "description": "Create a new link between an issue in Jira and a Test Case in Zephyr
 
+**Toolset:** Test Cases
+
 **Examples:**
 1. Create a link between the test case SA-T1 and the Jira Issue ID 10100
 \`\`\`json
@@ -9586,6 +10054,8 @@ Expected Output: The newly created Issue Link with its ID and self link",
       "title": "Zephyr: Create Test Case Steps",
     },
     "description": "Create steps for a Test Case in Zephyr. Supports inline step definitions or delegating execution to another test case (also known as 'call to test' via UI). Requires a mode: \`APPEND\` adds steps to the end of the existing list, \`OVERWRITE\` deletes all existing steps and replaces them with the provided ones. Always ask the user to choose between OVERWRITE or APPEND before calling this tool.
+
+**Toolset:** Test Cases
 
 **Examples:**
 1. To the Test Case SA-T1, add steps that will test a login page.
@@ -9672,6 +10142,8 @@ Expected Output: The ID of the Test Steps resource and the API self URL to fetch
     },
     "description": "Create a new Web Link for a Test Case in Zephyr
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - description (string): The web link description
 - url (string) *required*: The web link URL
@@ -9717,6 +10189,8 @@ Expected Output: The newly created Web Link with its ID and self link",
       "title": "Zephyr: Create Test Cycle",
     },
     "description": "Create a new Test Cycle in Zephyr specified project
+
+**Toolset:** Test Cycles
 
 **Parameters:**
 - projectKey (string) *required*: Jira project key.
@@ -9811,6 +10285,8 @@ Expected Output: The newly created Test Cycle with its details and key",
     },
     "description": "Create a new link between an issue in Jira and a Test Cycle in Zephyr
 
+**Toolset:** Test Cycles
+
 **Examples:**
 1. Create a link between the test cycle with key SA-R1 and the Jira Issue ID 10100
 \`\`\`json
@@ -9845,6 +10321,8 @@ Expected Output: The link between Test Cycle and Jira issue should be created, b
       "title": "Zephyr: Create Test Cycle Web Link",
     },
     "description": "Create a new Web Link for a Test Cycle in Zephyr
+
+**Toolset:** Test Cycles
 
 **Examples:**
 1. Create a link between the specified test cycle by Id '100001' and generic URL 'https://www.atlassian.com' with description 'Atlassian homepage'
@@ -9893,6 +10371,8 @@ Expected Output: The newly created Web Link with its ID and self link",
       "title": "Zephyr: Create Test Execution",
     },
     "description": "Create a new Test Execution for a Test Case within a specific Test Cycle
+
+**Toolset:** Test Executions
 
 **Parameters:**
 - projectKey (string) *required*: Jira project key.
@@ -9985,6 +10465,8 @@ Expected Output: The newly created Test Execution including custom field values"
     },
     "description": "Create a new link between a Jira issue and a Test Execution in Zephyr
 
+**Toolset:** Test Executions
+
 **Examples:**
 1. Create a link between the test execution with key SA-E40 and the Jira Issue ID 10100
 \`\`\`json
@@ -10019,6 +10501,8 @@ Expected Output: The link between Test Execution and Jira issue should be create
       "title": "Zephyr: Create Test Script",
     },
     "description": "Create a new Test Script of the types Plain Text or BDD in a Zephyr Test Case.
+
+**Toolset:** Test Cases
 
 **Examples:**
 1. Create a plain text test script for test case SA-T1 to verify that the axial pump can be enabled
@@ -10070,6 +10554,8 @@ Expected Output: The created test script metadata including its id and self link
       "title": "Zephyr: Get Environments",
     },
     "description": "Get environments in Zephyr
+
+**Toolset:** Environment
 
 **Parameters:**
 - projectKey (string): Jira project key filter
@@ -10152,6 +10638,8 @@ Expected Output: The five environments starting from the 10th Environment from t
     },
     "description": "Get test cases linked to a Jira issue in Zephyr
 
+**Toolset:** Issue Links
+
 **Parameters:**
 - issueKey (string) *required*: The key of the Jira issue
 
@@ -10178,6 +10666,8 @@ Expected Output: The List of test cases linked to Jira issue PROJ-123 with their
       "title": "Zephyr: Get priorities",
     },
     "description": "Get Zephyr Test Case priorities with optional filters
+
+**Toolset:** Priorities
 
 **Parameters:**
 - maxResults (number): Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.
@@ -10235,6 +10725,8 @@ Expected Output: All priorities",
     },
     "description": "Get details of project specified by id or key in Zephyr
 
+**Toolset:** Projects
+
 **Parameters:**
 - projectIdOrKey (string) *required*: The Zephyr project ID or Jira project key
 
@@ -10274,6 +10766,8 @@ Expected Output: The project with its details",
       "title": "Zephyr: Get Projects",
     },
     "description": "Get details of projects in Zephyr
+
+**Toolset:** Projects
 
 **Parameters:**
 - maxResults (number): Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.
@@ -10331,6 +10825,8 @@ Expected Output: The 7th to the 11th projects with their details",
       "title": "Zephyr: Get Statuses",
     },
     "description": "Get statuses of different types of test artifacts in Zephyr
+
+**Toolset:** Statuses
 
 **Parameters:**
 - maxResults (number): Specifies the maximum number of results to return in a single call. The default value is 10, and the maximum value that can be requested is 1000.
@@ -10394,6 +10890,8 @@ Expected Output: The first five statuses from the project PROJ with their detail
     },
     "description": "Get details of test case specified by key in Zephyr
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
 
@@ -10447,6 +10945,8 @@ Expected Output: The test case with its details",
     },
     "description": "Get all links (issue links and web links) associated with a test case in Zephyr
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
 
@@ -10477,6 +10977,8 @@ Expected Output: The links (issue links and web links) associated with the test 
       "title": "Zephyr: Get Test Case Steps",
     },
     "description": "Get details of test case steps in Zephyr
+
+**Toolset:** Test Cases
 
 **Examples:**
 1. Get the first 10 test case steps for test case with key 'SA-T1'
@@ -10531,6 +11033,8 @@ Expected Output: The 7th to the 11th test case steps with their details",
       "title": "Zephyr: Get Test Cases",
     },
     "description": "Get details of test cases in Zephyr
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - projectKey (string): Jira project key filter
@@ -10611,6 +11115,8 @@ Expected Output: One Test Case from folder with ID 123 with its details",
     },
     "description": "Get details of test cycle specified by id or key in Zephyr
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - testCycleIdOrKey (string) *required*: The ID or key of the test cycle.
 
@@ -10660,6 +11166,8 @@ Expected Output: The test cycle with its details",
     },
     "description": "Get all links (issues, web links, and test plans) associated with a test cycle in Zephyr
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - testCycleIdOrKey (string) *required*: The ID or key of the test cycle.
 
@@ -10699,6 +11207,8 @@ Expected Output: All links (issues, web links, test plans) for the test cycle wi
       "title": "Zephyr: Get Test Cycles",
     },
     "description": "Get details of Test Cycles in Zephyr
+
+**Toolset:** Test Cycles
 
 **Parameters:**
 - projectKey (string): Jira project key filter
@@ -10790,6 +11300,8 @@ Expected Output: One Test Cycle from version 456 with its details",
     },
     "description": "Get test cycles linked to a Jira issue in Zephyr
 
+**Toolset:** Issue Links
+
 **Parameters:**
 - issueKey (string) *required*: The key of the Jira issue
 
@@ -10816,6 +11328,8 @@ Expected Output: The List of test cycles linked to Jira issue PROJ-123 with thei
       "title": "Zephyr: Get Test Execution",
     },
     "description": "Get details of test execution specified by id or key in Zephyr
+
+**Toolset:** Test Executions
 
 **Parameters:**
 - testExecutionIdOrKey (string) *required*: The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
@@ -10870,6 +11384,8 @@ Expected Output: The test execution with its details",
     },
     "description": "Get links for a specific test execution in Zephyr
 
+**Toolset:** Test Executions
+
 **Parameters:**
 - testExecutionIdOrKey (string) *required*: The ID or key of the test execution. Test execution keys are of the format [A-Z]+-E[0-9]+
 
@@ -10907,6 +11423,8 @@ Expected Output: The test execution links with its details",
       "title": "Zephyr: Get Test Execution Steps",
     },
     "description": "Get details of test execution steps in Zephyr
+
+**Toolset:** Test Executions
 
 **Examples:**
 1. Get the first 10 test execution steps for test execution with ID 1
@@ -10983,6 +11501,8 @@ Expected Output: Test execution steps for the specified test data row",
       "title": "Zephyr: Get Test Executions",
     },
     "description": "Get test executions with optional filters
+
+**Toolset:** Test Executions
 
 **Parameters:**
 - projectKey (string): Jira project key filter
@@ -11063,6 +11583,8 @@ Expected Output: Test executions with step links included",
     },
     "description": "Get test executions linked to a Jira issue in Zephyr
 
+**Toolset:** Issue Links
+
 **Parameters:**
 - issueKey (string) *required*: The key of the Jira issue
 
@@ -11089,6 +11611,8 @@ Expected Output: The List of test executions linked to Jira issue PROJ-123 with 
       "title": "Zephyr: Get Test Script",
     },
     "description": "Get the Test Script (Plain Text or BDD) for a given Test Case in Zephyr
+
+**Toolset:** Test Cases
 
 **Parameters:**
 - testCaseKey (string) *required*: The key of the test case. Test case keys are of the format [A-Z]+-T[0-9]+
@@ -11136,6 +11660,8 @@ Expected Output: The test script with its type (plain or bdd), text content, and
       "title": "Zephyr: Update Test Case",
     },
     "description": "Update an existing Test Case in Zephyr. This operation fetches the current test case and merges your updates with it to prevent accidental property deletion. Properties which are not included in the tool call will be left unchanged. To remove a property, set it to null explicitly. For fields that accept multiple values, such as \`labels\`, if the field is provided, it will override the previous values. For example, if \`labels\` is provided with the values \`["label1", "label2"]\`, the Test Case will now only have those two labels, and any previous labels will be removed. If you want to add a label, you would need to specify in the prompt the intention to add a label.
+
+**Toolset:** Test Cases
 
 **Examples:**
 1. Update the name of the test case 'SA-T10' to 'Check axial pump' and objective to 'To ensure the axial pump can be enabled'
@@ -11236,6 +11762,8 @@ Expected Output: The test case should be updated, but no output is expected.",
     },
     "description": "Update an existing Test Cycle in Zephyr. This operation fetches the current test cycle and merges your updates with it to prevent accidental property deletion. To remove a property, set it to null explicitly. The plannedStartDate and plannedEndDate fields cannot be cleared
 
+**Toolset:** Test Cycles
+
 **Examples:**
 1. Update the name of the test cycle 'SA-R40' to 'Sprint 1 Regression - Updated' and set description.
 \`\`\`json
@@ -11331,6 +11859,8 @@ Expected Output: The test cycle should be updated, but no output is expected.",
     },
     "description": "Update an existing Test Execution in Zephyr. This operation only updates specified fields in the payload and ignores \`null\` or \`undefined\` values.
 
+**Toolset:** Test Executions
+
 **Examples:**
 1. Update the status name to 'PASS' and the environment name to 'ENV-1' in the test execution 'SA-E40'.
 \`\`\`json
@@ -11401,6 +11931,8 @@ Expected Output: The test execution should be updated, but no output is expected
       "title": "Zephyr: Update Test Execution Steps",
     },
     "description": "Update test steps for a given Test Execution in Zephyr. This operation updates the provided steps with their execution status and actual results. Only the fields included in the request will be modified.
+
+**Toolset:** Test Executions
 
 **Examples:**
 1. Mark the status of all steps in the test execution 'SA-E1' as 'Pass'. Set the actual result of step 1 to 'Dashboard widgets loaded correctly' and step 2 to 'Navigation menu responded correctly to user interactions'.

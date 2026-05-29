@@ -9,6 +9,7 @@ import { API_HOSTNAME } from "../../config/constants";
 export class CancelSuiteExecution extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Cancel Suite Execution",
+    toolset: "Suites",
     summary: "Cancel a reflect suite execution",
     inputSchema: z.object({
       suiteId: z

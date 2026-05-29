@@ -9,6 +9,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
   {
     handler: QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS,
     title: "Import Automation Test Results",
+    toolset: "Automation",
     summary:
       "Import/Publish automation test results from TestNG, JUnit, Cucumber, Robot, HPUFT, or QAF frameworks into QMetry",
     purpose:
@@ -286,6 +287,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
   {
     handler: QMetryToolsHandlers.FETCH_AUTOMATION_STATUS,
     title: "Fetch Automation Status",
+    toolset: "Automation",
     summary: "Fetches the status of an automation import job by request ID.",
     purpose:
       "Track the progress and result of an automation import operation in QMetry.",

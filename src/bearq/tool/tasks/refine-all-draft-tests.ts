@@ -10,6 +10,7 @@ const inputSchema = z.object({});
 export class RefineAllDraftTests extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Refine All Draft Tests",
+    toolset: "Tasks",
     summary:
       "Refines every draft test case in the workspace. Use to push an entire draft backlog forward; may take multiple passes before all drafts are ready to be promoted to regression tests.",
     inputSchema,

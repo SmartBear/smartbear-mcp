@@ -12,6 +12,7 @@ import {
 export class GetTestExecutionSteps extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Execution Steps",
+    toolset: "Test Executions",
     summary: "Get details of test execution steps in Zephyr",
     readOnly: true,
     idempotent: true,

@@ -12,6 +12,7 @@ import {
 export class CreateTestScript extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Script",
+    toolset: "Test Cases",
     summary:
       "Create a new Test Script of the types Plain Text or BDD in a Zephyr Test Case.",
     readOnly: false,

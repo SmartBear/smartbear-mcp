@@ -9,6 +9,7 @@ import { API_HOSTNAME } from "../../config/constants";
 export class GetSuiteExecutionStatus extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Get Suite Execution Status",
+    toolset: "Suites",
     summary: "Get the status of a reflect suite execution",
     inputSchema: z.object({
       suiteId: z

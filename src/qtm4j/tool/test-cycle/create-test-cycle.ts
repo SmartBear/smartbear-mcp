@@ -1,7 +1,7 @@
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES } from "../../config/constants";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
 import { InputField, ResolverKeys } from "../../config/field-resolution.types";
 import {
   CreateTestCycleBody,
@@ -39,6 +39,7 @@ export class CreateTestCycle extends Tool<Qtm4jClient> {
 
   specification: ToolParams = {
     title: TOOL_NAMES.CREATE_TEST_CYCLE.TITLE,
+    toolset: TOOLSETS.TEST_CYCLES,
     summary: TOOL_NAMES.CREATE_TEST_CYCLE.SUMMARY,
     readOnly: false,
     idempotent: false,

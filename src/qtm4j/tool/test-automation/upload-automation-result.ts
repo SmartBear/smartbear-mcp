@@ -8,6 +8,7 @@ import {
   AUTOMATION_RESULT_DIRS,
   ENDPOINTS,
   TOOL_NAMES,
+  TOOLSETS,
 } from "../../config/constants.ts";
 import {
   UploadAutomationResultBody,
@@ -21,6 +22,7 @@ const SUPPORTED_EXTENSIONS = new Set([".xml", ".json", ".zip"]);
 export class UploadAutomationResult extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.UPLOAD_AUTOMATION_RESULT.TITLE,
+    toolset: TOOLSETS.TEST_AUTOMATION,
     summary: TOOL_NAMES.UPLOAD_AUTOMATION_RESULT.SUMMARY,
     readOnly: false,
     idempotent: false,

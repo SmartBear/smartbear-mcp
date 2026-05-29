@@ -8,6 +8,7 @@ import { API_HOSTNAME } from "../../config/constants";
 export class ListTests extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "List Tests",
+    toolset: "Tests",
     summary: "List all reflect tests",
     inputSchema: z.object({}),
   };

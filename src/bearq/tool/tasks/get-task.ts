@@ -12,6 +12,7 @@ const inputSchema = z.object({
 export class GetTask extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Get Task",
+    toolset: "Tasks",
     summary:
       "Retrieves a task's current state, metadata, and activity log. Returns immediately with whatever's available — does not block on the task completing.",
     inputSchema,
