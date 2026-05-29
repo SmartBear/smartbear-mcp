@@ -60,3 +60,4 @@ Schemathesis
 Visualise
 artefacts
 behaviour
+issuetype
