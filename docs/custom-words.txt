@@ -16,6 +16,7 @@ Dsyms
 Eventmachine
 frankkilcommins
 HPUFT
+issuetype
 jailbroken
 Laravel
 latestby
