@@ -1,7 +1,7 @@
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import {ENDPOINTS, TOOL_NAMES, TOOLSETS} from "../../config/constants";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
 import { ResolverKeys } from "../../config/field-resolution.types";
 import type { ResolvedRequirement } from "../../resolver/resolvers/requirement-id-resolver";
 import type { ResolvedTestCase } from "../../resolver/resolvers/test-case-uid-resolver.ts";
@@ -16,7 +16,7 @@ export class LinkTestCasesToRequirement extends Tool<Qtm4jClient> {
     summary: TOOL_NAMES.LINK_TESTCASES_TO_REQUIREMENT.SUMMARY,
     readOnly: false,
     idempotent: false,
-    toolset:TOOLSETS.REQUIREMENTS,
+    toolset: TOOLSETS.REQUIREMENTS,
     inputSchema: LinkTestCasesToRequirementBody,
     outputSchema: RequirementTestCaseLinkResponse,
     purpose:

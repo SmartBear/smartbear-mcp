@@ -1,7 +1,7 @@
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import {ENDPOINTS, TOOL_NAMES, TOOLSETS} from "../../config/constants";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
 import { ResolverKeys } from "../../config/field-resolution.types";
 import type { ResolvedTestCase } from "../../resolver/resolvers/test-case-uid-resolver.ts";
 import type { ResolvedTestCycle } from "../../resolver/resolvers/test-cycle-uid-resolver.ts";
@@ -16,7 +16,7 @@ export class UnlinkTestCasesFromCycle extends Tool<Qtm4jClient> {
     summary: TOOL_NAMES.UNLINK_TESTCASES_FROM_CYCLE.SUMMARY,
     readOnly: false,
     idempotent: false,
-    toolset:TOOLSETS.TEST_CYCLES,
+    toolset: TOOLSETS.TEST_CYCLES,
     inputSchema: UnlinkTestCasesFromCycleBody,
     outputSchema: TestCycleLinkResponse,
     purpose:

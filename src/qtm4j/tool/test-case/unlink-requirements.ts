@@ -2,7 +2,7 @@ import z from "zod";
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import {ENDPOINTS, TOOL_NAMES, TOOLSETS} from "../../config/constants";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
 import { ResolverKeys } from "../../config/field-resolution.types";
 import type { ResolvedRequirement } from "../../resolver/resolvers/requirement-id-resolver";
 import type { ResolvedTestCase } from "../../resolver/resolvers/test-case-uid-resolver.ts";
@@ -44,7 +44,7 @@ export class UnlinkRequirements extends Tool<Qtm4jClient> {
     summary: TOOL_NAMES.UNLINK_REQUIREMENTS.SUMMARY,
     readOnly: false,
     idempotent: false,
-    toolset:TOOLSETS.TEST_CASES,
+    toolset: TOOLSETS.TEST_CASES,
     inputSchema: UnlinkRequirementsBody,
     outputSchema: UnlinkRequirementsResponse,
     purpose:
