@@ -1,7 +1,7 @@
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES } from "../../config/constants";
+import {ENDPOINTS, TOOL_NAMES, TOOLSETS} from "../../config/constants";
 import { ResolverKeys } from "../../config/field-resolution.types";
 import type { ResolvedTestCycle } from "../../resolver/resolvers/test-cycle-uid-resolver";
 import { GetLinkedRequirementsResponse } from "../../schema/linked-items.schema";
@@ -13,6 +13,7 @@ export class GetLinkedRequirementsForCycle extends Tool<Qtm4jClient> {
     summary: TOOL_NAMES.GET_LINKED_REQUIREMENTS_FOR_CYCLE.SUMMARY,
     readOnly: true,
     idempotent: true,
+    toolset:TOOLSETS.TEST_CYCLES,
     inputSchema: GetLinkedRequirementsForCycleBody,
     outputSchema: GetLinkedRequirementsResponse,
     purpose:

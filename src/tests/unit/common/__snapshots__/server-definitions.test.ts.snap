@@ -7855,6 +7855,8 @@ Skip any field that is null, missing, or false. NEVER show the raw fileName. NEV
     },
     "description": "Retrieve the Jira requirements linked to a specific test case in QTM4J. Test case key is resolved to internal ID automatically.
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - key (string) *required*: Test case key in '{PROJECT_KEY}-TC-{number}' format (e.g., 'SCRUM-TC-145'). Required.
 - versionNo (number): Test case version number to retrieve linked requirements for. Defaults to the latest version.
@@ -7911,6 +7913,8 @@ Expected Output: Requirements linked to version 2 of the test case
     },
     "description": "Retrieve Jira requirements linked to a QTM4J test cycle. Test cycle key is resolved to internal UID automatically.
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - cycleKey (string) *required*: Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
 - maxResults (number): Maximum results per page (1-100). Default: 50. (default: 50)
@@ -7964,6 +7968,8 @@ Expected Output: Requirements linked to cycle sorted by priority ascending
       "title": "QTM4J: Get Linked Test Cases for Requirement",
     },
     "description": "Retrieve the test cases linked to a Jira requirement in QTM4J. Requirement key is resolved to internal ID automatically.
+
+**Toolset:** Requirements
 
 **Parameters:**
 - requirementKey (string) *required*: Jira requirement key (e.g., 'SCRUM-1'). Resolved to the internal Jira issue ID automatically.
@@ -8244,6 +8250,8 @@ Expected Output: First 10 steps in sequence order
     },
     "description": "Link one or more Jira requirements to a test case in QTM4J by requirement keys or JQL filter. Requirement keys are resolved to internal IDs automatically.
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - key (string) *required*: Test case key in '{PROJECT_KEY}-TC-{number}' format (e.g., 'SCRUM-TC-145'). Required.
 - versionNo (number): Test case version number. Defaults to the latest version.
@@ -8314,6 +8322,8 @@ Expected Output: Requirement linked to version 2 of test case
     },
     "description": "Link one or more Jira requirements to a QTM4J test cycle by requirement keys or JQL filter. Requirement keys are resolved to internal IDs automatically.
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - cycleKey (string) *required*: Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
 - requirementKeys (array): List of Jira requirement keys to link (e.g., ['SCRUM-1', 'SCRUM-2']). Resolved to internal IDs automatically. Provide this OR filter.jql — not both.
@@ -8368,6 +8378,8 @@ Expected Output: Requirements matched by JQL linked to test cycle
       "title": "QTM4J: Link Test Cases to Requirement",
     },
     "description": "Link test cases to a Jira requirement in QTM4J by test case keys or filter criteria. Test case keys are resolved to internal IDs automatically.
+
+**Toolset:** Requirements
 
 **Parameters:**
 - requirementKey (string) *required*: Jira requirement key (e.g., 'SCRUM-1'). Resolved to the internal Jira issue ID automatically.
@@ -8444,6 +8456,8 @@ Expected Output: Folder test cases linked to requirement
       "title": "QTM4J: Link Test Cases to Test Cycle",
     },
     "description": "Link test cases to a QTM4J test cycle by test case keys or filter criteria. Test case keys are resolved to internal IDs and latest versions automatically.
+
+**Toolset:** Test Cycles
 
 **Parameters:**
 - cycleKey (string) *required*: Test Cycle key (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
@@ -8537,6 +8551,8 @@ Expected Output: Folder test cases linked to cycle with planned date
       "title": "QTM4J: Search Linked Test Cases in Test Cycle",
     },
     "description": "Search and filter test case executions linked to a QTM4J test cycle. Supports pagination, field selection, sorting, and rich filter criteria.
+
+**Toolset:** Test Cycles
 
 **Parameters:**
 - cycleKey (string) *required*: Test Cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
@@ -9206,6 +9222,8 @@ Expected Output: Project context switched to AD
     },
     "description": "Unlink one or more Jira requirements from a test case in QTM4J by requirement keys, or unlink all requirements at once with unLinkAll.
 
+**Toolset:** Test Cases
+
 **Parameters:**
 - key (string) *required*: Test case key in '{PROJECT_KEY}-TC-{number}' format (e.g., 'SCRUM-TC-145'). Required.
 - versionNo (number): Test case version number. Defaults to the latest version.
@@ -9274,6 +9292,8 @@ Expected Output: Requirement unlinked from version 2 of test case
     },
     "description": "Unlink one or more Jira requirements from a QTM4J test cycle by requirement keys, or unlink all requirements at once with unLinkAll.
 
+**Toolset:** Test Cycles
+
 **Parameters:**
 - cycleKey (string) *required*: Test cycle key in '{PROJECT_KEY}-TR-{id}' format (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.
 - requirementKeys (array): List of Jira requirement keys to unlink (e.g., ['SCRUM-1', 'SCRUM-2']). Resolved to internal IDs automatically. Provide this OR unLinkAll — not both.
@@ -9326,6 +9346,8 @@ Expected Output: All requirements unlinked from test cycle
       "title": "QTM4J: Unlink Test Cases from Requirement",
     },
     "description": "Unlink test cases from a Jira requirement in QTM4J by test case keys or filter criteria. Test case keys are resolved to internal IDs automatically.
+
+**Toolset:** Requirements
 
 **Parameters:**
 - requirementKey (string) *required*: Jira requirement key (e.g., 'SCRUM-1'). Resolved to the internal Jira issue ID automatically.
@@ -9387,6 +9409,8 @@ Expected Output: Filtered test cases unlinked from requirement
       "title": "QTM4J: Unlink Test Cases from Test Cycle",
     },
     "description": "Unlink test cases from a QTM4J test cycle by test case keys, filter criteria, or all at once with unlinkAll.
+
+**Toolset:** Test Cycles
 
 **Parameters:**
 - cycleKey (string) *required*: Test Cycle key (e.g., 'SCRUM-TR-1'). Resolved to the internal cycle UID automatically.

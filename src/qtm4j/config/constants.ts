@@ -434,6 +434,8 @@ export const TOOLSETS = {
   TEST_CYCLES: "Test Cycles",
   /** Projects toolset */
   PROJECTS: "Projects",
+
+  REQUIREMENTS: "Requirements",
 } as const;
 
 /**

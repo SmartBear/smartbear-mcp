@@ -1,7 +1,7 @@
 import { Tool, ToolError } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, RESPONSE_FIELDS, TOOL_NAMES } from "../../config/constants";
+import {ENDPOINTS, RESPONSE_FIELDS, TOOL_NAMES, TOOLSETS} from "../../config/constants";
 import { ResolverKeys } from "../../config/field-resolution.types";
 import type { ResolvedTestCycle } from "../../resolver/resolvers/test-cycle-uid-resolver.ts";
 import {
@@ -15,6 +15,7 @@ export class SearchLinkedTestCasesInCycle extends Tool<Qtm4jClient> {
     summary: TOOL_NAMES.SEARCH_LINKED_TESTCASES_IN_CYCLE.SUMMARY,
     readOnly: true,
     idempotent: true,
+    toolset:TOOLSETS.TEST_CYCLES,
     inputSchema: SearchLinkedTestCasesInCycleBody,
     outputSchema: SearchLinkedTestCasesInCycleResponse,
     purpose:
