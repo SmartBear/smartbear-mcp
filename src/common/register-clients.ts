@@ -47,5 +47,5 @@ clientRegistry.register(new Qtm4jClient());
 // Register Collaborator client
 clientRegistry.register(new CollaboratorClient());
 
-// Register SmartBear Functional Testing client
+// Register Swagger Functional Testing client
 clientRegistry.register(new FunctionalTestingClient());

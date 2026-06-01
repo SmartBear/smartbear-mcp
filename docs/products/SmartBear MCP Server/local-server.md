@@ -72,7 +72,7 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
 - **Swagger Functional Testing**
 
-  Generate an API key from your SmartBear Functional Testing account dashboard at [`app.reflect.run`](https://app.reflect.run/settings/account).
+  Generate an API key from your Swagger Functional Testing account dashboard at [`app.reflect.run`](https://app.reflect.run/settings/account).
 
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products — tokens for unused products can be omitted.
 
@@ -126,7 +126,7 @@ export QTM4J_API_KEY="your-qtm4j-api-key"
 # US (default): https://qtmcloud.qmetry.com Australia: https://syd-qtmcloud.qmetry.com
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
 
-# Required for SmartBear Functional Testing tools
+# Required for Swagger Functional Testing tools
 export FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
@@ -271,7 +271,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
     {
       "id": "functional_testing_api_token",
       "type": "promptString",
-      "description": "SmartBear Functional Testing API Token",
+      "description": "Swagger Functional Testing API Token",
       "password": true
     }
   ]
@@ -551,7 +551,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
     {
       "id": "functional_testing_api_token",
       "type": "promptString",
-      "description": "SmartBear Functional Testing API Token",
+      "description": "Swagger Functional Testing API Token",
       "password": true
     }
   ]
