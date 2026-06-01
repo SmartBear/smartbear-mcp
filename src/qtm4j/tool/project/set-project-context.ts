@@ -8,6 +8,7 @@ import {
   PAGINATION,
   RESPONSE_FIELDS,
   TOOL_NAMES,
+  TOOLSETS,
 } from "../../config/constants";
 import {
   GetProjectsResponse,
@@ -44,6 +45,7 @@ const ERRORS = {
 export class SetProjectContext extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.SET_PROJECT_CONTEXT.TITLE,
+    toolset: TOOLSETS.PROJECTS,
     summary: TOOL_NAMES.SET_PROJECT_CONTEXT.SUMMARY,
     readOnly: false,
     idempotent: true,

@@ -11,6 +11,7 @@ import {
 export class GetTestScript extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Script",
+    toolset: "Test Cases",
     summary:
       "Get the Test Script (Plain Text or BDD) for a given Test Case in Zephyr",
     readOnly: true,

@@ -11,6 +11,7 @@ import {
 export class GetTestExecutions extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get test executions linked to a Jira issue",
+    toolset: "Issue Links",
     summary: "Get test executions linked to a Jira issue in Zephyr",
     readOnly: true,
     idempotent: true,

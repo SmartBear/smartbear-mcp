@@ -12,6 +12,7 @@ const inputSchema = z.object({
 export class GetTaskStatus extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Get Task Status",
+    toolset: "Tasks",
     summary:
       "Retrieves the status of a task (running / complete / error / cancelled). Cheaper than fetching full task details.",
     inputSchema,

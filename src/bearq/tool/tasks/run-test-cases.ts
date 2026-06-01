@@ -15,6 +15,7 @@ const inputSchema = z.object({
 export class RunTestCases extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Run Test Cases",
+    toolset: "Tasks",
     summary:
       "Runs specific BearQ regression test cases by ID. Targets only regression-ready cases — drafts will be rejected.",
     inputSchema,

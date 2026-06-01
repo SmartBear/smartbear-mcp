@@ -179,7 +179,7 @@ describe("CommonAttributeResolver", () => {
         warnings,
       );
 
-      expect(body[InputField.PRIORITY]).toBe("NonExistent");
+      expect(body).not.toHaveProperty(InputField.PRIORITY);
       expect(warnings).toHaveLength(1);
       expect(warnings[0]).toContain("NonExistent");
     });

@@ -16,6 +16,7 @@ describe("ClientRegistry", () => {
     // Mock server
     mockServer = {
       addClient: vi.fn(),
+      isClientEnabled: vi.fn().mockReturnValue(true),
     } as any;
 
     // Spy on console.warn to verify warning messages

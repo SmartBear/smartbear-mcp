@@ -17,6 +17,7 @@ const inputSchema = z.object({
 export class ExpandApplicationModel extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Expand Application Model",
+    toolset: "Tasks",
     summary:
       "Explores the live application to discover or update its pages and elements in BearQ's application model. Optionally scope to a single functional area.",
     inputSchema,

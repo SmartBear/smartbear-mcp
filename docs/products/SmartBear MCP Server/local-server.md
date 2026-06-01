@@ -68,7 +68,7 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
 - **QTM4J**
 
-  Generate your QTM4J API key by following the instructions [here](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html).
+  Generate your QTM4J API key by following the instructions [here](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html). To use automation tools, also generate a separate `QTM4J_AUTOMATION_API_KEY` from the same page.
 
 - **Swagger Functional Testing**
 
@@ -122,6 +122,8 @@ export ZEPHYR_BASE_URL="https://api.zephyrscale.smartbear.com/v2"
 
 # Required for QTM4J tools
 export QTM4J_API_KEY="your-qtm4j-api-key"
+# Required for QTM4J automation tools (Upload Automation Result, Get Automation History)
+export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
 # Optional: Set your QTM4J base URL based on your region
 # US (default): https://qtmcloud.qmetry.com Australia: https://syd-qtmcloud.qmetry.com
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
@@ -166,6 +168,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
+        "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
         "FUNCTIONAL_TESTING_API_TOKEN": "${input:functional_testing_api_token}"
       }
@@ -263,6 +266,12 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "password": true
     },
     {
+      "id": "qtm4j_automation_api_key",
+      "type": "promptString",
+      "description": "QTM4J Automation API Key — required for Upload Automation Result and Get Automation History tools.",
+      "password": true
+    },
+    {
       "id": "qtm4j_base_url",
       "type": "promptString",
       "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
@@ -307,6 +316,7 @@ Add to your `mcp.json` configuration:
         "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
         "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
         "QTM4J_API_KEY": "your-qtm4j-api-key",
+        "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
         "FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
@@ -344,6 +354,7 @@ Edit your `claude_desktop_config.json` file:
         "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
         "ZEPHYR_BASE_URL": "your-zephyr-base-url",
         "QTM4J_API_KEY": "your-qtm4j-api-key",
+        "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
         "FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
@@ -385,6 +396,7 @@ export PACT_BROKER_TOKEN=your-pact-broker-token
 # export PACT_BROKER_USERNAME=your-username
 # export PACT_BROKER_PASSWORD=your-password
 export QTM4J_API_KEY="your-qtm4j-api-key"
+export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
 export FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
@@ -446,6 +458,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
+        "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
         "FUNCTIONAL_TESTING_API_TOKEN": "${input:functional_testing_api_token}"
       }
@@ -543,6 +556,12 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "password": true
     },
     {
+      "id": "qtm4j_automation_api_key",
+      "type": "promptString",
+      "description": "QTM4J Automation API Key — required for Upload Automation Result and Get Automation History tools.",
+      "password": true
+    },
+    {
       "id": "qtm4j_base_url",
       "type": "promptString",
       "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
@@ -575,6 +594,7 @@ QMETRY_BASE_URL=https://testmanagement.qmetry.com \
 ZEPHYR_API_TOKEN=your_zephyr_token \
 ZEPHYR_BASE_URL=https://api.zephyrscale.smartbear.com/v2 \
 QTM4J_API_KEY=your_qtm4j_key \
+QTM4J_AUTOMATION_API_KEY=your_qtm4j_automation_key \
 QTM4J_BASE_URL=https://qtmcloud.qmetry.com \
 FUNCTIONAL_TESTING_API_TOKEN=your_functional_testing_token \
 npx @modelcontextprotocol/inspector node dist/index.js
@@ -621,3 +641,8 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "Update the status of SCRUM-TC-145 to Done"
 -   "Add the Release_2 label to SCRUM-TC-145 and remove Release_1"
 -   "Show me the test steps for SCRUM-TC-32"
+-   "Create a test cycle called 'Regression Suite' with High priority"
+-   "Find all in-progress test cycles in the active project"
+-   "Update the status of SCRUM-TR-101 to In Progress"
+-   "Upload JUnit test results to QTM4J"
+-   "Check whether last automation import succeeded"

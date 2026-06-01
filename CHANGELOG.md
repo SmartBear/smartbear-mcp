@@ -7,11 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [0.24.0] - 2026-05-27
+### Added
+
+- [Common] Add `MCP_TOOLSETS` environment variable to allow tools to be grouped into sets for better organization and client control [#474](https://github.com/SmartBear/smartbear-mcp/pull/474)
+
+## [0.24.0] - 2026-05-28
 
 ### Added
 
-- [Functional Testing] Add Swagger Functional Testing integration with `list_functional_testing_tests` tool for discovering available API tests ([#499](https://github.com/SmartBear/smartbear-mcp/pull/499))
+- [QTM4J] Added test cycle management capabilities, including create, search, and update operations. [#501](https://github.com/SmartBear/smartbear-mcp/pull/501)
+- [QTM4J] Added test automation capabilities, including automation result uploads and import history retrieval. [#501](https://github.com/SmartBear/smartbear-mcp/pull/501)
 
 ### Fixed
 

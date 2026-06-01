@@ -9,6 +9,7 @@ import { API_HOSTNAME } from "../../config/constants";
 export class ExecuteSuite extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Execute Suite",
+    toolset: "Suites",
     summary: "Execute a reflect suite",
     inputSchema: z.object({
       suiteId: z.string().describe("ID of the reflect suite to execute"),

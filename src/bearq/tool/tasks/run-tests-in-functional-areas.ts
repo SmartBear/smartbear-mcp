@@ -15,6 +15,7 @@ const inputSchema = z.object({
 export class RunTestsInFunctionalAreas extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Run Tests in Functional Areas",
+    toolset: "Tasks",
     summary:
       "Runs every regression test case tagged with one or more functional areas. Functional areas can be given by ID or name.",
     inputSchema,
