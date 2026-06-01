@@ -8,6 +8,7 @@ import { API_HOSTNAME } from "../config/constants";
 export class ListFunctionalTestingTests extends Tool<FunctionalTestingClient> {
   specification: ToolParams = {
     title: "List Tests",
+    toolset: "Tests",
     summary:
       "Lists all API tests available in your Swagger Functional Testing account. " +
       "Use this tool when you need to discover available tests before running them or checking their status. " +
