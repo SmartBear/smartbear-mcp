@@ -1,3 +1,5 @@
+![swagger-functional-testing.svg](./images/embedded/swagger-functional-testing.svg)
+
 The Swagger Functional Testing client provides tools for discovering API tests. Tools for Swagger Functional Testing require a `FUNCTIONAL_TESTING_API_TOKEN`.
 
 ## Available Tools
