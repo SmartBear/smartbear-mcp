@@ -11,8 +11,7 @@ export interface ResolvedRequirement {
 }
 
 /**
- * RequirementIdResolver — batch-resolves human-readable test case keys to internal UIDs.
- *
+ * RequirementIdResolver — batch-resolves human-readable requirement keys to internal Jira issue IDs. *
  * Key format: '{PROJECT_KEY}-{number}', e.g. 'SCRUM-145'
  * No caching — each call hits the API directly for up-to-date IDs.
  */
