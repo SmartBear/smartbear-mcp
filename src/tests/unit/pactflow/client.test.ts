@@ -10,20 +10,29 @@ import * as toolsModule from "../../../pactflow/client/tools";
 const fetchMock = createFetchMock(vi);
 
 // Helper to create and configure a client
-async function createConfiguredClient(config: {
-  token?: string;
-  username?: string;
-  password?: string;
-  base_url?: string;
-}): Promise<PactflowClient> {
+async function createConfiguredClient(
+  token?: string,
+  username?: string,
+  password?: string,
+  config?: {
+    base_url?: string;
+  },
+): Promise<PactflowClient> {
   const client = new PactflowClient();
-  const mockServer = { server: vi.fn() } as any;
+  const getEnv = vi.fn();
+  const mockServer = { server: vi.fn(), getEnv } as any;
   const defaultConfig = {
-    base_url: "https://example.com",
-    token: config.token,
-    username: config.username,
-    password: config.password,
+    base_url: config?.base_url || "https://example.com",
   };
+  getEnv.mockImplementation((key: string) => {
+    if (key === "token") {
+      return token;
+    } else if (key === "username") {
+      return username;
+    } else if (key === "password") {
+      return password;
+    }
+  });
   await client.configure(mockServer, defaultConfig);
   return client;
 }
@@ -45,7 +54,7 @@ describe("PactFlowClient", () => {
 
   describe("constructor", () => {
     it("sets correct headers when client is pactflow", async () => {
-      client = await createConfiguredClient({ token: "my-token" });
+      client = await createConfiguredClient("my-token");
 
       expect(client.requestHeaders).toEqual(
         expect.objectContaining({
@@ -56,10 +65,7 @@ describe("PactFlowClient", () => {
     });
 
     it("sets correct headers when client is pact_broker", async () => {
-      client = await createConfiguredClient({
-        username: "user",
-        password: "pass",
-      });
+      client = await createConfiguredClient(undefined, "user", "pass");
 
       expect(client.requestHeaders).toEqual(
         expect.objectContaining({
@@ -97,7 +103,7 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = await createConfiguredClient({ token: "token" });
+      const client = await createConfiguredClient("token");
       await client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).toHaveBeenCalledTimes(1);
@@ -118,7 +124,7 @@ describe("PactFlowClient", () => {
       ];
       vi.spyOn(toolsModule, "TOOLS", "get").mockReturnValue(fakeTools as any);
 
-      const client = await createConfiguredClient({ token: "token" });
+      const client = await createConfiguredClient("token");
       await client.registerTools(mockRegister, mockGetInput);
 
       expect(mockRegister).not.toHaveBeenCalled();
@@ -127,7 +133,7 @@ describe("PactFlowClient", () => {
 
   describe("API Methods", () => {
     beforeEach(async () => {
-      client = await createConfiguredClient({ token: "test-token" });
+      client = await createConfiguredClient("test-token");
     });
 
     describe("canIDeploy", () => {
@@ -940,7 +946,7 @@ describe("PactFlowClient", () => {
 
     describe("getResult", () => {
       beforeEach(async () => {
-        client = await createConfiguredClient({ token: "test-token" });
+        client = await createConfiguredClient("test-token");
       });
 
       it("should return parsed JSON when response is OK", async () => {
@@ -969,7 +975,7 @@ describe("PactFlowClient", () => {
 
     describe("getStatus", () => {
       beforeEach(async () => {
-        client = await createConfiguredClient({ token: "test-token" });
+        client = await createConfiguredClient("test-token");
       });
 
       it("should return isComplete true for status 200", async () => {
@@ -1004,7 +1010,7 @@ describe("PactFlowClient", () => {
 
     describe("pollForCompletion", () => {
       beforeEach(async () => {
-        client = await createConfiguredClient({ token: "test-token" });
+        client = await createConfiguredClient("test-token");
       });
 
       it("should resolve when status becomes 200", async () => {
@@ -1057,7 +1063,7 @@ describe("PactFlowClient", () => {
 
     describe("getProviderStates", () => {
       beforeEach(async () => {
-        client = await createConfiguredClient({ token: "test-token" });
+        client = await createConfiguredClient("test-token");
       });
 
       it("should return provider states when response is OK", async () => {

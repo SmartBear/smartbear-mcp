@@ -8,16 +8,18 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import { clientRegistry } from "./client-registry";
-import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { isDraining, registerShutdownHandler } from "./shutdown";
 import { getEnvVarName } from "./transport-stdio";
+import type { GetEnvFn } from "./types";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 type SessionEntry = {
   server: SmartBearMcpServer;
   transport: StreamableHTTPServerTransport | SSEServerTransport;
 };
+
+export class AuthorizationError extends Error {}
 
 /**
  * Common cache-control headers for probe endpoints.
@@ -482,10 +484,7 @@ export async function handleStreamableHttpRequest(
     }
 
     // Delegate to transport to handle the MCP protocol message
-    await withRequestContext(
-      req,
-      async () => await transport.handleRequest(req, res, parsedBody),
-    );
+    await transport.handleRequest(req, res, parsedBody);
   } catch (error) {
     console.error("Error handling StreamableHTTP request:", error);
     res.writeHead(500, { "Content-Type": "text/plain" });
@@ -591,14 +590,10 @@ async function handleLegacyMessageRequest(
     try {
       const parsedBody = JSON.parse(body);
       // Route message to the SSE transport for processing
-      await withRequestContext(
+      await (session.transport as SSEServerTransport).handlePostMessage(
         req,
-        async () =>
-          await (session.transport as SSEServerTransport).handlePostMessage(
-            req,
-            res,
-            parsedBody,
-          ),
+        res,
+        parsedBody,
       );
     } catch (error) {
       console.error("Error handling POST message:", error);
@@ -608,13 +603,19 @@ async function handleLegacyMessageRequest(
   });
 }
 
-function getConfigValue(
-  clientPrefix: string,
-  key: string,
+/**
+ * Resolves a single key/prefix pair from a request, checking in order:
+ *   1. Query-string parameters
+ *   2. HTTP request headers (auth-scheme prefixes are stripped)
+ *   3. Environment variables
+ */
+function resolveFromRequest(
   req: IncomingMessage,
-): string | null {
+  key: string,
+  prefix?: string,
+): string | undefined {
   // 1. Try query string
-  const queryStringName = getQueryStringName(clientPrefix, key);
+  const queryStringName = getQueryStringName(key, prefix);
   const queryParams = querystring.parse(req.url?.split("?")[1] || "");
   let value =
     queryParams[queryStringName] || queryParams[queryStringName.toLowerCase()];
@@ -622,18 +623,31 @@ function getConfigValue(
     return value;
   }
 
-  // 2. Try headers
-  const headerName = getHeaderName(clientPrefix, key);
-  // Check both original case and lower-case headers for compatibility
-  // (HTTP headers are case-insensitive, but Node.js lowercases them)
+  // 2. Try headers (HTTP headers are case-insensitive; Node.js lowercases them)
+  const headerName = getHeaderName(key, prefix);
   value = req.headers[headerName] || req.headers[headerName.toLowerCase()];
   if (typeof value === "string") {
+    // Strip common auth-scheme prefixes so callers receive the raw token
+    if (value.toLowerCase().startsWith("bearer ")) {
+      value = value.slice("bearer ".length);
+    } else if (value.toLowerCase().startsWith("token ")) {
+      value = value.slice("token ".length);
+    } else if (value.toLowerCase().startsWith("basic ")) {
+      value = value.slice("basic ".length);
+    }
     return value;
   }
 
   // 3. Fall back to environment variable
-  const envVarName = getEnvVarName(clientPrefix, key);
-  return process.env[envVarName] || null;
+  const envVarName = getEnvVarName(key, prefix);
+  return process.env[envVarName];
+}
+
+/**
+ * Build a GetEnvFn backed by the current HTTP request, delegating to resolveFromRequest.
+ */
+function makeConfigFn(req: IncomingMessage): GetEnvFn {
+  return (key, client) => resolveFromRequest(req, key, client?.configPrefix);
 }
 
 /**
@@ -651,73 +665,67 @@ export async function newServer(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
+  const configFn = makeConfigFn(req);
+
   const enabledToolsets =
-    getConfigValue("smartbear", "toolsets", req) || undefined;
-  const server = new SmartBearMcpServer(enabledToolsets);
+    resolveFromRequest(req, "toolsets", "smartbear") || undefined;
+
+  const server = new SmartBearMcpServer(configFn, enabledToolsets);
   try {
-    // Run configuration within request context so that client getAuthToken()
-    // methods can access request headers via AsyncLocalStorage
-    const configuredCount = await withRequestContext(req, () =>
-      clientRegistry.configure(
-        server,
-        (client, key) => {
-          return getConfigValue(client.configPrefix, key, req);
-        },
-        true, // ignoreMissingRequiredConfigs
-      ),
+    const configuredCount = await clientRegistry.registerAll(
+      server,
+      configFn,
+      true,
+      false,
     );
+
+    if (configuredCount === 0) {
+      throw new Error(
+        "No clients successfully configured. The request headers are missing the required configuration.",
+      );
+    }
 
     console.log(
       `Configured ${configuredCount} clients for new server instance`,
     );
 
-    if (configuredCount === 0) {
-      throw new Error(
-        "No clients successfully configured. Missing authentication headers.",
-      );
-    }
-
     // Check if any configured client actually has auth credentials for this request.
     // Some clients (e.g., Bugsnag, Reflect) configure successfully with optional auth
     // and resolve tokens per-request. If none of them have auth, trigger OAuth flow.
-    const hasAuth = withRequestContext(req, () =>
-      server.getClients().some((client) => {
-        // Client doesn't support dynamic auth — auth was provided at config time
-        if (!client.getAuthToken) return true;
-        // Client supports dynamic auth — check if a token is available
-        return client.getAuthToken() !== null;
-      }),
-    );
-
-    if (!hasAuth) {
-      throw new Error(
+    const hasNoAuth = !server.getClients().some((client) => client.hasAuth());
+    if (hasNoAuth) {
+      throw new AuthorizationError(
         "No clients have valid authentication credentials. Please authenticate via OAuth or provide alternative auth headers (e.g. API key or personal auth token).",
       );
     }
-  } catch (error: any) {
-    // Configuration failed - provide helpful error message
-    const headerHelp = getHttpHeadersHelp();
-    const errorMessage =
-      headerHelp.length > 0
-        ? `Configuration error: ${error instanceof Error ? error.message : String(error)}. Please provide valid headers:\n${headerHelp.join("\n")}`
-        : "No clients support HTTP header configuration.";
 
+    return server;
+  } catch (error: any) {
     const headers: Record<string, string> = {
       "Content-Type": "text/plain",
     };
-
-    // Add WWW-Authenticate header to support OAuth discovery flow
-    // This points the client to the Protected Resource Metadata endpoint
-    if (req.headers.host) {
-      headers["WWW-Authenticate"] =
-        `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+    if (error instanceof AuthorizationError) {
+      // Add WWW-Authenticate header to support OAuth discovery flow
+      // This points the client to the Protected Resource Metadata endpoint
+      if (req.headers.host) {
+        headers["WWW-Authenticate"] =
+          `OAuth resource_metadata="http://${req.headers.host}/.well-known/oauth-protected-resource"`;
+      }
+      res.writeHead(401, headers);
+      res.end(error.message);
+    } else {
+      // Configuration failed - provide helpful error message
+      const headerHelp = getHttpHeadersHelp();
+      let errorMessage = `Configuration error: ${error instanceof Error ? error.message : String(error)}.`;
+      if (headerHelp.length > 0) {
+        errorMessage += ` Please provide valid headers:\n${headerHelp.join("\n")}`;
+      }
+      res.writeHead(500, headers);
+      res.end(errorMessage);
     }
 
-    res.writeHead(401, headers);
-    res.end(errorMessage);
     return null;
   }
-  return server;
 }
 
 /**
@@ -730,28 +738,31 @@ export async function newServer(
  *
  * Combined with configPrefix: Bugsnag-Auth-Token, Reflect-Api-Token, etc.
  *
- * @param client The client instance (provides configPrefix)
  * @param key The config key in snake_case
+ * @param client The client config prefix
  * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
  */
-export function getHeaderName(clientPrefix: string, key: string): string {
-  return `${clientPrefix}-${key
-    .split("_")
+export function getHeaderName(key: string, clientPrefix?: string): string {
+  const prefix = `${clientPrefix ? `${clientPrefix}-${key}` : key}`;
+  return prefix
+    .split(/[\s\-_]/)
     .map(
       (part: string) =>
         part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
     )
-    .join("-")}`;
+    .join("-");
 }
 
-export function getQueryStringName(clientPrefix: string, key: string): string {
-  return `${clientPrefix.toLowerCase()}${key
-    .split("_")
-    .map(
-      (part: string) =>
-        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+export function getQueryStringName(key: string, clientPrefix?: string): string {
+  const prefix = `${clientPrefix ? `${clientPrefix}-${key}` : key}`;
+  return prefix
+    .split(/[\s\-_]/)
+    .map((part, i) =>
+      i === 0
+        ? part.toLowerCase()
+        : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
     )
-    .join("")}`;
+    .join("");
 }
 
 /**
@@ -761,10 +772,13 @@ export function getQueryStringName(clientPrefix: string, key: string): string {
 function getHttpHeaders(): string[] {
   const headers = new Set<string>();
 
-  // Use getAll() to respect client filtering
-  for (const entry of clientRegistry.getAll()) {
-    for (const configKey of Object.keys(entry.config.shape)) {
-      headers.add(getHeaderName(entry.configPrefix, configKey));
+  // Use getAll() to respect MCP_ENABLED_CLIENTS filtering
+  for (const client of clientRegistry.getAll()) {
+    for (const key of [
+      ...Object.keys(client.config.shape),
+      ...Object.keys(client.authenticationFields.shape),
+    ]) {
+      headers.add(getHeaderName(key, client.configPrefix));
     }
   }
 
@@ -777,10 +791,18 @@ function getHttpHeaders(): string[] {
  */
 function getHttpHeadersHelp(): string[] {
   const messages: string[] = [];
-  for (const entry of clientRegistry.getAll()) {
-    messages.push(` - ${entry.name}:`);
-    for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
-      const headerName = getHeaderName(entry.configPrefix, configKey);
+  for (const client of clientRegistry.getAll()) {
+    messages.push(` - ${client.name}:`);
+    for (const [authKey, requirement] of Object.entries(
+      client.authenticationFields.shape,
+    )) {
+      const headerName = getHeaderName(authKey, client.configPrefix);
+      messages.push(`    - ${headerName}: ${getTypeDescription(requirement)}`);
+    }
+    for (const [configKey, requirement] of Object.entries(
+      client.config.shape,
+    )) {
+      const headerName = getHeaderName(configKey, client.configPrefix);
       const requiredTag = isOptionalType(requirement)
         ? " (optional)"
         : " (required)";

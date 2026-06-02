@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -9,11 +8,14 @@ import type {
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Collaborator server base URL"),
-  username: z
+});
+
+const AuthenticationSchema = z.object({
+  login: z
     .string()
     .describe("Collaborator username for authentication")
     .optional(),
-  login_ticket: z
+  ticket: z
     .string()
     .describe("Collaborator login ticket for authentication")
     .optional(),
@@ -24,23 +26,29 @@ export class CollaboratorClient implements Client {
   capabilityPrefix = "collaborator";
   configPrefix = "Collaborator";
   config = ConfigurationSchema;
+  authenticationFields = AuthenticationSchema;
 
   private baseUrl: string | undefined;
-  private username: string | undefined;
-  private loginTicket: string | undefined;
+  private server?: SmartBearMcpServer;
 
   async configure(
-    _server: SmartBearMcpServer,
+    server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
-    _cache?: any,
   ): Promise<void> {
     this.baseUrl = config.base_url;
-    this.username = config.username;
-    this.loginTicket = config.login_ticket;
+    this.server = server;
   }
 
   isConfigured(): boolean {
     return this.baseUrl !== undefined;
+  }
+
+  hasAuth(): boolean {
+    return (
+      this.isConfigured() &&
+      this.server?.getEnv("Login", this) !== undefined &&
+      this.server?.getEnv("Ticket", this) !== undefined
+    );
   }
 
   /**
@@ -51,18 +59,8 @@ export class CollaboratorClient implements Client {
   async call(commands: any[]): Promise<any> {
     const url = `${this.baseUrl}/services/json/v1`;
 
-    let login = this.username;
-    let ticket = this.loginTicket;
-
-    const contextLogin = getRequestHeader("Collaborator-Login");
-    const contextTicket = getRequestHeader("Collaborator-Ticket");
-
-    if (contextLogin) {
-      login = Array.isArray(contextLogin) ? contextLogin[0] : contextLogin;
-    }
-    if (contextTicket) {
-      ticket = Array.isArray(contextTicket) ? contextTicket[0] : contextTicket;
-    }
+    const login = this.server?.getEnv("Login", this);
+    const ticket = this.server?.getEnv("Ticket", this);
 
     // Always prepend authentication command automatically
     const body = [
