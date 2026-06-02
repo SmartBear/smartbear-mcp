@@ -129,7 +129,7 @@ export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
 
 # Required for Swagger Functional Testing tools
-export FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
+export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
 > ⚠️ The `MCP_SERVER_BUGSNAG_API_KEY` is used for monitoring the MCP server itself and should be different from your main application's API key.
@@ -170,7 +170,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
-        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functional_testing_api_token}"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
       }
     }
   },
@@ -278,7 +278,7 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "password": false
     },
     {
-      "id": "functional_testing_api_token",
+      "id": "swagger_functional_testing_api_token",
       "type": "promptString",
       "description": "Swagger Functional Testing API Token",
       "password": true
@@ -318,7 +318,7 @@ Add to your `mcp.json` configuration:
         "QTM4J_API_KEY": "your-qtm4j-api-key",
         "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
-        "FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
   }
@@ -356,7 +356,7 @@ Edit your `claude_desktop_config.json` file:
         "QTM4J_API_KEY": "your-qtm4j-api-key",
         "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
-        "FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
   }
@@ -398,7 +398,7 @@ export PACT_BROKER_TOKEN=your-pact-broker-token
 export QTM4J_API_KEY="your-qtm4j-api-key"
 export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
-export FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
+export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
 Launch Claude Code with:
@@ -460,7 +460,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
-        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functional_testing_api_token}"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
       }
     }
   },
@@ -568,7 +568,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "password": false
     },
     {
-      "id": "functional_testing_api_token",
+      "id": "swagger_functional_testing_api_token",
       "type": "promptString",
       "description": "Swagger Functional Testing API Token",
       "password": true
@@ -596,7 +596,7 @@ ZEPHYR_BASE_URL=https://api.zephyrscale.smartbear.com/v2 \
 QTM4J_API_KEY=your_qtm4j_key \
 QTM4J_AUTOMATION_API_KEY=your_qtm4j_automation_key \
 QTM4J_BASE_URL=https://qtmcloud.qmetry.com \
-FUNCTIONAL_TESTING_API_TOKEN=your_functional_testing_token \
+SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your_functional_testing_token \
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
 

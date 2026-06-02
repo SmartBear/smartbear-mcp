@@ -110,7 +110,7 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
-        "FUNCTIONAL_TESTING_API_TOKEN": "${input:functional_testing_api_token}"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
       }
     }
   },
@@ -254,7 +254,7 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
           "password": true
     },
     {
-          "id": "functional_testing_api_token",
+          "id": "swagger_functional_testing_api_token",
           "type": "promptString",
           "description": "Swagger Functional Testing API Token - leave blank to disable Functional Testing tools",
           "password": true
@@ -300,7 +300,7 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "QTM4J_API_KEY": "your_qtm4j_key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
         "QTM4J_AUTOMATION_API_KEY": "your_qtm4j_automation_api_key",
-        "FUNCTIONAL_TESTING_API_TOKEN": "your_functional_testing_api_token"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your_swagger_functional_testing_api_token"
       }
     }
   }

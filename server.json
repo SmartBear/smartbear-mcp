@@ -108,6 +108,12 @@
           "description": "QTM4J Automation API key used exclusively by the automation import tools. Leave empty to disable automation tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration",
           "isRequired": false,
           "isSecret": true
+        },
+        {
+          "name": "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN",
+          "description": "Swagger Functional Testing API token. Leave empty to disable Functional Testing tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/functional-testing-integration",
+          "isRequired": false,
+          "isSecret": true
         }
       ]
     }

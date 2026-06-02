@@ -21,7 +21,7 @@ export class FunctionalTestingClient implements Client {
 
   name = "Swagger Functional Testing";
   capabilityPrefix = "functional_testing";
-  configPrefix = "Functional-Testing";
+  configPrefix = "Swagger-Functional-Testing";
 
   config = ConfigurationSchema;
 

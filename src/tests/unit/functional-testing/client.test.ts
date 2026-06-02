@@ -14,7 +14,7 @@ describe("FunctionalTestingClient", () => {
   });
 
   it("should have correct configPrefix", () => {
-    expect(client.configPrefix).toBe("Functional-Testing");
+    expect(client.configPrefix).toBe("Swagger-Functional-Testing");
   });
 
   it("should not be configured before configure() and without request header", () => {
