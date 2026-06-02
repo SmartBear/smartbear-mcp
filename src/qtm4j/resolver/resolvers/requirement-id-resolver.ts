@@ -36,7 +36,7 @@ export class RequirementIdResolver extends Resolver {
     _context: ProjectContext,
     _warnings: string[],
   ): Promise<void> {
-    // TestCaseUidResolver uses resolveAndReturn — this method is intentionally a no-op
+    // RequirementIdResolver uses resolveAndReturn — this method is intentionally a no-op
   }
 
   async resolveAndReturn(

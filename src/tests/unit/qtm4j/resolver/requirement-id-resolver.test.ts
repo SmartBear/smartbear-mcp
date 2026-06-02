@@ -30,8 +30,8 @@ describe("RequirementIdResolver", () => {
 
     it("should call resolve-requirement-ids endpoint with joined keys", async () => {
       const mockResponse = {
-        "SCRUM-145": { id: "req-id-001" },
-        "SCRUM-146": { id: "req-id-002" },
+        "SCRUM-145": { id: "10001" },
+        "SCRUM-146": { id: "10002" },
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
@@ -49,7 +49,7 @@ describe("RequirementIdResolver", () => {
 
     it("should handle a single key", async () => {
       const mockResponse = {
-        "SCRUM-200": { id: "req-id-999" },
+        "SCRUM-200": { id: "10003" },
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
@@ -75,9 +75,9 @@ describe("RequirementIdResolver", () => {
 
     it("should return API response as-is", async () => {
       const mockResponse = {
-        "AD-10": { id: "abc-123" },
-        "AD-11": { id: "def-456" },
-        "AD-12": { id: "ghi-789" },
+        "AD-10": { id: "20010" },
+        "AD-11": { id: "20011" },
+        "AD-12": { id: "20012" },
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 

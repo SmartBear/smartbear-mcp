@@ -180,7 +180,7 @@ describe("LinkRequirements", () => {
       });
     });
 
-    it("should not call post if all requirement keys fail to resolve", async () => {
+    it("should call post with an empty body when all requirement keys fail to resolve", async () => {
       mockTcResolver.resolveAndReturn.mockResolvedValueOnce({
         "SCRUM-TC-145": { uid: "uid-abc", latestVersion: 1 },
       });

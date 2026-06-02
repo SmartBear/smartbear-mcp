@@ -11,9 +11,9 @@ export interface ResolvedTestCycle {
 }
 
 /**
- * TestCaseUidResolver — batch-resolves human-readable test case keys to internal UIDs.
+ * TestCycleUidResolver — batch-resolves human-readable test case keys to internal UIDs.
  *
- * Key format: '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'
+ * Key format: '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-145'
  * No caching — each call hits the API directly for up-to-date UIDs and versions.
  */
 
@@ -35,7 +35,7 @@ export class TestCycleUidResolver extends Resolver {
     _context: ProjectContext,
     _warnings: string[],
   ): Promise<void> {
-    // TestCaseUidResolver uses resolveAndReturn — this method is intentionally a no-op
+    // TestCycleUidResolver uses resolveAndReturn — this method is intentionally a no-op
   }
 
   async resolveAndReturn(

@@ -51,7 +51,7 @@ export const ENDPOINTS = {
   RESOLVE_TEST_CYCLE_IDS: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcycles/resolve-ids`,
 
-  /** Resolve test case keys → internal UIDs for a given project */
+  /** Resolve requirement keys → internal Jira issue IDs for a given project */
   RESOLVE_REQUIREMENT_IDS: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/requirement/resolve-ids`,
 
