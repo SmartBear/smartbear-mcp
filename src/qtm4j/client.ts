@@ -191,6 +191,43 @@ export class Qtm4jClient implements Client {
       "./tool/test-cycle/update-test-cycle"
     );
 
+    const { LinkRequirements } = await import(
+      "./tool/test-case/link-requirements"
+    );
+    const { UnlinkRequirements } = await import(
+      "./tool/test-case/unlink-requirements"
+    );
+    const { LinkTestCasesToRequirement } = await import(
+      "./tool/requirement/link-testcases"
+    );
+    const { UnlinkTestCasesFromRequirement } = await import(
+      "./tool/requirement/unlink-testcases"
+    );
+    const { GetLinkedRequirements } = await import(
+      "./tool/test-case/get-linked-requirements"
+    );
+    const { GetLinkedTestCasesForRequirement } = await import(
+      "./tool/requirement/get-linked-testcases"
+    );
+    const { LinkTestCasesToCycle } = await import(
+      "./tool/test-cycle/link-testcases"
+    );
+    const { UnlinkTestCasesFromCycle } = await import(
+      "./tool/test-cycle/unlink-testcases"
+    );
+    const { SearchLinkedTestCasesInCycle } = await import(
+      "./tool/test-cycle/search-linked-testcases"
+    );
+    const { LinkRequirementsToCycle } = await import(
+      "./tool/test-cycle/link-requirements"
+    );
+    const { UnlinkRequirementsFromCycle } = await import(
+      "./tool/test-cycle/unlink-requirements"
+    );
+    const { GetLinkedRequirementsForCycle } = await import(
+      "./tool/test-cycle/get-linked-requirements"
+    );
+
     const tools = [
       new GetProjects(this),
       new SetProjectContext(this),
@@ -203,6 +240,18 @@ export class Qtm4jClient implements Client {
       new UpdateTestCycle(this),
       new UploadAutomationResult(this),
       new GetAutomationHistory(this),
+      new LinkRequirements(this),
+      new UnlinkRequirements(this),
+      new LinkTestCasesToRequirement(this),
+      new UnlinkTestCasesFromRequirement(this),
+      new GetLinkedRequirements(this),
+      new GetLinkedTestCasesForRequirement(this),
+      new LinkTestCasesToCycle(this),
+      new UnlinkTestCasesFromCycle(this),
+      new SearchLinkedTestCasesInCycle(this),
+      new LinkRequirementsToCycle(this),
+      new UnlinkRequirementsFromCycle(this),
+      new GetLinkedRequirementsForCycle(this),
     ];
 
     // Register each tool with the MCP server

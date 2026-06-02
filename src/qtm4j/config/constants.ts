@@ -48,6 +48,61 @@ export const ENDPOINTS = {
   UPDATE_TEST_CASE: (id: string, versionNo: number) =>
     `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}`,
 
+  RESOLVE_TEST_CYCLE_IDS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcycles/resolve-ids`,
+
+  /** Resolve requirement keys → internal Jira issue IDs for a given project */
+  RESOLVE_REQUIREMENT_IDS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/requirement/resolve-ids`,
+
+  /** Link requirements to test case endpoint */
+  LINK_REQUIREMENTS: (id: string, versionNo: number) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/version/${versionNo}/requirements/link`,
+
+  /** Unlink requirements from test case endpoint */
+  UNLINK_REQUIREMENTS: (id: string, versionNo: number) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/requirements/unlink`,
+
+  /** Link test cases to requirement endpoint */
+  LINK_TESTCASES_TO_REQUIREMENT: (requirementId: number) =>
+    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases/link`,
+
+  /** Unlink test cases from requirement endpoint */
+  UNLINK_TESTCASES_FROM_REQUIREMENT: (requirementId: number) =>
+    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases/unlink`,
+
+  /** Get linked requirements for a test case endpoint */
+  GET_LINKED_REQUIREMENTS: (id: string) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/requirements`,
+
+  /** Get linked test cases for a requirement endpoint */
+  GET_LINKED_TESTCASES_FOR_REQUIREMENT: (requirementId: number) =>
+    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases`,
+
+  /** Link test cases to test cycle endpoint */
+  LINK_TESTCASES_TO_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases`,
+
+  /** Unlink test cases from test cycle endpoint */
+  UNLINK_TESTCASES_FROM_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases`,
+
+  /** Search test cases linked to a test cycle endpoint */
+  SEARCH_LINKED_TESTCASES_IN_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases/search`,
+
+  /** Get linked requirements for a test cycle endpoint */
+  GET_LINKED_REQUIREMENTS_FOR_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements`,
+
+  /** Link requirements to test cycle endpoint */
+  LINK_REQUIREMENTS_TO_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements/link`,
+
+  /** Unlink requirements from test cycle endpoint */
+  UNLINK_REQUIREMENTS_FROM_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements/unlink`,
+
   /** Test steps search endpoint */
   TEST_STEPS: (id: string, versionNo: number) =>
     `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/teststeps/search`,
@@ -281,6 +336,90 @@ export const TOOL_NAMES = {
       "Only the fields you provide are changed — omitted fields are left as-is. " +
       "projectId is injected automatically from the active project context.",
   },
+
+  /** Link Requirements tool */
+  LINK_REQUIREMENTS: {
+    TITLE: "Link Requirements to Test Case",
+    SUMMARY:
+      "Link one or more Jira requirements to a test case in QTM4J by requirement keys or JQL filter. Requirement keys are resolved to internal IDs automatically.",
+  },
+
+  /** Unlink Requirements tool */
+  UNLINK_REQUIREMENTS: {
+    TITLE: "Unlink Requirements from Test Case",
+    SUMMARY:
+      "Unlink one or more Jira requirements from a test case in QTM4J by requirement keys, or unlink all requirements at once with unLinkAll.",
+  },
+
+  /** Link Test Cases to Requirement tool */
+  LINK_TESTCASES_TO_REQUIREMENT: {
+    TITLE: "Link Test Cases to Requirement",
+    SUMMARY:
+      "Link test cases to a Jira requirement in QTM4J by test case keys or filter criteria. Test case keys are resolved to internal IDs automatically.",
+  },
+
+  /** Unlink Test Cases from Requirement tool */
+  UNLINK_TESTCASES_FROM_REQUIREMENT: {
+    TITLE: "Unlink Test Cases from Requirement",
+    SUMMARY:
+      "Unlink test cases from a Jira requirement in QTM4J by test case keys or filter criteria. Test case keys are resolved to internal IDs automatically.",
+  },
+
+  /** Get Linked Requirements tool */
+  GET_LINKED_REQUIREMENTS: {
+    TITLE: "Get Linked Requirements",
+    SUMMARY:
+      "Retrieve the Jira requirements linked to a specific test case in QTM4J. Test case key is resolved to internal ID automatically.",
+  },
+
+  /** Get Linked Test Cases for Requirement tool */
+  GET_LINKED_TESTCASES_FOR_REQUIREMENT: {
+    TITLE: "Get Linked Test Cases for Requirement",
+    SUMMARY:
+      "Retrieve the test cases linked to a Jira requirement in QTM4J. Requirement key is resolved to internal ID automatically.",
+  },
+
+  /** Link Test Cases to Test Cycle tool */
+  LINK_TESTCASES_TO_CYCLE: {
+    TITLE: "Link Test Cases to Test Cycle",
+    SUMMARY:
+      "Link test cases to a QTM4J test cycle by test case keys or filter criteria. Test case keys are resolved to internal IDs and latest versions automatically.",
+  },
+
+  /** Unlink Test Cases from Test Cycle tool */
+  UNLINK_TESTCASES_FROM_CYCLE: {
+    TITLE: "Unlink Test Cases from Test Cycle",
+    SUMMARY:
+      "Unlink test cases from a QTM4J test cycle by test case keys, filter criteria, or all at once with unlinkAll.",
+  },
+
+  /** Search Linked Test Cases in Test Cycle tool */
+  SEARCH_LINKED_TESTCASES_IN_CYCLE: {
+    TITLE: "Search Linked Test Cases in Test Cycle",
+    SUMMARY:
+      "Search and filter test case executions linked to a QTM4J test cycle. Supports pagination, field selection, sorting, and rich filter criteria.",
+  },
+
+  /** Get Linked Requirements for Test Cycle tool */
+  GET_LINKED_REQUIREMENTS_FOR_CYCLE: {
+    TITLE: "Get Linked Requirements for Test Cycle",
+    SUMMARY:
+      "Retrieve Jira requirements linked to a QTM4J test cycle. Test cycle key is resolved to internal UID automatically.",
+  },
+
+  /** Link Requirements to Test Cycle tool */
+  LINK_REQUIREMENTS_TO_CYCLE: {
+    TITLE: "Link Requirements to Test Cycle",
+    SUMMARY:
+      "Link one or more Jira requirements to a QTM4J test cycle by requirement keys or JQL filter. Requirement keys are resolved to internal IDs automatically.",
+  },
+
+  /** Unlink Requirements from Test Cycle tool */
+  UNLINK_REQUIREMENTS_FROM_CYCLE: {
+    TITLE: "Unlink Requirements from Test Cycle",
+    SUMMARY:
+      "Unlink one or more Jira requirements from a QTM4J test cycle by requirement keys, or unlink all requirements at once with unLinkAll.",
+  },
 } as const;
 
 /**
@@ -295,6 +434,8 @@ export const TOOLSETS = {
   TEST_CYCLES: "Test Cycles",
   /** Projects toolset */
   PROJECTS: "Projects",
+
+  REQUIREMENTS: "Requirements",
 } as const;
 
 /**
