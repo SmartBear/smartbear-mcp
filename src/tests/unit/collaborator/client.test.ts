@@ -13,10 +13,14 @@ async function createConfiguredClient(
   loginTicket = "ticket123",
 ): Promise<CollaboratorClient> {
   const client = new CollaboratorClient();
-  await client.configure({} as any, {
+  const getEnv = vi.fn().mockImplementation((key: string) => {
+    if (key === "Login") return username;
+    if (key === "Ticket") return loginTicket;
+    return undefined;
+  });
+  const server = { getEnv: getEnv } as any;
+  await client.configure(server, {
     base_url: baseUrl,
-    username: username,
-    login_ticket: loginTicket,
   });
   return client;
 }
@@ -40,8 +44,6 @@ describe("CollaboratorClient", () => {
       const newClient = new CollaboratorClient();
       const result = await newClient.configure({} as any, {
         base_url: "https://collab.example.com",
-        username: "admin",
-        login_ticket: "ticket123",
       });
       expect(result).toBe(undefined);
       expect(newClient.isConfigured()).toBe(true);

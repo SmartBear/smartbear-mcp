@@ -14,7 +14,9 @@ describe("SwaggerClient", () => {
     fetchMock.resetMocks();
 
     client = new SwaggerClient();
-    await client.configure({} as any, { api_key: "test-token" });
+    const getEnv = vi.fn().mockReturnValue("test-token");
+    const mockServer = { server: vi.fn(), getEnv } as any;
+    await client.configure(mockServer, {} as any);
   });
 
   afterEach(() => {

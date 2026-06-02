@@ -18,7 +18,7 @@ describe("SmartBearMcpServer", () => {
   let superRegisterResourceMock: any;
 
   beforeEach(() => {
-    server = new SmartBearMcpServer();
+    server = new SmartBearMcpServer(vi.fn());
     // This approach is required to mock the super call - other techniques result in mocking the actual server
     superRegisterToolMock = vi
       .spyOn(
@@ -49,6 +49,7 @@ describe("SmartBearMcpServer", () => {
         capabilityPrefix: "test_product",
         configPrefix: "test-product",
         config: z.object({}),
+        authenticationFields: z.object({}),
         registerTools: vi.fn(),
         registerResources: vi.fn(),
         configure: vi.fn(),
@@ -341,8 +342,10 @@ describe("SmartBearMcpServer", () => {
         registerTools: vi.fn(),
         registerResources: vi.fn(),
         config: z.object({}),
+        authenticationFields: z.object({}),
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
+        hasAuth: vi.fn().mockReturnValue(true),
       };
 
       await server.addClient(mockClient);
@@ -397,8 +400,10 @@ describe("SmartBearMcpServer", () => {
         registerTools: vi.fn(),
         registerResources: undefined,
         config: z.object({}),
+        authenticationFields: z.object({}),
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
+        hasAuth: vi.fn().mockReturnValue(true),
       };
 
       await server.addClient(mockClient);
@@ -610,21 +615,25 @@ describe("SmartBearMcpServer", () => {
         capabilityPrefix: "test_product_a",
         configPrefix: "test-product-a",
         config: z.object({}),
+        authenticationFields: z.object({}),
         registerTools: vi.fn(),
         registerResources: vi.fn(),
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
         cleanupSession: vi.fn().mockResolvedValue(undefined),
+        hasAuth: vi.fn().mockReturnValue(true),
       };
       const clientWithoutCleanup = {
         name: "Test Product B",
         capabilityPrefix: "test_product_b",
         configPrefix: "test-product-b",
         config: z.object({}),
+        authenticationFields: z.object({}),
         registerTools: vi.fn(),
         registerResources: vi.fn(),
         configure: vi.fn(),
         isConfigured: vi.fn().mockReturnValue(true),
+        hasAuth: vi.fn().mockReturnValue(true),
       };
 
       await server.addClient(clientWithCleanup);
@@ -655,6 +664,7 @@ describe("SmartBearMcpServer", () => {
         capabilityPrefix: "test_product",
         configPrefix: "test-product",
         config: z.object({}),
+        authenticationFields: z.object({}),
         registerTools: vi.fn(),
         registerResources: vi.fn(),
         configure: vi.fn(),
@@ -665,6 +675,7 @@ describe("SmartBearMcpServer", () => {
         capabilityPrefix: "another_test_product",
         configPrefix: "another-test-product",
         config: z.object({}),
+        authenticationFields: z.object({}),
         registerTools: vi.fn(),
         registerResources: vi.fn(),
         configure: vi.fn(),
@@ -675,7 +686,7 @@ describe("SmartBearMcpServer", () => {
         enabledToolsets?: string,
         defaultToolsets?: string[],
       ) => {
-        server = new SmartBearMcpServer(enabledToolsets);
+        server = new SmartBearMcpServer(vi.fn(), enabledToolsets);
         registerToolSpy = vi
           .spyOn(
             Object.getPrototypeOf(Object.getPrototypeOf(server)),
@@ -863,62 +874,65 @@ describe("SmartBearMcpServer", () => {
       configPrefix: "test-product",
       capabilityPrefix: "test_product",
       config: z.object({}),
+      authenticationFields: z.object({}),
       configure: vi.fn(),
       isConfigured: vi.fn(),
       registerTools: vi.fn(),
+      hasAuth: vi.fn(),
     };
 
     it("should enable all tools when no toolsets are configured", () => {
-      const server = new SmartBearMcpServer();
+      const server = new SmartBearMcpServer(vi.fn());
       expect(server.isToolEnabled(mockClient, "anything")).toBe(true);
     });
 
     it("should enable tool when client is listed", () => {
-      const server = new SmartBearMcpServer("test-product");
+      const server = new SmartBearMcpServer(vi.fn(), "test-product");
       expect(server.isToolEnabled(mockClient, "anything")).toBe(true);
     });
 
     it("should enable tool when its toolset matches an enabled entry", () => {
-      const server = new SmartBearMcpServer("test-product:errors");
+      const server = new SmartBearMcpServer(vi.fn(), "test-product:errors");
       expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
     });
 
     it("should disable tool when its toolset does not match any enabled entry", () => {
-      const server = new SmartBearMcpServer("test-product:errors");
+      const server = new SmartBearMcpServer(vi.fn(), "test-product:errors");
       expect(server.isToolEnabled(mockClient, "releases")).toBe(false);
     });
 
     it("should disable tool when client prefix does not match any enabled toolset", () => {
-      const server = new SmartBearMcpServer("other-product:errors");
+      const server = new SmartBearMcpServer(vi.fn(), "other-product:errors");
       expect(server.isToolEnabled(mockClient, "errors")).toBe(false);
     });
 
     it("should handle toolset name normalization (spaces, hyphens, underscores)", () => {
-      const server = new SmartBearMcpServer("test-product:mytools");
+      const server = new SmartBearMcpServer(vi.fn(), "test-product:mytools");
       expect(server.isToolEnabled(mockClient, "my-tools")).toBe(true);
       expect(server.isToolEnabled(mockClient, "my_tools")).toBe(true);
       expect(server.isToolEnabled(mockClient, "my tools")).toBe(true);
     });
 
     it("should be case-insensitive", () => {
-      const server = new SmartBearMcpServer("Test-Product:Errors");
+      const server = new SmartBearMcpServer(vi.fn(), "Test-Product:Errors");
       expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
     });
 
     it("should enable default toolsets when specific toolsets are configured for the client", () => {
       const client = { ...mockClient, defaultToolsets: ["default-set"] };
-      const server = new SmartBearMcpServer("test-product:errors");
+      const server = new SmartBearMcpServer(vi.fn(), "test-product:errors");
       expect(server.isToolEnabled(client, "default-set")).toBe(true);
     });
 
     it("should not enable default toolsets when no specific toolsets are configured for the client", () => {
       const client = { ...mockClient, defaultToolsets: ["default-set"] };
-      const server = new SmartBearMcpServer("other-product:errors");
+      const server = new SmartBearMcpServer(vi.fn(), "other-product:errors");
       expect(server.isToolEnabled(client, "default-set")).toBe(false);
     });
 
     it("should support multiple toolset entries for the same client", () => {
       const server = new SmartBearMcpServer(
+        vi.fn(),
         "test-product:errors,test-product:releases",
       );
       expect(server.isToolEnabled(mockClient, "errors")).toBe(true);

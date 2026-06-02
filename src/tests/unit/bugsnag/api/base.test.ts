@@ -354,7 +354,7 @@ describe("base.ts", () => {
 
   describe("BaseAPI", () => {
     const configuration = new Configuration({
-      apiKey: "test-token",
+      apiKey: () => "test-token",
       basePath: "http://localhost:3000",
       headers: { "X-Test-Header": "test-value" },
     });
@@ -364,7 +364,7 @@ describe("base.ts", () => {
       // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
       const configuredObj = baseApi["configuration"];
       expect(configuredObj).toBe(configuration);
-      expect(configuredObj.apiKey).toBe("test-token");
+      expect(configuredObj.apiKey()).toBe("test-token");
       expect(configuredObj.basePath).toBe("http://localhost:3000");
       // biome-ignore lint/complexity/useLiteralKeys: reading internal field for testing
       expect(baseApi["filterFields"]).toEqual([]);
