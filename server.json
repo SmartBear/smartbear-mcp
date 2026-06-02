@@ -111,5 +111,19 @@
         }
       ]
     }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://swagger.mcp.smartbear.com/mcp"
+    },
+    {
+      "type": "streamable-http",
+      "url": "https://bugsnag.mcp.smartbear.com/mcp"
+    },
+    {
+      "type": "streamable-http",
+      "url": "https://zephyr.mcp.smartbear.com/mcp"
+    }
   ]
 }
