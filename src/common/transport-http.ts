@@ -603,13 +603,19 @@ async function handleLegacyMessageRequest(
   });
 }
 
-function getConfigValue(
-  clientPrefix: string,
-  key: string,
+/**
+ * Resolves a single key/prefix pair from a request, checking in order:
+ *   1. Query-string parameters
+ *   2. HTTP request headers (auth-scheme prefixes are stripped)
+ *   3. Environment variables
+ */
+function resolveFromRequest(
   req: IncomingMessage,
-): string | null {
+  key: string,
+  prefix?: string,
+): string | undefined {
   // 1. Try query string
-  const queryStringName = getQueryStringName(key, clientPrefix);
+  const queryStringName = getQueryStringName(key, prefix);
   const queryParams = querystring.parse(req.url?.split("?")[1] || "");
   let value =
     queryParams[queryStringName] || queryParams[queryStringName.toLowerCase()];
@@ -617,18 +623,31 @@ function getConfigValue(
     return value;
   }
 
-  // 2. Try headers
-  const headerName = getHeaderName(key, clientPrefix);
-  // Check both original case and lower-case headers for compatibility
-  // (HTTP headers are case-insensitive, but Node.js lowercases them)
+  // 2. Try headers (HTTP headers are case-insensitive; Node.js lowercases them)
+  const headerName = getHeaderName(key, prefix);
   value = req.headers[headerName] || req.headers[headerName.toLowerCase()];
   if (typeof value === "string") {
+    // Strip common auth-scheme prefixes so callers receive the raw token
+    if (value.toLowerCase().startsWith("bearer ")) {
+      value = value.slice("bearer ".length);
+    } else if (value.toLowerCase().startsWith("token ")) {
+      value = value.slice("token ".length);
+    } else if (value.toLowerCase().startsWith("basic ")) {
+      value = value.slice("basic ".length);
+    }
     return value;
   }
 
   // 3. Fall back to environment variable
-  const envVarName = getEnvVarName(key, clientPrefix);
-  return process.env[envVarName] || null;
+  const envVarName = getEnvVarName(key, prefix);
+  return process.env[envVarName];
+}
+
+/**
+ * Build a GetEnvFn backed by the current HTTP request, delegating to resolveFromRequest.
+ */
+function makeConfigFn(req: IncomingMessage): GetEnvFn {
+  return (key, client) => resolveFromRequest(req, key, client?.configPrefix);
 }
 
 /**
@@ -646,40 +665,10 @@ export async function newServer(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
-  const configFn: GetEnvFn = (key, client) => {
-    // 1. Try query string
-    const queryStringName = getQueryStringName(key, client?.configPrefix);
-    const queryParams = querystring.parse(req.url?.split("?")[1] || "");
-    let value =
-      queryParams[queryStringName] ||
-      queryParams[queryStringName.toLowerCase()];
-    if (typeof value === "string") {
-      return value;
-    }
-
-    // 2. Try headers
-    const headerName = getHeaderName(key, client?.configPrefix);
-    // Check both original case and lower-case headers for compatibility
-    // (HTTP headers are case-insensitive, but Node.js lowercases them)
-    value = req.headers[headerName] || req.headers[headerName.toLowerCase()];
-    if (typeof value === "string") {
-      if (value.toLowerCase().startsWith("bearer ")) {
-        value = value.slice("bearer ".length);
-      } else if (value.toLowerCase().startsWith("token ")) {
-        value = value.slice("token ".length);
-      } else if (value.toLowerCase().startsWith("basic ")) {
-        value = value.slice("basic ".length);
-      }
-      return value;
-    }
-
-    // 3. Fall back to environment variable
-    const envVarName = getEnvVarName(key, client?.configPrefix);
-    return process.env[envVarName];
-  };
+  const configFn = makeConfigFn(req);
 
   const enabledToolsets =
-    getConfigValue("smartbear", "toolsets", req) || undefined;
+    resolveFromRequest(req, "toolsets", "smartbear") || undefined;
 
   const server = new SmartBearMcpServer(configFn, enabledToolsets);
   try {
