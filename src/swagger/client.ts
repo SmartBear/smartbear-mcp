@@ -31,6 +31,8 @@ import {
   type Product,
   type ProductsListResponse,
   type PublishProductArgs,
+  type ScanApiStandardizationFromRegistryParams,
+  type ScanApiStandardizationFromRegistryResult,
   type ScanStandardizationParams,
   type SectionsListResponse,
   type StandardizationResult,
@@ -263,6 +265,12 @@ export class SwaggerClient implements Client {
     args: ScanStandardizationParams,
   ): Promise<StandardizationResult | FallbackResponse> {
     return this.getApi().scanStandardization(args);
+  }
+
+  async scanApiStandardizationFromRegistry(
+    args: ScanApiStandardizationFromRegistryParams,
+  ): Promise<ScanApiStandardizationFromRegistryResult | FallbackResponse> {
+    return this.getApi().scanApiStandardizationFromRegistry(args);
   }
 
   async standardizeApi(

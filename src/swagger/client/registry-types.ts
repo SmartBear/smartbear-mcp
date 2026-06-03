@@ -85,6 +85,14 @@ export const ScanStandardizationParamsSchema = z.object({
     ),
 });
 
+export const ScanApiStandardizationFromRegistryParamsSchema = z.object({
+  orgName: z
+    .string()
+    .describe("The organization name that owns the API and provides the standardization rules (case-sensitive)"),
+  apiName: z.string().describe("API name (case-sensitive)"),
+  version: z.string().describe("Version identifier"),
+});
+
 export const CreateApiFromPromptParamsSchema = z.object({
   owner: z
     .string()
@@ -129,6 +137,9 @@ export type ApiDefinitionParams = z.infer<typeof ApiDefinitionParamsSchema>;
 export type CreateApiParams = z.infer<typeof CreateApiParamsSchema>;
 export type ScanStandardizationParams = z.infer<
   typeof ScanStandardizationParamsSchema
+>;
+export type ScanApiStandardizationFromRegistryParams = z.infer<
+  typeof ScanApiStandardizationFromRegistryParamsSchema
 >;
 export type CreateApiFromPromptParams = z.infer<
   typeof CreateApiFromPromptParamsSchema
@@ -197,9 +208,33 @@ export interface CreateApiFromPromptResponse {
   operation: "create" | "update";
 }
 
-// Response type for standardization scan
-export interface StandardizationResult {
-  [key: string]: unknown; // The API returns standardization errors/results
+export type StandardizationSeverity =
+  | "Off"
+  | "Warning"
+  | "Critical"
+  | "Info"
+  | "Hint";
+
+export interface StandardizationError {
+  line: number;
+  description: string;
+  severity?: StandardizationSeverity;
+}
+
+export interface StandardizationScanApiResponse {
+  validation?: StandardizationError[];
+}
+
+// Response type for standardization scan tool
+export interface StandardizationResult extends StandardizationScanApiResponse {
+  count: number;
+  countsBySeverity: Record<string, number>;
+}
+
+// Response type for scanning an API by org/name/version.
+export interface ScanApiStandardizationFromRegistryResult
+  extends StandardizationResult {
+  url: string;
 }
 
 // Response type for API standardization
