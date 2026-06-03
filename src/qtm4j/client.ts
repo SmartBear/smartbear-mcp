@@ -1,5 +1,4 @@
 import z from "zod";
-import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -20,17 +19,20 @@ import { ResolverRegistry } from "./resolver/resolver-registry";
  * Configuration schema for QTM4J client
  */
 const ConfigurationSchema = z.object({
-  [CONFIG_KEYS.API_KEY]: z.string().describe(SCHEMA_DESCRIPTIONS.API_KEY),
-  [CONFIG_KEYS.AUTOMATION_API_KEY]: z
-    .string()
-    .optional()
-    .describe(SCHEMA_DESCRIPTIONS.AUTOMATION_API_KEY),
   [CONFIG_KEYS.BASE_URL]: z
     .string()
     .url()
     .optional()
     .default(API_CONFIG.DEFAULT_BASE_URL)
     .describe(SCHEMA_DESCRIPTIONS.BASE_URL),
+});
+
+const AuthenticationSchema = z.object({
+  api_key: z.string().describe(SCHEMA_DESCRIPTIONS.API_KEY).optional(),
+  automation_api_key: z
+    .string()
+    .describe(SCHEMA_DESCRIPTIONS.AUTOMATION_API_KEY)
+    .optional(),
 });
 
 /**
@@ -65,9 +67,9 @@ export class Qtm4jClient implements Client {
   capabilityPrefix = CLIENT_CONFIG.TOOL_PREFIX;
   configPrefix = CLIENT_CONFIG.CONFIG_PREFIX;
   config = ConfigurationSchema;
+  authenticationFields = AuthenticationSchema;
 
-  private _apiKey: string | undefined;
-  private _automationApiKey: string | undefined;
+  private server?: SmartBearMcpServer;
   private baseUrl: string = API_CONFIG.DEFAULT_BASE_URL;
   private apiClient: ApiClient | undefined;
   private resolverRegistry: ResolverRegistry | undefined;
@@ -81,8 +83,7 @@ export class Qtm4jClient implements Client {
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
-    this._apiKey = config[CONFIG_KEYS.API_KEY];
-    this._automationApiKey = config[CONFIG_KEYS.AUTOMATION_API_KEY];
+    this.server = server;
     if (config[CONFIG_KEYS.BASE_URL]) {
       this.baseUrl = config[CONFIG_KEYS.BASE_URL];
     }
@@ -102,47 +103,27 @@ export class Qtm4jClient implements Client {
   }
 
   /**
-   * Get authentication token with request-scoped override support
-   * Checks request headers first, then falls back to configured API key
-   * @returns API key or null if not found
-   */
-  getAuthToken(): string | null {
-    // 1. Try request context headers
-    const contextHeader =
-      getRequestHeader("Qtm4j-Api-Key") ||
-      getRequestHeader("apiKey") ||
-      getRequestHeader("Authorization");
-
-    if (contextHeader) {
-      let token = Array.isArray(contextHeader)
-        ? contextHeader[0]
-        : contextHeader;
-
-      // Handle Bearer prefix if present
-      if (token.startsWith("Bearer ")) {
-        token = token.substring(7);
-      }
-      return token;
-    }
-
-    // 2. Fallback to configured API key
-    return this._apiKey || null;
-  }
-
-  getAutomationApiKey(): string | null {
-    const headerKey = getRequestHeader("Qtm4j-Automation-Api-Key");
-    if (headerKey) {
-      return Array.isArray(headerKey) ? headerKey[0] : headerKey;
-    }
-    return this._automationApiKey || null;
-  }
-
-  /**
    * Check if the client is properly configured
    * @returns true if API key is set and client is ready
    */
   isConfigured(): boolean {
-    return this.apiClient !== undefined;
+    return !!this.apiClient;
+  }
+
+  hasAuth(): boolean {
+    return this.isConfigured() && !!this.getAuthToken();
+  }
+
+  getAuthToken(): string | null {
+    return (
+      this.server?.getEnv(CONFIG_KEYS.API_KEY, this) ||
+      this.server?.getEnv("Authorization") ||
+      null
+    );
+  }
+
+  getAutomationApiKey(): string | null {
+    return this.server?.getEnv(CONFIG_KEYS.AUTOMATION_API_KEY, this) || null;
   }
 
   /**
@@ -210,6 +191,43 @@ export class Qtm4jClient implements Client {
       "./tool/test-cycle/update-test-cycle"
     );
 
+    const { LinkRequirements } = await import(
+      "./tool/test-case/link-requirements"
+    );
+    const { UnlinkRequirements } = await import(
+      "./tool/test-case/unlink-requirements"
+    );
+    const { LinkTestCasesToRequirement } = await import(
+      "./tool/requirement/link-testcases"
+    );
+    const { UnlinkTestCasesFromRequirement } = await import(
+      "./tool/requirement/unlink-testcases"
+    );
+    const { GetLinkedRequirements } = await import(
+      "./tool/test-case/get-linked-requirements"
+    );
+    const { GetLinkedTestCasesForRequirement } = await import(
+      "./tool/requirement/get-linked-testcases"
+    );
+    const { LinkTestCasesToCycle } = await import(
+      "./tool/test-cycle/link-testcases"
+    );
+    const { UnlinkTestCasesFromCycle } = await import(
+      "./tool/test-cycle/unlink-testcases"
+    );
+    const { SearchLinkedTestCasesInCycle } = await import(
+      "./tool/test-cycle/search-linked-testcases"
+    );
+    const { LinkRequirementsToCycle } = await import(
+      "./tool/test-cycle/link-requirements"
+    );
+    const { UnlinkRequirementsFromCycle } = await import(
+      "./tool/test-cycle/unlink-requirements"
+    );
+    const { GetLinkedRequirementsForCycle } = await import(
+      "./tool/test-cycle/get-linked-requirements"
+    );
+
     const tools = [
       new GetProjects(this),
       new SetProjectContext(this),
@@ -222,6 +240,18 @@ export class Qtm4jClient implements Client {
       new UpdateTestCycle(this),
       new UploadAutomationResult(this),
       new GetAutomationHistory(this),
+      new LinkRequirements(this),
+      new UnlinkRequirements(this),
+      new LinkTestCasesToRequirement(this),
+      new UnlinkTestCasesFromRequirement(this),
+      new GetLinkedRequirements(this),
+      new GetLinkedTestCasesForRequirement(this),
+      new LinkTestCasesToCycle(this),
+      new UnlinkTestCasesFromCycle(this),
+      new SearchLinkedTestCasesInCycle(this),
+      new LinkRequirementsToCycle(this),
+      new UnlinkRequirementsFromCycle(this),
+      new GetLinkedRequirementsForCycle(this),
     ];
 
     // Register each tool with the MCP server

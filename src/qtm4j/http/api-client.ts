@@ -40,7 +40,7 @@ export class ApiClient {
    * @returns Record of HTTP headers including API key
    * @throws ToolError if token is not available
    */
-  private getHeaders(): Record<string, string> {
+  getHeaders(): Record<string, string> {
     const token = this.tokenProvider();
     if (!token) {
       throw new ToolError(ERROR_MESSAGES.CLIENT_NOT_CONFIGURED);
@@ -102,10 +102,15 @@ export class ApiClient {
    * Perform POST request
    * @param endpoint - API endpoint path
    * @param body - Request body object
+   * @param params - Optional query parameters
    * @returns Parsed response data
    */
-  async post(endpoint: string, body: object): Promise<any> {
-    const response = await fetch(this.getUrl(endpoint), {
+  async post(
+    endpoint: string,
+    body: object,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<any> {
+    const response = await fetch(this.getUrl(endpoint, params), {
       method: HTTP_METHODS.POST,
       headers: {
         ...this.getHeaders(),
@@ -170,6 +175,24 @@ export class ApiClient {
       method: HTTP_METHODS.POST,
       headers: requestHeaders,
       body: JSON.stringify(body),
+    });
+    return await this.validateAndGetResponseBody(response);
+  }
+
+  /**
+   * Perform DELETE request with optional body
+   * @param endpoint - API endpoint path
+   * @param body - Optional request body object
+   * @returns Parsed response data
+   */
+  async delete(endpoint: string, body?: object): Promise<any> {
+    const response = await fetch(this.getUrl(endpoint), {
+      method: HTTP_METHODS.DELETE,
+      headers: {
+        ...this.getHeaders(),
+        [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     return await this.validateAndGetResponseBody(response);
   }
