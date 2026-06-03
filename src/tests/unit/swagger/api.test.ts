@@ -275,7 +275,11 @@ describe("SwaggerAPI", () => {
         definition: JSON.stringify({ openapi: "3.0.0" }),
       });
 
-      expect(result).toEqual({ validation: [], count: 0, countsBySeverity: {} });
+      expect(result).toEqual({
+        validation: [],
+        count: 0,
+        countsBySeverity: {},
+      });
     });
 
     it("should throw when the scan endpoint returns 400 Bad Request", async () => {

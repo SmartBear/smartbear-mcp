@@ -904,20 +904,21 @@ export class SwaggerAPI {
       );
     }
 
-  const results = await this.handleResponse<StandardizationScanApiResponse>(response);
+    const results =
+      await this.handleResponse<StandardizationScanApiResponse>(response);
 
-  if (isStandardizationResult(results)) {
-    const errors = results.validation ?? [];
-    const countsBySeverity: Record<string, number> = {};
-    for (const error of errors) {
-      const severity = error.severity ?? "Unknown";
-      countsBySeverity[severity] = (countsBySeverity[severity] ?? 0) + 1;
+    if (isStandardizationResult(results)) {
+      const errors = results.validation ?? [];
+      const countsBySeverity: Record<string, number> = {};
+      for (const error of errors) {
+        const severity = error.severity ?? "Unknown";
+        countsBySeverity[severity] = (countsBySeverity[severity] ?? 0) + 1;
+      }
+
+      return { ...results, count: errors.length, countsBySeverity };
     }
-
-    return { ...results, count: errors.length, countsBySeverity };
+    return results;
   }
-  return results
-}
 
   /**
    * Fetch an API definition from the registry and run a standardization scan
@@ -927,7 +928,6 @@ export class SwaggerAPI {
   async scanApiStandardizationFromRegistry(
     params: ScanApiStandardizationFromRegistryParams,
   ): Promise<ScanApiStandardizationFromRegistryResult | FallbackResponse> {
-
     const definition = await this.getApiDefinition(
       {
         owner: params.orgName,
@@ -948,7 +948,7 @@ export class SwaggerAPI {
         url: `${this.config.uiBasePath}/apis/${params.orgName}/${params.apiName}/${params.version}`,
       };
     }
-    return results
+    return results;
   }
 
   /**
