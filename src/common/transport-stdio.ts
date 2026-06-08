@@ -5,22 +5,22 @@ import { clientRegistry } from "./client-registry";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
-import type { GetEnvFn } from "./types";
-import { getTypeDescription } from "./zod-utils";
+import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 /**
- * Generate a dynamic listing all available clients and the available environment variables
+ * Generate a dynamic error message listing all available clients and their required env vars
  */
-function getConfigMessage(): string[] {
+function getNoConfigMessage(): string[] {
   const messages: string[] = [];
-  for (const client of clientRegistry.getAll()) {
-    messages.push(` - ${client.name}:`);
-    for (const [configKey, requirement] of [
-      ...Object.entries(client.authenticationFields.shape),
-      ...Object.entries(client.config.shape),
-    ]) {
+  for (const entry of clientRegistry.getAll()) {
+    messages.push(` - ${entry.name}:`);
+    for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
+      const envVarName = getEnvVarName(entry.configPrefix, configKey);
+      const requiredTag = isOptionalType(requirement)
+        ? " (optional)"
+        : " (required)";
       messages.push(
-        `    - ${getEnvVarName(configKey, client.configPrefix)}: ${getTypeDescription(requirement)}`,
+        `    - ${envVarName}${requiredTag}: ${getTypeDescription(requirement)}`,
       );
     }
   }
@@ -38,32 +38,33 @@ export async function runStdioMode() {
     console.log(
       "The following environment variables can be set to configure each of the SmartBear clients:",
     );
-    console.log(getConfigMessage().join("\n"));
+    console.log(getNoConfigMessage().join("\n"));
     process.exit(0);
   }
 
   enableCompileCache();
-  const configFn: GetEnvFn = (key, client) => {
-    const envVarName = getEnvVarName(key, client?.configPrefix);
-    return process.env[envVarName];
-  };
 
-  const server = new SmartBearMcpServer(configFn, process.env.MCP_TOOLSETS);
+  const server = new SmartBearMcpServer(process.env.MCP_TOOLSETS);
 
   // Setup clients from environment variables
-  const addedCount = await clientRegistry.registerAll(
+  const configuredCount = await clientRegistry.configure(
     server,
-    configFn,
-    true,
-    true,
+    (client, key) => {
+      const envVarName = getEnvVarName(client.configPrefix, key);
+      return process.env[envVarName] || null;
+    },
   );
-  if (addedCount === 0) {
-    const message = getConfigMessage();
+  if (configuredCount === 0) {
+    const message = getNoConfigMessage();
     console.warn(
-      `No clients configured. Please provide valid environment variables for at least one client:\n${message.join("\n")}`,
+      message.length > 0
+        ? `No clients configured. Please provide valid environment variables for at least one client:\n${message.join("\n")}`
+        : "No clients support environment variable configuration.",
     );
-    // Add clients without configuration/authorization to allow listing available tools
-    await clientRegistry.registerAll(server, configFn, false, false);
+    // Add non-configured clients to server to allow listing available tools
+    for (const entry of clientRegistry.getAll()) {
+      await server.addClient(entry);
+    }
   }
 
   const transport = new StdioServerTransport();
@@ -115,8 +116,6 @@ export async function runStdioMode() {
   await server.connect(transport);
 }
 
-export function getEnvVarName(key: string, clientPrefix?: string): string {
-  const prefix =
-    `${clientPrefix ? `${clientPrefix}-${key}` : key}`.toUpperCase();
-  return prefix.replace(/[\s\-_]/g, "_");
+export function getEnvVarName(clientPrefix: string, key: string): string {
+  return `${clientPrefix.toUpperCase().replace(/-/g, "_")}_${key.toUpperCase()}`;
 }

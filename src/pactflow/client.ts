@@ -5,6 +5,7 @@ import {
   isSamplingPolyfillResult,
   type SamplingPolyfillResult,
 } from "../common/pollyfills";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -61,17 +62,14 @@ import { type ClientType, TOOLS } from "./client/tools";
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Pact Broker or PactFlow base URL"),
-});
-
-const AuthenticationSchema = z.object({
-  username: z.string().describe("Username for Pact Broker").optional(),
-  password: z.string().describe("Password for Pact Broker").optional(),
   token: z
     .string()
+    .optional()
     .describe(
       "Bearer token for PactFlow authentication (use this OR username/password)",
-    )
-    .optional(),
+    ),
+  username: z.string().optional().describe("Username for Pact Broker"),
+  password: z.string().optional().describe("Password for Pact Broker"),
 });
 
 // Tool definitions for PactFlow AI API client
@@ -80,7 +78,10 @@ export class PactflowClient implements Client {
   capabilityPrefix = "contract-testing";
   configPrefix = "Pact-Broker";
   config = ConfigurationSchema;
-  authenticationFields = AuthenticationSchema;
+
+  private token: string | undefined;
+  private username: string | undefined;
+  private password: string | undefined;
 
   private aiBaseUrl: string | undefined;
   private baseUrl: string | undefined;
@@ -94,7 +95,7 @@ export class PactflowClient implements Client {
   }
 
   /**
-   * Initializes the client with auth credentials and the MCP server reference.
+   * Initialises the client with auth credentials and the MCP server reference.
    * Accepts either a Bearer token (PactFlow) or username/password (Pact Broker).
    * Does nothing if neither is supplied.
    *
@@ -105,27 +106,30 @@ export class PactflowClient implements Client {
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
+    this.token = config.token;
+    this.username = config.username;
+    this.password = config.password;
+
     // Set client type based on auth provided
-    this._server = server;
-    if (
-      this._server.getEnv("username", this) &&
-      this._server.getEnv("password", this)
+    if (typeof config.token === "string") {
+      this._clientType = "pactflow";
+    } else if (
+      typeof config.username === "string" &&
+      typeof config.password === "string"
     ) {
       this._clientType = "pact_broker";
     } else {
+      // Default to pactflow for dynamic auth
       this._clientType = "pactflow";
     }
     this.baseUrl = config.base_url;
     this.aiBaseUrl = `${this.baseUrl}/api/ai`;
+    this._server = server;
   }
 
   /** Returns true if the client has been configured with a base URL and credentials. */
   isConfigured(): boolean {
-    return !!this._server;
-  }
-
-  hasAuth(): boolean {
-    return this.isConfigured() && !!this.requestHeaders;
+    return this.baseUrl !== undefined;
   }
 
   // PactFlow AI client methods
@@ -274,14 +278,20 @@ export class PactflowClient implements Client {
 
   /** Returns the current auth/content-type headers used for all requests. */
   get requestHeaders() {
-    const token =
-      this.server?.getEnv("token", this) ||
-      this.server?.getEnv("Authorization");
+    let contextToken =
+      getRequestHeader("Pact-Token") || getRequestHeader("Authorization");
 
-    if (token) {
-      let authHeader = token;
-      if (!token.startsWith("Basic ") && !token.startsWith("Bearer ")) {
-        authHeader = `Bearer ${token}`;
+    if (Array.isArray(contextToken)) {
+      contextToken = contextToken[0];
+    }
+
+    if (contextToken) {
+      let authHeader = contextToken;
+      if (
+        !contextToken.startsWith("Basic ") &&
+        !contextToken.startsWith("Bearer ")
+      ) {
+        authHeader = `Bearer ${contextToken}`;
       }
 
       return {
@@ -289,20 +299,30 @@ export class PactflowClient implements Client {
         "Content-Type": "application/json",
         "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
       };
-    } else {
-      const username = this.server?.getEnv("username", this);
-      const password = this.server?.getEnv("password", this);
-
-      if (username && password) {
-        const authString = `${username}:${password}`;
-        return {
-          Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
-          "Content-Type": "application/json",
-          "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-        };
-      }
     }
 
+    // Fallback to config
+    if (this.token) {
+      let authHeader = this.token;
+      if (
+        !authHeader.startsWith("Basic ") &&
+        !authHeader.startsWith("Bearer ")
+      ) {
+        authHeader = `Bearer ${authHeader}`;
+      }
+      return {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      };
+    } else if (this.username && this.password) {
+      const authString = `${this.username}:${this.password}`;
+      return {
+        Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
+        "Content-Type": "application/json",
+        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      };
+    }
     return undefined;
   }
 
