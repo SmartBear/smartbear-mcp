@@ -131,16 +131,16 @@ const originalConsole = {
   debug: console.debug,
 };
 
-const mockGetEnv = vi.fn();
-
 // Helper to create and configure a client
 async function createConfiguredClient(
+  authToken = "test-token",
   projectApiKey?: string,
   endpoint?: string,
 ): Promise<BugsnagClient> {
   const client = new BugsnagClient();
-  const mockServer = { getCache: () => mockCache, getEnv: mockGetEnv } as any;
+  const mockServer = { getCache: () => mockCache } as any;
   await client.configure(mockServer, {
+    auth_token: authToken,
     project_api_key: projectApiKey,
     endpoint,
   });
@@ -194,9 +194,8 @@ describe("BugsnagClient", () => {
         "../../../bugsnag/client/api/index.js"
       );
       const MockedConfiguration = vi.mocked(Configuration);
-      mockGetEnv.mockReturnValue("test-token");
 
-      await createConfiguredClient("00000hub-key");
+      await createConfiguredClient("test-token", "00000hub-key");
 
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -215,13 +214,158 @@ describe("BugsnagClient", () => {
       const configCall = MockedConfiguration.mock.calls[0][0];
       const apiKeyFunc = configCall.apiKey as (name: string) => string;
       expect(apiKeyFunc("any")).toBe("token test-token");
-      expect(mockGetEnv).toHaveBeenCalledWith("auth_token", expect.anything());
     });
 
     it("should set project API key when provided", async () => {
-      mockGetEnv.mockReturnValue("test-token");
-      const client = await createConfiguredClient("test-project-key");
+      const client = await createConfiguredClient(
+        "test-token",
+        "test-project-key",
+      );
       expect(client).toBeInstanceOf(BugsnagClient);
+    });
+  });
+
+  describe("getAuthToken", () => {
+    it("should return token from Bugsnag-Auth-Token header with 'token' prefix", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": "my-pat" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token my-pat");
+    });
+
+    it("should strip existing 'token ' prefix from header value", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": "token already-prefixed" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token already-prefixed");
+    });
+
+    it("should fall back to Authorization Bearer header for OAuth", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "Bearer oauth-jwt-token" } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("Bearer oauth-jwt-token");
+    });
+
+    it("should fall back to configured auth_token with 'token' prefix", async () => {
+      const client = await createConfiguredClient("my-configured-pat");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getAuthToken(),
+      );
+      expect(result).toBe("token my-configured-pat");
+    });
+
+    it("should return null when no auth is available", async () => {
+      const client = new BugsnagClient();
+      const mockServer = { getCache: () => mockCache } as any;
+      await client.configure(mockServer, {} as any);
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getAuthToken(),
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should prefer Bugsnag-Auth-Token over Authorization header", async () => {
+      const client = await createConfiguredClient("configured-token");
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        {
+          headers: {
+            "Bugsnag-Auth-Token": "pat-value",
+            authorization: "Bearer oauth-value",
+          },
+        },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token pat-value");
+    });
+
+    it("should handle array header values", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { "Bugsnag-Auth-Token": ["first-token", "second-token"] } },
+        () => client.getAuthToken(),
+      );
+      expect(result).toBe("token first-token");
+    });
+  });
+
+  describe("getBearerToken", () => {
+    it("should extract Bearer token from Authorization header", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "Bearer my-jwt" } },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer my-jwt");
+    });
+
+    it("should add Bearer prefix when not present", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        { headers: { authorization: "raw-token-value" } },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer raw-token-value");
+    });
+
+    it("should return null when no Authorization header", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getBearerToken(),
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should handle array Authorization header values", async () => {
+      const client = await createConfiguredClient();
+      const { requestContextStorage } = await import(
+        "../../../common/request-context.js"
+      );
+      const result = requestContextStorage.run(
+        {
+          headers: {
+            authorization: ["Bearer first", "Bearer second"],
+          },
+        },
+        () => client.getBearerToken(),
+      );
+      expect(result).toBe("Bearer first");
     });
   });
 
@@ -514,8 +658,7 @@ describe("BugsnagClient", () => {
       const MockedConfiguration = vi.mocked(Configuration);
       const testToken = "super-secret-token-123";
 
-      mockGetEnv.mockReturnValue(testToken);
-      await createConfiguredClient();
+      await createConfiguredClient(testToken);
 
       expect(MockedConfiguration).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -534,67 +677,13 @@ describe("BugsnagClient", () => {
       expect(apiKeyFunc("any")).toBe(`token ${testToken}`);
     });
 
-    it("should pass correct bearer auth to Configuration", async () => {
-      const { Configuration } = await import(
-        "../../../bugsnag/client/api/index.js"
-      );
-      const MockedConfiguration = vi.mocked(Configuration);
-      const bearerToken = "my-oauth-token";
-
-      mockGetEnv
-        .mockReturnValueOnce(undefined) // No auth token
-        .mockReturnValueOnce(bearerToken);
-      await createConfiguredClient();
-
-      expect(MockedConfiguration).toHaveBeenCalledWith(
-        expect.objectContaining({
-          apiKey: expect.any(Function),
-        }),
-      );
-
-      // Verify the apiKey function returns the expected token
-      const configCall = MockedConfiguration.mock.calls.find(
-        (call) =>
-          (call[0] as any).basePath === "https://api.bugsnag.com" &&
-          typeof (call[0] as any).apiKey === "function",
-      )?.[0];
-      expect(configCall).toBeDefined();
-      const apiKeyFunc = configCall?.apiKey as (name: string) => string;
-      expect(apiKeyFunc("any")).toBe(`Bearer ${bearerToken}`);
-    });
-
-    it("should throw an error if no auth is provided", async () => {
-      const { Configuration } = await import(
-        "../../../bugsnag/client/api/index.js"
-      );
-      const MockedConfiguration = vi.mocked(Configuration);
-
-      mockGetEnv
-        .mockReturnValueOnce(undefined) // No auth token
-        .mockReturnValueOnce(undefined); // No bearer token
-      await createConfiguredClient();
-
-      // Verify the apiKey function returns the expected token
-      const configCall = MockedConfiguration.mock.calls.find(
-        (call) =>
-          (call[0] as any).basePath === "https://api.bugsnag.com" &&
-          typeof (call[0] as any).apiKey === "function",
-      )?.[0];
-      expect(configCall).toBeDefined();
-      const apiKeyFunc = configCall?.apiKey as (
-        name: string,
-      ) => string | undefined;
-      expect(apiKeyFunc("any")).toBeUndefined();
-    });
-
     it("should include all required headers", async () => {
       const { Configuration } = await import(
         "../../../bugsnag/client/api/index.js"
       );
       const MockedConfiguration = vi.mocked(Configuration);
-      mockGetEnv.mockReturnValue("test-token");
 
-      await createConfiguredClient();
+      await createConfiguredClient("test-token");
 
       const configCall = MockedConfiguration.mock.calls[0][0];
       expect(configCall?.headers).toEqual({
@@ -620,9 +709,8 @@ describe("BugsnagClient", () => {
       MockedCurrentUserAPI.mockClear();
       MockedErrorAPI.mockClear();
       MockedProjectAPI.mockClear();
-      mockGetEnv.mockReturnValue("test-token");
 
-      await createConfiguredClient();
+      await createConfiguredClient("test-token");
 
       expect(MockedCurrentUserAPI).toHaveBeenCalledOnce();
       expect(MockedErrorAPI).toHaveBeenCalledOnce();
@@ -635,7 +723,9 @@ describe("BugsnagClient", () => {
         getCache: vi.fn().mockReturnValue(mockCache),
       } as any;
 
-      await client.configure(mockServer, {});
+      await client.configure(mockServer, {
+        auth_token: "test-token",
+      });
 
       // Cache should be used in getProjects
       mockCache.get.mockReturnValueOnce(null); // No cached org
@@ -666,6 +756,7 @@ describe("BugsnagClient", () => {
       const client = new BugsnagClient();
 
       await client.configure({ getCache: () => mockCache } as any, {
+        auth_token: "test-token",
         project_api_key: "project-api-key",
       });
 
@@ -674,7 +765,9 @@ describe("BugsnagClient", () => {
     it("should initialize without project API key", async () => {
       const client = new BugsnagClient();
 
-      await client.configure({ getCache: () => mockCache } as any, {});
+      await client.configure({ getCache: () => mockCache } as any, {
+        auth_token: "test-token",
+      });
 
       expect(client.isConfigured()).toBe(true);
     });
@@ -682,8 +775,7 @@ describe("BugsnagClient", () => {
 
   describe("API methods", async () => {
     beforeEach(async () => {
-      mockGetEnv.mockReturnValue("test-token");
-      client = await createConfiguredClient("test-project-key");
+      client = await createConfiguredClient("test-token", "test-project-key");
     });
 
     describe("getProjects", () => {
@@ -845,9 +937,8 @@ describe("BugsnagClient", () => {
       registerToolsSpy = vi.fn();
       getInputFunctionSpy = vi.fn();
 
-      mockGetEnv.mockReturnValue("test-token");
-      client = await createConfiguredClient("test-project-key");
-      clientWithNoApiKey = await createConfiguredClient();
+      client = await createConfiguredClient("test-token", "test-project-key");
+      clientWithNoApiKey = await createConfiguredClient("test-token");
     });
 
     describe("Setting the current project", () => {
