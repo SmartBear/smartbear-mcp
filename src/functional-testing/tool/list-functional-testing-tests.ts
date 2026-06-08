@@ -24,7 +24,7 @@ export class ListFunctionalTestingTests extends Tool<FunctionalTestingClient> {
 
     if (!response.ok) {
       throw new ToolError(
-        `Failed to list functional testing tests: ${response.status} ${response.statusText}`,
+        `Failed to list Functional Testing tests: ${response.status} ${response.statusText}`,
       );
     }
 

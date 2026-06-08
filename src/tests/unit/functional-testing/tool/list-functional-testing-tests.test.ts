@@ -64,7 +64,7 @@ describe("ListFunctionalTestingTests", () => {
   it("should throw ToolError if fetch fails", async () => {
     fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
     await expect(instance.handle({}, {} as any)).rejects.toThrow(
-      "Failed to list functional testing tests",
+      "Failed to list Functional Testing tests",
     );
   });
 });
