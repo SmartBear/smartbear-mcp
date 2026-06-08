@@ -94,6 +94,22 @@ describe("FunctionalTestingClient", () => {
     });
   });
 
+  describe("registerTools", () => {
+    it("should register ListFunctionalTestingTests tool", async () => {
+      const mockServer = {
+        getEnv: vi.fn(() => undefined),
+      } as any;
+      await client.configure(mockServer, {});
+
+      const mockRegister = vi.fn();
+      const mockGetInput = vi.fn();
+      await client.registerTools(mockRegister, mockGetInput);
+
+      expect(mockRegister).toHaveBeenCalledTimes(1);
+      expect(mockRegister.mock.calls[0][0].title).toBe("List Tests");
+    });
+  });
+
   describe("getHeaders", () => {
     it("should return headers with token", async () => {
       const mockServer = {

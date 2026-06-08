@@ -157,10 +157,10 @@
     {
       "order": 10,
       "parent": "mcp-server-capabilities",
-      "name": "Functional Testing Integration",
-      "slug": "functional-testing-integration",
+      "name": "Swagger Functional Testing Integration",
+      "slug": "swagger-functional-testing-integration",
       "type": "markdown",
-      "contentUrl": "functional-testing-integration.md"
+      "contentUrl": "swagger-functional-testing-integration.md"
     },
     {
       "order": 3,

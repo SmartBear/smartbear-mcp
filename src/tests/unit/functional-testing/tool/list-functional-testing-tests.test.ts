@@ -61,10 +61,17 @@ describe("ListFunctionalTestingTests", () => {
     expect(parsed).toHaveLength(0);
   });
 
-  it("should throw ToolError if fetch fails", async () => {
+  it("should throw ToolError if fetch fails with HTTP error", async () => {
     fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
     await expect(instance.handle({}, {} as any)).rejects.toThrow(
       "Failed to list Functional Testing tests",
+    );
+  });
+
+  it("should propagate error on network failure", async () => {
+    fetchMock.mockRejectOnce(new Error("Network error"));
+    await expect(instance.handle({}, {} as any)).rejects.toThrow(
+      "Network error",
     );
   });
 });
