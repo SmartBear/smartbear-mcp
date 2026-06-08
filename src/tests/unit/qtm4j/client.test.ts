@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Qtm4jClient } from "../../../qtm4j/client";
 import { ApiClient } from "../../../qtm4j/http/api-client";
 
@@ -6,7 +6,13 @@ vi.mock("../../../common/request-context", () => ({
   getRequestHeader: vi.fn().mockReturnValue(null),
 }));
 
+import { getRequestHeader } from "../../../common/request-context";
+
 describe("Qtm4jClient", () => {
+  beforeEach(() => {
+    vi.mocked(getRequestHeader).mockReturnValue(undefined);
+  });
+
   it("should set name and prefix", () => {
     const client = new Qtm4jClient();
     expect(client.name).toBe("QTM4J");
@@ -26,6 +32,7 @@ describe("Qtm4jClient", () => {
   it("should initialize ApiClient with custom baseUrl", async () => {
     const client = new Qtm4jClient();
     await client.configure({ getCache: () => undefined } as any, {
+      api_key: "token",
       base_url: "https://custom.qtm4j.com",
     });
     expect(client.getApiClient()).toBeInstanceOf(ApiClient);
@@ -91,9 +98,40 @@ describe("Qtm4jClient", () => {
   it("should get auth token from configuration", async () => {
     const client = new Qtm4jClient();
     await client.configure(
-      { getCache: () => undefined, getEnv: () => "test-token-123" } as any,
-      {} as any,
+      { getCache: () => undefined } as any,
+      { api_key: "test-token-123" } as any,
     );
-    expect(client.getApiClient().getHeaders().apiKey).toBe("test-token-123");
+    const token = client.getAuthToken();
+    expect(token).toBe("test-token-123");
+  });
+
+  it("should prefer request header token over configured api key", async () => {
+    vi.mocked(getRequestHeader).mockReturnValue("header-token");
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "config-token" } as any,
+    );
+    expect(client.getAuthToken()).toBe("header-token");
+  });
+
+  it("should strip Bearer prefix from Authorization header", async () => {
+    vi.mocked(getRequestHeader).mockReturnValue("Bearer my-bearer-token");
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "config-token" } as any,
+    );
+    expect(client.getAuthToken()).toBe("my-bearer-token");
+  });
+
+  it("should handle array header value by using first element", async () => {
+    vi.mocked(getRequestHeader).mockReturnValue(["array-token", "other"]);
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "config-token" } as any,
+    );
+    expect(client.getAuthToken()).toBe("array-token");
   });
 });
