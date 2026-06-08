@@ -43,6 +43,8 @@ export const ResolverKeys = {
     LABEL: "label",
     COMPONENTS: "components",
     TEST_CASE_KEY_TO_UID: "testCaseKeyToUid",
+    TEST_CYCLE_KEY_TO_UID: "testCycleKeyToUid",
+    REQUIREMENT_KEY_TO_ID: "requirementKeyToId",
   } as const,
 } as const;
 
