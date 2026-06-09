@@ -10,6 +10,7 @@ import type {
 } from "../common/types";
 // Apply backward compatibility for API_HUB_API_KEY
 import "./config-utils";
+import { FunctionalTestingAPI } from "./client/functional-testing-api";
 import {
   type ApiDefinitionParams,
   type ApiSearchParams,
@@ -47,7 +48,6 @@ import {
   type UpdatePortalArgs,
   type UpdateProductArgs,
 } from "./client/index";
-import { FunctionalTestingAPI } from "./client/functional-testing-api";
 
 import type {
   OrganizationsListResponse,
