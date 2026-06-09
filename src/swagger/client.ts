@@ -10,7 +10,7 @@ import type {
 } from "../common/types";
 // Apply backward compatibility for API_HUB_API_KEY
 import "./config-utils";
-import { FunctionalTestingAPI } from "./client/functional-testing-api";
+import { FunctionalTestingAPI, FUNCTIONAL_TESTING_API_KEY_HEADER } from "./client/functional-testing-api";
 import {
   type ApiDefinitionParams,
   type ApiSearchParams,
@@ -135,7 +135,8 @@ export class SwaggerClient implements Client {
   }
 
   getFtAuthToken(): string | null {
-    const contextHeader = getRequestHeader("X-API-KEY");
+    if (!this.ftApi) return null;
+    const contextHeader = getRequestHeader(FUNCTIONAL_TESTING_API_KEY_HEADER);
     if (contextHeader) {
       return Array.isArray(contextHeader) ? contextHeader[0] : contextHeader;
     }
@@ -309,7 +310,7 @@ export class SwaggerClient implements Client {
     _getInput: GetInputFunction,
   ): Promise<void> {
     TOOLS.forEach((tool) => {
-      if (tool.toolset === "Functional Testing" && !this._ftApiToken) {
+      if (tool.toolset === "Functional Testing" && !this.ftApi) {
         return;
       }
 

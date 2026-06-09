@@ -28,7 +28,10 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
 
     it("should return token from X-API-KEY request header", async () => {
-      await client.configure({} as any, { api_key: "swagger-key" });
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "static-token",
+      });
 
       const result = requestContextStorage.run(
         { headers: { "X-API-KEY": "header-ft-token" } },
