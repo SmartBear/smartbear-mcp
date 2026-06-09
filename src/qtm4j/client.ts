@@ -21,6 +21,10 @@ import { ResolverRegistry } from "./resolver/resolver-registry";
  */
 const ConfigurationSchema = z.object({
   [CONFIG_KEYS.API_KEY]: z.string().describe(SCHEMA_DESCRIPTIONS.API_KEY),
+  [CONFIG_KEYS.AUTOMATION_API_KEY]: z
+    .string()
+    .optional()
+    .describe(SCHEMA_DESCRIPTIONS.AUTOMATION_API_KEY),
   [CONFIG_KEYS.BASE_URL]: z
     .string()
     .url()
@@ -63,6 +67,7 @@ export class Qtm4jClient implements Client {
   config = ConfigurationSchema;
 
   private _apiKey: string | undefined;
+  private _automationApiKey: string | undefined;
   private baseUrl: string = API_CONFIG.DEFAULT_BASE_URL;
   private apiClient: ApiClient | undefined;
   private resolverRegistry: ResolverRegistry | undefined;
@@ -77,12 +82,17 @@ export class Qtm4jClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
     this._apiKey = config[CONFIG_KEYS.API_KEY];
+    this._automationApiKey = config[CONFIG_KEYS.AUTOMATION_API_KEY];
     if (config[CONFIG_KEYS.BASE_URL]) {
       this.baseUrl = config[CONFIG_KEYS.BASE_URL];
     }
 
-    // Initialize API client with token provider for request-scoped credentials
-    this.apiClient = new ApiClient(() => this.getAuthToken(), this.baseUrl);
+    // Initialize API client with regular and automation token providers
+    this.apiClient = new ApiClient(
+      () => this.getAuthToken(),
+      this.baseUrl,
+      () => this.getAutomationApiKey(),
+    );
 
     // Initialize resolver registry with the API client and shared cache
     this.resolverRegistry = new ResolverRegistry(
@@ -117,6 +127,14 @@ export class Qtm4jClient implements Client {
 
     // 2. Fallback to configured API key
     return this._apiKey || null;
+  }
+
+  getAutomationApiKey(): string | null {
+    const headerKey = getRequestHeader("Qtm4j-Automation-Api-Key");
+    if (headerKey) {
+      return Array.isArray(headerKey) ? headerKey[0] : headerKey;
+    }
+    return this._automationApiKey || null;
   }
 
   /**
@@ -175,6 +193,59 @@ export class Qtm4jClient implements Client {
     const { UpdateTestCase } = await import(
       "./tool/test-case/update-test-case"
     );
+    const { UploadAutomationResult } = await import(
+      "./tool/test-automation/upload-automation-result"
+    );
+    const { GetAutomationHistory } = await import(
+      "./tool/test-automation/get-automation-history"
+    );
+
+    const { CreateTestCycle } = await import(
+      "./tool/test-cycle/create-test-cycle"
+    );
+    const { SearchTestCycles } = await import(
+      "./tool/test-cycle/search-test-cycle"
+    );
+    const { UpdateTestCycle } = await import(
+      "./tool/test-cycle/update-test-cycle"
+    );
+
+    const { LinkRequirements } = await import(
+      "./tool/test-case/link-requirements"
+    );
+    const { UnlinkRequirements } = await import(
+      "./tool/test-case/unlink-requirements"
+    );
+    const { LinkTestCasesToRequirement } = await import(
+      "./tool/requirement/link-testcases"
+    );
+    const { UnlinkTestCasesFromRequirement } = await import(
+      "./tool/requirement/unlink-testcases"
+    );
+    const { GetLinkedRequirements } = await import(
+      "./tool/test-case/get-linked-requirements"
+    );
+    const { GetLinkedTestCasesForRequirement } = await import(
+      "./tool/requirement/get-linked-testcases"
+    );
+    const { LinkTestCasesToCycle } = await import(
+      "./tool/test-cycle/link-testcases"
+    );
+    const { UnlinkTestCasesFromCycle } = await import(
+      "./tool/test-cycle/unlink-testcases"
+    );
+    const { SearchLinkedTestCasesInCycle } = await import(
+      "./tool/test-cycle/search-linked-testcases"
+    );
+    const { LinkRequirementsToCycle } = await import(
+      "./tool/test-cycle/link-requirements"
+    );
+    const { UnlinkRequirementsFromCycle } = await import(
+      "./tool/test-cycle/unlink-requirements"
+    );
+    const { GetLinkedRequirementsForCycle } = await import(
+      "./tool/test-cycle/get-linked-requirements"
+    );
 
     const tools = [
       new GetProjects(this),
@@ -183,6 +254,23 @@ export class Qtm4jClient implements Client {
       new GetTestCases(this),
       new GetTestSteps(this),
       new UpdateTestCase(this),
+      new CreateTestCycle(this),
+      new SearchTestCycles(this),
+      new UpdateTestCycle(this),
+      new UploadAutomationResult(this),
+      new GetAutomationHistory(this),
+      new LinkRequirements(this),
+      new UnlinkRequirements(this),
+      new LinkTestCasesToRequirement(this),
+      new UnlinkTestCasesFromRequirement(this),
+      new GetLinkedRequirements(this),
+      new GetLinkedTestCasesForRequirement(this),
+      new LinkTestCasesToCycle(this),
+      new UnlinkTestCasesFromCycle(this),
+      new SearchLinkedTestCasesInCycle(this),
+      new LinkRequirementsToCycle(this),
+      new UnlinkRequirementsFromCycle(this),
+      new GetLinkedRequirementsForCycle(this),
     ];
 
     // Register each tool with the MCP server

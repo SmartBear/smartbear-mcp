@@ -185,7 +185,7 @@ export const CreatePortalArgsSchema = z.object({
   swaggerHubOrganizationId: z
     .string()
     .describe(
-      "The corresponding SwaggerHub organization UUID - required for portal creation. This links the portal to your SwaggerHub organization",
+      "The corresponding Swagger organization UUID - required for portal creation. This links the portal to your Swagger organization. Only one Portal per Swagger organization is allowed.",
     ),
   openapiRenderer: z
     .string()

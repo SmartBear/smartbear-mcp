@@ -12,6 +12,7 @@ import type { QMetryToolParams } from "./types";
 export const ISSUE_TOOLS: QMetryToolParams[] = [
   {
     title: "Create Defect or Issue",
+    toolset: "Issues",
     summary: "Create a new defect/issue internally in QMetry.",
     handler: QMetryToolsHandlers.CREATE_ISSUE,
     inputSchema: CreateIssueArgsSchema,
@@ -147,6 +148,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Update Issue",
+    toolset: "Issues",
     summary: "Update an existing QMetry issue by DefectId and/or entityKey.",
     handler: QMetryToolsHandlers.UPDATE_ISSUE,
     inputSchema: UpdateIssueArgsSchema,
@@ -201,6 +203,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Defects or Issues",
+    toolset: "Issues",
     summary:
       "Fetch QMetry defects or issues - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_ISSUES,
@@ -321,6 +324,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Linked Issues of Test Case Run",
+    toolset: "Issues",
     summary:
       "Get issues that are linked (or not linked) to a specific test case run in QMetry",
     handler: QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN,
@@ -463,6 +467,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Link Issues to Testcase Run",
+    toolset: "Issues",
     summary: "Link one or more issues to a QMetry Testcase Run (execution).",
     handler: QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN,
     inputSchema: LinkIssuesToTestcaseRunArgsSchema,
@@ -502,6 +507,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Issues Linked to Test Case",
+    toolset: "Issues",
     summary:
       "Get issues that are linked (or not linked) to a specific test case in QMetry",
     handler: QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE,

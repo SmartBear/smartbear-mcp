@@ -11,6 +11,7 @@ import {
 export class GetTestCycles extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Cycles",
+    toolset: "Test Cycles",
     summary: "Get details of Test Cycles in Zephyr",
     readOnly: true,
     idempotent: true,

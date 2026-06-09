@@ -192,7 +192,7 @@ describe("LabelResolver", () => {
         warnings,
       );
 
-      expect(body[InputField.LABELS]).toBe("NonExistent");
+      expect(body).not.toHaveProperty(InputField.LABELS);
       expect(warnings).toHaveLength(1);
       expect(warnings[0]).toContain("NonExistent");
     });

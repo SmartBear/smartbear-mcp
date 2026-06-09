@@ -11,6 +11,7 @@ import type { QMetryToolParams } from "./types";
 export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Requirements",
+    toolset: "Requirements",
     summary:
       "Fetch QMetry requirements - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS,
@@ -208,6 +209,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Requirement Details",
+    toolset: "Requirements",
     summary:
       "Get detailed information for a specific QMetry requirement by numeric ID",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENT_DETAILS,
@@ -245,6 +247,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Link Requirements to Testcase",
+    toolset: "Requirements",
     summary:
       "Link one or more requirements to a test case by entityKey and version IDs.",
     handler: QMetryToolsHandlers.LINK_REQUIREMENT_TO_TESTCASE,
@@ -283,6 +286,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Cases Linked to Requirement",
+    toolset: "Requirements",
     summary:
       "Get test cases that are linked (or not linked) to a specific requirement in QMetry",
     handler: QMetryToolsHandlers.FETCH_TESTCASES_LINKED_TO_REQUIREMENT,
@@ -462,6 +466,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Requirements Linked to Test Case",
+    toolset: "Requirements",
     summary:
       "Get requirements that are linked (or not linked) to a specific test case in QMetry",
     handler: QMetryToolsHandlers.FETCH_REQUIREMENTS_LINKED_TO_TESTCASE,

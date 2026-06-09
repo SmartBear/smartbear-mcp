@@ -24,6 +24,7 @@ function parseFrame(frame: string): { event: string; data: string } | null {
 export class WaitForTask extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Wait For Task",
+    toolset: "Tasks",
     summary:
       "Blocks until a BearQ task reaches a terminal state (completed / failed / cancelled) or the stream times out, then returns the full ordered sequence of SSE events from the public API (metadata, activityLogEntries, and a terminal done or timeout event) verbatim. Blocks for the lifetime of the task — for a quick check use bearq_get_task_status instead.",
     inputSchema,

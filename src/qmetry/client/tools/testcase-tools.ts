@@ -13,6 +13,7 @@ import type { QMetryToolParams } from "./types";
 export const TESTCASE_TOOLS: QMetryToolParams[] = [
   {
     title: "Create Test Case",
+    toolset: "Test Cases",
     summary:
       "Create a new test case in QMetry with steps, metadata, and release/cycle mapping.",
     handler: QMetryToolsHandlers.CREATE_TEST_CASE,
@@ -124,6 +125,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Update Test Case",
+    toolset: "Test Cases",
     summary:
       "Update an existing QMetry test case OR create a new version by tcID and tcVersionID, with auto-resolution from entityKey.",
     handler: QMetryToolsHandlers.UPDATE_TEST_CASE,
@@ -765,6 +767,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Cases",
+    toolset: "Test Cases",
     summary:
       "Fetch QMetry test cases - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_TEST_CASES,
@@ -904,6 +907,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Case Details",
+    toolset: "Test Cases",
     summary:
       "Get detailed information for a specific QMetry test case by numeric ID - USE THIS for single test case lookup",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_DETAILS,
@@ -946,6 +950,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Case Version Details",
+    toolset: "Test Cases",
     summary:
       "Get QMetry test case details for a specific version by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_VERSION_DETAILS,
@@ -977,6 +982,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Case Steps",
+    toolset: "Test Cases",
     summary:
       "Get detailed test case steps for a specific test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_STEPS,
@@ -1010,6 +1016,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Test Case Executions",
+    toolset: "Test Cases",
     summary: "Get execution records for a specific test case by numeric ID",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
     inputSchema: TestCaseExecutionsArgsSchema,

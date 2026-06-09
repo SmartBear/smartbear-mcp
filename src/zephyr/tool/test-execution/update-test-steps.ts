@@ -11,6 +11,7 @@ import {
 export class UpdateTestExecutionSteps extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Update Test Execution Steps",
+    toolset: "Test Executions",
     summary:
       "Update test steps for a given Test Execution in Zephyr. This operation updates the provided steps with their execution status and actual results. Only the fields included in the request will be modified.",
     readOnly: false,

@@ -14,6 +14,7 @@ const inputSchema = z.object({
 export class ListProjectEventFilters extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Project Event Filters",
+    toolset: "Projects",
     summary: "Get available event filter fields for a project",
     purpose:
       "Discover valid filter field names and options that can be used with the List Errors or Get Error tools",

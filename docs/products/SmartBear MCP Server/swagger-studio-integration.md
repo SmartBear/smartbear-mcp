@@ -89,6 +89,22 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | `owner` | API owner (organization or user, case-sensitive) | string | Yes |
 | `api` | API name (case-sensitive) | string | Yes |
 | `version` | Version identifier | string | Yes |
+| `newVersion` | The version to save the fixed definition as (e.g. `1.0.1`). Omitting this will overwrite the current version - prefer providing a patch bump (e.g. `1.0.0` -> `1.0.1`) unless the user specifies otherwise. | string | No |
+
+#### `list_organizations`
+
+-   Purpose: Get organizations for the authenticated user. Returns a list of organizations that the authenticating user is a member of. On-Premise admins get a list of all organizations in the system.
+-   Returns: Paged list of organizations, each including id, name, description, email, url, and memberCount.
+-   Use case: Discover which organizations the current user belongs to before performing organization-scoped operations (e.g., `scan_api_standardization`, creating APIs under a specific owner), or enumerate organizations on On-Premise installations.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `q` | Search organizations by partial or full name (case-insensitive) | string | No |
+| `sortBy` | The property to sort the results by.<br />Options: `NAME`, `EMAIL` | string | No |
+| `order` | Sort order.<br />Options: `ASC`, `DESC` | string | No |
+| `page` | 0-based index of the page to return | number | No |
+| `pageSize` | Number of results per page to return.<br />Min: `1`, Max: `1000` | number | No |
 
 ## Configuration
 

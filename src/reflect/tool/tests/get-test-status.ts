@@ -9,6 +9,7 @@ import { API_HOSTNAME } from "../../config/constants";
 export class GetTestStatus extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Get Test Status",
+    toolset: "Tests",
     summary: "Get the status of a reflect test execution",
     inputSchema: z.object({
       executionId: z

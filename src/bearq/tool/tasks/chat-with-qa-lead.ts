@@ -17,6 +17,7 @@ const inputSchema = z.object({
 export class ChatWithQaLead extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Chat with QA Lead",
+    toolset: "Tasks",
     summary:
       "Sends an open-ended instruction to BearQ's QA lead agent. Use this when no other BearQ tool fits — the QA lead can list, create, and update test cases, manage functional areas, and read the application model, and acts as a general-purpose escape hatch.",
     inputSchema,

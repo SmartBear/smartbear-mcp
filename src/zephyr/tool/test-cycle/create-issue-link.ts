@@ -11,6 +11,7 @@ import {
 export class CreateTestCycleIssueLink extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Cycle Issue Link",
+    toolset: "Test Cycles",
     summary:
       "Create a new link between an issue in Jira and a Test Cycle in Zephyr",
     readOnly: false,

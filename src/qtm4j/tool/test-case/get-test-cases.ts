@@ -1,7 +1,12 @@
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, RESPONSE_FIELDS, TOOL_NAMES } from "../../config/constants";
+import {
+  ENDPOINTS,
+  RESPONSE_FIELDS,
+  TOOL_NAMES,
+  TOOLSETS,
+} from "../../config/constants";
 import {
   SearchTestCaseBody,
   SearchTestCaseResponse,
@@ -11,6 +16,7 @@ import {
 export class GetTestCases extends Tool<Qtm4jClient> {
   specification: ToolParams = {
     title: TOOL_NAMES.SEARCH_TEST_CASES.TITLE,
+    toolset: TOOLSETS.TEST_CASES,
     summary: TOOL_NAMES.SEARCH_TEST_CASES.SUMMARY,
     readOnly: true,
     idempotent: true,

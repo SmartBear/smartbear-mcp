@@ -1,7 +1,7 @@
 import { Tool } from "../../../common/tools";
 import type { ToolParams } from "../../../common/types";
 import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES } from "../../config/constants";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
 import { InputField, ResolverKeys } from "../../config/field-resolution.types";
 import {
   CreateTestCaseBody,
@@ -37,6 +37,7 @@ export class CreateTestCase extends Tool<Qtm4jClient> {
 
   specification: ToolParams = {
     title: TOOL_NAMES.CREATE_TEST_CASE.TITLE,
+    toolset: TOOLSETS.TEST_CASES,
     summary: TOOL_NAMES.CREATE_TEST_CASE.SUMMARY,
     readOnly: false,
     idempotent: false,
