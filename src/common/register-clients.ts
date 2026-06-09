@@ -11,7 +11,6 @@
 import { BearQClient } from "../bearq/client";
 import { BugsnagClient } from "../bugsnag/client";
 import { CollaboratorClient } from "../collaborator/client";
-import { FunctionalTestingClient } from "../functional-testing/client";
 import { PactflowClient } from "../pactflow/client";
 import { QmetryClient } from "../qmetry/client";
 import { Qtm4jClient } from "../qtm4j/client";
@@ -46,6 +45,3 @@ clientRegistry.register(new Qtm4jClient());
 
 // Register Collaborator client
 clientRegistry.register(new CollaboratorClient());
-
-// Register Swagger Functional Testing client
-clientRegistry.register(new FunctionalTestingClient());

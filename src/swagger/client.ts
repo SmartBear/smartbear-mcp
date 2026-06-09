@@ -2,6 +2,7 @@ import { z } from "zod";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
+import { ToolError } from "../common/tools";
 import type {
   Client,
   GetInputFunction,
@@ -46,6 +47,7 @@ import {
   type UpdatePortalArgs,
   type UpdateProductArgs,
 } from "./client/index";
+import { FunctionalTestingAPI } from "./client/functional-testing-api";
 
 import type {
   OrganizationsListResponse,
@@ -66,12 +68,20 @@ const ConfigurationSchema = z.object({
     .string()
     .optional()
     .describe("Base URL for the SwaggerHub UI (optional)"),
+  functional_testing_api_token: z
+    .string()
+    .optional()
+    .describe(
+      "Swagger Functional Testing API token. Leave empty to disable Functional Testing tools.",
+    ),
 });
 
 // Tool definitions for API Hub API client
 export class SwaggerClient implements Client {
   private api: SwaggerAPI | undefined;
   private _apiKey: string | undefined;
+  private ftApi: FunctionalTestingAPI | undefined;
+  private _ftApiToken: string | undefined;
 
   name = "Swagger";
   capabilityPrefix = "swagger";
@@ -93,6 +103,14 @@ export class SwaggerClient implements Client {
       }),
       `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
     );
+
+    if (config.functional_testing_api_token) {
+      this._ftApiToken = config.functional_testing_api_token;
+      this.ftApi = new FunctionalTestingAPI(
+        () => this.getFtAuthToken(),
+        `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      );
+    }
   }
 
   getAuthToken(): string | null {
@@ -114,6 +132,14 @@ export class SwaggerClient implements Client {
 
     // 2. Fallback to configured token
     return this._apiKey || null;
+  }
+
+  getFtAuthToken(): string | null {
+    const contextHeader = getRequestHeader("X-API-KEY");
+    if (contextHeader) {
+      return Array.isArray(contextHeader) ? contextHeader[0] : contextHeader;
+    }
+    return this._ftApiToken || null;
   }
 
   isConfigured(): boolean {
@@ -271,11 +297,22 @@ export class SwaggerClient implements Client {
     return this.getApi().standardizeApi(args);
   }
 
+  async listFunctionalTestingTests(): Promise<unknown> {
+    if (!this.ftApi) {
+      throw new ToolError("Functional Testing API not configured");
+    }
+    return this.ftApi.listTests();
+  }
+
   async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
     TOOLS.forEach((tool) => {
+      if (tool.toolset === "Functional Testing" && !this._ftApiToken) {
+        return;
+      }
+
       const { handler, formatResponse, ...toolParams } = tool;
       register(toolParams, async (args, _extra) => {
         try {
