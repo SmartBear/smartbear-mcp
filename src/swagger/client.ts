@@ -11,8 +11,8 @@ import type {
 // Apply backward compatibility for API_HUB_API_KEY
 import "./config-utils";
 import {
-  FunctionalTestingAPI,
   FUNCTIONAL_TESTING_API_KEY_HEADER,
+  FunctionalTestingAPI,
 } from "./client/functional-testing-api";
 import {
   type ApiDefinitionParams,
