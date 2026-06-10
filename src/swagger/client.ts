@@ -318,7 +318,11 @@ export class SwaggerClient implements Client {
       if (tool.toolset === "Functional Testing" && !this.ftApi) {
         return;
       }
-      if (tool.toolset !== "Functional Testing" && !this.api) {
+      if (
+        tool.toolset !== "Functional Testing" &&
+        !this.api &&
+        this.isConfigured()
+      ) {
         return;
       }
 
