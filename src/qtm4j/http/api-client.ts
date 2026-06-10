@@ -40,7 +40,7 @@ export class ApiClient {
    * @returns Record of HTTP headers including API key
    * @throws ToolError if token is not available
    */
-  getHeaders(): Record<string, string> {
+  private getHeaders(): Record<string, string> {
     const token = this.tokenProvider();
     if (!token) {
       throw new ToolError(ERROR_MESSAGES.CLIENT_NOT_CONFIGURED);

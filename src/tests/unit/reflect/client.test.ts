@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { requestContextStorage } from "../../../common/request-context";
 import { ReflectClient } from "../../../reflect/client";
 
 describe("ReflectClient", () => {
@@ -8,12 +9,12 @@ describe("ReflectClient", () => {
     client = new ReflectClient();
   });
 
-  it("should not be configured by default", () => {
-    expect(client.isConfigured()).toBe(false);
+  it("should be configured by default to support dynamic OAuth tokens", () => {
+    expect(client.isConfigured()).toBe(true);
   });
 
   it("should be configured after configure()", async () => {
-    await client.configure({} as any, {} as any);
+    await client.configure({} as any, { api_token: "test-token" });
     expect(client.isConfigured()).toBe(true);
   });
 
@@ -49,141 +50,82 @@ describe("ReflectClient", () => {
   });
 
   describe("isOAuthRequest", () => {
-    it("should return false when api_token is set", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "api_token") return "my-api-token";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      expect(client.isOAuthRequest()).toBe(false);
+    it("should return true when Authorization header starts with Bearer", () => {
+      const result = requestContextStorage.run(
+        { headers: { Authorization: "Bearer oauth-token" } },
+        () => client.isOAuthRequest(),
+      );
+      expect(result).toBe(true);
     });
 
-    it("should return false when X-API-KEY is set", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "X-API-KEY") return "my-api-key";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      expect(client.isOAuthRequest()).toBe(false);
+    it("should return true when authorization header uses lowercase bearer scheme", () => {
+      const result = requestContextStorage.run(
+        { headers: { authorization: "bearer oauth-token" } },
+        () => client.isOAuthRequest(),
+      );
+      expect(result).toBe(true);
     });
 
-    it("should return true when only Authorization header is set", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "Authorization") return "Bearer oauth-token";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      expect(client.isOAuthRequest()).toBe(true);
+    it("should return false when no Authorization header", () => {
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.isOAuthRequest(),
+      );
+      expect(result).toBe(false);
     });
 
-    it("should return false when no auth is set", async () => {
-      const mockServer = {
-        getEnv: vi.fn(() => undefined),
-      } as any;
-      await client.configure(mockServer, {});
-      expect(client.isOAuthRequest()).toBe(false);
+    it("should return false when Authorization header does not start with Bearer", () => {
+      const result = requestContextStorage.run(
+        { headers: { Authorization: "Basic abc123" } },
+        () => client.isOAuthRequest(),
+      );
+      expect(result).toBe(false);
     });
 
-    it("should return false when X-API-KEY is present alongside Authorization", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "X-API-KEY") return "my-api-key";
-          if (key === "Authorization") return "Bearer oauth-token";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      expect(client.isOAuthRequest()).toBe(false);
+    it("should return false when Reflect-Api-Token is present alongside Authorization Bearer", () => {
+      const result = requestContextStorage.run(
+        {
+          headers: {
+            "Reflect-Api-Token": "my-api-token",
+            Authorization: "Bearer oauth-token",
+          },
+        },
+        () => client.isOAuthRequest(),
+      );
+      expect(result).toBe(false);
     });
   });
 
   describe("getAuthHeader", () => {
-    it("should return Authorization Bearer header for OAuth request", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "Authorization") return "oauth-token";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      expect(client.getAuthHeader()).toEqual({
-        Authorization: "Bearer oauth-token",
-      });
-    });
-
-    it("should return X-API-KEY header when using API key", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "api_token") return "my-api-key";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      expect(client.getAuthHeader()).toEqual({ "X-API-KEY": "my-api-key" });
-    });
-
-    it("should throw when no token is available", async () => {
-      const mockServer = {
-        getEnv: vi.fn(() => undefined),
-      } as any;
-      await client.configure(mockServer, {});
-      expect(() => client.getAuthHeader()).toThrow();
-    });
-  });
-
-  describe("getHeaders", () => {
-    it("should include Content-Type and User-Agent alongside auth header", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "api_token") return "my-api-key";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      const headers = client.getHeaders();
-      expect(headers).toEqual(
-        expect.objectContaining({
-          "X-API-KEY": "my-api-key",
-          "Content-Type": "application/json",
-        }),
+    it("should return Authorization Bearer header for OAuth request", () => {
+      const result = requestContextStorage.run(
+        { headers: { Authorization: "Bearer oauth-token" } },
+        () => client.getAuthHeader(),
       );
-      expect(headers["User-Agent"]).toMatch(/^SmartBear MCP Server\//);
+      expect(result).toEqual({ Authorization: "Bearer oauth-token" });
     });
 
-    it("should use Bearer auth header for OAuth requests", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "Authorization") return "oauth-token";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      const headers = client.getHeaders();
-      expect(headers).toEqual(
-        expect.objectContaining({
-          Authorization: "Bearer oauth-token",
-          "Content-Type": "application/json",
-        }),
+    it("should return X-API-KEY header when using API key header", () => {
+      const result = requestContextStorage.run(
+        { headers: { "X-API-KEY": "my-api-key" } },
+        () => client.getAuthHeader(),
       );
-      expect(headers["User-Agent"]).toMatch(/^SmartBear MCP Server\//);
+      expect(result).toEqual({ "X-API-KEY": "my-api-key" });
     });
 
-    it("should not contain X-API-KEY when using OAuth", async () => {
-      const mockServer = {
-        getEnv: vi.fn((key: string) => {
-          if (key === "Authorization") return "oauth-token";
-          return undefined;
-        }),
-      } as any;
-      await client.configure(mockServer, {});
-      const headers = client.getHeaders();
-      expect(headers["X-API-KEY"]).toBeUndefined();
+    it("should return X-API-KEY header when falling back to configured token", async () => {
+      await client.configure({} as any, { api_token: "configured-token" });
+      const result = requestContextStorage.run({ headers: {} }, () =>
+        client.getAuthHeader(),
+      );
+      expect(result).toEqual({ "X-API-KEY": "configured-token" });
+    });
+
+    it("should throw when no token is available", () => {
+      expect(() =>
+        requestContextStorage.run({ headers: {} }, () =>
+          client.getAuthHeader(),
+        ),
+      ).toThrow("Reflect API token not found");
     });
   });
 });

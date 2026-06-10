@@ -1,11 +1,10 @@
 import z from "zod";
-import type { SmartBearMcpServer } from "../common/server.ts";
+import { getRequestHeader } from "../common/request-context";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
 } from "../common/types";
-
 import { ApiClient } from "./common/api-client";
 
 import { GetEnvironments } from "./tool/environment/get-environments";
@@ -44,53 +43,62 @@ import { GetTestExecutionSteps } from "./tool/test-execution/get-test-steps.ts";
 import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
 import { UpdateTestExecutionSteps } from "./tool/test-execution/update-test-steps.ts";
 
+const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";
+
 const ConfigurationSchema = z.object({
+  api_token: z.string().describe("Zephyr Scale API token for authentication"),
   base_url: z
+    .string()
     .url()
     .optional()
     .describe("Zephyr Scale API base URL")
-    .default("https://api.zephyrscale.smartbear.com/v2"),
-});
-
-const AuthenticationSchema = z.object({
-  api_token: z
-    .string()
-    .describe("Zephyr Scale API token for authentication")
-    .optional(),
+    .default(BASE_URL_DEFAULT),
 });
 
 export class ZephyrClient implements Client {
   private apiClient: ApiClient | undefined;
-  private server?: SmartBearMcpServer;
+  private _apiToken: string | undefined;
 
   name = "Zephyr";
   capabilityPrefix = "zephyr";
   configPrefix = "Zephyr";
   config = ConfigurationSchema;
-  authenticationFields = AuthenticationSchema;
 
   async configure(
-    server: SmartBearMcpServer,
+    _server: any,
     config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
   ): Promise<void> {
-    this.server = server;
-    this.apiClient = new ApiClient(() => this.getAuthToken(), config.base_url);
-  }
-
-  getAuthToken(): string | null {
-    return (
-      this.server?.getEnv("api_token", this) ||
-      this.server?.getEnv("Authorization") ||
-      null
+    this._apiToken = config.api_token;
+    this.apiClient = new ApiClient(
+      () => this.getAuthToken(),
+      config.base_url || process.env.ZEPHYR_CUSTOM_BASE_URL || BASE_URL_DEFAULT,
     );
   }
 
-  isConfigured(): boolean {
-    return !!this.apiClient;
+  getAuthToken(): string | null {
+    // 1. Try request context
+    const contextHeader =
+      getRequestHeader("Zephyr-Api-Token") || getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer or token prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+      return token;
+    }
+
+    // 2. Fallback to configured token
+    return this._apiToken || null;
   }
 
-  hasAuth(): boolean {
-    return this.isConfigured() && !!this.getAuthToken();
+  isConfigured(): boolean {
+    return this.apiClient !== undefined;
   }
 
   getApiClient() {

@@ -74,8 +74,6 @@ export type GetInputFunction = (
   options?: RequestOptions,
 ) => Promise<ElicitResult>;
 
-export type GetEnvFn = (key: string, client?: Client) => string | undefined;
-
 export interface Client {
   /** Human-readable name for the client - usually the product name */
   name: string;
@@ -94,14 +92,6 @@ export interface Client {
     [key: string]: ZodType;
   }>;
   /**
-   * Zod schema defining authentication fields for this client
-   * Field names must use snake case to ensure they are mapped to environment variables and HTTP headers correctly.
-   * e.g., `authenticationFields.my_property` would refer to the http header `Tool-My-Property`
-   */
-  authenticationFields: ZodObject<{
-    [key: string]: ZodType;
-  }>;
-  /**
    * Configure the client with the given server and configuration
    */
   configure: (server: SmartBearMcpServer, config: any) => Promise<void>;
@@ -113,8 +103,9 @@ export interface Client {
   registerResources?(register: RegisterResourceFunction): Promise<void>;
   registerPrompts?(register: RegisterPromptFunction): Promise<void>;
   /**
-   * Whether the client is currently authorized to make API requests.
+   * Optional method to retrieve the authentication token for the current request context.
+   * This is used for request-level authentication where the token might change per request.
    */
-  hasAuth(): boolean;
+  getAuthToken?(): string | null;
   cleanupSession?(mcpSessionId: string): Promise<void>;
 }

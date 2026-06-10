@@ -1,6 +1,6 @@
-import { ZodError, type ZodType, ZodURL } from "zod";
+import { type ZodType, ZodURL } from "zod";
 import type { SmartBearMcpServer } from "./server";
-import type { Client, GetEnvFn } from "./types";
+import type { Client } from "./types";
 import { fullyUnwrapZodType, isOptionalType } from "./zod-utils";
 
 /**
@@ -109,65 +109,39 @@ class ClientRegistry {
   }
 
   /**
-   * Registers all enabled clients on the given MCP server
+   * Configures all enabled clients on the given MCP server
    * @param server The MCP server on which the client is registered
    * @param getConfigValue A function that obtains a configuration value for the given client and requirement name
-   * @returns The number of clients successfully added
+   * @returns The number of clients successfully configured
    */
-  async registerAll(
+  async configure(
     server: SmartBearMcpServer,
-    getConfigValue: GetEnvFn,
-    configure: boolean,
-    authorizationCheck: boolean,
+    getConfigValue: (client: Client, key: string) => string | null,
+    ignoreMissingRequiredConfigs = false,
   ): Promise<number> {
-    if (authorizationCheck && !configure) {
-      throw new Error(
-        "Cannot perform authorization check without configuring clients",
-      );
-    }
-    let addedCount = 0;
-    clientLoop: for (const client of this.getAll()) {
-      if (configure) {
-        const config: Record<string, string> = {};
-        for (const configKey of Object.keys(client.config.shape)) {
-          const value = getConfigValue(configKey, client);
-          if (value) {
-            // validate if a config option is an Allowed Endpoint URL
-            this.validateAllowedEndpoint(client.config.shape[configKey], value);
-            config[configKey] = value;
-          } else if (!isOptionalType(client.config.shape[configKey])) {
-            continue clientLoop; // Skip configuring this client - missing required config
-          }
-        }
-
-        let parsedConfig: any;
-        try {
-          parsedConfig = client.config.parse(config); // Validate config against schema, validate and apply default values
-        } catch (error) {
-          if (error instanceof ZodError) {
-            console.warn(
-              `Configuration for client ${client.name} is invalid: ${error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join("; ")}`,
-            );
-          } else {
-            console.warn(
-              `Unable to apply configuration for client ${client.name}: ${error}`,
-            );
-          }
-          continue; // Skip configuring this client - config is invalid
-        }
-
-        await client.configure(server, parsedConfig);
-        if (!client.isConfigured()) {
-          continue; // Client did not configure successfully - skip adding to server
-        }
-        if (authorizationCheck && !client.hasAuth()) {
-          continue; // Client is not authorized - skip adding to server
+    let configuredCount = 0;
+    entryLoop: for (const entry of this.getAll()) {
+      const config: Record<string, string> = {};
+      for (const configKey of Object.keys(entry.config.shape)) {
+        const value = getConfigValue(entry, configKey);
+        if (value !== null) {
+          // validate if a config option is an Allowed Endpoint URL
+          this.validateAllowedEndpoint(entry.config.shape[configKey], value);
+          config[configKey] = value;
+        } else if (
+          !ignoreMissingRequiredConfigs &&
+          !isOptionalType(entry.config.shape[configKey])
+        ) {
+          continue entryLoop; // Skip configuring this client - missing required config
         }
       }
-      await server.addClient(client);
-      addedCount++;
+      await entry.configure(server, config);
+      if (entry.isConfigured()) {
+        await server.addClient(entry);
+        configuredCount++;
+      }
     }
-    return addedCount;
+    return configuredCount;
   }
 
   /**
