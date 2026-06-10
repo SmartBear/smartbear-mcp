@@ -58,7 +58,7 @@ import type {
 } from "./client/user-management-types";
 
 const ConfigurationSchema = z.object({
-  api_key: z.string().describe("Swagger API key for authentication"),
+  api_key: z.string().optional().describe("Swagger API key for authentication"),
   portal_base_path: z
     .string()
     .optional()
@@ -96,16 +96,18 @@ export class SwaggerClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
-    this._apiKey = config.api_key;
-    this.api = new SwaggerAPI(
-      new SwaggerConfiguration({
-        token: () => this.getAuthToken(),
-        portalBasePath: config.portal_base_path,
-        registryBasePath: config.registry_base_path,
-        uiBasePath: config.ui_base_path,
-      }),
-      `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-    );
+    if (config.api_key) {
+      this._apiKey = config.api_key;
+      this.api = new SwaggerAPI(
+        new SwaggerConfiguration({
+          token: () => this.getAuthToken(),
+          portalBasePath: config.portal_base_path,
+          registryBasePath: config.registry_base_path,
+          uiBasePath: config.ui_base_path,
+        }),
+        `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      );
+    }
 
     if (config.functional_testing_api_token) {
       this._ftApiToken = config.functional_testing_api_token;
@@ -147,7 +149,7 @@ export class SwaggerClient implements Client {
   }
 
   isConfigured(): boolean {
-    return this.api !== undefined;
+    return this.api !== undefined || this.ftApi !== undefined;
   }
 
   getApi(): SwaggerAPI {
@@ -314,6 +316,9 @@ export class SwaggerClient implements Client {
   ): Promise<void> {
     TOOLS.forEach((tool) => {
       if (tool.toolset === "Functional Testing" && !this.ftApi) {
+        return;
+      }
+      if (tool.toolset !== "Functional Testing" && !this.api) {
         return;
       }
 

@@ -80,6 +80,37 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
   });
 
+  describe("isConfigured", () => {
+    it("should return false when neither api_key nor FT token is configured", async () => {
+      await client.configure({} as any, {});
+
+      expect(client.isConfigured()).toBe(false);
+    });
+
+    it("should return true when only api_key is configured", async () => {
+      await client.configure({} as any, { api_key: "swagger-key" });
+
+      expect(client.isConfigured()).toBe(true);
+    });
+
+    it("should return true when only FT token is configured", async () => {
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      expect(client.isConfigured()).toBe(true);
+    });
+
+    it("should return true when both api_key and FT token are configured", async () => {
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      expect(client.isConfigured()).toBe(true);
+    });
+  });
+
   describe("registerTools — conditional FT tool registration", () => {
     it("should not register FT tools when no FT token configured", async () => {
       await client.configure({} as any, { api_key: "swagger-key" });
@@ -117,6 +148,39 @@ describe("SwaggerClient — Functional Testing integration", () => {
       const registeredTitles = mockRegister.mock.calls.map(
         (call) => call[0].title,
       );
+      expect(registeredTitles).toContain("List Portals");
+      expect(registeredTitles).toContain("Search APIs and Domains");
+    });
+
+    it("should register only FT tools when only FT token is configured", async () => {
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      const mockRegister = vi.fn();
+      await client.registerTools(mockRegister, vi.fn());
+
+      const registeredTitles = mockRegister.mock.calls.map(
+        (call) => call[0].title,
+      );
+      expect(registeredTitles).toContain("List Tests");
+      expect(registeredTitles).not.toContain("List Portals");
+      expect(registeredTitles).not.toContain("Search APIs and Domains");
+    });
+
+    it("should register all tools when both api_key and FT token are configured", async () => {
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const mockRegister = vi.fn();
+      await client.registerTools(mockRegister, vi.fn());
+
+      const registeredTitles = mockRegister.mock.calls.map(
+        (call) => call[0].title,
+      );
+      expect(registeredTitles).toContain("List Tests");
       expect(registeredTitles).toContain("List Portals");
       expect(registeredTitles).toContain("Search APIs and Domains");
     });
