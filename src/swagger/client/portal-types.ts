@@ -334,6 +334,15 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
     ),
 });
 
+export const ResolveOrganizationPortalArgsSchema = z.object({
+  organizationId: z
+    .string()
+    .uuid()
+    .describe(
+      "Swagger organization UUID - the organization to resolve portal details for",
+    ),
+});
+
 export const PublishProductArgsSchema = ProductArgsSchema.extend({
   preview: z
     .boolean()
@@ -352,6 +361,9 @@ export type UpdatePortalArgs = z.infer<typeof UpdatePortalArgsSchema>;
 export type CreateProductArgs = z.infer<typeof CreateProductArgsSchema>;
 export type UpdateProductArgs = z.infer<typeof UpdateProductArgsSchema>;
 export type PublishProductArgs = z.infer<typeof PublishProductArgsSchema>;
+export type ResolveOrganizationPortalArgs = z.infer<
+  typeof ResolveOrganizationPortalArgsSchema
+>;
 export type GetProductSectionsArgs = z.infer<
   typeof GetProductSectionsArgsSchema
 >;
@@ -503,6 +515,22 @@ export type ContentReference = ApiUrlContent | HtmlContent | MarkdownContent;
 
 export interface TableOfContentsItemSwaggerhubApi {
   _private: boolean;
+}
+
+// Response type for the Resolve Organization Portal tool. Product keys use
+// the kebab-case names required by the SWG-20374 contract.
+export interface ResolvedPortalProduct {
+  productId: string;
+  "product-slug": string;
+  "product-name": string;
+}
+
+export interface ResolveOrganizationPortalResponse {
+  organizationId: string;
+  portalId: string;
+  subdomain: string;
+  portalCreated: boolean;
+  products: ResolvedPortalProduct[];
 }
 
 // Response collection types
