@@ -2,7 +2,7 @@ import { enableCompileCache } from "node:module";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { clientRegistry } from "./client-registry";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
+import { USER_AGENT } from "./info";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
@@ -32,7 +32,7 @@ function getNoConfigMessage(): string[] {
  */
 export async function runStdioMode() {
   if (process.argv.includes("--version")) {
-    console.log(`${MCP_SERVER_NAME}: v${MCP_SERVER_VERSION}`);
+    console.log(`User-Agent: ${USER_AGENT}`);
     process.exit(0);
   } else if (process.argv.includes("--help")) {
     console.log(

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { USER_AGENT } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
@@ -74,7 +75,7 @@ export class CollaboratorClient implements Client {
     ];
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
       body: JSON.stringify(body),
     });
     if (!response.ok) {
