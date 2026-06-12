@@ -45,6 +45,8 @@
     "test:coverage": "vitest --coverage",
     "test:coverage:ci": "vitest --coverage --reporter=verbose",
     "test:run": "vitest run",
+    "update:bugsnag-api": "tsx scripts/update-bugsnag-api.ts",
+    "verify:bugsnag-api": "tsx scripts/verify-bugsnag-api.ts",
     "coverage:check": "vitest --coverage --reporter=verbose",
     "bump": "node scripts/bump.js"
   },
@@ -59,6 +61,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
+    "ts-morph": "^28.0.0",
+    "tsr": "^1.3.4",
+    "tsx": "^4.22.3",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.19.15",
     "@types/ws": "^8.18.1",
