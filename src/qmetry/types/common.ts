@@ -17,6 +17,8 @@ export interface RequestOptions {
   project?: string; // Sent as HTTP header, not in body
   baseUrl: string; // Used for URL construction, not in body
   body?: any; // Only contains business logic parameters
+  scopeId?: number; // Sent as "scope" HTTP header (numeric project ID from currentProjectId)
+  orgCode?: string; // Sent as "orgcode" HTTP header (from clientCode in project info response)
 }
 export interface PaginationPayload {
   start?: number;
@@ -105,8 +107,7 @@ export const CommonFields = {
     .string()
     .url()
     .optional()
-    .describe("The base URL for the QMetry instance (must be a valid URL)")
-    .default(QMETRY_DEFAULTS.BASE_URL),
+    .describe("The base URL for the QMetry instance (must be a valid URL)"),
   start: z
     .number()
     .optional()
