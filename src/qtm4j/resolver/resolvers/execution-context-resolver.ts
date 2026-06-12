@@ -40,9 +40,9 @@ export type ExecutionContextResponse = Record<string, ExecutionContextEntry>;
  * testCycleKey and at least one testCaseKey are REQUIRED. Response is keyed by testCaseKey.
  *
  * Cache layout (mirrors LabelResolver):
- *   projectKey  → cache namespace (cleared together on project switch)
+ *   projectKey → cache namespace (cleared together on project switch)
  *   resolverKey → "executionContext" (static, from ResolverKeys.SearchableField.EXECUTION_CONTEXT)
- *   name        → "TestCycle:{testCycleKey}.TestCase:{testCaseKey}" (lookup key via matchValue)
+ *   name → "TestCycle:{testCycleKey}.TestCase:{testCaseKey}" (lookup key via matchValue)
  * clearCache(projectKey) evicts all entries for that project.
  */
 export class ExecutionContextResolver extends Resolver {
