@@ -638,6 +638,201 @@ describe("SmartBearMcpServer", () => {
     });
   });
 
+  describe("toolset filtering", () => {
+    let mockClient: any;
+    let secondMockClient: any;
+    let server: SmartBearMcpServer;
+    let registerToolSpy: any;
+    let registerFn: any;
+    let setupServer: (
+      enabledToolsets?: string,
+      defaultToolsets?: string[],
+    ) => Promise<void>;
+
+    beforeEach(async () => {
+      mockClient = {
+        name: "Test Product",
+        capabilityPrefix: "test_product",
+        configPrefix: "test-product",
+        config: z.object({}),
+        registerTools: vi.fn(),
+        registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+      };
+      secondMockClient = {
+        name: "Another Test Product",
+        capabilityPrefix: "another_test_product",
+        configPrefix: "another-test-product",
+        config: z.object({}),
+        registerTools: vi.fn(),
+        registerResources: vi.fn(),
+        configure: vi.fn(),
+        isConfigured: vi.fn().mockReturnValue(true),
+      };
+
+      setupServer = async (
+        enabledToolsets?: string,
+        defaultToolsets?: string[],
+      ) => {
+        server = new SmartBearMcpServer(enabledToolsets);
+        registerToolSpy = vi
+          .spyOn(
+            Object.getPrototypeOf(Object.getPrototypeOf(server)),
+            "registerTool",
+          )
+          .mockImplementation(vi.fn());
+
+        mockClient.defaultToolsets = defaultToolsets;
+        await server.addClient(mockClient);
+        registerFn = mockClient.registerTools.mock.calls[0][0];
+        await server.addClient(secondMockClient);
+      };
+    });
+
+    it("should register all tools when enabled toolsets is not set", async () => {
+      await setupServer();
+      // Tool with a toolset
+      const result1 = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+      // Tool without a toolset
+      const result2 = registerFn({ title: "Tool B", summary: "B" }, vi.fn());
+
+      expect(result1).not.toBeNull();
+      expect(result2).not.toBeNull();
+    });
+
+    it("should register tools whose toolset matches enabled toolsets", async () => {
+      await setupServer("test-product:groupa");
+
+      const result = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+
+      expect(result).not.toBeNull();
+      expect(registerToolSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should skip tools whose toolset does not match enabled toolsets", async () => {
+      await setupServer("test-product:groupa");
+      const result = registerFn(
+        { title: "Tool B", summary: "B", toolset: "groupB" },
+        vi.fn(),
+      );
+
+      expect(result).toBeNull();
+      expect(registerToolSpy).not.toHaveBeenCalled();
+    });
+
+    it("should register tools default tools of client", async () => {
+      await setupServer("test-product:groupa", ["default-group"]);
+
+      let result = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupa" },
+        vi.fn(),
+      );
+      expect(result).not.toBeNull();
+
+      result = registerFn(
+        { title: "Default Tool", summary: "Default", toolset: "default-group" },
+        vi.fn(),
+      );
+      expect(result).not.toBeNull();
+
+      expect(registerToolSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("should register tools default tools of client, if other toolsets are enabled", async () => {
+      await setupServer("test-product:groupa", ["default-group"]);
+
+      let result = registerFn(
+        { title: "Tool C", summary: "C", toolset: "groupa" },
+        vi.fn(),
+      );
+      expect(result).not.toBeNull();
+
+      result = registerFn(
+        { title: "Default Tool", summary: "Default", toolset: "default-group" },
+        vi.fn(),
+      );
+      expect(result).not.toBeNull();
+
+      expect(registerToolSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not register default tools of client if no other toolsets are enabled", async () => {
+      await setupServer("another-test-product:groupb", ["default-group"]);
+
+      const result = registerFn(
+        { title: "Default Tool", summary: "Default", toolset: "default-group" },
+        vi.fn(),
+      );
+      expect(result).toBeNull();
+
+      expect(registerToolSpy).not.toHaveBeenCalled();
+    });
+
+    it("should support multiple toolsets in MCP_TOOLSETS", async () => {
+      await setupServer("test-product:groupa,test-product:groupb");
+
+      const resultA = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+      const resultB = registerFn(
+        { title: "Tool B", summary: "B", toolset: "groupB" },
+        vi.fn(),
+      );
+      const resultC = registerFn(
+        { title: "Tool C", summary: "C", toolset: "groupC" },
+        vi.fn(),
+      );
+
+      expect(resultA).not.toBeNull();
+      expect(resultB).not.toBeNull();
+      expect(resultC).toBeNull();
+      expect(registerToolSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("should register all tools when just the client name is in toolsets", async () => {
+      await setupServer("test-product");
+
+      const resultA = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+
+      expect(resultA).not.toBeNull();
+      expect(registerToolSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not register any tools when a different client is enabled in toolsets", async () => {
+      await setupServer("another-test-product");
+
+      const resultA = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupA" },
+        vi.fn(),
+      );
+
+      expect(resultA).toBeNull();
+      expect(registerToolSpy).not.toHaveBeenCalled();
+    });
+
+    it("should match toolsets case-insensitively", async () => {
+      await setupServer("Test-Product:GroupA");
+
+      const result = registerFn(
+        { title: "Tool A", summary: "A", toolset: "groupa" },
+        vi.fn(),
+      );
+
+      expect(result).not.toBeNull();
+    });
+  });
+
   describe("schemaToRawShape", () => {
     it("should convert Zod schema to raw shape", () => {
       const schema = z.object({
@@ -661,4 +856,76 @@ describe("SmartBearMcpServer", () => {
       expect(rawShape).toBeUndefined();
     });
   });
+
+  describe("isToolEnabled", () => {
+    const mockClient = {
+      name: "Test Product",
+      configPrefix: "test-product",
+      capabilityPrefix: "test_product",
+      config: z.object({}),
+      configure: vi.fn(),
+      isConfigured: vi.fn(),
+      registerTools: vi.fn(),
+    };
+
+    it("should enable all tools when no toolsets are configured", () => {
+      const server = new SmartBearMcpServer();
+      expect(server.isToolEnabled(mockClient, "anything")).toBe(true);
+    });
+
+    it("should enable tool when client is listed", () => {
+      const server = new SmartBearMcpServer("test-product");
+      expect(server.isToolEnabled(mockClient, "anything")).toBe(true);
+    });
+
+    it("should enable tool when its toolset matches an enabled entry", () => {
+      const server = new SmartBearMcpServer("test-product:errors");
+      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
+    });
+
+    it("should disable tool when its toolset does not match any enabled entry", () => {
+      const server = new SmartBearMcpServer("test-product:errors");
+      expect(server.isToolEnabled(mockClient, "releases")).toBe(false);
+    });
+
+    it("should disable tool when client prefix does not match any enabled toolset", () => {
+      const server = new SmartBearMcpServer("other-product:errors");
+      expect(server.isToolEnabled(mockClient, "errors")).toBe(false);
+    });
+
+    it("should handle toolset name normalization (spaces, hyphens, underscores)", () => {
+      const server = new SmartBearMcpServer("test-product:mytools");
+      expect(server.isToolEnabled(mockClient, "my-tools")).toBe(true);
+      expect(server.isToolEnabled(mockClient, "my_tools")).toBe(true);
+      expect(server.isToolEnabled(mockClient, "my tools")).toBe(true);
+    });
+
+    it("should be case-insensitive", () => {
+      const server = new SmartBearMcpServer("Test-Product:Errors");
+      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
+    });
+
+    it("should enable default toolsets when specific toolsets are configured for the client", () => {
+      const client = { ...mockClient, defaultToolsets: ["default-set"] };
+      const server = new SmartBearMcpServer("test-product:errors");
+      expect(server.isToolEnabled(client, "default-set")).toBe(true);
+    });
+
+    it("should not enable default toolsets when no specific toolsets are configured for the client", () => {
+      const client = { ...mockClient, defaultToolsets: ["default-set"] };
+      const server = new SmartBearMcpServer("other-product:errors");
+      expect(server.isToolEnabled(client, "default-set")).toBe(false);
+    });
+
+    it("should support multiple toolset entries for the same client", () => {
+      const server = new SmartBearMcpServer(
+        "test-product:errors,test-product:releases",
+      );
+      expect(server.isToolEnabled(mockClient, "errors")).toBe(true);
+      expect(server.isToolEnabled(mockClient, "releases")).toBe(true);
+      expect(server.isToolEnabled(mockClient, "other")).toBe(false);
+    });
+  });
 });
+
+// cspell:ignore groupa groupb

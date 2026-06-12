@@ -95,7 +95,8 @@ export class CollaboratorClient implements Client {
     // findReviewById tool
     register(
       {
-        title: "Find Collaborator Review By ID",
+        title: "Find Review By ID",
+        toolset: "Review Management",
         summary: "Finds a review in Collaborator by its review ID.",
         inputSchema: z.object({
           reviewId: z.string().describe("The Collaborator review ID to find."),
@@ -119,7 +120,8 @@ export class CollaboratorClient implements Client {
     // createReview tool
     register(
       {
-        title: "Create Collaborator Review",
+        title: "Create Review",
+        toolset: "Review Management",
         summary:
           "Creates a new review in Collaborator. All parameters are optional.",
         inputSchema: z.object({
@@ -171,7 +173,8 @@ export class CollaboratorClient implements Client {
     // rejectReview tool
     register(
       {
-        title: "Reject Collaborator Review",
+        title: "Reject Review",
+        toolset: "Review Management",
         summary:
           "Rejects a review in Collaborator by its review ID and reason.",
         inputSchema: z.object({
@@ -202,6 +205,7 @@ export class CollaboratorClient implements Client {
     register(
       {
         title: "ReviewService Action",
+        toolset: "Review Management",
         summary:
           "Invoke any ReviewService method by name and arguments. For finishReviewPhase and waitOnPhase, provide reviewId (required) and until (optional, defaults to 'ANY').",
         inputSchema: z.object({
@@ -227,7 +231,8 @@ export class CollaboratorClient implements Client {
     // getReviews tool
     register(
       {
-        title: "Get Collaborator Reviews",
+        title: "Get Reviews",
+        toolset: "Review Management",
         summary:
           "Retrieves reviews from Collaborator using ReviewService.getReviews. All parameters are optional and only provided ones are sent.",
         inputSchema: z.object({
@@ -287,7 +292,8 @@ export class CollaboratorClient implements Client {
     // createIntegration tool
     register(
       {
-        title: "Create Collaborator Remote System Configuration",
+        title: "Create Remote System Configuration",
+        toolset: "Remote System Configuration Management",
         summary:
           "Creates a remote system configuration in Collaborator (e.g., Bitbucket, GitHub, etc).",
         inputSchema: z.object({
@@ -328,7 +334,8 @@ export class CollaboratorClient implements Client {
     // editIntegration tool
     register(
       {
-        title: "Edit Collaborator Remote System Configuration",
+        title: "Edit Remote System Configuration",
+        toolset: "Remote System Configuration Management",
         summary:
           "Edits parameters of an existing remote system configuration in Collaborator. Only title and config are editable after creation.",
         inputSchema: z.object({
@@ -372,7 +379,8 @@ export class CollaboratorClient implements Client {
     // deleteIntegration tool
     register(
       {
-        title: "Delete Collaborator Remote System Configuration",
+        title: "Delete Remote System Configuration",
+        toolset: "Remote System Configuration Management",
         summary:
           "Deletes a remote system configuration in Collaborator by its ID.",
         inputSchema: z.object({
@@ -403,7 +411,8 @@ export class CollaboratorClient implements Client {
 
     register(
       {
-        title: "Update Collaborator Remote System Configuration Webhook",
+        title: "Update Remote System Configuration Webhook",
+        toolset: "Remote System Configuration Management",
         summary:
           "Updates the webhook for a remote system configuration in Collaborator by its ID.",
         inputSchema: z.object({
@@ -437,7 +446,8 @@ export class CollaboratorClient implements Client {
     // Test connection tool
     register(
       {
-        title: "Test Collaborator Remote System Configuration Connection",
+        title: "Test Remote System Configuration Connection",
+        toolset: "Remote System Configuration Management",
         summary:
           "Tests the connection for a remote system configuration in Collaborator by its ID.",
         inputSchema: z.object({

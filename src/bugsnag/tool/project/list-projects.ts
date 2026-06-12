@@ -16,6 +16,7 @@ const inputSchema = z.object({
 // Lists all projects the user has access to, optionally filtered by API key.
 export class ListProjects extends Tool<BugsnagClient> {
   specification: ToolParams = {
+    toolset: "Projects",
     title: "List Projects",
     summary:
       "List all projects in the organization that the current user has access to, or find a project matching an API key.",

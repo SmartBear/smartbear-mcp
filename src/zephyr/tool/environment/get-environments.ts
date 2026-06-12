@@ -11,6 +11,7 @@ import {
 export class GetEnvironments extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Environments",
+    toolset: "Environment",
     summary: "Get environments in Zephyr",
     readOnly: true,
     idempotent: true,

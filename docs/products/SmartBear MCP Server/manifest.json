@@ -139,6 +139,30 @@
       "contentUrl": "collaborator-integration.md"
     },
     {
+      "order": 8,
+      "parent": "mcp-server-capabilities",
+      "name": "QTM4J Integration",
+      "slug": "qtm4j-integration",
+      "type": "markdown",
+      "contentUrl": "qtm4j-integration.md"
+    },
+    {
+      "order": 9,
+      "parent": "mcp-server-capabilities",
+      "name": "BearQ Integration",
+      "slug": "bearq-integration",
+      "type": "markdown",
+      "contentUrl": "bearq-integration.md"
+    },
+    {
+      "order": 10,
+      "parent": "mcp-server-capabilities",
+      "name": "Swagger Functional Testing Integration",
+      "slug": "swagger-functional-testing-integration",
+      "type": "markdown",
+      "contentUrl": "swagger-functional-testing-integration.md"
+    },
+    {
       "order": 3,
       "parent": "",
       "name": "Best Practices",

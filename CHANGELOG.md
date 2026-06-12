@@ -9,14 +9,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [QMetry] Enhance LLM prompt handling with contextual metadata and usage tracking [#371](https://github.com/SmartBear/smartbear-mcp/pull/371)
 
 ### Added
+
+- [Swagger] Add Swagger Functional Testing integration with `list_tests` tool for discovering available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+
+## [0.25.1] - 2026-06-08
+
+### Fixed
+
+- [Common] Reverted [#487](https://github.com/SmartBear/smartbear-mcp/pull/487) due to request scoping issue. [#512](https://github.com/SmartBear/smartbear-mcp/pull/512)
+
+## [0.25.0] - 2026-06-03
+
+### Added
+- [Common] Add `MCP_TOOLSETS` environment variable to allow tools to be grouped into sets for better organization and client control [#474](https://github.com/SmartBear/smartbear-mcp/pull/474)
+- [Common] Split authorization and configuration options to better suit OAuth flow [#487](https://github.com/SmartBear/smartbear-mcp/pull/487)
+- [QTM4J] Added support for linking and unlinking requirements, test cases, and test cycles through new tools. [#505](https://github.com/SmartBear/smartbear-mcp/pull/505)
+- [QTM4J] Added tools for retrieving linked requirements and test cases across requirements, test cases, and test cycles. [#505](https://github.com/SmartBear/smartbear-mcp/pull/505)
+
+## [0.24.0] - 2026-05-28
+
+### Added
+
+- [QTM4J] Added test cycle management capabilities, including create, search, and update operations. [#501](https://github.com/SmartBear/smartbear-mcp/pull/501)
+- [QTM4J] Added test automation capabilities, including automation result uploads and import history retrieval. [#501](https://github.com/SmartBear/smartbear-mcp/pull/501)
+
+### Fixed
+
+- [PactFlow] Remove `.email()` Zod validator from PactFlow admin user tool schemas — the generated JSON Schema pattern used regex lookahead which is rejected by strict JSON Schema validators (e.g. OpenAI gpt-5.5) [#491](https://github.com/SmartBear/smartbear-mcp/issues/491)
+- [BearQ] Fix BearQ integration page not appearing in live docs [#496](https://github.com/SmartBear/smartbear-mcp/pull/496)
+- [Swagger]  Add constraint in the create_portal tool schema description, that allows only one Portal per organization.
+
+## [0.23.0] - 2026-05-22
+
+### Added
+
+- [BearQ] Add BearQ integration with 11 tools for AI-powered QA: run regression tests, run/refine test cases and functional areas, expand the application model, chat with the QA lead agent, and manage async tasks (`get_task`, `get_task_status`, `wait_for_task`, `stop_task`) [#485](https://github.com/SmartBear/smartbear-mcp/pull/485)
+
+## [0.22.0] - 2026-05-21
+
+### Fixed
+
+- [Common] Only advertise prompts and resources capabilities when provided by clients [#480](https://github.com/SmartBear/smartbear-mcp/pull/480)
+
+## [0.21.1] - 2026-05-20
+
+### Added
+
+- [QTM4J] Add QTM4J (QMetry Test Management for Jira) capabilities to MCP [#476](https://github.com/SmartBear/smartbear-mcp/pull/476)
+
+## [0.20.0] - 2026-05-15
+
+### Added
 - [Common] Add graceful shutdown on SIGTERM/SIGINT in HTTP mode: drains active sessions (closes Streamable HTTP and SSE transports, runs per-client `cleanupSession` hooks including Reflect WebSocket teardown), with a configurable deadline via `MCP_SHUTDOWN_TIMEOUT_MS` (default 25s) [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
 - [Common] Split health/readiness probes: `GET /health` is now liveness-only and always returns 200 when the process is responsive; `GET /ready` is the readiness probe and returns 503 during drain so load balancers stop routing new sessions to draining pods. Both probes set `Cache-Control: no-store`. [#455](https://github.com/SmartBear/smartbear-mcp/pull/455)
 - [Common] Add product prefix to registered resources and prompts [#458](https://github.com/SmartBear/smartbear-mcp/pull/458)
 
 ### Fixed
 
-- [Transport] Streamable HTTP requests carrying an `MCP-Session-Id` the server doesn't recognize now return `404` (with a JSON-RPC error envelope, code `-32001`) instead of `400`. This aligns with the MCP Streamable HTTP spec's Session Management rules, which require a 404 for requests against a terminated session and oblige clients to respond by sending a fresh `InitializeRequest`. In multi-pod deployments this lets clients transparently re-initialize after a pod restart or routing reshuffle drops the in-memory session, instead of treating it as a permanent protocol error. [#449](https://github.com/SmartBear/smartbear-mcp/pull/449)
+- [Common] Streamable HTTP requests carrying an `MCP-Session-Id` the server doesn't recognize now return `404` (with a JSON-RPC error envelope, code `-32001`) instead of `400`. This aligns with the MCP Streamable HTTP spec's Session Management rules, which require a 404 for requests against a terminated session and oblige clients to respond by sending a fresh `InitializeRequest`. In multi-pod deployments this lets clients transparently re-initialize after a pod restart or routing reshuffle drops the in-memory session, instead of treating it as a permanent protocol error. [#449](https://github.com/SmartBear/smartbear-mcp/pull/449)
 - [Common] Configuration options can now be passed in via query string parameters for HTTP transport [#453](https://github.com/SmartBear/smartbear-mcp/pull/453)
+- [Swagger] Remove unused `role` parameter from the `create_portal_product` tool. [#469](https://github.com/SmartBear/smartbear-mcp/pull/469)
+- [Swagger] Portal API error responses now surface the human-readable reason instead of showing `HTTP 400:` with no message. The client reads the `application/problem+json` error body and extracts the `detail` field (RFC 7807); falls back to `message` if absent. [#468](https://github.com/SmartBear/smartbear-mcp/pull/468)
+- [Pactflow][Collaborator] Reduced tool names under the apparent 64 character limit for Claude connectors [#470](https://github.com/SmartBear/smartbear-mcp/pull/470)
 - [Pactflow] Fix bug that prevents MCP server from starting with no configuration (for tool exploration) [#445](https://github.com/SmartBear/smartbear-mcp/pull/445)
 
 ## [0.19.2] - 2026-05-05

@@ -53,6 +53,7 @@ const inputSchema = z.object({
 export class ListSpanGroups extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "List Span Groups",
+    toolset: "Performance",
     summary: "List span groups (operations) tracked for performance monitoring",
     purpose: "Discover and analyze different operations being monitored",
     useCases: [

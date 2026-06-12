@@ -12,7 +12,6 @@ import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { isDraining, registerShutdownHandler } from "./shutdown";
 import { getEnvVarName } from "./transport-stdio";
-import type { Client } from "./types";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
 
 type SessionEntry = {
@@ -609,6 +608,34 @@ async function handleLegacyMessageRequest(
   });
 }
 
+function getConfigValue(
+  clientPrefix: string,
+  key: string,
+  req: IncomingMessage,
+): string | null {
+  // 1. Try query string
+  const queryStringName = getQueryStringName(clientPrefix, key);
+  const queryParams = querystring.parse(req.url?.split("?")[1] || "");
+  let value =
+    queryParams[queryStringName] || queryParams[queryStringName.toLowerCase()];
+  if (typeof value === "string") {
+    return value;
+  }
+
+  // 2. Try headers
+  const headerName = getHeaderName(clientPrefix, key);
+  // Check both original case and lower-case headers for compatibility
+  // (HTTP headers are case-insensitive, but Node.js lowercases them)
+  value = req.headers[headerName] || req.headers[headerName.toLowerCase()];
+  if (typeof value === "string") {
+    return value;
+  }
+
+  // 3. Fall back to environment variable
+  const envVarName = getEnvVarName(clientPrefix, key);
+  return process.env[envVarName] || null;
+}
+
 /**
  * Create a new MCP server instance with configuration from HTTP headers
  *
@@ -624,7 +651,9 @@ export async function newServer(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<SmartBearMcpServer | null> {
-  const server = new SmartBearMcpServer();
+  const enabledToolsets =
+    getConfigValue("smartbear", "toolsets", req) || undefined;
+  const server = new SmartBearMcpServer(enabledToolsets);
   try {
     // Run configuration within request context so that client getAuthToken()
     // methods can access request headers via AsyncLocalStorage
@@ -632,29 +661,7 @@ export async function newServer(
       clientRegistry.configure(
         server,
         (client, key) => {
-          // 1. Try query string
-          const queryStringName = getQueryStringName(client, key);
-          const queryParams = querystring.parse(req.url?.split("?")[1] || "");
-          let value =
-            queryParams[queryStringName] ||
-            queryParams[queryStringName.toLowerCase()];
-          if (typeof value === "string") {
-            return value;
-          }
-
-          // 2. Try headers
-          const headerName = getHeaderName(client, key);
-          // Check both original case and lower-case headers for compatibility
-          // (HTTP headers are case-insensitive, but Node.js lowercases them)
-          value =
-            req.headers[headerName] || req.headers[headerName.toLowerCase()];
-          if (typeof value === "string") {
-            return value;
-          }
-
-          // 3. Fall back to environment variable
-          const envVarName = getEnvVarName(client, key);
-          return process.env[envVarName] || null;
+          return getConfigValue(client.configPrefix, key, req);
         },
         true, // ignoreMissingRequiredConfigs
       ),
@@ -727,8 +734,8 @@ export async function newServer(
  * @param key The config key in snake_case
  * @returns Header name in format: {ConfigPrefix}-{Pascal-Kebab-Case}
  */
-export function getHeaderName(client: Client, key: string): string {
-  return `${client.configPrefix}-${key
+export function getHeaderName(clientPrefix: string, key: string): string {
+  return `${clientPrefix}-${key
     .split("_")
     .map(
       (part: string) =>
@@ -737,8 +744,8 @@ export function getHeaderName(client: Client, key: string): string {
     .join("-")}`;
 }
 
-export function getQueryStringName(client: Client, key: string): string {
-  return `${client.configPrefix.toLowerCase()}${key
+export function getQueryStringName(clientPrefix: string, key: string): string {
+  return `${clientPrefix.toLowerCase()}${key
     .split("_")
     .map(
       (part: string) =>
@@ -754,10 +761,10 @@ export function getQueryStringName(client: Client, key: string): string {
 function getHttpHeaders(): string[] {
   const headers = new Set<string>();
 
-  // Use getAll() to respect MCP_ENABLED_CLIENTS filtering
+  // Use getAll() to respect client filtering
   for (const entry of clientRegistry.getAll()) {
     for (const configKey of Object.keys(entry.config.shape)) {
-      headers.add(getHeaderName(entry, configKey));
+      headers.add(getHeaderName(entry.configPrefix, configKey));
     }
   }
 
@@ -773,7 +780,7 @@ function getHttpHeadersHelp(): string[] {
   for (const entry of clientRegistry.getAll()) {
     messages.push(` - ${entry.name}:`);
     for (const [configKey, requirement] of Object.entries(entry.config.shape)) {
-      const headerName = getHeaderName(entry, configKey);
+      const headerName = getHeaderName(entry.configPrefix, configKey);
       const requiredTag = isOptionalType(requirement)
         ? " (optional)"
         : " (required)";

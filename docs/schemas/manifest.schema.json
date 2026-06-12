@@ -1,34 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
     "productMetadata": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
-        "description": {
-          "type": "string"
-        },
-        "slug": {
-          "type": "string"
-        },
-        "public": {
-          "type": "boolean"
-        },
-        "hidden": {
-          "type": "boolean"
-        },
-        "logo": {
-          "type": "string"
-        },
-        "logoDark": {
-          "type": "string"
-        },
-        "autoPublish": {
-          "type": "boolean"
-        },
-        "validateAPIs": {
-          "type": "boolean"
-        }
+        "description": { "type": "string" },
+        "slug": { "type": "string" },
+        "public": { "type": "boolean" },
+        "hidden": { "type": "boolean" },
+        "logo": { "type": "string" },
+        "logoDark": { "type": "string" },
+        "autoPublish": { "type": "boolean" },
+        "validateAPIs": { "type": "boolean" }
       },
       "required": [
         "description",
@@ -44,27 +30,25 @@
       "type": "array",
       "items": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
-          "order": {
-            "type": "integer"
-          },
+          "order": { "type": "integer" },
           "parent": {
-            "type": "string"
+            "type": "string",
+            "description": "Slug of the parent item. Use empty string for root-level items."
           },
-          "name": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
           "type": {
-            "type": "string"
+            "type": "string",
+            "enum": ["markdown", "html", "apiUrl"]
           },
           "contentUrl": {
-            "type": "string"
+            "type": "string",
+            "description": "For markdown/html: path to the content file relative to the product directory. For apiUrl: the full API URL."
           }
         },
-        "required": ["order", "name", "slug", "type", "contentUrl"]
+        "required": ["order", "parent", "name", "slug", "type", "contentUrl"]
       }
     }
   },

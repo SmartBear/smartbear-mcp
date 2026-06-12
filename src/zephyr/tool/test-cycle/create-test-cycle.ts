@@ -11,6 +11,7 @@ import {
 export class CreateTestCycle extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Cycle",
+    toolset: "Test Cycles",
     summary: "Create a new Test Cycle in Zephyr specified project",
     readOnly: false,
     idempotent: false,

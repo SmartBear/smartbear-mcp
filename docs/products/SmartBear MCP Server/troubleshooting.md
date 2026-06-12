@@ -6,11 +6,13 @@
 
 - Verify your auth tokens are valid.
 - Check that environment variables are properly set and match the expected names:
+  - `BEARQ_API_TOKEN` for BearQ
   - `BUGSNAG_AUTH_TOKEN` for BugSnag
   - `REFLECT_API_TOKEN` for Reflect
   - `SWAGGER_API_KEY` for Swagger
   - `QMETRY_API_KEY` for QMetry
   - `ZEPHYR_API_TOKEN` for Zephyr
+  - `QTM4J_API_KEY` for QTM4J
 - Ensure you have the correct token type (Auth Token vs API Key) for each desired service.
 
 ### Build and Installation Problems

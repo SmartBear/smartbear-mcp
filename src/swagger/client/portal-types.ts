@@ -185,7 +185,7 @@ export const CreatePortalArgsSchema = z.object({
   swaggerHubOrganizationId: z
     .string()
     .describe(
-      "The corresponding SwaggerHub organization UUID - required for portal creation. This links the portal to your SwaggerHub organization",
+      "The corresponding Swagger organization UUID - required for portal creation. This links the portal to your Swagger organization. Only one Portal per Swagger organization is allowed.",
     ),
   openapiRenderer: z
     .string()
@@ -298,12 +298,6 @@ export const CreateProductArgsSchema = PortalArgsSchema.extend({
     .optional()
     .describe(
       "Whether the product is hidden from the portal landing page navigation menus - useful for internal or draft products",
-    ),
-  role: z
-    .boolean()
-    .optional()
-    .describe(
-      "Whether the product has role-based access restrictions - controls if specific user roles are required to access the product",
     ),
 });
 

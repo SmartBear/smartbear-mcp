@@ -18,7 +18,7 @@
 </div>
 <br />
 
-A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [Swagger](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
+A Model Context Protocol (MCP) server which provides AI assistants with seamless access to SmartBear's suite of testing and monitoring tools, including [BearQ](https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration), [BugSnag](https://www.bugsnag.com/), [Reflect](https://reflect.run), [Swagger](https://www.smartbear.com/api-hub), [PactFlow](https://pactflow.io/), [Pact Broker](https://docs.pact.io/), [QMetry](https://www.qmetry.com/), [QTM4J](https://www.qmetry.com/qmetry-test-management-for-jira), [Zephyr](https://smartbear.com/test-management/zephyr/) and [Collaborator](https://smartbear.com/product/collaborator/).
 
 ## What is MCP?
 
@@ -28,15 +28,18 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)
 
 See individual guides for suggested prompts and supported tools and resources:
 
+- [BearQ](https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration) - AI-powered QA test management and execution capabilities
 - [BugSnag](https://developer.smartbear.com/smartbear-mcp/docs/bugsnag-integration) - Comprehensive error monitoring and debugging capabilities
 - [Reflect](https://developer.smartbear.com/smartbear-mcp/docs/reflect-integration) - Test management and execution capabilities
 - **Swagger**
   - [Portal](https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration) - Portal and product management capabilities
   - [Studio](https://developer.smartbear.com/smartbear-mcp/docs/swagger-studio-integration) - API and Domain management capabilities, including AI-powered API generation from prompts and automatic standardization
   - [Contract Testing (PactFlow)](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
+  - [Functional Testing](https://developer.smartbear.com/smartbear-mcp/docs/functional-testing-integration) - API test discovery capabilities
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
 - [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - Review and Remote System Configuration management capabilities
+- [QTM4J](https://developer.smartbear.com/smartbear-mcp/docs/qtm4j-integration) - QTM4J Test Management for Jira capabilities
 
 ## Remote MCP Servers
 
@@ -50,12 +53,12 @@ For BugSnag, Swagger, and Zephyr, SmartBear hosts Remote MCP Servers that you ca
 
 See the [Remote MCP Servers guide](https://developer.smartbear.com/smartbear-mcp/docs/remote-mcp-servers) for per-client setup instructions. You can connect to multiple remote servers at the same time.
 
-> **Need Reflect, QMetry, PactFlow, or Collaborator?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
+> **Need BearQ, Reflect, QMetry, QTM4J, PactFlow, Collaborator, or Functional Testing?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
 
 ## Prerequisites
 
 - Node.js 20+ and npm
-- Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, or Zephyr)
+- Access to SmartBear products (BugSnag, Reflect, Swagger, QMetry, QTM4J or Zephyr)
 - Valid API tokens for the products you want to integrate
 
 ## Local MCP Server Installation (npm)
@@ -84,6 +87,8 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "@smartbear/mcp@latest"
       ],
       "env": {
+        "BEARQ_API_TOKEN": "${input:bearq_api_token}",
+        "BEARQ_API_BASE_URL": "${input:bearq_api_base_url}",
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
@@ -101,11 +106,27 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "COLLABORATOR_BASE_URL": "${input:collab_base_url}",
         "COLLABORATOR_USERNAME": "${input:collab_username}",
-        "COLLABORATOR_LOGIN_TICKET": "${input:collab_login_ticket}"
+        "COLLABORATOR_LOGIN_TICKET": "${input:collab_login_ticket}",
+        "QTM4J_API_KEY": "${input:qtm4j_api_key}",
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
       }
     }
   },
   "inputs": [
+      {
+         "id": "bearq_api_token",
+         "type": "promptString",
+         "description": "BearQ workspace API token - leave blank to disable BearQ tools",
+         "password": true
+      },
+      {
+         "id": "bearq_api_base_url",
+         "type": "promptString",
+         "description": "BearQ API base URL - leave blank to use the default (https://api.bearq.smartbear.com)",
+         "password": false
+      },
       {
          "id": "bugsnag_auth_token",
          "type": "promptString",
@@ -213,7 +234,31 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
           "type": "promptString",
           "description": "Collab login ticket",
           "password": true
-      }
+      },
+      {
+          "id": "qtm4j_api_key",
+          "type": "promptString",
+          "description": "QTM4J API Key",
+          "password": true
+    },
+    {
+          "id": "qtm4j_base_url",
+          "type": "promptString",
+          "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
+          "password": false
+    },
+    {
+          "id": "qtm4j_automation_api_key",
+          "type": "promptString",
+          "description": "QTM4J Automation API Key - required for automation tools, leave blank to disable them",
+          "password": true
+    },
+    {
+          "id": "swagger_functional_testing_api_token",
+          "type": "promptString",
+          "description": "Swagger Functional Testing API Token - leave blank to disable Functional Testing tools",
+          "password": true
+    }
   ]
 }
 ```
@@ -233,6 +278,7 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "@smartbear/mcp@latest"
       ],
       "env": {
+        "BEARQ_API_TOKEN": "your_bearq_api_token",
         "BUGSNAG_AUTH_TOKEN": "your_personal_auth_token",
         "BUGSNAG_PROJECT_API_KEY": "your_project_api_key",
         "REFLECT_API_TOKEN": "your_reflect_token",
@@ -250,7 +296,11 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
         "COLLABORATOR_BASE_URL": "your collab base url",
         "COLLABORATOR_USERNAME": "your collab user name",
-        "COLLABORATOR_LOGIN_TICKET": "your collab login ticket"
+        "COLLABORATOR_LOGIN_TICKET": "your collab login ticket",
+        "QTM4J_API_KEY": "your_qtm4j_key",
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "QTM4J_AUTOMATION_API_KEY": "your_qtm4j_automation_api_key",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your_swagger_functional_testing_api_token"
       }
     }
   }

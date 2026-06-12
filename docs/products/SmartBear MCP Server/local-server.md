@@ -6,7 +6,7 @@ This guide walks you through installing and configuring the local SmartBear MCP 
 
 Before setting up and using the SmartBear MCP Server, ensure you have:
 
--   An active account across our relevant products (e.g. [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Reflect](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
+-   An active account across our relevant products (e.g. [BearQ](https://bearq.smartbear.com), [Swagger](https://try.platform.smartbear.com/?product=ApiHub), [Reflect](https://app.reflect.run/registration), [QMetry](https://testmanagement.qmetry.com), and/or [BugSnag](https://app.bugsnag.com/user/new)) with valid API credentials.
 -   Node.js 20 or later installed on your development machine
 -   A compatible MCP client (Claude Desktop, Cursor, etc.)
 
@@ -36,6 +36,10 @@ npm install @smartbear/mcp
 
 The SmartBear MCP Server supports multiple SmartBear products, each requiring its own authentication token.
 
+- **BearQ**
+
+  Generate a workspace API token from your BearQ workspace settings. Learn more: [BearQ integration](https://developer.smartbear.com/smartbear-mcp/docs/bearq-integration).
+
 - **Swagger - Portal & Studio**
 
   Copy the API key from the Swagger dashboard at [`app.swaggerhub.com`](https://app.swaggerhub.com/settings/apiKey).
@@ -62,6 +66,14 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
   Generate an API token from Zephyr by following the instructions [here](https://support.smartbear.com/zephyr/docs/en/rest-api/api-access-tokens-management.html).
 
+- **QTM4J**
+
+  Generate your QTM4J API key by following the instructions [here](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html). To use automation tools, also generate a separate `QTM4J_AUTOMATION_API_KEY` from the same page.
+
+- **Swagger Functional Testing**
+
+  Generate an API key from your Swagger Functional Testing account dashboard at [`app.reflect.run`](https://app.reflect.run/settings/account).
+
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products — tokens for unused products can be omitted.
 
 ## Configure Environment Variables
@@ -69,6 +81,11 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 Set the following environment variables for the SmartBear products you want to access:
 
 ```shell
+# Required for BearQ tools
+export BEARQ_API_TOKEN=your-bearq-api-token
+# Optional: Override the BearQ API base URL (defaults to https://api.bearq.smartbear.com)
+export BEARQ_API_BASE_URL=https://api.bearq.smartbear.com
+
 # Required for BugSnag tools
 export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 
@@ -102,6 +119,17 @@ export QMETRY_BASE_URL=https://testmanagement.qmetry.com
 export ZEPHYR_API_TOKEN="your-zephyr-api-token"
 # Optional: Set your Zephyr API base URL depending on the region of your Jira instance.
 export ZEPHYR_BASE_URL="https://api.zephyrscale.smartbear.com/v2"
+
+# Required for QTM4J tools
+export QTM4J_API_KEY="your-qtm4j-api-key"
+# Required for QTM4J automation tools (Upload Automation Result, Get Automation History)
+export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
+# Optional: Set your QTM4J base URL based on your region
+# US (default): https://qtmcloud.qmetry.com Australia: https://syd-qtmcloud.qmetry.com
+export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
+
+# Required for Swagger Functional Testing tools
+export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
 > ⚠️ The `MCP_SERVER_BUGSNAG_API_KEY` is used for monitoring the MCP server itself and should be different from your main application's API key.
@@ -125,6 +153,8 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "@smartbear/mcp@latest"
       ],
       "env": {
+        "BEARQ_API_TOKEN": "${input:bearq_api_token}",
+        "BEARQ_API_BASE_URL": "${input:bearq_api_base_url}",
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
@@ -136,11 +166,27 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
-        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}"
+        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
+        "QTM4J_API_KEY": "${input:qtm4j_api_key}",
+        "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
       }
     }
   },
   "inputs": [
+    {
+      "id": "bearq_api_token",
+      "type": "promptString",
+      "description": "BearQ Workspace API Token",
+      "password": true
+    },
+    {
+      "id": "bearq_api_base_url",
+      "type": "promptString",
+      "description": "BearQ API Base URL (leave blank for default https://api.bearq.smartbear.com)",
+      "password": false
+    },
     {
       "id": "bugsnag_auth_token",
       "type": "promptString",
@@ -212,6 +258,30 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "type": "promptString",
       "description": "By default, connects to https://api.zephyrscale.smartbear.com/v2. Change to a custom server URL if your Jira instance is pinned to a specific region.",
       "password": false
+    },
+    {
+      "id": "qtm4j_api_key",
+      "type": "promptString",
+      "description": "QTM4J API Key",
+      "password": true
+    },
+    {
+      "id": "qtm4j_automation_api_key",
+      "type": "promptString",
+      "description": "QTM4J Automation API Key — required for Upload Automation Result and Get Automation History tools.",
+      "password": true
+    },
+    {
+      "id": "qtm4j_base_url",
+      "type": "promptString",
+      "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
+      "password": false
+    },
+    {
+      "id": "swagger_functional_testing_api_token",
+      "type": "promptString",
+      "description": "Swagger Functional Testing API Token",
+      "password": true
     }
   ]
 }
@@ -231,6 +301,7 @@ Add to your `mcp.json` configuration:
         "@smartbear/mcp@latest"
       ],
       "env": {
+        "BEARQ_API_TOKEN": "your-bearq-api-token",
         "BUGSNAG_AUTH_TOKEN": "your-bugsnag-auth-token",
         "BUGSNAG_PROJECT_API_KEY": "your-bugsnag-project-api-key",
         "REFLECT_API_TOKEN": "your-reflect-api-token",
@@ -243,7 +314,11 @@ Add to your `mcp.json` configuration:
         "QMETRY_API_KEY": "your-qmetry-api-key",
         "QMETRY_BASE_URL": "https://testmanagement.qmetry.com",
         "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
-        "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2"
+        "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
+        "QTM4J_API_KEY": "your-qtm4j-api-key",
+        "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
   }
@@ -264,6 +339,7 @@ Edit your `claude_desktop_config.json` file:
         "@smartbear/mcp@latest"
       ],
       "env": {
+        "BEARQ_API_TOKEN": "your-bearq-api-token",
         "BUGSNAG_AUTH_TOKEN": "your-bugsnag-auth-token",
         "BUGSNAG_PROJECT_API_KEY": "your-bugsnag-project-api-key",
         "REFLECT_API_TOKEN": "your-reflect-api-token",
@@ -276,7 +352,11 @@ Edit your `claude_desktop_config.json` file:
         "QMETRY_API_KEY": "your-qmetry-api-key",
         "QMETRY_BASE_URL": "https://testmanagement.qmetry.com",
         "ZEPHYR_API_TOKEN": "your-zephyr-api-token",
-        "ZEPHYR_BASE_URL": "your-zephyr-base-url"
+        "ZEPHYR_BASE_URL": "your-zephyr-base-url",
+        "QTM4J_API_KEY": "your-qtm4j-api-key",
+        "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
   }
@@ -300,6 +380,7 @@ claude mcp add --transport stdio smartbear npx mcp
 Then set the required environment variables:
 
 ```shell
+export BEARQ_API_TOKEN=your-bearq-api-token
 export BUGSNAG_AUTH_TOKEN=your-bugsnag-auth-token
 export BUGSNAG_PROJECT_API_KEY=your-bugsnag-project-api-key
 export REFLECT_API_TOKEN=your-reflect-api-token
@@ -314,6 +395,10 @@ export PACT_BROKER_TOKEN=your-pact-broker-token
 # If using the open source Pact broker, replace the token with:
 # export PACT_BROKER_USERNAME=your-username
 # export PACT_BROKER_PASSWORD=your-password
+export QTM4J_API_KEY="your-qtm4j-api-key"
+export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
+export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
+export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
 Launch Claude Code with:
@@ -357,6 +442,8 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "command": "node",
       "args": ["<PATH_TO_SMARTBEAR_MCP>/dist/index.js"],
       "env": {
+        "BEARQ_API_TOKEN": "${input:bearq_api_token}",
+        "BEARQ_API_BASE_URL": "${input:bearq_api_base_url}",
         "BUGSNAG_AUTH_TOKEN": "${input:bugsnag_auth_token}",
         "BUGSNAG_PROJECT_API_KEY": "${input:bugsnag_project_api_key}",
         "REFLECT_API_TOKEN": "${input:reflect_api_token}",
@@ -369,11 +456,27 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "QMETRY_API_KEY": "${input:qmetry_api_key}",
         "QMETRY_BASE_URL": "${input:qmetry_base_url}",
         "ZEPHYR_API_TOKEN": "${input:zephyr_api_token}",
-        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}"
+        "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
+        "QTM4J_API_KEY": "${input:qtm4j_api_key}",
+        "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
       }
     }
   },
   "inputs": [
+    {
+      "id": "bearq_api_token",
+      "type": "promptString",
+      "description": "BearQ Workspace API Token",
+      "password": true
+    },
+    {
+      "id": "bearq_api_base_url",
+      "type": "promptString",
+      "description": "BearQ API Base URL (leave blank for default https://api.bearq.smartbear.com)",
+      "password": false
+    },
     {
       "id": "bugsnag_auth_token",
       "type": "promptString",
@@ -445,6 +548,30 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "type": "promptString",
       "description": "By default, connects to https://api.zephyrscale.smartbear.com/v2. Change to a custom server URL if your Jira instance is pinned to a specific region.",
       "password": false
+    },
+    {
+      "id": "qtm4j_api_key",
+      "type": "promptString",
+      "description": "QTM4J API Key",
+      "password": true
+    },
+    {
+      "id": "qtm4j_automation_api_key",
+      "type": "promptString",
+      "description": "QTM4J Automation API Key — required for Upload Automation Result and Get Automation History tools.",
+      "password": true
+    },
+    {
+      "id": "qtm4j_base_url",
+      "type": "promptString",
+      "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
+      "password": false
+    },
+    {
+      "id": "swagger_functional_testing_api_token",
+      "type": "promptString",
+      "description": "Swagger Functional Testing API Token",
+      "password": true
     }
   ]
 }
@@ -455,6 +582,7 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
 To test the MCP server locally before integrating with your preferred host, use the MCP Inspector:
 
 ```
+BEARQ_API_TOKEN=your_bearq_token \
 BUGSNAG_AUTH_TOKEN=your_token \
 BUGSNAG_PROJECT_API_KEY=your_project_api_key \
 REFLECT_API_TOKEN=your_reflect_token \
@@ -465,6 +593,10 @@ QMETRY_API_KEY=your_qmetry_key \
 QMETRY_BASE_URL=https://testmanagement.qmetry.com \
 ZEPHYR_API_TOKEN=your_zephyr_token \
 ZEPHYR_BASE_URL=https://api.zephyrscale.smartbear.com/v2 \
+QTM4J_API_KEY=your_qtm4j_key \
+QTM4J_AUTOMATION_API_KEY=your_qtm4j_automation_key \
+QTM4J_BASE_URL=https://qtmcloud.qmetry.com \
+SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your_functional_testing_token \
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
 
@@ -499,3 +631,18 @@ Once configured, you can interact with SmartBear tools through natural language 
 -   "List all projects where Zephyr is enabled"
 -   "Get Zephyr test cases from the project with key TEST"
 -   "Get the last executions from the Zephyr Test Cycle TEST-R1"
+
+### QTM4J Test Management
+
+-   "Set up the SCRUM project context in QTM4J"
+-   "Search for all high-priority test cases in the active project"
+-   "Create a new test case for the login functionality with High priority"
+-   "Find test case SCRUM-TC-145 and show its details"
+-   "Update the status of SCRUM-TC-145 to Done"
+-   "Add the Release_2 label to SCRUM-TC-145 and remove Release_1"
+-   "Show me the test steps for SCRUM-TC-32"
+-   "Create a test cycle called 'Regression Suite' with High priority"
+-   "Find all in-progress test cycles in the active project"
+-   "Update the status of SCRUM-TR-101 to In Progress"
+-   "Upload JUnit test results to QTM4J"
+-   "Check whether last automation import succeeded"

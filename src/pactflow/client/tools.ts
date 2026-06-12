@@ -89,6 +89,7 @@ export interface PactflowToolParams extends ToolParams {
 export const TOOLS: PactflowToolParams[] = [
   {
     title: "Generate Pact Tests",
+    toolset: "Generate Pact Tests",
     summary:
       "Generate Pact tests using PactFlow AI. You can provide one or more of the following input types: (1) request/response pairs for specific interactions, (2) code files to analyze and extract interactions from, and/or (3) OpenAPI document to generate tests for specific endpoints. When providing an OpenAPI document, a matcher is required to specify which endpoints to generate tests for.",
     purpose: "Generate Pact tests for API interactions",
@@ -100,6 +101,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Review Pact Tests",
+    toolset: "Review Pact Tests",
     summary:
       "Review Pact tests using PactFlow AI. You can provide the following inputs: (1) Pact tests to be reviewed along with metadata",
     purpose: "Review Pact tests for API interactions",
@@ -111,6 +113,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Provider States",
+    toolset: "Fetch Provider States",
     summary: "Retrieve the states of a specific provider",
     purpose:
       "A provider state in Pact defines the specific preconditions that must be met on the provider side before a consumer-provider interaction can be tested. It sets up the provider in the right context—such as ensuring a particular user or record exists—so that the provider can return the response the consumer expects. This makes contract tests reliable, repeatable, and isolated by injecting or configuring the necessary data and conditions directly into the provider before each test runs.",
@@ -124,6 +127,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Can I Deploy",
+    toolset: "Can I Deploy",
     summary:
       "Performs a comprehensive compatibility check to determine whether a specific version of a service (pacticipant) can be safely deployed into a given environment. It analyzes the complete contract matrix of consumer-provider relationships to confirm that all required integrations are verified and compatible.",
     purpose:
@@ -134,6 +138,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Matrix",
+    toolset: "Matrix",
     summary:
       "Retrieve the comprehensive contract verification matrix that shows the relationship between consumer and provider versions, their associated pact files, and verification results stored in the Pact Broker or Pactflow. The matrix provides detailed visibility into which consumer and provider versions have been successfully verified against each other, and highlights failures with detailed information about the cause.",
     purpose:
@@ -152,6 +157,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Check PactFlow AI Entitlements",
+    toolset: "PactFlow AI Status",
     summary:
       "Check your PactFlow AI entitlements and credit balance if you encounter 401 Unauthorized errors or permission/credit issues when using PactFlow AI features.",
     purpose:
@@ -168,6 +174,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Metrics",
+    toolset: "Metrics",
     summary: "Fetch metrics across the entire workspace",
     purpose:
       "Fetch metrics across the workspace. Use this to get an overview of contract testing usage, resource consumption and account-wide statistics.",
@@ -177,6 +184,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Team Metrics",
+    toolset: "Metrics",
     summary: "Fetch metrics for all teams",
     purpose:
       "Fetch metrics for all teams within PactFlow. Use this to get an overview of team-specific contract testing usage, resource consumption and usage statistics.",
@@ -186,6 +194,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Pacticipants",
+    toolset: "Pacticipants",
     summary:
       "Retrieve all pacticipants (applications/services) registered in the Pact Broker or PactFlow workspace.",
     purpose:
@@ -199,6 +208,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Pacticipant",
+    toolset: "Pacticipants",
     summary: "Retrieve details for a specific pacticipant by name.",
     purpose:
       "Fetch metadata for a single application/service including its display name, main branch, repository URL, and labels.",
@@ -208,6 +218,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Branches",
+    toolset: "Branches and Versions",
     summary:
       "Retrieve all branches for a given pacticipant, with optional filtering and pagination.",
     purpose:
@@ -218,6 +229,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Pacticipant Versions",
+    toolset: "Branches and Versions",
     summary: "Retrieve all versions for a given pacticipant.",
     purpose:
       "List all published versions of a service with their branch and tag associations. Useful for understanding which versions exist and tracing deployment history.",
@@ -227,6 +239,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Pacticipant Version",
+    toolset: "Branches and Versions",
     summary: "Retrieve details for a specific version of a pacticipant.",
     purpose:
       "Fetch metadata for a single version including its branches, tags, and build URL.",
@@ -236,6 +249,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Latest Pacticipant Version",
+    toolset: "Branches and Versions",
     summary:
       "Retrieve the latest version of a pacticipant, optionally filtered by tag.",
     purpose:
@@ -246,6 +260,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Environments",
+    toolset: "Environments and Deployments",
     summary:
       "Retrieve all environments configured in the Pact Broker or PactFlow workspace.",
     purpose:
@@ -256,6 +271,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Environment",
+    toolset: "Environments and Deployments",
     summary: "Retrieve details for a specific environment by UUID.",
     purpose:
       "Fetch metadata for a single environment including its name, display name, production flag, and associated teams.",
@@ -265,6 +281,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Record Deployment",
+    toolset: "Environments and Deployments",
     summary:
       "Record that a version of a pacticipant has been deployed to an environment.",
     purpose:
@@ -275,6 +292,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Currently Deployed Versions",
+    toolset: "Environments and Deployments",
     summary: "Retrieve all versions currently deployed to a given environment.",
     purpose:
       "Check which versions of all services are currently running in an environment. Useful for auditing the state of an environment or for troubleshooting deployment issues.",
@@ -284,6 +302,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Record Release",
+    toolset: "Environments and Deployments",
     summary:
       "Record that a version of a pacticipant has been released to an environment (for mobile/library release workflows).",
     purpose:
@@ -294,6 +313,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Currently Supported Versions",
+    toolset: "Environments and Deployments",
     summary:
       "Retrieve all versions currently released and supported in a given environment.",
     purpose:
@@ -304,6 +324,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Publish Consumer Contracts",
+    toolset: "Contracts",
     summary:
       "Publish one or more consumer Pact contracts to the Pact Broker or PactFlow, with branch and tag metadata.",
     purpose:
@@ -314,6 +335,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Publish Provider Contract",
+    toolset: "Contracts",
     summary:
       "Publish a provider OpenAPI contract and self-verification results to PactFlow (Bi-Directional Contract Testing).",
     purpose:
@@ -324,6 +346,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Pacts for Verification",
+    toolset: "Contracts",
     summary:
       "Retrieve the pacts that a provider should verify, based on consumer version selectors and WIP/pending pact configuration.",
     purpose:
@@ -334,6 +357,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get BDCT Provider Contract",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the provider OpenAPI contract for a given provider version in Bi-Directional Contract Testing.",
     purpose:
@@ -344,6 +368,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get BDCT Provider Contract Verification Results",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the self-verification results for a provider contract version in Bi-Directional Contract Testing.",
     purpose:
@@ -354,6 +379,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get BDCT Consumer Contracts",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch all consumer Pact contracts relevant to a given provider version in Bi-Directional Contract Testing.",
     purpose:
@@ -364,6 +390,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get BDCT Consumer Contract Verification Results",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the consumer contract verification results for a given provider version in Bi-Directional Contract Testing.",
     purpose:
@@ -374,6 +401,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get BDCT Cross-Contract Verification Results",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the cross-contract verification results for a given provider version in Bi-Directional Contract Testing.",
     purpose:
@@ -383,7 +411,8 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Consumer Contract by Consumer Version",
+    title: "Get BDCT Consumer by Consumer Version",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the consumer Pact contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -393,7 +422,8 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Provider Contract by Consumer Version",
+    title: "Get BDCT Provider by Consumer Version",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the provider OpenAPI contract for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -403,8 +433,8 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title:
-      "Get BDCT Provider Contract Verification Results by Consumer Version",
+    title: "Get BDCT Provider Check Results by Consumer",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the provider contract self-verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -414,8 +444,8 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title:
-      "Get BDCT Consumer Contract Verification Results by Consumer Version",
+    title: "Get BDCT Consumer Pact Test Results by Consumer",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the consumer contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -425,7 +455,8 @@ export const TOOLS: PactflowToolParams[] = [
     clients: ["pactflow"],
   },
   {
-    title: "Get BDCT Cross-Contract Verification Results by Consumer Version",
+    title: "Get BDCT X-Contract Test Results by Consumer",
+    toolset: "Bi-Directional Contract Testing",
     summary:
       "Fetch the cross-contract verification results for a specific consumer-provider version pair in Bi-Directional Contract Testing.",
     purpose:
@@ -436,6 +467,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Integrations",
+    toolset: "Integrations and Network",
     summary:
       "Retrieve all consumer-provider integrations registered in the workspace.",
     purpose:
@@ -446,6 +478,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Pacticipant Network",
+    toolset: "Integrations and Network",
     summary:
       "Retrieve the integration network graph for a specific pacticipant.",
     purpose:
@@ -456,6 +489,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Labels",
+    toolset: "Labels",
     summary: "Retrieve all labels used across the workspace.",
     purpose:
       "Get a list of every label that has been applied to any pacticipant. Labels are used to categorise services and enable label-based queries.",
@@ -468,6 +502,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Pacticipant Label",
+    toolset: "Labels",
     summary: "Check whether a specific label is applied to a pacticipant.",
     purpose:
       "Verify that a label exists on a pacticipant. Returns 404 if the label is not applied.",
@@ -477,6 +512,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Pacticipants by Label",
+    toolset: "Labels",
     summary: "Retrieve all pacticipants that have a specific label applied.",
     purpose:
       "Filter the pacticipant list by label. Useful for querying services by team ownership, technology, or any custom grouping you have applied via labels.",
@@ -486,6 +522,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Update Pacticipant",
+    toolset: "Pacticipants",
     summary:
       "Fully replace a pacticipant's metadata (display name, main branch, repository URL, etc.).",
     purpose:
@@ -496,6 +533,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Patch Pacticipant",
+    toolset: "Pacticipants",
     summary:
       "Partially update a pacticipant's metadata — only fields provided are changed.",
     purpose:
@@ -506,6 +544,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Update Pacticipant Version",
+    toolset: "Branches and Versions",
     summary: "Update metadata for a specific pacticipant version.",
     purpose:
       "Set or update the build URL for an existing version. This is useful when the build URL was not available at publish time.",
@@ -515,6 +554,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Branch Versions",
+    toolset: "Branches and Versions",
     summary:
       "Retrieve all versions published from a specific branch of a pacticipant.",
     purpose:
@@ -525,6 +565,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Deployed Versions for Version",
+    toolset: "Environments and Deployments",
     summary:
       "Retrieve deployment records for a specific pacticipant version in a specific environment.",
     purpose:
@@ -535,6 +576,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Released Versions for Version",
+    toolset: "Environments and Deployments",
     summary:
       "Retrieve release records for a specific pacticipant version in a specific environment.",
     purpose:
@@ -545,6 +587,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Create Environment",
+    toolset: "Environments and Deployments",
     summary: "Create a new deployment environment in PactFlow.",
     purpose:
       "Register a new environment (e.g. 'staging', 'production') so it can be used in record-deployment and can-i-deploy workflows.",
@@ -554,6 +597,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Update Environment",
+    toolset: "Environments and Deployments",
     summary: "Update an existing environment's metadata.",
     purpose:
       "Rename an environment, change its production flag, or update team assignments.",
@@ -563,6 +607,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Delete Environment",
+    toolset: "Environments and Deployments",
     summary: "Delete an environment by UUID.",
     purpose:
       "Remove an environment that is no longer needed. This will also remove all deployed and released version records for this environment.",
@@ -572,6 +617,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Create Pacticipant",
+    toolset: "Pacticipants",
     summary:
       "Register a new application/service (pacticipant) in the workspace.",
     purpose:
@@ -582,6 +628,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Delete Pacticipant",
+    toolset: "Pacticipants",
     summary: "Delete a pacticipant and all its associated data.",
     purpose:
       "Remove a service from the workspace, including all its pacts, verifications, deployments, and version records.",
@@ -591,6 +638,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Branch",
+    toolset: "Branches and Versions",
     summary: "Retrieve details for a specific branch of a pacticipant.",
     purpose:
       "Fetch metadata for a single branch, including its latest version.",
@@ -600,6 +648,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Delete Branch",
+    toolset: "Branches and Versions",
     summary: "Delete a branch from a pacticipant.",
     purpose:
       "Remove a stale branch record. This does not delete the versions or pacts published from the branch.",
@@ -609,6 +658,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Add Label to Pacticipant",
+    toolset: "Labels",
     summary: "Apply a label to a pacticipant.",
     purpose:
       "Tag a service with a label for grouping and filtering. Creates the label if it does not already exist.",
@@ -618,6 +668,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Remove Label from Pacticipant",
+    toolset: "Labels",
     summary: "Remove a label from a pacticipant.",
     purpose:
       "Delete the label association from a pacticipant. Does not affect other pacticipants that have the same label.",
@@ -627,6 +678,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Integrations by Team",
+    toolset: "Integrations and Network",
     summary:
       "Retrieve all consumer-provider integrations belonging to a specific team.",
     purpose:
@@ -637,6 +689,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Delete Integration",
+    toolset: "Integrations and Network",
     summary: "Delete a specific consumer-provider integration.",
     purpose:
       "Remove the integration record between a consumer and provider. Use with caution — this removes the link even if pacts exist.",
@@ -646,6 +699,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Delete All Integrations",
+    toolset: "Integrations and Network",
     summary: "Delete ALL consumer-provider integrations in the workspace.",
     purpose:
       "Bulk-remove all integration records. This is a destructive operation — use only when resetting the workspace.",
@@ -655,6 +709,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Webhooks",
+    toolset: "Webhooks",
     summary: "Retrieve all webhooks configured in the workspace.",
     purpose:
       "Get an overview of all webhook triggers, their target URLs, and enabled/disabled status.",
@@ -664,6 +719,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Webhook",
+    toolset: "Webhooks",
     summary: "Retrieve details for a specific webhook by UUID.",
     purpose:
       "Fetch the full configuration of a single webhook including events, request details, and consumer/provider filters.",
@@ -673,6 +729,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Create Webhook",
+    toolset: "Webhooks",
     summary: "Create a new webhook to trigger on contract events.",
     purpose:
       "Set up automated notifications or CI triggers that fire when contracts change, verifications are published, or other events occur.",
@@ -682,6 +739,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Update Webhook",
+    toolset: "Webhooks",
     summary: "Update an existing webhook's configuration.",
     purpose:
       "Modify the URL, events, consumer/provider filters, or enabled status of a webhook.",
@@ -691,6 +749,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Delete Webhook",
+    toolset: "Webhooks",
     summary: "Delete a webhook by UUID.",
     purpose:
       "Permanently remove a webhook. Any in-flight triggered executions will still complete.",
@@ -700,6 +759,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Test Execute Webhooks",
+    toolset: "Webhooks",
     summary:
       "Trigger a test execution of all matching webhooks without a real event.",
     purpose:
@@ -710,6 +770,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Execute Webhook",
+    toolset: "Webhooks",
     summary: "Trigger a test execution of a specific webhook.",
     purpose:
       "Send a test request for a single webhook to verify its configuration without waiting for a real event.",
@@ -719,6 +780,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List Secrets",
+    toolset: "Secrets",
     summary: "Retrieve all secrets stored in the workspace.",
     purpose:
       "Get an overview of all configured secrets. Note: secret values are never returned — only metadata.",
@@ -728,6 +790,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Secret",
+    toolset: "Secrets",
     summary: "Retrieve metadata for a specific secret by UUID.",
     purpose:
       "Fetch secret metadata (name, description, team). The secret value is never returned.",
@@ -737,6 +800,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Create Secret",
+    toolset: "Secrets",
     summary: "Create a new secret for use in webhook authentication.",
     purpose:
       "Store a sensitive value (API key, password, token) securely. The value can be referenced in webhook configurations without exposing it.",
@@ -746,6 +810,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Update Secret",
+    toolset: "Secrets",
     summary: "Update an existing secret's name, value, or description.",
     purpose:
       "Rotate or rename a secret. The team assignment cannot be changed after creation.",
@@ -755,6 +820,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Delete Secret",
+    toolset: "Secrets",
     summary: "Delete a secret by UUID.",
     purpose:
       "Permanently remove a secret. Any webhooks referencing this secret will need to be updated.",
@@ -764,6 +830,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Current User",
+    toolset: "User, Tokens and Preferences",
     summary: "Retrieve the profile of the currently authenticated user.",
     purpose:
       "Check who you are authenticated as, including your UUID, name, email, and roles.",
@@ -773,6 +840,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "List API Tokens",
+    toolset: "User, Tokens and Preferences",
     summary: "Retrieve API tokens for the current user.",
     purpose:
       "List the read-only and read-write API tokens for the authenticated user.",
@@ -782,6 +850,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Regenerate API Token",
+    toolset: "User, Tokens and Preferences",
     summary: "Regenerate (rotate) an API token by ID.",
     purpose:
       "Invalidate the current token and generate a new one. Use when a token has been compromised.",
@@ -791,6 +860,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get User Preferences",
+    toolset: "User, Tokens and Preferences",
     summary: "Retrieve the current user's preferences.",
     purpose: "Fetch all preference settings for the authenticated user.",
     inputSchema: z.object({}),
@@ -799,6 +869,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get System Preferences",
+    toolset: "User, Tokens and Preferences",
     summary: "Retrieve system-wide preferences.",
     purpose: "Fetch all system-level preference settings for the workspace.",
     inputSchema: z.object({}),
@@ -807,6 +878,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Get Audit Log",
+    toolset: "Audit",
     summary: "Retrieve the audit log of events in the workspace.",
     purpose:
       "Search and filter the audit trail of actions taken in PactFlow. Useful for compliance, debugging, and security reviews.",
@@ -822,6 +894,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin List Users",
+    toolset: "Admin",
     summary: "List all users in the workspace (admin).",
     purpose:
       "Get an overview of all user accounts with optional filtering by active status, name/email, or user type.",
@@ -831,6 +904,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Get User",
+    toolset: "Admin",
     summary: "Retrieve details for a specific user by UUID (admin).",
     purpose:
       "Fetch a user's profile including their email, name, roles, and active status.",
@@ -840,6 +914,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Create User",
+    toolset: "Admin",
     summary: "Create a new user account (admin).",
     purpose:
       "Add a new user to the workspace. For SSO environments, provide externalIdpId or externalIdpUsername to match the IdP identity.",
@@ -849,6 +924,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Update User",
+    toolset: "Admin",
     summary: "Update a user's profile or active status (admin).",
     purpose:
       "Modify user details such as name, email, or active status. Deactivating a user prevents them from logging in.",
@@ -858,6 +934,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Delete User",
+    toolset: "Admin",
     summary: "Delete a user account (admin).",
     purpose: "Permanently remove a user from the workspace.",
     inputSchema: AdminUserIdSchema,
@@ -866,6 +943,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Invite Users",
+    toolset: "Admin",
     summary: "Send invitations to new users (admin).",
     purpose:
       "Invite one or more people to join the workspace by email. They will receive an invitation email.",
@@ -875,6 +953,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Set User Roles",
+    toolset: "Admin",
     summary: "Replace all roles assigned to a user (admin).",
     purpose:
       "Fully replace the set of roles for a user. All existing roles are removed and replaced with the provided list.",
@@ -884,6 +963,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Add Role to User",
+    toolset: "Admin",
     summary: "Add a single role to a user (admin).",
     purpose:
       "Grant an additional role to a user without affecting their existing roles.",
@@ -893,6 +973,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Remove Role from User",
+    toolset: "Admin",
     summary: "Remove a single role from a user (admin).",
     purpose:
       "Revoke a specific role from a user without affecting their other roles.",
@@ -902,6 +983,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin List Teams",
+    toolset: "Admin",
     summary: "List all teams in the workspace (admin).",
     purpose:
       "Get an overview of all teams with optional name filtering and pagination.",
@@ -911,6 +993,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Get Team",
+    toolset: "Admin",
     summary: "Retrieve details for a specific team by UUID (admin).",
     purpose:
       "Fetch a team's configuration including its name, members, environments, and pacticipants.",
@@ -920,6 +1003,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Create Team",
+    toolset: "Admin",
     summary: "Create a new team (admin).",
     purpose:
       "Add a new team to the workspace and optionally assign administrators, environments, and pacticipants.",
@@ -929,6 +1013,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Update Team",
+    toolset: "Admin",
     summary: "Replace a team's configuration (admin).",
     purpose:
       "Fully update a team's name, administrators, environments, and pacticipant assignments.",
@@ -938,6 +1023,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Delete Team",
+    toolset: "Admin",
     summary: "Delete a team (admin).",
     purpose:
       "Permanently remove a team from the workspace. Members are not deleted.",
@@ -947,6 +1033,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin List Team Users",
+    toolset: "Admin",
     summary: "List all users in a specific team (admin).",
     purpose: "Retrieve all user members of a team.",
     inputSchema: AdminTeamIdSchema,
@@ -955,6 +1042,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Get Team User",
+    toolset: "Admin",
     summary: "Check if a specific user is a member of a team (admin).",
     purpose:
       "Verify team membership for a user. Returns 404 if the user is not in the team.",
@@ -964,6 +1052,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Set Team Users",
+    toolset: "Admin",
     summary: "Replace all members of a team (admin).",
     purpose:
       "Fully replace the set of users in a team. All existing members are removed and replaced with the provided list.",
@@ -973,6 +1062,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Patch Team Users",
+    toolset: "Admin",
     summary:
       "Add or remove individual users from a team using JSON Patch (admin).",
     purpose:
@@ -983,6 +1073,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Remove User from Team",
+    toolset: "Admin",
     summary: "Remove a specific user from a team (admin).",
     purpose: "Revoke team membership for a user.",
     inputSchema: TeamUserIdSchema,
@@ -991,6 +1082,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin List Roles",
+    toolset: "Admin",
     summary: "List all roles defined in the workspace (admin).",
     purpose:
       "Get an overview of all role definitions and their associated permissions.",
@@ -1000,6 +1092,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Get Role",
+    toolset: "Admin",
     summary: "Retrieve details for a specific role by UUID (admin).",
     purpose:
       "Fetch a role's name, description, and full list of permission scopes.",
@@ -1009,6 +1102,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Create Role",
+    toolset: "Admin",
     summary: "Create a new role with specific permissions (admin).",
     purpose:
       "Define a custom role with a tailored set of permission scopes. Roles can then be assigned to users.",
@@ -1018,6 +1112,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Update Role",
+    toolset: "Admin",
     summary: "Update an existing role's name and permissions (admin).",
     purpose:
       "Modify the permission set of a role. Changes take effect for all users assigned the role.",
@@ -1027,6 +1122,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Delete Role",
+    toolset: "Admin",
     summary: "Delete a role (admin).",
     purpose:
       "Permanently remove a role. Users currently assigned this role will lose its permissions.",
@@ -1036,6 +1132,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Reset Roles",
+    toolset: "Admin",
     summary: "Reset all roles to their factory defaults (admin).",
     purpose:
       "Restore the built-in roles to their original permission sets. Custom roles are removed.",
@@ -1045,6 +1142,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin List Permissions",
+    toolset: "Admin",
     summary: "List all available permission scopes (admin).",
     purpose: "Retrieve all permission scopes that can be assigned to roles.",
     inputSchema: z.object({}),
@@ -1053,6 +1151,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Create System Account",
+    toolset: "Admin",
     summary: "Create a new system account (admin).",
     purpose:
       "Add a machine/service account that can authenticate via API token rather than user credentials.",
@@ -1062,6 +1161,7 @@ export const TOOLS: PactflowToolParams[] = [
   },
   {
     title: "Admin Get System Account Tokens",
+    toolset: "Admin",
     summary: "Retrieve API tokens for a system account (admin).",
     purpose:
       "Get the tokens associated with a system account for use in CI/CD pipelines.",

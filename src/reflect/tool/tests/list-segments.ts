@@ -10,6 +10,7 @@ import type { TestPlatform } from "../../types/common";
 export class ListSegments extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "List Segments",
+    toolset: "Tests",
     summary:
       "Retrieve available reusable test segments for the given platform type. Segments are reusable test steps with an optional set of parameters that can used across multiple tests.",
     readOnly: true,
