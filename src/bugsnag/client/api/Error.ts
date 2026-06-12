@@ -8,6 +8,19 @@ import {
   type PivotApiView,
 } from "./index";
 
+export interface CommentApiView {
+  id: string;
+  message: string;
+  created_at: string;
+  updated_at: string;
+  url: string;
+  collaborator?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export class ErrorAPI extends BaseAPI {
   static filterFields: string[] = ["url", "project_url", "events_url"];
 
@@ -223,6 +236,39 @@ export class ErrorAPI extends BaseAPI {
       localVarFetchArgs.url,
       localVarFetchArgs.options,
     );
+  }
+
+  /**
+   * List Comments on an Error
+   * GET /projects/{project_id}/errors/{error_id}/comments
+   */
+  async listErrorComments(
+    projectId: string,
+    errorId: string,
+  ): Promise<ApiResponse<CommentApiView[]>> {
+    const path = `/projects/${projectId}/errors/${errorId}/comments`;
+    return await this.requestArray<CommentApiView>(
+      path,
+      { headers: this.resolveAuthHeader() },
+      false,
+    );
+  }
+
+  /**
+   * Create a Comment on an Error
+   * POST /projects/{project_id}/errors/{error_id}/comments
+   */
+  async createErrorComment(
+    projectId: string,
+    errorId: string,
+    message: string,
+  ): Promise<ApiResponse<CommentApiView>> {
+    const path = `/projects/${projectId}/errors/${errorId}/comments`;
+    return await this.requestObject<CommentApiView>(path, {
+      method: "POST",
+      body: JSON.stringify({ message }),
+      headers: this.resolveAuthHeader(),
+    });
   }
 
   /**
