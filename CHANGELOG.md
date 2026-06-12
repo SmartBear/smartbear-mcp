@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [QTM4J] Added test execution tools to start executions, update test case and step executions, link Jira bugs to executions, and retrieve bugs linked to executions.
 - [Swagger] Add Swagger Functional Testing integration with `list_tests` tool for discovering available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+- [QTM4J] Added test execution tools to start executions, update test case and step executions, link Jira bugs to executions, and retrieve bugs linked to executions.
 
 ## [0.25.1] - 2026-06-08
 
