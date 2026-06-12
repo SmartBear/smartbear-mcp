@@ -1,4 +1,4 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info";
+import { USER_AGENT } from "../../common/info";
 
 export class AuthService {
   private readonly bearerToken: string;
@@ -11,7 +11,7 @@ export class AuthService {
     return {
       Authorization: `Bearer ${this.bearerToken}`,
       "Content-Type": "application/json",
-      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      "User-Agent": USER_AGENT,
       "zscale-source": "smartbear-mcp",
     };
   }
