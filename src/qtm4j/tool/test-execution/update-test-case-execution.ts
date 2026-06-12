@@ -116,6 +116,12 @@ export class UpdateTestCaseExecution extends Tool<Qtm4jClient> {
       ),
     );
 
+    if (Object.keys(body).length === 0) {
+      throw new ToolError(
+        `No updatable fields remain after resolution. ${warnings.join(" | ")}`,
+      );
+    }
+
     await this.client
       .getApiClient()
       .put(

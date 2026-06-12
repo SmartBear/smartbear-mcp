@@ -17,7 +17,6 @@ import { Resolver } from "./resolver.ts";
  * which returns { lowercased_name → numeric_id }.
  *
  * Lazy-loaded on first use and cached per project.
- * Priority is always a single value — no array handling.
  */
 export class DefectPriorityResolver extends Resolver {
   override readonly fieldKeys: readonly string[] = [
@@ -40,22 +39,30 @@ export class DefectPriorityResolver extends Resolver {
     context: ProjectContext,
     warnings: string[],
   ): Promise<void> {
-    const name = body[inputField];
-    if (name == null) return;
+    const value = body[inputField];
+    if (!Array.isArray(value) || value.length === 0) return;
 
-    const id = await this.resolveAndReturn(
-      context.projectKey,
-      context.projectId,
-      resolverKey,
-      name as string,
-    );
-    if (id === undefined) {
-      delete body[inputField];
-      warnings.push(
-        `Skipped ${inputField} '${name}' — not a recognised defect priority in the current project.`,
+    const resolvedIds: number[] = [];
+    for (const item of value) {
+      const trimmed = String(item).trim();
+      const id = await this.resolveAndReturn(
+        context.projectKey,
+        context.projectId,
+        resolverKey,
+        trimmed,
       );
+      if (id === undefined) {
+        warnings.push(
+          `Skipped ${inputField} '${trimmed}' — not a recognised defect priority in the current project.`,
+        );
+      } else {
+        resolvedIds.push(Number(id));
+      }
+    }
+    if (resolvedIds.length > 0) {
+      body[inputField] = resolvedIds;
     } else {
-      body[inputField] = Number(id);
+      delete body[inputField];
     }
   }
 

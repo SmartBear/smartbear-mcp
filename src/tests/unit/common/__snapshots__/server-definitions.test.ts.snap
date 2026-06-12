@@ -7845,6 +7845,168 @@ Skip any field that is null, missing, or false. NEVER show the raw fileName. NEV
     ],
     "title": "QTM4J: Get Automation History",
   },
+  "qtm4j_get_linked_bugs_of_test_case_execution": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Get Linked Bugs of Test Case Execution",
+    },
+    "description": "Retrieve Jira bugs linked to a test case execution with optional priority and status filtering. Looks up testCaseExecutionId from testCycleKey and testCaseKey; resolves filter names to numeric IDs.
+
+**Toolset:** Test Executions
+
+**Parameters:**
+- testCycleKey (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
+- testCaseKey (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'.
+- filter (object): Filter criteria for linked bugs. Omit to return all linked bugs. priority and status names are resolved to numeric IDs; unresolvable names are skipped with a warning.
+- level (string): Execution level filter. Default: 'testcase_execution, teststep_execution' (both levels). Use 'testcase_execution' for test-case-level links only, 'teststep_execution' for step-level links only. (default: "testcase_execution, teststep_execution")
+- startAt (number): Zero-based index of the first result to return (pagination offset). (default: 0)
+- maxResults (number): Maximum number of bugs to return per page. Range 1–100; defaults to 20. (default: 20)
+
+**Output Description:** JSON object with startAt, maxResults, total, and data array of linked bug objects. Each bug has: id, key, summary, status, priority, issueType, level, stepSeqNo, parameterGroup.
+
+**Use Cases:** 1. List all Jira bugs linked to a test case execution 2. Filter linked bugs by priority or status
+
+**Examples:**
+1. Get all linked bugs for a test case execution
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42"
+}
+\`\`\`
+Expected Output: Paginated list of all bugs linked to the test case execution
+
+2. Filter by priority
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "filter": {
+    "priority": [
+      "High"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Linked bugs with High priority
+
+3. Filter by status
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "filter": {
+    "status": [
+      "To Do",
+      "In Progress"
+    ]
+  }
+}
+\`\`\`
+Expected Output: Linked bugs in To Do or In Progress status
+
+**Hints:** 1. Call set_project_context before this tool. 2. An empty result (total = 0) means no bugs are linked — it is not an error. 3. priority and status names are resolved to numeric IDs; unresolved names are skipped with a warning. 4. Use get_linked_bugs_of_test_step_execution to retrieve bugs linked at a specific step level.",
+    "inputSchema": [
+      "filter",
+      "level",
+      "maxResults",
+      "startAt",
+      "testCaseKey",
+      "testCycleKey",
+    ],
+    "outputSchema": [
+      "data",
+      "maxResults",
+      "startAt",
+      "total",
+    ],
+    "title": "QTM4J: Get Linked Bugs of Test Case Execution",
+  },
+  "qtm4j_get_linked_bugs_of_test_step_execution": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QTM4J: Get Linked Bugs of Test Step Execution",
+    },
+    "description": "Retrieve Jira bugs linked to a test step execution with optional priority and status filtering. Looks up testStepExecutionId from testCycleKey, testCaseKey, and step sequence number; resolves filter names to numeric IDs.
+
+**Toolset:** Test Executions
+
+**Parameters:**
+- testCycleKey (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
+- testCaseKey (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'.
+- testStepSeqNo (number) *required*: sequence number of the test step within the test case (e.g. 2 = the second step).
+- filter (object): Filter criteria for linked bugs. Omit to return all linked bugs. priority and status names are resolved to numeric IDs; unresolvable names are skipped with a warning.
+- startAt (number): Zero-based index of the first result to return (pagination offset). (default: 0)
+- maxResults (number): Maximum number of bugs to return per page. Range 1–100; defaults to 20. (default: 20)
+
+**Output Description:** JSON object with startAt, maxResults, total, and data array of linked bug objects. Each bug has: id, key, summary, status, priority, issueType, level, stepSeqNo, parameterGroup.
+
+**Use Cases:** 1. List all Jira bugs linked to a specific test step execution 2. Filter step-level linked bugs by priority or status
+
+**Examples:**
+1. Get linked bugs for step 2
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 2
+}
+\`\`\`
+Expected Output: Bugs linked to step 2 of the execution
+
+2. Filter by priority
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 1,
+  "filter": {
+    "priority": [
+      "High"
+    ]
+  }
+}
+\`\`\`
+Expected Output: High-priority bugs linked to step 1
+
+3. Filter by status
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 1,
+  "filter": {
+    "status": [
+      "In Progress"
+    ]
+  }
+}
+\`\`\`
+Expected Output: In Progress bugs linked to step 1
+
+**Hints:** 1. Call set_project_context before this tool. 2. An empty result (total = 0) means no bugs are linked — it is not an error. 3. priority and status names are resolved to numeric IDs; unresolved names are skipped with a warning. 4. Use get_linked_bugs_of_test_case_execution to retrieve all bugs on the test case execution across all steps.",
+    "inputSchema": [
+      "filter",
+      "maxResults",
+      "startAt",
+      "testCaseKey",
+      "testCycleKey",
+      "testStepSeqNo",
+    ],
+    "outputSchema": [
+      "data",
+      "maxResults",
+      "startAt",
+      "total",
+    ],
+    "title": "QTM4J: Get Linked Bugs of Test Step Execution",
+  },
   "qtm4j_get_linked_requirements": {
     "annotations": {
       "destructiveHint": false,
@@ -8239,6 +8401,169 @@ Expected Output: First 10 steps in sequence order
       "total",
     ],
     "title": "QTM4J: Get Test Steps",
+  },
+  "qtm4j_link_bugs_to_test_case_execution": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Link Bugs to Test Case Execution",
+    },
+    "description": "Link Jira bug keys to a test case execution. Looks up testCaseExecutionId from testCycleKey and testCaseKey; resolves bug keys to numeric defect IDs automatically.
+
+**Toolset:** Test Executions
+
+**Parameters:**
+- testCycleKey (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
+- testCaseKey (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'.
+- defectIDs (any): Jira issue keys of the bugs to link (e.g. ['PROJ-456', 'PROJ-789']). Pass Jira keys — not numeric IDs. Required if filter.jql is not provided; duplicates removed automatically.
+- filter (object): JQL filter to select which bugs should be linked. Use instead of or in addition to defectIDs.
+- returnLinkedDefectCount (boolean): When true, the response includes linkedDefectCount (the number of bugs linked). Defaults to true. (default: true)
+
+**Output Description:** Confirmation object with testCycleKey, testCaseKey, linked: true, and linkedDefectCount (by default). warningMessages is included when the server reports per-bug issues.
+
+**Use Cases:** 1. Link a Jira bug to a test case execution 2. Link multiple Jira bug to a test case execution in a single bulk operation.
+
+**Examples:**
+1. Link two bugs to a test case execution
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "defectIDs": [
+    "PROJ-456",
+    "PROJ-789"
+  ]
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', linked: true, linkedDefectCount: 2 }
+
+2. Link a bug and suppress defect count in response
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "defectIDs": [
+    "PROJ-456"
+  ],
+  "returnLinkedDefectCount": false
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', linked: true }
+
+3. Link bugs using a JQL filter
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "filter": {
+    "jql": "project = PROJ AND issuetype = Bug AND status = 'To Do'"
+  }
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', linked: true, linkedDefectCount: 5 }
+
+**Hints:** 1. Call set_project_context before this tool. 2. An execution must already be started for the test case before bugs can be linked. 3. If the user provides a JQL expression, pass it as the \`filter.jql\` field. Correct or normalize JQL before calling this tool if needed — the handler passes it through unchanged.",
+    "inputSchema": [
+      "defectIDs",
+      "filter",
+      "returnLinkedDefectCount",
+      "testCaseKey",
+      "testCycleKey",
+    ],
+    "outputSchema": [
+      "linked",
+      "linkedDefectCount",
+      "testCaseKey",
+      "testCycleKey",
+      "warningMessages",
+    ],
+    "title": "QTM4J: Link Bugs to Test Case Execution",
+  },
+  "qtm4j_link_bugs_to_test_step_execution": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Link Bugs to Test Step Execution",
+    },
+    "description": "Link Jira bug keys to a test step execution. Looks up testStepExecutionId from testCycleKey, testCaseKey, and step sequence number; resolves bug keys to numeric defect IDs automatically.
+
+**Toolset:** Test Executions
+
+**Parameters:**
+- testCycleKey (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
+- testCaseKey (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'.
+- testStepSeqNo (number) *required*: sequence number of the test step within the test case (e.g. 2 = the second step).
+- defectIDs (any): Jira issue keys of the bugs to link (e.g. ['PROJ-456', 'PROJ-789']). Pass Jira keys — not numeric IDs. Required if filter.jql is not provided; duplicates removed automatically.
+- filter (object): JQL filter to select which bugs should be linked. Use instead of or in addition to defectIDs.
+- returnLinkedDefectCount (boolean): When true, the response includes linkedDefectCount (the number of bugs linked). Defaults to true. (default: true)
+
+**Output Description:** Confirmation object with testCycleKey, testCaseKey, linked: true, and linkedDefectCount (by default). warningMessages is included when the server reports per-bug issues.
+
+**Use Cases:** 1. Link a Jira bug to a specific test step execution 2. Link multiple Jira bugs to a test step execution in a single request
+
+**Examples:**
+1. Link a bug to step 2 of a test case execution
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 2,
+  "defectIDs": [
+    "PROJ-456"
+  ]
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', linked: true, linkedDefectCount: 1 }
+
+2. Link multiple bugs to step 3 and suppress defect count
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 3,
+  "defectIDs": [
+    "PROJ-456",
+    "PROJ-789"
+  ],
+  "returnLinkedDefectCount": false
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', linked: true }
+
+3. Link bugs to a step using a JQL filter
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 1,
+  "filter": {
+    "jql": "project = PROJ AND status = Open"
+  }
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', linked: true, linkedDefectCount: 2 }
+
+**Hints:** 1. Call set_project_context before this tool. 2. An execution must already be started for the test case before bugs can be linked. 3. If the user provides a JQL expression, pass it as the \`filter.jql\` field. Correct or normalize JQL before calling if needed — the handler passes it through unchanged.",
+    "inputSchema": [
+      "defectIDs",
+      "filter",
+      "returnLinkedDefectCount",
+      "testCaseKey",
+      "testCycleKey",
+      "testStepSeqNo",
+    ],
+    "outputSchema": [
+      "linked",
+      "linkedDefectCount",
+      "testCaseKey",
+      "testCycleKey",
+      "warningMessages",
+    ],
+    "title": "QTM4J: Link Bugs to Test Step Execution",
   },
   "qtm4j_link_requirements_to_test_case": {
     "annotations": {
@@ -9212,6 +9537,86 @@ Expected Output: Project context switched to AD
     ],
     "title": "QTM4J: Set Project Context",
   },
+  "qtm4j_start_new_execution": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Start New Execution",
+    },
+    "description": "Start a new test case execution within a test cycle. Looks up the internal map ID from testCycleKey and testCaseKey; resolves environmentId and buildId names to numeric IDs.
+
+**Toolset:** Test Executions
+
+**Parameters:**
+- testCycleKey (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
+- testCaseKey (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'.
+- assignee (string): Jira account ID of the user to assign this execution to (e.g. '5e4a642c1c9d440008f2a2b4'). This is the account ID, not a display name.
+- executionPlannedDate (string): Planned execution date. Format: 'dd/MMM/yyyy' e.g. '15/Oct/2025'. Month must be capitalised (Oct, not oct or OCT).
+- environmentId (string): Environment name (e.g. 'Production', 'Staging'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.
+- buildId (string): Build name (e.g. 'Build 2.0', '1.0.0'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.
+- actualTime (string): Time already spent on the execution. Format: 'HH:mm:ss' e.g. '02:30:00' (2 hours 30 minutes 0 seconds).
+- cloneFrom (number): Source testCaseExecutionId to clone. When set, the new execution copies the source's execution and all other body fields are ignored by the server.
+- cloneExecutionCustomFields (boolean): When true (only meaningful together with cloneFrom), execution-level custom field values are also copied from the source execution.
+
+**Output Description:** Confirmation object with testCycleKey, testCaseKey, and created: true (set when server returns 204).
+
+**Use Cases:** 1. Start a fresh execution for a test case in a test cycle 2. Clone an existing execution
+
+**Examples:**
+1. Start an execution for a test case (minimal)
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42"
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', created: true }
+
+2. Start execution with environment, build and planned date
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "environmentId": "Production",
+  "buildId": "Build 2.0",
+  "executionPlannedDate": "15/Oct/2025",
+  "assignee": "5e4a642c1c9d440008f2a2b4"
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', created: true }
+
+3. Clone an existing execution
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "cloneFrom": 725981,
+  "cloneExecutionCustomFields": true
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', created: true }
+
+**Hints:** 1. Call set_project_context before this tool. 2. executionPlannedDate must be in 'dd/MMM/yyyy' format (e.g. '15/Oct/2025', month 3-letter capitalised). Normalize from any user-provided format before calling. 3. When cloneFrom is non-zero, the server ignores all body fields except cloneExecutionCustomFields. 4. assignee must be a Jira account ID (e.g. '5e4a642c1c9d440008f2a2b4'), not a display name. 5. environmentId and buildId accept name as strings that are resolved to numeric IDs; unresolved names are dropped and a warning is returned. 6. actualTime must be in 'HH:mm:ss' format (e.g. '02:30:00'). Always include seconds.",
+    "inputSchema": [
+      "actualTime",
+      "assignee",
+      "buildId",
+      "cloneExecutionCustomFields",
+      "cloneFrom",
+      "environmentId",
+      "executionPlannedDate",
+      "testCaseKey",
+      "testCycleKey",
+    ],
+    "outputSchema": [
+      "created",
+      "testCaseKey",
+      "testCycleKey",
+    ],
+    "title": "QTM4J: Start New Execution",
+  },
   "qtm4j_unlink_requirements_from_test_case": {
     "annotations": {
       "destructiveHint": false,
@@ -9576,6 +9981,86 @@ Expected Output: Version 2 of test case updated with new assignee and estimated 
     ],
     "title": "QTM4J: Update Test Case",
   },
+  "qtm4j_update_test_case_execution": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Update Test Case Execution",
+    },
+    "description": "Update a test case execution (execution result, comment, environment, build, assignee, planned date, actual time). Looks up testCaseExecutionId from testCycleKey and testCaseKey; resolves executionResultId, environmentId, and buildId names to numeric IDs.
+
+**Toolset:** Test Executions
+
+**Parameters:**
+- testCycleKey (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
+- testCaseKey (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'.
+- executionResultId (string): Execution result name, e.g. 'Pass', 'Fail', 'Blocked', 'In Progress', 'Not Executed'. Project-specific (custom results allowed); resolved case-insensitively to a numeric executionResultId.
+- comment (string): Execution comment. Pass null to clear the existing comment.
+- actualTime (string): Time already spent on the execution. Format: 'HH:mm:ss' e.g. '02:30:00' (2 hours 30 minutes 0 seconds). Pass null to clear.
+- executionAssignee (string): Jira account ID of the assignee (not a display name). Pass null to unassign.
+- environmentId (string): Environment name (e.g. 'Production', 'Staging'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.
+- executionPlannedDate (string): Planned execution date. Format: 'dd/MMM/yyyy' e.g. '15/Oct/2025'. Month must be capitalised (Oct, not oct or OCT). Pass null to clear.
+- buildId (string): Build name (e.g. 'Build 2.0', '1.0.0'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned. Pass null to clear.
+
+**Output Description:** Confirmation object with testCycleKey, testCaseKey, and updated: true. Warnings are returned in content if executionResultId name could not be resolved.
+
+**Use Cases:** 1. Set a test case execution result (e.g. Pass, Fail, Blocked) 2. Update comment, environment, build, assignee, planned date, or actual time on an execution
+
+**Examples:**
+1. Mark test case as Pass
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "executionResultId": "Pass"
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', updated: true }
+
+2. Update with comment, environment, and actual time
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "executionResultId": "Pass",
+  "comment": "All smoke tests passed.",
+  "environmentId": "Production",
+  "actualTime": "01:30:00"
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', updated: true }
+
+3. Clear comment
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "comment": null
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', updated: true }
+
+**Hints:** 1. Call set_project_context before this tool. 2. At least one updatable field must be provided. 3. An execution must already be started before it can be updated. 4. environmentId and buildId accept environment/build name as strings that are resolved to numeric IDs; unresolved names are dropped and a warning is returned. 5. actualTime must be in 'HH:mm:ss' format (e.g. '01:30:00'). Always include seconds",
+    "inputSchema": [
+      "actualTime",
+      "buildId",
+      "comment",
+      "environmentId",
+      "executionAssignee",
+      "executionPlannedDate",
+      "executionResultId",
+      "testCaseKey",
+      "testCycleKey",
+    ],
+    "outputSchema": [
+      "testCaseKey",
+      "testCycleKey",
+      "updated",
+    ],
+    "title": "QTM4J: Update Test Case Execution",
+  },
   "qtm4j_update_test_cycle": {
     "annotations": {
       "destructiveHint": false,
@@ -9713,6 +10198,84 @@ Expected Output: Test cycle updated with all specified fields
       "updated",
     ],
     "title": "QTM4J: Update Test Cycle",
+  },
+  "qtm4j_update_test_step_execution": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QTM4J: Update Test Step Execution",
+    },
+    "description": "Update a test step execution (execution result, actual result, comment). Looks up testStepExecutionId from testCycleKey, testCaseKey, and step sequence number; resolves executionResultId name to a numeric ID.
+
+**Toolset:** Test Executions
+
+**Parameters:**
+- testCycleKey (string) *required*: Test cycle key in the format '{PROJECT_KEY}-TR-{number}', e.g. 'SCRUM-TR-101'. Used directly as the API path parameter.
+- testCaseKey (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'.
+- testStepSeqNo (number) *required*: sequence number of the step to update (e.g. 2 = the second step).
+- executionResultId (string): Execution result name, e.g. 'Pass', 'Fail', 'Blocked', 'In Progress', 'Not Executed'. Project-specific (custom results allowed); resolved case-insensitively to a numeric executionResultId.
+- comment (string): Step execution comment. Pass null to clear the existing comment.
+- actualResult (string): Actual result for this test step. Set to null to clear the existing value.
+
+**Output Description:** Confirmation object with testCycleKey, testCaseKey, testStepSeqNo, and updated: true. executionResultName is included when the server returns it. Warnings are returned in content if executionResultId name could not be resolved.
+
+**Use Cases:** 1. Set a test step result (e.g. Pass, Fail, Blocked) 2. Update actual result text or comment on a test step execution
+
+**Examples:**
+1. Mark step 2 as Pass
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 2,
+  "executionResultId": "Pass"
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testStepSeqNo: 2, executionResultName: 'Pass', updated: true }
+
+2. Update step 3 with result text and comment
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 3,
+  "executionResultId": "Fail",
+  "actualResult": "Button not found on page.",
+  "comment": "Reproduced consistently in Chrome."
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testStepSeqNo: 3, executionResultName: 'Fail', updated: true }
+
+3. Clear actual result on step 1
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
+  "testStepSeqNo": 1,
+  "actualResult": null
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testStepSeqNo: 1, updated: true }
+
+**Hints:** 1. Call set_project_context before this tool. 2. At least one updatable field must be provided. 3. An execution must already be started for the test case before steps can be updated.",
+    "inputSchema": [
+      "actualResult",
+      "comment",
+      "executionResultId",
+      "testCaseKey",
+      "testCycleKey",
+      "testStepSeqNo",
+    ],
+    "outputSchema": [
+      "executionResultName",
+      "testCaseKey",
+      "testCycleKey",
+      "testStepSeqNo",
+      "updated",
+    ],
+    "title": "QTM4J: Update Test Step Execution",
   },
   "qtm4j_upload_automation_result": {
     "annotations": {

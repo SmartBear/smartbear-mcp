@@ -501,7 +501,7 @@ export const TOOL_NAMES = {
       "Unlink one or more Jira requirements from a QTM4J test cycle by requirement keys, or unlink all requirements at once with unLinkAll.",
   },
 
-  /** Start New Execution tool */
+  /** Start a New Execution tool */
   START_NEW_EXECUTION: {
     TITLE: "Start New Execution",
     SUMMARY:

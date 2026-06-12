@@ -19,9 +19,9 @@ import { Resolver } from "./resolver.ts";
  * Empty {} when none of the seqNos resolve (bad key or no execution started).
  *
  * Cache layout (mirrors LabelResolver):
- *   projectKey  → cache namespace (cleared together on project switch)
+ *   projectKey → cache namespace (cleared together on project switch)
  *   resolverKey → "stepExecutionContext" (static, from ResolverKeys.SearchableField.STEP_EXECUTION_CONTEXT)
- *   name        → "TestCycle:{testCycleKey}.TestCase:{testCaseKey}.Step:{seqNo}" (lookup key via matchValue)
+ *   name → "TestCycle:{testCycleKey}.TestCase:{testCaseKey}.Step:{seqNo}" (lookup key via matchValue)
  * clearCache(projectKey) evicts all entries for that project.
  */
 export class StepExecutionContextResolver extends Resolver {
@@ -62,8 +62,8 @@ export class StepExecutionContextResolver extends Resolver {
     testCycleKey: string,
     testCaseKey: string,
     seqNos: number[],
-  ): Promise<Record<string, Record<string, number>>> {
-    const cachedSteps: Record<string, number> = {};
+  ): Promise<Record<string, Record<number, number>>> {
+    const cachedSteps: Record<number, number> = {};
     const uncachedSeqNos: number[] = [];
     const resolverKey = ResolverKeys.SearchableField.STEP_EXECUTION_CONTEXT;
 
@@ -74,7 +74,7 @@ export class StepExecutionContextResolver extends Resolver {
       if (cached === undefined) {
         uncachedSeqNos.push(seqNo);
       } else {
-        cachedSteps[String(seqNo)] = Number(cached);
+        cachedSteps[seqNo] = Number(cached);
       }
     }
 
@@ -95,10 +95,10 @@ export class StepExecutionContextResolver extends Resolver {
 
     // Store each resolved step ID in the cache bucket
     const values: Record<string, string> = {};
-    for (const [seqNoStr, stepExecutionId] of Object.entries(fetchedSteps)) {
-      const name = this.buildCacheName(testCycleKey, testCaseKey, seqNoStr);
+    for (const [seqNo, stepExecutionId] of Object.entries(fetchedSteps)) {
+      const name = this.buildCacheName(testCycleKey, testCaseKey, seqNo);
       values[name.toLowerCase()] = String(stepExecutionId);
-      cachedSteps[seqNoStr] = stepExecutionId;
+      cachedSteps[Number(seqNo)] = stepExecutionId;
     }
     if (Object.keys(values).length > 0) {
       this.cache.set(projectKey, resolverKey, values);

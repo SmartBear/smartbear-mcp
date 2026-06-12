@@ -116,6 +116,12 @@ export class UpdateTestStepExecution extends Tool<Qtm4jClient> {
       ),
     );
 
+    if (Object.keys(body).length === 0) {
+      throw new ToolError(
+        `No updatable fields remain after resolution. ${warnings.join(" | ")}`,
+      );
+    }
+
     const apiResponse = (await this.client
       .getApiClient()
       .put(
@@ -160,10 +166,10 @@ export class UpdateTestStepExecution extends Tool<Qtm4jClient> {
         testCycleKey,
         testCaseKey,
         [testStepSeqNo],
-      )) as Record<string, Record<string, number>>;
+      )) as Record<string, Record<number, number>>;
 
     const stepMap = stepCtxResult[testCaseKey] ?? {};
-    const testStepExecutionId = stepMap[String(testStepSeqNo)];
+    const testStepExecutionId = stepMap[testStepSeqNo];
     if (testStepExecutionId == null) {
       throw new ToolError(
         `Step ${testStepSeqNo} was not found in this execution.`,

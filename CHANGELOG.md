@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [QTM4J] Added test execution tools to start executions, update test case and step executions, link Jira bugs to executions, and retrieve bugs linked to executions.
+
 ## [0.25.1] - 2026-06-08
 
 ### Fixed
@@ -355,7 +359,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [BugSnag] Add pagination, sorting and total counts to list errors tool [#88](https://github.com/SmartBear/smartbear-mcp/pull/88)
+- [BugSnag] Add pagination, sorting, and total counts to list errors tool [#88](https://github.com/SmartBear/smartbear-mcp/pull/88)
 - [PactFlow] Add remote OAD reading support to Generate and Review tool [#104](https://github.com/SmartBear/smartbear-mcp/pull/104)
 - [PactFlow] Add tool for can-i-deploy PactFlow API [#106](https://github.com/SmartBear/smartbear-mcp/pull/106)
 

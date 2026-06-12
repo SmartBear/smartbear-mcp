@@ -41,48 +41,29 @@ export class DefectStatusResolver extends Resolver {
     warnings: string[],
   ): Promise<void> {
     const value = body[inputField];
-    if (value == null) return;
+    if (!Array.isArray(value) || value.length === 0) return;
 
-    if (Array.isArray(value)) {
-      const resolvedIds: number[] = [];
-      for (const item of value) {
-        const trimmed = String(item).trim();
-        const id = await this.resolveAndReturn(
-          context.projectKey,
-          context.projectId,
-          resolverKey,
-          trimmed,
-        );
-        if (id !== undefined) {
-          resolvedIds.push(Number(id));
-        } else {
-          warnings.push(
-            `Skipped ${inputField} '${trimmed}' — not a recognised defect status in the current project.`,
-          );
-        }
-      }
-      if (resolvedIds.length > 0) {
-        body[inputField] = resolvedIds;
-      } else {
-        delete body[inputField];
-      }
-      return;
-    }
-
-    const trimmed = String(value).trim();
-    const id = await this.resolveAndReturn(
-      context.projectKey,
-      context.projectId,
-      resolverKey,
-      trimmed,
-    );
-    if (id === undefined) {
-      delete body[inputField];
-      warnings.push(
-        `Skipped ${inputField} '${trimmed}' — not a recognised defect status in the current project.`,
+    const resolvedIds: number[] = [];
+    for (const item of value) {
+      const trimmed = String(item).trim();
+      const id = await this.resolveAndReturn(
+        context.projectKey,
+        context.projectId,
+        resolverKey,
+        trimmed,
       );
+      if (id === undefined) {
+        warnings.push(
+          `Skipped ${inputField} '${trimmed}' — not a recognised defect status in the current project.`,
+        );
+      } else {
+        resolvedIds.push(Number(id));
+      }
+    }
+    if (resolvedIds.length > 0) {
+      body[inputField] = resolvedIds;
     } else {
-      body[inputField] = Number(id);
+      delete body[inputField];
     }
   }
 
