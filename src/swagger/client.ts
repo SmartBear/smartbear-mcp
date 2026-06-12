@@ -14,6 +14,10 @@ import {
   FUNCTIONAL_TESTING_API_KEY_HEADER,
   FunctionalTestingAPI,
 } from "./client/functional-testing-api";
+import type {
+  GetFunctionalTestingExecutionParams,
+  RunFunctionalTestingTestParams,
+} from "./client/functional-testing-types";
 import {
   type ApiDefinitionParams,
   type ApiSearchParams,
@@ -51,7 +55,6 @@ import {
   type UpdatePortalArgs,
   type UpdateProductArgs,
 } from "./client/index";
-
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
@@ -303,11 +306,36 @@ export class SwaggerClient implements Client {
     return this.getApi().standardizeApi(args);
   }
 
+  // Functional Testing methods
+
   async listFunctionalTestingTests(): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.listTests());
+  }
+
+  async runFunctionalTestingTest(
+    args: RunFunctionalTestingTestParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.runTest(args));
+  }
+
+  async getFunctionalTestingExecution(
+    args: GetFunctionalTestingExecutionParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.getExecution(args));
+  }
+
+  /**
+   * Perform an operation with the Functional Testing API.
+   * Throws a ToolError if Functional Testing is not configured
+   */
+  private async withFunctionalTesting<T>(
+    fn: (ftApi: FunctionalTestingAPI) => Promise<T>,
+  ): Promise<T> {
     if (!this.ftApi) {
       throw new ToolError("Functional Testing API not configured");
     }
-    return this.ftApi.listTests();
+
+    return fn(this.ftApi);
   }
 
   async registerTools(

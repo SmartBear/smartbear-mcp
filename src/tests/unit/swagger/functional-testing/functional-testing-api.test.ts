@@ -67,6 +67,102 @@ describe("FunctionalTestingAPI", () => {
     });
   });
 
+  describe("runTest", () => {
+    const executionMock = { executionId: "42", status: "running" };
+
+    it("should call the correct endpoint with POST method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await api.runTest({ testId: "94" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/tests/94/executions",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      const result = await api.runTest({ testId: "94" });
+
+      expect(result).toEqual(executionMock);
+    });
+
+    it("should throw ToolError when testId is missing", async () => {
+      await expect(api.runTest({ testId: "" })).rejects.toThrow(
+        "testId argument is required",
+      );
+    });
+
+    it("should throw ToolError on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(api.runTest({ testId: "94" })).rejects.toThrow(
+        "Failed to run test",
+      );
+    });
+
+    it("should propagate network errors", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(api.runTest({ testId: "94" })).rejects.toThrow(
+        "Network error",
+      );
+    });
+  });
+
+  describe("getExecution", () => {
+    const executionMock = { executionId: "42", status: "passed" };
+
+    it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await api.getExecution({ executionId: "42" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/executions/42",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      const result = await api.getExecution({ executionId: "42" });
+
+      expect(result).toEqual(executionMock);
+    });
+
+    it("should throw ToolError when executionId is missing", async () => {
+      await expect(api.getExecution({ executionId: "" })).rejects.toThrow(
+        "executionId argument is required",
+      );
+    });
+
+    it("should throw ToolError on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
+
+      await expect(api.getExecution({ executionId: "42" })).rejects.toThrow(
+        "Failed to get test status",
+      );
+    });
+
+    it("should propagate network errors", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(api.getExecution({ executionId: "42" })).rejects.toThrow(
+        "Network error",
+      );
+    });
+  });
+
   describe("getFtHeaders", () => {
     it("should return headers with X-API-KEY and Content-Type", () => {
       const headers = api.getFtHeaders();

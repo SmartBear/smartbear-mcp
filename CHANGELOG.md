@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [Swagger] Add Swagger Functional Testing integration with `list_tests` tool for discovering available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+- [Swagger] Add Swagger Functional Testing integration with `list_tests`, `run_test`, and `get_test_status` tools for discovering and executing available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 
 ## [0.25.1] - 2026-06-08
 
