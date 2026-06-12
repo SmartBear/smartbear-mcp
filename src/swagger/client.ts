@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { USER_AGENT } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
@@ -105,7 +105,7 @@ export class SwaggerClient implements Client {
           registryBasePath: config.registry_base_path,
           uiBasePath: config.ui_base_path,
         }),
-        `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        USER_AGENT,
       );
     }
 
@@ -113,7 +113,7 @@ export class SwaggerClient implements Client {
       this._ftApiToken = config.functional_testing_api_token;
       this.ftApi = new FunctionalTestingAPI(
         () => this.getFtAuthToken(),
-        `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        USER_AGENT,
       );
     }
   }
