@@ -30,6 +30,7 @@ import {
   type PortalsListResponse,
   type Product,
   type ProductsListResponse,
+  type PublishPortalProductResponse,
   type PublishProductArgs,
   type ScanStandardizationParams,
   type SectionsListResponse,
@@ -183,9 +184,9 @@ export class SwaggerClient implements Client {
 
   async publishPortalProduct(
     args: PublishProductArgs,
-  ): Promise<SuccessResponse | FallbackResponse> {
-    const { productId, preview } = args;
-    return this.getApi().publishPortalProduct(productId, preview);
+  ): Promise<PublishPortalProductResponse | FallbackResponse> {
+    const { productId, preview, tableOfContentsId } = args;
+    return this.getApi().publishPortalProduct(productId, preview, tableOfContentsId ?? null);
   }
 
   async getPortalProductSections(
