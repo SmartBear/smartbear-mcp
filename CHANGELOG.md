@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Common] Added transport mode (stdio/http) to User-Agent header for all API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
 - [Collaborator] Add user agent header to API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
 
+### Fixed
+- [Zephyr] Fix output validation for `zephyr_get_test_case_steps` when Zephyr returns `null` for optional fields and includes additional step keys (e.g. `id`).
+
 ## [0.25.1] - 2026-06-08
 
 ### Fixed

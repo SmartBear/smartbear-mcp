@@ -109,4 +109,33 @@ describe("GetTestCaseSteps", () => {
     );
     expect(result.structuredContent).toBeUndefined();
   });
+
+  it("should allow null values for optional inline/testCase fields", () => {
+    const responseMock = {
+      next: null,
+      startAt: 0,
+      maxResults: 1,
+      total: 1,
+      isLast: true,
+      values: [
+        {
+          id: 123,
+          index: 0,
+          customFields: {},
+          inline: {
+            description: "Navigate to Sites page",
+            testData: null,
+            expectedResult: "Sites page is displayed",
+            reflectRef: null,
+          },
+          testCase: null,
+        },
+      ],
+    };
+
+    const parsed = getTestCaseStepsResponse.parse(responseMock);
+    expect(parsed.values?.[0].inline?.testData).toBeNull();
+    expect(parsed.values?.[0].inline?.reflectRef).toBeNull();
+    expect(parsed.values?.[0].testCase).toBeNull();
+  });
 });
