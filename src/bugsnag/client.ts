@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CacheService } from "../common/cache";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { USER_AGENT } from "../common/info";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
 import type {
@@ -70,16 +71,12 @@ interface StabilityData {
 }
 
 const ConfigurationSchema = z.object({
+  auth_token: z.string().describe("BugSnag personal access token"),
   project_api_key: z.string().describe("BugSnag project API key").optional(),
-  endpoint: z.url().describe("BugSnag endpoint URL").optional(),
-});
-
-const AuthenticationSchema = z.object({
-  auth_token: z.string().describe("BugSnag personal access token").optional(),
+  endpoint: z.string().url().describe("BugSnag endpoint URL").optional(),
 });
 
 export class BugsnagClient implements Client {
-  private server?: SmartBearMcpServer | undefined;
   private cache?: CacheService;
   private _projectApiKey?: string;
   private _isConfigured: boolean = false;
@@ -87,7 +84,7 @@ export class BugsnagClient implements Client {
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
   private _appEndpoint: string | undefined;
-  private apiConfig?: Configuration;
+  private _authToken?: string;
 
   get currentUserApi(): CurrentUserAPI {
     if (!this._currentUserApi) throw new Error("Client not configured");
@@ -114,13 +111,11 @@ export class BugsnagClient implements Client {
   configPrefix = "Bugsnag";
   config = ConfigurationSchema;
   defaultToolsets = ["Projects"];
-  authenticationFields = AuthenticationSchema;
 
   async configure(
     server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
   ): Promise<void> {
-    this.server = server;
     this.cache = server.getCache();
 
     this._appEndpoint = this.getEndpoint(
@@ -129,25 +124,70 @@ export class BugsnagClient implements Client {
       config.endpoint,
     );
     this._projectApiKey = config.project_api_key;
+    this._authToken = config.auth_token;
 
-    this.apiConfig = new Configuration({
-      apiKey: () => {
-        // First try an auth token, if provided
-        const authToken = this.server?.getEnv("auth_token", this);
+    // Initialize APIs even if auth_token is missing, to allow request-level auth
+    await this.initializeApis(config);
+  }
+
+  getAuthToken(): string | null {
+    const contextHeader = getRequestHeader("Bugsnag-Auth-Token");
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle token prefix if present
+      if (token.startsWith("token ")) {
+        token = token.substring(6);
+      }
+
+      return `token ${token}`;
+    }
+
+    // Fall back to Authorization header (used by OAuth flow)
+    const bearerToken = this.getBearerToken();
+    if (bearerToken) {
+      return bearerToken;
+    }
+
+    // Fall back to configured token (needs prefix for Authorization header)
+    return this._authToken ? `token ${this._authToken}` : null;
+  }
+
+  getBearerToken(): string | null {
+    const contextHeader = getRequestHeader("Authorization");
+
+    if (contextHeader) {
+      let token = Array.isArray(contextHeader)
+        ? contextHeader[0]
+        : contextHeader;
+
+      // Handle Bearer prefix if present
+      if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+      }
+
+      return `Bearer ${token}`;
+    }
+
+    return null;
+  }
+
+  private async initializeApis(config: z.infer<typeof ConfigurationSchema>) {
+    const apiConfig = new Configuration({
+      apiKey: (_name: string) => {
+        const authToken = this.getAuthToken();
         if (authToken) {
-          return `token ${authToken}`;
+          return authToken;
         }
 
-        // Fall back to Authorization header (used by OAuth flow)
-        const bearerToken = this.server?.getEnv("Authorization");
-        if (bearerToken) {
-          return `Bearer ${bearerToken}`;
-        }
-
-        return undefined;
+        throw new Error(
+          "Authentication token not found in request headers or configuration",
+        );
       },
       headers: {
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": USER_AGENT,
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",
@@ -158,18 +198,14 @@ export class BugsnagClient implements Client {
         config.endpoint,
       ),
     });
-    this._currentUserApi = new CurrentUserAPI(this.apiConfig);
-    this._errorsApi = new ErrorAPI(this.apiConfig);
-    this._projectApi = new ProjectAPI(this.apiConfig);
+    this._currentUserApi = new CurrentUserAPI(apiConfig);
+    this._errorsApi = new ErrorAPI(apiConfig);
+    this._projectApi = new ProjectAPI(apiConfig);
     this._isConfigured = true;
   }
 
   isConfigured(): boolean {
     return this._isConfigured;
-  }
-
-  hasAuth(): boolean {
-    return this.isConfigured() && !!this.apiConfig?.apiKey();
   }
 
   // If the endpoint is not provided, it will use the default API endpoint based on the project API key.

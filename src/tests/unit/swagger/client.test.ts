@@ -14,9 +14,7 @@ describe("SwaggerClient", () => {
     fetchMock.resetMocks();
 
     client = new SwaggerClient();
-    const getEnv = vi.fn().mockReturnValue("test-token");
-    const mockServer = { server: vi.fn(), getEnv } as any;
-    await client.configure(mockServer, {} as any);
+    await client.configure({} as any, { api_key: "test-token" });
   });
 
   afterEach(() => {
@@ -129,7 +127,12 @@ describe("SwaggerClient", () => {
   });
 
   describe("registerTools", () => {
-    it("should register all tools from TOOLS array", () => {
+    it("should register all tools from TOOLS array when FT token is configured", async () => {
+      await client.configure({} as any, {
+        api_key: "test-token",
+        functional_testing_api_token: "ft-test-token",
+      });
+
       const mockRegister = vi.fn();
       const mockGetInput = vi.fn();
 
@@ -144,6 +147,21 @@ describe("SwaggerClient", () => {
         expect(registerCall[0]).toEqual(expectedToolParams);
         expect(typeof registerCall[1]).toBe("function");
       });
+    });
+
+    it("should skip FT tools when no FT token is configured", () => {
+      const mockRegister = vi.fn();
+      const mockGetInput = vi.fn();
+
+      client.registerTools(mockRegister, mockGetInput);
+
+      const registeredTitles = mockRegister.mock.calls.map(
+        (call) => call[0].title,
+      );
+      expect(registeredTitles).not.toContain("List Tests");
+      expect(mockRegister).toHaveBeenCalledTimes(
+        TOOLS.filter((t) => t.toolset !== "Functional Testing").length,
+      );
     });
 
     it("should handle tool execution for getPortals", async () => {

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { USER_AGENT } from "../common/info";
+import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import type {
   Client,
@@ -8,14 +10,11 @@ import type {
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Collaborator server base URL"),
-});
-
-const AuthenticationSchema = z.object({
-  login: z
+  username: z
     .string()
     .describe("Collaborator username for authentication")
     .optional(),
-  ticket: z
+  login_ticket: z
     .string()
     .describe("Collaborator login ticket for authentication")
     .optional(),
@@ -26,29 +25,23 @@ export class CollaboratorClient implements Client {
   capabilityPrefix = "collaborator";
   configPrefix = "Collaborator";
   config = ConfigurationSchema;
-  authenticationFields = AuthenticationSchema;
 
   private baseUrl: string | undefined;
-  private server?: SmartBearMcpServer;
+  private username: string | undefined;
+  private loginTicket: string | undefined;
 
   async configure(
-    server: SmartBearMcpServer,
+    _server: SmartBearMcpServer,
     config: z.infer<typeof ConfigurationSchema>,
+    _cache?: any,
   ): Promise<void> {
     this.baseUrl = config.base_url;
-    this.server = server;
+    this.username = config.username;
+    this.loginTicket = config.login_ticket;
   }
 
   isConfigured(): boolean {
     return this.baseUrl !== undefined;
-  }
-
-  hasAuth(): boolean {
-    return (
-      this.isConfigured() &&
-      this.server?.getEnv("Login", this) !== undefined &&
-      this.server?.getEnv("Ticket", this) !== undefined
-    );
   }
 
   /**
@@ -59,8 +52,18 @@ export class CollaboratorClient implements Client {
   async call(commands: any[]): Promise<any> {
     const url = `${this.baseUrl}/services/json/v1`;
 
-    const login = this.server?.getEnv("Login", this);
-    const ticket = this.server?.getEnv("Ticket", this);
+    let login = this.username;
+    let ticket = this.loginTicket;
+
+    const contextLogin = getRequestHeader("Collaborator-Login");
+    const contextTicket = getRequestHeader("Collaborator-Ticket");
+
+    if (contextLogin) {
+      login = Array.isArray(contextLogin) ? contextLogin[0] : contextLogin;
+    }
+    if (contextTicket) {
+      ticket = Array.isArray(contextTicket) ? contextTicket[0] : contextTicket;
+    }
 
     // Always prepend authentication command automatically
     const body = [
@@ -72,7 +75,7 @@ export class CollaboratorClient implements Client {
     ];
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "User-Agent": USER_AGENT },
       body: JSON.stringify(body),
     });
     if (!response.ok) {

@@ -11,7 +11,7 @@ import { clientRegistry } from "../../../common/client-registry";
  */
 describe("server definitions are not changed unexpectedly", () => {
   it("registered tools", async () => {
-    const server = new SmartBearMcpServer(vi.fn());
+    const server = new SmartBearMcpServer();
 
     const registeredTools: Record<string, any> = {};
 
@@ -41,7 +41,7 @@ describe("server definitions are not changed unexpectedly", () => {
     expect(sorted).toMatchSnapshot();
   });
   it("registered prompts", async () => {
-    const server = new SmartBearMcpServer(vi.fn());
+    const server = new SmartBearMcpServer();
 
     const registeredPrompts: Record<string, any> = {};
 
@@ -68,7 +68,7 @@ describe("server definitions are not changed unexpectedly", () => {
     expect(sorted).toMatchSnapshot();
   });
   it("registered resources", async () => {
-    const server = new SmartBearMcpServer(vi.fn());
+    const server = new SmartBearMcpServer();
 
     const registeredResources: Record<string, any> = {};
 

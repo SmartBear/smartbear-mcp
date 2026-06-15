@@ -19,6 +19,7 @@ export default defineConfig({
         "@bugsnag/js",
         "node-cache",
         "swagger-client",
+        "ws",
         "zod",
         "zod-to-json-schema",
       ],

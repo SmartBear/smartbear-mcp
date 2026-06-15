@@ -7,6 +7,7 @@
  */
 
 import type { ToolParams } from "../../common/types";
+import { FUNCTIONAL_TESTING_TOOLS } from "./functional-testing-tools";
 import {
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
@@ -227,4 +228,6 @@ export const TOOLS: SwaggerToolParams[] = [
     inputSchema: StandardizeApiParamsSchema,
     handler: "standardizeApi",
   },
+
+  ...FUNCTIONAL_TESTING_TOOLS,
 ];

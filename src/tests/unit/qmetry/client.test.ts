@@ -7,12 +7,12 @@ const fetchMock = createFetchMock(vi);
 
 // Helper to create and configure a client
 async function createConfiguredClient(
+  apiKey = "fake-token",
   baseUrl = "https://qmetry.example",
 ): Promise<QmetryClient> {
   const client = new QmetryClient();
-  const getEnv = vi.fn();
-  const mockServer = { server: vi.fn(), getEnv } as any;
-  await client.configure(mockServer, {
+  await client.configure({} as any, {
+    api_key: apiKey,
     base_url: baseUrl,
   });
   return client;
@@ -34,9 +34,18 @@ describe("QmetryClient", () => {
 
   describe("constructor", () => {
     it("should initialize with correct parameters", async () => {
-      const testClient = await createConfiguredClient("https://qmetry.example");
+      const testClient = await createConfiguredClient(
+        "fake-token",
+        "https://qmetry.example",
+      );
       expect(testClient).toBeInstanceOf(QmetryClient);
       expect(testClient.getBaseUrl()).toBe("https://qmetry.example");
+      expect(testClient.getToken()).toBe("fake-token");
+    });
+
+    it("should store token and endpoint", () => {
+      expect(client.getBaseUrl()).toBe("https://qmetry.example");
+      expect(client.getToken()).toBe("fake-token");
     });
   });
 
@@ -85,7 +94,8 @@ describe("QmetryClient", () => {
   });
 
   describe("utilities", () => {
-    it("should expose baseUrl", () => {
+    it("should expose token and baseUrl", () => {
+      expect(client.getToken()).toBe("fake-token");
       expect(client.getBaseUrl()).toBe("https://qmetry.example");
     });
   });
