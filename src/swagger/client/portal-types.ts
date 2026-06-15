@@ -335,6 +335,12 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
 });
 
 export const PublishProductArgsSchema = ProductArgsSchema.extend({
+  tableOfContentsId: z
+    .string()
+    .optional()
+    .describe(
+      "The table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'",
+    ),
   preview: z
     .boolean()
     .optional()
@@ -424,6 +430,10 @@ export type CreateTableOfContentsBody = Omit<
 >;
 export type UpdateDocumentBody = Omit<UpdateDocumentArgs, "documentId">;
 
+export type PublishPortalProductResponse = SuccessResponse & {
+  liveUrl?: string;
+};
+
 // Response types for better type safety
 export type FallbackResponse =
   | {
@@ -440,12 +450,15 @@ export interface Portal {
   id: string;
   name: string;
   subdomain?: string;
+  customDomain?: string;
   [key: string]: unknown;
 }
 
 export interface Product {
   id: string;
   name: string;
+  slug: string;
+  portalId?: string;
   [key: string]: unknown;
 }
 
@@ -508,5 +521,16 @@ export interface TableOfContentsItemSwaggerhubApi {
 // Response collection types
 export type PortalsListResponse = Portal[];
 export type ProductsListResponse = Product[];
-export type SectionsListResponse = Section[];
+
+export interface PaginatedResponse<T> {
+  page: {
+    number: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+  items: T[];
+}
+
+export type SectionsListResponse = PaginatedResponse<Section>;
 export type TableOfContentsListResponse = TableOfContentsItem[];
