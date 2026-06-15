@@ -199,7 +199,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Scan API Standardization",
     toolset: "Registry API",
     summary:
-      "Run a standardization scan against an API definition using the organization's governance and standardization rules. Accepts a raw YAML or JSON OpenAPI/AsyncAPI definition and returns a list of validation errors, the total issue count, and counts grouped by severity. Use this tool when users ask to validate, scan, or check API governance or standardization.",
+      "Run a standardization scan against an API definition using the organization's governance and standardization rules. Accepts a raw YAML or JSON OpenAPI/AsyncAPI definition and returns a list of validation errors, the total issue count, and counts grouped by severity. Use this tool when the user provides the API definition content directly (as raw YAML or JSON) and asks to validate, scan, or check the governance or standardization of the API.",
     inputSchema: ScanStandardizationParamsSchema,
     handler: "scanStandardization",
   },
@@ -207,7 +207,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Scan API Standardization from Registry",
     toolset: "Registry API",
     summary:
-      "Run a standardization scan on an API that already exists in SwaggerHub Registry, identified by organization name, API name, and version. Fetches the API definition from the registry and scans it against the organization's governance and standardization rules. Returns a list of validation errors, total issue count, counts grouped by severity, and a SwaggerHub UI URL for the scanned API. Use this tool when users ask to validate, scan, or check the governance or standardization of an existing API by its owner/name/version.",
+      "Run a standardization scan on an API that already exists in SwaggerHub Registry, identified by organization name, API name, and version. Fetches the API definition from the registry internally and scans it against the organization's governance and standardization rules. Returns a list of validation errors, total issue count, counts grouped by severity, and a SwaggerHub UI URL for the scanned API. Use this tool when the user identifies the API by org name, API name, and version and asks to validate, scan, or check the governance or standardization of an existing API.",
     inputSchema: ScanApiStandardizationFromRegistryParamsSchema,
     handler: "scanApiStandardizationFromRegistry",
   },
