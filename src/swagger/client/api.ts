@@ -1,5 +1,9 @@
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
+import {
+  buildPortalLiveUrl,
+  findTableOfContentsItem,
+} from "./utils";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -14,6 +18,7 @@ import type {
   PortalsListResponse,
   Product,
   ProductsListResponse,
+  PublishPortalProductResponse,
   SectionsListResponse,
   SuccessResponse,
   TableOfContentsItem,
@@ -372,10 +377,54 @@ export class SwaggerAPI {
     } as SuccessResponse);
   }
 
+  /**
+   * Publish a portal product and generate live URL with environment-specific domain
+   * @param productId - ID of the product to publish
+   * @param preview - Whether to publish in preview mode (default: false)
+   * @param tableOfContentsId - Optional tableOfContentsId The table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'
+   * @returns Complete publish response with product details and live URL
+   */
   async publishPortalProduct(
     productId: string,
     preview: boolean = false,
-  ): Promise<SuccessResponse | FallbackResponse> {
+    tableOfContentsId: string | null = null,
+  ): Promise<PublishPortalProductResponse | FallbackResponse> {
+
+    const [productDetails, sections] = await Promise.all([
+      this.getPortalProduct(productId),
+      this.getPortalProductSections(productId, {
+        embed: ["tableOfContents", "tableOfContents.swaggerhubApi"],
+      }),
+    ]);
+
+    // Fetch portal details after portalId ID is available
+    const portalDetails = await this.getPortal(
+      String(productDetails.portalId ?? ""),
+    );
+
+    // Get the first section (primary section)
+    const targetSection = sections.items[0] ?? null;
+
+    // Resolve the target table of contents item if tableOfContentsId is provided
+    const targetTocItem =
+      tableOfContentsId && targetSection
+        ? findTableOfContentsItem(
+            targetSection.tableOfContents ?? [],
+            tableOfContentsId,
+          )
+        : null;
+
+    // Build live URL using environment-specific domain
+    const host = portalDetails.customDomain ?? portalDetails.subdomain;
+    const liveUrl = buildPortalLiveUrl(
+      this.config,
+      host,
+      productDetails.slug,
+      targetSection,
+      targetTocItem,
+    );
+
+    // Publish the product to the portal
     const response = await fetch(
       `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
       {
@@ -383,9 +432,15 @@ export class SwaggerAPI {
         headers: this.headers,
       },
     );
-    return this.handleResponse<SuccessResponse>(response, {
+
+    const result = await this.handleResponse<SuccessResponse>(response, {
       success: true,
     } as SuccessResponse);
+
+    return {
+      ...result,
+      liveUrl,
+    } as PublishPortalProductResponse;
   }
 
   async getPortalProductSections(
@@ -413,9 +468,19 @@ export class SwaggerAPI {
       headers: this.headers,
     });
 
+    const defaultResponse: SectionsListResponse = {
+      page: {
+        number: 0,
+        size: 0,
+        totalElements: 0,
+        totalPages: 0,
+      },
+      items: [],
+    };
+
     const result = await this.handleResponse<SectionsListResponse>(
       response,
-      [] as SectionsListResponse,
+      defaultResponse,
     );
     return result as SectionsListResponse;
   }
@@ -488,8 +553,12 @@ export class SwaggerAPI {
 
     const result = await response.json();
 
-    // The API returns a paginated response, so we extract the items array
-    return result.items as TableOfContentsListResponse;
+    // The API may return either a raw array or a paginated response with an items array.
+    if (Array.isArray(result)) {
+      return result as TableOfContentsListResponse;
+    }
+
+    return (result.items ?? []) as TableOfContentsListResponse;
   }
 
   /**
@@ -981,14 +1050,12 @@ export class SwaggerAPI {
 
     const result = await this.handleResponse<StandardizeApiResponse>(response);
 
-    // Validate that we have the expected response structure
     if (!hasMessage(result)) {
       throw new ToolError(
         "Unexpected response format from standardizeApi endpoint",
       );
     }
 
-    // If errorsFound is not present, default to 0 (no errors found)
     if (!hasErrorsFound(result)) {
       return { ...result, errorsFound: 0 } as StandardizeApiResponse;
     }

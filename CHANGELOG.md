@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Swagger] Refactored `publish_portal_product` to build live URLs dynamically from `SWAGGER_PORTAL_BASE_PATH`, support preview and section/table-of-contents paths, and return the resolved `liveUrl` in the publish response.
+[#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
+
 ## [0.26.1] - 2026-06-24
 
 ### Fixed
