@@ -361,11 +361,12 @@ export class SwaggerAPI {
   }
 
   /**
-   * Publish a portal product and generate live URL with environment-specific domain
+   * Publish a portal product and generate a published URL with environment-specific domain.
+   * Returns `liveUrl` for live publishes and `previewUrl` for preview publishes.
    * @param productId - ID of the product to publish
    * @param preview - Whether to publish in preview mode (default: false)
-   * @param tableOfContentsId - Optional tableOfContentsId The table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'
-   * @returns Complete publish response with product details and live URL
+   * @param tableOfContentsId - Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'
+   * @returns Complete publish response with product details and the resolved published URL
    */
   async publishPortalProduct(
     productId: string,
@@ -399,12 +400,13 @@ export class SwaggerAPI {
 
     // Build live URL using environment-specific domain
     const host = portalDetails.customDomain ?? portalDetails.subdomain;
-    const liveUrl = buildPortalLiveUrl(
+    const publicationUrl = buildPortalLiveUrl(
       this.config,
       host,
       productDetails.slug,
       targetSection,
       targetTocItem,
+      preview,
     );
 
     // Publish the product to the portal
@@ -422,7 +424,9 @@ export class SwaggerAPI {
 
     return {
       ...result,
-      liveUrl,
+      ...(preview
+        ? { previewUrl: publicationUrl }
+        : { liveUrl: publicationUrl }),
     } as PublishPortalProductResponse;
   }
 

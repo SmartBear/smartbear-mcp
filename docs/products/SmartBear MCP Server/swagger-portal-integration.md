@@ -116,7 +116,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 #### `publish_portal_product`
 
 - Purpose: Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.
-- Returns: Publication status information, including the generated live URL when the product can be resolved.
+- Returns: Publication status information, including the generated `liveUrl` for live publication or `previewUrl` for preview publication when the product can be resolved.
 - Use case: Make product content visible to portal visitors, either as live content or preview for testing.
 - Parameters:
 
@@ -126,7 +126,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `preview`   | Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) | boolean | No       |
 | `tableOfContentsId` | Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug' used to resolve a specific live URL path | string | No |
 
-The publish response now includes `liveUrl` when available. The live URL is built dynamically from the configured `portalBasePath`, so it works across dev2, int, and production environments.
+The publish response now includes `liveUrl` for live publication and `previewUrl` for preview publication. The URL is built dynamically from the configured `portalBasePath`, so it works across dev2, int, and production environments. When `tableOfContentsId` resolves, the returned URL includes the section and table-of-contents path.
 
 ### Product Sections Management
 

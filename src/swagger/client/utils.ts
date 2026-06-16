@@ -26,7 +26,7 @@ export function findTableOfContentsItem(
 }
 
 /**
- * Build the live URL for a published portal product.
+ * Build the live URL or previewUrl for a published portal product.
  */
 export function buildPortalLiveUrl(
   config: SwaggerConfiguration,
@@ -34,6 +34,7 @@ export function buildPortalLiveUrl(
   productSlug: string | undefined,
   section: UrlSegmentSource,
   tocItem: UrlSegmentSource,
+  preview: boolean = false,
 ): string {
   if (!host || !productSlug) {
     return "";
@@ -41,10 +42,11 @@ export function buildPortalLiveUrl(
 
   const portalUiDomain = config.getPortalUiDomainSuffix();
   const baseUrl = `https://${host}${portalUiDomain}/${productSlug}`;
+  const previewSuffix = preview ? "?preview=product" : "";
 
   if (section?.slug && tocItem?.slug) {
-    return `${baseUrl}/${section.slug}/${tocItem.slug}`;
+    return `${baseUrl}/${section.slug}/${tocItem.slug}${previewSuffix}`;
   }
 
-  return baseUrl;
+  return `${baseUrl}${previewSuffix}`;
 }
