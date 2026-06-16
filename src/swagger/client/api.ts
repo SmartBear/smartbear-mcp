@@ -1,6 +1,5 @@
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
-import { buildPortalLiveUrl, findTableOfContentsItem } from "./utils";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -48,6 +47,7 @@ import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
 } from "./user-management-types";
+import { buildPortalLiveUrl, findTableOfContentsItem } from "./utils";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
