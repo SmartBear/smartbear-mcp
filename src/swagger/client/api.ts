@@ -361,19 +361,24 @@ export class SwaggerAPI {
   }
 
   /**
-   * Publish a portal product and generate a published URL with environment-specific domain.
-   * Returns `liveUrl` for live publishes and `previewUrl` for preview publishes.
+   * Prepare publication metadata and URL for a portal product and page.
+   * Fetches product, portal, and section details, resolves TOC item if provided,
+   * and builds the publication URL.
    * @param productId - ID of the product to publish
-   * @param preview - Whether to publish in preview mode (default: false)
-   * @param tableOfContentsId - Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'
-   * @returns Complete publish response with product details and the resolved published URL
+   * @param preview - Whether this is a preview publish
+   * @param tableOfContentsId - Optional table of contents UUID or identifier
+   * @returns Publication metadata including URL and narrowed entity details
    */
-  async publishPortalProduct(
+  private async preparePublicationMetadata(
     productId: string,
-    preview: boolean = false,
-    tableOfContentsId: string | null = null,
-  ): Promise<PublishPortalProductResponse | FallbackResponse> {
-
+    preview: boolean,
+    tableOfContentsId: string | null,
+  ): Promise<{
+    publicationUrl: string;
+    product: Pick<Product, "id" | "name" | "slug">;
+    portal: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
+    tableOfContentsItem: Pick<TableOfContentsItem, "id" | "slug" | "title" | "order" | "parentId"> | null;
+  }> {
     const [productDetails, sections] = await Promise.all([
       this.getPortalProduct(productId),
       this.getPortalProductSections(productId, {
@@ -404,24 +409,8 @@ export class SwaggerAPI {
       preview,
     );
 
-    const response = await fetch(
-      `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
-      {
-        method: "PUT",
-        headers: this.headers,
-      },
-    );
-
-    const result = await this.handleResponse<SuccessResponse>(response, {
-      success: true,
-    } as SuccessResponse);
-
     return {
-      ...result,
-      preview,
-      ...(preview
-        ? { previewUrl: publicationUrl }
-        : { liveUrl: publicationUrl }),
+      publicationUrl,
       product: {
         id: productDetails.id,
         name: productDetails.name,
@@ -440,6 +429,49 @@ export class SwaggerAPI {
         order: targetTocItem.order,
         parentId: targetTocItem.parentId,
       } : null,
+    };
+  }
+
+  /**
+   * Publish a portal product and generate a published URL with environment-specific domain.
+   * Returns `liveUrl` for live publishes and `previewUrl` for preview publishes.
+   * @param productId - ID of the product to publish
+   * @param preview - Whether to publish in preview mode (default: false)
+   * @param tableOfContentsId - Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'
+   * @returns Complete publish response with product details and the resolved published URL
+   */
+  async publishPortalProduct(
+    productId: string,
+    preview: boolean = false,
+    tableOfContentsId: string | null = null,
+  ): Promise<PublishPortalProductResponse | FallbackResponse> {
+    const metadata = await this.preparePublicationMetadata(
+      productId,
+      preview,
+      tableOfContentsId,
+    );
+
+    const response = await fetch(
+      `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
+      {
+        method: "PUT",
+        headers: this.headers,
+      },
+    );
+
+    const result = await this.handleResponse<SuccessResponse>(response, {
+      success: true,
+    } as SuccessResponse);
+
+    return {
+      ...result,
+      preview,
+      ...(preview
+        ? { previewUrl: metadata.publicationUrl }
+        : { liveUrl: metadata.publicationUrl }),
+      product: metadata.product,
+      portal: metadata.portal,
+      tableOfContentsItem: metadata.tableOfContentsItem,
     } as PublishPortalProductResponse;
   }
 
