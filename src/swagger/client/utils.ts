@@ -1,4 +1,3 @@
-
 import type { SwaggerConfiguration } from "./configuration";
 import type { TableOfContentsItem } from "./portal-types";
 
@@ -41,7 +40,9 @@ export function buildPortalLiveUrl(
   preview: boolean = false,
 ): string {
   const host = portal?.customDomain ?? portal?.subdomain;
-  const portalUiDomain = portal?.customDomain ? "" : config.getPortalUiDomainSuffix();
+  const portalUiDomain = portal?.customDomain
+    ? ""
+    : config.getPortalUiDomainSuffix();
 
   if (!host || !productSlug) {
     return "";

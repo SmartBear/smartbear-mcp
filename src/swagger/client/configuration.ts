@@ -65,9 +65,9 @@ export class SwaggerConfiguration {
     // Match pattern: https://api[.{env}].portal.swaggerhub.com
     // Extract everything from the first dot after api to the end
     const match = this.portalBasePath.match(
-      /https?:\/\/api(\..*\.portal\.swaggerhub\.com)/
+      /https?:\/\/api(\..*\.portal\.swaggerhub\.com)/,
     );
-    if ( match?.[1]) {
+    if (match?.[1]) {
       return match[1];
     }
     return ".portal.swaggerhub.com";

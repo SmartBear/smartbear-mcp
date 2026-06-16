@@ -1,9 +1,6 @@
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
-import {
-  buildPortalLiveUrl,
-  findTableOfContentsItem,
-} from "./utils";
+import { buildPortalLiveUrl, findTableOfContentsItem } from "./utils";
 import type {
   CreatePortalArgs,
   CreateProductBody,
@@ -377,7 +374,10 @@ export class SwaggerAPI {
     publicationUrl: string;
     product: Pick<Product, "id" | "name" | "slug">;
     portal: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
-    tableOfContentsItem: Pick<TableOfContentsItem, "id" | "slug" | "title" | "order" | "parentId"> | null;
+    tableOfContentsItem: Pick<
+      TableOfContentsItem,
+      "id" | "slug" | "title" | "order" | "parentId"
+    > | null;
   }> {
     const [productDetails, sections] = await Promise.all([
       this.getPortalProduct(productId),
@@ -422,13 +422,15 @@ export class SwaggerAPI {
         subdomain: portalDetails.subdomain,
         customDomain: portalDetails.customDomain,
       },
-      tableOfContentsItem: targetTocItem ? {
-        id: targetTocItem.id,
-        slug: targetTocItem.slug,
-        title: targetTocItem.title,
-        order: targetTocItem.order,
-        parentId: targetTocItem.parentId,
-      } : null,
+      tableOfContentsItem: targetTocItem
+        ? {
+            id: targetTocItem.id,
+            slug: targetTocItem.slug,
+            title: targetTocItem.title,
+            order: targetTocItem.order,
+            parentId: targetTocItem.parentId,
+          }
+        : null,
     };
   }
 
