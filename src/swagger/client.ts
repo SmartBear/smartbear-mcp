@@ -232,7 +232,11 @@ export class SwaggerClient implements Client {
     args: PublishProductArgs,
   ): Promise<PublishPortalProductResponse | FallbackResponse> {
     const { productId, preview, tableOfContentsId } = args;
-    return this.getApi().publishPortalProduct(productId, preview, tableOfContentsId ?? null);
+    return this.getApi().publishPortalProduct(
+      productId,
+      preview,
+      tableOfContentsId ?? null,
+    );
   }
 
   async getPortalProductSections(

@@ -436,7 +436,10 @@ export type PublishPortalProductResponse = SuccessResponse & {
   previewUrl?: string;
   product?: Pick<Product, "id" | "name" | "slug">;
   portal?: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
-  tableOfContentsItem?: Pick<TableOfContentsItem, "id" | "slug" | "title" | "order" | "parentId"> | null;
+  tableOfContentsItem?: Pick<
+    TableOfContentsItem,
+    "id" | "slug" | "title" | "order" | "parentId"
+  > | null;
 };
 
 // Response types for better type safety

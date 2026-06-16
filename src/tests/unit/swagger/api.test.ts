@@ -481,8 +481,7 @@ describe("SwaggerAPI", () => {
       expect(result).toEqual({
         success: true,
         preview: false,
-        liveUrl:
-          `https://testportal.portal.swaggerhub.com/${productSlug}/docs/getting-started`,
+        liveUrl: `https://testportal.portal.swaggerhub.com/${productSlug}/docs/getting-started`,
         product: {
           id: productResponse.id,
           name: productResponse.name,
@@ -525,8 +524,7 @@ describe("SwaggerAPI", () => {
       expect(result).toEqual({
         success: true,
         preview: true,
-        previewUrl:
-          `https://testportal.portal.swaggerhub.com/${productSlug}?preview=product`,
+        previewUrl: `https://testportal.portal.swaggerhub.com/${productSlug}?preview=product`,
         product: {
           id: productResponse.id,
           name: productResponse.name,
