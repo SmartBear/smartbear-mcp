@@ -135,7 +135,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 **Response Details:**
 - When `portal.customDomain` is present, it is used as the full host in the generated URL without appending the portal UI suffix
-- When `customDomain` is not present, the URL is built using `portal.subdomain` + the portal UI suffix (`.portal.swaggerhub.com`)  
+- When `customDomain` is not present, the URL is built using `portal.subdomain` + the portal UI suffix (`.portal.swaggerhub.com`)
 - When `tableOfContentsId` resolves successfully, the returned URL includes the section and table-of-contents path in the format: `/{productSlug}/{sectionSlug}/{tocSlug}`
 - The response includes only essential fields from product, portal, and tableOfContentsItem following React/TypeScript best practices using Pick<> utility types
 
