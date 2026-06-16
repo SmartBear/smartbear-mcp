@@ -398,15 +398,12 @@ export class SwaggerAPI {
       }),
     ]);
 
-    // Fetch portal details after portalId ID is available
     const portalDetails = await this.getPortal(
       String(productDetails.portalId ?? ""),
     );
 
-    // Get the first section (primary section)
     const targetSection = sections.items[0] ?? null;
 
-    // Resolve the target table of contents item if tableOfContentsId is provided
     const targetTocItem =
       tableOfContentsId && targetSection
         ? findTableOfContentsItem(
@@ -415,18 +412,15 @@ export class SwaggerAPI {
           )
         : null;
 
-    // Build live URL using environment-specific domain
-    const host = portalDetails.customDomain ?? portalDetails.subdomain;
     const publicationUrl = buildPortalLiveUrl(
       this.config,
-      host,
+      portalDetails,
       productDetails.slug,
       targetSection,
       targetTocItem,
       preview,
     );
 
-    // Publish the product to the portal
     const response = await fetch(
       `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
       {
@@ -441,9 +435,28 @@ export class SwaggerAPI {
 
     return {
       ...result,
+      preview,
       ...(preview
         ? { previewUrl: publicationUrl }
         : { liveUrl: publicationUrl }),
+      product: {
+        id: productDetails.id,
+        name: productDetails.name,
+        slug: productDetails.slug,
+      },
+      portal: {
+        id: portalDetails.id,
+        name: portalDetails.name,
+        subdomain: portalDetails.subdomain,
+        customDomain: portalDetails.customDomain,
+      },
+      tableOfContentsItem: targetTocItem ? {
+        id: targetTocItem.id,
+        slug: targetTocItem.slug,
+        title: targetTocItem.title,
+        order: targetTocItem.order,
+        parentId: targetTocItem.parentId,
+      } : null,
     } as PublishPortalProductResponse;
   }
 

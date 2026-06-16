@@ -3,6 +3,10 @@ import type { SwaggerConfiguration } from "./configuration";
 import type { TableOfContentsItem } from "./portal-types";
 
 type UrlSegmentSource = { slug?: string } | null;
+type PortalHostSource = {
+  customDomain?: string | null;
+  subdomain?: string | null;
+} | null;
 
 /**
  * Recursively search for a table of contents item by ID.
@@ -30,17 +34,19 @@ export function findTableOfContentsItem(
  */
 export function buildPortalLiveUrl(
   config: SwaggerConfiguration,
-  host: string | undefined,
+  portal: PortalHostSource,
   productSlug: string | undefined,
   section: UrlSegmentSource,
   tocItem: UrlSegmentSource,
   preview: boolean = false,
 ): string {
+  const host = portal?.customDomain ?? portal?.subdomain;
+  const portalUiDomain = portal?.customDomain ? "" : config.getPortalUiDomainSuffix();
+
   if (!host || !productSlug) {
     return "";
   }
 
-  const portalUiDomain = config.getPortalUiDomainSuffix();
   const baseUrl = `https://${host}${portalUiDomain}/${productSlug}`;
   const previewSuffix = preview ? "?preview=product" : "";
 

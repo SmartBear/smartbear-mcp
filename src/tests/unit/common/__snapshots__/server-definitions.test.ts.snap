@@ -10460,7 +10460,7 @@ None",
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product
 - embed (array): List of related entities to embed in the response - e.g., ['tableOfContents', 'tableOfContents.swaggerhubApi'] to include table of contents and SwaggerHub API details
 - page (number): Page number for paginated results - specifies which page of results to retrieve (default is 1)
-- size (number): Number of items per page for pagination - controls how many results are returned per page (default is 20)",
+- size (number): Number of items per page for pagination - controls how many results are returned per page (default is 10)",
     "inputSchema": [
       "embed",
       "page",
@@ -10539,16 +10539,18 @@ None",
       "readOnlyHint": true,
       "title": "Swagger: Publish Portal Product",
     },
-    "description": "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.
+    "description": "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live. Optionally provide tableOfContentsId to form liveUrl or previewUrl for specific table-of-contents item or specific page url. Returns a PublishPortalProductResponse containing: success status, preview boolean, liveUrl or previewUrl (depending on preview mode), and narrowed metadata objects for product (id, name, slug), portal (id, name, subdomain, customDomain), and tableOfContentsItem (id, slug, title, order, parentId) when resolved.
 
 **Toolset:** Products
 
 **Parameters:**
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product
+- tableOfContentsId (string): Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'. When provided, publishPortalProduct uses it to resolve the published URL path for the returned preview/live link.
 - preview (boolean): Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) (default: false)",
     "inputSchema": [
       "preview",
       "productId",
+      "tableOfContentsId",
     ],
     "outputSchema": undefined,
     "title": "Swagger: Publish Portal Product",
