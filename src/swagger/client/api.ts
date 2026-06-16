@@ -377,7 +377,7 @@ export class SwaggerAPI {
   /**
    * Prepare publication metadata and URL for a portal product and page.
    * Fetches product, portal, and section details, resolves TOC item if provided,
-   * and builds the publication URL.
+   * and builds the live and preview URL.
    * @param productId - ID of the product to publish
    * @param preview - Whether this is a preview publish
    * @param tableOfContentsId - Optional table of contents UUID or identifier
