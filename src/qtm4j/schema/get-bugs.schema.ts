@@ -10,6 +10,7 @@
  * sequence number) before the call. An empty page (total = 0) means no bugs are linked.
  */
 import * as zod from "zod";
+import { PAGINATION } from "../config/constants";
 
 const testCycleKey = zod
   .string()
@@ -41,8 +42,8 @@ const priority = zod
 const startAt = zod
   .number()
   .int()
-  .min(0)
-  .default(0)
+  .min(PAGINATION.DEFAULT_START_AT)
+  .default(PAGINATION.DEFAULT_START_AT)
   .describe(
     "Zero-based index of the first result to return (pagination offset).",
   );
@@ -50,11 +51,17 @@ const startAt = zod
 const maxResults = zod
   .number()
   .int()
-  .min(1, "maxResults must be between 1 and 100.")
-  .max(100, "maxResults must be between 1 and 100.")
-  .default(20)
+  .min(
+    PAGINATION.MIN_ALLOWED_RESULTS,
+    `maxResults must be between ${PAGINATION.MIN_ALLOWED_RESULTS} and ${PAGINATION.MAX_ALLOWED_RESULTS_LINKED_BUGS}.`,
+  )
+  .max(
+    PAGINATION.MAX_ALLOWED_RESULTS_LINKED_BUGS,
+    `maxResults must be between ${PAGINATION.MIN_ALLOWED_RESULTS} and ${PAGINATION.MAX_ALLOWED_RESULTS_LINKED_BUGS}.`,
+  )
+  .default(PAGINATION.DEFAULT_MAX_RESULTS_LINKED_BUGS)
   .describe(
-    "Maximum number of bugs to return per page. Range 1–100; defaults to 20.",
+    `Maximum number of bugs to return per page. Range ${PAGINATION.MIN_ALLOWED_RESULTS}–${PAGINATION.MAX_ALLOWED_RESULTS_LINKED_BUGS}; defaults to ${PAGINATION.DEFAULT_MAX_RESULTS_LINKED_BUGS}.`,
   );
 
 const level = zod
