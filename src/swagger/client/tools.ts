@@ -107,7 +107,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Publish Portal Product",
     toolset: "Products",
     summary:
-      "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.",
+      "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live. Optionally provide tableOfContentsId to form liveUrl or previewUrl for specific table-of-contents item or specific page url. Returns a PublishPortalProductResponse containing: success status, preview boolean, liveUrl or previewUrl (depending on preview mode), and narrowed metadata objects for product (id, name, slug), portal (id, name, subdomain, customDomain), and tableOfContentsItem (id, slug, title, order, parentId) when resolved.",
     inputSchema: PublishProductArgsSchema,
     handler: "publishPortalProduct",
   },
