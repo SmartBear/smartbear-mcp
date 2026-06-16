@@ -364,59 +364,73 @@ describe("SwaggerAPI", () => {
   });
 
   describe("publishPortalProduct", () => {
-    it("should publish product and return resolved liveUrl", async () => {
-      const headers = {
-        Authorization: "Bearer test-token",
-        "Content-Type": "application/json",
-        "User-Agent": "SmartBear-MCP/1.0.0",
-      };
-      const productId = "prod-123";
-      const portalId = "portal-123";
-      const productSlug = "test-product";
-      const tocId = "toc-1";
+    const headers = {
+      Authorization: "Bearer test-token",
+      "Content-Type": "application/json",
+      "User-Agent": "SmartBear-MCP/1.0.0",
+    };
 
-      const productResponse = {
-        id: productId,
-        name: "Test Product",
-        slug: productSlug,
-        portalId,
-      };
-      const portalResponse = {
-        id: portalId,
-        name: "Test Portal",
-        subdomain: "testportal",
-      };
-      const sectionsResponse = {
-        page: {
-          number: 0,
-          size: 20,
-          totalElements: 1,
-          totalPages: 1,
+    const productId = "prod-123";
+    const portalId = "portal-123";
+    const productSlug = "test-product";
+    const tocId = "toc-1";
+
+    const productResponse = {
+      id: productId,
+      name: "Test Product",
+      slug: productSlug,
+      portalId,
+    };
+
+    const portalResponse = {
+      id: portalId,
+      name: "Test Portal",
+      subdomain: "testportal",
+    };
+
+    const sectionsResponse = {
+      page: {
+        number: 0,
+        size: 20,
+        totalElements: 1,
+        totalPages: 1,
+      },
+      items: [
+        {
+          id: "section-1",
+          productId,
+          title: "Docs",
+          slug: "docs",
+          tableOfContents: [
+            {
+              id: tocId,
+              slug: "getting-started",
+              title: "Getting Started",
+              order: 0,
+              parentId: null,
+              children: [],
+              swaggerhubApi: null,
+              content: null,
+            },
+          ],
+          order: 0,
         },
-        items: [
-          {
-            id: "section-1",
-            productId,
-            title: "Docs",
-            slug: "docs",
-            tableOfContents: [
-              {
-                id: tocId,
-                slug: "getting-started",
-                title: "Getting Started",
-                order: 0,
-                parentId: null,
-                children: [],
-                swaggerhubApi: null,
-                content: null,
-              },
-            ],
-            order: 0,
-          },
-        ],
-      };
-      const publishResponse = { success: true };
+      ],
+    };
 
+    const previewSectionsResponse = {
+      page: {
+        number: 0,
+        size: 20,
+        totalElements: 1,
+        totalPages: 1,
+      },
+      items: [],
+    };
+
+    const publishResponse = { success: true };
+
+    it("should publish product and return resolved liveUrl", async () => {
       fetchMock
         .mockResponseOnce(JSON.stringify(productResponse))
         .mockResponseOnce(JSON.stringify(sectionsResponse))
@@ -462,6 +476,31 @@ describe("SwaggerAPI", () => {
         success: true,
         liveUrl:
           `https://testportal.portal.swaggerhub.com/${productSlug}/docs/getting-started`,
+      });
+    });
+
+    it("should publish preview product and return previewUrl", async () => {
+      fetchMock
+        .mockResponseOnce(JSON.stringify(productResponse))
+        .mockResponseOnce(JSON.stringify(previewSectionsResponse))
+        .mockResponseOnce(JSON.stringify(portalResponse))
+        .mockResponseOnce(JSON.stringify(publishResponse));
+
+      const result = await api.publishPortalProduct(productId, true);
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        4,
+        `https://api.portal.swaggerhub.com/v1/products/${productId}/published-content?preview=true`,
+        {
+          method: "PUT",
+          headers,
+        },
+      );
+
+      expect(result).toEqual({
+        success: true,
+        previewUrl:
+          `https://testportal.portal.swaggerhub.com/${productSlug}?preview=product`,
       });
     });
   });

@@ -432,6 +432,7 @@ export type UpdateDocumentBody = Omit<UpdateDocumentArgs, "documentId">;
 
 export type PublishPortalProductResponse = SuccessResponse & {
   liveUrl?: string;
+  previewUrl?: string;
 };
 
 // Response types for better type safety
