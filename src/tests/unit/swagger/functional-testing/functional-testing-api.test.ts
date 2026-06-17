@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import {
-  FunctionalTestingAPI,
-  FunctionalTestingApiEnv,
-} from "../../../../swagger/client/functional-testing-api";
+import { FunctionalTestingAPI } from "../../../../swagger/client/functional-testing-api";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -48,7 +45,6 @@ describe("FunctionalTestingAPI", () => {
     api = new FunctionalTestingAPI(
       () => "test-api-key",
       "SmartBear MCP Server/test",
-      FunctionalTestingApiEnv.Production,
     );
   });
 
