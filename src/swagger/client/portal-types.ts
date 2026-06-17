@@ -39,7 +39,7 @@ export const GetProductSectionsArgsSchema = z.object({
     .number()
     .optional()
     .describe(
-      "Number of items per page for pagination - controls how many results are returned per page (default is 20)",
+      "Number of items per page for pagination - controls how many results are returned per page (default is 10)",
     ),
 });
 
@@ -339,7 +339,7 @@ export const PublishProductArgsSchema = ProductArgsSchema.extend({
     .string()
     .optional()
     .describe(
-      "The table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'",
+      "Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'. When provided, publishPortalProduct uses it to resolve the published URL path for the returned preview/live link.",
     ),
   preview: z
     .boolean()
@@ -431,8 +431,15 @@ export type CreateTableOfContentsBody = Omit<
 export type UpdateDocumentBody = Omit<UpdateDocumentArgs, "documentId">;
 
 export type PublishPortalProductResponse = SuccessResponse & {
+  preview: boolean;
   liveUrl?: string;
   previewUrl?: string;
+  product?: Pick<Product, "id" | "name" | "slug">;
+  portal?: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
+  tableOfContentsItem?: Pick<
+    TableOfContentsItem,
+    "id" | "slug" | "title" | "order" | "parentId"
+  > | null;
 };
 
 // Response types for better type safety

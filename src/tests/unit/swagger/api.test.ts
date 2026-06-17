@@ -267,6 +267,13 @@ describe("SwaggerAPI", () => {
       subdomain: "testportal",
     };
 
+    const customDomainPortalResponse = {
+      id: portalId,
+      name: "Test Portal",
+      customDomain: "testCustomDomain.portal-testing.com",
+    };
+
+
     const sectionsResponse = {
       page: {
         number: 0,
@@ -353,8 +360,26 @@ describe("SwaggerAPI", () => {
 
       expect(result).toEqual({
         success: true,
-        liveUrl:
-          `https://testportal.portal.swaggerhub.com/${productSlug}/docs/getting-started`,
+        preview: false,
+        liveUrl: `https://testportal.portal.swaggerhub.com/${productSlug}/docs/getting-started`,
+        product: {
+          id: productResponse.id,
+          name: productResponse.name,
+          slug: productResponse.slug,
+        },
+        portal: {
+          id: portalResponse.id,
+          name: portalResponse.name,
+          subdomain: portalResponse.subdomain,
+          customDomain: undefined,
+        },
+        tableOfContentsItem: {
+          id: sectionsResponse.items[0].tableOfContents[0].id,
+          slug: sectionsResponse.items[0].tableOfContents[0].slug,
+          title: sectionsResponse.items[0].tableOfContents[0].title,
+          order: sectionsResponse.items[0].tableOfContents[0].order,
+          parentId: sectionsResponse.items[0].tableOfContents[0].parentId,
+        },
       });
     });
 
@@ -378,8 +403,54 @@ describe("SwaggerAPI", () => {
 
       expect(result).toEqual({
         success: true,
+        preview: true,
+        previewUrl: `https://testportal.portal.swaggerhub.com/${productSlug}?preview=product`,
+        product: {
+          id: productResponse.id,
+          name: productResponse.name,
+          slug: productResponse.slug,
+        },
+        portal: {
+          id: portalResponse.id,
+          name: portalResponse.name,
+          subdomain: portalResponse.subdomain,
+          customDomain: undefined,
+        },
+      });
+    });
+
+    it("should use customDomain as the full host when present", async () => {
+      fetchMock
+        .mockResponseOnce(JSON.stringify(productResponse))
+        .mockResponseOnce(JSON.stringify(sectionsResponse))
+        .mockResponseOnce(JSON.stringify(customDomainPortalResponse))
+        .mockResponseOnce(JSON.stringify(publishResponse));
+
+      const result = await api.publishPortalProduct(productId, true, tocId);
+
+      expect(result).toEqual({
+        success: true,
+        preview: true,
         previewUrl:
-          `https://testportal.portal.swaggerhub.com/${productSlug}?preview=product`,
+          "https://testCustomDomain.portal-testing.com/test-product/docs/getting-started?preview=product",
+        product: {
+          id: productResponse.id,
+          name: productResponse.name,
+          slug: productResponse.slug,
+        },
+        portal: {
+          id: customDomainPortalResponse.id,
+          name: customDomainPortalResponse.name,
+          subdomain: undefined,
+          customDomain: customDomainPortalResponse.customDomain,
+        },
+        tableOfContentsItem: {
+          id: sectionsResponse.items[0].tableOfContents[0].id,
+          slug: sectionsResponse.items[0].tableOfContents[0].slug,
+          title: sectionsResponse.items[0].tableOfContents[0].title,
+          order: sectionsResponse.items[0].tableOfContents[0].order,
+          parentId: sectionsResponse.items[0].tableOfContents[0].parentId,
+        },
       });
     });
   });

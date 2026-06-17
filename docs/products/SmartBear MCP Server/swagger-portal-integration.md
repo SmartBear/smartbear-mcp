@@ -116,7 +116,14 @@ The Swagger Portal client provides comprehensive portal and product management c
 #### `publish_portal_product`
 
 - Purpose: Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.
-- Returns: Publication status information, including the generated `liveUrl` for live publication or `previewUrl` for preview publication when the product can be resolved.
+- Returns: Publication status information with the following structure:
+  - `success` (boolean): Publication success status
+  - `preview` (boolean): Whether this is a preview or live publication
+  - `liveUrl` (string, conditional): Generated live URL (only when preview is false)
+  - `previewUrl` (string, conditional): Generated preview URL (only when preview is true)
+  - `product` (object): Product metadata with fields: `id`, `name`, `slug`
+  - `portal` (object): Portal metadata with fields: `id`, `name`, `subdomain`, `customDomain`
+  - `tableOfContentsItem` Optional (object): Table of contents metadata with fields: `id`, `slug`, `title`, `order`, `parentId` (null when tableOfContentsId is not provided or not found)
 - Use case: Make product content visible to portal visitors, either as live content or preview for testing.
 - Parameters:
 
@@ -126,7 +133,11 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `preview`   | Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) | boolean | No       |
 | `tableOfContentsId` | Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug' used to resolve a specific live URL path | string | No |
 
-The publish response now includes `liveUrl` for live publication and `previewUrl` for preview publication. The URL is built dynamically from the configured `portalBasePath`, so it works across dev2, int, and production environments. When `tableOfContentsId` resolves, the returned URL includes the section and table-of-contents path.
+**Response Details:**
+- When `portal.customDomain` is present, it is used as the full host in the generated URL without appending the portal UI suffix
+- When `customDomain` is not present, the URL is built using `portal.subdomain` + the portal UI suffix (`.portal.swaggerhub.com`)
+- When `tableOfContentsId` resolves successfully, the returned URL includes the section and table-of-contents path in the format: `/{productSlug}/{sectionSlug}/{tocSlug}`
+- The response includes only essential fields from product, portal, and tableOfContentsItem.
 
 ### Product Sections Management
 

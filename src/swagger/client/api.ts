@@ -25,6 +25,7 @@ import type {
   PublishPortalProductResponse,
   SectionsListResponse,
   SuccessResponse,
+  TableOfContentsItem,
   TableOfContentsListResponse,
   UpdateDocumentArgs,
   UpdatePortalBody,
@@ -51,7 +52,6 @@ import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
 } from "./user-management-types";
-
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
 // Example: /apis/acme/petstore/1.0.0
@@ -364,6 +364,83 @@ export class SwaggerAPI {
   }
 
   /**
+   * Prepare publication metadata and URL for a portal product and page.
+   * Fetches product, portal, and section details, resolves TOC item if provided,
+   * and builds the live and preview URL.
+   * @param productId - ID of the product to publish
+   * @param preview - Whether this is a preview publish
+   * @param tableOfContentsId - Optional table of contents UUID or identifier
+   * @returns Publication metadata including URL and narrowed entity details
+   */
+  private async preparePublicationMetadata(
+    productId: string,
+    preview: boolean,
+    tableOfContentsId: string | null,
+  ): Promise<{
+    publicationUrl: string;
+    product: Pick<Product, "id" | "name" | "slug">;
+    portal: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
+    tableOfContentsItem: Pick<
+      TableOfContentsItem,
+      "id" | "slug" | "title" | "order" | "parentId"
+    > | null;
+  }> {
+    const [productDetails, sections] = await Promise.all([
+      this.getPortalProduct(productId),
+      this.getPortalProductSections(productId, {
+        embed: ["tableOfContents", "tableOfContents.swaggerhubApi"],
+      }),
+    ]);
+
+    const portalDetails = await this.getPortal(
+      String(productDetails.portalId ?? ""),
+    );
+
+    const targetSection = sections.items[0] ?? null;
+
+    const targetTocItem =
+      tableOfContentsId && targetSection
+        ? findTableOfContentsItem(
+            targetSection.tableOfContents ?? [],
+            tableOfContentsId,
+          )
+        : null;
+
+    const publicationUrl = buildPortalLiveUrl(
+      this.config,
+      portalDetails,
+      productDetails.slug,
+      targetSection,
+      targetTocItem,
+      preview,
+    );
+
+    return {
+      publicationUrl,
+      product: {
+        id: productDetails.id,
+        name: productDetails.name,
+        slug: productDetails.slug,
+      },
+      portal: {
+        id: portalDetails.id,
+        name: portalDetails.name,
+        subdomain: portalDetails.subdomain,
+        customDomain: portalDetails.customDomain,
+      },
+      tableOfContentsItem: targetTocItem
+        ? {
+            id: targetTocItem.id,
+            slug: targetTocItem.slug,
+            title: targetTocItem.title,
+            order: targetTocItem.order,
+            parentId: targetTocItem.parentId,
+          }
+        : null,
+    };
+  }
+
+  /**
    * Publish a portal product and generate a published URL with environment-specific domain.
    * Returns `liveUrl` for live publishes and `previewUrl` for preview publishes.
    * @param productId - ID of the product to publish
@@ -376,43 +453,13 @@ export class SwaggerAPI {
     preview: boolean = false,
     tableOfContentsId: string | null = null,
   ): Promise<PublishPortalProductResponse | FallbackResponse> {
-
-    const [productDetails, sections] = await Promise.all([
-      this.getPortalProduct(productId),
-      this.getPortalProductSections(productId, {
-        embed: ["tableOfContents", "tableOfContents.swaggerhubApi"],
-      }),
-    ]);
-
-    // Fetch portal details after portalId ID is available
-    const portalDetails = await this.getPortal(
-      String(productDetails.portalId ?? ""),
-    );
-
-    // Get the first section (primary section)
-    const targetSection = sections.items[0] ?? null;
-
-    // Resolve the target table of contents item if tableOfContentsId is provided
-    const targetTocItem =
-      tableOfContentsId && targetSection
-        ? findTableOfContentsItem(
-            targetSection.tableOfContents ?? [],
-            tableOfContentsId,
-          )
-        : null;
-
-    // Build live URL using environment-specific domain
-    const host = portalDetails.customDomain ?? portalDetails.subdomain;
-    const publicationUrl = buildPortalLiveUrl(
-      this.config,
-      host,
-      productDetails.slug,
-      targetSection,
-      targetTocItem,
+    const metadata = await this.preparePublicationMetadata(
+      productId,
       preview,
+      tableOfContentsId,
     );
 
-    // Publish the product to the portal
+
     const response = await fetch(
       `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
       {
@@ -425,12 +472,21 @@ export class SwaggerAPI {
       success: true,
     } as SuccessResponse);
 
-    return {
+    const baseResponse: any = {
       ...result,
+      preview,
       ...(preview
-        ? { previewUrl: publicationUrl }
-        : { liveUrl: publicationUrl }),
-    } as PublishPortalProductResponse;
+        ? { previewUrl: metadata.publicationUrl }
+        : { liveUrl: metadata.publicationUrl }),
+      product: metadata.product,
+      portal: metadata.portal,
+    };
+
+    if (tableOfContentsId && metadata.tableOfContentsItem) {
+      baseResponse.tableOfContentsItem = metadata.tableOfContentsItem;
+    }
+
+    return baseResponse as PublishPortalProductResponse;
   }
 
   async getPortalProductSections(
@@ -646,8 +702,7 @@ export class SwaggerAPI {
       type: "markdown",
     });
 
-    const host = portal.customDomain ?? portal.subdomain;
-    const pageUrl = buildPortalLiveUrl(this.config, host, productSlug, section, { slug: pageSlug });
+    const pageUrl = buildPortalLiveUrl(this.config, portal, productSlug, section, { slug: pageSlug });
 
     return {
       productId,
