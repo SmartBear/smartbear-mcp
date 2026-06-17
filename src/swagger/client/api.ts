@@ -465,7 +465,7 @@ export class SwaggerAPI {
       success: true,
     } as SuccessResponse);
 
-    return {
+    const baseResponse: any = {
       ...result,
       preview,
       ...(preview
@@ -473,8 +473,13 @@ export class SwaggerAPI {
         : { liveUrl: metadata.publicationUrl }),
       product: metadata.product,
       portal: metadata.portal,
-      tableOfContentsItem: metadata.tableOfContentsItem,
-    } as PublishPortalProductResponse;
+    };
+
+    if (tableOfContentsId && metadata.tableOfContentsItem) {
+      baseResponse.tableOfContentsItem = metadata.tableOfContentsItem;
+    }
+
+    return baseResponse as PublishPortalProductResponse;
   }
 
   async getPortalProductSections(

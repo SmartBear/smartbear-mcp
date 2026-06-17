@@ -415,7 +415,6 @@ describe("SwaggerAPI", () => {
           subdomain: portalResponse.subdomain,
           customDomain: undefined,
         },
-        tableOfContentsItem: null,
       });
     });
 
