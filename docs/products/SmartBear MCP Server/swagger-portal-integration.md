@@ -134,7 +134,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `tableOfContentsId` | Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug' used to resolve a specific live URL path | string | No |
 
 **Response Details:**
-- The response contains a URL to the product. If tableOfContentsId is found, the URL links directly to that table of contents page.
+- Returns success plus product/portal metadata and a publish URL (previewUrl if preview, else liveUrl); includes tableOfContentsItem (and a direct TOC URL) only when tableOfContentsId was provided and resolved.
 
 ### Product Sections Management
 
