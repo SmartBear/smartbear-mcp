@@ -8,6 +8,7 @@
 
 import type { ToolParams } from "../../common/types";
 import {
+  CreateDocumentationPageArgsSchema,
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   CreateTableOfContentsArgsSchema,
@@ -143,6 +144,14 @@ export const TOOLS: SwaggerToolParams[] = [
   },
 
   // Document management tools
+  {
+    title: "Create Documentation Page",
+    toolset: "Documents",
+    summary:
+      "Create a documentation page in a portal product in a single tool call. Handles section lookup or creation, TOC entry creation, and content update internally. Returns the draft page URL and all relevant IDs.",
+    inputSchema: CreateDocumentationPageArgsSchema,
+    handler: "createDocumentationPage",
+  },
   {
     title: "Get Document",
     toolset: "Documents",

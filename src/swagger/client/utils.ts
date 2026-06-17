@@ -4,6 +4,20 @@ import type { TableOfContentsItem } from "./portal-types";
 
 type UrlSegmentSource = { slug?: string } | null;
 
+export function normalizeSlug(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (slug.length < 3) {
+    throw new Error(`Slug "${slug}" is too short (minimum 3 characters).`);
+  }
+
+  return slug;
+}
+
 /**
  * Recursively search for a table of contents item by ID.
  */

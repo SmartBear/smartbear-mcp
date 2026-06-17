@@ -3,11 +3,15 @@ import type { SwaggerConfiguration } from "./configuration";
 import {
   buildPortalLiveUrl,
   findTableOfContentsItem,
+  normalizeSlug,
 } from "./utils";
 import type {
+  CreateDocumentationPageArgs,
+  CreateDocumentationPageResult,
   CreatePortalArgs,
   CreateProductBody,
   CreateTableOfContentsBody,
+  CreateTableOfContentsItemResponse,
   DeleteTableOfContentsArgs,
   Document,
   FallbackResponse,
@@ -21,7 +25,6 @@ import type {
   PublishPortalProductResponse,
   SectionsListResponse,
   SuccessResponse,
-  TableOfContentsItem,
   TableOfContentsListResponse,
   UpdateDocumentArgs,
   UpdatePortalBody,
@@ -481,7 +484,7 @@ export class SwaggerAPI {
   async createTableOfContents(
     sectionId: string,
     body: CreateTableOfContentsBody,
-  ): Promise<TableOfContentsItem> {
+  ): Promise<CreateTableOfContentsItemResponse> {
     const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents`;
 
     const response = await fetch(url, {
@@ -498,7 +501,7 @@ export class SwaggerAPI {
     }
 
     const result = await response.json();
-    return result as TableOfContentsItem;
+    return result as CreateTableOfContentsItemResponse;
   }
 
   /**
@@ -599,6 +602,69 @@ export class SwaggerAPI {
     }
 
     return { success: true };
+  }
+
+
+  async createDocumentationPage(
+    args: CreateDocumentationPageArgs,
+  ): Promise<CreateDocumentationPageResult> {
+    const { portalId, productId, pageTitle, pageContent, order = 0, parentId = null } = args;
+
+    const portal = await this.getPortal(portalId);
+    const product = await this.getPortalProduct(productId);
+    const productSlug = (product as Record<string, unknown>)?.slug as string;
+
+    const sections = await this.getPortalProductSections(productId, {});
+
+    if (sections.items.length === 0) {
+      throw new ToolError(
+        `Product ${productId} has no sections. Create a section first before adding documentation pages.`,
+      );
+    }
+    const section = sections.items[0];
+
+    const pageSlug = normalizeSlug(pageTitle);
+    const normalizedTitle = pageTitle.slice(0, 255);
+
+    const tocItem = await this.createTableOfContents(section.id, {
+      type: "new",
+      title: normalizedTitle,
+      slug: pageSlug,
+      order,
+      parentId,
+      content: {
+        type: "markdown",
+        source: "internal",
+      },
+    });
+
+    const documentId = tocItem.documentId;
+
+    await this.updateDocument({
+      documentId,
+      content: pageContent,
+      type: "markdown",
+    });
+
+    const host = portal.customDomain ?? portal.subdomain;
+    const pageUrl = buildPortalLiveUrl(this.config, host, productSlug, section, { slug: pageSlug });
+
+    return {
+      productId,
+      sectionId: section.id,
+      sectionSlug: section.slug,
+      pageDetails: {
+        contentId: tocItem.id,
+        slug: pageSlug,
+        title: normalizedTitle,
+        content: {
+          type: "markdown",
+          source: "internal",
+          documentId,
+        },
+      },
+      pageUrl,
+    };
   }
 
   /**

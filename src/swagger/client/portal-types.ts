@@ -472,6 +472,11 @@ export interface Section {
   order: number;
 }
 
+export interface CreateTableOfContentsItemResponse {
+  id: string;
+  documentId: string;
+}
+
 export interface TableOfContentsItem {
   id: string;
   slug: string;
@@ -535,3 +540,50 @@ export interface PaginatedResponse<T> {
 
 export type SectionsListResponse = PaginatedResponse<Section>;
 export type TableOfContentsListResponse = TableOfContentsItem[];
+
+export const CreateDocumentationPageArgsSchema = z.object({
+  portalId: z
+    .string()
+    .describe("Portal UUID or subdomain - unique identifier for the portal"),
+  productId: z
+    .string()
+    .uuid()
+    .describe("Product UUID - unique identifier for the product"),
+  pageTitle: z
+    .string()
+    .describe("Title for the documentation page (max 255 characters). Used to generate the page slug (min 3 characters)."),
+  pageContent: z
+    .string()
+    .describe("Markdown content for the documentation page"),
+  order: z
+    .number()
+    .default(0)
+    .describe("Order position of the page within its parent section"),
+  parentId: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe("Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure"),
+});
+
+export type CreateDocumentationPageArgs = z.infer<
+  typeof CreateDocumentationPageArgsSchema
+>;
+
+export interface CreateDocumentationPageResult {
+  productId: string;
+  sectionId: string;
+  sectionSlug: string;
+  pageDetails: {
+    contentId: string;
+    slug: string;
+    title: string;
+    content: {
+      type: "markdown";
+      source: "internal";
+      documentId: string;
+    };
+  };
+  pageUrl: string;
+}
+
