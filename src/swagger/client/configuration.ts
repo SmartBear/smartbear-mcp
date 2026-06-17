@@ -53,17 +53,7 @@ export class SwaggerConfiguration {
     };
   }
 
-  /**
-   * Get the portal UI domain suffix from portalBasePath
-   * Extracts the portal domain for building live URLs like:
-   * - https://api.dev2.portal.swaggerhub.com/v1 → ".dev2.portal.swaggerhub.com"
-   * - https://api.int.portal.swaggerhub.com/v1 → ".int.portal.swaggerhub.com"
-   * - https://api.portal.swaggerhub.com/v1 (prod) → ".portal.swaggerhub.com"
-   * @returns Portal UI domain suffix with leading dot (e.g., ".dev2.portal.swaggerhub.com")
-   */
   getPortalUiDomainSuffix(): string {
-    // Match pattern: https://api[.{env}].portal.swaggerhub.com
-    // Extract everything from the first dot after api to the end
     const match = this.portalBasePath.match(
       /https?:\/\/api(\..*\.portal\.swaggerhub\.com)/,
     );
