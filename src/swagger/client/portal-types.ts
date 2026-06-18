@@ -558,22 +558,28 @@ export const CreateDocumentationPageArgsSchema = z.object({
     .describe("Product UUID - unique identifier for the product"),
   pageTitle: z
     .string()
-    .describe("Title for the documentation page (max 255 characters). Used to generate the page slug (min 3 characters)."),
+    .describe(
+      "Title of the documentation page - will be displayed in navigation (3-255 characters, used to generate the page slug)",
+    ),
   pageContent: z
     .string()
-    .describe("Markdown content for the documentation page"),
+    .describe("Markdown content of the documentation page"),
   order: z
     .number()
+    .optional()
     .default(0)
-    .describe("Order position of the page within its parent section"),
+    .describe(
+      "Order position of the documentation page within its parent section or item",
+    ),
   parentId: z
     .string()
     .nullable()
+    .optional()
     .default(null)
     .describe("Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure"),
 });
 
-export type CreateDocumentationPageArgs = z.infer<
+export type CreateDocumentationPageArgs = z.input<
   typeof CreateDocumentationPageArgsSchema
 >;
 
