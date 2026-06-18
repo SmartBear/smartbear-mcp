@@ -527,15 +527,12 @@ describe("SwaggerAPI", () => {
         if (url === `${BASE}/documents/${documentId}`) {
           return Promise.resolve(JSON.stringify(updateDocumentResponse));
         }
-        if (url.startsWith(`${BASE}/products/${productId}/published-content`)) {
-          return Promise.resolve(JSON.stringify(publishResponse));
-        }
 
         return Promise.reject(new Error(`Unexpected fetch: ${method} ${url}`));
       });
     };
 
-    it("should create a documentation page and return previewUrl", async () => {
+    it("should create a documentation page and return draftUrl", async () => {
       setupFetchRoutes();
 
       const result = await api.createDocumentationPage({
@@ -591,8 +588,8 @@ describe("SwaggerAPI", () => {
           title: "Getting Started",
           content: { type: "markdown", source: "internal", documentId },
         },
-        previewUrl:
-          "https://myportal.portal.swaggerhub.com/my-product/docs/getting-started?preview=product",
+        draftUrl:
+          "https://myportal.portal.swaggerhub.com/sp-admin/products/my-product/edit/content/doc-111",
       });
     });
 
@@ -666,7 +663,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(result.pageDetails.slug).toBe("hello-world-123");
-      expect(result.previewUrl).toContain("/hello-world-123");
+      expect(result.draftUrl).toContain(`/edit/content/${documentId}`);
     });
   });
 

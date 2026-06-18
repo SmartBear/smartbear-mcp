@@ -584,7 +584,6 @@ export class SwaggerAPI {
     }
 
     const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-
     const response = await fetch(url, {
       method: "GET",
       headers: this.headers,
@@ -664,7 +663,7 @@ export class SwaggerAPI {
   async createDocumentationPage(
     args: CreateDocumentationPageArgs,
   ): Promise<CreateDocumentationPageResult> {
-    
+
     const { portalId, productId, pageTitle, pageContent, order = 0, parentId = null } = args;
 
     const portal = await this.getPortal(portalId);
@@ -696,17 +695,17 @@ export class SwaggerAPI {
     });
     const documentId = tocItem.documentId;
 
-    await this.updateDocument({
-      documentId,
-      content: pageContent,
-      type: "markdown",
-    });
+    if (pageContent !== undefined) {
+      await this.updateDocument({
+        documentId,
+        content: pageContent,
+        type: "markdown",
+      });
+    }
 
-    
-
-    await this.publishPortalProduct(productId, true);
-
-    const previewUrl = buildPortalLiveUrl(this.config, portal, productSlug, section, { slug: pageSlug }, true);
+    const host = portal?.customDomain ?? portal?.subdomain;
+    const portalUiDomain = portal?.customDomain ? "" : this.config.getPortalUiDomainSuffix();
+    const draftUrl =`https://${host}${portalUiDomain}/sp-admin/products/${productSlug}/edit/content/${documentId}`;
 
     return {
       productId,
@@ -722,7 +721,7 @@ export class SwaggerAPI {
           documentId,
         },
       },
-      previewUrl,
+      draftUrl,
     };
   }
 

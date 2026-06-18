@@ -563,6 +563,7 @@ export const CreateDocumentationPageArgsSchema = z.object({
     ),
   pageContent: z
     .string()
+    .optional()
     .describe("Markdown content of the documentation page"),
   order: z
     .number()
@@ -597,6 +598,6 @@ export interface CreateDocumentationPageResult {
       documentId: string;
     };
   };
-  previewUrl: string;
+  draftUrl?: string;
 }
 

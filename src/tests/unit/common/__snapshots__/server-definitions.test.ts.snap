@@ -10142,6 +10142,36 @@ None",
     "outputSchema": undefined,
     "title": "Swagger: Create API from Prompt",
   },
+  "swagger_create_documentation_page": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Swagger: Create Documentation Page",
+    },
+    "description": "Create a documentation page in a portal product in a single tool call. Shortcut for adding a new table of contents page with markdown content to a portal product. Returns the page location details (productId, sectionId, slug) and a draftUrl to edit it in the portal.
+
+**Toolset:** Documents
+
+**Parameters:**
+- portalId (string) *required*: Portal UUID or subdomain - unique identifier for the portal
+- productId (string) *required*: Product UUID - unique identifier for the product
+- pageTitle (string) *required*: Title of the documentation page - will be displayed in navigation (3-255 characters, used to generate the page slug)
+- pageContent (string): Markdown content of the documentation page
+- order (number): Order position of the documentation page within its parent section or item (default: 0)
+- parentId (string): Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure",
+    "inputSchema": [
+      "order",
+      "pageContent",
+      "pageTitle",
+      "parentId",
+      "portalId",
+      "productId",
+    ],
+    "outputSchema": undefined,
+    "title": "Swagger: Create Documentation Page",
+  },
   "swagger_create_or_update_api": {
     "annotations": {
       "destructiveHint": false,
