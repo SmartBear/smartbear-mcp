@@ -254,6 +254,154 @@ describe("FunctionalTestingAPI", () => {
     });
   });
 
+  describe("runSuite", () => {
+    const executionMock = { executionId: "7", status: "pending" };
+
+    it("should call the correct endpoint with POST method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await api.runSuite({ suiteId: "checkout-suite" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/checkout-suite/executions",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should not send a request body when no tunnelAgentName is provided", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await api.runSuite({ suiteId: "checkout-suite" });
+
+      const [, init] = fetchMock.mock.calls[0];
+      expect((init as RequestInit | undefined)?.body).toBeUndefined();
+    });
+
+    it("should send tunnel agent override body when tunnelAgentName is provided", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await api.runSuite({
+        suiteId: "checkout-suite",
+        tunnelAgentName: "my-tunnel",
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      expect((init as RequestInit | undefined)?.body).toBe(
+        JSON.stringify({
+          overrides: { reserved: { agent: { name: "my-tunnel" } } },
+        }),
+      );
+      expect((init as RequestInit | undefined)?.headers).toEqual(
+        expect.objectContaining({ "Content-Type": "application/json" }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      const result = await api.runSuite({ suiteId: "checkout-suite" });
+
+      expect(result).toEqual(executionMock);
+    });
+
+    it("should throw ToolError when suiteId is missing", async () => {
+      await expect(api.runSuite({ suiteId: "" })).rejects.toThrow(
+        "suiteId argument is required",
+      );
+    });
+
+    it("should throw ToolError on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+        "Failed to run suite",
+      );
+    });
+
+    it("should propagate network errors", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+        "Network error",
+      );
+    });
+  });
+
+  describe("getSuiteExecution", () => {
+    const suiteExecutionMock = {
+      suiteId: "checkout-suite",
+      executionId: 7,
+      isFinished: true,
+      status: "Passed",
+      tests: { items: [] },
+    };
+
+    it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
+
+      await api.getSuiteExecution({
+        suiteId: "checkout-suite",
+        executionId: "7",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/checkout-suite/executions/7",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
+
+      const result = await api.getSuiteExecution({
+        suiteId: "checkout-suite",
+        executionId: "7",
+      });
+
+      expect(result).toEqual(suiteExecutionMock);
+    });
+
+    it("should throw ToolError when suiteId is missing", async () => {
+      await expect(
+        api.getSuiteExecution({ suiteId: "", executionId: "7" }),
+      ).rejects.toThrow("suiteId argument is required");
+    });
+
+    it("should throw ToolError when executionId is missing", async () => {
+      await expect(
+        api.getSuiteExecution({ suiteId: "checkout-suite", executionId: "" }),
+      ).rejects.toThrow("executionId argument is required");
+    });
+
+    it("should throw ToolError on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
+
+      await expect(
+        api.getSuiteExecution({
+          suiteId: "checkout-suite",
+          executionId: "7",
+        }),
+      ).rejects.toThrow("Failed to get suite execution status");
+    });
+
+    it("should propagate network errors", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.getSuiteExecution({
+          suiteId: "checkout-suite",
+          executionId: "7",
+        }),
+      ).rejects.toThrow("Network error");
+    });
+  });
+
   describe("getFtHeaders", () => {
     it("should return headers with X-API-KEY and Content-Type", () => {
       const headers = api.getFtHeaders();
