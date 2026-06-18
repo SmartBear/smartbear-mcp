@@ -97,9 +97,7 @@ export class FunctionalTestingAPI {
 
     const body = args.tunnelAgentName
       ? JSON.stringify({
-          overrides: {
-            reserved: { agent: { name: args.tunnelAgentName } },
-          },
+          overrides: { agent: { name: args.tunnelAgentName } },
         })
       : undefined;
 

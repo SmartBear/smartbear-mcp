@@ -200,7 +200,7 @@ describe("FunctionalTestingAPI", () => {
       const [, init] = fetchMock.mock.calls[0];
       expect((init as RequestInit | undefined)?.body).toBe(
         JSON.stringify({
-          overrides: { reserved: { agent: { name: "my-tunnel" } } },
+          overrides: { agent: { name: "my-tunnel" } },
         }),
       );
       expect((init as RequestInit | undefined)?.headers).toEqual(
