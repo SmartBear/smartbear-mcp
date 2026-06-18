@@ -1,6 +1,8 @@
 import { ToolError } from "../../common/tools";
 import type {
   GetFunctionalTestingExecutionTestParams,
+  GetFunctionalTestingSuiteExecutionParams,
+  RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
 } from "./functional-testing-types";
 
@@ -84,6 +86,60 @@ export class FunctionalTestingAPI {
     if (!response.ok) {
       throw new ToolError(
         `Failed to get test status: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return response.json();
+  }
+
+  async runSuite(args: RunFunctionalTestingSuiteParams): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+
+    const body = args.tunnelAgentName
+      ? JSON.stringify({
+          overrides: {
+            reserved: { agent: { name: args.tunnelAgentName } },
+          },
+        })
+      : undefined;
+
+    const response = await fetch(
+      `${this.baseUrl}/suites/${args.suiteId}/executions`,
+      {
+        method: "POST",
+        headers: this.getFtHeaders(),
+        body,
+      },
+    );
+
+    if (!response.ok) {
+      throw new ToolError(
+        `Failed to run suite: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return response.json();
+  }
+
+  async getSuiteExecution(
+    args: GetFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.executionId) {
+      throw new ToolError("executionId argument is required");
+    }
+
+    const response = await fetch(
+      `${this.baseUrl}/suites/${args.suiteId}/executions/${args.executionId}`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+    );
+
+    if (!response.ok) {
+      throw new ToolError(
+        `Failed to get suite execution status: ${response.status} ${response.statusText}`,
       );
     }
 
