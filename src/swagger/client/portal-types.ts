@@ -591,6 +591,6 @@ export interface CreateDocumentationPageResult {
       documentId: string;
     };
   };
-  pageUrl: string;
+  previewUrl: string;
 }
 

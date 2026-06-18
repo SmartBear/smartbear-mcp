@@ -149,7 +149,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Create Documentation Page",
     toolset: "Documents",
     summary:
-      "Create a documentation page in a portal product in a single tool call. Handles section lookup or creation, TOC entry creation, and content update internally. Returns the draft page URL and all relevant IDs.",
+      "Create a documentation page in a portal product in a single tool call. Handles section lookup or creation, TOC entry creation, and content update internally. Returns the previewUrl and all relevant IDs.",
     inputSchema: CreateDocumentationPageArgsSchema,
     handler: "createDocumentationPage",
   },

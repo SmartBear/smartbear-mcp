@@ -664,6 +664,7 @@ export class SwaggerAPI {
   async createDocumentationPage(
     args: CreateDocumentationPageArgs,
   ): Promise<CreateDocumentationPageResult> {
+    
     const { portalId, productId, pageTitle, pageContent, order = 0, parentId = null } = args;
 
     const portal = await this.getPortal(portalId);
@@ -693,7 +694,6 @@ export class SwaggerAPI {
         source: "internal",
       },
     });
-
     const documentId = tocItem.documentId;
 
     await this.updateDocument({
@@ -702,7 +702,11 @@ export class SwaggerAPI {
       type: "markdown",
     });
 
-    const pageUrl = buildPortalLiveUrl(this.config, portal, productSlug, section, { slug: pageSlug });
+    
+
+    await this.publishPortalProduct(productId, true);
+
+    const previewUrl = buildPortalLiveUrl(this.config, portal, productSlug, section, { slug: pageSlug }, true);
 
     return {
       productId,
@@ -718,7 +722,7 @@ export class SwaggerAPI {
           documentId,
         },
       },
-      pageUrl,
+      previewUrl,
     };
   }
 
