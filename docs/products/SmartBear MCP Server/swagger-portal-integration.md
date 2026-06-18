@@ -60,7 +60,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 #### `resolve_organization_portal`
 
 - Purpose: Resolve portal details for a Swagger organization in a single step. Finds the portal mapped to the given organization and returns its details along with the portal's products. If the organization has no portal yet, a new portal is created automatically (with a subdomain derived from the organization name).
-- Returns: The organization ID, portal ID, subdomain, a `portalCreated` flag indicating whether a new portal was created, and the list of products (`productId`, `product-slug`, `product-name`).
+- Returns: The organization ID, portal ID, subdomain, `customDomain` (only when the portal has one configured), a `portalCreated` flag indicating whether a new portal was created, and the list of products (`productId`, `productSlug`, `productName`).
 - Use case: Obtain all portal context needed for subsequent portal and product operations without performing multiple manual lookup steps.
 - Parameters:
 

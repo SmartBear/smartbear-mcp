@@ -517,18 +517,20 @@ export interface TableOfContentsItemSwaggerhubApi {
   _private: boolean;
 }
 
-// Response type for the Resolve Organization Portal tool. Product keys use
-// the kebab-case names required by the SWG-20374 contract.
+// Response type for the Resolve Organization Portal tool. Product keys follow
+// the camelCase naming convention used across the MCP server.
 export interface ResolvedPortalProduct {
   productId: string;
-  "product-slug": string;
-  "product-name": string;
+  productSlug: string;
+  productName: string;
 }
 
 export interface ResolveOrganizationPortalResponse {
   organizationId: string;
   portalId: string;
   subdomain: string;
+  // Present only when the portal has a custom domain configured.
+  customDomain?: string;
   portalCreated: boolean;
   products: ResolvedPortalProduct[];
 }

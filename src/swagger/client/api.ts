@@ -42,6 +42,12 @@ import type {
   StandardizeApiResponse,
 } from "./registry-types";
 
+import {
+  buildPortalName,
+  buildSubdomainCandidate,
+  buildSuffixedSubdomain,
+  isConflictError,
+} from "./portal-utils";
 import type {
   Organization,
   OrganizationsListResponse,
@@ -307,16 +313,22 @@ export class SwaggerAPI {
       await this.getPortalProducts(portal.id),
     );
 
+    const customDomain =
+      typeof portal.customDomain === "string" && portal.customDomain.length > 0
+        ? portal.customDomain
+        : undefined;
+
     return {
       organizationId,
       portalId: portal.id,
       subdomain: typeof portal.subdomain === "string" ? portal.subdomain : "",
+      ...(customDomain ? { customDomain } : {}),
       portalCreated,
       products: products.map(
         (product): ResolvedPortalProduct => ({
           productId: product.id,
-          "product-slug": typeof product.slug === "string" ? product.slug : "",
-          "product-name": product.name,
+          productSlug: typeof product.slug === "string" ? product.slug : "",
+          productName: product.name,
         }),
       ),
     };
@@ -343,6 +355,11 @@ export class SwaggerAPI {
   /**
    * Find the portal mapped to a Swagger organization. The Portal API does not
    * support filtering by organization, so pages are scanned client-side.
+   *
+   * Permission/role problems surface as thrown errors: handleResponse throws on
+   * any non-2xx status (e.g. 401/403), so a lack of access never masquerades as
+   * an empty result. An empty list therefore means the user can see portals but
+   * none is mapped to this organization, in which case a new portal is created.
    */
   private async findPortalByOrganizationId(
     organizationId: string,
@@ -404,42 +421,6 @@ export class SwaggerAPI {
   }
 
   /**
-   * Build a portal subdomain candidate from the organization name, falling
-   * back to an identifier derived from the organization UUID. Subdomains must
-   * match ^[a-z0-9]+(-[a-z0-9]+)*$ and be 3-20 characters long.
-   */
-  private buildSubdomainCandidate(
-    organizationId: string,
-    organizationName?: string,
-  ): string {
-    const fallback = `portal-${organizationId
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-      .slice(0, 8)}`;
-
-    if (!organizationName) {
-      return fallback;
-    }
-
-    const sanitized = organizationName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 20)
-      .replace(/-+$/, "");
-
-    return sanitized.length >= 3 ? sanitized : fallback;
-  }
-
-  private isConflictError(error: unknown): boolean {
-    return (
-      error instanceof ToolError &&
-      (error.metadata?.get("status") === 409 ||
-        error.message.startsWith("HTTP 409"))
-    );
-  }
-
-  /**
    * Create a portal for an organization that has none yet. The subdomain is
    * derived from the organization name; on a subdomain conflict a candidate
    * suffixed with part of the organization UUID is retried.
@@ -448,25 +429,16 @@ export class SwaggerAPI {
     organizationId: string,
   ): Promise<{ portal: Portal; created: boolean }> {
     const organization = await this.findOrganizationById(organizationId);
-    const baseSubdomain = this.buildSubdomainCandidate(
+    const baseSubdomain = buildSubdomainCandidate(
       organizationId,
       organization?.name,
     );
+    const candidates = [
+      baseSubdomain,
+      buildSuffixedSubdomain(baseSubdomain, organizationId),
+    ];
 
-    const idSuffix = organizationId
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-      .slice(0, 4);
-    const suffixedSubdomain = `${baseSubdomain
-      .slice(0, 20 - idSuffix.length - 1)
-      .replace(/-+$/, "")}-${idSuffix}`;
-    const candidates = [baseSubdomain, suffixedSubdomain];
-
-    const organizationName = organization?.name?.trim();
-    const portalName =
-      organizationName && organizationName.length >= 3
-        ? organizationName.slice(0, 40)
-        : undefined;
+    const portalName = buildPortalName(organization?.name);
 
     let lastError: unknown;
     for (const subdomain of candidates) {
@@ -481,7 +453,7 @@ export class SwaggerAPI {
           created: true,
         };
       } catch (error) {
-        if (!this.isConflictError(error)) {
+        if (!isConflictError(error)) {
           throw error;
         }
         lastError = error;

@@ -358,15 +358,52 @@ describe("SwaggerAPI", () => {
         products: [
           {
             productId: "prod-1",
-            "product-slug": "pet-api",
-            "product-name": "Pet API",
+            productSlug: "pet-api",
+            productName: "Pet API",
           },
           {
             productId: "prod-2",
-            "product-slug": "store-api",
-            "product-name": "Store API",
+            productSlug: "store-api",
+            productName: "Store API",
           },
         ],
+      });
+    });
+
+    it("should include customDomain when the existing portal has one", async () => {
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        if (url.includes("/portals?page=1")) {
+          return {
+            body: JSON.stringify({
+              items: [
+                {
+                  id: "portal-2",
+                  name: "Pet Co.",
+                  subdomain: "petco",
+                  customDomain: "docs.petco.com",
+                  swaggerHubOrganizationId: organizationId,
+                },
+              ],
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.includes("/portals/portal-2/products")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      const result = await api.resolveOrganizationPortal({ organizationId });
+
+      expect(result).toEqual({
+        organizationId,
+        portalId: "portal-2",
+        subdomain: "petco",
+        customDomain: "docs.petco.com",
+        portalCreated: false,
+        products: [],
       });
     });
 
