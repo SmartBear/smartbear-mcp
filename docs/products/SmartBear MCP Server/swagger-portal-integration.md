@@ -134,10 +134,7 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `tableOfContentsId` | Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug' used to resolve a specific live URL path | string | No |
 
 **Response Details:**
-- When `portal.customDomain` is present, it is used as the full host in the generated URL without appending the portal UI suffix
-- When `customDomain` is not present, the URL is built using `portal.subdomain` + the portal UI suffix (`.portal.swaggerhub.com`)
-- When `tableOfContentsId` resolves successfully, the returned URL includes the section and table-of-contents path in the format: `/{productSlug}/{sectionSlug}/{tocSlug}`
-- The response includes only essential fields from product, portal, and tableOfContentsItem.
+- Returns success plus product/portal metadata and a publish URL (previewUrl if preview, else liveUrl); includes tableOfContentsItem (and a direct TOC URL) only when tableOfContentsId was provided and resolved.
 
 ### Product Sections Management
 
