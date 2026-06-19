@@ -1017,9 +1017,53 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Test Case Executions",
     toolset: "Test Cases",
-    summary: "Get execution records for a specific test case by numeric ID",
+    summary:
+      "Get execution records for a specific test case by numeric ID, including Test Run UDF values",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
     inputSchema: TestCaseExecutionsArgsSchema,
+    formatResponse: (result: any) => {
+      if (!result?.data || !Array.isArray(result.data)) return result;
+      if (result.hasTcRunUdf === false) {
+        return {
+          ...result,
+          testRunUdfNote:
+            "No Test Run UDFs are configured for this project. " +
+            "The 'testRunUdfs' field will not be present in execution records. " +
+            "To enable Test Run UDF features, a project administrator must define Test Run UDF fields in the project settings.",
+        };
+      }
+      return {
+        ...result,
+        data: result.data.map((row: any) => {
+          if (!row.udfjson) return row;
+          let testRunUdfs: Record<string, unknown> = {};
+          try {
+            const parsed = JSON.parse(row.udfjson);
+            testRunUdfs = Object.fromEntries(
+              Object.entries(parsed).map(([key, val]) => {
+                if (typeof val === "string" && /<[^>]+>/.test(val)) {
+                  const text = val
+                    .replace(/<[^>]*>/g, " ")
+                    .replace(/&nbsp;/g, " ")
+                    .replace(/&amp;/g, "&")
+                    .replace(/&lt;/g, "<")
+                    .replace(/&gt;/g, ">")
+                    .replace(/&quot;/g, '"')
+                    .replace(/\s+/g, " ")
+                    .trim();
+                  return [key, text];
+                }
+                return [key, val];
+              }),
+            );
+          } catch {
+            testRunUdfs = {};
+          }
+          const { udfjson: _udfjson, ...rest } = row;
+          return { ...rest, testRunUdfs };
+        }),
+      };
+    },
     purpose:
       "Retrieve execution history and results for a specific test case. " +
       "This tool provides detailed execution information including test suite names, platforms, " +
@@ -1035,6 +1079,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "Audit test execution history for compliance",
       "Analyze test case execution performance across different environments",
       "Track test execution by specific users or teams",
+      "Fetch Test Run UDF values for a specific test case's execution records",
+      "Inspect custom metadata captured during test execution via Test Run UDFs",
+      "Check whether the project has Test Run UDFs configured (hasTcRunUdf flag)",
     ],
     examples: [
       {
@@ -1094,6 +1141,20 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         },
         expectedOutput: "Execution records executed by specific user",
       },
+      {
+        description:
+          "Fetch Test Run UDF values for all executions of test case ID 41571999",
+        parameters: { tcid: 41571999 },
+        expectedOutput:
+          "Execution records where each row includes a 'testRunUdfs' object with UDF field keys mapped to their values. Example: testRunUdfs: { '8260LUP': 'l1', 'TRString': 'dsf', 'notes_run': 'testadsfa', 'cascade_vK': { child: 'qq', parent: 'vkc' }, 'PGTE_MULTILOOKUPLIST': ['aa', 'bb'] }",
+      },
+      {
+        description:
+          "Check if project has Test Run UDFs — response includes hasTcRunUdf flag",
+        parameters: { tcid: 1223922 },
+        expectedOutput:
+          "Response contains hasTcRunUdf: true (UDFs present, testRunUdfs populated) or hasTcRunUdf: false (no UDFs configured, testRunUdfNote explains this)",
+      },
     ],
     hints: [
       "This API requires a numeric tcid parameter, not entity key",
@@ -1132,9 +1193,30 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "This tool is essential for test execution reporting, trend analysis, and compliance auditing",
       "Execution data includes timestamps, user information, environment details, and test results",
       "Use scope parameter to define retrieval context (project, folder, release, cycle)",
+      "",
+      "TEST RUN UDF SUPPORT:",
+      "This tool automatically parses the 'udfjson' field from each execution record into a readable 'testRunUdfs' key-value object.",
+      "HTML is stripped from rich text (large text) UDF fields for clean LLM output.",
+      "Example testRunUdfs in response:",
+      "  testRunUdfs: {",
+      '    "8260LUP": "l1",',
+      '    "TRString": "dsf",',
+      '    "notes_run": "testadsfa",',
+      '    "cascade_vK": { "child": "qq", "parent": "vkc" },',
+      '    "PGTE_MULTILOOKUPLIST": ["aa", "bb"],',
+      '    "PGTE_DATEPICKER": "06-03-2026"',
+      "  }",
+      "",
+      "hasTcRunUdf FLAG — IMPORTANT:",
+      "The response contains a 'hasTcRunUdf' boolean flag at the top level.",
+      "hasTcRunUdf: true  → Project has Test Run UDFs configured; each execution record includes 'testRunUdfs' object.",
+      "hasTcRunUdf: false → Project has NO Test Run UDFs configured.",
+      "  When hasTcRunUdf is false, the response includes a 'testRunUdfNote' field with a professional explanation.",
+      "  Inform the user: 'No Test Run UDFs are configured for this project. Contact a project administrator to set up Test Run UDF fields.'",
+      "NEVER attempt to read testRunUdfs from records when hasTcRunUdf is false — the field will not be present.",
     ],
     outputDescription:
-      "JSON object with executions array containing execution records, status, timestamps, and metadata",
+      "JSON object with executions array. Each execution record contains status, timestamps, metadata, and a 'testRunUdfs' object with key-value pairs of Test Run UDF values (HTML stripped from rich text fields). Top-level 'hasTcRunUdf' flag indicates whether the project has Test Run UDFs configured. When false, a 'testRunUdfNote' field provides a professional explanation instead.",
     readOnly: true,
     idempotent: true,
   },

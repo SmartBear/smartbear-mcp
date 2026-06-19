@@ -320,6 +320,16 @@ export const CommonFields = {
     .optional()
     .describe("User-defined field filter as JSON string (default '[]')")
     .default("[]"),
+  tcrUdfFilter: z
+    .string()
+    .optional()
+    .describe(
+      "Test Case Run (TCR) UDF filter as JSON string (default '[]'). " +
+        "Used to filter test case runs by Test Run UDF field values. " +
+        'Format: \'[{"type":"list","value":[<listItemId1>,<listItemId2>],"field":"<udfFieldKey>"}]\'. ' +
+        'Example: \'[{"type":"list","value":[5108701,5108697],"field":"8260LUP"}]\' filters runs where the UDF field \'8260LUP\' has those list item IDs.',
+    )
+    .default("[]"),
   showRootOnly: z
     .boolean()
     .optional()
@@ -972,6 +982,10 @@ export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
+  filter: CommonFields.filter,
+  udfFilter: CommonFields.udfFilter,
+  tcrUdfFilter: CommonFields.tcrUdfFilter,
+  showTcWithDefects: CommonFields.showTcWithDefects,
 });
 
 export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
@@ -1094,6 +1108,34 @@ export const LinkIssuesToTestcaseRunArgsSchema = z.object({
     .array(z.union([z.string(), z.number()]))
     .describe("ID of issues to be linked to Testcase Run"),
   tcrId: z.number().describe("ID of Testcase Run to link issues with"),
+});
+
+export const IssueExecutionsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  linkedAssetId: z
+    .number()
+    .describe(
+      "Numeric defect ID of the QMetry issue. " +
+        "To get this ID, call the Fetch Defects or Issues tool and use data[<index>].id from the response.",
+    ),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  platformID: z
+    .string()
+    .optional()
+    .describe("Platform ID to filter executions by environment/platform"),
+  filter: z
+    .string()
+    .optional()
+    .describe(
+      "JSON filter string. Supported fields: tcName (string), linkageLevel (string), executedVersion (string), " +
+        "runStatusName (list of status names), platformID (list of numeric IDs), " +
+        "executionCreatedByLoginAlias (list of usernames), isTestSuiteArchived (list: [1] active, [0] archived, [1,0] both). " +
+        'Example: \'[{"type":"string","value":"login","field":"tcName"}]\'',
+    )
+    .default("[]"),
 });
 
 // Export for Link Platforms to Test Suite tool

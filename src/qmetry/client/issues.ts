@@ -2,10 +2,12 @@ import { QMETRY_PATHS } from "../config/rest-endpoints";
 import {
   type CreateIssuePayload,
   DEFAULT_CREATE_ISSUE_PAYLOAD,
+  DEFAULT_FETCH_ISSUE_EXECUTIONS_PAYLOAD,
   DEFAULT_FETCH_ISSUES_LINKED_TO_TESTCASE_PAYLOAD,
   DEFAULT_FETCH_ISSUES_PAYLOAD,
   DEFAULT_LINK_ISSUES_TO_TESTCASE_RUN_PAYLOAD,
   DEFAULT_UPDATE_ISSUE_PAYLOAD,
+  type FetchIssueExecutionsPayload,
   type FetchIssuesLinkedToTestCasePayload,
   type FetchIssuesPayload,
   type LinkIssuesToTestcaseRunPayload,
@@ -161,6 +163,54 @@ export async function fetchIssuesLinkedToTestCase(
   return qmetryRequest<unknown>({
     method: "POST",
     path: QMETRY_PATHS.ISSUES.GET_ISSUES_LINKED_TO_TC,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body,
+  });
+}
+
+/**
+ * Fetch executions for a QMetry-native (non-Jira) issue.
+ * @throws If linkedAssetId or linkedAsset.id is missing/invalid.
+ */
+export async function fetchIssueExecutions(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload:
+    | (Omit<FetchIssueExecutionsPayload, "linkedAsset"> & {
+        linkedAssetId?: number;
+      })
+    | FetchIssueExecutionsPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const { linkedAssetId, ...rest } = payload as any;
+  const resolvedLinkedAsset =
+    (payload as FetchIssueExecutionsPayload).linkedAsset ??
+    (typeof linkedAssetId === "number"
+      ? { type: "DF" as const, id: linkedAssetId }
+      : undefined);
+
+  if (!resolvedLinkedAsset || typeof resolvedLinkedAsset.id !== "number") {
+    throw new Error(
+      "[fetchIssueExecutions] Missing or invalid required parameter: 'linkedAssetId'.",
+    );
+  }
+
+  const body: FetchIssueExecutionsPayload = {
+    ...DEFAULT_FETCH_ISSUE_EXECUTIONS_PAYLOAD,
+    ...rest,
+    linkedAsset: resolvedLinkedAsset,
+  };
+
+  return qmetryRequest<unknown>({
+    method: "POST",
+    path: QMETRY_PATHS.ISSUES.GET_ISSUE_EXECUTIONS,
     token,
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,

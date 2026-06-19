@@ -1,6 +1,7 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
   CreateIssueArgsSchema,
+  IssueExecutionsArgsSchema,
   IssuesLinkedToTestCaseArgsSchema,
   IssuesListArgsSchema,
   LinkedIssuesByTestCaseRunArgsSchema,
@@ -504,6 +505,142 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     outputDescription: "JSON object with linkage status and details.",
     readOnly: false,
     idempotent: false,
+  },
+  {
+    title: "Fetch Issue Executions",
+    toolset: "Issues",
+    summary:
+      "Get test case executions linked to a QMetry-native (non-Jira) defect/issue.",
+    handler: QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS,
+    inputSchema: IssueExecutionsArgsSchema,
+    purpose:
+      "Retrieve all test case execution runs that are linked to a specific QMetry-native defect or issue. " +
+      "This tool is for local QMetry issues only (not Jira-integrated projects). " +
+      "Returns execution details including test case name, run status, platform, release/cycle, and UDF fields. " +
+      "The response includes hasTcRunUdf flag (true when executions have UDF data) and udfjson (JSON string of UDF field values per execution). " +
+      "To get linkedAssetId, call Fetch Defects or Issues tool and use data[<index>].id from the response.",
+    useCases: [
+      "Get all test executions linked to a specific defect",
+      "Audit which test cases were run against a given issue",
+      "Filter executions by run status (failed, passed, etc.) for an issue",
+      "Filter executions by platform/environment for an issue",
+      "Filter executions by tester/executor for an issue",
+      "Show archived and active test suite executions for an issue",
+      "View UDF (custom field) values on executions linked to an issue",
+      "Track test coverage and execution progress for a defect",
+    ],
+    examples: [
+      {
+        description: "Get all executions linked to issue ID 9598240",
+        parameters: {
+          linkedAssetId: 9598240,
+        },
+        expectedOutput:
+          "List of test case executions linked to the issue with run status, platform, release/cycle, and UDF data",
+      },
+      {
+        description: "Get executions with pagination (page 1, 20 records)",
+        parameters: {
+          linkedAssetId: 9598240,
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput: "First 20 executions linked to the issue",
+      },
+      {
+        description: "Filter executions by run status (failed or passed)",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter:
+            '[{"type":"list","field":"runStatusName","value":["failed","passed"]}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput: "Executions with failed or passed status for the issue",
+      },
+      {
+        description: "Filter executions by test case name",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter: '[{"type":"string","value":"login","field":"tcName"}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput: "Executions where test case name contains 'login'",
+      },
+      {
+        description: "Filter by platform, status, and tester",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter:
+            '[{"type":"list","field":"runStatusName","value":["failed"]},{"type":"list","field":"platformID","value":[100145]},{"type":"list","field":"executionCreatedByLoginAlias","value":["Varis Khan"]}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput:
+          "Failed executions on platform 100145 created by Varis Khan",
+      },
+      {
+        description:
+          "Filter by status and include archived test suite executions",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter:
+            '[{"type":"list","field":"runStatusName","value":["failed","passed"]},{"value":[1,0],"type":"list","field":"isTestSuiteArchived"}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput:
+          "Executions with failed/passed status including archived test suites",
+      },
+      {
+        description: "Filter by execution version and linkage level",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter:
+            '[{"type":"string","value":"1","field":"executedVersion"},{"type":"string","value":"Test Case","field":"linkageLevel"}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput: "Executions at Test Case linkage level for version 1",
+      },
+    ],
+    hints: [
+      "CRITICAL: linkedAssetId is REQUIRED - this is the numeric defect ID from QMetry (not entity key like VKT-IS-5)",
+      "HOW TO GET linkedAssetId: Call Fetch Defects or Issues tool → use data[<index>].id from the response",
+      "AUTO-RESOLVE: If user provides an issue entity key (e.g. VKT-IS-5, MAC-IS-10), first call Fetch Defects or Issues with that entity key as filter, extract data[<index>].id, then use it as linkedAssetId",
+      'AUTO-RESOLVE FILTER EXAMPLE: to resolve VKT-IS-5 → use filter \'[{"type":"string","value":"VKT-IS-5","field":"entityKeyId"}]\' in Fetch Defects or Issues tool',
+      "This tool supports QMetry-native issues only — do NOT use for Jira-integrated projects",
+      "RESPONSE FIELDS: hasTcRunUdf=true means executions have UDF data; udfjson is a JSON string of UDF field key-value pairs per execution",
+      'UDF PARSING: Parse udfjson string as JSON to access individual UDF fields. Example: {"TRString":"test","dateTimePicker1010":"05-22-2026"}',
+      "FILTER FIELDS:",
+      "  - tcName (string): filter by test case name substring",
+      "  - linkageLevel (string): 'Test Case' or 'Test Step'",
+      "  - executedVersion (string): version number as string e.g. '1'",
+      '  - runStatusName (list): e.g. ["failed","passed","in progress"]',
+      "  - platformID (list): numeric platform IDs e.g. [100145]. Get from FETCH_PLATFORMS tool",
+      '  - executionCreatedByLoginAlias (list): usernames/login aliases e.g. ["john.doe"]',
+      "  - isTestSuiteArchived (list): [1] active only, [0] archived only, [1,0] both",
+      'FILTER FORMAT: JSON string array — \'[{"type":"list","field":"runStatusName","value":["failed"]}]\'',
+      "Multiple filter conditions are combined with AND logic",
+      "Use pagination (page, start, limit) for large result sets",
+      "Get platform IDs using the FETCH_PLATFORMS tool before filtering by platformID",
+      "Execution status names are case-sensitive — use lowercase: 'failed', 'passed', 'in progress', 'blocked', 'not run'",
+    ],
+    outputDescription:
+      "JSON object with 'data' array of execution records, 'hasTcRunUdf' boolean flag, and 'total' count. " +
+      "Each execution contains tcRunID, tcID, dfID, tcName, tcEntityKey, runStatusName, platformName, " +
+      "cycleName, releaseName, executedAt, executionCreatedByLoginAlias, linkageLevel, executedVersion, " +
+      "isArchived, isTestSuiteArchived, and udfjson (JSON string of UDF field values).",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
   },
   {
     title: "Fetch Issues Linked to Test Case",
