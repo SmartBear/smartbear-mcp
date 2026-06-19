@@ -212,7 +212,7 @@ async function getPortalId(): Promise<string> {
   info(`Fetching portal ID for subdomain "${PORTAL_SUBDOMAIN}"...`);
   const data = (await portalFetch(
     "GET",
-    portalUrlQ("/portals", { subdomain: PORTAL_SUBDOMAIN! }),
+    portalUrlQ("/portals", { subdomain: PORTAL_SUBDOMAIN ?? "" }),
   )) as { items?: Array<{ id: string }> };
   const id = data?.items?.[0]?.id;
   if (!id)
