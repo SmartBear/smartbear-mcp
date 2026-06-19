@@ -64,6 +64,13 @@ The Reflect client provides test management, execution, and test authoring capab
 - Returns: Status of a test.
 - Use case: Understand the health status of a given test.
 
+#### `reflect_get_test_detail`
+
+- Purpose: Get the full detail of a reflect test, including its name, description, and all recorded steps.
+- Parameters: Test identifier (`testId`).
+- Returns: Complete test details including all recorded steps.
+- Use case: Inspect the structure of a specific test before executing or editing it.
+
 ---
 
 ### Test Authoring & Agent Interaction
