@@ -26,6 +26,7 @@ import { ExecuteSuite } from "./tool/suites/execute-suite";
 import { GetSuiteExecutionStatus } from "./tool/suites/get-suite-execution-status";
 import { ListSuiteExecutions } from "./tool/suites/list-suite-executions";
 import { ListSuites } from "./tool/suites/list-suites";
+import { GetTestDetail } from "./tool/tests/get-test-detail";
 import { GetTestStatus } from "./tool/tests/get-test-status";
 import { ListSegments } from "./tool/tests/list-segments";
 import { ListTests } from "./tool/tests/list-tests";
@@ -185,6 +186,7 @@ export class ReflectClient implements Client {
       new ExecuteSuite(this),
       new CancelSuiteExecution(this),
       new ListTests(this),
+      new GetTestDetail(this),
       new RunTest(this),
       new GetTestStatus(this),
     ];
