@@ -459,7 +459,6 @@ export class SwaggerAPI {
       tableOfContentsId,
     );
 
-
     const response = await fetch(
       `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
       {
@@ -659,12 +658,17 @@ export class SwaggerAPI {
     return { success: true };
   }
 
-
   async createDocumentationPage(
     args: CreateDocumentationPageArgs,
   ): Promise<CreateDocumentationPageResult> {
-
-    const { portalId, productId, pageTitle, pageContent, order = 0, parentId = null } = args;
+    const {
+      portalId,
+      productId,
+      pageTitle,
+      pageContent,
+      order = 0,
+      parentId = null,
+    } = args;
 
     const portal = await this.getPortal(portalId);
     const product = await this.getPortalProduct(productId);
@@ -704,8 +708,10 @@ export class SwaggerAPI {
     }
 
     const host = portal?.customDomain ?? portal?.subdomain;
-    const portalUiDomain = portal?.customDomain ? "" : this.config.getPortalUiDomainSuffix();
-    const draftUrl =`https://${host}${portalUiDomain}/sp-admin/products/${productSlug}/edit/content/${tocItem.id}`;
+    const portalUiDomain = portal?.customDomain
+      ? ""
+      : this.config.getPortalUiDomainSuffix();
+    const draftUrl = `https://${host}${portalUiDomain}/sp-admin/products/${productSlug}/edit/content/${tocItem.id}`;
 
     return {
       productId,

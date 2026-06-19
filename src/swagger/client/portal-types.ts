@@ -577,7 +577,9 @@ export const CreateDocumentationPageArgsSchema = z.object({
     .nullable()
     .optional()
     .default(null)
-    .describe("Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure"),
+    .describe(
+      "Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure",
+    ),
 });
 
 export type CreateDocumentationPageArgs = z.input<
@@ -600,4 +602,3 @@ export interface CreateDocumentationPageResult {
   };
   draftUrl?: string;
 }
-

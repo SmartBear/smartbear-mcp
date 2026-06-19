@@ -273,7 +273,6 @@ describe("SwaggerAPI", () => {
       customDomain: "testCustomDomain.portal-testing.com",
     };
 
-
     const sectionsResponse = {
       page: {
         number: 0,
@@ -541,14 +540,14 @@ describe("SwaggerAPI", () => {
         pageContent: "# Hello",
       });
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/portals/${portalId}`,
-        { method: "GET", headers },
-      );
-      expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/products/${productId}`,
-        { method: "GET", headers },
-      );
+      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/portals/${portalId}`, {
+        method: "GET",
+        headers,
+      });
+      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/products/${productId}`, {
+        method: "GET",
+        headers,
+      });
       expect(fetchMock).toHaveBeenCalledWith(
         `${BASE}/products/${productId}/sections`,
         { method: "GET", headers },
