@@ -119,6 +119,80 @@ export const ENDPOINTS = {
   COMPONENTS: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/components`,
 
+  /** Environments search endpoint (resolve environment name → ID for executions) */
+  ENVIRONMENTS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/environments`,
+
+  /** Builds search endpoint (resolve build name → ID for executions) */
+  BUILDS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/builds`,
+
+  /** Resolve defect issue keys → Jira numeric issueIds for a given project */
+  RESOLVE_DEFECT_IDS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/defects/resolve-ids`,
+
+  /** Resolve defect status names → internal status IDs for a given project */
+  DEFECT_STATUSES: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/defects/statuses`,
+
+  /** Resolve defect priority names → internal priority IDs for a given project */
+  DEFECT_PRIORITIES: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/defects/priorities`,
+
+  /** Resolve execution context (testCycleTestCaseMapId + testCaseExecutionId) by issue keys */
+  EXECUTION_CONTEXT: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcycles/execution-context`,
+
+  /** Resolve step execution context (seqNo → testStepExecutionId) for a test case execution */
+  STEP_EXECUTION_CONTEXT: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcycles/step-execution-context`,
+
+  /** Start new test case execution */
+  START_NEW_EXECUTION: (cycleKey: string, testCycleTestCaseMapId: number) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcases/${testCycleTestCaseMapId}/executions`,
+
+  /** Update test case execution */
+  UPDATE_TEST_CASE_EXECUTION: (cycleKey: string, testCaseExecutionId: number) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}`,
+
+  /** Update test step execution */
+  UPDATE_TEST_STEP_EXECUTION: (cycleKey: string, testStepExecutionId: number) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}`,
+
+  /** Get test step executions for a test case execution */
+  GET_TEST_STEP_EXECUTIONS: (cycleKey: string, testCaseExecutionId: number) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}/teststeps`,
+
+  /** Link bugs to test case execution */
+  LINK_BUGS_TEST_CASE_EXECUTION: (
+    cycleKey: string,
+    testCaseExecutionId: number,
+    returnLinkedDefectCount?: boolean,
+  ) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}/defects${returnLinkedDefectCount ? "?returnLinkedDefectCount=true" : ""}`,
+
+  /** Link bugs to test step execution */
+  LINK_BUGS_TEST_STEP_EXECUTION: (
+    cycleKey: string,
+    testStepExecutionId: number,
+    returnLinkedDefectCount?: boolean,
+  ) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}/defects${returnLinkedDefectCount ? "?returnLinkedDefectCount=true" : ""}`,
+
+  /** Get linked bugs for a test case execution (POST with filter body) */
+  GET_LINKED_BUGS_TEST_CASE_EXECUTION: (
+    cycleKey: string,
+    testCaseExecutionId: number,
+  ) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}/defects`,
+
+  /** Get linked bugs for a test step execution (POST with filter body) */
+  GET_LINKED_BUGS_TEST_STEP_EXECUTION: (
+    cycleKey: string,
+    testStepExecutionId: number,
+  ) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}/defects`,
+
   /** Automation: initiate result file import — returns pre-signed S3 upload URL + trackingId */
   AUTOMATION_IMPORT: "/rest/api/automation/importresult",
 
@@ -225,6 +299,12 @@ export const PAGINATION = {
 
   /** Minimum allowed results per request */
   MIN_ALLOWED_RESULTS: 1,
+
+  /** Default maximum results for linked bugs */
+  DEFAULT_MAX_RESULTS_LINKED_BUGS: 20,
+
+  /** Maximum allowed results per request for linked bugs */
+  MAX_ALLOWED_RESULTS_LINKED_BUGS: 100,
 } as const;
 
 /**
@@ -420,6 +500,55 @@ export const TOOL_NAMES = {
     SUMMARY:
       "Unlink one or more Jira requirements from a QTM4J test cycle by requirement keys, or unlink all requirements at once with unLinkAll.",
   },
+
+  /** Start a New Execution tool */
+  START_NEW_EXECUTION: {
+    TITLE: "Start New Execution",
+    SUMMARY:
+      "Start a new test case execution within a test cycle. Looks up the internal map ID from testCycleKey and testCaseKey; resolves environmentId and buildId names to numeric IDs.",
+  },
+
+  /** Update Test Case Execution tool */
+  UPDATE_TEST_CASE_EXECUTION: {
+    TITLE: "Update Test Case Execution",
+    SUMMARY:
+      "Update a test case execution (execution result, comment, environment, build, assignee, planned date, actual time). Looks up testCaseExecutionId from testCycleKey and testCaseKey; resolves executionResultId, environmentId, and buildId names to numeric IDs.",
+  },
+
+  /** Update Test Step Execution tool */
+  UPDATE_TEST_STEP_EXECUTION: {
+    TITLE: "Update Test Step Execution",
+    SUMMARY:
+      "Update a test step execution (execution result, actual result, comment). Looks up testStepExecutionId from testCycleKey, testCaseKey, and step sequence number; resolves executionResultId name to a numeric ID.",
+  },
+
+  /** Link Bugs to Test Case Execution tool */
+  LINK_BUGS_TO_TEST_CASE_EXECUTION: {
+    TITLE: "Link Bugs to Test Case Execution",
+    SUMMARY:
+      "Link Jira bug keys to a test case execution. Looks up testCaseExecutionId from testCycleKey and testCaseKey; resolves bug keys to numeric defect IDs automatically.",
+  },
+
+  /** Link Bugs to Test Step Execution tool */
+  LINK_BUGS_TO_TEST_STEP_EXECUTION: {
+    TITLE: "Link Bugs to Test Step Execution",
+    SUMMARY:
+      "Link Jira bug keys to a test step execution. Looks up testStepExecutionId from testCycleKey, testCaseKey, and step sequence number; resolves bug keys to numeric defect IDs automatically.",
+  },
+
+  /** Get Linked Bugs of Test Case Execution tool */
+  GET_LINKED_BUGS_OF_TEST_CASE_EXECUTION: {
+    TITLE: "Get Linked Bugs of Test Case Execution",
+    SUMMARY:
+      "Retrieve Jira bugs linked to a test case execution with optional priority and status filtering. Looks up testCaseExecutionId from testCycleKey and testCaseKey; resolves filter names to numeric IDs.",
+  },
+
+  /** Get Linked Bugs of Test Step Execution tool */
+  GET_LINKED_BUGS_OF_TEST_STEP_EXECUTION: {
+    TITLE: "Get Linked Bugs of Test Step Execution",
+    SUMMARY:
+      "Retrieve Jira bugs linked to a test step execution with optional priority and status filtering. Looks up testStepExecutionId from testCycleKey, testCaseKey, and step sequence number; resolves filter names to numeric IDs.",
+  },
 } as const;
 
 /**
@@ -432,9 +561,11 @@ export const TOOLSETS = {
   TEST_CASES: "Test Cases",
   /** Test Cycle Management toolset */
   TEST_CYCLES: "Test Cycles",
+  /** Test Executions toolset */
+  TEST_EXECUTIONS: "Test Executions",
   /** Projects toolset */
   PROJECTS: "Projects",
-
+  /** Requirements toolset */
   REQUIREMENTS: "Requirements",
 } as const;
 
