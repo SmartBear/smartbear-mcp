@@ -204,6 +204,22 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 **Note**: Documents are managed as part of table of contents items. To delete a document, use `delete_table_of_contents` which will remove the table of contents entry and any associated document content.
 
+#### `create_documentation_page`
+
+- Purpose: Create a documentation page in a portal product in a single tool call. Shortcut for adding a new table of contents page with markdown content to a portal product.
+- Returns: Page location details (`productId`, `sectionId`, `sectionSlug`, `pageDetails`) and a `draftUrl` to edit the page in the portal admin.
+- Use case: Quickly add a new markdown documentation page to an existing product without managing sections or table of contents separately.
+- Parameters:
+
+| Parameter     | Description                                                                                                           | Type        | Required |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- | ----------- | -------- |
+| `portalId`    | Portal UUID or subdomain - unique identifier for the portal                                                           | string      | Yes      |
+| `productId`   | Product UUID - unique identifier for the product                                                                      | string      | Yes      |
+| `pageTitle`   | Title of the documentation page - displayed in navigation and used to generate the page slug (3-255 characters)       | string      | Yes      |
+| `pageContent` | Markdown content of the documentation page                                                                            | string      | No       |
+| `order`       | Order position of the page within its parent section or item (default: 0)                                             | number      | No       |
+| `parentId`    | Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure (default: null) | string/null | No       |
+
 #### `get_document`
 
 - Purpose: Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.
