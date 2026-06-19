@@ -115,25 +115,25 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 #### `publish_portal_product`
 
- - Purpose: Publish a product's content to make it live or as a preview. This endpoint publishes the current content of a product, making it visible to portal visitors.
- - Use: Call with `preview` set to `true` for preview publishes, `false` for live. Optionally pass `tableOfContentsId` to resolve a page-specific URL.
- - Returns:
-   - `success` (boolean)
-   - `preview` (boolean)
-   - `liveUrl` (string|null) — present when `preview` is false and URL build succeeds; otherwise `null`
-   - `previewUrl` (string|null) — present when `preview` is true and URL build succeeds; otherwise `null`
-   - `product` (object) — `{ id, name, slug }` when available
-   - `portal` (object) — `{ id, name, subdomain, customDomain }` when available
-   - `tableOfContentsItem` (object|null) — present when `tableOfContentsId` resolved
-   - `warning` (object) — returned when metadata/URL building failed; contains `code`, `step`, and `message`. A `warning` does NOT mean the publish failed.
+- Purpose: Publish a product's content to make it live or as a preview. This endpoint publishes the current content of a product, making it visible to portal visitors.
+- Use: Call with `preview` set to `true` for preview publishes, `false` for live. Optionally pass `tableOfContentsId` to resolve a page-specific URL.
+- Returns:
+  - `success` (boolean)
+  - `preview` (boolean)
+  - `liveUrl` (string|null) — present when `preview` is false and URL build succeeds; otherwise `null`
+  - `previewUrl` (string|null) — present when `preview` is true and URL build succeeds; otherwise `null`
+  - `product` (object) — `{ id, name, slug }` when available
+  - `portal` (object) — `{ id, name, subdomain, customDomain }` when available
+  - `tableOfContentsItem` (object|null) — present when `tableOfContentsId` resolved
+  - `warning` (object) — returned when metadata/URL building failed; contains `code`, `step`, and `message`. A `warning` does NOT mean the publish failed.
 
- - Parameters:
+- Parameters:
 
-   | Parameter | Description | Type | Required |
-   | --- | --- | --- | --- |
-   | `productId` | Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product | string | Yes |
-   | `preview` | Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) | boolean | No |
-   | `tableOfContentsId` | Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug' used to resolve a specific live URL path | string | No |
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `productId` | Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product | string | Yes |
+| `preview` | Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) | boolean | No |
+| `tableOfContentsId` | Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug' used to resolve a specific live URL path | string | No |
 
 **Response Details:**
 - Returns success plus product/portal metadata and a publish URL (previewUrl if preview, else liveUrl); includes tableOfContentsItem (and a direct TOC URL) only when tableOfContentsId was provided and resolved.
