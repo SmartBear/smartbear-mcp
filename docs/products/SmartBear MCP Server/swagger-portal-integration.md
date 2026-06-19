@@ -115,26 +115,29 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 #### `publish_portal_product`
 
-- Purpose: Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.
-- Returns: Publication status information with the following structure:
-  - `success` (boolean): Publication success status
-  - `preview` (boolean): Whether this is a preview or live publication
-  - `liveUrl` (string, conditional): Generated live URL (only when preview is false)
-  - `previewUrl` (string, conditional): Generated preview URL (only when preview is true)
-  - `product` (object): Product metadata with fields: `id`, `name`, `slug`
-  - `portal` (object): Portal metadata with fields: `id`, `name`, `subdomain`, `customDomain`
-  - `tableOfContentsItem` Optional (object): Table of contents metadata with fields: `id`, `slug`, `title`, `order`, `parentId` (null when tableOfContentsId is not provided or not found)
-- Use case: Make product content visible to portal visitors, either as live content or preview for testing.
-- Parameters:
+ - Purpose: Publish a product's content to make it live or as a preview. This endpoint publishes the current content of a product, making it visible to portal visitors.
+ - Use: Call with `preview` set to `true` for preview publishes, `false` for live. Optionally pass `tableOfContentsId` to resolve a page-specific URL.
+ - Returns:
+   - `success` (boolean)
+   - `preview` (boolean)
+   - `liveUrl` (string|null) — present when `preview` is false and URL build succeeds; otherwise `null`
+   - `previewUrl` (string|null) — present when `preview` is true and URL build succeeds; otherwise `null`
+   - `product` (object) — `{ id, name, slug }` when available
+   - `portal` (object) — `{ id, name, subdomain, customDomain }` when available
+   - `tableOfContentsItem` (object|null) — present when `tableOfContentsId` resolved
+   - `warning` (object) — returned when metadata/URL building failed; contains `code`, `step`, and `message`. A `warning` does NOT mean the publish failed.
 
-| Parameter   | Description                                                                                                                          | Type    | Required |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------- | -------- |
-| `productId` | Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product                         | string  | Yes      |
-| `preview`   | Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) | boolean | No       |
-| `tableOfContentsId` | Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug' used to resolve a specific live URL path | string | No |
+ - Parameters:
+
+   | Parameter | Description | Type | Required |
+   | --- | --- | --- | --- |
+   | `productId` | Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product | string | Yes |
+   | `preview` | Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) | boolean | No |
+   | `tableOfContentsId` | Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug' used to resolve a specific live URL path | string | No |
 
 **Response Details:**
 - Returns success plus product/portal metadata and a publish URL (previewUrl if preview, else liveUrl); includes tableOfContentsItem (and a direct TOC URL) only when tableOfContentsId was provided and resolved.
+- When URL building fails, response includes `liveUrl`/`previewUrl` as `null` and a `warning` explaining the failure.
 
 ### Product Sections Management
 

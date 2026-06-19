@@ -376,38 +376,84 @@ export class SwaggerAPI {
 
   /**
    * Prepare publication metadata and URL for a portal product and page.
-   * Fetches product, portal, and section details, resolves TOC item if provided,
-   * and builds the live and preview URL.
+   * Fetches product, portal, and section details step-by-step, gracefully handling failures.
+   * Product and portal details are essential for URL generation; sections are optional.
    * @param productId - ID of the product to publish
    * @param preview - Whether this is a preview publish
    * @param tableOfContentsId - Optional table of contents UUID or identifier
-   * @returns Publication metadata including URL and narrowed entity details
+   * @returns Publication metadata with optional fields based on what could be fetched
    */
   private async preparePublicationMetadata(
     productId: string,
     preview: boolean,
     tableOfContentsId: string | null,
   ): Promise<{
-    publicationUrl: string;
-    product: Pick<Product, "id" | "name" | "slug">;
-    portal: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
-    tableOfContentsItem: Pick<
+    publicationUrl: string | null;
+    product?: Pick<Product, "id" | "name" | "slug">;
+    portal?: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
+    tableOfContentsItem?: Pick<
       TableOfContentsItem,
       "id" | "slug" | "title" | "order" | "parentId"
-    > | null;
+    >;
+    warning?: {
+      step: string;
+      message: string;
+    };
   }> {
-    const [productDetails, sections] = await Promise.all([
-      this.getPortalProduct(productId),
-      this.getPortalProductSections(productId, {
+    // Step 1: Fetch product details (required for URL generation)
+    let productDetails: Product | null = null;
+    try {
+      productDetails = await this.getPortalProduct(productId);
+    } catch (error) {
+      console.warn("Failed to fetch product details:", error);
+      return {
+        publicationUrl: null,
+        warning: {
+          step: "product",
+          message: `Product published ${preview ? "in preview mode" : "in live mode"} successfully, but failed to fetch product details for URL generation`,
+        },
+      };
+    }
+
+    // Step 2: Fetch portal details (required for URL generation)
+    let portalDetails: Portal | null = null;
+    if (productDetails?.portalId) {
+      try {
+        portalDetails = await this.getPortal(String(productDetails.portalId));
+      } catch (error) {
+        console.warn("Failed to fetch portal details:", error);
+      }
+    }
+
+    // If we don't have both product and portal, return empty URL only
+    if (!portalDetails) {
+      return {
+        publicationUrl: null,
+        product: productDetails
+          ? {
+              id: productDetails.id,
+              name: productDetails.name,
+              slug: productDetails.slug,
+            }
+          : undefined,
+        warning: {
+          step: "portal",
+          message: `Product published ${preview ? "in preview mode" : "in live mode"} successfully, but failed to fetch portal details for URL generation`,
+        },
+      };
+    }
+
+    // Step 3: Fetch sections (optional, for page-specific URLs)
+    let sections: SectionsListResponse | null = null;
+    try {
+      sections = await this.getPortalProductSections(productId, {
         embed: ["tableOfContents", "tableOfContents.swaggerhubApi"],
-      }),
-    ]);
+      });
+    } catch (error) {
+      console.warn("Failed to fetch sections:", error);
+    }
 
-    const portalDetails = await this.getPortal(
-      String(productDetails.portalId ?? ""),
-    );
-
-    const targetSection = sections.items[0] ?? null;
+    const targetSection = sections?.items[0] ?? null;
 
     const targetTocItem =
       tableOfContentsId && targetSection
@@ -417,6 +463,7 @@ export class SwaggerAPI {
           )
         : null;
 
+    // Build URL with available data (product + portal required, section + toc optional)
     const publicationUrl = buildPortalLiveUrl(
       this.config,
       portalDetails,
@@ -439,37 +486,37 @@ export class SwaggerAPI {
         subdomain: portalDetails.subdomain,
         customDomain: portalDetails.customDomain,
       },
-      tableOfContentsItem: targetTocItem
+      ...(targetTocItem
         ? {
-            id: targetTocItem.id,
-            slug: targetTocItem.slug,
-            title: targetTocItem.title,
-            order: targetTocItem.order,
-            parentId: targetTocItem.parentId,
+            tableOfContentsItem: {
+              id: targetTocItem.id,
+              slug: targetTocItem.slug,
+              title: targetTocItem.title,
+              order: targetTocItem.order,
+              parentId: targetTocItem.parentId,
+            },
           }
-        : null,
+        : {}),
     };
   }
 
   /**
    * Publish a portal product and generate a published URL with environment-specific domain.
-   * Returns `liveUrl` for live publishes and `previewUrl` for preview publishes.
+   * The publish operation always succeeds if the API call succeeds. URL generation is done separately and may fail gracefully.
+   * Returns `liveUrl` for live publishes and `previewUrl` for preview publishes (null if URL building fails).
+   * When metadata/URL building fails, response includes `success: true` (publish succeeded), `liveUrl/previewUrl: null`,
+   * and a `warning` object explaining which step failed (product/portal fetch or URL building).
    * @param productId - ID of the product to publish
    * @param preview - Whether to publish in preview mode (default: false)
    * @param tableOfContentsId - Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'
-   * @returns Complete publish response with product details and the resolved published URL
+   * @returns Complete publish response with `success: true`, optional URL/metadata, and optional warning details
    */
   async publishPortalProduct(
     productId: string,
     preview: boolean = false,
     tableOfContentsId: string | null = null,
   ): Promise<PublishPortalProductResponse | FallbackResponse> {
-    const metadata = await this.preparePublicationMetadata(
-      productId,
-      preview,
-      tableOfContentsId,
-    );
-
+    // Execute the publish operation first (primary action)
     const response = await fetch(
       `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
       {
@@ -482,21 +529,52 @@ export class SwaggerAPI {
       success: true,
     } as SuccessResponse);
 
-    const baseResponse: any = {
-      ...result,
-      preview,
-      ...(preview
-        ? { previewUrl: metadata.publicationUrl }
-        : { liveUrl: metadata.publicationUrl }),
-      product: metadata.product,
-      portal: metadata.portal,
-    };
+    // Attempt to build metadata and URLs
+    try {
+      const metadata = await this.preparePublicationMetadata(
+        productId,
+        preview,
+        tableOfContentsId,
+      );
 
-    if (tableOfContentsId && metadata.tableOfContentsItem) {
-      baseResponse.tableOfContentsItem = metadata.tableOfContentsItem;
+      // Build complete response with metadata
+      return {
+        ...result,
+        preview,
+        [preview ? "previewUrl" : "liveUrl"]: metadata.publicationUrl,
+        ...(metadata.product ? { product: metadata.product } : {}),
+        ...(metadata.portal ? { portal: metadata.portal } : {}),
+        ...(metadata.tableOfContentsItem
+          ? { tableOfContentsItem: metadata.tableOfContentsItem }
+          : {}),
+        ...(metadata.warning
+          ? {
+              warning: {
+                code: "METADATA_FETCH_FAILED",
+                step: metadata.warning.step,
+                message: metadata.warning.message,
+              },
+            }
+          : {}),
+      } as PublishPortalProductResponse;
+    } catch (error) {
+      console.warn(
+        "Failed to build publication metadata — returning publish success with empty URL:",
+        error,
+      );
+
+      // Return publish success with null URL field and warning details
+      return {
+        ...result,
+        preview,
+        [preview ? "previewUrl" : "liveUrl"]: null,
+        warning: {
+          code: "METADATA_BUILD_FAILED",
+          step: "url_build",
+          message: `Product published ${preview ? "in preview mode" : "in live mode"} successfully, but failed to build publication URL`,
+        },
+      } as PublishPortalProductResponse;
     }
-
-    return baseResponse as PublishPortalProductResponse;
   }
 
   async getPortalProductSections(
