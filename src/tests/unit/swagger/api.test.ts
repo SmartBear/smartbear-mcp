@@ -503,7 +503,6 @@ describe("SwaggerAPI", () => {
 
     const tocItemResponse = { id: tocItemId, documentId };
     const updateDocumentResponse = { success: true };
-    const publishResponse = { success: true };
 
     const setupFetchRoutes = () => {
       fetchMock.mockResponse((req) => {
@@ -589,7 +588,7 @@ describe("SwaggerAPI", () => {
           content: { type: "markdown", source: "internal", documentId },
         },
         draftUrl:
-          "https://myportal.portal.swaggerhub.com/sp-admin/products/my-product/edit/content/doc-111",
+          "https://myportal.portal.swaggerhub.com/sp-admin/products/my-product/edit/content/toc-222",
       });
     });
 
@@ -663,7 +662,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(result.pageDetails.slug).toBe("hello-world-123");
-      expect(result.draftUrl).toContain(`/edit/content/${documentId}`);
+      expect(result.draftUrl).toContain(`/edit/content/${tocItemId}`);
     });
   });
 

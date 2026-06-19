@@ -705,7 +705,7 @@ export class SwaggerAPI {
 
     const host = portal?.customDomain ?? portal?.subdomain;
     const portalUiDomain = portal?.customDomain ? "" : this.config.getPortalUiDomainSuffix();
-    const draftUrl =`https://${host}${portalUiDomain}/sp-admin/products/${productSlug}/edit/content/${documentId}`;
+    const draftUrl =`https://${host}${portalUiDomain}/sp-admin/products/${productSlug}/edit/content/${tocItem.id}`;
 
     return {
       productId,
