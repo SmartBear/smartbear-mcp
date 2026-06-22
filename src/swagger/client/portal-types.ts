@@ -591,7 +591,7 @@ export interface CreateDocumentationPageResult {
   sectionId: string;
   sectionSlug: string;
   pageDetails: {
-    contentId: string;
+    tableOfContentsId: string;
     slug: string;
     title: string;
     content: {

@@ -718,7 +718,7 @@ export class SwaggerAPI {
       sectionId: section.id,
       sectionSlug: section.slug,
       pageDetails: {
-        contentId: tocItem.id,
+        tableOfContentsId: tocItem.id,
         slug: pageSlug,
         title: normalizedTitle,
         content: {

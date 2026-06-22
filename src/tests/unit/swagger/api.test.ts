@@ -581,7 +581,7 @@ describe("SwaggerAPI", () => {
         sectionId,
         sectionSlug: "docs",
         pageDetails: {
-          contentId: tocItemId,
+          tableOfContentsId: tocItemId,
           slug: "getting-started",
           title: "Getting Started",
           content: { type: "markdown", source: "internal", documentId },
