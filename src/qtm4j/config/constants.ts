@@ -159,10 +159,6 @@ export const ENDPOINTS = {
   UPDATE_TEST_STEP_EXECUTION: (cycleKey: string, testStepExecutionId: number) =>
     `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/teststep-executions/${testStepExecutionId}`,
 
-  /** Get test step executions for a test case execution */
-  GET_TEST_STEP_EXECUTIONS: (cycleKey: string, testCaseExecutionId: number) =>
-    `${API_CONFIG.API_VERSION}/testcycles/${cycleKey}/testcase-executions/${testCaseExecutionId}/teststeps`,
-
   /** Link bugs to test case execution */
   LINK_BUGS_TEST_CASE_EXECUTION: (
     cycleKey: string,
@@ -221,6 +217,12 @@ export const HTTP_HEADERS = {
 
   /** Content length header */
   CONTENT_LENGTH: "content-length",
+
+  /** Identifies the request source for backend analytics (e.g., Amplitude) */
+  REQUEST_SOURCE_TYPE: "requestSourceType",
+
+  /** Signals whether analytics should be skipped for this request */
+  SKIP_ANALYTICS: "skipAnalytics",
 } as const;
 
 /**
@@ -258,6 +260,9 @@ export const HTTP_STATUS = {
 export const CLIENT_CONFIG = {
   /** Client name */
   NAME: "QTM4J",
+
+  /** Fixed value sent in Request-Source to identify MCP-originated requests */
+  SOURCE_VALUE: "QTM4J_MCP",
 
   /** Tool prefix for all QTM4J tools */
   TOOL_PREFIX: "qtm4j",

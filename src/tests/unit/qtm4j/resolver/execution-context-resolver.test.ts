@@ -23,6 +23,7 @@ describe("ExecutionContextResolver", () => {
       }),
     };
     mockApiClient = { get: vi.fn() };
+    mockApiClient.skipAnalytics = vi.fn().mockReturnValue(mockApiClient);
     resolver = new ExecutionContextResolver(mockApiClient, mockCacheService);
   });
 

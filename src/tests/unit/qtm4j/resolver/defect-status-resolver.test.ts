@@ -38,6 +38,7 @@ describe("DefectStatusResolver", () => {
     vi.clearAllMocks();
 
     mockApiClient = { get: vi.fn() };
+    mockApiClient.skipAnalytics = vi.fn().mockReturnValue(mockApiClient);
     mockCache = { matchValue: vi.fn(), set: vi.fn(), clear: vi.fn() };
 
     vi.mocked(Cache).mockImplementation(() => mockCache);

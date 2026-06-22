@@ -70,9 +70,11 @@ export class BuildResolver extends Resolver {
     const cached = this.cache.matchValue(projectKey, resolverKey, trimmed);
     if (cached !== undefined) return cached;
 
-    const response = await this.apiClient.get(ENDPOINTS.BUILDS(projectId), {
-      search: trimmed,
-    });
+    const response = await this.apiClient
+      .skipAnalytics()
+      .get(ENDPOINTS.BUILDS(projectId), {
+        search: trimmed,
+      });
     this.cache.set(projectKey, resolverKey, response as FieldValues);
     return this.cache.matchValue(projectKey, resolverKey, trimmed);
   }

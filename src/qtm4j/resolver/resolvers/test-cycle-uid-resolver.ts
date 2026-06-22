@@ -44,10 +44,11 @@ export class TestCycleUidResolver extends Resolver {
   ): Promise<Record<string, ResolvedTestCycle>> {
     if (keys.length === 0) return {};
 
-    const response = await this.apiClient.get(
-      ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(projectId),
-      { keys: keys.join(",") },
-    );
+    const response = await this.apiClient
+      .skipAnalytics()
+      .get(ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(projectId), {
+        keys: keys.join(","),
+      });
 
     return response as Record<string, ResolvedTestCycle>;
   }
