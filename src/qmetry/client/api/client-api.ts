@@ -1,4 +1,4 @@
-import { USER_AGENT } from "../../../common/info";
+import { getUserAgent } from "../../../common/info";
 import { QMETRY_DEFAULTS } from "../../config/constants";
 import type { RequestOptions } from "../../types/common";
 import { handleQMetryApiError, handleQMetryFetchError } from "./error-handler";
@@ -25,7 +25,7 @@ export async function qmetryRequest<T>({
   const headers: Record<string, string> = {
     apikey: token,
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
-    "User-Agent": USER_AGENT,
+    "User-Agent": getUserAgent(),
     "qmetry-source": "smartbear-mcp",
   };
   if (body) {

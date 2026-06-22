@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { USER_AGENT } from "../common/info";
+import { getUserAgent } from "../common/info";
 import {
   isSamplingPolyfillResult,
   type SamplingPolyfillResult,
@@ -297,7 +297,7 @@ export class PactflowClient implements Client {
       return {
         Authorization: authHeader,
         "Content-Type": "application/json",
-        "User-Agent": USER_AGENT,
+        "User-Agent": getUserAgent(),
       };
     }
 
@@ -313,14 +313,14 @@ export class PactflowClient implements Client {
       return {
         Authorization: authHeader,
         "Content-Type": "application/json",
-        "User-Agent": USER_AGENT,
+        "User-Agent": getUserAgent(),
       };
     } else if (this.username && this.password) {
       const authString = `${this.username}:${this.password}`;
       return {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
         "Content-Type": "application/json",
-        "User-Agent": USER_AGENT,
+        "User-Agent": getUserAgent(),
       };
     }
     return undefined;
