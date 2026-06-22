@@ -56,6 +56,12 @@
           "isSecret": true
         },
         {
+          "name": "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN",
+          "description": "Swagger Functional Testing API token. Leave empty to disable Functional Testing tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/functional-testing-integration",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
           "name": "PACT_BROKER_BASE_URL",
           "description": "PactFlow/Pact Broker base URL. Leave empty to disable Pact tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow",
           "isRequired": false,

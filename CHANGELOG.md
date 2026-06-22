@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [Swagger] Add Swagger Functional Testing integration with `list_tests` tool for discovering available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 - [Swagger] Added `Resolve Organization Portal` tool to find or create a portal for an organization. [#526](https://github.com/SmartBear/smartbear-mcp/pull/526)
+- [Common] Added transport mode (stdio/http) to User-Agent header for all API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
+- [Collaborator] Add user agent header to API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
+- [Reflect] Added `get_test_detail` tool for retrieving full test details including name, description, and all recorded steps [#524](https://github.com/SmartBear/smartbear-mcp/pull/524)
 
 ## [0.25.1] - 2026-06-08
 
@@ -20,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.25.0] - 2026-06-03
 
 ### Added
-
 - [Common] Add `MCP_TOOLSETS` environment variable to allow tools to be grouped into sets for better organization and client control [#474](https://github.com/SmartBear/smartbear-mcp/pull/474)
 - [Common] Split authorization and configuration options to better suit OAuth flow [#487](https://github.com/SmartBear/smartbear-mcp/pull/487)
 - [QTM4J] Added support for linking and unlinking requirements, test cases, and test cycles through new tools. [#505](https://github.com/SmartBear/smartbear-mcp/pull/505)

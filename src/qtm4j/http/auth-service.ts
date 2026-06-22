@@ -1,4 +1,4 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../common/info";
+import { USER_AGENT } from "../../common/info";
 import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants";
 
 /**
@@ -20,7 +20,7 @@ export class AuthService {
     return {
       [HTTP_HEADERS.API_KEY]: this.apiKey,
       [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
-      [HTTP_HEADERS.USER_AGENT]: `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      [HTTP_HEADERS.USER_AGENT]: USER_AGENT,
       [HTTP_HEADERS.ACCEPT]: CONTENT_TYPES.JSON,
     };
   }

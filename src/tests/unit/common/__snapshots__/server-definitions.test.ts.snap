@@ -9996,6 +9996,26 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     "outputSchema": undefined,
     "title": "Reflect: Get Suite Execution Status",
   },
+  "reflect_get_test_detail": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Reflect: Get Test Detail",
+    },
+    "description": "Get the full detail of a reflect test, including its name, description, and all recorded steps
+
+**Toolset:** Tests
+
+**Parameters:**
+- testId (string) *required*: ID of the reflect test to retrieve details for",
+    "inputSchema": [
+      "testId",
+    ],
+    "outputSchema": undefined,
+    "title": "Reflect: Get Test Detail",
+  },
   "reflect_get_test_status": {
     "annotations": {
       "destructiveHint": false,
