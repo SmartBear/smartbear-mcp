@@ -14,6 +14,7 @@ import {
 } from "zod";
 import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
 import { CacheService } from "./cache";
+import { type McpClientIdentity, toClientIdentity } from "./client-identity";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
 import {
   executeElicitationOrPolyfill,
@@ -35,6 +36,7 @@ export class SmartBearMcpServer extends McpServer {
   private clientInfo?: ClientInfo;
   private clients: Client[] = [];
   private enabledToolsets?: string[];
+  private mcpClientIdentity?: McpClientIdentity;
 
   constructor(enabledToolsets?: string) {
     super(
@@ -88,6 +90,38 @@ export class SmartBearMcpServer extends McpServer {
 
   getClients(): Client[] {
     return this.clients;
+  }
+
+  /**
+   * Record the MCP client identity reported in the `initialize` handshake.
+   * Captured once per session by the transport layer.
+   */
+  setMcpClientIdentity(identity: McpClientIdentity): void {
+    this.mcpClientIdentity = identity;
+  }
+
+  /**
+   * Return the MCP client identity for this session. Prefers the value captured
+   * at `initialize`; falls back to the SDK's `getClientVersion()` so callers
+   * still get an answer if the explicit capture was skipped.
+   */
+  getMcpClientIdentity(): McpClientIdentity {
+    return (
+      this.mcpClientIdentity ?? toClientIdentity(this.server.getClientVersion())
+    );
+  }
+
+  /**
+   * Attach MCP client attribution to a Bugsnag event so errors can be segmented
+   * by originating client/marketplace.
+   */
+  private addClientMetadata(event: BugsnagEvent): void {
+    const identity = this.getMcpClientIdentity();
+    event.addMetadata("mcpClient", {
+      mcp_client_name: identity.name ?? null,
+      mcp_client_version: identity.version ?? null,
+      mcp_protocol_version: identity.protocolVersion ?? null,
+    });
   }
 
   async cleanupSession(mcpSessionId: string): Promise<void> {
@@ -149,6 +183,7 @@ export class SmartBearMcpServer extends McpServer {
               } else {
                 Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
                   event.addMetadata("app", { tool: toolName });
+                  this.addClientMetadata(event);
                   event.unhandled = true;
                 });
               }
@@ -201,6 +236,7 @@ export class SmartBearMcpServer extends McpServer {
                   resource: resourceName,
                   url: url,
                 });
+                this.addClientMetadata(event);
                 event.unhandled = true;
               });
               throw e;
@@ -227,6 +263,7 @@ export class SmartBearMcpServer extends McpServer {
                 event.addMetadata("app", {
                   prompt: this.getCapabilityName(client, params.title),
                 });
+                this.addClientMetadata(event);
                 event.unhandled = true;
               });
               throw e;
