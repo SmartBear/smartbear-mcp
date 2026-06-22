@@ -25,6 +25,12 @@ import type {
   UpdatePortalBody,
   UpdateProductBody,
 } from "./portal-types";
+import {
+  buildPortalName,
+  buildSubdomainCandidate,
+  buildSuffixedSubdomain,
+  isConflictError,
+} from "./portal-utils";
 import type {
   ApiDefinitionParams,
   ApiProperty,
@@ -41,13 +47,6 @@ import type {
   StandardizeApiParams,
   StandardizeApiResponse,
 } from "./registry-types";
-
-import {
-  buildPortalName,
-  buildSubdomainCandidate,
-  buildSuffixedSubdomain,
-  isConflictError,
-} from "./portal-utils";
 import type {
   Organization,
   OrganizationsListResponse,
