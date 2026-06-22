@@ -1,11 +1,10 @@
-import { UDF_FIELD_TYPES } from "../config/constants";
+import { UDF_FIELD_TYPES, UDF_MODULES } from "../config/constants";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import type {
   BulkUpdateTestRunUdfsPayload,
   CreateUdfPayload,
   FetchCustomListItemsPayload,
   FetchCustomListsPayload,
-  FetchUdfFieldTypesPayload,
 } from "../types/udf";
 import { qmetryRequest } from "./api/client-api";
 import { extractProjectContext } from "./auto-resolve";
@@ -296,46 +295,10 @@ export async function bulkUpdateTestRunUdfs(
  * Uses the built-in constant as the source of truth.
  * If the API returns new field types not present in the constant, merges them in.
  */
-export async function fetchUdfFieldTypes(
-  token: string,
-  baseUrl: string,
-  project: string | undefined,
-  payload: FetchUdfFieldTypesPayload,
-) {
-  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
-    baseUrl,
-    project,
-  );
+export async function fetchUdfFieldTypes() {
+  return [...UDF_FIELD_TYPES];
+}
 
-  const constantTypes = [...UDF_FIELD_TYPES] as Array<{
-    Id: number;
-    Fieldtype: string;
-    Description: string;
-    Preview: string;
-  }>;
-
-  try {
-    const apiTypes = await qmetryRequest<any[]>({
-      method: "POST",
-      path: QMETRY_PATHS.UDF.LIST_FIELD_TYPES,
-      token,
-      project: resolvedProject,
-      baseUrl: resolvedBaseUrl,
-      body: {},
-      scopeId: payload.scopeId,
-      orgCode: payload.orgCode,
-    });
-
-    if (Array.isArray(apiTypes)) {
-      const existingIds = new Set(constantTypes.map((t) => t.Id));
-      const newTypes = apiTypes.filter((t) => !existingIds.has(t.Id));
-      if (newTypes.length > 0) {
-        return [...constantTypes, ...newTypes];
-      }
-    }
-  } catch {
-    // Fall back to constant if API call fails
-  }
-
-  return constantTypes;
+export async function fetchUdfModules() {
+  return [...UDF_MODULES];
 }

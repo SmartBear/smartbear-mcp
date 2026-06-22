@@ -106,6 +106,7 @@ export const QMetryToolsHandlers = {
   FETCH_CUSTOM_LISTS: "fetchCustomLists",
   FETCH_CUSTOM_LIST_ITEMS: "fetchCustomListItems",
   FETCH_UDF_FIELD_TYPES: "fetchUdfFieldTypes",
+  FETCH_UDF_MODULES: "fetchUdfModules",
   BULK_UPDATE_TEST_RUN_UDFS: "bulkUpdateTestRunUdfs",
   FETCH_ISSUE_EXECUTIONS: "getIssueExecutions",
 };

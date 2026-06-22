@@ -4106,7 +4106,7 @@ Expected Output: Bulk updates to execution UDF values will run in the background
   CASCADINGLIST: object with parent and child keys, e.g. {parent: 5126498, child: 5126499} 4. MULTILOOKUPLIST — multiSelectAction rules:
   'append' (default): new values are ADDED to existing selections. Use when user says 'add', 'include', 'append'.
   'replace': existing selections are CLEARED and replaced with only the new values. Use when user says 'replace', 'set to', 'overwrite', 'change to'.
-  If user does not specify, ALWAYS default to 'append'. Never assume 'replace'. 5. MULTILOOKUPLIST — apply multiSelectAction per field individually. Different multi-select fields in the same request can have different multiSelectAction values. 6. DATE FORMAT: Always use MM-DD-YYYY format for DATETIMEPICKER fields (e.g. '06-20-2026', not '2026-06-20'). Convert from any user-supplied date format before calling the tool. 7. ASYNC OPERATION: This API runs in the background. The success response means the job was queued, not that it completed. Tell the user to check 'Scheduled Task' in QMetry UI to track completion. 8. FIELD IDs: The 'fieldID' for each UDF must be the numeric ID from QMetry's UDF definition, not the field name. If user does not know fieldIDs, check the UDF definitions in QMetry admin or from prior 'Create User Defined Field' call responses. 9. ALL UDF FIELDS ARE OPTIONAL: Only include the UDF fields the user wants to update. Do not include fields with no change. 10. tcRunIDs vs entityIDs: This tool uses 'tcRunIDs' (array of numbers). Do NOT confuse with 'Bulk Update Test Case Execution Status' which uses 'entityIDs' (comma-separated string).",
+  If user does not specify, ALWAYS default to 'append'. Never assume 'replace'. 5. MULTILOOKUPLIST — apply multiSelectAction per field individually. Different multi-select fields in the same request can have different multiSelectAction values. 6. DATE FORMAT: Always use MM-DD-YYYY format for DATETIMEPICKER fields (e.g. '06-20-2026', not '2026-06-20'). Convert from any user-supplied date format before calling the tool. 7. ASYNC OPERATION: This API runs in the background. The success response means the job was queued, not that it completed. Tell the user to check 'Scheduled Task' in QMetry UI to track completion. 8. CRITICAL — FIELD IDs: The 'fieldID' for each UDF entry MUST be the exact numeric ID from QMetry's UDF definition — do NOT guess, infer, or fabricate fieldIDs. If the user has not provided a fieldID, ask the user to supply it or look it up in QMetry admin settings before calling this tool. Using a wrong fieldID will silently fail or update the wrong field. 9. CRITICAL — WORKFLOW: When user asks to bulk-update a UDF across all executions of a test suite run (e.g. tsRunID 731600), ALWAYS call 'Fetch Test Case Runs by Test Suite Run' first with that tsRunID to collect ALL tcRunIDs from the response (data[].tcRunID), THEN call this tool. Never skip the fetch step or hard-code tcRunIDs. 10. ALL UDF FIELDS ARE OPTIONAL: Only include the UDF fields the user wants to update. Do not include fields with no change. 11. tcRunIDs vs entityIDs: This tool uses 'tcRunIDs' (array of numbers). Do NOT confuse with 'Bulk Update Test Case Execution Status' which uses 'entityIDs' (comma-separated string).",
     "inputSchema": [
       "UDF",
       "baseUrl",
@@ -4899,27 +4899,27 @@ Expected Output: User defined field created successfully with default multi-look
 \`\`\`
 Expected Output: User defined field created successfully.
 
-**Hints:** 1. FIELD NAME RULE: 'name' must contain ONLY alphanumeric characters and underscores (a-z, A-Z, 0-9, _). Spaces or special characters will cause an API error. Examples: 'my_field', 'testEnv1', 'udf_str'. 2. FIELD TYPES AND IDs:
+**Hints:** 1. NEVER call 'Fetch UDF Field Types' to look up fieldTypeID. All supported field types and their IDs are already listed in this tool's hints under FIELD TYPES AND IDs. Use those values directly without any additional API call. 2. FIELD NAME RULE: 'name' must contain ONLY alphanumeric characters and underscores (a-z, A-Z, 0-9, _). Spaces or special characters will cause an API error. Examples: 'my_field', 'testEnv1', 'udf_str'. 3. FIELD TYPES AND IDs:
   1 = DATETIMEPICKER (no extra params needed)
   2 = LARGETEXT (no extra params needed)
   3 = LOOKUPLIST (requires lookuplistId)
   4 = MULTILOOKUPLIST (requires lookuplistId)
   5 = NUMBER (no extra params needed)
   6 = STRING (use fieldLength to set max characters)
-  7 = CASCADINGLIST (requires lookuplistId) 3. MODULE IDs:
+  7 = CASCADINGLIST (requires lookuplistId) 4. MODULE IDs:
   1 = Requirement
   3 = Test Case
   5 = Test Step
   6 = Test Suite
   11 = Issue
-  32 = Test Run 4. LOOKUP TYPES: For fieldTypeID 3 (LOOKUPLIST), 4 (MULTILOOKUPLIST), or 7 (CASCADINGLIST), you MUST provide lookuplistId. First call the 'Fetch Custom Lists' tool to find available lists and use the 'Id' field from the response as lookuplistId. 5. STRING fieldLength: If user does not specify fieldLength, default to 10. Always include fieldLength for STRING fields. 6. DEFAULT VALUE SUPPORT — which field types support defaultValue at creation time:
+  32 = Test Run 5. LOOKUP TYPES: For fieldTypeID 3 (LOOKUPLIST), 4 (MULTILOOKUPLIST), or 7 (CASCADINGLIST), you MUST provide lookuplistId. First call the 'Fetch Custom Lists' tool to find available lists and use the 'Id' field from the response as lookuplistId. 6. STRING fieldLength: If user does not specify fieldLength, default to 10. Always include fieldLength for STRING fields. 7. DEFAULT VALUE SUPPORT — which field types support defaultValue at creation time:
   ✅ STRING (6): plain string value, e.g. defaultValue: 'my default text'
   ✅ NUMBER (5): plain number value, e.g. defaultValue: 42
   ✅ LOOKUPLIST (3): array of one item ID + listValues required, e.g. defaultValue: [5173520], listValues: [{id:5173520,name:'t',projectID:42307}]
   ✅ MULTILOOKUPLIST (4): array of item IDs + listValues required, e.g. defaultValue: [5173521], listValues: [{id:5173521,name:'aa',projectID:1250}]
   ✅ CASCADINGLIST (7): defaultValue (parent ID array) + defaultChildValue (child ID array) + listValues required
   ❌ LARGETEXT (2): defaultValue NOT supported — do not include it
-  ❌ DATETIMEPICKER (1): defaultValue NOT supported — do not include it 7. DEFAULT VALUES (LOOKUPLIST / MULTILOOKUPLIST / CASCADINGLIST only): ONLY when fieldTypeID is 3, 4, or 7 AND user wants a default value pre-selected — call 'Fetch Custom List Items' FIRST to get item IDs, THEN call this tool. Do NOT call 'Fetch Custom List Items' for STRING (6), NUMBER (5), LARGETEXT (2), DATETIMEPICKER (1), or for any lookup field where user did NOT request a default value. Response 'Id' (capital I) → use in defaultValue array and listValues[].id. Response 'Name' → use in listValues[].name. Never guess or fabricate item IDs. 8. DEFAULT VALUES (CASCADINGLIST): Provide defaultValue (parent item ID array), defaultChildValue (child item ID array), and listValues (parent list items). Example: listValues=[{id:5126498,name:'abc',projectID:42307}], defaultValue=[5126498], defaultChildValue=[5126499]. 9. PROJECT CONTEXT: The tool automatically resolves the numeric project ID from the current session context. If project context is not set, call 'Set Project Info' first or ensure projectKey is provided. 10. If the user refers to 'custom fields', 'user defined fields', or 'UDFs', treat all as the same concept. 11. If user specifies a module by name (e.g. 'Test Run'), map it to the correct moduleID (32) before calling the tool. 12. If user specifies a field type by name (e.g. 'large text field', 'lookup list'), map it to the correct fieldTypeID.",
+  ❌ DATETIMEPICKER (1): defaultValue NOT supported — do not include it 8. DEFAULT VALUES (LOOKUPLIST / MULTILOOKUPLIST / CASCADINGLIST only): ONLY when fieldTypeID is 3, 4, or 7 AND user wants a default value pre-selected — call 'Fetch Custom List Items' FIRST to get item IDs, THEN call this tool. Do NOT call 'Fetch Custom List Items' for STRING (6), NUMBER (5), LARGETEXT (2), DATETIMEPICKER (1), or for any lookup field where user did NOT request a default value. Response 'Id' (capital I) → use in defaultValue array and listValues[].id. Response 'Name' → use in listValues[].name. Never guess or fabricate item IDs. 9. DEFAULT VALUES (CASCADINGLIST): Provide defaultValue (parent item ID array), defaultChildValue (child item ID array), and listValues (parent list items). Example: listValues=[{id:5126498,name:'abc',projectID:42307}], defaultValue=[5126498], defaultChildValue=[5126499]. 10. PROJECT CONTEXT: The tool automatically resolves the numeric project ID from the current session context. If project context is not set, call 'Set Project Info' first or ensure projectKey is provided. 11. If the user refers to 'custom fields', 'user defined fields', or 'UDFs', treat all as the same concept. 12. If user specifies a module by name (e.g. 'Test Run'), map it to the correct moduleID (32) before calling the tool. 13. If user specifies a field type by name (e.g. 'large text field', 'lookup list'), map it to the correct fieldTypeID.",
     "inputSchema": [
       "baseUrl",
       "defaultChildValue",
@@ -7496,13 +7496,48 @@ Expected Output: Test suites available in specific folder ID 42 for test case li
 \`\`\`
 Expected Output: Array of field types with Id, Fieldtype name, and Description.
 
-**Hints:** 1. Use the 'Id' from the response as 'fieldTypeID' when calling 'Create User Defined Field'. 2. Field types 3, 4, and 7 (LOOKUPLIST, MULTILOOKUPLIST, CASCADINGLIST) require a lookuplistId. 3. Field type 6 (STRING) supports an optional fieldLength parameter.",
+**Hints:** 1. DO NOT call this tool when the purpose is to get a fieldTypeID for 'Create User Defined Field'. The 'Create User Defined Field' tool already lists all 7 field types and their IDs inline. Only call this tool if the user explicitly asks to list or discover UDF field types. 2. Use the 'Id' from the response as 'fieldTypeID' when calling 'Create User Defined Field'. 3. Field types 3, 4, and 7 (LOOKUPLIST, MULTILOOKUPLIST, CASCADINGLIST) require a lookuplistId. 4. Field type 6 (STRING) supports an optional fieldLength parameter.",
     "inputSchema": [
       "baseUrl",
       "projectKey",
     ],
     "outputSchema": undefined,
     "title": "QMetry: Fetch UDF Field Types",
+  },
+  "qmetry_fetch_udf_modules": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch UDF Modules",
+    },
+    "description": "Fetch all QMetry modules that support User Defined Fields (UDFs). Returns module IDs and names. Use to get the correct module ID before creating a UDF.
+
+**Toolset:** UDF
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+
+**Output Description:** Array of module objects with 'id' (numeric module ID) and 'name' (module display name).
+
+**Use Cases:** 1. List all modules that support UDFs 2. Get the numeric module ID for a module name (e.g. 'Test Run' → 32) 3. Confirm which module ID to use before calling 'Create User Defined Field'
+
+**Examples:**
+1. Get all UDF-supported modules
+\`\`\`json
+{}
+\`\`\`
+Expected Output: Array of modules: [{id:1,name:'Requirement'},{id:3,name:'Test Case'},{id:5,name:'Test Step'},{id:6,name:'Test Suite'},{id:11,name:'Issue'},{id:32,name:'Test Run'}]
+
+**Hints:** 1. NEVER call this tool when you already know the module ID — the 'Create User Defined Field' tool lists all module IDs inline in its hints. Only call this tool if the user explicitly asks to list modules or if you need to confirm a module ID. 2. Use the 'id' field from the response as the 'modules' array value when calling 'Create User Defined Field'. 3. Module IDs are fixed constants: 1=Requirement, 3=Test Case, 5=Test Step, 6=Test Suite, 11=Issue, 32=Test Run.",
+    "inputSchema": [
+      "baseUrl",
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch UDF Modules",
   },
   "qmetry_import_automation_test_results": {
     "annotations": {

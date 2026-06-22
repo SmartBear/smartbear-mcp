@@ -4,8 +4,12 @@ import {
   createUdf,
   fetchCustomLists,
   fetchUdfFieldTypes,
+  fetchUdfModules,
 } from "../../../../qmetry/client/udf.js";
-import { UDF_FIELD_TYPES } from "../../../../qmetry/config/constants.js";
+import {
+  UDF_FIELD_TYPES,
+  UDF_MODULES,
+} from "../../../../qmetry/config/constants.js";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -570,60 +574,49 @@ describe("UDF API clients", () => {
   });
 
   describe("fetchUdfFieldTypes", () => {
-    it("should return constant field types when API response matches", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk([...UDF_FIELD_TYPES]));
+    it("should return all field types from constant without making an API call", async () => {
+      global.fetch = vi.fn();
 
-      const result = (await fetchUdfFieldTypes(token, baseUrl, projectKey, {
-        scopeId: 42307,
-      })) as any[];
+      const result = (await fetchUdfFieldTypes()) as any[];
 
+      expect(global.fetch).not.toHaveBeenCalled();
       expect(result).toHaveLength(UDF_FIELD_TYPES.length);
-      expect(result.find((t) => t.Fieldtype === "STRING")).toBeDefined();
-      expect(result.find((t) => t.Fieldtype === "LARGETEXT")).toBeDefined();
+      expect(result.find((t: any) => t.Fieldtype === "STRING")).toBeDefined();
+      expect(
+        result.find((t: any) => t.Fieldtype === "DATETIMEPICKER"),
+      ).toBeDefined();
+      expect(
+        result.find((t: any) => t.Fieldtype === "CASCADINGLIST"),
+      ).toBeDefined();
     });
 
-    it("should merge new field types from API not in constant", async () => {
-      const newType = {
-        Id: 99,
-        Fieldtype: "NEWTYPE",
-        Description: "A brand new field type from the API.",
-        Preview: "ad-new-ico",
-      };
+    it("should return a copy of the constant (not a reference)", async () => {
+      const result1 = (await fetchUdfFieldTypes()) as any[];
+      const result2 = (await fetchUdfFieldTypes()) as any[];
 
-      global.fetch = vi
-        .fn()
-        .mockResolvedValue(mockOk([...UDF_FIELD_TYPES, newType]));
+      expect(result1).not.toBe(result2);
+      expect(result1).toEqual(result2);
+    });
+  });
 
-      const result = (await fetchUdfFieldTypes(token, baseUrl, projectKey, {
-        scopeId: 42307,
-      })) as any[];
+  describe("fetchUdfModules", () => {
+    it("should return all modules from constant without making an API call", async () => {
+      global.fetch = vi.fn();
 
-      expect(result).toHaveLength(UDF_FIELD_TYPES.length + 1);
-      expect(result.find((t) => t.Fieldtype === "NEWTYPE")).toBeDefined();
+      const result = (await fetchUdfModules()) as any[];
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(result).toHaveLength(UDF_MODULES.length);
+      expect(result.find((m: any) => m.name === "Test Run")).toBeDefined();
+      expect(result.find((m: any) => m.id === 32)).toBeDefined();
     });
 
-    it("should fall back to constant when API call fails", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockFail(500, "Server Error"));
+    it("should return a copy of the constant (not a reference)", async () => {
+      const result1 = (await fetchUdfModules()) as any[];
+      const result2 = (await fetchUdfModules()) as any[];
 
-      const result = (await fetchUdfFieldTypes(
-        token,
-        baseUrl,
-        projectKey,
-        {},
-      )) as any[];
-
-      expect(result).toHaveLength(UDF_FIELD_TYPES.length);
-    });
-
-    it("should call the field types API endpoint", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk([...UDF_FIELD_TYPES]));
-
-      await fetchUdfFieldTypes(token, baseUrl, projectKey, {});
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        `${baseUrl}/rest/admin/userdefinefieldtype/list`,
-        expect.objectContaining({ method: "POST" }),
-      );
+      expect(result1).not.toBe(result2);
+      expect(result1).toEqual(result2);
     });
   });
 });

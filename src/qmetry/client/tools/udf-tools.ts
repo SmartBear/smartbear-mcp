@@ -5,6 +5,7 @@ import {
   FetchCustomListItemsArgsSchema,
   FetchCustomListsArgsSchema,
   FetchUdfFieldTypesArgsSchema,
+  FetchUdfModulesArgsSchema,
 } from "../../types/udf";
 import type { QMetryToolParams } from "./types";
 
@@ -204,6 +205,9 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "NEVER call 'Fetch UDF Field Types' to look up fieldTypeID. " +
+        "All supported field types and their IDs are already listed in this tool's hints under FIELD TYPES AND IDs. " +
+        "Use those values directly without any additional API call.",
       "FIELD NAME RULE: 'name' must contain ONLY alphanumeric characters and underscores (a-z, A-Z, 0-9, _). " +
         "Spaces or special characters will cause an API error. Examples: 'my_field', 'testEnv1', 'udf_str'.",
       "FIELD TYPES AND IDs:\n" +
@@ -372,12 +376,49 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "DO NOT call this tool when the purpose is to get a fieldTypeID for 'Create User Defined Field'. " +
+        "The 'Create User Defined Field' tool already lists all 7 field types and their IDs inline. " +
+        "Only call this tool if the user explicitly asks to list or discover UDF field types.",
       "Use the 'Id' from the response as 'fieldTypeID' when calling 'Create User Defined Field'.",
       "Field types 3, 4, and 7 (LOOKUPLIST, MULTILOOKUPLIST, CASCADINGLIST) require a lookuplistId.",
       "Field type 6 (STRING) supports an optional fieldLength parameter.",
     ],
     outputDescription:
       "Array of field type objects with Id, Fieldtype (name), Description, and Preview fields.",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
+  },
+  {
+    title: "Fetch UDF Modules",
+    toolset: "UDF",
+    summary:
+      "Fetch all QMetry modules that support User Defined Fields (UDFs). Returns module IDs and names. Use to get the correct module ID before creating a UDF.",
+    handler: QMetryToolsHandlers.FETCH_UDF_MODULES,
+    inputSchema: FetchUdfModulesArgsSchema,
+    purpose:
+      "Returns the list of QMetry modules that support UDFs, served from built-in constants. " +
+      "No API call is made. Use the 'id' from the response as the module ID when creating a User Defined Field.",
+    useCases: [
+      "List all modules that support UDFs",
+      "Get the numeric module ID for a module name (e.g. 'Test Run' → 32)",
+      "Confirm which module ID to use before calling 'Create User Defined Field'",
+    ],
+    examples: [
+      {
+        description: "Get all UDF-supported modules",
+        parameters: {},
+        expectedOutput:
+          "Array of modules: [{id:1,name:'Requirement'},{id:3,name:'Test Case'},{id:5,name:'Test Step'},{id:6,name:'Test Suite'},{id:11,name:'Issue'},{id:32,name:'Test Run'}]",
+      },
+    ],
+    hints: [
+      "NEVER call this tool when you already know the module ID — the 'Create User Defined Field' tool lists all module IDs inline in its hints. Only call this tool if the user explicitly asks to list modules or if you need to confirm a module ID.",
+      "Use the 'id' field from the response as the 'modules' array value when calling 'Create User Defined Field'.",
+      "Module IDs are fixed constants: 1=Requirement, 3=Test Case, 5=Test Step, 6=Test Suite, 11=Issue, 32=Test Run.",
+    ],
+    outputDescription:
+      "Array of module objects with 'id' (numeric module ID) and 'name' (module display name).",
     readOnly: true,
     idempotent: true,
     openWorld: false,
@@ -581,8 +622,14 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       "ASYNC OPERATION: This API runs in the background. " +
         "The success response means the job was queued, not that it completed. " +
         "Tell the user to check 'Scheduled Task' in QMetry UI to track completion.",
-      "FIELD IDs: The 'fieldID' for each UDF must be the numeric ID from QMetry's UDF definition, not the field name. " +
-        "If user does not know fieldIDs, check the UDF definitions in QMetry admin or from prior 'Create User Defined Field' call responses.",
+      "CRITICAL — FIELD IDs: The 'fieldID' for each UDF entry MUST be the exact numeric ID from QMetry's UDF definition — " +
+        "do NOT guess, infer, or fabricate fieldIDs. " +
+        "If the user has not provided a fieldID, ask the user to supply it or look it up in QMetry admin settings before calling this tool. " +
+        "Using a wrong fieldID will silently fail or update the wrong field.",
+      "CRITICAL — WORKFLOW: When user asks to bulk-update a UDF across all executions of a test suite run " +
+        "(e.g. tsRunID 731600), ALWAYS call 'Fetch Test Case Runs by Test Suite Run' first with that tsRunID " +
+        "to collect ALL tcRunIDs from the response (data[].tcRunID), THEN call this tool. " +
+        "Never skip the fetch step or hard-code tcRunIDs.",
       "ALL UDF FIELDS ARE OPTIONAL: Only include the UDF fields the user wants to update. Do not include fields with no change.",
       "tcRunIDs vs entityIDs: This tool uses 'tcRunIDs' (array of numbers). " +
         "Do NOT confuse with 'Bulk Update Test Case Execution Status' which uses 'entityIDs' (comma-separated string).",

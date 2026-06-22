@@ -211,6 +211,11 @@ export const FetchUdfFieldTypesArgsSchema = z.object({
   baseUrl: CommonFields.baseUrl,
 });
 
+export const FetchUdfModulesArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+});
+
 export interface UdfFieldValue {
   fieldID: number;
   value: string | number | number[] | { parent: number; child: number } | null;

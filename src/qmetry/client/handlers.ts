@@ -54,6 +54,7 @@ import {
   fetchCustomListItems,
   fetchCustomLists,
   fetchUdfFieldTypes,
+  fetchUdfModules,
 } from "./udf";
 
 /**
@@ -124,6 +125,7 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_CUSTOM_LISTS]: fetchCustomLists,
   [QMetryToolsHandlers.FETCH_CUSTOM_LIST_ITEMS]: fetchCustomListItems,
   [QMetryToolsHandlers.FETCH_UDF_FIELD_TYPES]: fetchUdfFieldTypes,
+  [QMetryToolsHandlers.FETCH_UDF_MODULES]: fetchUdfModules,
   [QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS]: bulkUpdateTestRunUdfs,
   [QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS]: fetchIssueExecutions,
 };
