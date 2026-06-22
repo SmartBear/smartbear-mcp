@@ -5,6 +5,7 @@ import type { SmartBearMcpServer } from "../../../common/server";
 function fakeServer() {
   return {
     setClientInfo: vi.fn(),
+    setMcpClientIdentity: vi.fn(),
     setSamplingSupported: vi.fn(),
     setElicitationSupported: vi.fn(),
   } as unknown as SmartBearMcpServer;
