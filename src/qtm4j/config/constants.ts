@@ -136,6 +136,9 @@ export const HTTP_HEADERS = {
   /** API key header name */
   API_KEY: "apiKey",
 
+  /** Authorization header name (used for Bearer token passthrough) */
+  AUTHORIZATION: "Authorization",
+
   /** Content type header */
   CONTENT_TYPE: "Content-Type",
 
