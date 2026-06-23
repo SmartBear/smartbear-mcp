@@ -454,13 +454,17 @@ export async function fetchTestRunUdfValues(
     // metadata call is best-effort — proceed without enrichment
   }
 
-  // Build a lookup from field name → definition
+  // Build a lookup from field name → definition (used for fallback when metadata is unavailable)
   const defByName: Record<string, any> = {};
   for (const def of Object.values(fieldDefs)) {
     if (def?.name) defByName[def.name] = def;
   }
 
+  const hasMetadata = Object.keys(fieldDefs).length > 0;
+
   // Step 4: extract and enrich UDF values from each run
+  // When metadata is available, ALL project-defined UDF fields are included (null for unset fields).
+  // This ensures every run shows the full set of available UDF fields, not just those with values.
   const rows: any[] = runsResponse.data ?? [];
   const runs = rows.map((row: any) => {
     let rawUdfs: Record<string, unknown> = {};
@@ -474,16 +478,29 @@ export async function fetchTestRunUdfValues(
       rawUdfs = row.testRunUdfs;
     }
 
-    const enrichedUdfs = Object.entries(rawUdfs).map(([name, value]) => {
-      const def = defByName[name];
-      return {
-        name,
-        label: def?.fieldLabel ?? name,
-        fieldID: def?.projectUserFieldID ?? null,
-        fieldType: def?.fieldTypeName ?? "UNKNOWN",
-        value,
-      };
-    });
+    let enrichedUdfs: any[];
+    if (hasMetadata) {
+      // Show ALL project-defined UDF fields; value is null when not set on this execution
+      enrichedUdfs = Object.values(fieldDefs).map((def: any) => ({
+        name: def.name as string,
+        label: def.fieldLabel as string,
+        fieldID: def.projectUserFieldID as number,
+        fieldType: def.fieldTypeName as string,
+        value: Object.hasOwn(rawUdfs, def.name) ? rawUdfs[def.name] : null,
+      }));
+    } else {
+      // Fallback: metadata unavailable — show only fields that have values
+      enrichedUdfs = Object.entries(rawUdfs).map(([name, value]) => {
+        const def = defByName[name];
+        return {
+          name,
+          label: def?.fieldLabel ?? name,
+          fieldID: def?.projectUserFieldID ?? null,
+          fieldType: def?.fieldTypeName ?? "UNKNOWN",
+          value,
+        };
+      });
+    }
 
     return {
       tcRunID: row.tcRunID,

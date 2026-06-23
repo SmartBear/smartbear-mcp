@@ -15,6 +15,8 @@ export interface ModuleAutoResolveConfig {
   moduleName: string;
   /** Field name for the folder ID (e.g., 'tsFolderID') */
   folderIdField?: string;
+  /** When true, converts the resolved folder ID to a string (needed for tcFolderID, parentFolderId) */
+  folderIdAsString?: boolean;
 }
 
 /**
@@ -31,6 +33,7 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     handler: QMetryToolsHandlers.CREATE_TEST_CASE,
     folderIdPath: "rootFolders.TC.id",
     folderIdField: "tcFolderID",
+    folderIdAsString: true,
     moduleName: "Test Cases",
   },
   {
@@ -69,7 +72,14 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     handler: QMetryToolsHandlers.CREATE_TEST_SUITE,
     folderIdPath: "rootFolders.TS.id",
     folderIdField: "parentFolderId",
+    folderIdAsString: true,
     moduleName: "Test Suites",
+  },
+  {
+    handler: QMetryToolsHandlers.UPDATE_TEST_SUITE,
+    folderIdPath: "rootFolders.TS.id",
+    folderIdField: "TsFolderID",
+    moduleName: "Test Suite",
   },
   {
     handler: QMetryToolsHandlers.FETCH_ISSUES,
@@ -125,7 +135,9 @@ export function autoResolveViewIdAndFolderPath(
   ) {
     const folderId = getNestedProperty(projectInfo, config.folderIdPath);
     if (folderId) {
-      updatedArgs[config.folderIdField] = folderId;
+      updatedArgs[config.folderIdField] = config.folderIdAsString
+        ? String(folderId)
+        : folderId;
     }
   }
 

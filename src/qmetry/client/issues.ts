@@ -172,6 +172,8 @@ export async function fetchIssuesLinkedToTestCase(
 
 /**
  * Fetch executions for a QMetry-native (non-Jira) issue.
+ * Also fetches UDF metadata (once, project-wide) to enrich each execution with
+ * ALL available Test Run UDF fields, including fields with no value set (null).
  * @throws If linkedAssetId or linkedAsset.id is missing/invalid.
  */
 export async function fetchIssueExecutions(
@@ -208,7 +210,7 @@ export async function fetchIssueExecutions(
     linkedAsset: resolvedLinkedAsset,
   };
 
-  return qmetryRequest<unknown>({
+  const result = await qmetryRequest<Record<string, any>>({
     method: "POST",
     path: QMETRY_PATHS.ISSUES.GET_ISSUE_EXECUTIONS,
     token,
@@ -216,6 +218,108 @@ export async function fetchIssueExecutions(
     baseUrl: resolvedBaseUrl,
     body,
   });
+
+  if (result.hasTcRunUdf === false) {
+    return {
+      ...result,
+      testRunUdfNote:
+        "No Test Run UDFs are configured for this project. " +
+        "The 'testRunUdfs' field will not be present in execution records. " +
+        "To enable Test Run UDF features, a project administrator must define Test Run UDF fields in the project settings.",
+    };
+  }
+
+  // Fetch UDF metadata once — field definitions are project-wide and identical across all executions
+  let fieldDefs: Record<string, any> = {};
+  try {
+    const meta = await qmetryRequest<{
+      qmUDF?: { TCR?: Record<string, any> };
+    }>({
+      method: "POST",
+      path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
+      token,
+      project: resolvedProject,
+      baseUrl: resolvedBaseUrl,
+      body: { entityType: "TCR" },
+      extraHeaders: {
+        action: "fetch-steps",
+        screenname: "EXECUTION RUN",
+      },
+    });
+    fieldDefs = meta.qmUDF?.TCR ?? {};
+  } catch {
+    // metadata call is best-effort — proceed without enrichment
+  }
+
+  const hasMetadata = Object.keys(fieldDefs).length > 0;
+  const rows: any[] = result.data ?? [];
+
+  const enrichedData = rows.map((row: any) => {
+    let rawUdfs: Record<string, unknown> = {};
+    if (row.udfjson) {
+      try {
+        rawUdfs = JSON.parse(row.udfjson);
+      } catch {
+        rawUdfs = {};
+      }
+    }
+
+    let testRunUdfs: any;
+    if (hasMetadata) {
+      // Show ALL project-defined UDF fields; value is null when not set on this execution
+      testRunUdfs = Object.values(fieldDefs).map((def: any) => {
+        let value: unknown = Object.hasOwn(rawUdfs, def.name)
+          ? rawUdfs[def.name]
+          : null;
+        // Strip HTML from rich text (LARGETEXT) field values
+        if (typeof value === "string" && /<[^>]+>/.test(value)) {
+          value = value
+            .replace(/<[^>]*>/g, " ")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&amp;/g, "&")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&quot;/g, '"')
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+        return {
+          name: def.name as string,
+          label: def.fieldLabel as string,
+          fieldID: def.projectUserFieldID as number,
+          fieldType: def.fieldTypeName as string,
+          value,
+        };
+      });
+    } else {
+      // Fallback: metadata unavailable — parse udfjson keys directly
+      testRunUdfs = Object.fromEntries(
+        Object.entries(rawUdfs).map(([key, val]) => {
+          if (typeof val === "string" && /<[^>]+>/.test(val)) {
+            const text = val
+              .replace(/<[^>]*>/g, " ")
+              .replace(/&nbsp;/g, " ")
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/&quot;/g, '"')
+              .replace(/\s+/g, " ")
+              .trim();
+            return [key, text];
+          }
+          return [key, val];
+        }),
+      );
+    }
+
+    const { udfjson: _udfjson, ...rowRest } = row;
+    return { ...rowRest, testRunUdfs };
+  });
+
+  return {
+    ...result,
+    data: enrichedData,
+  };
 }
 
 /**

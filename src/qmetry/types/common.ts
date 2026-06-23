@@ -172,6 +172,7 @@ export const CommonFields = {
     ),
   tcViewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
@@ -180,6 +181,7 @@ export const CommonFields = {
     ),
   rqViewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
@@ -253,6 +255,7 @@ export const CommonFields = {
     ),
   tsfeViewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
@@ -261,6 +264,7 @@ export const CommonFields = {
     ),
   tsViewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
@@ -555,7 +559,15 @@ export const UpdateTestCaseRemoveStepSchema = z.object({
 });
 
 export const CreateTestCaseArgsSchema = z.object({
-  tcFolderID: z.string(),
+  tcFolderID: z
+    .string()
+    .optional()
+    .describe(
+      "Test Case folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific folder ID. " +
+        "System will fetch project info using the projectKey and extract rootFolders.TC.id automatically. " +
+        "Manual folder ID only needed if you want to target a specific sub-folder.",
+    ),
   steps: z.array(CreateTestCaseStepSchema).optional(),
   name: z.string(),
   priority: z.number().optional(),
@@ -846,7 +858,15 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
 });
 
 export const CreateTestSuiteArgsSchema = z.object({
-  parentFolderId: z.string(),
+  parentFolderId: z
+    .string()
+    .optional()
+    .describe(
+      "Test Suite parent folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific folder ID. " +
+        "System will fetch project info using the projectKey and extract rootFolders.TS.id automatically. " +
+        "Manual folder ID only needed if you want to target a specific sub-folder.",
+    ),
   name: z.string(),
   isAutomatedFlag: z.boolean().optional(),
   description: z.string().optional(),
@@ -867,7 +887,13 @@ export const UpdateTestSuiteArgsSchema = z.object({
   id: z.number().describe("Id of Test Suite to be updated (required)"),
   TsFolderID: z
     .number()
-    .describe("Folder ID where Test Suite resides (required)"),
+    .optional()
+    .describe(
+      "Folder ID where Test Suite resides - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific folder ID. " +
+        "System will fetch project info using the projectKey and extract rootFolders.TS.id automatically. " +
+        "Manual folder ID only needed if you want to override the automatic resolution.",
+    ),
   entityKey: z
     .string()
     .describe("Entity Key of Test Suite to be updated (required)"),
@@ -901,8 +927,8 @@ export const TestSuiteListArgsSchema = z.object({
 export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
-  tsFolderID: CommonFields.tsFolderID,
-  viewId: CommonFields.tsfeViewId.optional(),
+  tsFolderID: CommonFields.tsFolderID.optional(),
+  viewId: CommonFields.tsfeViewId,
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -979,7 +1005,7 @@ export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
   tsrunID: CommonFields.tsrunID, // API payload param - sent in request body (REQUIRED)
-  viewId: CommonFields.teViewId.pipe(z.number()), // API payload param - sent in request body (REQUIRED)
+  viewId: CommonFields.teViewId, // auto-resolved via SYSTEM if not provided
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -1077,6 +1103,7 @@ export const IssuesListArgsSchema = z.object({
   baseUrl: CommonFields.baseUrl,
   viewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +

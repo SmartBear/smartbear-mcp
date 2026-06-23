@@ -1021,49 +1021,6 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "Get execution records for a specific test case by numeric ID, including Test Run UDF values",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
     inputSchema: TestCaseExecutionsArgsSchema,
-    formatResponse: (result: any) => {
-      if (!result?.data || !Array.isArray(result.data)) return result;
-      if (result.hasTcRunUdf === false) {
-        return {
-          ...result,
-          testRunUdfNote:
-            "No Test Run UDFs are configured for this project. " +
-            "The 'testRunUdfs' field will not be present in execution records. " +
-            "To enable Test Run UDF features, a project administrator must define Test Run UDF fields in the project settings.",
-        };
-      }
-      return {
-        ...result,
-        data: result.data.map((row: any) => {
-          if (!row.udfjson) return row;
-          let testRunUdfs: Record<string, unknown> = {};
-          try {
-            const parsed = JSON.parse(row.udfjson);
-            testRunUdfs = Object.fromEntries(
-              Object.entries(parsed).map(([key, val]) => {
-                if (typeof val === "string" && /<[^>]+>/.test(val)) {
-                  const text = val
-                    .replace(/<[^>]*>/g, " ")
-                    .replace(/&nbsp;/g, " ")
-                    .replace(/&amp;/g, "&")
-                    .replace(/&lt;/g, "<")
-                    .replace(/&gt;/g, ">")
-                    .replace(/&quot;/g, '"')
-                    .replace(/\s+/g, " ")
-                    .trim();
-                  return [key, text];
-                }
-                return [key, val];
-              }),
-            );
-          } catch {
-            testRunUdfs = {};
-          }
-          const { udfjson: _udfjson, ...rest } = row;
-          return { ...rest, testRunUdfs };
-        }),
-      };
-    },
     purpose:
       "Retrieve execution history and results for a specific test case. " +
       "This tool provides detailed execution information including test suite names, platforms, " +
@@ -1179,7 +1136,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "ALWAYS get tcRunID from executions and use THAT as entityId!",
       "",
       "EXAMPLE RESPONSE STRUCTURE FROM THIS TOOL:",
-      '{ "data": [{ "tcRunID": 58312120, "testSuiteName": "Suite 1", "executionStatus": "PASS" }] }',
+      '{ "data": [{ "tcRunID": 58312120, "testSuiteName": "Suite 1", "executionStatus": "PASS", "testRunUdfs": [...] }] }',
       "→ Use tcRunID (58312120) as entityId for linked issues API",
       "",
       "FILTER CAPABILITIES: Support extensive filtering by test suite, platform, status, user, release, cycle, dates, and archive status",
@@ -1195,28 +1152,31 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "Use scope parameter to define retrieval context (project, folder, release, cycle)",
       "",
       "TEST RUN UDF SUPPORT:",
-      "This tool automatically parses the 'udfjson' field from each execution record into a readable 'testRunUdfs' key-value object.",
-      "HTML is stripped from rich text (large text) UDF fields for clean LLM output.",
-      "Example testRunUdfs in response:",
-      "  testRunUdfs: {",
-      '    "8260LUP": "l1",',
-      '    "TRString": "dsf",',
-      '    "notes_run": "testadsfa",',
-      '    "cascade_vK": { "child": "qq", "parent": "vkc" },',
-      '    "PGTE_MULTILOOKUPLIST": ["aa", "bb"],',
-      '    "PGTE_DATEPICKER": "06-03-2026"',
-      "  }",
+      "This tool automatically fetches UDF metadata (project-wide, one call for all executions) and enriches each execution record.",
+      "ALL project-defined Test Run UDF fields are returned for every execution — including fields with no value (value: null).",
+      "HTML is stripped from rich text (LARGETEXT) UDF field values for clean output.",
+      "Each execution's 'testRunUdfs' is an array of objects:",
+      "  testRunUdfs: [",
+      '    { "name": "8260LUP", "label": "Lookup Field", "fieldID": 228563, "fieldType": "LOOKUPLIST", "value": "l1" },',
+      '    { "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "dsf" },',
+      '    { "name": "notes_run", "label": "Notes Run", "fieldID": 229242, "fieldType": "LARGETEXT", "value": null },',
+      '    { "name": "cascade_vK", "label": "Cascade VK", "fieldID": 229426, "fieldType": "CASCADINGLIST", "value": { "child": "qq", "parent": "vkc" } }',
+      "  ]",
+      "Use 'fieldID' from testRunUdfs entries when calling 'Bulk Update Test Run UDFs'.",
       "",
       "hasTcRunUdf FLAG — IMPORTANT:",
       "The response contains a 'hasTcRunUdf' boolean flag at the top level.",
-      "hasTcRunUdf: true  → Project has Test Run UDFs configured; each execution record includes 'testRunUdfs' object.",
+      "hasTcRunUdf: true  → Project has Test Run UDFs configured; each execution record includes 'testRunUdfs' array with all fields.",
       "hasTcRunUdf: false → Project has NO Test Run UDFs configured.",
       "  When hasTcRunUdf is false, the response includes a 'testRunUdfNote' field with a professional explanation.",
       "  Inform the user: 'No Test Run UDFs are configured for this project. Contact a project administrator to set up Test Run UDF fields.'",
       "NEVER attempt to read testRunUdfs from records when hasTcRunUdf is false — the field will not be present.",
     ],
     outputDescription:
-      "JSON object with executions array. Each execution record contains status, timestamps, metadata, and a 'testRunUdfs' object with key-value pairs of Test Run UDF values (HTML stripped from rich text fields). Top-level 'hasTcRunUdf' flag indicates whether the project has Test Run UDFs configured. When false, a 'testRunUdfNote' field provides a professional explanation instead.",
+      "JSON object with executions array. Each execution record contains status, timestamps, metadata, and a 'testRunUdfs' array. " +
+      "Each element in testRunUdfs has: name (field key), label (display name), fieldID (use for bulk update), fieldType, and value (null if not set for this execution). " +
+      "ALL project-defined UDF fields are always included, even those with no value. " +
+      "Top-level 'hasTcRunUdf' flag indicates whether the project has Test Run UDFs configured. When false, a 'testRunUdfNote' field provides a professional explanation instead.",
     readOnly: true,
     idempotent: true,
   },

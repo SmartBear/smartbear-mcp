@@ -617,8 +617,10 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "AUTO-RESOLVE: If user provides an issue entity key (e.g. VKT-IS-5, MAC-IS-10), first call Fetch Defects or Issues with that entity key as filter, extract data[<index>].id, then use it as linkedAssetId",
       'AUTO-RESOLVE FILTER EXAMPLE: to resolve VKT-IS-5 → use filter \'[{"type":"string","value":"VKT-IS-5","field":"entityKeyId"}]\' in Fetch Defects or Issues tool',
       "This tool supports QMetry-native issues only — do NOT use for Jira-integrated projects",
-      "RESPONSE FIELDS: hasTcRunUdf=true means executions have UDF data; udfjson is a JSON string of UDF field key-value pairs per execution",
-      'UDF PARSING: Parse udfjson string as JSON to access individual UDF fields. Example: {"TRString":"test","dateTimePicker1010":"05-22-2026"}',
+      "RESPONSE FIELDS: hasTcRunUdf=true means executions have UDF data; each execution includes a 'testRunUdfs' array with ALL project-defined UDF fields",
+      "ALL UDF FIELDS: ALL project-defined Test Run UDF fields are returned for every execution — including fields not yet set (value: null)",
+      "Each element in testRunUdfs: { name, label, fieldID, fieldType, value } — use fieldID when calling 'Bulk Update Test Run UDFs'",
+      'EXAMPLE testRunUdfs: [{ "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "test" }, { "name": "dateField", "label": "Date", "fieldID": 229255, "fieldType": "DATETIMEPICKER", "value": null }]',
       "FILTER FIELDS:",
       "  - tcName (string): filter by test case name substring",
       "  - linkageLevel (string): 'Test Case' or 'Test Step'",
@@ -632,12 +634,15 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "Use pagination (page, start, limit) for large result sets",
       "Get platform IDs using the FETCH_PLATFORMS tool before filtering by platformID",
       "Execution status names are case-sensitive — use lowercase: 'failed', 'passed', 'in progress', 'blocked', 'not run'",
+      "hasTcRunUdf: false → No Test Run UDFs configured; testRunUdfs will not appear; a 'testRunUdfNote' field explains this.",
     ],
     outputDescription:
       "JSON object with 'data' array of execution records, 'hasTcRunUdf' boolean flag, and 'total' count. " +
       "Each execution contains tcRunID, tcID, dfID, tcName, tcEntityKey, runStatusName, platformName, " +
       "cycleName, releaseName, executedAt, executionCreatedByLoginAlias, linkageLevel, executedVersion, " +
-      "isArchived, isTestSuiteArchived, and udfjson (JSON string of UDF field values).",
+      "isArchived, isTestSuiteArchived, and 'testRunUdfs' array. " +
+      "testRunUdfs includes ALL project-defined UDF fields, each with name, label, fieldID, fieldType, and value (null if not set). " +
+      "When hasTcRunUdf is false, a 'testRunUdfNote' field provides a professional explanation instead.",
     readOnly: true,
     idempotent: true,
     openWorld: false,
