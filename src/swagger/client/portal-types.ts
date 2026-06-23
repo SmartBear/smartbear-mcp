@@ -432,14 +432,19 @@ export type UpdateDocumentBody = Omit<UpdateDocumentArgs, "documentId">;
 
 export type PublishPortalProductResponse = SuccessResponse & {
   preview: boolean;
-  liveUrl?: string;
-  previewUrl?: string;
+  liveUrl?: string | null;
+  previewUrl?: string | null;
   product?: Pick<Product, "id" | "name" | "slug">;
   portal?: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
   tableOfContentsItem?: Pick<
     TableOfContentsItem,
     "id" | "slug" | "title" | "order" | "parentId"
   > | null;
+  warning?: {
+    code: string;
+    step: string;
+    message: string;
+  };
 };
 
 // Response types for better type safety
