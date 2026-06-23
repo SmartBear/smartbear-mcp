@@ -111,4 +111,5 @@ export const QMetryToolsHandlers = {
   FETCH_TEST_RUN_UDF_METADATA: "fetchTestRunUdfMetadata",
   FETCH_TEST_RUN_UDF_VALUES: "fetchTestRunUdfValues",
   FETCH_ISSUE_EXECUTIONS: "getIssueExecutions",
+  FETCH_CASCADE_CHILD_VALUES: "fetchCascadeChildValues",
 };

@@ -53,6 +53,7 @@ import {
   // createUdf,
   // fetchCustomListItems,
   // fetchCustomLists,
+  fetchCascadeChildValues,
   fetchTestRunUdfMetadata,
   fetchTestRunUdfValues,
   fetchUdfFieldTypes,
@@ -132,4 +133,5 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA]: fetchTestRunUdfMetadata,
   [QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES]: fetchTestRunUdfValues,
   [QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS]: fetchIssueExecutions,
+  [QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES]: fetchCascadeChildValues,
 };

@@ -318,15 +318,48 @@ export interface FetchTestRunUdfValuesPayload {
   orgCode?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Fetch Cascade Child Values
+// ---------------------------------------------------------------------------
+
+export interface FetchCascadeChildValuesPayload {
+  id: number;
+  isArchReq?: boolean;
+  scopeId?: number;
+  orgCode?: string;
+}
+
+export const FetchCascadeChildValuesArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  id: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "Numeric ID of the parent cascade list item to fetch child values for. " +
+        "Get this from the 'lookupOptions' returned by 'Fetch Test Run UDF Metadata' " +
+        "for a CASCADINGLIST field — each option has an 'id' field.",
+    ),
+  isArchReq: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Whether to include archived child items in the response (default: false).",
+    ),
+});
+
 export const FetchTestRunUdfValuesArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
   tsrunID: z
+    .coerce
     .string()
     .describe(
-      "Test Suite Run ID (string format). " +
-        "Get this from the 'Fetch Executions by Test Suite' tool — " +
-        "use data[<index>].tsRunID from the response.",
+      "Test Suite Run ID. CRITICAL: the parameter name is 'tsrunID' — do NOT use 'testSuiteRunId', 'tsRunID', or any other variant. " +
+        "Accepts a string or number (e.g. 731600 or '731600' — both are valid). " +
+        "Get this from 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response.",
     ),
   viewId: z
     .number()

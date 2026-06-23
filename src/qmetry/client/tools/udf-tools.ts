@@ -4,6 +4,7 @@ import {
   // CreateUdfArgsSchema, // TODO: Deferred to next release
   // FetchCustomListItemsArgsSchema,
   // FetchCustomListsArgsSchema,
+  FetchCascadeChildValuesArgsSchema,
   FetchTestRunUdfMetadataArgsSchema,
   FetchTestRunUdfValuesArgsSchema,
   // FetchUdfFieldTypesArgsSchema, // TODO: Deferred to next release
@@ -616,7 +617,10 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         "  DATETIMEPICKER: date string in MM-DD-YYYY format, e.g. '06-20-2026'\n" +
         "  LOOKUPLIST (single select): numeric item ID, e.g. 5108697\n" +
         "  MULTILOOKUPLIST (multi-select): array of item IDs, e.g. [5158524, 5158525]\n" +
-        "  CASCADINGLIST: object with parent and child keys, e.g. {parent: 5126498, child: 5126499}",
+        "  CASCADINGLIST: object with parent and child keys, e.g. {parent: 5126498, child: 5126499}. " +
+        "To get valid child IDs for a CASCADINGLIST field — first call 'Fetch Test Run UDF Metadata' to get the parent " +
+        "item IDs from lookupOptions, then call 'Fetch Cascade Child Values' with a parent item ID to get " +
+        "the available child IDs, then use {parent: <parentId>, child: <childId>} as the value here.",
       "MULTILOOKUPLIST — multiSelectAction rules:\n" +
         "  'append' (default): new values are ADDED to existing selections. Use when user says 'add', 'include', 'append'.\n" +
         "  'replace': existing selections are CLEARED and replaced with only the new values. Use when user says 'replace', 'set to', 'overwrite', 'change to'.\n" +
@@ -727,6 +731,71 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     outputDescription:
       "JSON with hasTcRunUdf boolean, total count, runs array (each with tcRunID, entityKey, summary, runStatus, testRunUdfs), " +
       "and availableUdfFields array describing all UDF fields in the project.",
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Cascade Child Values",
+    toolset: "UDF",
+    summary:
+      "Fetch the child values of a CASCADINGLIST UDF field for a given parent item ID. " +
+      "Use this before bulk-updating a CASCADINGLIST Test Run UDF to discover valid child item IDs.",
+    handler: QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES,
+    inputSchema: FetchCascadeChildValuesArgsSchema,
+    purpose:
+      "Retrieves the available child items for a selected parent item in a CASCADINGLIST UDF field. " +
+      "CASCADINGLIST fields have a two-level hierarchy: a parent value and a dependent child value. " +
+      "The child options are not static — they depend on which parent item is selected. " +
+      "This tool resolves that dependency by returning all valid child item IDs for a given parent ID. " +
+      "Call this tool AFTER 'Fetch Test Run UDF Metadata' to get parent item IDs from lookupOptions, " +
+      "and BEFORE 'Bulk Update Test Run UDFs' to obtain the correct child item ID to include in the update payload.",
+    useCases: [
+      "Find valid child values for a CASCADINGLIST UDF before bulk-updating test runs",
+      "List all child options available under a specific parent cascade item",
+      "Resolve child item ID when user knows the parent but not the child",
+      "Discover cascade hierarchy for a UDF field before setting it on test executions",
+    ],
+    examples: [
+      {
+        description:
+          "Fetch child values for parent cascade item with ID 5173534",
+        parameters: {
+          id: 5173534,
+        },
+        expectedOutput:
+          '{ parentId: 5173534, parentName: "India", children: [{ id: 5173535, name: "i1", uniqueLabel: "i1", isArchived: false }, ...], _note: "Use \'id\' from \'children\' as the \'child\' value in the CASCADINGLIST update." }',
+      },
+      {
+        description:
+          "Fetch child values including archived items for parent ID 5126498",
+        parameters: {
+          id: 5126498,
+          isArchReq: true,
+        },
+        expectedOutput:
+          "{ parentId: 5126498, parentName: \"abc\", children: [...], _note: \"...\" }",
+      },
+    ],
+    hints: [
+      "MANDATORY WORKFLOW for CASCADINGLIST bulk update:\n" +
+        "  1. Call 'Fetch Test Run UDF Metadata' → get the CASCADINGLIST field's 'fieldID' (projectUserFieldID) " +
+        "     and parent item options from 'lookupOptions'.\n" +
+        "  2. Call this tool ('Fetch Cascade Child Values') with a parent item 'id' from step 1 → get child item IDs.\n" +
+        "  3. Call 'Bulk Update Test Run UDFs' with value: { parent: <parentId>, child: <childId> } and the 'fieldID' from step 1.",
+      "The parent item IDs are in the 'lookupOptions' map returned by 'Fetch Test Run UDF Metadata'. " +
+        "Each entry under the field's listName contains items with 'id' — use that 'id' as the 'id' parameter here.",
+      "The response 'children' array contains objects with 'id', 'name', 'uniqueLabel', and 'isArchived'. " +
+        "Use 'id' as the 'child' value in the bulk update payload.",
+      "Set 'isArchReq: true' only if the user explicitly asks to include archived/inactive child options.",
+      "This endpoint requires 'scope' and 'orgcode' headers — these are injected automatically from the session " +
+        "context when 'Set Project Info' has been called. If you see an authorization error, call 'Set Project Info' first.",
+      "Do NOT call this tool for STRING, NUMBER, DATETIMEPICKER, LOOKUPLIST, or MULTILOOKUPLIST fields — " +
+        "only CASCADINGLIST (fieldType: 'CASCADINGLIST') fields have a parent-child hierarchy.",
+    ],
+    outputDescription:
+      "JSON object with 'parentId' (the input ID), 'parentName' (the parent item's display name), " +
+      "'children' array (each item has id, name, uniqueLabel, isArchived), and a '_note' explaining how to use the IDs.",
     readOnly: true,
     destructive: false,
     idempotent: true,

@@ -5,6 +5,7 @@ import type {
   // CreateUdfPayload,
   // FetchCustomListItemsPayload,
   // FetchCustomListsPayload,
+  FetchCascadeChildValuesPayload,
   FetchTestRunUdfMetadataPayload,
   FetchTestRunUdfValuesPayload,
 } from "../types/udf";
@@ -290,6 +291,80 @@ export async function bulkUpdateTestRunUdfs(
     scopeId: payload.scopeId,
     orgCode: payload.orgCode,
   });
+}
+
+/**
+ * Fetches the child values of a CASCADINGLIST UDF field for a given parent item ID.
+ * Required headers: action: fetch-cascade-children, screenname: EXECUTION RUN.
+ * Response is an object keyed by the parent item name, containing an array of child items.
+ * Normalizes the response into a flat { parentName, children } shape for easy LLM consumption.
+ */
+export async function fetchCascadeChildValues(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchCascadeChildValuesPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (typeof payload.id !== "number" || payload.id <= 0) {
+    throw new Error(
+      "[fetchCascadeChildValues] Missing or invalid required parameter: 'id'. " +
+        "Must be a positive integer representing the parent cascade item ID.",
+    );
+  }
+
+  const raw = await qmetryRequest<Record<string, Array<{
+    id: number;
+    name: string;
+    uniqueLabel: string;
+    isArchived: boolean;
+  }>>>({
+    method: "POST",
+    path: QMETRY_PATHS.UDF.FETCH_CASCADE_CHILD_VALUES,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body: {
+      id: payload.id,
+      isArchReq: payload.isArchReq ?? false,
+    },
+    scopeId: payload.scopeId,
+    orgCode: payload.orgCode,
+    extraHeaders: {
+      action: "fetch-cascade-children",
+      screenname: "EXECUTION RUN",
+    },
+  });
+
+  // Response is keyed by the parent item name — normalize for easier consumption
+  const entries = Object.entries(raw);
+  if (entries.length === 0) {
+    return {
+      parentId: payload.id,
+      parentName: null,
+      children: [],
+      _note: "No child values found for this parent cascade item.",
+    };
+  }
+
+  const [parentName, children] = entries[0];
+  return {
+    parentId: payload.id,
+    parentName,
+    children: children.map((c) => ({
+      id: c.id,
+      name: c.name,
+      uniqueLabel: c.uniqueLabel,
+      isArchived: c.isArchived,
+    })),
+    _note:
+      "Use 'id' from 'children' as the 'child' value in the CASCADINGLIST update: " +
+      "{ parent: <parentId>, child: <children[].id> }",
+  };
 }
 
 /**
