@@ -666,9 +666,17 @@ export class SwaggerAPI {
       productId,
       pageTitle,
       pageContent,
+      contentType = "markdown",
+      source = "internal",
       order = 0,
       parentId = null,
     } = args;
+
+    if (contentType === "html" && source === "internal" && pageContent !== undefined) {
+      throw new ToolError(
+        "Cannot create an html + internal page with content via API. Use 'external' source for html, or 'markdown' with 'internal' source.",
+      );
+    }
 
     const portal = await this.getPortal(portalId);
     const product = await this.getPortalProduct(productId);
@@ -693,8 +701,8 @@ export class SwaggerAPI {
       order,
       parentId,
       content: {
-        type: "markdown",
-        source: "internal",
+        type: contentType,
+        source,
       },
     });
     const documentId = tocItem.documentId;
@@ -703,7 +711,7 @@ export class SwaggerAPI {
       await this.updateDocument({
         documentId,
         content: pageContent,
-        type: "markdown",
+        type: contentType,
       });
     }
 
@@ -722,8 +730,8 @@ export class SwaggerAPI {
         slug: pageSlug,
         title: normalizedTitle,
         content: {
-          type: "markdown",
-          source: "internal",
+          type: contentType,
+          source,
           documentId,
         },
       },

@@ -620,6 +620,19 @@ describe("SwaggerAPI", () => {
       );
     });
 
+    it("should throw ToolError for html + internal with content", async () => {
+      await expect(
+        api.createDocumentationPage({
+          portalId,
+          productId,
+          pageTitle: "My Page",
+          pageContent: "<h1>Hello</h1>",
+          contentType: "html",
+          source: "internal",
+        }),
+      ).rejects.toThrow("Cannot create an html + internal page with content via API");
+    });
+
     it("should throw ToolError when product has no sections", async () => {
       const emptySections = {
         page: { number: 0, size: 0, totalElements: 0, totalPages: 0 },
@@ -648,6 +661,51 @@ describe("SwaggerAPI", () => {
           pageContent: "content",
         }),
       ).rejects.toThrow(`Product ${productId} has no sections`);
+    });
+
+    it("should create an html + external documentation page", async () => {
+      setupFetchRoutes();
+
+      const result = await api.createDocumentationPage({
+        portalId,
+        productId,
+        pageTitle: "API Reference",
+        pageContent: "<h1>API Reference</h1>",
+        contentType: "html",
+        source: "external",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/sections/${sectionId}/table-of-contents`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            type: "new",
+            title: "API Reference",
+            slug: "api-reference",
+            order: 0,
+            parentId: null,
+            content: { type: "html", source: "external" },
+          }),
+        },
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/documents/${documentId}`,
+        {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({
+            content: "<h1>API Reference</h1>",
+            type: "html",
+          }),
+        },
+      );
+      expect(result.pageDetails.content).toEqual({
+        type: "html",
+        source: "external",
+        documentId,
+      });
     });
 
     it("should normalise page title into a slug", async () => {

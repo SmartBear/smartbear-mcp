@@ -149,7 +149,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Create Documentation Page",
     toolset: "Documents",
     summary:
-      "Create a documentation page in a portal product in a single tool call. Shortcut for adding a new table of contents page with markdown content to a portal product. Returns the page location details (productId, sectionId, slug) and a draftUrl to edit it in the portal.",
+      "Create a documentation page in a portal product in a single tool call. Supports markdown and html content types. Returns the page location details (productId, sectionId, slug) and a draftUrl to edit it in the portal.",
     inputSchema: CreateDocumentationPageArgsSchema,
     handler: "createDocumentationPage",
   },

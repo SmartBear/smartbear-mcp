@@ -113,7 +113,7 @@ export const CreateTableOfContentsArgsSchema = z.object({
         .enum(["internal", "external"])
         .optional()
         .describe(
-          "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+          "Source of the document content - 'internal' allows editing in both UI and API, 'external' enables editing only via API. Note: 'html' type only supports 'external' source.",
         ),
       url: z
         .string()
@@ -389,13 +389,13 @@ export const UpdateDocumentArgsSchema = z.object({
     .enum(["html", "markdown"])
     .optional()
     .describe(
-      "Content type - 'html' for HTML content or 'markdown' for Markdown content",
+      "Content type of the document. Note: documents with type 'html' and source 'internal' cannot be edited via API — only 'html' + 'external' and all 'markdown' combinations are supported.",
     ),
   source: z
     .enum(["internal", "external"])
     .optional()
     .describe(
-      "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+      "Where the document content is managed. 'internal': editable in both portal UI and API. 'external': editable via API only. Note: 'html' + 'internal' documents cannot be updated via API.",
     ),
 });
 
@@ -564,7 +564,21 @@ export const CreateDocumentationPageArgsSchema = z.object({
   pageContent: z
     .string()
     .optional()
-    .describe("Markdown content of the documentation page"),
+    .describe(
+      "Content of the documentation page. Provide HTML when contentType is 'html', Markdown when contentType is 'markdown'.",
+    ),
+  contentType: z
+    .enum(["markdown", "html"])
+    .default("markdown")
+    .describe(
+      "Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return 400.",
+    ),
+  source: z
+    .enum(["internal", "external"])
+    .default("internal")
+    .describe(
+      "Where the document content is managed. 'internal': editable in both the portal UI and via API. 'external': editable via API only, not in the portal UI. Constraint: 'html' content type only supports 'external' source.",
+    ),
   order: z
     .number()
     .optional()
@@ -595,8 +609,8 @@ export interface CreateDocumentationPageResult {
     slug: string;
     title: string;
     content: {
-      type: "markdown";
-      source: "internal";
+      type: "markdown" | "html";
+      source: "internal" | "external";
       documentId: string;
     };
   };
