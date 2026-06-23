@@ -10159,7 +10159,7 @@ None",
 - productId (string) *required*: Product UUID - unique identifier for the product
 - pageTitle (string) *required*: Title of the documentation page - will be displayed in navigation (3-255 characters, used to generate the page slug)
 - pageContent (string): Content of the documentation page. Provide HTML when contentType is 'html', Markdown when contentType is 'markdown'.
-- contentType (enum): Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return 400. (default: "markdown")
+- contentType (enum): Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return an error. (default: "markdown")
 - source (enum): Where the document content is managed. 'internal': editable in both the portal UI and via API. 'external': editable via API only, not in the portal UI. Constraint: 'html' content type only supports 'external' source. (default: "internal")
 - order (number): Order position of the documentation page within its parent section or item (default: 0)
 - parentId (string): Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure",

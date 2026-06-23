@@ -576,7 +576,7 @@ export const CreateDocumentationPageArgsSchema = z.object({
     .enum(["markdown", "html"])
     .default("markdown")
     .describe(
-      "Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return 400.",
+      "Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return an error.",
     ),
   source: z
     .enum(["internal", "external"])
