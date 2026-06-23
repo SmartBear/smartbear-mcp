@@ -575,12 +575,14 @@ export const CreateDocumentationPageArgsSchema = z.object({
   contentType: z
     .enum(["markdown", "html"])
     .default("markdown")
+    .optional()
     .describe(
       "Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return an error.",
     ),
   source: z
     .enum(["internal", "external"])
     .default("internal")
+    .optional()
     .describe(
       "Where the document content is managed. 'internal': editable in both the portal UI and via API. 'external': editable via API only, not in the portal UI. Constraint: 'html' content type only supports 'external' source.",
     ),
