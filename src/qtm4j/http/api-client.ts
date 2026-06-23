@@ -63,7 +63,7 @@ export class ApiClient {
     }
     return {
       ...new AuthService(token).getAuthHeaders(),
-      [HTTP_HEADERS.SKIP_ANALYTICS]: String(this.analyticsSkipped),
+      [HTTP_HEADERS.X_SKIP_TRACKING]: String(this.analyticsSkipped),
     };
   }
 
@@ -78,7 +78,7 @@ export class ApiClient {
     }
     return {
       ...new AuthService(token).getAuthHeaders(),
-      [HTTP_HEADERS.SKIP_ANALYTICS]: String(this.analyticsSkipped),
+      [HTTP_HEADERS.X_SKIP_TRACKING]: String(this.analyticsSkipped),
     };
   }
 

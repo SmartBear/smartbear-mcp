@@ -8,7 +8,7 @@ import {
   AUTOMATION_RESULT_DIRS,
   CLIENT_CONFIG,
   ENDPOINTS,
-  HTTP_HEADERS,
+  IMPORT_BODY_FIELDS,
   TOOL_NAMES,
   TOOLSETS,
 } from "../../config/constants.ts";
@@ -152,8 +152,8 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     const importBody: Record<string, unknown> = {
       format,
       isZip,
-      [HTTP_HEADERS.REQUEST_SOURCE_TYPE]: CLIENT_CONFIG.SOURCE_VALUE,
-      [HTTP_HEADERS.SKIP_ANALYTICS]: false,
+      [IMPORT_BODY_FIELDS.REQUEST_SOURCE_TYPE]: CLIENT_CONFIG.SOURCE_VALUE,
+      [IMPORT_BODY_FIELDS.SKIP_ANALYTICS]: false,
       ...rest,
       ...(fields ? { fields } : {}),
     };

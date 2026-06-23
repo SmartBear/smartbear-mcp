@@ -36,6 +36,6 @@ describe("AuthService", () => {
     expect(headers).toHaveProperty(HTTP_HEADERS.CONTENT_TYPE);
     expect(headers).toHaveProperty(HTTP_HEADERS.USER_AGENT);
     expect(headers).toHaveProperty(HTTP_HEADERS.ACCEPT);
-    expect(headers).toHaveProperty(HTTP_HEADERS.REQUEST_SOURCE_TYPE);
+    expect(headers).toHaveProperty(HTTP_HEADERS.X_REQUEST_SOURCE);
   });
 });

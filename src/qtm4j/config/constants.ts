@@ -219,10 +219,10 @@ export const HTTP_HEADERS = {
   CONTENT_LENGTH: "content-length",
 
   /** Identifies the request source for backend analytics (e.g., Amplitude) */
-  REQUEST_SOURCE_TYPE: "requestSourceType",
+  X_REQUEST_SOURCE: "X-Request-Source",
 
   /** Signals whether analytics should be skipped for this request */
-  SKIP_ANALYTICS: "skipAnalytics",
+  X_SKIP_TRACKING: "X-Skip-Tracking",
 } as const;
 
 /**
@@ -269,6 +269,15 @@ export const CLIENT_CONFIG = {
 
   /** Configuration prefix */
   CONFIG_PREFIX: "Qtm4j",
+} as const;
+
+/**
+ * Automation Import Body Fields
+ * These are request body field names (camelCase), distinct from HTTP header names.
+ */
+export const IMPORT_BODY_FIELDS = {
+  REQUEST_SOURCE_TYPE: "xRequestSource",
+  SKIP_ANALYTICS: "xSkipTracking",
 } as const;
 
 /**
