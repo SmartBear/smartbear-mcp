@@ -49,6 +49,11 @@ export const AUTO_RESOLVE_MODULES: ModuleAutoResolveConfig[] = [
     moduleName: "Test Case Run By Test Suite Run",
   },
   {
+    handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
+    viewIdPath: "latestViews.TE.viewId",
+    moduleName: "Test Run UDF Values",
+  },
+  {
     handler: QMetryToolsHandlers.FETCH_EXECUTIONS_BY_TESTSUITE,
     viewIdPath: "latestViews.TEL.viewId",
     moduleName: "Executions By Test Suites",

@@ -1,26 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   bulkUpdateTestRunUdfs,
-  createUdf,
-  fetchCustomLists,
-  fetchUdfFieldTypes,
-  fetchUdfModules,
+  // createUdf, // TODO: Deferred to next release
+  // fetchCustomLists,
+  fetchTestRunUdfMetadata,
+  fetchTestRunUdfValues,
+  // fetchUdfFieldTypes, // TODO: Deferred to next release
+  // fetchUdfModules, // TODO: Deferred to next release
 } from "../../../../qmetry/client/udf.js";
-import {
-  UDF_FIELD_TYPES,
-  UDF_MODULES,
-} from "../../../../qmetry/config/constants.js";
+
+// TODO: Deferred to next release — UDF_FIELD_TYPES and UDF_MODULES only used by commented-out tests
+// import {
+//   UDF_FIELD_TYPES,
+//   UDF_MODULES,
+// } from "../../../../qmetry/config/constants.js";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
 const projectKey = "TEST_PROJECT";
 
-const mockProjectInfoResponse = {
-  currentProjectId: 42307,
-  clientCode: "2O5API",
-  projectName: "Test Project",
-  latestViews: { TC: { viewId: 1001 } },
-};
+// TODO: Deferred to next release — only used by commented-out createUdf tests
+// const mockProjectInfoResponse = {
+//   currentProjectId: 42307,
+//   clientCode: "2O5API",
+//   projectName: "Test Project",
+//   latestViews: { TC: { viewId: 1001 } },
+// };
 
 describe("UDF API clients", () => {
   beforeEach(() => {
@@ -32,13 +37,15 @@ describe("UDF API clients", () => {
     json: async () => data,
   });
 
-  const mockFail = (status = 400, errorText = "Bad Request") => ({
-    ok: false,
-    status,
-    text: async () => errorText,
-    headers: new Map([["content-type", "text/plain"]]),
-  });
+  // TODO: Deferred to next release — only used by commented-out tests
+  // const mockFail = (status = 400, errorText = "Bad Request") => ({
+  //   ok: false,
+  //   status,
+  //   text: async () => errorText,
+  //   headers: new Map([["content-type", "text/plain"]]),
+  // });
 
+  /* TODO: Deferred to next release — createUdf tests
   describe("createUdf", () => {
     it("should POST with correct URL and required fields when scopeId is provided", async () => {
       const successResponse = {
@@ -317,84 +324,85 @@ describe("UDF API clients", () => {
       ).rejects.toThrow();
     });
   });
+  */
 
-  describe("fetchCustomLists", () => {
-    it("should POST with correct URL and default pagination", async () => {
-      const mockResponse = {
-        data: [
-          {
-            Id: 2398198,
-            fieldName: "CardType",
-            Listname: "Card Type",
-            SystemDefine: false,
-            noofitems: 3,
-            isEditable: true,
-            listType: "Normal",
-          },
-        ],
-      };
+  // describe("fetchCustomLists", () => {
+  //   it("should POST with correct URL and default pagination", async () => {
+  //     const mockResponse = {
+  //       data: [
+  //         {
+  //           Id: 2398198,
+  //           fieldName: "CardType",
+  //           Listname: "Card Type",
+  //           SystemDefine: false,
+  //           noofitems: 3,
+  //           isEditable: true,
+  //           listType: "Normal",
+  //         },
+  //       ],
+  //     };
 
-      global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
+  //     global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
-      const result = await fetchCustomLists(token, baseUrl, projectKey, {
-        scopeId: 42307,
-        orgCode: "2O5API",
-      });
+  //     const result = await fetchCustomLists(token, baseUrl, projectKey, {
+  //       scopeId: 42307,
+  //       orgCode: "2O5API",
+  //     });
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        `${baseUrl}/rest/admin/customlist/list`,
-        expect.objectContaining({
-          method: "POST",
-          headers: expect.objectContaining({
-            apikey: token,
-            project: projectKey,
-          }),
-        }),
-      );
+  //     expect(global.fetch).toHaveBeenCalledWith(
+  //       `${baseUrl}/rest/admin/customlist/list`,
+  //       expect.objectContaining({
+  //         method: "POST",
+  //         headers: expect.objectContaining({
+  //           apikey: token,
+  //           project: projectKey,
+  //         }),
+  //       }),
+  //     );
 
-      const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
-      );
-      expect(body.start).toBe(0);
-      expect(body.limit).toBe(50);
-      expect(body.page).toBe(1);
+  //     const body = JSON.parse(
+  //       (global.fetch as any).mock.calls[0][1].body as string,
+  //     );
+  //     expect(body.start).toBe(0);
+  //     expect(body.limit).toBe(50);
+  //     expect(body.page).toBe(1);
 
-      expect((result as any).data).toHaveLength(1);
-      expect((result as any).data[0].Id).toBe(2398198);
-    });
+  //     expect((result as any).data).toHaveLength(1);
+  //     expect((result as any).data[0].Id).toBe(2398198);
+  //   });
 
-    it("should include listName filter when provided", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk({ data: [] }));
+  //   it("should include listName filter when provided", async () => {
+  //     global.fetch = vi.fn().mockResolvedValue(mockOk({ data: [] }));
 
-      await fetchCustomLists(token, baseUrl, projectKey, {
-        listName: "Card Type",
-        scopeId: 42307,
-      });
+  //     await fetchCustomLists(token, baseUrl, projectKey, {
+  //       listName: "Card Type",
+  //       scopeId: 42307,
+  //     });
 
-      const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
-      );
-      expect(body.filter).toContain("Card Type");
-      expect(body.filter).toContain("Listname");
-    });
+  //     const body = JSON.parse(
+  //       (global.fetch as any).mock.calls[0][1].body as string,
+  //     );
+  //     expect(body.filter).toContain("Card Type");
+  //     expect(body.filter).toContain("Listname");
+  //   });
 
-    it("should use custom pagination parameters", async () => {
-      global.fetch = vi.fn().mockResolvedValue(mockOk({ data: [] }));
+  //   it("should use custom pagination parameters", async () => {
+  //     global.fetch = vi.fn().mockResolvedValue(mockOk({ data: [] }));
 
-      await fetchCustomLists(token, baseUrl, projectKey, {
-        start: 10,
-        page: 2,
-        limit: 25,
-      });
+  //     await fetchCustomLists(token, baseUrl, projectKey, {
+  //       start: 10,
+  //       page: 2,
+  //       limit: 25,
+  //     });
 
-      const body = JSON.parse(
-        (global.fetch as any).mock.calls[0][1].body as string,
-      );
-      expect(body.start).toBe(10);
-      expect(body.page).toBe(2);
-      expect(body.limit).toBe(25);
-    });
-  });
+  //     const body = JSON.parse(
+  //       (global.fetch as any).mock.calls[0][1].body as string,
+  //     );
+  //     expect(body.start).toBe(10);
+  //     expect(body.page).toBe(2);
+  //     expect(body.limit).toBe(25);
+  //   });
+  // });
 
   describe("bulkUpdateTestRunUdfs", () => {
     const mockSuccessResponse = {
@@ -573,6 +581,7 @@ describe("UDF API clients", () => {
     });
   });
 
+  /* TODO: Deferred to next release — fetchUdfFieldTypes and fetchUdfModules tests
   describe("fetchUdfFieldTypes", () => {
     it("should return all field types from constant without making an API call", async () => {
       global.fetch = vi.fn();
@@ -617,6 +626,213 @@ describe("UDF API clients", () => {
 
       expect(result1).not.toBe(result2);
       expect(result1).toEqual(result2);
+    });
+  });
+  */
+
+  describe("fetchTestRunUdfMetadata", () => {
+    const mockMetaResponse = {
+      qmUDF: {
+        TCR: {
+          "FLD.planned_execution_date": {
+            projectUserFieldID: 229460,
+            name: "planned_execution_date",
+            fieldLabel: "Planned Execution Date",
+            fieldTypeName: "DATETIMEPICKER",
+            allowBlank: true,
+          },
+          "FLD.test_env": {
+            projectUserFieldID: 229461,
+            name: "test_env",
+            fieldLabel: "Test Environment",
+            fieldTypeName: "STRING",
+            allowBlank: false,
+          },
+        },
+      },
+      qmUDFList: {},
+    };
+
+    it("should POST to metadata endpoint with entityType=TCR and special headers", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
+
+      await fetchTestRunUdfMetadata(token, baseUrl, projectKey, {
+        scopeId: 46270,
+        orgCode: "2O5API",
+      });
+
+      expect(global.fetch).toHaveBeenCalledOnce();
+      const [url, opts] = (global.fetch as any).mock.calls[0];
+      expect(url).toContain("/rest/admin/udf/metadata");
+      expect(opts.method).toBe("POST");
+      expect(JSON.parse(opts.body)).toMatchObject({ entityType: "TCR" });
+      expect(opts.headers.action).toBe("fetch-steps");
+      expect(opts.headers.screenname).toBe("EXECUTION RUN");
+    });
+
+    it("should return normalized fields array with fieldID and label", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
+
+      const result = (await fetchTestRunUdfMetadata(
+        token,
+        baseUrl,
+        projectKey,
+        {},
+      )) as any;
+
+      expect(result.fields).toHaveLength(2);
+      const dateField = result.fields.find(
+        (f: any) => f.name === "planned_execution_date",
+      );
+      expect(dateField).toBeDefined();
+      expect(dateField.fieldID).toBe(229460);
+      expect(dateField.label).toBe("Planned Execution Date");
+      expect(dateField.fieldType).toBe("DATETIMEPICKER");
+    });
+
+    it("should return empty fields array when no TCR UDFs exist", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValue(mockOk({ qmUDF: { TCR: {} }, qmUDFList: {} }));
+
+      const result = (await fetchTestRunUdfMetadata(
+        token,
+        baseUrl,
+        projectKey,
+        {},
+      )) as any;
+
+      expect(result.fields).toEqual([]);
+    });
+
+    it("should include _note with fieldID usage instructions", async () => {
+      global.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
+
+      const result = (await fetchTestRunUdfMetadata(
+        token,
+        baseUrl,
+        projectKey,
+        {},
+      )) as any;
+
+      expect(result._note).toContain("fieldID");
+    });
+  });
+
+  describe("fetchTestRunUdfValues", () => {
+    const mockRunsResponse = {
+      hasTcRunUdf: true,
+      total: 1,
+      data: [
+        {
+          tcRunID: 41667465,
+          entityKey: "TC-001",
+          summary: "Test Case 1",
+          runStatus: "Not Run",
+          udfjson: JSON.stringify({ planned_execution_date: "06-23-2026" }),
+        },
+      ],
+    };
+
+    const mockMetaResponse = {
+      qmUDF: {
+        TCR: {
+          "FLD.planned_execution_date": {
+            projectUserFieldID: 229460,
+            name: "planned_execution_date",
+            fieldLabel: "Planned Execution Date",
+            fieldTypeName: "DATETIMEPICKER",
+            allowBlank: true,
+          },
+        },
+      },
+      qmUDFList: {},
+    };
+
+    it("should call both runs API and metadata API when hasTcRunUdf is true", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(mockOk(mockRunsResponse))
+        .mockResolvedValueOnce(mockOk(mockMetaResponse));
+
+      await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+        tsrunID: "731600",
+        viewId: 87039,
+        scopeId: 46270,
+        orgCode: "2O5API",
+      });
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("should return hasTcRunUdf=false immediately when project has no UDFs", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(
+          mockOk({ hasTcRunUdf: false, total: 2, data: [] }),
+        );
+
+      const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+        tsrunID: "731600",
+        viewId: 87039,
+      })) as any;
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(result.hasTcRunUdf).toBe(false);
+      expect(result.runs).toEqual([]);
+      expect(result._note).toContain("No Test Run UDFs");
+    });
+
+    it("should enrich UDF values with label and fieldID from metadata", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(mockOk(mockRunsResponse))
+        .mockResolvedValueOnce(mockOk(mockMetaResponse));
+
+      const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+        tsrunID: "731600",
+        viewId: 87039,
+      })) as any;
+
+      expect(result.runs).toHaveLength(1);
+      const udf = result.runs[0].testRunUdfs[0];
+      expect(udf.name).toBe("planned_execution_date");
+      expect(udf.label).toBe("Planned Execution Date");
+      expect(udf.fieldID).toBe(229460);
+      expect(udf.value).toBe("06-23-2026");
+    });
+
+    it("should throw when tsrunID is missing", async () => {
+      await expect(
+        fetchTestRunUdfValues(token, baseUrl, projectKey, {
+          tsrunID: "",
+          viewId: 87039,
+        }),
+      ).rejects.toThrow("tsrunID");
+    });
+
+    it("should throw when viewId is missing", async () => {
+      await expect(
+        fetchTestRunUdfValues(token, baseUrl, projectKey, {
+          tsrunID: "731600",
+          viewId: undefined as any,
+        }),
+      ).rejects.toThrow("viewId");
+    });
+
+    it("should include availableUdfFields in response", async () => {
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(mockOk(mockRunsResponse))
+        .mockResolvedValueOnce(mockOk(mockMetaResponse));
+
+      const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
+        tsrunID: "731600",
+        viewId: 87039,
+      })) as any;
+
+      expect(result.availableUdfFields).toHaveLength(1);
+      expect(result.availableUdfFields[0].fieldID).toBe(229460);
     });
   });
 });

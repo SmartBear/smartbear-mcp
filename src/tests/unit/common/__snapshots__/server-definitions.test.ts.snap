@@ -4619,324 +4619,6 @@ Expected Output: Test suite created with details and metadata. Example uses: par
     "outputSchema": undefined,
     "title": "QMetry: Create Test Suite",
   },
-  "qmetry_create_user_defined_field": {
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": false,
-      "openWorldHint": false,
-      "readOnlyHint": false,
-      "title": "QMetry: Create User Defined Field",
-    },
-    "description": "Create a new User Defined Field (custom field / UDF) for one or more modules in a QMetry project.
-
-**Toolset:** UDF
-
-**Parameters:**
-- projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
-- fieldTypeID (number) *required*: Field type numeric ID. Supported types:
-1 = DATETIMEPICKER - date/time selection calendar
-2 = LARGETEXT - multi-line text input
-3 = LOOKUPLIST - single-select custom list (requires lookuplistId)
-4 = MULTILOOKUPLIST - multi-select custom list (requires lookuplistId)
-5 = NUMBER - numeric input
-6 = STRING - single-line text (use fieldLength to cap characters)
-7 = CASCADINGLIST - hierarchical single-select (requires lookuplistId)
-- name (string) *required*: Internal field name — ONLY alphanumeric characters and underscore allowed (e.g. 'my_field_1'). Spaces or special characters will cause an API error.
-- label (string) *required*: Display label shown in the QMetry UI for this field.
-- fieldLength (number): Maximum character length for STRING (fieldTypeID=6) fields. Not applicable for other field types.
-- lookuplistId (number): Required for LOOKUPLIST (3), MULTILOOKUPLIST (4), and CASCADINGLIST (7). Use the 'Fetch Custom Lists' tool to retrieve available list IDs.
-- modules (array) *required*: Array of module IDs to associate this UDF with. Supported modules:
-1 = Requirement
-3 = Test Case
-5 = Test Step
-6 = Test Suite
-11 = Issue
-32 = Test Run
-- mandatory (boolean): Whether this field is mandatory in the specified modules (default: false). (default: false)
-- listValues (array): Optional: pre-selected list items to associate with this field in the project. For CASCADINGLIST fields, provide the parent list items here. Obtain item IDs from the custom list linked via lookuplistId.
-- defaultValue (union): Optional default value for the field. Type depends on fieldTypeID:
-STRING (6): plain string, e.g. 'my default text'
-NUMBER (5): plain number, e.g. 42
-LOOKUPLIST (3): array of one item ID, e.g. [5173520] — also provide listValues
-MULTILOOKUPLIST (4): array of item IDs, e.g. [5173521] — also provide listValues
-CASCADINGLIST (7): array of parent item ID, e.g. [5126498] — also provide listValues and defaultChildValue
-LARGETEXT (2): NOT supported — omit this field
-DATETIMEPICKER (1): NOT supported — omit this field
-- defaultChildValue (array): CASCADINGLIST only: array of default child item IDs selected under the defaultValue parent. Example: [5126499]
-
-**Output Description:** JSON object with success status and confirmation message when UDF is created.
-
-**Use Cases:** 1. Create a string custom field for Test Case module 2. Create a large text UDF for Test Run and Test Suite modules 3. Create a lookup list custom field linked to an existing custom list 4. Create a multi-select lookup UDF for the Requirement module 5. Create a number field for Issue tracking 6. Create a date picker UDF for Test Step module 7. Create a cascading list custom field for any module 8. Add the same UDF to multiple modules at once
-
-**Examples:**
-1. Create a STRING UDF for Test Case module with max 50 chars
-\`\`\`json
-{
-  "fieldTypeID": 6,
-  "name": "test_env",
-  "label": "Test Environment",
-  "fieldLength": 50,
-  "modules": [
-    3
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully.
-
-2. Create a LARGETEXT UDF for Test Run and Test Case modules
-\`\`\`json
-{
-  "fieldTypeID": 2,
-  "name": "notes_field",
-  "label": "Notes",
-  "modules": [
-    32,
-    3
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully.
-
-3. Create a NUMBER UDF for Test Step module
-\`\`\`json
-{
-  "fieldTypeID": 5,
-  "name": "step_weight",
-  "label": "Step Weight",
-  "modules": [
-    5
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully.
-
-4. Create a DATETIMEPICKER UDF for Requirement module
-\`\`\`json
-{
-  "fieldTypeID": 1,
-  "name": "due_date",
-  "label": "Due Date",
-  "modules": [
-    1
-  ],
-  "mandatory": true
-}
-\`\`\`
-Expected Output: User defined field created successfully.
-
-5. Create a LOOKUPLIST UDF for Test Suite — lookuplistId from Fetch Custom Lists
-\`\`\`json
-{
-  "fieldTypeID": 3,
-  "name": "priority_list",
-  "label": "Priority List",
-  "lookuplistId": 2398198,
-  "modules": [
-    6
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully.
-
-6. Create a MULTILOOKUPLIST UDF for Issue module
-\`\`\`json
-{
-  "fieldTypeID": 4,
-  "name": "affected_areas",
-  "label": "Affected Areas",
-  "lookuplistId": 2398201,
-  "modules": [
-    11
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully.
-
-7. Create a CASCADINGLIST UDF for Test Run and Test Case modules
-\`\`\`json
-{
-  "fieldTypeID": 7,
-  "name": "region_cascade",
-  "label": "Region",
-  "lookuplistId": 2381192,
-  "modules": [
-    32,
-    3
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully.
-
-8. Create a CASCADINGLIST UDF with default parent and child values pre-selected
-\`\`\`json
-{
-  "fieldTypeID": 7,
-  "name": "cascade_mcp2",
-  "label": "cascade_mcp2",
-  "lookuplistId": 2381199,
-  "modules": [
-    32
-  ],
-  "listValues": [
-    {
-      "id": 5126498,
-      "name": "abc",
-      "projectID": 42307
-    },
-    {
-      "id": 5126500,
-      "name": "vkc",
-      "projectID": 42307
-    }
-  ],
-  "defaultValue": [
-    5126498
-  ],
-  "defaultChildValue": [
-    5126499
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully with default cascade selection.
-
-9. Create a STRING UDF with a default value (plain string)
-\`\`\`json
-{
-  "fieldTypeID": 6,
-  "name": "test",
-  "label": "test",
-  "fieldLength": 20,
-  "modules": [
-    32
-  ],
-  "defaultValue": "testing default valu"
-}
-\`\`\`
-Expected Output: User defined field created successfully with default string value.
-
-10. Create a NUMBER UDF with a default numeric value
-\`\`\`json
-{
-  "fieldTypeID": 5,
-  "name": "num",
-  "label": "num",
-  "modules": [
-    32
-  ],
-  "defaultValue": 11
-}
-\`\`\`
-Expected Output: User defined field created successfully with default number value.
-
-11. Create a LOOKUPLIST UDF with a default list item pre-selected
-\`\`\`json
-{
-  "fieldTypeID": 3,
-  "name": "lookup00",
-  "label": "lookup00",
-  "lookuplistId": 2398206,
-  "modules": [
-    32
-  ],
-  "listValues": [
-    {
-      "id": 5173520,
-      "name": "t",
-      "projectID": 42307
-    }
-  ],
-  "defaultValue": [
-    5173520
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully with default lookup selection.
-
-12. Create a MULTILOOKUPLIST UDF with a default item pre-selected
-\`\`\`json
-{
-  "fieldTypeID": 4,
-  "name": "multo",
-  "label": "multo",
-  "lookuplistId": 2398198,
-  "modules": [
-    32
-  ],
-  "listValues": [
-    {
-      "id": 5173521,
-      "name": "aa",
-      "projectID": 1250
-    },
-    {
-      "id": 5173522,
-      "name": "bb",
-      "projectID": 1250
-    }
-  ],
-  "defaultValue": [
-    5173521
-  ]
-}
-\`\`\`
-Expected Output: User defined field created successfully with default multi-lookup selection.
-
-13. Create a mandatory STRING UDF for multiple modules
-\`\`\`json
-{
-  "fieldTypeID": 6,
-  "name": "build_version",
-  "label": "Build Version",
-  "fieldLength": 100,
-  "modules": [
-    3,
-    6,
-    32
-  ],
-  "mandatory": true
-}
-\`\`\`
-Expected Output: User defined field created successfully.
-
-**Hints:** 1. NEVER call 'Fetch UDF Field Types' to look up fieldTypeID. All supported field types and their IDs are already listed in this tool's hints under FIELD TYPES AND IDs. Use those values directly without any additional API call. 2. FIELD NAME RULE: 'name' must contain ONLY alphanumeric characters and underscores (a-z, A-Z, 0-9, _). Spaces or special characters will cause an API error. Examples: 'my_field', 'testEnv1', 'udf_str'. 3. FIELD TYPES AND IDs:
-  1 = DATETIMEPICKER (no extra params needed)
-  2 = LARGETEXT (no extra params needed)
-  3 = LOOKUPLIST (requires lookuplistId)
-  4 = MULTILOOKUPLIST (requires lookuplistId)
-  5 = NUMBER (no extra params needed)
-  6 = STRING (use fieldLength to set max characters)
-  7 = CASCADINGLIST (requires lookuplistId) 4. MODULE IDs:
-  1 = Requirement
-  3 = Test Case
-  5 = Test Step
-  6 = Test Suite
-  11 = Issue
-  32 = Test Run 5. LOOKUP TYPES: For fieldTypeID 3 (LOOKUPLIST), 4 (MULTILOOKUPLIST), or 7 (CASCADINGLIST), you MUST provide lookuplistId. First call the 'Fetch Custom Lists' tool to find available lists and use the 'Id' field from the response as lookuplistId. 6. STRING fieldLength: If user does not specify fieldLength, default to 10. Always include fieldLength for STRING fields. 7. DEFAULT VALUE SUPPORT — which field types support defaultValue at creation time:
-  ✅ STRING (6): plain string value, e.g. defaultValue: 'my default text'
-  ✅ NUMBER (5): plain number value, e.g. defaultValue: 42
-  ✅ LOOKUPLIST (3): array of one item ID + listValues required, e.g. defaultValue: [5173520], listValues: [{id:5173520,name:'t',projectID:42307}]
-  ✅ MULTILOOKUPLIST (4): array of item IDs + listValues required, e.g. defaultValue: [5173521], listValues: [{id:5173521,name:'aa',projectID:1250}]
-  ✅ CASCADINGLIST (7): defaultValue (parent ID array) + defaultChildValue (child ID array) + listValues required
-  ❌ LARGETEXT (2): defaultValue NOT supported — do not include it
-  ❌ DATETIMEPICKER (1): defaultValue NOT supported — do not include it 8. DEFAULT VALUES (LOOKUPLIST / MULTILOOKUPLIST / CASCADINGLIST only): ONLY when fieldTypeID is 3, 4, or 7 AND user wants a default value pre-selected — call 'Fetch Custom List Items' FIRST to get item IDs, THEN call this tool. Do NOT call 'Fetch Custom List Items' for STRING (6), NUMBER (5), LARGETEXT (2), DATETIMEPICKER (1), or for any lookup field where user did NOT request a default value. Response 'Id' (capital I) → use in defaultValue array and listValues[].id. Response 'Name' → use in listValues[].name. Never guess or fabricate item IDs. 9. DEFAULT VALUES (CASCADINGLIST): Provide defaultValue (parent item ID array), defaultChildValue (child item ID array), and listValues (parent list items). Example: listValues=[{id:5126498,name:'abc',projectID:42307}], defaultValue=[5126498], defaultChildValue=[5126499]. 10. PROJECT CONTEXT: The tool automatically resolves the numeric project ID from the current session context. If project context is not set, call 'Set Project Info' first or ensure projectKey is provided. 11. If the user refers to 'custom fields', 'user defined fields', or 'UDFs', treat all as the same concept. 12. If user specifies a module by name (e.g. 'Test Run'), map it to the correct moduleID (32) before calling the tool. 13. If user specifies a field type by name (e.g. 'large text field', 'lookup list'), map it to the correct fieldTypeID.",
-    "inputSchema": [
-      "baseUrl",
-      "defaultChildValue",
-      "defaultValue",
-      "fieldLength",
-      "fieldTypeID",
-      "label",
-      "listValues",
-      "lookuplistId",
-      "mandatory",
-      "modules",
-      "name",
-      "projectKey",
-    ],
-    "outputSchema": undefined,
-    "title": "QMetry: Create User Defined Field",
-  },
   "qmetry_fetch_automation_status": {
     "annotations": {
       "destructiveHint": false,
@@ -7226,6 +6908,86 @@ Expected Output: Active test cases linked to the test suite
     "outputSchema": undefined,
     "title": "QMetry: Fetch Test Cases Linked to Test Suite",
   },
+  "qmetry_fetch_test_run_udf_metadata": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Test Run UDF Metadata",
+    },
+    "description": "Fetch the metadata (field definitions) for all Test Run UDF (User Defined Fields) configured in this QMetry project. Returns each field's name, display label, type, and numeric fieldID (projectUserFieldID) required for bulk updates.
+
+**Toolset:** UDF
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+
+**Output Description:** JSON object with 'fields' array (each item has fieldID, name, label, fieldType, allowBlank, and optional listName/listMasterID) and 'lookupOptions' map for list-based fields.
+
+**Use Cases:** 1. Get the fieldID for 'planned_execution_date' before bulk updating it 2. List all available Test Run UDF fields and their types in the project 3. Find the lookup list item IDs for a LOOKUPLIST or MULTILOOKUPLIST Test Run UDF 4. Discover UDF field names and IDs when user says 'what Test Run UDF fields are available'
+
+**Examples:**
+1. List all Test Run UDF fields in the project
+\`\`\`json
+{}
+\`\`\`
+Expected Output: Array of fields with fieldID, name, label, fieldType, and lookupOptions for list-based fields.
+
+**Hints:** 1. ALWAYS call this tool before 'Bulk Update Test Run UDFs' when the user has not explicitly provided a numeric fieldID. The 'fieldID' in the bulk update corresponds to 'projectUserFieldID' in this response. 2. This tool is the authoritative source of fieldIDs for all Test Run UDF fields — do NOT guess or hard-code fieldIDs. 3. For LOOKUPLIST and MULTILOOKUPLIST fields, the response 'lookupOptions' contains the valid item IDs and labels to use as values in bulk updates. 4. DATE fields use MM-DD-YYYY format (e.g. '06-23-2026') when setting values via Bulk Update Test Run UDFs.",
+    "inputSchema": [
+      "baseUrl",
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Test Run UDF Metadata",
+  },
+  "qmetry_fetch_test_run_udf_values": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Test Run UDF Values",
+    },
+    "description": "Fetch the Test Run UDF (User Defined Field) values for all test case runs in a given test suite run. Returns each run's UDF values enriched with field label and type information from metadata.
+
+**Toolset:** UDF
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tsrunID (string) *required*: Test Suite Run ID (string format). Get this from the 'Fetch Executions by Test Suite' tool — use data[<index>].tsRunID from the response.
+- viewId (number): View ID for the test execution list (latestViews.TE.viewId from project info). Auto-resolved from project info when omitted.
+- startIndex (number): Zero-based start index for pagination (default: 0). (default: 0)
+- size (number): Number of test case runs to return per page (default: 50). (default: 50)
+
+**Output Description:** JSON with hasTcRunUdf boolean, total count, runs array (each with tcRunID, entityKey, summary, runStatus, testRunUdfs), and availableUdfFields array describing all UDF fields in the project.
+
+**Use Cases:** 1. Show me the UDF values for all runs in test suite run 731600 2. What is the planned execution date set on each run in this test cycle? 3. List the Test Run UDF values for test suite run 87039 4. Fetch test run UDFs of executions for tsRunID 731600
+
+**Examples:**
+1. Fetch UDF values for all runs in test suite run 731600
+\`\`\`json
+{
+  "tsrunID": "731600"
+}
+\`\`\`
+Expected Output: JSON with hasTcRunUdf, total, runs (each with tcRunID, entityKey, summary, runStatus, testRunUdfs array), and availableUdfFields listing all configured UDF fields with their fieldIDs.
+
+**Hints:** 1. Use 'tsrunID' from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID field). 2. 'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding. 3. If 'hasTcRunUdf' is false in the response, no Test Run UDFs are configured for this project. 4. The 'testRunUdfs' array on each run contains enriched UDF values with label and fieldID — use fieldID from here when calling 'Bulk Update Test Run UDFs'. 5. This tool calls both the execution list API and the UDF metadata API internally — no need to call 'Fetch Test Run UDF Metadata' separately when viewing values.",
+    "inputSchema": [
+      "baseUrl",
+      "projectKey",
+      "size",
+      "startIndex",
+      "tsrunID",
+      "viewId",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Test Run UDF Values",
+  },
   "qmetry_fetch_test_suites": {
     "annotations": {
       "destructiveHint": false,
@@ -7468,76 +7230,6 @@ Expected Output: Test suites available in specific folder ID 42 for test case li
     ],
     "outputSchema": undefined,
     "title": "QMetry: Fetch Test Suites for Test Case",
-  },
-  "qmetry_fetch_udf_field_types": {
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-      "title": "QMetry: Fetch UDF Field Types",
-    },
-    "description": "Fetch available UDF field types supported in QMetry. Returns field type IDs, names, and descriptions.
-
-**Toolset:** UDF
-
-**Parameters:**
-- projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
-
-**Output Description:** Array of field type objects with Id, Fieldtype (name), Description, and Preview fields.
-
-**Use Cases:** 1. List all supported UDF field types with their IDs 2. Check if a specific field type is supported 3. Get field type descriptions to help users understand options
-
-**Examples:**
-1. Get all supported UDF field types
-\`\`\`json
-{}
-\`\`\`
-Expected Output: Array of field types with Id, Fieldtype name, and Description.
-
-**Hints:** 1. DO NOT call this tool when the purpose is to get a fieldTypeID for 'Create User Defined Field'. The 'Create User Defined Field' tool already lists all 7 field types and their IDs inline. Only call this tool if the user explicitly asks to list or discover UDF field types. 2. Use the 'Id' from the response as 'fieldTypeID' when calling 'Create User Defined Field'. 3. Field types 3, 4, and 7 (LOOKUPLIST, MULTILOOKUPLIST, CASCADINGLIST) require a lookuplistId. 4. Field type 6 (STRING) supports an optional fieldLength parameter.",
-    "inputSchema": [
-      "baseUrl",
-      "projectKey",
-    ],
-    "outputSchema": undefined,
-    "title": "QMetry: Fetch UDF Field Types",
-  },
-  "qmetry_fetch_udf_modules": {
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-      "title": "QMetry: Fetch UDF Modules",
-    },
-    "description": "Fetch all QMetry modules that support User Defined Fields (UDFs). Returns module IDs and names. Use to get the correct module ID before creating a UDF.
-
-**Toolset:** UDF
-
-**Parameters:**
-- projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
-
-**Output Description:** Array of module objects with 'id' (numeric module ID) and 'name' (module display name).
-
-**Use Cases:** 1. List all modules that support UDFs 2. Get the numeric module ID for a module name (e.g. 'Test Run' → 32) 3. Confirm which module ID to use before calling 'Create User Defined Field'
-
-**Examples:**
-1. Get all UDF-supported modules
-\`\`\`json
-{}
-\`\`\`
-Expected Output: Array of modules: [{id:1,name:'Requirement'},{id:3,name:'Test Case'},{id:5,name:'Test Step'},{id:6,name:'Test Suite'},{id:11,name:'Issue'},{id:32,name:'Test Run'}]
-
-**Hints:** 1. NEVER call this tool when you already know the module ID — the 'Create User Defined Field' tool lists all module IDs inline in its hints. Only call this tool if the user explicitly asks to list modules or if you need to confirm a module ID. 2. Use the 'id' field from the response as the 'modules' array value when calling 'Create User Defined Field'. 3. Module IDs are fixed constants: 1=Requirement, 3=Test Case, 5=Test Step, 6=Test Suite, 11=Issue, 32=Test Run.",
-    "inputSchema": [
-      "baseUrl",
-      "projectKey",
-    ],
-    "outputSchema": undefined,
-    "title": "QMetry: Fetch UDF Modules",
   },
   "qmetry_import_automation_test_results": {
     "annotations": {

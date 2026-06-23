@@ -1,15 +1,18 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
   BulkUpdateTestRunUdfsArgsSchema,
-  CreateUdfArgsSchema,
-  FetchCustomListItemsArgsSchema,
-  FetchCustomListsArgsSchema,
-  FetchUdfFieldTypesArgsSchema,
-  FetchUdfModulesArgsSchema,
+  // CreateUdfArgsSchema, // TODO: Deferred to next release
+  // FetchCustomListItemsArgsSchema,
+  // FetchCustomListsArgsSchema,
+  FetchTestRunUdfMetadataArgsSchema,
+  FetchTestRunUdfValuesArgsSchema,
+  // FetchUdfFieldTypesArgsSchema, // TODO: Deferred to next release
+  // FetchUdfModulesArgsSchema, // TODO: Deferred to next release
 } from "../../types/udf";
 import type { QMetryToolParams } from "./types";
 
 export const UDF_TOOLS: QMetryToolParams[] = [
+  /* TODO: Deferred to next release — Create UDF and its dedicated support tools
   {
     title: "Create User Defined Field",
     toolset: "UDF",
@@ -259,97 +262,99 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     destructive: false,
     idempotent: false,
   },
-  {
-    title: "Fetch Custom Lists",
-    toolset: "UDF",
-    summary:
-      "Fetch custom lists (lookup lists) available in the project. Use to get lookuplistId for LOOKUPLIST, MULTILOOKUPLIST, or CASCADINGLIST UDFs.",
-    handler: QMetryToolsHandlers.FETCH_CUSTOM_LISTS,
-    inputSchema: FetchCustomListsArgsSchema,
-    purpose:
-      "Retrieves the custom lists defined in the QMetry project. " +
-      "These lists are required when creating LOOKUPLIST (3), MULTILOOKUPLIST (4), " +
-      "or CASCADINGLIST (7) User Defined Fields. " +
-      "The 'Id' field from the response is used as 'lookuplistId' when creating UDFs. " +
-      "Supports optional filtering by list name and pagination.",
-    useCases: [
-      "Get all custom lists available in the current project",
-      "Search for a specific custom list by name to get its ID",
-      "Retrieve lookup list IDs before creating a LOOKUPLIST UDF",
-      "Paginate through large numbers of custom lists",
-    ],
-    examples: [
-      {
-        description: "Get all custom lists in current project",
-        parameters: {},
-        expectedOutput:
-          "List of all custom lists with Id, Listname, fieldName, noofitems, and listType.",
-      },
-      {
-        description: "Search for a custom list by name",
-        parameters: { listName: "Card Type" },
-        expectedOutput:
-          "Custom lists matching 'Card Type' with their Ids for use in UDF creation.",
-      },
-      {
-        description: "Paginate through custom lists",
-        parameters: { start: 0, page: 1, limit: 20 },
-        expectedOutput: "First 20 custom lists in the project.",
-      },
-    ],
-    hints: [
-      "Use the 'Id' field from the response as 'lookuplistId' when calling 'Create User Defined Field'.",
-      "Filter by listName for a faster, targeted search when you know the list name.",
-      "The 'Listname' field is the human-readable name; 'fieldName' is the internal name.",
-    ],
-    outputDescription:
-      "JSON object with 'data' array containing custom lists (Id, Listname, fieldName, noofitems, listType, isEditable).",
-    readOnly: true,
-    idempotent: true,
-    openWorld: false,
-  },
-  {
-    title: "Fetch Custom List Items",
-    toolset: "UDF",
-    summary:
-      "Fetch the items (values) within a specific custom list by its ID. Returns item IDs and names needed to set default values when creating LOOKUPLIST, MULTILOOKUPLIST, or CASCADINGLIST UDFs.",
-    handler: QMetryToolsHandlers.FETCH_CUSTOM_LIST_ITEMS,
-    inputSchema: FetchCustomListItemsArgsSchema,
-    purpose:
-      "Retrieves the individual items stored in a QMetry custom list. " +
-      "Call this ONLY when creating a LOOKUPLIST (3), MULTILOOKUPLIST (4), or CASCADINGLIST (7) UDF " +
-      "AND the user wants a default value pre-selected. " +
-      "Do NOT call for STRING, NUMBER, LARGETEXT, DATETIMEPICKER, or lookup fields with no default value requested. " +
-      "Returns item 'Id' (capital I) and 'Name' — used in defaultValue array and listValues.",
-    useCases: [
-      "Get item IDs from a lookup list before creating a UDF with a default value",
-      "List all options in a custom list to let the user pick a default",
-      "Retrieve listValues needed for LOOKUPLIST or MULTILOOKUPLIST UDF creation",
-      "Find specific item IDs by name to pre-select as UDF defaults",
-    ],
-    examples: [
-      {
-        description: "Get all items in custom list with ID 2385633",
-        parameters: { listId: 2385633 },
-        expectedOutput:
-          "{ data: [{ Id: 5173524, Name: 'aa', Alias: 'aa', isArchived: false, ... }], total: 1, fieldName: 'PortalSelectList' }",
-      },
-    ],
-    hints: [
-      "Call 'Fetch Custom Lists' first to get the listId (the 'Id' field in that response).",
-      "Response 'data' array: each item has 'Id' (capital I — use this in defaultValue and listValues[].id) and 'Name' (use in listValues[].name).",
-      "MANDATORY WORKFLOW for creating LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST with a default value: " +
-        "1) Fetch Custom Lists → get lookuplistId. " +
-        "2) Fetch Custom List Items (this tool) with that listId → get item Id and Name. " +
-        "3) Create User Defined Field using lookuplistId, listValues:[{id:<Id>,name:<Name>,projectID:<projectID>}], defaultValue:[<Id>].",
-      "projectID in listValues: use the numeric project ID from the current session context (same scopeId used elsewhere).",
-    ],
-    outputDescription:
-      "JSON object with 'data' array of list items. Each item has 'Id' (numeric — use in defaultValue/listValues), 'Name', 'Alias', 'isArchived', 'isLocked', 'createdDate'. Also returns 'total' count and 'fieldName'.",
-    readOnly: true,
-    idempotent: true,
-    openWorld: false,
-  },
+  */
+  // {
+  //   title: "Fetch Custom Lists",
+  //   toolset: "UDF",
+  //   summary:
+  //     "Fetch custom lists (lookup lists) available in the project. Use to get lookuplistId for LOOKUPLIST, MULTILOOKUPLIST, or CASCADINGLIST UDFs.",
+  //   handler: QMetryToolsHandlers.FETCH_CUSTOM_LISTS,
+  //   inputSchema: FetchCustomListsArgsSchema,
+  //   purpose:
+  //     "Retrieves the custom lists defined in the QMetry project. " +
+  //     "These lists are required when creating LOOKUPLIST (3), MULTILOOKUPLIST (4), " +
+  //     "or CASCADINGLIST (7) User Defined Fields. " +
+  //     "The 'Id' field from the response is used as 'lookuplistId' when creating UDFs. " +
+  //     "Supports optional filtering by list name and pagination.",
+  //   useCases: [
+  //     "Get all custom lists available in the current project",
+  //     "Search for a specific custom list by name to get its ID",
+  //     "Retrieve lookup list IDs before creating a LOOKUPLIST UDF",
+  //     "Paginate through large numbers of custom lists",
+  //   ],
+  //   examples: [
+  //     {
+  //       description: "Get all custom lists in current project",
+  //       parameters: {},
+  //       expectedOutput:
+  //         "List of all custom lists with Id, Listname, fieldName, noofitems, and listType.",
+  //     },
+  //     {
+  //       description: "Search for a custom list by name",
+  //       parameters: { listName: "Card Type" },
+  //       expectedOutput:
+  //         "Custom lists matching 'Card Type' with their Ids for use in UDF creation.",
+  //     },
+  //     {
+  //       description: "Paginate through custom lists",
+  //       parameters: { start: 0, page: 1, limit: 20 },
+  //       expectedOutput: "First 20 custom lists in the project.",
+  //     },
+  //   ],
+  //   hints: [
+  //     "Use the 'Id' field from the response as 'lookuplistId' when calling 'Create User Defined Field'.",
+  //     "Filter by listName for a faster, targeted search when you know the list name.",
+  //     "The 'Listname' field is the human-readable name; 'fieldName' is the internal name.",
+  //   ],
+  //   outputDescription:
+  //     "JSON object with 'data' array containing custom lists (Id, Listname, fieldName, noofitems, listType, isEditable).",
+  //   readOnly: true,
+  //   idempotent: true,
+  //   openWorld: false,
+  // },
+  // {
+  //   title: "Fetch Custom List Items",
+  //   toolset: "UDF",
+  //   summary:
+  //     "Fetch the items (values) within a specific custom list by its ID. Returns item IDs and names needed to set default values when creating LOOKUPLIST, MULTILOOKUPLIST, or CASCADINGLIST UDFs.",
+  //   handler: QMetryToolsHandlers.FETCH_CUSTOM_LIST_ITEMS,
+  //   inputSchema: FetchCustomListItemsArgsSchema,
+  //   purpose:
+  //     "Retrieves the individual items stored in a QMetry custom list. " +
+  //     "Call this ONLY when creating a LOOKUPLIST (3), MULTILOOKUPLIST (4), or CASCADINGLIST (7) UDF " +
+  //     "AND the user wants a default value pre-selected. " +
+  //     "Do NOT call for STRING, NUMBER, LARGETEXT, DATETIMEPICKER, or lookup fields with no default value requested. " +
+  //     "Returns item 'Id' (capital I) and 'Name' — used in defaultValue array and listValues.",
+  //   useCases: [
+  //     "Get item IDs from a lookup list before creating a UDF with a default value",
+  //     "List all options in a custom list to let the user pick a default",
+  //     "Retrieve listValues needed for LOOKUPLIST or MULTILOOKUPLIST UDF creation",
+  //     "Find specific item IDs by name to pre-select as UDF defaults",
+  //   ],
+  //   examples: [
+  //     {
+  //       description: "Get all items in custom list with ID 2385633",
+  //       parameters: { listId: 2385633 },
+  //       expectedOutput:
+  //         "{ data: [{ Id: 5173524, Name: 'aa', Alias: 'aa', isArchived: false, ... }], total: 1, fieldName: 'PortalSelectList' }",
+  //     },
+  //   ],
+  //   hints: [
+  //     "Call 'Fetch Custom Lists' first to get the listId (the 'Id' field in that response).",
+  //     "Response 'data' array: each item has 'Id' (capital I — use this in defaultValue and listValues[].id) and 'Name' (use in listValues[].name).",
+  //     "MANDATORY WORKFLOW for creating LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST with a default value: " +
+  //       "1) Fetch Custom Lists → get lookuplistId. " +
+  //       "2) Fetch Custom List Items (this tool) with that listId → get item Id and Name. " +
+  //       "3) Create User Defined Field using lookuplistId, listValues:[{id:<Id>,name:<Name>,projectID:<projectID>}], defaultValue:[<Id>].",
+  //     "projectID in listValues: use the numeric project ID from the current session context (same scopeId used elsewhere).",
+  //   ],
+  //   outputDescription:
+  //     "JSON object with 'data' array of list items. Each item has 'Id' (numeric — use in defaultValue/listValues), 'Name', 'Alias', 'isArchived', 'isLocked', 'createdDate'. Also returns 'total' count and 'fieldName'.",
+  //   readOnly: true,
+  //   idempotent: true,
+  //   openWorld: false,
+  // },
+  /* TODO: Deferred to next release — Fetch UDF Field Types and Fetch UDF Modules (only used for Create UDF flow)
   {
     title: "Fetch UDF Field Types",
     toolset: "UDF",
@@ -423,6 +428,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     idempotent: true,
     openWorld: false,
   },
+  */
   {
     title: "Bulk Update Test Run UDFs",
     toolset: "UDF",
@@ -639,5 +645,90 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     readOnly: false,
     destructive: false,
     idempotent: false,
+  },
+  {
+    title: "Fetch Test Run UDF Metadata",
+    toolset: "UDF",
+    summary:
+      "Fetch the metadata (field definitions) for all Test Run UDF (User Defined Fields) configured in this QMetry project. " +
+      "Returns each field's name, display label, type, and numeric fieldID (projectUserFieldID) required for bulk updates.",
+    handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA,
+    inputSchema: FetchTestRunUdfMetadataArgsSchema,
+    purpose:
+      "Retrieves the full list of Test Run UDF field definitions from QMetry's admin metadata endpoint. " +
+      "The response includes each field's projectUserFieldID (used as 'fieldID' in Bulk Update Test Run UDFs), " +
+      "field name, display label, field type, and lookup list options for multi-select fields. " +
+      "Call this tool BEFORE 'Bulk Update Test Run UDFs' when the user does not know the numeric fieldID for a UDF.",
+    useCases: [
+      "Get the fieldID for 'planned_execution_date' before bulk updating it",
+      "List all available Test Run UDF fields and their types in the project",
+      "Find the lookup list item IDs for a LOOKUPLIST or MULTILOOKUPLIST Test Run UDF",
+      "Discover UDF field names and IDs when user says 'what Test Run UDF fields are available'",
+    ],
+    examples: [
+      {
+        description: "List all Test Run UDF fields in the project",
+        parameters: {},
+        expectedOutput:
+          "Array of fields with fieldID, name, label, fieldType, and lookupOptions for list-based fields.",
+      },
+    ],
+    hints: [
+      "ALWAYS call this tool before 'Bulk Update Test Run UDFs' when the user has not explicitly provided a numeric fieldID. " +
+        "The 'fieldID' in the bulk update corresponds to 'projectUserFieldID' in this response.",
+      "This tool is the authoritative source of fieldIDs for all Test Run UDF fields — do NOT guess or hard-code fieldIDs.",
+      "For LOOKUPLIST and MULTILOOKUPLIST fields, the response 'lookupOptions' contains the valid item IDs and labels to use as values in bulk updates.",
+      "DATE fields use MM-DD-YYYY format (e.g. '06-23-2026') when setting values via Bulk Update Test Run UDFs.",
+    ],
+    outputDescription:
+      "JSON object with 'fields' array (each item has fieldID, name, label, fieldType, allowBlank, and optional listName/listMasterID) " +
+      "and 'lookupOptions' map for list-based fields.",
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
+  },
+  {
+    title: "Fetch Test Run UDF Values",
+    toolset: "UDF",
+    summary:
+      "Fetch the Test Run UDF (User Defined Field) values for all test case runs in a given test suite run. " +
+      "Returns each run's UDF values enriched with field label and type information from metadata.",
+    handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
+    inputSchema: FetchTestRunUdfValuesArgsSchema,
+    purpose:
+      "Retrieves the test case runs for a test suite run and extracts their Test Run UDF field values. " +
+      "Internally checks the 'hasTcRunUdf' flag — if UDFs are configured, it also calls the metadata API " +
+      "to enrich each run's UDF values with field label, type, and numeric fieldID. " +
+      "Use this tool when the user asks to view, list, or inspect UDF values on specific test executions.",
+    useCases: [
+      "Show me the UDF values for all runs in test suite run 731600",
+      "What is the planned execution date set on each run in this test cycle?",
+      "List the Test Run UDF values for test suite run 87039",
+      "Fetch test run UDFs of executions for tsRunID 731600",
+    ],
+    examples: [
+      {
+        description: "Fetch UDF values for all runs in test suite run 731600",
+        parameters: {
+          tsrunID: "731600",
+        },
+        expectedOutput:
+          "JSON with hasTcRunUdf, total, runs (each with tcRunID, entityKey, summary, runStatus, testRunUdfs array), " +
+          "and availableUdfFields listing all configured UDF fields with their fieldIDs.",
+      },
+    ],
+    hints: [
+      "Use 'tsrunID' from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID field).",
+      "'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding.",
+      "If 'hasTcRunUdf' is false in the response, no Test Run UDFs are configured for this project.",
+      "The 'testRunUdfs' array on each run contains enriched UDF values with label and fieldID — use fieldID from here when calling 'Bulk Update Test Run UDFs'.",
+      "This tool calls both the execution list API and the UDF metadata API internally — no need to call 'Fetch Test Run UDF Metadata' separately when viewing values.",
+    ],
+    outputDescription:
+      "JSON with hasTcRunUdf boolean, total count, runs array (each with tcRunID, entityKey, summary, runStatus, testRunUdfs), " +
+      "and availableUdfFields array describing all UDF fields in the project.",
+    readOnly: true,
+    destructive: false,
+    idempotent: true,
   },
 ];

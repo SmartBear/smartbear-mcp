@@ -19,6 +19,7 @@ export interface RequestOptions {
   body?: any; // Only contains business logic parameters
   scopeId?: number; // Sent as "scope" HTTP header (numeric project ID from currentProjectId)
   orgCode?: string; // Sent as "orgcode" HTTP header (from clientCode in project info response)
+  extraHeaders?: Record<string, string>; // Additional HTTP headers for specific endpoints
 }
 export interface PaginationPayload {
   start?: number;

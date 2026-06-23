@@ -2,16 +2,18 @@ import { UDF_FIELD_TYPES, UDF_MODULES } from "../config/constants";
 import { QMETRY_PATHS } from "../config/rest-endpoints";
 import type {
   BulkUpdateTestRunUdfsPayload,
-  CreateUdfPayload,
-  FetchCustomListItemsPayload,
-  FetchCustomListsPayload,
+  // CreateUdfPayload,
+  // FetchCustomListItemsPayload,
+  // FetchCustomListsPayload,
+  FetchTestRunUdfMetadataPayload,
+  FetchTestRunUdfValuesPayload,
 } from "../types/udf";
 import { qmetryRequest } from "./api/client-api";
-import { extractProjectContext } from "./auto-resolve";
-import { getProjectInfo } from "./project";
+// import { extractProjectContext } from "./auto-resolve";
+// import { getProjectInfo } from "./project";
 import { resolveDefaults } from "./utils";
 
-const LOOKUP_FIELD_TYPE_IDS = new Set([3, 4, 7]);
+// const LOOKUP_FIELD_TYPE_IDS = new Set([3, 4, 7]);
 
 /**
  * Creates a User Defined Field (UDF/custom field) in QMetry.
@@ -19,215 +21,215 @@ const LOOKUP_FIELD_TYPE_IDS = new Set([3, 4, 7]);
  * @throws If name contains invalid characters, required fields are missing,
  *         or lookuplistId is missing for list-based field types.
  */
-export async function createUdf(
-  token: string,
-  baseUrl: string,
-  project: string | undefined,
-  payload: CreateUdfPayload,
-) {
-  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
-    baseUrl,
-    project,
-  );
+// export async function createUdf(
+//   token: string,
+//   baseUrl: string,
+//   project: string | undefined,
+//   payload: CreateUdfPayload,
+// ) {
+//   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+//     baseUrl,
+//     project,
+//   );
 
-  const nameRegex = /^[a-zA-Z0-9_]+$/;
-  if (!nameRegex.test(payload.name)) {
-    throw new Error(
-      "[createUdf] Field name can only contain alphanumeric characters and underscore.",
-    );
-  }
+//   // const nameRegex = /^[a-zA-Z0-9_]+$/;
+//   // if (!nameRegex.test(payload.name)) {
+//   //   throw new Error(
+//   //     "[createUdf] Field name can only contain alphanumeric characters and underscore.",
+//   //   );
+//   // }
 
-  if (typeof payload.fieldTypeID !== "number") {
-    throw new Error(
-      "[createUdf] Missing or invalid required parameter: 'fieldTypeID'.",
-    );
-  }
-  if (!payload.label) {
-    throw new Error(
-      "[createUdf] Missing or invalid required parameter: 'label'.",
-    );
-  }
-  if (!Array.isArray(payload.modules) || payload.modules.length === 0) {
-    throw new Error(
-      "[createUdf] Missing or invalid required parameter: 'modules' (must be a non-empty array of module IDs).",
-    );
-  }
+//   // if (typeof payload.fieldTypeID !== "number") {
+//   //   throw new Error(
+//   //     "[createUdf] Missing or invalid required parameter: 'fieldTypeID'.",
+//   //   );
+//   // }
+//   // if (!payload.label) {
+//   //   throw new Error(
+//   //     "[createUdf] Missing or invalid required parameter: 'label'.",
+//   //   );
+//   // }
+//   // if (!Array.isArray(payload.modules) || payload.modules.length === 0) {
+//   //   throw new Error(
+//   //     "[createUdf] Missing or invalid required parameter: 'modules' (must be a non-empty array of module IDs).",
+//   //   );
+//   // }
 
-  if (LOOKUP_FIELD_TYPE_IDS.has(payload.fieldTypeID) && !payload.lookuplistId) {
-    throw new Error(
-      `[createUdf] 'lookuplistId' is required for fieldTypeID ${payload.fieldTypeID} ` +
-        "(LOOKUPLIST / MULTILOOKUPLIST / CASCADINGLIST). " +
-        "Use the 'Fetch Custom Lists' tool to retrieve available list IDs.",
-    );
-  }
+//   // if (LOOKUP_FIELD_TYPE_IDS.has(payload.fieldTypeID) && !payload.lookuplistId) {
+//   //   throw new Error(
+//   //     `[createUdf] 'lookuplistId' is required for fieldTypeID ${payload.fieldTypeID} ` +
+//   //       "(LOOKUPLIST / MULTILOOKUPLIST / CASCADINGLIST). " +
+//   //       "Use the 'Fetch Custom Lists' tool to retrieve available list IDs.",
+//   //   );
+//   // }
 
-  // Resolve numeric projectID — prefer injected scopeId, else fetch project info
-  let projectID = payload.scopeId;
-  let orgCode = payload.orgCode;
-  let projectName = resolvedProject;
+//   // Resolve numeric projectID — prefer injected scopeId, else fetch project info
+//   let projectID = payload.scopeId;
+//   let orgCode = payload.orgCode;
+//   let projectName = resolvedProject;
 
-  if (!projectID) {
-    const projectInfo = (await getProjectInfo(
-      token,
-      resolvedBaseUrl,
-      resolvedProject,
-    )) as any;
-    const ctx = extractProjectContext(projectInfo);
-    projectID = ctx.scopeId;
-    if (!orgCode) orgCode = ctx.orgCode;
-    if (projectInfo?.projectName) projectName = projectInfo.projectName;
-  }
+//   if (!projectID) {
+//     const projectInfo = (await getProjectInfo(
+//       token,
+//       resolvedBaseUrl,
+//       resolvedProject,
+//     )) as any;
+//     const ctx = extractProjectContext(projectInfo);
+//     projectID = ctx.scopeId;
+//     if (!orgCode) orgCode = ctx.orgCode;
+//     if (projectInfo?.projectName) projectName = projectInfo.projectName;
+//   }
 
-  if (!projectID) {
-    throw new Error(
-      "[createUdf] Unable to resolve numeric project ID. " +
-        "Use the 'Set Project Info' tool first to establish project context, " +
-        "or verify the project key is correct.",
-    );
-  }
+//   if (!projectID) {
+//     throw new Error(
+//       "[createUdf] Unable to resolve numeric project ID. " +
+//         "Use the 'Set Project Info' tool first to establish project context, " +
+//         "or verify the project key is correct.",
+//     );
+//   }
 
-  const modules = payload.modules.map((moduleID) => ({
-    moduleID,
-    mandatory: payload.mandatory ?? false,
-  }));
+//   const modules = payload.modules.map((moduleID) => ({
+//     moduleID,
+//     mandatory: payload.mandatory ?? false,
+//   }));
 
-  const dataEntry: Record<string, any> = {
-    projectID,
-    projectName,
-    modules,
-    moduleModel: [],
-  };
+//   const dataEntry: Record<string, any> = {
+//     projectID,
+//     projectName,
+//     modules,
+//     moduleModel: [],
+//   };
 
-  if (payload.listValues !== undefined) {
-    dataEntry.listValues = payload.listValues;
-  }
-  if (payload.defaultValue !== undefined) {
-    dataEntry.defaultValue = payload.defaultValue;
-  }
-  if (payload.defaultChildValue !== undefined) {
-    dataEntry.defaultChildValue = payload.defaultChildValue;
-  }
+//   if (payload.listValues !== undefined) {
+//     dataEntry.listValues = payload.listValues;
+//   }
+//   if (payload.defaultValue !== undefined) {
+//     dataEntry.defaultValue = payload.defaultValue;
+//   }
+//   if (payload.defaultChildValue !== undefined) {
+//     dataEntry.defaultChildValue = payload.defaultChildValue;
+//   }
 
-  const body: Record<string, any> = {
-    fieldTypeID: payload.fieldTypeID,
-    name: payload.name,
-    label: payload.label,
-    data: [dataEntry],
-  };
+//   const body: Record<string, any> = {
+//     fieldTypeID: payload.fieldTypeID,
+//     name: payload.name,
+//     label: payload.label,
+//     data: [dataEntry],
+//   };
 
-  // STRING fields require fieldLength; default to 10 if not provided
-  if (payload.fieldTypeID === 6) {
-    body.fieldLength = payload.fieldLength ?? 10;
-  } else if (payload.fieldLength !== undefined) {
-    body.fieldLength = payload.fieldLength;
-  }
-  if (payload.lookuplistId !== undefined) {
-    body.lookuplistId = payload.lookuplistId;
-  }
+//   // STRING fields require fieldLength; default to 10 if not provided
+//   if (payload.fieldTypeID === 6) {
+//     body.fieldLength = payload.fieldLength ?? 10;
+//   } else if (payload.fieldLength !== undefined) {
+//     body.fieldLength = payload.fieldLength;
+//   }
+//   if (payload.lookuplistId !== undefined) {
+//     body.lookuplistId = payload.lookuplistId;
+//   }
 
-  return qmetryRequest<unknown>({
-    method: "POST",
-    path: QMETRY_PATHS.UDF.CREATE_UDF,
-    token,
-    project: resolvedProject,
-    baseUrl: resolvedBaseUrl,
-    body,
-    scopeId: projectID,
-    orgCode,
-  });
-}
+//   return qmetryRequest<unknown>({
+//     method: "POST",
+//     path: QMETRY_PATHS.UDF.CREATE_UDF,
+//     token,
+//     project: resolvedProject,
+//     baseUrl: resolvedBaseUrl,
+//     body,
+//     scopeId: projectID,
+//     orgCode,
+//   });
+// }
 
 /**
  * Fetches custom lists (lookup lists) available in the project.
  * Use this to get lookuplistId values needed when creating LOOKUPLIST,
  * MULTILOOKUPLIST, or CASCADINGLIST UDFs.
  */
-export async function fetchCustomLists(
-  token: string,
-  baseUrl: string,
-  project: string | undefined,
-  payload: FetchCustomListsPayload,
-) {
-  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
-    baseUrl,
-    project,
-  );
+// export async function fetchCustomLists(
+//   token: string,
+//   baseUrl: string,
+//   project: string | undefined,
+//   payload: FetchCustomListsPayload,
+// ) {
+//   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+//     baseUrl,
+//     project,
+//   );
 
-  const body: Record<string, any> = {
-    start: payload.start ?? 0,
-    limit: payload.limit ?? 50,
-    page: payload.page ?? 1,
-  };
+//   const body: Record<string, any> = {
+//     start: payload.start ?? 0,
+//     limit: payload.limit ?? 50,
+//     page: payload.page ?? 1,
+//   };
 
-  if (payload.listName) {
-    body.filter = `[{"type":"string","value":"${payload.listName}","field":"Listname"}]`;
-  } else if (payload.filter) {
-    body.filter = payload.filter;
-  }
+//   if (payload.listName) {
+//     body.filter = `[{"type":"string","value":"${payload.listName}","field":"Listname"}]`;
+//   } else if (payload.filter) {
+//     body.filter = payload.filter;
+//   }
 
-  return qmetryRequest<unknown>({
-    method: "POST",
-    path: QMETRY_PATHS.UDF.LIST_CUSTOM_LISTS,
-    token,
-    project: resolvedProject,
-    baseUrl: resolvedBaseUrl,
-    body,
-    scopeId: payload.scopeId,
-    orgCode: payload.orgCode,
-  });
-}
+//   return qmetryRequest<unknown>({
+//     method: "POST",
+//     path: QMETRY_PATHS.UDF.LIST_CUSTOM_LISTS,
+//     token,
+//     project: resolvedProject,
+//     baseUrl: resolvedBaseUrl,
+//     body,
+//     scopeId: payload.scopeId,
+//     orgCode: payload.orgCode,
+//   });
+// }
 
 /**
  * Fetches items within a specific custom list by its ID.
  * Returns item IDs and names needed for defaultValue/listValues when creating UDFs.
  */
-export async function fetchCustomListItems(
-  token: string,
-  baseUrl: string,
-  project: string | undefined,
-  payload: FetchCustomListItemsPayload,
-) {
-  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
-    baseUrl,
-    project,
-  );
+// export async function fetchCustomListItems(
+//   token: string,
+//   baseUrl: string,
+//   project: string | undefined,
+//   payload: FetchCustomListItemsPayload,
+// ) {
+//   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+//     baseUrl,
+//     project,
+//   );
 
-  // Resolve numeric projectID — prefer injected scopeId, else fetch project info
-  let projectID = payload.scopeId;
-  let orgCode = payload.orgCode;
+//   // Resolve numeric projectID — prefer injected scopeId, else fetch project info
+//   let projectID = payload.scopeId;
+//   let orgCode = payload.orgCode;
 
-  if (!projectID) {
-    const projectInfo = (await getProjectInfo(
-      token,
-      resolvedBaseUrl,
-      resolvedProject,
-    )) as any;
-    const ctx = extractProjectContext(projectInfo);
-    projectID = ctx.scopeId;
-    if (!orgCode) orgCode = ctx.orgCode;
-  }
+//   if (!projectID) {
+//     const projectInfo = (await getProjectInfo(
+//       token,
+//       resolvedBaseUrl,
+//       resolvedProject,
+//     )) as any;
+//     const ctx = extractProjectContext(projectInfo);
+//     projectID = ctx.scopeId;
+//     if (!orgCode) orgCode = ctx.orgCode;
+//   }
 
-  const body: Record<string, any> = {
-    qmMode: "EDIT",
-    qmMasterId: payload.listId,
-    params: { showArchive: true },
-  };
+//   const body: Record<string, any> = {
+//     qmMode: "EDIT",
+//     qmMasterId: payload.listId,
+//     params: { showArchive: true },
+//   };
 
-  if (projectID) {
-    body.projectID = projectID;
-  }
+//   if (projectID) {
+//     body.projectID = projectID;
+//   }
 
-  return qmetryRequest<unknown>({
-    method: "POST",
-    path: QMETRY_PATHS.UDF.LIST_CUSTOM_LIST_ITEMS,
-    token,
-    project: resolvedProject,
-    baseUrl: resolvedBaseUrl,
-    body,
-    scopeId: projectID,
-    orgCode,
-  });
-}
+//   return qmetryRequest<unknown>({
+//     method: "POST",
+//     path: QMETRY_PATHS.UDF.LIST_CUSTOM_LIST_ITEMS,
+//     token,
+//     project: resolvedProject,
+//     baseUrl: resolvedBaseUrl,
+//     body,
+//     scopeId: projectID,
+//     orgCode,
+//   });
+// }
 
 /**
  * Bulk updates UDF values for one or more Test Case Runs.
@@ -301,4 +303,213 @@ export async function fetchUdfFieldTypes() {
 
 export async function fetchUdfModules() {
   return [...UDF_MODULES];
+}
+
+/**
+ * Fetches Test Run UDF metadata for the current project.
+ * Returns all available Test Run UDF field definitions (name, fieldID, type)
+ * and lookup list options (for LOOKUPLIST, MULTILOOKUPLIST, CASCADINGLIST fields).
+ * The `projectUserFieldID` in the response is the `fieldID` required by
+ * the 'Bulk Update Test Run UDFs' tool.
+ * Extra headers `action: fetch-steps` and `screenname: EXECUTION RUN` are
+ * required by this endpoint.
+ */
+export async function fetchTestRunUdfMetadata(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchTestRunUdfMetadataPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  const raw = await qmetryRequest<{
+    qmUDF?: { TCR?: Record<string, any> };
+    qmUDFList?: Record<string, any[]>;
+    qmSDF?: Record<string, any>;
+  }>({
+    method: "POST",
+    path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body: { entityType: "TCR" },
+    scopeId: payload.scopeId,
+    orgCode: payload.orgCode,
+    extraHeaders: {
+      action: "fetch-steps",
+      screenname: "EXECUTION RUN",
+    },
+  });
+
+  // Normalize qmUDF.TCR into a flat array for easy LLM consumption
+  const tcrFields = raw.qmUDF?.TCR ?? {};
+  const fields = Object.entries(tcrFields).map(([key, def]) => ({
+    fieldKey: key, // e.g. "FLD.planned_execution_date"
+    fieldID: def.projectUserFieldID as number, // use as fieldID in bulk update
+    name: def.name as string,
+    label: def.fieldLabel as string,
+    fieldType: def.fieldTypeName as string,
+    allowBlank: def.allowBlank as boolean,
+    ...(def.qmListName ? { listName: def.qmListName as string } : {}),
+    ...(def.listMasterID ? { listMasterID: def.listMasterID as number } : {}),
+  }));
+
+  return {
+    fields,
+    lookupOptions: raw.qmUDFList ?? {},
+    _note:
+      "Use 'fieldID' (projectUserFieldID) when calling 'Bulk Update Test Run UDFs'. " +
+      "For LOOKUPLIST/MULTILOOKUPLIST/CASCADINGLIST fields, use IDs from 'lookupOptions' as the value.",
+  };
+}
+
+/**
+ * Fetches Test Run UDF values for all test case runs in a given test suite run.
+ * Steps:
+ * 1. Calls `rest/execution/list/viewColumns` to get test case runs and their UDF values.
+ * 2. Checks `hasTcRunUdf` — if false, returns immediately with a note.
+ * 3. If UDFs exist, calls `rest/admin/udf/metadata` to get field definitions
+ *    and enriches each run's UDF values with field label and type information.
+ * @throws If tsrunID or viewId are missing.
+ */
+export async function fetchTestRunUdfValues(
+  token: string,
+  baseUrl: string,
+  project: string | undefined,
+  payload: FetchTestRunUdfValuesPayload,
+) {
+  const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
+    baseUrl,
+    project,
+  );
+
+  if (typeof payload.tsrunID !== "string" || !payload.tsrunID) {
+    throw new Error(
+      "[fetchTestRunUdfValues] Missing or invalid required parameter: 'tsrunID'.",
+    );
+  }
+  if (typeof payload.viewId !== "number") {
+    throw new Error(
+      "[fetchTestRunUdfValues] Missing or invalid required parameter: 'viewId'.",
+    );
+  }
+
+  // Step 1: fetch test case runs
+  const runsResponse = await qmetryRequest<Record<string, any>>({
+    method: "POST",
+    path: QMETRY_PATHS.TESTSUITE.GET_TESTCASE_RUNS_BY_TESTSUITE_RUN,
+    token,
+    project: resolvedProject,
+    baseUrl: resolvedBaseUrl,
+    body: {
+      tsrunID: payload.tsrunID,
+      viewId: payload.viewId,
+      startIndex: payload.startIndex ?? 0,
+      size: payload.size ?? 50,
+    },
+    scopeId: payload.scopeId,
+    orgCode: payload.orgCode,
+  });
+
+  // Step 2: check hasTcRunUdf flag
+  if (runsResponse.hasTcRunUdf === false) {
+    return {
+      tsRunID: payload.tsrunID,
+      hasTcRunUdf: false,
+      total: runsResponse.total ?? 0,
+      runs: [],
+      _note:
+        "No Test Run UDFs are configured for this project. " +
+        "A project administrator must define Test Run UDF fields before values can be fetched.",
+    };
+  }
+
+  // Step 3: fetch UDF metadata to enrich values
+  let fieldDefs: Record<string, any> = {};
+  let lookupOptions: Record<string, any[]> = {};
+  try {
+    const meta = await qmetryRequest<{
+      qmUDF?: { TCR?: Record<string, any> };
+      qmUDFList?: Record<string, any[]>;
+    }>({
+      method: "POST",
+      path: QMETRY_PATHS.UDF.TEST_RUN_UDF_METADATA,
+      token,
+      project: resolvedProject,
+      baseUrl: resolvedBaseUrl,
+      body: { entityType: "TCR" },
+      scopeId: payload.scopeId,
+      orgCode: payload.orgCode,
+      extraHeaders: {
+        action: "fetch-steps",
+        screenname: "EXECUTION RUN",
+      },
+    });
+    fieldDefs = meta.qmUDF?.TCR ?? {};
+    lookupOptions = meta.qmUDFList ?? {};
+  } catch {
+    // metadata call is best-effort — proceed without enrichment
+  }
+
+  // Build a lookup from field name → definition
+  const defByName: Record<string, any> = {};
+  for (const def of Object.values(fieldDefs)) {
+    if (def?.name) defByName[def.name] = def;
+  }
+
+  // Step 4: extract and enrich UDF values from each run
+  const rows: any[] = runsResponse.data ?? [];
+  const runs = rows.map((row: any) => {
+    let rawUdfs: Record<string, unknown> = {};
+    if (row.udfjson) {
+      try {
+        rawUdfs = JSON.parse(row.udfjson);
+      } catch {
+        rawUdfs = {};
+      }
+    } else if (row.testRunUdfs && typeof row.testRunUdfs === "object") {
+      rawUdfs = row.testRunUdfs;
+    }
+
+    const enrichedUdfs = Object.entries(rawUdfs).map(([name, value]) => {
+      const def = defByName[name];
+      return {
+        name,
+        label: def?.fieldLabel ?? name,
+        fieldID: def?.projectUserFieldID ?? null,
+        fieldType: def?.fieldTypeName ?? "UNKNOWN",
+        value,
+      };
+    });
+
+    return {
+      tcRunID: row.tcRunID,
+      entityKey: row.entityKey,
+      summary: row.summary,
+      runStatus: row.runStatus,
+      testRunUdfs: enrichedUdfs,
+    };
+  });
+
+  return {
+    tsRunID: payload.tsrunID,
+    hasTcRunUdf: runsResponse.hasTcRunUdf ?? true,
+    total: runsResponse.total ?? rows.length,
+    runs,
+    availableUdfFields: Object.values(fieldDefs).map((def: any) => ({
+      fieldID: def.projectUserFieldID,
+      name: def.name,
+      label: def.fieldLabel,
+      fieldType: def.fieldTypeName,
+      ...(def.qmListName
+        ? {
+            listName: def.qmListName,
+            lookupOptions: lookupOptions[def.qmListName] ?? [],
+          }
+        : {}),
+    })),
+  };
 }
