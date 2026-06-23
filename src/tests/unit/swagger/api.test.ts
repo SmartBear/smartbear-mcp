@@ -752,7 +752,9 @@ describe("SwaggerAPI", () => {
           contentType: "html",
           source: "internal",
         }),
-      ).rejects.toThrow("Cannot create an html + internal page with content via API");
+      ).rejects.toThrow(
+        "Cannot create an html + internal page with content via API",
+      );
     });
 
     it("should throw ToolError when product has no sections", async () => {

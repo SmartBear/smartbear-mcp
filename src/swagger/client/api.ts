@@ -750,7 +750,11 @@ export class SwaggerAPI {
       parentId = null,
     } = args;
 
-    if (contentType === "html" && source === "internal" && pageContent !== undefined) {
+    if (
+      contentType === "html" &&
+      source === "internal" &&
+      pageContent !== undefined
+    ) {
       throw new ToolError(
         "Cannot create an html + internal page with content via API. Use 'external' source for html, or 'markdown' with 'internal' source.",
       );
