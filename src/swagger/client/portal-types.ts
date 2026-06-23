@@ -542,9 +542,21 @@ export const DocumentOutputSchema = z.object({
 });
 
 const ContentReferenceOutputSchema = z.union([
-  z.object({ type: z.literal("apiUrl"), url: z.string(), apiSpec: z.string().nullable() }),
-  z.object({ type: z.literal("html"), source: z.enum(["internal", "external"]), documentId: z.string().nullable() }),
-  z.object({ type: z.literal("markdown"), source: z.enum(["internal", "external"]), documentId: z.string().nullable() }),
+  z.object({
+    type: z.literal("apiUrl"),
+    url: z.string(),
+    apiSpec: z.string().nullable(),
+  }),
+  z.object({
+    type: z.literal("html"),
+    source: z.enum(["internal", "external"]),
+    documentId: z.string().nullable(),
+  }),
+  z.object({
+    type: z.literal("markdown"),
+    source: z.enum(["internal", "external"]),
+    documentId: z.string().nullable(),
+  }),
 ]);
 
 export const TableOfContentsItemOutputSchema: z.ZodType<any> = z.lazy(() =>
@@ -560,7 +572,9 @@ export const TableOfContentsItemOutputSchema: z.ZodType<any> = z.lazy(() =>
   }),
 );
 
-export const TableOfContentsListOutputSchema = z.array(TableOfContentsItemOutputSchema);
+export const TableOfContentsListOutputSchema = z.array(
+  TableOfContentsItemOutputSchema,
+);
 
 export const SectionOutputSchema = z.object({
   id: z.string(),
