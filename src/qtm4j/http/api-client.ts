@@ -17,13 +17,14 @@ export class ApiClient {
   private readonly baseUrl: string;
   private readonly tokenProvider: () => string | null;
   private readonly automationTokenProvider?: () => string | null;
-  private readonly analyticsSkipped: boolean;
+  private readonly allowTracking: boolean;
+  private readonly _skipInstance!: ApiClient;
 
   constructor(
     tokenOrProvider: string | (() => string | null),
     baseUrl: string,
     automationTokenProvider?: () => string | null,
-    skipAnalytics = false,
+    allowTracking = true,
   ) {
     this.baseUrl = baseUrl.trim().replace(/\/$/, EMPTY_VALUES.STRING);
 
@@ -34,20 +35,26 @@ export class ApiClient {
     }
 
     this.automationTokenProvider = automationTokenProvider;
-    this.analyticsSkipped = skipAnalytics;
+    this.allowTracking = allowTracking;
+
+    if (allowTracking) {
+      this._skipInstance = new ApiClient(
+        this.tokenProvider,
+        this.baseUrl,
+        this.automationTokenProvider,
+        false,
+      );
+    } else {
+      this._skipInstance = this;
+    }
   }
 
   /**
-   * Returns a new ApiClient instance that sends skipAnalytics: true on every request.
+   * Returns the pre-created ApiClient instance with analytics tracking disabled.
    * Use for resolver and internal calls that should not be tracked.
    */
   skipAnalytics(): ApiClient {
-    return new ApiClient(
-      this.tokenProvider,
-      this.baseUrl,
-      this.automationTokenProvider,
-      true,
-    );
+    return this._skipInstance;
   }
 
   /**
@@ -63,7 +70,7 @@ export class ApiClient {
     }
     return {
       ...new AuthService(token).getAuthHeaders(),
-      [HTTP_HEADERS.X_SKIP_TRACKING]: String(this.analyticsSkipped),
+      [HTTP_HEADERS.X_ALLOW_TRACKING]: String(this.allowTracking),
     };
   }
 
@@ -78,7 +85,7 @@ export class ApiClient {
     }
     return {
       ...new AuthService(token).getAuthHeaders(),
-      [HTTP_HEADERS.X_SKIP_TRACKING]: String(this.analyticsSkipped),
+      [HTTP_HEADERS.X_ALLOW_TRACKING]: String(this.allowTracking),
     };
   }
 

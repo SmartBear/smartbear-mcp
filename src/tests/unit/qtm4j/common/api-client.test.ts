@@ -231,7 +231,7 @@ describe("ApiClient", () => {
     expect(skipped).not.toBe(client);
   });
 
-  it("skipAnalytics() instance sends skipAnalytics: true in headers", async () => {
+  it("skipAnalytics() instance sends allowTracking: false in headers", async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -244,10 +244,10 @@ describe("ApiClient", () => {
     await skipped.get("/endpoint");
 
     const calledHeaders = (global.fetch as any).mock.calls[0][1].headers;
-    expect(calledHeaders).toMatchObject({ "X-Skip-Tracking": "true" });
+    expect(calledHeaders).toMatchObject({ "X-Allow-Tracking": "false" });
   });
 
-  it("regular client sends skipAnalytics: false in headers", async () => {
+  it("regular client sends allowTracking: true in headers", async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -259,7 +259,7 @@ describe("ApiClient", () => {
     await client.get("/endpoint");
 
     const calledHeaders = (global.fetch as any).mock.calls[0][1].headers;
-    expect(calledHeaders).toMatchObject({ "X-Skip-Tracking": "false" });
+    expect(calledHeaders).toMatchObject({ "X-Allow-Tracking": "true" });
   });
 
   it("should throw ToolError when automation token is not available", () => {

@@ -221,8 +221,8 @@ export const HTTP_HEADERS = {
   /** Identifies the request source for backend analytics (e.g., Amplitude) */
   X_REQUEST_SOURCE: "X-Request-Source",
 
-  /** Signals whether analytics should be skipped for this request */
-  X_SKIP_TRACKING: "X-Skip-Tracking",
+  /** Signals whether analytics tracking is allowed for this request */
+  X_ALLOW_TRACKING: "X-Allow-Tracking",
 } as const;
 
 /**
