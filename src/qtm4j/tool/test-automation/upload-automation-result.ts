@@ -6,7 +6,9 @@ import type { Qtm4jClient } from "../../client.ts";
 import {
   AUTOMATION_LIMITS,
   AUTOMATION_RESULT_DIRS,
+  CLIENT_CONFIG,
   ENDPOINTS,
+  HTTP_HEADERS,
   TOOL_NAMES,
   TOOLSETS,
 } from "../../config/constants.ts";
@@ -149,7 +151,9 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     // Step 1 — POST with automation API key to get upload URL and trackingId
     const importBody: Record<string, unknown> = {
       format,
-      isZip: isZip ?? false,
+      isZip,
+      [HTTP_HEADERS.REQUEST_SOURCE_TYPE]: CLIENT_CONFIG.SOURCE_VALUE,
+      [HTTP_HEADERS.SKIP_ANALYTICS]: false,
       ...rest,
       ...(fields ? { fields } : {}),
     };

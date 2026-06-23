@@ -70,12 +70,11 @@ export class EnvironmentResolver extends Resolver {
     const cached = this.cache.matchValue(projectKey, resolverKey, trimmed);
     if (cached !== undefined) return cached;
 
-    const response = await this.apiClient.get(
-      ENDPOINTS.ENVIRONMENTS(projectId),
-      {
+    const response = await this.apiClient
+      .skipAnalytics()
+      .get(ENDPOINTS.ENVIRONMENTS(projectId), {
         search: trimmed,
-      },
-    );
+      });
     this.cache.set(projectKey, resolverKey, response as FieldValues);
     return this.cache.matchValue(projectKey, resolverKey, trimmed);
   }

@@ -44,10 +44,11 @@ export class RequirementIdResolver extends Resolver {
   ): Promise<Record<string, ResolvedRequirement>> {
     if (keys.length === 0) return {};
 
-    const response = await this.apiClient.get(
-      ENDPOINTS.RESOLVE_REQUIREMENT_IDS(projectId),
-      { keys: keys.join(",") },
-    );
+    const response = await this.apiClient
+      .skipAnalytics()
+      .get(ENDPOINTS.RESOLVE_REQUIREMENT_IDS(projectId), {
+        keys: keys.join(","),
+      });
 
     return response as Record<string, ResolvedRequirement>;
   }

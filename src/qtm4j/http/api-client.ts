@@ -17,11 +17,13 @@ export class ApiClient {
   private readonly baseUrl: string;
   private readonly tokenProvider: () => string | null;
   private readonly automationTokenProvider?: () => string | null;
+  private readonly analyticsSkipped: boolean;
 
   constructor(
     tokenOrProvider: string | (() => string | null),
     baseUrl: string,
     automationTokenProvider?: () => string | null,
+    skipAnalytics = false,
   ) {
     this.baseUrl = baseUrl.trim().replace(/\/$/, EMPTY_VALUES.STRING);
 
@@ -32,6 +34,20 @@ export class ApiClient {
     }
 
     this.automationTokenProvider = automationTokenProvider;
+    this.analyticsSkipped = skipAnalytics;
+  }
+
+  /**
+   * Returns a new ApiClient instance that sends skipAnalytics: true on every request.
+   * Use for resolver and internal calls that should not be tracked.
+   */
+  skipAnalytics(): ApiClient {
+    return new ApiClient(
+      this.tokenProvider,
+      this.baseUrl,
+      this.automationTokenProvider,
+      true,
+    );
   }
 
   /**
@@ -45,7 +61,10 @@ export class ApiClient {
     if (!token) {
       throw new ToolError(ERROR_MESSAGES.CLIENT_NOT_CONFIGURED);
     }
-    return new AuthService(token).getAuthHeaders();
+    return {
+      ...new AuthService(token).getAuthHeaders(),
+      [HTTP_HEADERS.SKIP_ANALYTICS]: String(this.analyticsSkipped),
+    };
   }
 
   /**
@@ -57,7 +76,10 @@ export class ApiClient {
     if (!token) {
       throw new ToolError(ERROR_MESSAGES.AUTOMATION_API_KEY_NOT_CONFIGURED);
     }
-    return new AuthService(token).getAuthHeaders();
+    return {
+      ...new AuthService(token).getAuthHeaders(),
+      [HTTP_HEADERS.SKIP_ANALYTICS]: String(this.analyticsSkipped),
+    };
   }
 
   /**

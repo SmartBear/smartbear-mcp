@@ -23,6 +23,7 @@ describe("StepExecutionContextResolver", () => {
       }),
     };
     mockApiClient = { get: vi.fn() };
+    mockApiClient.skipAnalytics = vi.fn().mockReturnValue(mockApiClient);
     resolver = new StepExecutionContextResolver(
       mockApiClient,
       mockCacheService,

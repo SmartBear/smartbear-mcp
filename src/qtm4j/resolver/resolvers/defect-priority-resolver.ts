@@ -75,10 +75,9 @@ export class DefectPriorityResolver extends Resolver {
     const cached = this.cache.matchValue(projectKey, resolverKey, name);
     if (cached !== undefined) return cached;
 
-    const response = await this.apiClient.get(
-      ENDPOINTS.DEFECT_PRIORITIES(projectId),
-      { priorityNames: name },
-    );
+    const response = await this.apiClient
+      .skipAnalytics()
+      .get(ENDPOINTS.DEFECT_PRIORITIES(projectId), { priorityNames: name });
     this.cache.set(projectKey, resolverKey, response as FieldValues);
     return this.cache.matchValue(projectKey, resolverKey, name);
   }

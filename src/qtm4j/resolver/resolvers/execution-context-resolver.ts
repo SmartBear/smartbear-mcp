@@ -99,10 +99,12 @@ export class ExecutionContextResolver extends Resolver {
     }
 
     // Fetch only the uncached keys from the API
-    const response = await this.apiClient.get(
-      ENDPOINTS.EXECUTION_CONTEXT(projectId),
-      { testCycleKey, testCaseKeys: uncachedKeys.join(",") },
-    );
+    const response = await this.apiClient
+      .skipAnalytics()
+      .get(ENDPOINTS.EXECUTION_CONTEXT(projectId), {
+        testCycleKey,
+        testCaseKeys: uncachedKeys.join(","),
+      });
 
     const fetched = response as ExecutionContextResponse;
 

@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [QTM4J] Added test execution tools to start executions, update test case and step executions, link Jira bugs, and retrieve linked bugs
+- [QTM4J] Internal API calls now suppress analytics tracking and use shared header constants.
 
+### Fixed
+
+- [QTM4J] Fixed `search_test_cases` response validation errors when test case fields are missing.
 
 ## [0.26.0] - 2026-06-19
 

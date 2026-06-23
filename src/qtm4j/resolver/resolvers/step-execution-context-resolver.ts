@@ -85,10 +85,13 @@ export class StepExecutionContextResolver extends Resolver {
     }
 
     // Fetch only the uncached seqNos from the API
-    const response = await this.apiClient.get(
-      ENDPOINTS.STEP_EXECUTION_CONTEXT(projectId),
-      { testCycleKey, testCaseKey, seqNos: uncachedSeqNos.join(",") },
-    );
+    const response = await this.apiClient
+      .skipAnalytics()
+      .get(ENDPOINTS.STEP_EXECUTION_CONTEXT(projectId), {
+        testCycleKey,
+        testCaseKey,
+        seqNos: uncachedSeqNos.join(","),
+      });
 
     const fetched = response as Record<string, Record<string, number>>;
     const fetchedSteps = fetched[testCaseKey] ?? {};
