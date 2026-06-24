@@ -71,11 +71,14 @@ function stripHtml(value: string) {
   if (!/<[^>]+>/.test(value)) return value;
   return value
     .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
+    .replace(/&(nbsp|amp|lt|gt|quot);/g, (_, entity) => {
+      if (entity === "nbsp") return " ";
+      if (entity === "amp") return "&";
+      if (entity === "lt") return "<";
+      if (entity === "gt") return ">";
+      if (entity === "quot") return '"';
+      return `&${entity};`;
+    })
     .replace(/\s+/g, " ")
     .trim();
 }

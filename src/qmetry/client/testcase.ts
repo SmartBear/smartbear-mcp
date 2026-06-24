@@ -387,11 +387,14 @@ export async function fetchTestCaseExecutions(
         if (typeof value === "string" && /<[^>]+>/.test(value)) {
           value = value
             .replace(/<[^>]*>/g, " ")
-            .replace(/&nbsp;/g, " ")
-            .replace(/&amp;/g, "&")
-            .replace(/&lt;/g, "<")
-            .replace(/&gt;/g, ">")
-            .replace(/&quot;/g, '"')
+            .replace(/&(nbsp|amp|lt|gt|quot);/g, (_, entity) => {
+              if (entity === "nbsp") return " ";
+              if (entity === "amp") return "&";
+              if (entity === "lt") return "<";
+              if (entity === "gt") return ">";
+              if (entity === "quot") return '"';
+              return `&${entity};`;
+            })
             .replace(/\s+/g, " ")
             .trim();
         }
@@ -410,11 +413,14 @@ export async function fetchTestCaseExecutions(
           if (typeof val === "string" && /<[^>]+>/.test(val)) {
             const text = val
               .replace(/<[^>]*>/g, " ")
-              .replace(/&nbsp;/g, " ")
-              .replace(/&amp;/g, "&")
-              .replace(/&lt;/g, "<")
-              .replace(/&gt;/g, ">")
-              .replace(/&quot;/g, '"')
+              .replace(/&(nbsp|amp|lt|gt|quot);/g, (_, entity) => {
+                if (entity === "nbsp") return " ";
+                if (entity === "amp") return "&";
+                if (entity === "lt") return "<";
+                if (entity === "gt") return ">";
+                if (entity === "quot") return '"';
+                return `&${entity};`;
+              })
               .replace(/\s+/g, " ")
               .trim();
             return [key, text];

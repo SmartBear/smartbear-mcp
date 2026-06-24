@@ -176,13 +176,25 @@ export class QmetryClient implements Client {
           // Extract projectKey and baseUrl from arguments to prevent them from being sent in request body
           const { projectKey: _, baseUrl: __, ...cleanArgs } = a;
 
-          // Inject persisted numeric project context for endpoints that need scope/orgcode headers
+          // Inject persisted numeric project context only for handlers that explicitly support
+          // scope/orgcode headers and strip them from the request body before forwarding.
+          // Injecting into all handlers would silently add these fields to API request bodies.
+          const SCOPE_AWARE_HANDLERS = new Set([
+            QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
+            QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS,
+            QMetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA,
+            QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
+            QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES,
+          ]);
+          const isScopeAware = SCOPE_AWARE_HANDLERS.has(tool.handler);
           const enrichedArgs = {
             ...cleanArgs,
-            ...(this.projectNumericId !== undefined && {
-              scopeId: this.projectNumericId,
-            }),
-            ...(this.orgCode !== undefined && { orgCode: this.orgCode }),
+            ...(isScopeAware &&
+              this.projectNumericId !== undefined && {
+                scopeId: this.projectNumericId,
+              }),
+            ...(isScopeAware &&
+              this.orgCode !== undefined && { orgCode: this.orgCode }),
           };
 
           const result = await handlerFn(

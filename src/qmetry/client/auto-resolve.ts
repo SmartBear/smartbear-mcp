@@ -164,11 +164,10 @@ export function extractProjectContext(projectInfo: any): {
   scopeId: number | undefined;
   orgCode: string | undefined;
 } {
+  const rawScopeId = projectInfo?.currentProjectId;
+  const parsedScopeId = rawScopeId !== undefined ? Number(rawScopeId) : NaN;
   return {
-    scopeId:
-      projectInfo?.currentProjectId !== undefined
-        ? Number(projectInfo.currentProjectId)
-        : undefined,
+    scopeId: Number.isFinite(parsedScopeId) ? parsedScopeId : undefined,
     orgCode:
       projectInfo?.clientCode !== undefined
         ? String(projectInfo.clientCode)
