@@ -136,7 +136,7 @@ The QMetry client provides the following test management capabilities as listed 
 -   Purpose: Get execution records for a specific test case by ID.
 -   Parameters: Test Case identifier (`tcID`).
 -   Returns: Complete list of test case executions.
--   Use case: Retrieve available test case execution records.
+-   Use case: Retrieve available test case execution records including Test Run UDFs.
 
 ### `create_test_suite`
 
@@ -206,7 +206,7 @@ The QMetry client provides the following test management capabilities as listed 
 -   Purpose: Get test case runs under a specific test suite run execution in QMetry.
 -   Parameters: Test Suite Run identifier (`test suite run ID`), Test Execution View identifier (`viewId`).
 -   Returns: Complete list of test case runs with detailed execution information, status, tester details, and run metadata.
--   Use case: Retrieve individual test case execution results and status within a specific test suite run.
+-   Use case: Retrieve individual test case execution results and status within a specific test suite run, including Test Run UDFs.
 
 ### `update_testcase_execution_status`
 
@@ -256,6 +256,13 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: Test Case Run identifier (`entityId`).
 -   Returns: Complete list of issues linked to the test case run with issue details, priorities, status, owner information, and linkage metadata.
 -   Use case: Retrieve issues associated with specific test case executions for defect tracking, traceability analysis, and test execution quality monitoring.
+
+### `get_executions_by_issue`
+
+-   Purpose: Get test case executions that are linked to a specific issue in QMetry.
+-   Parameters: Issue identifier (`issueId`), Issue Type (`issueType`).
+-   Returns: Complete list of test case executions linked to the issue with execution details, status, and metadata.
+-   Use case: Retrieve test case executions associated with a specific issue for defect tracking, traceability analysis, test execution quality monitoring, Test Run UDFs.
 
 ### `import_automation_test_results`
 
