@@ -257,12 +257,12 @@ The QMetry client provides the following test management capabilities as listed 
 -   Returns: Complete list of issues linked to the test case run with issue details, priorities, status, owner information, and linkage metadata.
 -   Use case: Retrieve issues associated with specific test case executions for defect tracking, traceability analysis, and test execution quality monitoring.
 
-### `get_executions_by_issue`
+### `fetch_issue_executions`
 
--   Purpose: Get test case executions that are linked to a specific issue in QMetry.
--   Parameters: Issue identifier (`issueId`), Issue Type (`issueType`).
--   Returns: Complete list of test case executions linked to the issue with execution details, status, and metadata.
--   Use case: Retrieve test case executions associated with a specific issue for defect tracking, traceability analysis, test execution quality monitoring, Test Run UDFs.
+ -   Purpose: Get test case executions that are linked to a specific QMetry-native (non-Jira) defect/issue.
+ -   Parameters: Defect/issue numeric ID (`linkedAssetId`), optional filter (`filter`), optional platform filter (`platformID`), and pagination (`start`, `page`, `limit`).
+ -   Returns: Complete list of executions linked to the defect/issue, including Test Run UDF values when configured.
+ -   Use case: Retrieve test executions associated with a defect for traceability/coverage analysis and inspect Test Run UDFs captured during execution.
 
 ### `import_automation_test_results`
 

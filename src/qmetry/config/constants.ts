@@ -42,7 +42,7 @@ export const UDF_FIELD_TYPES = [
   {
     Id: 5,
     Fieldtype: "NUMBER",
-    Description: "Any number can be enter into this field.",
+    Description: "Any number can be entered into this field.",
     Preview: "ad-number-ico",
   },
   {

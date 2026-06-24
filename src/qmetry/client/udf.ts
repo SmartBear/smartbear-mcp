@@ -458,8 +458,9 @@ export async function fetchTestRunUdfValues(
         body: {
           tsrunID: payload.tsrunID,
           viewId: payload.viewId,
-          startIndex: payload.startIndex ?? 0,
-          size: payload.size ?? 50,
+          start: payload.startIndex ?? 0,
+          page: 1,
+          limit: payload.size ?? 50,
         },
         scopeId: payload.scopeId,
         orgCode: payload.orgCode,
