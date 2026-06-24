@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Add output schemas and TOC discriminated union [#535](https://github.com/SmartBear/smartbear-mcp/pull/535)
 
+### Fixed
+
+- [Swagger] Register Portal/Studio tools when authenticated via OAuth. Previously only an explicit API key (`SWAGGER_API_KEY` / `Swagger-Api-Key` header) enabled the tools, so OAuth-only sessions listed no Swagger tools. [#537](https://github.com/SmartBear/smartbear-mcp/pull/537)
+
 ## [0.26.0] - 2026-06-19
 
 ### Added
