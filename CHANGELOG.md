@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- [QMetry] Enhance LLM prompt handling with contextual metadata and usage tracking [#371](https://github.com/SmartBear/smartbear-mcp/pull/371)
+- [Qmetry]: add Test Run UDF workflow support and customer fixes [#538](https://github.com/SmartBear/smartbear-mcp/pull/538)
 
 ## [0.26.0] - 2026-06-19
 
@@ -175,6 +175,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool `create-web-link` for creating a Web link for a Test Cycle [#354](https://github.com/SmartBear/smartbear-mcp/pull/354)
 - [Zephyr] Added a tool `create-test-execution-issue-link` for creating a link between a Jira issue and a Test Execution [#362](https://github.com/SmartBear/smartbear-mcp/pull/362)
 - [Zephyr] Added a tool `get-test-steps` for getting a list of test steps for test execution [#367](https://github.com/SmartBear/smartbear-mcp/pull/367)
+- [QMetry] Enhance LLM prompt handling with contextual metadata and usage tracking [#371](https://github.com/SmartBear/smartbear-mcp/pull/371)
 - [Zephyr] Added a tool `get-links` for fetching links associated with given Test Cycle [#372](https://github.com/SmartBear/smartbear-mcp/pull/372)
 - [Zephyr] Added a tool `get-links` for fetching links associated with given Test Case [#373](https://github.com/SmartBear/smartbear-mcp/pull/373)
 - [Zephyr] Added a tool `get-test-cycles` for fetching Test Cycles linked to a Jira issue [#374](https://github.com/SmartBear/smartbear-mcp/pull/374)
