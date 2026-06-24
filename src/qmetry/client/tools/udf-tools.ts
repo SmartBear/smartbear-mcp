@@ -274,41 +274,93 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     toolset: "UDF",
     summary:
       "Fetch the Test Run UDF (User Defined Field) values for all test case runs in a given test suite run. " +
-      "Returns each run's UDF values enriched with field label and type information from metadata.",
+      "Returns each run's UDF values enriched with field label and type information from metadata. " +
+      "When called after a parent execution tool, pass that tool's rows as sourceRows and set sourceContext so the response always includes the correct default identification fields with the UDF columns.",
     handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
     inputSchema: FetchTestRunUdfValuesArgsSchema,
     purpose:
       "Retrieves the test case runs for a test suite run and extracts their Test Run UDF field values. " +
       "Internally checks the 'hasTcRunUdf' flag — if UDFs are configured, it also calls the metadata API " +
       "to enrich each run's UDF values with field label, type, and numeric fieldID. " +
-      "Use this tool when the user asks to view, list, or inspect UDF values on specific test executions.",
+      "Use this tool when the user asks to view, list, or inspect UDF values on specific test executions. " +
+      "CRITICAL: If the user request started from 'Fetch Test Case Runs by Test Suite Run' or 'Fetch Test Case Executions', pass the parent response rows through 'sourceRows' instead of refetching. " +
+      "Set sourceContext to 'testSuiteRun' or 'testCaseExecutions' so default fields are preserved in the final unified table. " +
+      "Do NOT use this tool for issue executions; 'Fetch Issue Executions' already reads UDF values from its own udfjson response and enriches them with metadata.",
     useCases: [
       "Show me the UDF values for all runs in test suite run 731600",
       "What is the planned execution date set on each run in this test cycle?",
       "List the Test Run UDF values for test suite run 87039",
       "Fetch test run UDFs of executions for tsRunID 731600",
+      "Show Test Run UDFs from rows already returned by Fetch Test Case Executions",
     ],
     examples: [
       {
         description: "Fetch UDF values for all runs in test suite run 731600",
         parameters: {
           tsrunID: "731600",
+          sourceContext: "testSuiteRun",
         },
         expectedOutput:
-          "JSON with hasTcRunUdf, total, runs (each with tcRunID, entityKey, summary, runStatus, testRunUdfs array), " +
-          "and availableUdfFields listing all configured UDF fields with their fieldIDs.",
+          "Present as ONE unified table — never as a separate type+value breakdown. Example:\n" +
+          "| Test Case Key | Test Case Summary        | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
+          "| MAC-TC-5      | Login - valid credential | 1                | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |\n" +
+          "| MAC-TC-6      | Login - invalid password | 2                | Failed           | john      | firefox              | Regression     | -          |\n" +
+          "Columns: Test Case Key (entityKey) | Test Case Summary (summary) | Executed Version (latestVersion) | Execution Status (runStatus) | Tested By | then one column per UDF label. " +
+          "Use the UDF 'label' as column header. Show null UDF values as '-'.",
+      },
+      {
+        description:
+          "Format Test Run UDF values from Fetch Test Case Executions rows",
+        parameters: {
+          sourceContext: "testCaseExecutions",
+          sourceRows: [
+            {
+              tsEntityKey: "MAC-TS-42",
+              testsuiteName: "Login Suite",
+              releaseName: "R1",
+              cycleName: "Sprint1",
+              platform: "Chrome",
+              executedVersion: "v1",
+              executionStatus: "Passed",
+              executedBy: "varis",
+              tcRunID: 41572006,
+              testRunUdfs: [
+                {
+                  name: "env_udf",
+                  label: "Environments UDF",
+                  value: ["chrome", "edge", "safari"],
+                },
+              ],
+            },
+          ],
+        },
+        expectedOutput:
+          "Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:\n" +
+          "| Test Suite Key | Test Suite Name | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
+          "| MAC-TS-42      | Login Suite     | R1      | Sprint1 | Chrome   | v1               | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |\n" +
+          "Columns in order: Test Suite Key (tsEntityKey) | Test Suite Name (testsuiteName) | Release (releaseName) | Cycle (cycleName) | Platform (platform) | Executed Version (executedVersion) | Execution Status (executionStatus) | Tested By | then one column per UDF label. " +
+          "Use the UDF 'label' as column header. Show null UDF values as '-'.",
       },
     ],
     hints: [
-      "Use 'tsrunID' from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID field).",
-      "'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding.",
+      "DEFAULT DISPLAY CONTRACT: Always render 'unifiedTableRows' as ONE table. Do not render UDFs as Label | Type | Value rows.",
+      "When sourceContext='testSuiteRun', mandatory columns are: Test Case Key | Test Case Summary | Executed Version | Execution Status | Tested By | then one column per UDF label.",
+      "When sourceContext='testCaseExecutions', mandatory columns are: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | Tested By | then one column per UDF label.",
+      "PARENT-TO-UDF WORKFLOW: If a parent tool already returned rows, pass parentResponse.data as sourceRows and choose the matching sourceContext. This preserves parent-specific default fields and avoids repeating the same execution API call.",
+      "For prompts like 'Fetch test case runs of VKMCP-TS-1 and its Test Run UDFs': call Fetch Test Case Runs by Test Suite Run, then call this tool with sourceContext='testSuiteRun' and sourceRows=<that response data>.",
+      "For prompts like 'Fetch Test Case Executions and Test Run UDFs': call Fetch Test Case Executions, then call this tool with sourceContext='testCaseExecutions' and sourceRows=<that response data>.",
+      "For prompts like 'Fetch Issue Executions and Test Run UDFs': call Fetch Issue Executions only. Do not call this tool, because issue UDF values come from /rest/execution/getExecutionsForIssue udfjson and are already enriched by the issue tool with metadata.",
+      "If no parent rows are available, use 'tsrunID' from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID field).",
+      "'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding. It is only needed when sourceRows is not supplied.",
       "If 'hasTcRunUdf' is false in the response, no Test Run UDFs are configured for this project.",
       "The 'testRunUdfs' array on each run contains enriched UDF values with label and fieldID — use fieldID from here when calling 'Bulk Update Test Run UDFs'.",
-      "This tool calls both the execution list API and the UDF metadata API internally — no need to call 'Fetch Test Run UDF Metadata' separately when viewing values.",
+      "This tool calls UDF metadata internally — no need to call 'Fetch Test Run UDF Metadata' separately when viewing values.",
+      "When sourceRows is omitted, this tool also calls the test-suite-run execution list API internally. When sourceRows is provided, it reuses those rows and does not refetch the parent execution list.",
     ],
     outputDescription:
-      "JSON with hasTcRunUdf boolean, total count, runs array (each with tcRunID, entityKey, summary, runStatus, testRunUdfs), " +
-      "and availableUdfFields array describing all UDF fields in the project.",
+      "JSON with hasTcRunUdf boolean, sourceContext, total count, defaultColumns, udfColumns, unifiedTableRows, runs array, " +
+      "and availableUdfFields array describing all UDF fields in the project. " +
+      "Render unifiedTableRows directly as the final table: default identification fields first, then one column per UDF label.",
     readOnly: true,
     destructive: false,
     idempotent: true,

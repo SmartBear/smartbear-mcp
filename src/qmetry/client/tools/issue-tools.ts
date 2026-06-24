@@ -519,7 +519,9 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "Retrieve all test case execution runs that are linked to a specific QMetry-native defect or issue. " +
       "This tool is for local QMetry issues only (not Jira-integrated projects). " +
       "Returns execution details including test case name, run status, platform, release/cycle, and UDF fields. " +
-      "The response includes hasTcRunUdf flag (true when executions have UDF data) and udfjson (JSON string of UDF field values per execution). " +
+      "The issue execution API (/rest/execution/getExecutionsForIssue) already returns Test Run UDF saved values in each row's udfjson field. " +
+      "This tool parses that udfjson and enriches it with Test Run UDF metadata so all configured UDF fields are included, even when a value is empty. " +
+      "Do NOT call 'Fetch Test Run UDF Values' after this tool for issue execution UDFs; that generic UDF tool uses the test-suite-run execution API, which is not the correct issue execution source. " +
       "To get linkedAssetId, call Fetch Defects or Issues tool and use data[<index>].id from the response. " +
       "IMPORTANT: Every execution record always contains key identification fields — " +
       "Test Suite Key (tsEntityKey), Test Suite Name (tsName), Release (releaseName), Cycle (cycleName), " +
@@ -544,8 +546,8 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         expectedOutput:
           "Present as ONE unified table — never as a separate type+value UDF breakdown. Example:\n" +
           "| Test Suite Key | Test Suite Name  | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type |\n" +
-          "| MAC-TS-42      | Regression Suite | R1      | Sprint1 | Chrome   | v1               | Failed           | varis     | chrome, edge, safari | Functional     |\n" +
-          "| MAC-TS-43      | Login Suite      | R1      | Sprint1 | Firefox  | v2               | Blocked          | john      | firefox              | Regression     |\n" +
+          "| MAC-TS-42      | Regression Suite | R1      | Sprint1 | Chrome   | 1               | Failed           | varis     | chrome, edge, safari | Functional     |\n" +
+          "| MAC-TS-43      | Login Suite      | R1      | Sprint1 | Firefox  | 2               | Blocked          | john      | firefox              | Regression     |\n" +
           "Columns in order: Test Suite Key (tsEntityKey) | Test Suite Name (tsName) | Release (releaseName) | Cycle (cycleName) | Platform (platformName) | Executed Version (executedVersion) | Execution Status (runStatusName) | then one column per UDF label. " +
           "Use the UDF 'label' as column header. Show null UDF values as '-'.",
       },
@@ -652,9 +654,14 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "  5. Platform          → platformName",
       "  6. Executed Version  → executedVersion",
       "  7. Execution Status  → runStatusName",
-      "  8+. One column per UDF field — use testRunUdfs[i].label as header, testRunUdfs[i].value as cell.",
+      "  8. Tested By         → executionCreatedByLoginAlias/testedBy when present",
+      "  9+. One column per UDF field — use testRunUdfs[i].label as header, testRunUdfs[i].value as cell.",
       "",
-      "Null UDF values → show as '-'. If hasTcRunUdf is false, show columns 1-7 only.",
+      "Null UDF values → show as '-'. If hasTcRunUdf is false, show columns 1-8 only.",
+      "ISSUE EXECUTION UDF SOURCE — CRITICAL:",
+      "Do NOT call 'Fetch Test Run UDF Values' for issue execution UDFs.",
+      "Do NOT create or use another issue-specific UDF fetch tool.",
+      "Use this tool's response directly: it calls /rest/execution/getExecutionsForIssue for execution rows, parses each row's udfjson for saved UDF values, and uses Test Run UDF metadata to include all configured UDF labels with null/empty values.",
       "=== END MANDATORY RESPONSE FORMAT ===",
       "",
       "CRITICAL: linkedAssetId is REQUIRED - this is the numeric defect ID from QMetry (not entity key like VKT-IS-5)",
@@ -662,6 +669,8 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "AUTO-RESOLVE: If user provides an issue entity key (e.g. VKT-IS-5, MAC-IS-10), first call Fetch Defects or Issues with that entity key as filter, extract data[<index>].id, then use it as linkedAssetId",
       'AUTO-RESOLVE FILTER EXAMPLE: to resolve VKT-IS-5 → use filter \'[{"type":"string","value":"VKT-IS-5","field":"entityKeyId"}]\' in Fetch Defects or Issues tool',
       "This tool supports QMetry-native issues only — do NOT use for Jira-integrated projects",
+      "API SOURCE: Execution rows and saved UDF values come from /rest/execution/getExecutionsForIssue. The udfjson field contains saved Test Run UDF values, e.g. Tested_By, execution_type, Country_mcp_udf, environments_udf.",
+      "METADATA SOURCE: This tool also calls Test Run UDF metadata once to get all available labels, fieldIDs, field types, and empty fields. Merge metadata fields with udfjson values by UDF name.",
       "RESPONSE FIELDS: hasTcRunUdf=true means executions have UDF data; each execution includes a 'testRunUdfs' array with ALL project-defined UDF fields",
       "ALL UDF FIELDS: ALL project-defined Test Run UDF fields are returned for every execution — including fields not yet set (value: null)",
       "Each element in testRunUdfs: { name, label, fieldID, fieldType, value } — use fieldID when calling 'Bulk Update Test Run UDFs'",

@@ -9,6 +9,181 @@ import type {
 import { qmetryRequest } from "./api/client-api";
 import { resolveDefaults } from "./utils";
 
+type TestRunUdfSourceContext = NonNullable<
+  FetchTestRunUdfValuesPayload["sourceContext"]
+>;
+
+type UdfFieldDefinition = {
+  name?: string;
+  fieldLabel?: string;
+  projectUserFieldID?: number;
+  fieldTypeName?: string;
+  qmListName?: string;
+};
+
+type DisplayColumn = {
+  header: string;
+  fields: string[];
+};
+
+const TEST_RUN_UDF_DISPLAY_COLUMNS: Record<
+  TestRunUdfSourceContext,
+  DisplayColumn[]
+> = {
+  testSuiteRun: [
+    { header: "Test Case Key", fields: ["entityKey"] },
+    { header: "Test Case Summary", fields: ["summary"] },
+    {
+      header: "Executed Version",
+      fields: ["latestVersion", "executedVersion"],
+    },
+    {
+      header: "Execution Status",
+      fields: ["runStatus", "runStatusName", "executionStatus"],
+    },
+    {
+      header: "Tested By",
+      fields: ["testedBy", "executedBy", "executionCreatedByLoginAlias"],
+    },
+  ],
+  testCaseExecutions: [
+    { header: "Test Suite Key", fields: ["tsEntityKey"] },
+    {
+      header: "Test Suite Name",
+      fields: ["testsuiteName", "testSuiteName", "tsName"],
+    },
+    { header: "Release", fields: ["releaseName"] },
+    { header: "Cycle", fields: ["cycleName"] },
+    { header: "Platform", fields: ["platform", "platformName"] },
+    { header: "Executed Version", fields: ["executedVersion"] },
+    {
+      header: "Execution Status",
+      fields: ["executionStatus", "runStatusName", "runStatus"],
+    },
+    {
+      header: "Tested By",
+      fields: ["testedBy", "executedBy", "executionCreatedByLoginAlias"],
+    },
+  ],
+};
+
+function stripHtml(value: string) {
+  if (!/<[^>]+>/.test(value)) return value;
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function readFirstAvailable(row: Record<string, any>, fields: string[]) {
+  for (const field of fields) {
+    if (Object.hasOwn(row, field) && row[field] !== null && row[field] !== "") {
+      return row[field];
+    }
+  }
+  return null;
+}
+
+function formatTableValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "-";
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "-";
+  if (typeof value === "object") {
+    const objectValue = value as Record<string, unknown>;
+    if ("parent" in objectValue || "child" in objectValue) {
+      return [objectValue.parent, objectValue.child]
+        .filter((part) => part !== null && part !== undefined && part !== "")
+        .join(" > ");
+    }
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+function parseRawUdfs(row: Record<string, any>): Record<string, unknown> {
+  if (Array.isArray(row.testRunUdfs)) {
+    return Object.fromEntries(
+      row.testRunUdfs.map((udf: any) => [udf.name, udf.value]),
+    );
+  }
+
+  if (row.testRunUdfs && typeof row.testRunUdfs === "object") {
+    return row.testRunUdfs;
+  }
+
+  if (row.udfjson) {
+    try {
+      return JSON.parse(row.udfjson);
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
+
+function enrichUdfsForRow(
+  row: Record<string, any>,
+  fieldDefs: Record<string, UdfFieldDefinition>,
+) {
+  const rawUdfs = parseRawUdfs(row);
+  const hasMetadata = Object.keys(fieldDefs).length > 0;
+
+  if (!hasMetadata && Array.isArray(row.testRunUdfs)) return row.testRunUdfs;
+
+  if (hasMetadata) {
+    return Object.values(fieldDefs).map((def) => {
+      const fieldName = def.name ?? "";
+      const rawValue = Object.hasOwn(rawUdfs, fieldName)
+        ? rawUdfs[fieldName]
+        : null;
+      const value =
+        typeof rawValue === "string" ? stripHtml(rawValue) : rawValue;
+      return {
+        name: fieldName,
+        label: def.fieldLabel ?? fieldName,
+        fieldID: def.projectUserFieldID ?? null,
+        fieldType: def.fieldTypeName ?? "UNKNOWN",
+        value,
+      };
+    });
+  }
+
+  return Object.entries(rawUdfs).map(([name, rawValue]) => ({
+    name,
+    label: name,
+    fieldID: null,
+    fieldType: "UNKNOWN",
+    value: typeof rawValue === "string" ? stripHtml(rawValue) : rawValue,
+  }));
+}
+
+function buildUnifiedTableRows(
+  rows: any[],
+  sourceContext: TestRunUdfSourceContext,
+) {
+  const contextColumns = TEST_RUN_UDF_DISPLAY_COLUMNS[sourceContext];
+  return rows.map((row) => {
+    const tableRow: Record<string, string> = {};
+
+    for (const column of contextColumns) {
+      tableRow[column.header] = formatTableValue(
+        readFirstAvailable(row, column.fields),
+      );
+    }
+
+    for (const udf of row.testRunUdfs ?? []) {
+      tableRow[udf.label ?? udf.name] = formatTableValue(udf.value);
+    }
+
+    return tableRow;
+  });
+}
+
 /**
  * Bulk updates UDF values for one or more Test Case Runs.
  * Runs asynchronously in QMetry background — check "Scheduled Task" for status.
@@ -243,33 +418,49 @@ export async function fetchTestRunUdfValues(
     project,
   );
 
-  if (typeof payload.tsrunID !== "string" || !payload.tsrunID) {
+  const sourceContext = payload.sourceContext ?? "testSuiteRun";
+
+  if (
+    (!Array.isArray(payload.sourceRows) || payload.sourceRows.length === 0) &&
+    (typeof payload.tsrunID !== "string" || !payload.tsrunID)
+  ) {
     throw new Error(
-      "[fetchTestRunUdfValues] Missing or invalid required parameter: 'tsrunID'.",
+      "[fetchTestRunUdfValues] Missing or invalid required parameter: 'tsrunID'. Provide 'tsrunID' or pass parent tool rows in 'sourceRows'.",
     );
   }
-  if (typeof payload.viewId !== "number") {
+  if (
+    (!Array.isArray(payload.sourceRows) || payload.sourceRows.length === 0) &&
+    typeof payload.viewId !== "number"
+  ) {
     throw new Error(
-      "[fetchTestRunUdfValues] Missing or invalid required parameter: 'viewId'.",
+      "[fetchTestRunUdfValues] Missing or invalid required parameter: 'viewId'. Provide 'viewId' or pass parent tool rows in 'sourceRows'.",
     );
   }
 
-  // Step 1: fetch test case runs
-  const runsResponse = await qmetryRequest<Record<string, any>>({
-    method: "POST",
-    path: QMETRY_PATHS.TESTSUITE.GET_TESTCASE_RUNS_BY_TESTSUITE_RUN,
-    token,
-    project: resolvedProject,
-    baseUrl: resolvedBaseUrl,
-    body: {
-      tsrunID: payload.tsrunID,
-      viewId: payload.viewId,
-      startIndex: payload.startIndex ?? 0,
-      size: payload.size ?? 50,
-    },
-    scopeId: payload.scopeId,
-    orgCode: payload.orgCode,
-  });
+  const usingSourceRows =
+    Array.isArray(payload.sourceRows) && payload.sourceRows.length > 0;
+
+  const runsResponse = usingSourceRows
+    ? {
+        data: payload.sourceRows,
+        hasTcRunUdf: true,
+        total: payload.sourceRows?.length ?? 0,
+      }
+    : await qmetryRequest<Record<string, any>>({
+        method: "POST",
+        path: QMETRY_PATHS.TESTSUITE.GET_TESTCASE_RUNS_BY_TESTSUITE_RUN,
+        token,
+        project: resolvedProject,
+        baseUrl: resolvedBaseUrl,
+        body: {
+          tsrunID: payload.tsrunID,
+          viewId: payload.viewId,
+          startIndex: payload.startIndex ?? 0,
+          size: payload.size ?? 50,
+        },
+        scopeId: payload.scopeId,
+        orgCode: payload.orgCode,
+      });
 
   // Step 2: check hasTcRunUdf flag
   if (runsResponse.hasTcRunUdf === false) {
@@ -285,11 +476,11 @@ export async function fetchTestRunUdfValues(
   }
 
   // Step 3: fetch UDF metadata to enrich values
-  let fieldDefs: Record<string, any> = {};
+  let fieldDefs: Record<string, UdfFieldDefinition> = {};
   let lookupOptions: Record<string, any[]> = {};
   try {
     const meta = await qmetryRequest<{
-      qmUDF?: { TCR?: Record<string, any> };
+      qmUDF?: { TCR?: Record<string, UdfFieldDefinition> };
       qmUDFList?: Record<string, any[]>;
     }>({
       method: "POST",
@@ -311,67 +502,34 @@ export async function fetchTestRunUdfValues(
     // metadata call is best-effort — proceed without enrichment
   }
 
-  // Build a lookup from field name → definition (used for fallback when metadata is unavailable)
-  const defByName: Record<string, any> = {};
-  for (const def of Object.values(fieldDefs)) {
-    if (def?.name) defByName[def.name] = def;
-  }
-
-  const hasMetadata = Object.keys(fieldDefs).length > 0;
-
   // Step 4: extract and enrich UDF values from each run
   // When metadata is available, ALL project-defined UDF fields are included (null for unset fields).
   // This ensures every run shows the full set of available UDF fields, not just those with values.
   const rows: any[] = runsResponse.data ?? [];
   const runs = rows.map((row: any) => {
-    let rawUdfs: Record<string, unknown> = {};
-    if (row.udfjson) {
-      try {
-        rawUdfs = JSON.parse(row.udfjson);
-      } catch {
-        rawUdfs = {};
-      }
-    } else if (row.testRunUdfs && typeof row.testRunUdfs === "object") {
-      rawUdfs = row.testRunUdfs;
-    }
-
-    let enrichedUdfs: any[];
-    if (hasMetadata) {
-      // Show ALL project-defined UDF fields; value is null when not set on this execution
-      enrichedUdfs = Object.values(fieldDefs).map((def: any) => ({
-        name: def.name as string,
-        label: def.fieldLabel as string,
-        fieldID: def.projectUserFieldID as number,
-        fieldType: def.fieldTypeName as string,
-        value: Object.hasOwn(rawUdfs, def.name) ? rawUdfs[def.name] : null,
-      }));
-    } else {
-      // Fallback: metadata unavailable — show only fields that have values
-      enrichedUdfs = Object.entries(rawUdfs).map(([name, value]) => {
-        const def = defByName[name];
-        return {
-          name,
-          label: def?.fieldLabel ?? name,
-          fieldID: def?.projectUserFieldID ?? null,
-          fieldType: def?.fieldTypeName ?? "UNKNOWN",
-          value,
-        };
-      });
-    }
+    const { udfjson: _udfjson, ...rowWithoutRawUdfJson } = row;
+    const enrichedUdfs = enrichUdfsForRow(row, fieldDefs);
 
     return {
-      tcRunID: row.tcRunID,
-      entityKey: row.entityKey,
-      summary: row.summary,
-      runStatus: row.runStatus,
+      ...rowWithoutRawUdfJson,
       testRunUdfs: enrichedUdfs,
     };
   });
+  const unifiedTableRows = buildUnifiedTableRows(runs, sourceContext);
+  const udfColumns = Object.values(fieldDefs).map(
+    (def) => def.fieldLabel ?? def.name ?? "Unnamed UDF",
+  );
 
   return {
     tsRunID: payload.tsrunID,
+    sourceContext,
     hasTcRunUdf: runsResponse.hasTcRunUdf ?? true,
     total: runsResponse.total ?? rows.length,
+    defaultColumns: TEST_RUN_UDF_DISPLAY_COLUMNS[sourceContext].map(
+      (column) => column.header,
+    ),
+    udfColumns,
+    unifiedTableRows,
     runs,
     availableUdfFields: Object.values(fieldDefs).map((def: any) => ({
       fieldID: def.projectUserFieldID,

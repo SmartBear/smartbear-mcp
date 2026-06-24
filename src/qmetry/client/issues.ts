@@ -217,6 +217,10 @@ export async function fetchIssueExecutions(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+    extraHeaders: {
+      action: "link-tc-list-view",
+      screenname: "ISSUE",
+    },
   });
 
   if (result.hasTcRunUdf === false) {

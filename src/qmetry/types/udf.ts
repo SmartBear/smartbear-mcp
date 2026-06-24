@@ -130,8 +130,10 @@ export const FetchTestRunUdfMetadataArgsSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export interface FetchTestRunUdfValuesPayload {
-  tsrunID: string;
-  viewId: number;
+  tsrunID?: string;
+  viewId?: number;
+  sourceContext?: "testSuiteRun" | "testCaseExecutions";
+  sourceRows?: Record<string, unknown>[];
   startIndex?: number;
   size?: number;
   scopeId?: number;
@@ -175,10 +177,12 @@ export const FetchTestRunUdfValuesArgsSchema = z.object({
   baseUrl: CommonFields.baseUrl,
   tsrunID: z.coerce
     .string()
+    .optional()
     .describe(
       "Test Suite Run ID. CRITICAL: the parameter name is 'tsrunID' — do NOT use 'testSuiteRunId', 'tsRunID', or any other variant. " +
         "Accepts a string or number (e.g. 731600 or '731600' — both are valid). " +
-        "Get this from 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response.",
+        "Get this from 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response. " +
+        "Required when sourceRows is not provided.",
     ),
   viewId: z
     .number()
@@ -187,7 +191,24 @@ export const FetchTestRunUdfValuesArgsSchema = z.object({
     .optional()
     .describe(
       "View ID for the test execution list (latestViews.TE.viewId from project info). " +
-        "Auto-resolved from project info when omitted.",
+        "Auto-resolved from project info when omitted. Required when sourceRows is not provided.",
+    ),
+  sourceContext: z
+    .enum(["testSuiteRun", "testCaseExecutions"])
+    .optional()
+    .default("testSuiteRun")
+    .describe(
+      "Which parent tool produced sourceRows, and therefore which default identification columns must be shown with the Test Run UDF columns. " +
+        "Use 'testSuiteRun' for Fetch Test Case Runs by Test Suite Run and 'testCaseExecutions' for Fetch Test Case Executions. " +
+        "Do NOT use this tool for Fetch Issue Executions; that tool already reads udfjson from /rest/execution/getExecutionsForIssue and enriches it with metadata.",
+    ),
+  sourceRows: z
+    .array(z.record(z.string(), z.unknown()))
+    .optional()
+    .describe(
+      "Optional rows already returned by a parent execution tool. Pass this when Fetch Test Case Runs by Test Suite Run or Fetch Test Case Executions was just called. " +
+        "The UDF tool will reuse these rows, enrich/pivot UDF values, and preserve the correct parent-specific default fields instead of making the same execution-list API call again. " +
+        "Do not pass issue execution rows here; use Fetch Issue Executions output directly for issue UDFs.",
     ),
   startIndex: z
     .number()
