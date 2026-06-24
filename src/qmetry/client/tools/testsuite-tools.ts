@@ -810,7 +810,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     title: "Fetch Test Case Runs by Test Suite Run",
     toolset: "Test Suites",
     summary:
-      "Get test case runs under a specific test suite run execution in QMetry, including Test Run UDF values",
+      "Get test case runs under a specific test suite run execution in QMetry, including Test Run UDF values. " +
+      "ALWAYS present results as a unified table: Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label columns…>. " +
+      "NEVER show a separate type+value breakdown — always combine identification fields and UDF values in one table per run.",
     handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
     inputSchema: TestCaseRunsByTestSuiteRunArgsSchema,
     formatResponse: (result: any) => {
@@ -861,10 +863,13 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "This tool provides comprehensive test case run data including execution status, " +
       "test results, tester information, execution dates, Test Run UDF values, and other run metadata. " +
       "Supports filtering by standard fields, test case UDFs (udfFilter), and Test Run UDFs (tcrUdfFilter). " +
-      "Essential for detailed execution analysis, test run reporting, UDF value inspection, and execution audit trails.",
+      "Essential for detailed execution analysis, test run reporting, UDF value inspection, and execution audit trails. " +
+      "IMPORTANT: Every response row contains key identification fields — Test Case Key (entityKey), " +
+      "Test Case Summary (summary), Executed Version (latestVersion), Execution Status (runStatus), and Test Run UDF values (testRunUdfs). " +
+      "These MUST always be shown in the response so users can identify which test case run each record represents.",
     useCases: [
       "Get all test case runs under a specific test suite run execution",
-      "Fetch Test Run UDF values for all test case executions in a test suite run",
+      "Fetch Test Run UDF values for all test case executions in a test suite run — always show Test Case Key, Summary, and Execution Status alongside UDFs",
       "Fetch Test Run UDF values for a specific test case execution by tcRunID",
       "Filter test case runs by Test Run UDF field values (e.g. show only runs where dropdown UDF = specific option)",
       "Analyze individual test case execution results, status, and custom UDF metadata",
@@ -881,7 +886,12 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description: "Get all test case runs for test suite run ID '107021'",
         parameters: { tsrunID: "107021", viewId: 6887 },
         expectedOutput:
-          "List of test case runs with execution details, status, testRunUdfs key-value pairs, and metadata",
+          "Present as ONE unified table — never as a separate type+value breakdown. Example:\n" +
+          "| Test Case Key | Test Case Summary        | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
+          "| MAC-TC-5      | Login - valid credential | v1               | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |\n" +
+          "| MAC-TC-6      | Login - invalid password | v2               | Failed           | john      | firefox              | Regression     | -          |\n" +
+          "Columns: Test Case Key (entityKey) | Test Case Summary (summary) | Executed Version (latestVersion) | Execution Status (runStatus) | then one column per UDF label. " +
+          "Use the UDF 'label' as column header. Show null UDF values as '-'.",
       },
       {
         description:
@@ -894,7 +904,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           limit: 20,
         },
         expectedOutput:
-          "Each row includes testRunUdfs object with UDF field keys mapped to their values (HTML stripped for large text fields)",
+          "Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:\n" +
+          "| Test Case Key | Test Case Summary | Executed Version | Execution Status | Tested By | Environments UDF     | Planned Execution Date | Execution Type |\n" +
+          "| MAC-TC-5      | Login test        | v1               | Passed           | varis     | chrome, edge, safari | -                      | Functional     |\n" +
+          "HTML is stripped from LARGETEXT UDF fields. Null values shown as '-'.",
       },
       {
         description:
@@ -1039,6 +1052,38 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "=== MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT ===",
+      "",
+      "PIVOT RULE — CRITICAL:",
+      "The 'testRunUdfs' field on each row is a key-value map (object) of UDF field keys to their values.",
+      "You MUST pivot this into TABLE COLUMNS — do NOT render it as rows.",
+      "  → Each key in testRunUdfs   = use the UDF human-readable label as the column header",
+      "  → Each value in testRunUdfs = the cell value for that run's row",
+      "  → 'fieldType' / 'fieldID'   = INTERNAL METADATA — NEVER show these as columns",
+      "",
+      "FORBIDDEN PATTERNS — NEVER do any of these:",
+      "  ❌ Do NOT render a separate sub-table (Label | Type | Value) per tcRunID",
+      "  ❌ Do NOT show 'Type' or 'fieldType' as a visible column",
+      "  ❌ Do NOT group output by tcRunID with individual breakdowns beneath each",
+      "  ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as column headers — use human-readable labels",
+      "",
+      "REQUIRED OUTPUT — ONE unified table, all runs as rows:",
+      "| Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... |",
+      "|---------------|-------------------|------------------|------------------|---------------|---------------|-----|",
+      "| VKMCP-TC-1    | Login test        | v1               | Not Run          | varis         | chrome, edge  | ... |",
+      "| VKMCP-TC-2    | Invalid password  | v2               | Not Run          | john          | firefox       | ... |",
+      "",
+      "MANDATORY COLUMNS (always first, in this order):",
+      "  1. Test Case Key     → entityKey     (e.g. 'VKMCP-TC-1')",
+      "  2. Test Case Summary → summary       (test case name)",
+      "  3. Executed Version  → latestVersion (e.g. 'v1', 'v2')",
+      "  4. Execution Status  → runStatus     (e.g. 'Not Run', 'Passed', 'Failed')",
+      "  5+. One column per UDF field — use the human-readable label as header, the value as the cell.",
+      "",
+      "Null UDF values → show as '-' in the cell.",
+      "If testRunUdfs is empty or hasTcRunUdf is false, still show columns 1-4.",
+      "=== END MANDATORY RESPONSE FORMAT ===",
+      "",
       "CRITICAL WORKFLOW FOR FETCHING ALL EXECUTIONS OF A TEST SUITE:",
       "When user asks to:",
       "  - 'fetch all executions'",
@@ -1228,7 +1273,14 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Essential for test execution quality assurance and trend analysis",
     ],
     outputDescription:
-      "JSON object with test case runs array. Each row contains detailed execution information, status, tester details, run metadata, and a 'testRunUdfs' object with key-value pairs of Test Run UDF field values (HTML stripped from rich text fields).",
+      "JSON object with test case runs array. Each row ALWAYS contains these mandatory identification fields: " +
+      "'entityKey' (Test Case Key, e.g. 'MAC-TC-123'), 'summary' (Test Case Summary/name), " +
+      "'latestVersion' (Executed Version, e.g. 'v1', 'v2'), " +
+      "'runStatus' (Execution Status label, e.g. 'Passed', 'Failed', 'Not Run'), 'runStatusID' (numeric status ID), " +
+      "'tcRunID' (numeric Test Run ID), " +
+      "and 'testRunUdfs' (object with Test Run UDF field keys mapped to their values, parsed from the raw 'udfjson' field; HTML stripped from rich text). " +
+      "UDF values can also be fetched in enriched form via FETCH_TEST_RUN_UDF_VALUES or field metadata via FETCH_TEST_RUN_UDF_METADATA. " +
+      "The top-level response includes 'hasTcRunUdf' (boolean), 'total' (count), and pagination metadata.",
     readOnly: true,
     idempotent: true,
   },

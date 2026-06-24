@@ -510,7 +510,9 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     title: "Fetch Issue Executions",
     toolset: "Issues",
     summary:
-      "Get test case executions linked to a QMetry-native (non-Jira) defect/issue.",
+      "Get test case executions linked to a QMetry-native (non-Jira) defect/issue. " +
+      "ALWAYS present results as a unified table: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label columns…>. " +
+      "NEVER show a separate type+value UDF breakdown — always combine identification fields and UDF values in one table per execution row.",
     handler: QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS,
     inputSchema: IssueExecutionsArgsSchema,
     purpose:
@@ -518,7 +520,11 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       "This tool is for local QMetry issues only (not Jira-integrated projects). " +
       "Returns execution details including test case name, run status, platform, release/cycle, and UDF fields. " +
       "The response includes hasTcRunUdf flag (true when executions have UDF data) and udfjson (JSON string of UDF field values per execution). " +
-      "To get linkedAssetId, call Fetch Defects or Issues tool and use data[<index>].id from the response.",
+      "To get linkedAssetId, call Fetch Defects or Issues tool and use data[<index>].id from the response. " +
+      "IMPORTANT: Every execution record always contains key identification fields — " +
+      "Test Suite Key (tsEntityKey), Test Suite Name (tsName), Release (releaseName), Cycle (cycleName), " +
+      "Platform (platformName), Executed Version (executedVersion), and Test Run UDF values (testRunUdfs). " +
+      "These MUST always be shown in the response so users can identify which test suite run each execution belongs to.",
     useCases: [
       "Get all test executions linked to a specific defect",
       "Audit which test cases were run against a given issue",
@@ -536,7 +542,12 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           linkedAssetId: 9598240,
         },
         expectedOutput:
-          "List of test case executions linked to the issue with run status, platform, release/cycle, and UDF data",
+          "Present as ONE unified table — never as a separate type+value UDF breakdown. Example:\n" +
+          "| Test Suite Key | Test Suite Name  | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type |\n" +
+          "| MAC-TS-42      | Regression Suite | R1      | Sprint1 | Chrome   | v1               | Failed           | varis     | chrome, edge, safari | Functional     |\n" +
+          "| MAC-TS-43      | Login Suite      | R1      | Sprint1 | Firefox  | v2               | Blocked          | john      | firefox              | Regression     |\n" +
+          "Columns in order: Test Suite Key (tsEntityKey) | Test Suite Name (tsName) | Release (releaseName) | Cycle (cycleName) | Platform (platformName) | Executed Version (executedVersion) | Execution Status (runStatusName) | then one column per UDF label. " +
+          "Use the UDF 'label' as column header. Show null UDF values as '-'.",
       },
       {
         description: "Get executions with pagination (page 1, 20 records)",
@@ -612,6 +623,40 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
     ],
     hints: [
+      "=== MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT ===",
+      "",
+      "PIVOT RULE — CRITICAL:",
+      "The 'testRunUdfs' field on each execution is an array of { name, label, fieldID, fieldType, value }.",
+      "You MUST pivot this array into TABLE COLUMNS — do NOT render it as rows.",
+      "  → Each testRunUdfs[i].label  = a column header in the unified table",
+      "  → Each testRunUdfs[i].value  = the cell value for that execution's row",
+      "  → testRunUdfs[i].fieldType   = INTERNAL METADATA — NEVER show this as a column",
+      "  → testRunUdfs[i].fieldID     = INTERNAL METADATA — NEVER show this as a column",
+      "",
+      "FORBIDDEN PATTERNS — NEVER do any of these:",
+      "  ❌ Do NOT render a separate sub-table (UDF Label | Type | Value) per execution",
+      "  ❌ Do NOT show 'Type' or 'fieldType' as a visible column",
+      "  ❌ Do NOT group output by tcRunID with individual breakdowns beneath each",
+      "  ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as headers — use 'label'",
+      "",
+      "REQUIRED OUTPUT — ONE unified table, all executions as rows:",
+      "| Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... |",
+      "|----------------|-----------------|---------|-------|----------|------------------|------------------|---------------|---------------|-----|",
+      "| MAC-TS-42      | Login Suite     | R1      | S1    | Chrome   | v1               | Failed           | varis         | chrome, edge  | ... |",
+      "",
+      "MANDATORY COLUMNS (always first, in this order):",
+      "  1. Test Suite Key    → tsEntityKey    (e.g. 'MAC-TS-42')",
+      "  2. Test Suite Name   → tsName         (test suite display name)",
+      "  3. Release           → releaseName",
+      "  4. Cycle             → cycleName",
+      "  5. Platform          → platformName",
+      "  6. Executed Version  → executedVersion",
+      "  7. Execution Status  → runStatusName",
+      "  8+. One column per UDF field — use testRunUdfs[i].label as header, testRunUdfs[i].value as cell.",
+      "",
+      "Null UDF values → show as '-'. If hasTcRunUdf is false, show columns 1-7 only.",
+      "=== END MANDATORY RESPONSE FORMAT ===",
+      "",
       "CRITICAL: linkedAssetId is REQUIRED - this is the numeric defect ID from QMetry (not entity key like VKT-IS-5)",
       "HOW TO GET linkedAssetId: Call Fetch Defects or Issues tool → use data[<index>].id from the response",
       "AUTO-RESOLVE: If user provides an issue entity key (e.g. VKT-IS-5, MAC-IS-10), first call Fetch Defects or Issues with that entity key as filter, extract data[<index>].id, then use it as linkedAssetId",
@@ -638,10 +683,13 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     ],
     outputDescription:
       "JSON object with 'data' array of execution records, 'hasTcRunUdf' boolean flag, and 'total' count. " +
-      "Each execution contains tcRunID, tcID, dfID, tcName, tcEntityKey, runStatusName, platformName, " +
-      "cycleName, releaseName, executedAt, executionCreatedByLoginAlias, linkageLevel, executedVersion, " +
-      "isArchived, isTestSuiteArchived, and 'testRunUdfs' array. " +
-      "testRunUdfs includes ALL project-defined UDF fields, each with name, label, fieldID, fieldType, and value (null if not set). " +
+      "Each execution record ALWAYS contains these mandatory identification fields: " +
+      "'tsEntityKey' (Test Suite Key, e.g. 'MAC-TS-42'), 'tsName' (Test Suite Name), " +
+      "'releaseName' (Release), 'cycleName' (Cycle), 'platformName' (Platform/environment), " +
+      "'executedVersion' (Executed Version of the test case), 'runStatusName' (Execution Status label), " +
+      "'tcRunID' (numeric Test Run ID), 'tcName' (Test Case Name), 'tcEntityKey' (Test Case Key), " +
+      "and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). " +
+      "ALL project-defined UDF fields are always included, even those with no value. " +
       "When hasTcRunUdf is false, a 'testRunUdfNote' field provides a professional explanation instead.",
     readOnly: true,
     idempotent: true,

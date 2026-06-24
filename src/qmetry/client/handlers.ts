@@ -50,9 +50,6 @@ import {
 } from "./testsuite";
 import {
   bulkUpdateTestRunUdfs,
-  // createUdf,
-  // fetchCustomListItems,
-  // fetchCustomLists,
   fetchCascadeChildValues,
   fetchTestRunUdfMetadata,
   fetchTestRunUdfValues,
@@ -124,9 +121,6 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
   [QMetryToolsHandlers.FETCH_AUTOMATION_STATUS]: getAutomationStatus,
-  // [QMetryToolsHandlers.CREATE_UDF]: createUdf,
-  // [QMetryToolsHandlers.FETCH_CUSTOM_LISTS]: fetchCustomLists,
-  // [QMetryToolsHandlers.FETCH_CUSTOM_LIST_ITEMS]: fetchCustomListItems,
   [QMetryToolsHandlers.FETCH_UDF_FIELD_TYPES]: fetchUdfFieldTypes,
   [QMetryToolsHandlers.FETCH_UDF_MODULES]: fetchUdfModules,
   [QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS]: bulkUpdateTestRunUdfs,

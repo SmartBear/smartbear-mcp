@@ -48,10 +48,6 @@ export const QMETRY_PATHS = {
     GET_STATUS: "/rest/admin/status/automation/:requestID",
   },
   UDF: {
-    // CREATE_UDF: "/rest/admin/userdefinefield/create",
-    // LIST_CUSTOM_LISTS: "/rest/admin/customlist/list",
-    // LIST_CUSTOM_LIST_ITEMS: "/rest/admin/customlist/listval",
-    // LIST_FIELD_TYPES: "/rest/admin/userdefinefieldtype/list",
     BULK_UPDATE_TEST_RUN_UDFS: "/rest/execution/udf/bulkupdate",
     TEST_RUN_UDF_METADATA: "/rest/admin/udf/metadata",
     FETCH_CASCADE_CHILD_VALUES: "/rest/admin/udf/cascade/childValue",
