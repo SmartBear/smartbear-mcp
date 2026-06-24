@@ -277,7 +277,7 @@ export const CLIENT_CONFIG = {
  */
 export const IMPORT_BODY_FIELDS = {
   REQUEST_SOURCE_TYPE: "xRequestSource",
-  SKIP_ANALYTICS: "xSkipTracking",
+  ALLOW_TRACKING: "xAllowTracking",
 } as const;
 
 /**
