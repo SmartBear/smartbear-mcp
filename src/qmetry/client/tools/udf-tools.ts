@@ -275,23 +275,22 @@ export const UDF_TOOLS: QMetryToolParams[] = [
     summary:
       "Fetch the Test Run UDF (User Defined Field) values for all test case runs in a given test suite run. " +
       "Returns each run's UDF values enriched with field label and type information from metadata. " +
-      "When called after a parent execution tool, pass that tool's rows as sourceRows and set sourceContext so the response always includes the correct default identification fields with the UDF columns.",
+      "Use this tool for test suite run UDF values (sourceContext='testSuiteRun'). " +
+      "Do NOT use this tool for test case executions — 'Fetch Test Case Executions' already calls metadata internally and returns 'testRunUdfs' in every execution row.",
     handler: QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
     inputSchema: FetchTestRunUdfValuesArgsSchema,
     purpose:
       "Retrieves the test case runs for a test suite run and extracts their Test Run UDF field values. " +
       "Internally checks the 'hasTcRunUdf' flag — if UDFs are configured, it also calls the metadata API " +
       "to enrich each run's UDF values with field label, type, and numeric fieldID. " +
-      "Use this tool when the user asks to view, list, or inspect UDF values on specific test executions. " +
-      "CRITICAL: If the user request started from 'Fetch Test Case Runs by Test Suite Run' or 'Fetch Test Case Executions', pass the parent response rows through 'sourceRows' instead of refetching. " +
-      "Set sourceContext to 'testSuiteRun' or 'testCaseExecutions' so default fields are preserved in the final unified table. " +
+      "Use this tool for test suite run UDF values (sourceContext='testSuiteRun'). If the user request started from 'Fetch Test Case Runs by Test Suite Run', pass the parent response rows through 'sourceRows'. " +
+      "Do NOT use this tool for test case executions: 'Fetch Test Case Executions' already calls metadata internally, parses udfjson per row, and returns 'testRunUdfs' on every execution record — use that data directly. " +
       "Do NOT use this tool for issue executions; 'Fetch Issue Executions' already reads UDF values from its own udfjson response and enriches them with metadata.",
     useCases: [
       "Show me the UDF values for all runs in test suite run 731600",
       "What is the planned execution date set on each run in this test cycle?",
       "List the Test Run UDF values for test suite run 87039",
       "Fetch test run UDFs of executions for tsRunID 731600",
-      "Show Test Run UDFs from rows already returned by Fetch Test Case Executions",
     ],
     examples: [
       {
@@ -308,47 +307,13 @@ export const UDF_TOOLS: QMetryToolParams[] = [
           "Columns: Test Case Key (entityKey) | Test Case Summary (summary) | Executed Version (latestVersion) | Execution Status (runStatus) | Tested By | then one column per UDF label. " +
           "Use the UDF 'label' as column header. Show null UDF values as '-'.",
       },
-      {
-        description:
-          "Format Test Run UDF values from Fetch Test Case Executions rows",
-        parameters: {
-          sourceContext: "testCaseExecutions",
-          sourceRows: [
-            {
-              tsEntityKey: "MAC-TS-42",
-              testsuiteName: "Login Suite",
-              releaseName: "R1",
-              cycleName: "Sprint1",
-              platform: "Chrome",
-              executedVersion: "v1",
-              executionStatus: "Passed",
-              executedBy: "varis",
-              tcRunID: 41572006,
-              testRunUdfs: [
-                {
-                  name: "env_udf",
-                  label: "Environments UDF",
-                  value: ["chrome", "edge", "safari"],
-                },
-              ],
-            },
-          ],
-        },
-        expectedOutput:
-          "Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:\n" +
-          "| Test Suite Key | Test Suite Name | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
-          "| MAC-TS-42      | Login Suite     | R1      | Sprint1 | Chrome   | v1               | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |\n" +
-          "Columns in order: Test Suite Key (tsEntityKey) | Test Suite Name (testsuiteName) | Release (releaseName) | Cycle (cycleName) | Platform (platform) | Executed Version (executedVersion) | Execution Status (executionStatus) | Tested By | then one column per UDF label. " +
-          "Use the UDF 'label' as column header. Show null UDF values as '-'.",
-      },
     ],
     hints: [
       "DEFAULT DISPLAY CONTRACT: Always render 'unifiedTableRows' as ONE table. Do not render UDFs as Label | Type | Value rows.",
       "When sourceContext='testSuiteRun', mandatory columns are: Test Case Key | Test Case Summary | Executed Version | Execution Status | Tested By | then one column per UDF label.",
-      "When sourceContext='testCaseExecutions', mandatory columns are: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | Tested By | then one column per UDF label.",
-      "PARENT-TO-UDF WORKFLOW: If a parent tool already returned rows, pass parentResponse.data as sourceRows and choose the matching sourceContext. This preserves parent-specific default fields and avoids repeating the same execution API call.",
+      "PARENT-TO-UDF WORKFLOW: If Fetch Test Case Runs by Test Suite Run was already called, pass parentResponse.data as sourceRows with sourceContext='testSuiteRun'. This preserves identification fields and avoids repeating the same API call.",
       "For prompts like 'Fetch test case runs of VKMCP-TS-1 and its Test Run UDFs': call Fetch Test Case Runs by Test Suite Run, then call this tool with sourceContext='testSuiteRun' and sourceRows=<that response data>.",
-      "For prompts like 'Fetch Test Case Executions and Test Run UDFs': call Fetch Test Case Executions, then call this tool with sourceContext='testCaseExecutions' and sourceRows=<that response data>.",
+      "For prompts like 'Fetch Test Case Executions and show Test Run UDFs': call Fetch Test Case Executions ONLY — that tool already calls metadata internally and returns testRunUdfs on every execution row. Do NOT call this tool for test case executions.",
       "For prompts like 'Fetch Issue Executions and Test Run UDFs': call Fetch Issue Executions only. Do not call this tool, because issue UDF values come from /rest/execution/getExecutionsForIssue udfjson and are already enriched by the issue tool with metadata.",
       "If no parent rows are available, use 'tsrunID' from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID field).",
       "'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding. It is only needed when sourceRows is not supplied.",

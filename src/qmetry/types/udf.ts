@@ -198,16 +198,17 @@ export const FetchTestRunUdfValuesArgsSchema = z.object({
     .optional()
     .default("testSuiteRun")
     .describe(
-      "Which parent tool produced sourceRows, and therefore which default identification columns must be shown with the Test Run UDF columns. " +
-        "Use 'testSuiteRun' for Fetch Test Case Runs by Test Suite Run and 'testCaseExecutions' for Fetch Test Case Executions. " +
-        "Do NOT use this tool for Fetch Issue Executions; that tool already reads udfjson from /rest/execution/getExecutionsForIssue and enriches it with metadata.",
+      "Which parent tool produced sourceRows. Use 'testSuiteRun' for Fetch Test Case Runs by Test Suite Run. " +
+        "Do NOT use this tool for Fetch Test Case Executions — that tool calls metadata internally and returns testRunUdfs on every execution row; use that data directly. " +
+        "Do NOT use this tool for Fetch Issue Executions; that tool already reads udfjson and enriches it with metadata.",
     ),
   sourceRows: z
     .array(z.record(z.string(), z.unknown()))
     .optional()
     .describe(
-      "Optional rows already returned by a parent execution tool. Pass this when Fetch Test Case Runs by Test Suite Run or Fetch Test Case Executions was just called. " +
-        "The UDF tool will reuse these rows, enrich/pivot UDF values, and preserve the correct parent-specific default fields instead of making the same execution-list API call again. " +
+      "Optional rows already returned by Fetch Test Case Runs by Test Suite Run. " +
+        "The UDF tool will reuse these rows, enrich/pivot UDF values, and preserve identification fields instead of making the same execution-list API call again. " +
+        "Do NOT pass Fetch Test Case Executions rows here — those rows already have testRunUdfs enriched. " +
         "Do not pass issue execution rows here; use Fetch Issue Executions output directly for issue UDFs.",
     ),
   startIndex: z
