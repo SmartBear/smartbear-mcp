@@ -197,6 +197,7 @@ export class StartExecution extends Tool<Qtm4jClient> {
   ): string {
     const params = new URLSearchParams();
     if (cloneFrom !== undefined) params.set("cloneFrom", String(cloneFrom));
-    return `${ENDPOINTS.START_NEW_EXECUTION(testCycleKey, testCycleTestCaseMapId)}?${params.toString()}`;
+    const query = params.toString();
+    return `${ENDPOINTS.START_NEW_EXECUTION(testCycleKey, testCycleTestCaseMapId)}${query ? `?${query}` : ""}`;
   }
 }

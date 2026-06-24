@@ -60,7 +60,7 @@ export class ExecutionContextResolver extends Resolver {
 
   /** Builds the cache lookup name for a test case within a test cycle. */
   private buildCacheName(testCycleKey: string, testCaseKey: string): string {
-    return `TestCycle:${testCycleKey}.TestCase:${testCaseKey}`;
+    return `TestCycle:${testCycleKey}.TestCase:${testCaseKey}`.toLowerCase();
   }
 
   async resolve(
@@ -86,11 +86,15 @@ export class ExecutionContextResolver extends Resolver {
     // Check cache; collect keys that still need to be fetched
     for (const testCaseKey of testCaseKeys) {
       const name = this.buildCacheName(testCycleKey, testCaseKey);
-      const cached = this.cache.matchValue(projectKey, resolverKey, name);
+      const cached = this.cache.matchValue(
+        projectKey,
+        resolverKey,
+        name,
+      ) as unknown as ExecutionContextEntry | undefined;
       if (cached === undefined) {
         uncachedKeys.push(testCaseKey);
       } else {
-        result[testCaseKey] = cached as unknown as ExecutionContextEntry;
+        result[testCaseKey] = cached;
       }
     }
 
@@ -109,13 +113,13 @@ export class ExecutionContextResolver extends Resolver {
     const fetched = response as ExecutionContextResponse;
 
     // Store each entry in the cache bucket and build the return value
-    const values: Record<string, string> = {};
+    const values: Record<string, unknown> = {};
     for (const [testCaseKey, entry] of Object.entries(fetched)) {
       const name = this.buildCacheName(testCycleKey, testCaseKey);
-      values[name.toLowerCase()] = entry as unknown as string;
+      values[name.toLowerCase()] = entry;
       result[testCaseKey] = entry;
     }
-    this.cache.set(projectKey, resolverKey, values);
+    this.cache.set(projectKey, resolverKey, values as any);
 
     return result;
   }

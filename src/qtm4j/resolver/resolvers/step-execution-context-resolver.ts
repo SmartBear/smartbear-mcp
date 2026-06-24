@@ -43,7 +43,7 @@ export class StepExecutionContextResolver extends Resolver {
     testCaseKey: string,
     seqNo: number | string,
   ): string {
-    return `TestCycle:${testCycleKey}.TestCase:${testCaseKey}.Step:${seqNo}`;
+    return `TestCycle:${testCycleKey}.TestCase:${testCaseKey}.Step:${seqNo}`.toLowerCase();
   }
 
   async resolve(
@@ -100,7 +100,7 @@ export class StepExecutionContextResolver extends Resolver {
     const values: Record<string, string> = {};
     for (const [seqNo, stepExecutionId] of Object.entries(fetchedSteps)) {
       const name = this.buildCacheName(testCycleKey, testCaseKey, seqNo);
-      values[name.toLowerCase()] = String(stepExecutionId);
+      values[name] = String(stepExecutionId);
       cachedSteps[Number(seqNo)] = stepExecutionId;
     }
     if (Object.keys(values).length > 0) {

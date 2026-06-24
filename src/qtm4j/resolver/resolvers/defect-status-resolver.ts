@@ -17,7 +17,7 @@ import { Resolver } from "./resolver.ts";
  * which returns { lowercased_name → numeric_id }.
  *
  * Lazy-loaded on first use and cached per project.
- * Status is always a single value — no array handling.
+ * Status is provided as an array of names and resolved to an array of numeric status IDs.
  */
 export class DefectStatusResolver extends Resolver {
   override readonly fieldKeys: readonly string[] = [
