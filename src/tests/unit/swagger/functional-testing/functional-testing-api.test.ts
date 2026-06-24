@@ -10,6 +10,11 @@ const testsMock = [
   { id: "test-2", name: "Checkout Test" },
 ];
 
+const suitesMock = [
+  { id: "suite-1", name: "Smoke Suite" },
+  { id: "suite-2", name: "Regression Suite" },
+];
+
 describe("FunctionalTestingAPI", () => {
   let api: FunctionalTestingAPI;
 
@@ -159,6 +164,70 @@ describe("FunctionalTestingAPI", () => {
 
       await expect(api.getTestExecution({ executionId: "42" })).rejects.toThrow(
         "Network error",
+      );
+    });
+  });
+
+  describe("listSuites", () => {
+    it("should call the correct endpoint with X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
+
+      await api.listSuites();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
+
+      const result = await api.listSuites();
+
+      expect(result).toEqual(suitesMock);
+    });
+
+    it("should return empty array when no suites exist", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify([]));
+
+      const result = await api.listSuites();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should throw an authentication error on 401", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(api.listSuites()).rejects.toThrow(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    });
+
+    it("should throw an authentication error on 403", async () => {
+      fetchMock.mockResponseOnce("Forbidden", { status: 403 });
+
+      await expect(api.listSuites()).rejects.toThrow(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    });
+
+    it("should throw a service-unavailable error on other HTTP errors", async () => {
+      fetchMock.mockResponseOnce("Server Error", { status: 503 });
+
+      await expect(api.listSuites()).rejects.toThrow(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
+    });
+
+    it("should throw a service-unavailable error on network failure", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(api.listSuites()).rejects.toThrow(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );
     });
   });

@@ -1,6 +1,7 @@
 import { ToolError } from "../../common/tools";
 import type {
   GetFunctionalTestingExecutionTestParams,
+  ListSuitesResponse,
   RunFunctionalTestingTestParams,
 } from "./functional-testing-types";
 
@@ -84,6 +85,34 @@ export class FunctionalTestingAPI {
     if (!response.ok) {
       throw new ToolError(
         `Failed to get test status: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return response.json();
+  }
+
+  async listSuites(): Promise<ListSuitesResponse> {
+    let response: Response;
+    try {
+      response = await fetch(`https://${API_HOSTNAME}/v1/suites`, {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      });
+    } catch {
+      throw new ToolError(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new ToolError(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    }
+
+    if (!response.ok) {
+      throw new ToolError(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );
     }
 
