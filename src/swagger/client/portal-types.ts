@@ -39,7 +39,7 @@ export const GetProductSectionsArgsSchema = z.object({
     .number()
     .optional()
     .describe(
-      "Number of items per page for pagination - controls how many results are returned per page (default is 20)",
+      "Number of items per page for pagination - controls how many results are returned per page (default is 10)",
     ),
 });
 
@@ -335,6 +335,12 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
 });
 
 export const PublishProductArgsSchema = ProductArgsSchema.extend({
+  tableOfContentsId: z
+    .string()
+    .optional()
+    .describe(
+      "Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'. When provided, publishPortalProduct uses it to resolve the published URL path for the returned preview/live link.",
+    ),
   preview: z
     .boolean()
     .optional()
@@ -424,6 +430,23 @@ export type CreateTableOfContentsBody = Omit<
 >;
 export type UpdateDocumentBody = Omit<UpdateDocumentArgs, "documentId">;
 
+export type PublishPortalProductResponse = SuccessResponse & {
+  preview: boolean;
+  liveUrl?: string | null;
+  previewUrl?: string | null;
+  product?: Pick<Product, "id" | "name" | "slug">;
+  portal?: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
+  tableOfContentsItem?: Pick<
+    TableOfContentsItem,
+    "id" | "slug" | "title" | "order" | "parentId"
+  > | null;
+  warning?: {
+    code: string;
+    step: string;
+    message: string;
+  };
+};
+
 // Response types for better type safety
 export type FallbackResponse =
   | {
@@ -440,12 +463,15 @@ export interface Portal {
   id: string;
   name: string;
   subdomain?: string;
+  customDomain?: string;
   [key: string]: unknown;
 }
 
 export interface Product {
   id: string;
   name: string;
+  slug: string;
+  portalId?: string;
   [key: string]: unknown;
 }
 
@@ -508,5 +534,16 @@ export interface TableOfContentsItemSwaggerhubApi {
 // Response collection types
 export type PortalsListResponse = Portal[];
 export type ProductsListResponse = Product[];
-export type SectionsListResponse = Section[];
+
+export interface PaginatedResponse<T> {
+  page: {
+    number: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+  items: T[];
+}
+
+export type SectionsListResponse = PaginatedResponse<Section>;
 export type TableOfContentsListResponse = TableOfContentsItem[];
