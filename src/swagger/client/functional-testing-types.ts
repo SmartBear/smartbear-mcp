@@ -19,23 +19,26 @@ export const GetFunctionalTestingExecutionTestSchema = z.object({
 export const RunFunctionalTestingSuiteParamsSchema = z.object({
   suiteId: z
     .string()
-    .min(1)
-    .describe("ID of the Functional Testing suite to run"),
+    .describe("ID of the Functional Testing suite to run")
+    .trim()
+    .min(1),
   tunnelAgentName: z
     .string()
-    .min(1)
-    .optional()
     .describe(
       "Optional tunnel agent name to override the suite's saved tunnel for this run. When omitted, the suite's saved tunnel overrides are used, falling back to each test's saved tunnel.",
-    ),
+    )
+    .trim()
+    .min(1)
+    .optional(),
 });
 
 export const GetFunctionalTestingSuiteExecutionSchema = z.object({
   suiteId: z.string().min(1).describe("ID of the Functional Testing suite"),
   executionId: z
     .string()
-    .min(1)
-    .describe("ID of the Functional Testing suite execution"),
+    .describe("ID of the Functional Testing suite execution")
+    .trim()
+    .min(1),
 });
 
 export type RunFunctionalTestingTestParams = z.infer<

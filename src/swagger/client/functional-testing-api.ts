@@ -148,7 +148,7 @@ export class FunctionalTestingAPI {
 
     const data = (await response.json()) as Record<string, unknown>;
     // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
-    // We strip-it for now, but will bring-back in scope of https://smartbear.atlassian.net/browse/RF-5271.
+    // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
     delete data["url"];
     return data;
   }
@@ -177,11 +177,11 @@ export class FunctionalTestingAPI {
 
     const data = (await response.json()) as Record<string, unknown>;
     // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
-    // We strip-it for now, but will bring-back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
+    // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
     delete data["url"];
     if (Array.isArray(data["tests"])) {
       for (const test of data["tests"] as Record<string, unknown>[]) {
-        // Reflect API returns video recording URL for each test, which SFT does not need. We strip-it.
+        // Reflect API returns video recording URL for each test, which SFT does not need so we remove it.
         delete test["videoUrl"];
       }
     }
