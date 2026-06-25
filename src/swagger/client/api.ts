@@ -33,8 +33,11 @@ import type {
   CreateApiFromPromptResponse,
   CreateApiParams,
   CreateApiResponse,
+  ScanApiStandardizationFromRegistryParams,
+  ScanApiStandardizationFromRegistryResult,
   ScanStandardizationParams,
   StandardizationResult,
+  StandardizationScanApiResponse,
   StandardizeApiParams,
   StandardizeApiResponse,
 } from "./registry-types";
@@ -79,6 +82,20 @@ function hasErrorsFound(
   value: unknown,
 ): value is { errorsFound: number } & Record<string, unknown> {
   return typeof value === "object" && value !== null && "errorsFound" in value;
+}
+
+/**
+ * Type guard to check if a value is a StandardizationScanApiResponse
+ */
+function isStandardizationResult(
+  value: unknown,
+): value is StandardizationScanApiResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "validation" in value &&
+    Array.isArray((value as StandardizationScanApiResponse).validation)
+  );
 }
 
 export class SwaggerAPI {
@@ -651,9 +668,13 @@ export class SwaggerAPI {
   /**
    * Get API definition from SwaggerHub Registry
    * @param params Parameters including owner, api name, version, and options
+   * @param options Optional transport options
    * @returns API definition (OpenAPI/Swagger specification)
    */
-  async getApiDefinition(params: ApiDefinitionParams): Promise<unknown> {
+  async getApiDefinition(
+    params: ApiDefinitionParams,
+    options?: { accept?: "text/plain" | "application/json" },
+  ): Promise<unknown> {
     const searchParams = new URLSearchParams();
 
     if (params.resolved !== undefined)
@@ -665,7 +686,9 @@ export class SwaggerAPI {
 
     const response = await fetch(url, {
       method: "GET",
-      headers: this.headers,
+      headers: options?.accept
+        ? { ...this.headers, Accept: options.accept }
+        : this.headers,
     });
 
     if (!response.ok) {
@@ -836,7 +859,7 @@ export class SwaggerAPI {
    */
   async scanStandardization(
     params: ScanStandardizationParams,
-  ): Promise<StandardizationResult> {
+  ): Promise<StandardizationResult | FallbackResponse> {
     // Auto-detect format from the definition content
     const format = this.detectDefinitionFormat(params.definition);
 
@@ -881,7 +904,51 @@ export class SwaggerAPI {
       );
     }
 
-    return await this.handleResponse<StandardizationResult>(response);
+    const results =
+      await this.handleResponse<StandardizationScanApiResponse>(response);
+
+    if (isStandardizationResult(results)) {
+      const errors = results.validation ?? [];
+      const countsBySeverity: Record<string, number> = {};
+      for (const error of errors) {
+        const severity = error.severity ?? "Unknown";
+        countsBySeverity[severity] = (countsBySeverity[severity] ?? 0) + 1;
+      }
+
+      return { ...results, count: errors.length, countsBySeverity };
+    }
+    return results;
+  }
+
+  /**
+   * Fetch an API definition from the registry and run a standardization scan
+   * @param params Parameters including organization name, API name, and version
+   * @returns Scan results with total count and counts grouped by severity
+   */
+  async scanApiStandardizationFromRegistry(
+    params: ScanApiStandardizationFromRegistryParams,
+  ): Promise<ScanApiStandardizationFromRegistryResult | FallbackResponse> {
+    const definition = await this.getApiDefinition(
+      {
+        owner: params.orgName,
+        api: params.apiName,
+        version: params.version,
+      },
+      { accept: "text/plain" },
+    );
+
+    const results = await this.scanStandardization({
+      orgName: params.orgName,
+      definition: definition as string,
+    });
+
+    if (isStandardizationResult(results)) {
+      return {
+        ...results,
+        url: `${this.config.uiBasePath}/apis/${params.orgName}/${params.apiName}/${params.version}`,
+      };
+    }
+    return results;
   }
 
   /**

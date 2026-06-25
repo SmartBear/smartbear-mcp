@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Add output schemas and TOC discriminated union [#535](https://github.com/SmartBear/smartbear-mcp/pull/535)
 
+## [0.26.1] - 2026-06-24
+
 ### Fixed
 
 - [Swagger] Register Portal/Studio tools when authenticated via OAuth. Previously only an explicit API key (`SWAGGER_API_KEY` / `Swagger-Api-Key` header) enabled the tools, so OAuth-only sessions listed no Swagger tools. [#537](https://github.com/SmartBear/smartbear-mcp/pull/537)
@@ -19,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [Swagger] Add `scan_api_standardization_from_registry` tool to fetch and scan an API definition from the registry, returning results with total issue count and counts by severity [#510](https://github.com/SmartBear/smartbear-mcp/pull/510)
 - [Swagger] Add Swagger Functional Testing integration with `list_tests` tool for discovering available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 - [Common] Added transport mode (stdio/http) to User-Agent header for all API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
 - [Collaborator] Add user agent header to API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
