@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  GetFunctionalTestingExecutionTestSchema,
+  RunFunctionalTestingTestParamsSchema,
+} from "./functional-testing-types";
 import type { SwaggerToolParams } from "./tools";
 import { READ_ONLY } from "./tools";
 
@@ -20,5 +24,28 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     ...READ_ONLY,
     handler: "listFunctionalTestingTests",
     outputSchema: ListTestsOutputSchema,
+  },
+  {
+    title: "Run Test",
+    toolset: "Functional Testing",
+    summary:
+      "Runs a specific API test in your Swagger Functional Testing workspace. " +
+      "The execution is asynchronous — it returns an executionId, not the result directly. " +
+      "Use swagger_get_test_status with that executionId to track progress and retrieve the final result.",
+    inputSchema: RunFunctionalTestingTestParamsSchema,
+    handler: "runFunctionalTestingTest",
+    idempotent: false,
+    readOnly: false,
+  },
+  {
+    title: "Get Test Status",
+    toolset: "Functional Testing",
+    summary:
+      "Get the status of a Swagger Functional Testing test execution. " +
+      "It returns information about the execution such as its status (running, passed or failed), run time, " +
+      "as well as the break down of the status of each test step.",
+    inputSchema: GetFunctionalTestingExecutionTestSchema,
+    handler: "getFunctionalTestingExecution",
+    idempotent: false,
   },
 ];
