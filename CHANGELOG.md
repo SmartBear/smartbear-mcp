@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [Swagger] Add output schemas and TOC discriminated union [#535](https://github.com/SmartBear/smartbear-mcp/pull/535)
+
 - [Swagger] Extended `publish_portal_product` to build published URLs dynamically from `SWAGGER_PORTAL_BASE_PATH`, support preview and section/table-of-contents paths, and return the resolved `liveUrl` or `previewUrl` plus product, portal, and table-of-contents metadata in the publish response. If `portal.customDomain` is present, the client now uses it as the full host without appending the portal UI suffix. For url generation product and portal details ar required and section and toc details are optional.
 [#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
 

@@ -251,3 +251,59 @@ export interface StandardizeApiResponse {
     severity?: string;
   }>;
 }
+
+// Output schemas for MCP tool responses
+export const ApiMetadataOutputSchema = z.object({
+  owner: z.string(),
+  name: z.string(),
+  description: z.string(),
+  summary: z.string(),
+  version: z.string(),
+  specification: z.string(),
+  created: z.string().optional(),
+  modified: z.string().optional(),
+  published: z.string().optional(),
+  private: z.string().optional(),
+  oasVersion: z.string().optional(),
+  url: z.string().optional(),
+});
+
+export const ApiSearchOutputSchema = z.array(ApiMetadataOutputSchema);
+
+export const CreateApiOutputSchema = z.object({
+  owner: z.string(),
+  apiName: z.string(),
+  version: z.string(),
+  url: z.string(),
+  operation: z.enum(["create", "update"]),
+});
+
+export const CreateApiFromPromptOutputSchema = z.object({
+  owner: z.string(),
+  apiName: z.string(),
+  specType: z.string(),
+  version: z.string().optional(),
+  url: z.string(),
+  operation: z.enum(["create", "update"]),
+});
+
+export const ApiDefinitionOutputSchema = z.union([
+  z.string().describe("YAML API definition"),
+  z.record(z.string(), z.unknown()).describe("JSON API definition"),
+]);
+
+export const StandardizeApiOutputSchema = z.object({
+  message: z.string(),
+  errorsFound: z.number(),
+  fixedDefinition: z.string().optional(),
+  savedVersion: z.string().optional(),
+  errors: z
+    .array(
+      z.object({
+        description: z.string(),
+        line: z.number().optional(),
+        severity: z.string().optional(),
+      }),
+    )
+    .optional(),
+});
