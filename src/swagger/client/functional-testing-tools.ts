@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { READ_ONLY } from "./tools";
 import type { SwaggerToolParams } from "./tools";
+import { READ_ONLY } from "./tools";
 
 const ListTestsOutputSchema = z.array(
   z.looseObject({
