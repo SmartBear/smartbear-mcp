@@ -47,7 +47,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "The execution is asynchronous — it returns an executionId, not results directly. " +
       "Use `swagger_get_suite_status` with your suiteId and executionId to track progress and retrieve the final per-test results. " +
       "Optionally accepts a `tunnelAgentName` argument to override the suite's saved tunnel for this run. " +
-      "Do not use this tool to run a single test — use `runFunctionalTestingTest` instead.",
+      "Do not use this tool to run a single test — use `swagger_run_test` instead.",
     inputSchema: RunFunctionalTestingSuiteParamsSchema,
     handler: "runFunctionalTestingSuite",
     idempotent: false,
@@ -59,8 +59,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     summary:
       "Get the status of a Swagger Functional Testing suite execution. " +
       "Returns the overall status (pending, canceled, passed or failed), whether the run is finished, and a per-test breakdown with pass/fail. " +
-      "Use this to poll for the outcome of a suite run triggered by `runFunctionalTestingTest`. " +
-      "Requires both `suiteId` and the `executionId` arguments returned by `runFunctionalTestingTest`.",
+      "Use this to poll for the outcome of a suite run triggered by `swagger_run_suite`. " +
+      "Requires both `suiteId` and the `executionId` arguments returned by `swagger_run_suite`.",
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
     handler: "getFunctionalTestingSuiteExecution",
     idempotent: false,

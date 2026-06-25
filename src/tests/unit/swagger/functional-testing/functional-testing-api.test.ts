@@ -216,6 +216,16 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(executionMock);
     });
 
+    it("should strip url field from response", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify({ ...executionMock, url: "https://app.reflect.run/suites/checkout-suite/executions/7" }),
+      );
+
+      const result = await api.runSuite({ suiteId: "checkout-suite" });
+
+      expect((result as Record<string, unknown>)["url"]).toBeUndefined();
+    });
+
     it("should throw ToolError when suiteId is missing", async () => {
       await expect(api.runSuite({ suiteId: "" })).rejects.toThrow(
         "suiteId argument is required",
@@ -274,6 +284,41 @@ describe("FunctionalTestingAPI", () => {
       });
 
       expect(result).toEqual(suiteExecutionMock);
+    });
+
+    it("should strip url field from response", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify({ ...suiteExecutionMock, url: "https://app.reflect.run/suites/checkout-suite/executions/7" }),
+      );
+
+      const result = await api.getSuiteExecution({
+        suiteId: "checkout-suite",
+        executionId: "7",
+      });
+
+      expect((result as Record<string, unknown>)["url"]).toBeUndefined();
+    });
+
+    it("should strip videoUrl from each test item in tests array", async () => {
+      const mockWithTests = {
+        ...suiteExecutionMock,
+        tests: [
+          { id: "test-1", status: "passed", videoUrl: "https://cdn.reflect.run/video/1.mp4" },
+          { id: "test-2", status: "failed", videoUrl: "https://cdn.reflect.run/video/2.mp4" },
+        ],
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(mockWithTests));
+
+      const result = await api.getSuiteExecution({
+        suiteId: "checkout-suite",
+        executionId: "7",
+      });
+
+      const tests = (result as Record<string, unknown>)["tests"] as Record<string, unknown>[];
+      expect(tests[0]["videoUrl"]).toBeUndefined();
+      expect(tests[1]["videoUrl"]).toBeUndefined();
+      expect(tests[0]["id"]).toBe("test-1");
+      expect(tests[1]["id"]).toBe("test-2");
     });
 
     it("should throw ToolError when suiteId is missing", async () => {
