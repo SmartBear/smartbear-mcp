@@ -56,7 +56,7 @@ export interface SwaggerToolParams extends ToolParams {
   formatResponse?: (result: any) => any;
 }
 
-const READ_ONLY = {
+export const READ_ONLY = {
   readOnly: true,
   destructive: false,
   openWorld: false,
@@ -285,6 +285,7 @@ export const TOOLS: SwaggerToolParams[] = [
     toolset: "Registry API",
     summary:
       "Run a standardization scan on an API that already exists in SwaggerHub Registry, identified by organization name, API name, and version. Fetches the API definition from the registry internally and scans it against the organization's governance and standardization rules. Returns a list of validation errors, total issue count, counts grouped by severity, and a SwaggerHub UI URL for the scanned API. Use this tool when the user identifies the API by org name, API name, and version and asks to validate, scan, or check the governance or standardization of an existing API.",
+    ...READ_ONLY,
     inputSchema: ScanApiStandardizationFromRegistryParamsSchema,
     handler: "scanApiStandardizationFromRegistry",
   },
