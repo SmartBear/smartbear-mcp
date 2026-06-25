@@ -52,3 +52,20 @@ export const OrganizationsQuerySchema = z.object({
 });
 
 export type OrganizationsQueryParams = z.infer<typeof OrganizationsQuerySchema>;
+
+// Output schemas for MCP tool responses
+export const OrganizationOutputSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  email: z.string().optional(),
+  url: z.string().optional(),
+  memberCount: z.number().optional(),
+});
+
+export const OrganizationsListOutputSchema = z.object({
+  totalCount: z.number(),
+  pageSize: z.number(),
+  page: z.number(),
+  items: z.array(OrganizationOutputSchema),
+});

@@ -85,6 +85,16 @@ export const ScanStandardizationParamsSchema = z.object({
     ),
 });
 
+export const ScanApiStandardizationFromRegistryParamsSchema = z.object({
+  orgName: z
+    .string()
+    .describe(
+      "The organization name that owns the API and provides the standardization rules (case-sensitive)",
+    ),
+  apiName: z.string().describe("API name (case-sensitive)"),
+  version: z.string().describe("Version identifier"),
+});
+
 export const CreateApiFromPromptParamsSchema = z.object({
   owner: z
     .string()
@@ -129,6 +139,9 @@ export type ApiDefinitionParams = z.infer<typeof ApiDefinitionParamsSchema>;
 export type CreateApiParams = z.infer<typeof CreateApiParamsSchema>;
 export type ScanStandardizationParams = z.infer<
   typeof ScanStandardizationParamsSchema
+>;
+export type ScanApiStandardizationFromRegistryParams = z.infer<
+  typeof ScanApiStandardizationFromRegistryParamsSchema
 >;
 export type CreateApiFromPromptParams = z.infer<
   typeof CreateApiFromPromptParamsSchema
@@ -197,9 +210,33 @@ export interface CreateApiFromPromptResponse {
   operation: "create" | "update";
 }
 
-// Response type for standardization scan
-export interface StandardizationResult {
-  [key: string]: unknown; // The API returns standardization errors/results
+export type StandardizationSeverity =
+  | "Off"
+  | "Warning"
+  | "Critical"
+  | "Info"
+  | "Hint";
+
+export interface StandardizationError {
+  line: number;
+  description: string;
+  severity?: StandardizationSeverity;
+}
+
+export interface StandardizationScanApiResponse {
+  validation?: StandardizationError[];
+}
+
+// Response type for standardization scan tool
+export interface StandardizationResult extends StandardizationScanApiResponse {
+  count: number;
+  countsBySeverity: Record<string, number>;
+}
+
+// Response type for scanning an API by org/name/version.
+export interface ScanApiStandardizationFromRegistryResult
+  extends StandardizationResult {
+  url: string;
 }
 
 // Response type for API standardization
@@ -214,3 +251,59 @@ export interface StandardizeApiResponse {
     severity?: string;
   }>;
 }
+
+// Output schemas for MCP tool responses
+export const ApiMetadataOutputSchema = z.object({
+  owner: z.string(),
+  name: z.string(),
+  description: z.string(),
+  summary: z.string(),
+  version: z.string(),
+  specification: z.string(),
+  created: z.string().optional(),
+  modified: z.string().optional(),
+  published: z.string().optional(),
+  private: z.string().optional(),
+  oasVersion: z.string().optional(),
+  url: z.string().optional(),
+});
+
+export const ApiSearchOutputSchema = z.array(ApiMetadataOutputSchema);
+
+export const CreateApiOutputSchema = z.object({
+  owner: z.string(),
+  apiName: z.string(),
+  version: z.string(),
+  url: z.string(),
+  operation: z.enum(["create", "update"]),
+});
+
+export const CreateApiFromPromptOutputSchema = z.object({
+  owner: z.string(),
+  apiName: z.string(),
+  specType: z.string(),
+  version: z.string().optional(),
+  url: z.string(),
+  operation: z.enum(["create", "update"]),
+});
+
+export const ApiDefinitionOutputSchema = z.union([
+  z.string().describe("YAML API definition"),
+  z.record(z.string(), z.unknown()).describe("JSON API definition"),
+]);
+
+export const StandardizeApiOutputSchema = z.object({
+  message: z.string(),
+  errorsFound: z.number(),
+  fixedDefinition: z.string().optional(),
+  savedVersion: z.string().optional(),
+  errors: z
+    .array(
+      z.object({
+        description: z.string(),
+        line: z.number().optional(),
+        severity: z.string().optional(),
+      }),
+    )
+    .optional(),
+});

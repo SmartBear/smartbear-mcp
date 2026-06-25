@@ -35,7 +35,10 @@ import {
   type PortalsListResponse,
   type Product,
   type ProductsListResponse,
+  type PublishPortalProductResponse,
   type PublishProductArgs,
+  type ScanApiStandardizationFromRegistryParams,
+  type ScanApiStandardizationFromRegistryResult,
   type ScanStandardizationParams,
   type SectionsListResponse,
   type StandardizationResult,
@@ -96,7 +99,19 @@ export class SwaggerClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
-    if (config.api_key) {
+    // The Swagger API key can be supplied directly as config (env var /
+    // Swagger-Api-Key header) or via an OAuth bearer token on the request's
+    // Authorization header. The bearer token is only available per-request and
+    // is resolved lazily in getAuthToken(), so check the request context here to
+    // decide whether to enable the Portal/Studio API. Without this, an
+    // OAuth-only request would leave this.api undefined and no Swagger tools
+    // would be registered.
+    const hasSwaggerAuth =
+      !!config.api_key ||
+      !!getRequestHeader("Swagger-Api-Key") ||
+      !!getRequestHeader("Authorization");
+
+    if (hasSwaggerAuth) {
       this._apiKey = config.api_key;
       this.api = new SwaggerAPI(
         new SwaggerConfiguration({
@@ -215,9 +230,13 @@ export class SwaggerClient implements Client {
 
   async publishPortalProduct(
     args: PublishProductArgs,
-  ): Promise<SuccessResponse | FallbackResponse> {
-    const { productId, preview } = args;
-    return this.getApi().publishPortalProduct(productId, preview);
+  ): Promise<PublishPortalProductResponse | FallbackResponse> {
+    const { productId, preview, tableOfContentsId } = args;
+    return this.getApi().publishPortalProduct(
+      productId,
+      preview,
+      tableOfContentsId ?? null,
+    );
   }
 
   async getPortalProductSections(
@@ -295,6 +314,12 @@ export class SwaggerClient implements Client {
     args: ScanStandardizationParams,
   ): Promise<StandardizationResult | FallbackResponse> {
     return this.getApi().scanStandardization(args);
+  }
+
+  async scanApiStandardizationFromRegistry(
+    args: ScanApiStandardizationFromRegistryParams,
+  ): Promise<ScanApiStandardizationFromRegistryResult | FallbackResponse> {
+    return this.getApi().scanApiStandardizationFromRegistry(args);
   }
 
   async standardizeApi(

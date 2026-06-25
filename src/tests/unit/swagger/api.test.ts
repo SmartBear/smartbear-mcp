@@ -242,6 +242,461 @@ describe("SwaggerAPI", () => {
     });
   });
 
+  describe("scanStandardization", () => {
+    it("should return validation errors with count and countsBySeverity", async () => {
+      const validation = [
+        { severity: "Critical", description: "Missing info", line: 1 },
+        { severity: "Warning", description: "Deprecated field", line: 5 },
+        { severity: "Critical", description: "Invalid type", line: 10 },
+      ];
+      fetchMock.mockResponseOnce(JSON.stringify({ validation }), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.scanStandardization({
+        orgName: "orgname",
+        definition: JSON.stringify({ openapi: "3.0.0" }),
+      });
+
+      expect(result).toEqual({
+        validation,
+        count: 3,
+        countsBySeverity: { Critical: 2, Warning: 1 },
+      });
+    });
+
+    it("should return count 0 and empty countsBySeverity when validation is empty", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify({ validation: [] }), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.scanStandardization({
+        orgName: "orgname",
+        definition: JSON.stringify({ openapi: "3.0.0" }),
+      });
+
+      expect(result).toEqual({
+        validation: [],
+        count: 0,
+        countsBySeverity: {},
+      });
+    });
+
+    it("should throw when the scan endpoint returns 400 Bad Request", async () => {
+      fetchMock.mockResponseOnce("Bad Request", {
+        status: 400,
+        statusText: "Bad Request",
+      });
+
+      await expect(
+        api.scanStandardization({
+          orgName: "orgname",
+          definition: JSON.stringify({ openapi: "3.0.0" }),
+        }),
+      ).rejects.toThrow(/scanStandardization failed - status: 400 Bad Request/);
+    });
+  });
+
+  describe("scanApiStandardizationFromRegistry", () => {
+    const definition = { openapi: "3.0.0", info: { title: "Pets" } };
+
+    it("should fetch the definition then scan it and return results extended with the api url", async () => {
+      const validation = [
+        { severity: "Critical", description: "a", line: 1 },
+        { severity: "Warning", description: "c", line: 3 },
+      ];
+      fetchMock.mockResponseOnce(JSON.stringify(definition), {
+        headers: { "content-type": "text/plain" },
+      });
+      fetchMock.mockResponseOnce(JSON.stringify({ validation }), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.scanApiStandardizationFromRegistry({
+        orgName: "orgname",
+        apiName: "petstore",
+        version: "1.0.0",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer test-token",
+            "Content-Type": "application/json",
+            "User-Agent": "SmartBear-MCP/1.0.0",
+            Accept: "text/plain",
+          },
+        },
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.swaggerhub.com/standardization/orgname/scan",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify(definition),
+        }),
+      );
+
+      expect(result).toEqual({
+        url: "https://app.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        validation,
+        count: 2,
+        countsBySeverity: { Critical: 1, Warning: 1 },
+      });
+    });
+
+    it("should surface a clear error when the API is not found", async () => {
+      fetchMock.mockResponseOnce("", {
+        status: 404,
+        statusText: "Not Found",
+      });
+
+      await expect(
+        api.scanApiStandardizationFromRegistry({
+          orgName: "orgname",
+          apiName: "missing",
+          version: "1.0.0",
+        }),
+      ).rejects.toThrow(/getApiDefinition failed - status: 404 Not Found/);
+    });
+  });
+
+  describe("publishPortalProduct", () => {
+    const headers = {
+      Authorization: "Bearer test-token",
+      "Content-Type": "application/json",
+      "User-Agent": "SmartBear-MCP/1.0.0",
+    };
+
+    const productId = "prod-123";
+    const portalId = "portal-123";
+    const productSlug = "test-product";
+    const tocId = "toc-1";
+
+    const productResponse = {
+      id: productId,
+      name: "Test Product",
+      slug: productSlug,
+      portalId,
+    };
+
+    const portalResponse = {
+      id: portalId,
+      name: "Test Portal",
+      subdomain: "testportal",
+    };
+
+    const customDomainPortalResponse = {
+      id: portalId,
+      name: "Test Portal",
+      customDomain: "testCustomDomain.portal-testing.com",
+    };
+
+    const sectionsResponse = {
+      page: {
+        number: 0,
+        size: 20,
+        totalElements: 1,
+        totalPages: 1,
+      },
+      items: [
+        {
+          id: "section-1",
+          productId,
+          title: "Docs",
+          slug: "docs",
+          tableOfContents: [
+            {
+              id: tocId,
+              slug: "getting-started",
+              title: "Getting Started",
+              order: 0,
+              parentId: null,
+              children: [],
+              swaggerhubApi: null,
+              content: null,
+            },
+          ],
+          order: 0,
+        },
+      ],
+    };
+
+    const emptySectionsResponse = {
+      page: {
+        number: 0,
+        size: 20,
+        totalElements: 0,
+        totalPages: 0,
+      },
+      items: [],
+    };
+
+    const publishResponse = { success: true };
+
+    it("should publish live product and return full metadata with liveUrl", async () => {
+      // Publish happens first, then metadata fetching
+      fetchMock
+        .mockResponseOnce(JSON.stringify(publishResponse)) // 1. PUT publish
+        .mockResponseOnce(JSON.stringify(productResponse)) // 2. GET product
+        .mockResponseOnce(JSON.stringify(portalResponse)) // 3. GET portal
+        .mockResponseOnce(JSON.stringify(sectionsResponse)); // 4. GET sections
+
+      const result = await api.publishPortalProduct(productId, false, tocId);
+
+      // Verify publish was called first
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `https://api.portal.swaggerhub.com/v1/products/${productId}/published-content?preview=false`,
+        {
+          method: "PUT",
+          headers,
+        },
+      );
+
+      // Verify metadata was fetched after publish
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        `https://api.portal.swaggerhub.com/v1/products/${productId}`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+
+      expect(result).toEqual({
+        success: true,
+        preview: false,
+        liveUrl: `https://testportal.portal.swaggerhub.com/${productSlug}/docs/getting-started`,
+        product: {
+          id: productResponse.id,
+          name: productResponse.name,
+          slug: productResponse.slug,
+        },
+        portal: {
+          id: portalResponse.id,
+          name: portalResponse.name,
+          subdomain: portalResponse.subdomain,
+          customDomain: undefined,
+        },
+        tableOfContentsItem: {
+          id: sectionsResponse.items[0].tableOfContents[0].id,
+          slug: sectionsResponse.items[0].tableOfContents[0].slug,
+          title: sectionsResponse.items[0].tableOfContents[0].title,
+          order: sectionsResponse.items[0].tableOfContents[0].order,
+          parentId: sectionsResponse.items[0].tableOfContents[0].parentId,
+        },
+      });
+    });
+
+    it("should publish preview product and return previewUrl without tableOfContents", async () => {
+      fetchMock
+        .mockResponseOnce(JSON.stringify(publishResponse))
+        .mockResponseOnce(JSON.stringify(productResponse))
+        .mockResponseOnce(JSON.stringify(portalResponse))
+        .mockResponseOnce(JSON.stringify(emptySectionsResponse));
+
+      const result = await api.publishPortalProduct(productId, true);
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        `https://api.portal.swaggerhub.com/v1/products/${productId}/published-content?preview=true`,
+        {
+          method: "PUT",
+          headers,
+        },
+      );
+
+      expect(result).toEqual({
+        success: true,
+        preview: true,
+        previewUrl: `https://testportal.portal.swaggerhub.com/${productSlug}?preview=product`,
+        product: {
+          id: productResponse.id,
+          name: productResponse.name,
+          slug: productResponse.slug,
+        },
+        portal: {
+          id: portalResponse.id,
+          name: portalResponse.name,
+          subdomain: portalResponse.subdomain,
+          customDomain: undefined,
+        },
+      });
+    });
+
+    it("should use customDomain when present in portal", async () => {
+      fetchMock
+        .mockResponseOnce(JSON.stringify(publishResponse))
+        .mockResponseOnce(JSON.stringify(productResponse))
+        .mockResponseOnce(JSON.stringify(customDomainPortalResponse))
+        .mockResponseOnce(JSON.stringify(sectionsResponse));
+
+      const result = await api.publishPortalProduct(productId, true, tocId);
+
+      expect(result).toEqual({
+        success: true,
+        preview: true,
+        previewUrl:
+          "https://testCustomDomain.portal-testing.com/test-product/docs/getting-started?preview=product",
+        product: {
+          id: productResponse.id,
+          name: productResponse.name,
+          slug: productResponse.slug,
+        },
+        portal: {
+          id: customDomainPortalResponse.id,
+          name: customDomainPortalResponse.name,
+          subdomain: undefined,
+          customDomain: customDomainPortalResponse.customDomain,
+        },
+        tableOfContentsItem: {
+          id: sectionsResponse.items[0].tableOfContents[0].id,
+          slug: sectionsResponse.items[0].tableOfContents[0].slug,
+          title: sectionsResponse.items[0].tableOfContents[0].title,
+          order: sectionsResponse.items[0].tableOfContents[0].order,
+          parentId: sectionsResponse.items[0].tableOfContents[0].parentId,
+        },
+      });
+    });
+
+    it("should succeed with warning when product fetch fails (live mode)", async () => {
+      fetchMock
+        .mockResponseOnce(JSON.stringify(publishResponse))
+        .mockResponseOnce(JSON.stringify({ error: "Not found" }), {
+          status: 404,
+        });
+
+      const result = await api.publishPortalProduct(productId, false);
+
+      expect(result).toEqual({
+        success: true,
+        preview: false,
+        liveUrl: null,
+        warning: {
+          code: "METADATA_FETCH_FAILED",
+          step: "product",
+          message:
+            "Product published in live mode successfully, but failed to fetch product details for URL generation",
+        },
+      });
+    });
+
+    it("should succeed with warning when product fetch fails (preview mode)", async () => {
+      fetchMock
+        .mockResponseOnce(JSON.stringify(publishResponse))
+        .mockResponseOnce(JSON.stringify({ error: "Not found" }), {
+          status: 404,
+        });
+
+      const result = await api.publishPortalProduct(productId, true);
+
+      expect(result).toEqual({
+        success: true,
+        preview: true,
+        previewUrl: null,
+        warning: {
+          code: "METADATA_FETCH_FAILED",
+          step: "product",
+          message:
+            "Product published in preview mode successfully, but failed to fetch product details for URL generation",
+        },
+      });
+    });
+
+    it("should succeed with warning when portal fetch fails", async () => {
+      fetchMock
+        .mockResponseOnce(JSON.stringify(publishResponse))
+        .mockResponseOnce(JSON.stringify(productResponse))
+        .mockResponseOnce(JSON.stringify({ error: "Not found" }), {
+          status: 404,
+        });
+
+      const result = await api.publishPortalProduct(productId, false);
+
+      expect(result).toEqual({
+        success: true,
+        preview: false,
+        liveUrl: null,
+        product: {
+          id: productResponse.id,
+          name: productResponse.name,
+          slug: productResponse.slug,
+        },
+        warning: {
+          code: "METADATA_FETCH_FAILED",
+          step: "portal",
+          message:
+            "Product published in live mode successfully, but failed to fetch portal details for URL generation",
+        },
+      });
+    });
+
+    it("should succeed even when sections fetch fails (sections are optional)", async () => {
+      fetchMock
+        .mockResponseOnce(JSON.stringify(publishResponse))
+        .mockResponseOnce(JSON.stringify(productResponse))
+        .mockResponseOnce(JSON.stringify(portalResponse))
+        .mockResponseOnce(JSON.stringify({ error: "Server error" }), {
+          status: 500,
+        });
+
+      const result = await api.publishPortalProduct(productId, false);
+
+      // Should still build URL without section/toc
+      expect(result).toEqual({
+        success: true,
+        preview: false,
+        liveUrl: `https://testportal.portal.swaggerhub.com/${productSlug}`,
+        product: {
+          id: productResponse.id,
+          name: productResponse.name,
+          slug: productResponse.slug,
+        },
+        portal: {
+          id: portalResponse.id,
+          name: portalResponse.name,
+          subdomain: portalResponse.subdomain,
+          customDomain: undefined,
+        },
+      });
+    });
+
+    it("should handle product without portalId", async () => {
+      const productWithoutPortal = {
+        id: productId,
+        name: "Orphan Product",
+        slug: productSlug,
+        portalId: null,
+      };
+
+      fetchMock
+        .mockResponseOnce(JSON.stringify(publishResponse))
+        .mockResponseOnce(JSON.stringify(productWithoutPortal));
+
+      const result = await api.publishPortalProduct(productId, false);
+
+      expect(result).toEqual({
+        success: true,
+        preview: false,
+        liveUrl: null,
+        product: {
+          id: productWithoutPortal.id,
+          name: productWithoutPortal.name,
+          slug: productWithoutPortal.slug,
+        },
+        warning: {
+          code: "METADATA_FETCH_FAILED",
+          step: "portal",
+          message:
+            "Product published in live mode successfully, but failed to fetch portal details for URL generation",
+        },
+      });
+    });
+  });
+
   describe("error handling", () => {
     it("should handle fetch errors gracefully", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));

@@ -52,4 +52,14 @@ export class SwaggerConfiguration {
       "User-Agent": userAgent,
     };
   }
+
+  getPortalUiDomainSuffix(): string {
+    const match = this.portalBasePath.match(
+      /https?:\/\/api(\..*\.portal\.swaggerhub\.com)/,
+    );
+    if (match?.[1]) {
+      return match[1];
+    }
+    return ".portal.swaggerhub.com";
+  }
 }
