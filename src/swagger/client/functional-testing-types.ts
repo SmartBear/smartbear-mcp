@@ -33,7 +33,11 @@ export const RunFunctionalTestingSuiteParamsSchema = z.object({
 });
 
 export const GetFunctionalTestingSuiteExecutionSchema = z.object({
-  suiteId: z.string().trim().min(1).describe("ID of the Functional Testing suite"),
+  suiteId: z
+    .string()
+    .describe("ID of the Functional Testing suite")
+    .trim()
+    .min(1),
   executionId: z
     .string()
     .describe("ID of the Functional Testing suite execution")

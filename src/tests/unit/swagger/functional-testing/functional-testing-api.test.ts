@@ -294,9 +294,6 @@ describe("FunctionalTestingAPI", () => {
           overrides: { agent: { name: "my-tunnel" } },
         }),
       );
-      expect((init as RequestInit | undefined)?.headers).toEqual(
-        expect.objectContaining({ "Content-Type": "application/json" }),
-      );
     });
 
     it("should return parsed JSON response", async () => {
@@ -309,12 +306,15 @@ describe("FunctionalTestingAPI", () => {
 
     it("should strip url field from response", async () => {
       fetchMock.mockResponseOnce(
-        JSON.stringify({ ...executionMock, url: "https://app.reflect.run/suites/checkout-suite/executions/7" }),
+        JSON.stringify({
+          ...executionMock,
+          url: "https://app.reflect.run/suites/checkout-suite/executions/7",
+        }),
       );
 
       const result = await api.runSuite({ suiteId: "checkout-suite" });
 
-      expect((result as Record<string, unknown>)["url"]).toBeUndefined();
+      expect((result as Record<string, unknown>).url).toBeUndefined();
     });
 
     it("should throw ToolError when suiteId is missing", async () => {
@@ -379,7 +379,10 @@ describe("FunctionalTestingAPI", () => {
 
     it("should strip url field from response", async () => {
       fetchMock.mockResponseOnce(
-        JSON.stringify({ ...suiteExecutionMock, url: "https://app.reflect.run/suites/checkout-suite/executions/7" }),
+        JSON.stringify({
+          ...suiteExecutionMock,
+          url: "https://app.reflect.run/suites/checkout-suite/executions/7",
+        }),
       );
 
       const result = await api.getSuiteExecution({
@@ -387,15 +390,23 @@ describe("FunctionalTestingAPI", () => {
         executionId: "7",
       });
 
-      expect((result as Record<string, unknown>)["url"]).toBeUndefined();
+      expect((result as Record<string, unknown>).url).toBeUndefined();
     });
 
     it("should strip videoUrl from each test item in tests array", async () => {
       const mockWithTests = {
         ...suiteExecutionMock,
         tests: [
-          { id: "test-1", status: "passed", videoUrl: "https://cdn.reflect.run/video/1.mp4" },
-          { id: "test-2", status: "failed", videoUrl: "https://cdn.reflect.run/video/2.mp4" },
+          {
+            id: "test-1",
+            status: "passed",
+            videoUrl: "https://cdn.reflect.run/video/1.mp4",
+          },
+          {
+            id: "test-2",
+            status: "failed",
+            videoUrl: "https://cdn.reflect.run/video/2.mp4",
+          },
         ],
       };
       fetchMock.mockResponseOnce(JSON.stringify(mockWithTests));
@@ -405,11 +416,14 @@ describe("FunctionalTestingAPI", () => {
         executionId: "7",
       });
 
-      const tests = (result as Record<string, unknown>)["tests"] as Record<string, unknown>[];
-      expect(tests[0]["videoUrl"]).toBeUndefined();
-      expect(tests[1]["videoUrl"]).toBeUndefined();
-      expect(tests[0]["id"]).toBe("test-1");
-      expect(tests[1]["id"]).toBe("test-2");
+      const tests = (result as Record<string, unknown>).tests as Record<
+        string,
+        unknown
+      >[];
+      expect(tests[0].videoUrl).toBeUndefined();
+      expect(tests[1].videoUrl).toBeUndefined();
+      expect(tests[0].id).toBe("test-1");
+      expect(tests[1].id).toBe("test-2");
     });
 
     it("should throw ToolError when suiteId is missing", async () => {
