@@ -242,6 +242,127 @@ describe("SwaggerAPI", () => {
     });
   });
 
+  describe("scanStandardization", () => {
+    it("should return validation errors with count and countsBySeverity", async () => {
+      const validation = [
+        { severity: "Critical", description: "Missing info", line: 1 },
+        { severity: "Warning", description: "Deprecated field", line: 5 },
+        { severity: "Critical", description: "Invalid type", line: 10 },
+      ];
+      fetchMock.mockResponseOnce(JSON.stringify({ validation }), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.scanStandardization({
+        orgName: "orgname",
+        definition: JSON.stringify({ openapi: "3.0.0" }),
+      });
+
+      expect(result).toEqual({
+        validation,
+        count: 3,
+        countsBySeverity: { Critical: 2, Warning: 1 },
+      });
+    });
+
+    it("should return count 0 and empty countsBySeverity when validation is empty", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify({ validation: [] }), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.scanStandardization({
+        orgName: "orgname",
+        definition: JSON.stringify({ openapi: "3.0.0" }),
+      });
+
+      expect(result).toEqual({
+        validation: [],
+        count: 0,
+        countsBySeverity: {},
+      });
+    });
+
+    it("should throw when the scan endpoint returns 400 Bad Request", async () => {
+      fetchMock.mockResponseOnce("Bad Request", {
+        status: 400,
+        statusText: "Bad Request",
+      });
+
+      await expect(
+        api.scanStandardization({
+          orgName: "orgname",
+          definition: JSON.stringify({ openapi: "3.0.0" }),
+        }),
+      ).rejects.toThrow(/scanStandardization failed - status: 400 Bad Request/);
+    });
+  });
+
+  describe("scanApiStandardizationFromRegistry", () => {
+    const definition = { openapi: "3.0.0", info: { title: "Pets" } };
+
+    it("should fetch the definition then scan it and return results extended with the api url", async () => {
+      const validation = [
+        { severity: "Critical", description: "a", line: 1 },
+        { severity: "Warning", description: "c", line: 3 },
+      ];
+      fetchMock.mockResponseOnce(JSON.stringify(definition), {
+        headers: { "content-type": "text/plain" },
+      });
+      fetchMock.mockResponseOnce(JSON.stringify({ validation }), {
+        headers: { "content-type": "application/json" },
+      });
+
+      const result = await api.scanApiStandardizationFromRegistry({
+        orgName: "orgname",
+        apiName: "petstore",
+        version: "1.0.0",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer test-token",
+            "Content-Type": "application/json",
+            "User-Agent": "SmartBear-MCP/1.0.0",
+            Accept: "text/plain",
+          },
+        },
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.swaggerhub.com/standardization/orgname/scan",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify(definition),
+        }),
+      );
+
+      expect(result).toEqual({
+        url: "https://app.swaggerhub.com/apis/orgname/petstore/1.0.0",
+        validation,
+        count: 2,
+        countsBySeverity: { Critical: 1, Warning: 1 },
+      });
+    });
+
+    it("should surface a clear error when the API is not found", async () => {
+      fetchMock.mockResponseOnce("", {
+        status: 404,
+        statusText: "Not Found",
+      });
+
+      await expect(
+        api.scanApiStandardizationFromRegistry({
+          orgName: "orgname",
+          apiName: "missing",
+          version: "1.0.0",
+        }),
+      ).rejects.toThrow(/getApiDefinition failed - status: 404 Not Found/);
+    });
+  });
+
   describe("publishPortalProduct", () => {
     const headers = {
       Authorization: "Bearer test-token",
