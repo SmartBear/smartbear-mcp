@@ -1017,13 +1017,20 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch Test Case Executions",
     toolset: "Test Cases",
-    summary: "Get execution records for a specific test case by numeric ID",
+    summary:
+      "Get execution records for a specific test case by numeric ID, including Test Run UDF values. " +
+      "ALWAYS present results as a unified table: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label columns…>. " +
+      "NEVER show a separate type+value UDF breakdown — always combine identification fields and UDF values in one table per execution row.",
     handler: QMetryToolsHandlers.FETCH_TEST_CASE_EXECUTIONS,
     inputSchema: TestCaseExecutionsArgsSchema,
     purpose:
       "Retrieve execution history and results for a specific test case. " +
       "This tool provides detailed execution information including test suite names, platforms, " +
-      "execution status, executed by, project, release, cycle, execution date, and test case versions.",
+      "execution status, executed by, project, release, cycle, execution date, and test case versions. " +
+      "IMPORTANT: Every execution record always contains key identification fields — " +
+      "Test Suite Key (tsEntityKey), Test Suite Name (testsuiteName), Release (releaseName), Cycle (cycleName), " +
+      "Platform (platform), Executed Version (executedVersion), and Test Run UDF values (testRunUdfs). " +
+      "These MUST always be shown in the response so users can identify which test suite run each execution belongs to.",
     useCases: [
       "Get execution history for a specific test case",
       "Retrieve test case execution results for reporting",
@@ -1035,13 +1042,21 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "Audit test execution history for compliance",
       "Analyze test case execution performance across different environments",
       "Track test execution by specific users or teams",
+      "Fetch Test Run UDF values for a specific test case's execution records",
+      "Inspect custom metadata captured during test execution via Test Run UDFs",
+      "Check whether the project has Test Run UDFs configured (hasTcRunUdf flag)",
     ],
     examples: [
       {
         description: "Get all executions for test case ID 1223922",
         parameters: { tcid: 1223922 },
         expectedOutput:
-          "List of execution records for test case with execution details, status, and metadata",
+          "Present as ONE unified table — never as a separate type+value UDF breakdown. Example:\n" +
+          "| Test Suite Key | Test Suite Name  | Release | Cycle  | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type |\n" +
+          "| MAC-TS-42      | Regression Suite | R1      | Sprint1| Chrome   | v1               | Passed           | varis     | chrome, edge, safari | Functional     |\n" +
+          "| MAC-TS-42      | Regression Suite | R1      | Sprint1| Firefox  | v2               | Failed           | john      | firefox              | Regression     |\n" +
+          "Columns in order: Test Suite Key (tsEntityKey) | Test Suite Name (testsuiteName) | Release (releaseName) | Cycle (cycleName) | Platform (platform) | Executed Version (executedVersion) | Execution Status | then one column per UDF label. " +
+          "Use the UDF 'label' as column header. Show null UDF values as '-'.",
       },
       {
         description: "Get executions for specific test case version",
@@ -1094,8 +1109,65 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         },
         expectedOutput: "Execution records executed by specific user",
       },
+      {
+        description:
+          "Fetch Test Run UDF values for all executions of test case ID 41571999",
+        parameters: { tcid: 41571999 },
+        expectedOutput:
+          "Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:\n" +
+          "| Test Suite Key | Test Suite Name | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
+          "| MAC-TS-42      | Login Suite     | R1      | Sprint1 | Chrome   | v1               | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |\n" +
+          "UDF column headers use the UDF 'label' (not raw field key). Null values shown as '-'.",
+      },
+      {
+        description:
+          "Check if project has Test Run UDFs — response includes hasTcRunUdf flag",
+        parameters: { tcid: 1223922 },
+        expectedOutput:
+          "Response contains hasTcRunUdf: true (UDFs present, testRunUdfs populated) or hasTcRunUdf: false (no UDFs configured, testRunUdfNote explains this)",
+      },
     ],
     hints: [
+      "=== MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT ===",
+      "",
+      "PIVOT RULE — CRITICAL:",
+      "The 'testRunUdfs' field on each execution is an array of { name, label, fieldID, fieldType, value }.",
+      "You MUST pivot this array into TABLE COLUMNS — do NOT render it as rows.",
+      "  → Each testRunUdfs[i].label  = a column header in the unified table",
+      "  → Each testRunUdfs[i].value  = the cell value for that execution's row",
+      "  → testRunUdfs[i].fieldType   = INTERNAL METADATA — NEVER show this as a column",
+      "  → testRunUdfs[i].fieldID     = INTERNAL METADATA — NEVER show this as a column",
+      "",
+      "FORBIDDEN PATTERNS — NEVER do any of these:",
+      "  ❌ Do NOT render a separate sub-table (UDF Label | Type | Value) per execution",
+      "  ❌ Do NOT show 'Type' or 'fieldType' as a visible column",
+      "  ❌ Do NOT group output by tcRunID with individual breakdowns beneath each",
+      "  ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as headers — use 'label'",
+      "",
+      "REQUIRED OUTPUT — ONE unified table, all executions as rows:",
+      "| Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... |",
+      "|----------------|-----------------|---------|-------|----------|------------------|------------------|---------------|---------------|-----|",
+      "| MAC-TS-42      | Login Suite     | R1      | S1    | Chrome   | v1               | Passed           | varis         | chrome, edge  | ... |",
+      "",
+      "MANDATORY COLUMNS (always first, in this order):",
+      "  1. Test Suite Key    → tsEntityKey    (e.g. 'MAC-TS-42')",
+      "  2. Test Suite Name   → testsuiteName  (test suite display name)",
+      "  3. Release           → releaseName",
+      "  4. Cycle             → cycleName",
+      "  5. Platform          → platform",
+      "  6. Executed Version  → executedVersion",
+      "  7. Execution Status  → executionStatus",
+      "  8. Tested By         → testedBy/executedBy when present",
+      "  9+. One column per UDF field — use testRunUdfs[i].label as header, testRunUdfs[i].value as cell.",
+      "",
+      "Null UDF values → show as '-'. If hasTcRunUdf is false, show columns 1-8 only.",
+      "UDF DATA SOURCE — THIS TOOL IS SELF-CONTAINED:",
+      "This tool automatically calls Test Run UDF metadata once (project-wide) and parses the udfjson field from each execution row.",
+      "The 'testRunUdfs' array in every execution record already contains ALL configured UDF fields — including fields with no value (null).",
+      "DO NOT call 'Fetch Test Run UDF Values' after this tool for test case executions — that tool uses GET_TESTCASE_RUNS_BY_TESTSUITE_RUN which is for test suite runs, not test case executions.",
+      "NEVER chain 'Fetch Test Run UDF Values' when the user asks for UDF values of test case executions — use testRunUdfs from THIS response directly.",
+      "=== END MANDATORY RESPONSE FORMAT ===",
+      "",
       "This API requires a numeric tcid parameter, not entity key",
       "If user provides entityKey (e.g., MAC-TC-1684), first call FETCH_TEST_CASES with filter on entityKeyId to resolve the tcid",
       "After resolving entityKey → tcid, call this tool with the resolved numeric tcid",
@@ -1118,7 +1190,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "ALWAYS get tcRunID from executions and use THAT as entityId!",
       "",
       "EXAMPLE RESPONSE STRUCTURE FROM THIS TOOL:",
-      '{ "data": [{ "tcRunID": 58312120, "testSuiteName": "Suite 1", "executionStatus": "PASS" }] }',
+      '{ "data": [{ "tcRunID": 58312120, "testSuiteName": "Suite 1", "executionStatus": "PASS", "testRunUdfs": [...] }] }',
       "→ Use tcRunID (58312120) as entityId for linked issues API",
       "",
       "FILTER CAPABILITIES: Support extensive filtering by test suite, platform, status, user, release, cycle, dates, and archive status",
@@ -1132,9 +1204,37 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       "This tool is essential for test execution reporting, trend analysis, and compliance auditing",
       "Execution data includes timestamps, user information, environment details, and test results",
       "Use scope parameter to define retrieval context (project, folder, release, cycle)",
+      "",
+      "TEST RUN UDF SUPPORT:",
+      "This tool automatically fetches UDF metadata (project-wide, one call for all executions) and enriches each execution record.",
+      "ALL project-defined Test Run UDF fields are returned for every execution — including fields with no value (value: null).",
+      "HTML is stripped from rich text (LARGETEXT) UDF field values for clean output.",
+      "Each execution's 'testRunUdfs' is an array of objects:",
+      "  testRunUdfs: [",
+      '    { "name": "8260LUP", "label": "Lookup Field", "fieldID": 228563, "fieldType": "LOOKUPLIST", "value": "l1" },',
+      '    { "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "dsf" },',
+      '    { "name": "notes_run", "label": "Notes Run", "fieldID": 229242, "fieldType": "LARGETEXT", "value": null },',
+      '    { "name": "cascade_vK", "label": "Cascade VK", "fieldID": 229426, "fieldType": "CASCADINGLIST", "value": { "child": "qq", "parent": "vkc" } }',
+      "  ]",
+      "Use 'fieldID' from testRunUdfs entries when calling 'Bulk Update Test Run UDFs'.",
+      "",
+      "hasTcRunUdf FLAG — IMPORTANT:",
+      "The response contains a 'hasTcRunUdf' boolean flag at the top level.",
+      "hasTcRunUdf: true  → Project has Test Run UDFs configured; each execution record includes 'testRunUdfs' array with all fields.",
+      "hasTcRunUdf: false → Project has NO Test Run UDFs configured.",
+      "  When hasTcRunUdf is false, the response includes a 'testRunUdfNote' field with a professional explanation.",
+      "  Inform the user: 'No Test Run UDFs are configured for this project. Contact a project administrator to set up Test Run UDF fields.'",
+      "NEVER attempt to read testRunUdfs from records when hasTcRunUdf is false — the field will not be present.",
     ],
     outputDescription:
-      "JSON object with executions array containing execution records, status, timestamps, and metadata",
+      "JSON object with executions array. Each execution record ALWAYS contains these mandatory identification fields: " +
+      "'tsEntityKey' (Test Suite Key, e.g. 'MAC-TS-42'), 'testsuiteName' (Test Suite Name), " +
+      "'releaseName' (Release), 'cycleName' (Cycle), 'platform' (Platform/environment), " +
+      "'executedVersion' (Executed Version of the test case), 'executionStatus' (Execution Status label), " +
+      "'tcRunID' (numeric Test Run ID), " +
+      "and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). " +
+      "ALL project-defined UDF fields are always included, even those with no value. " +
+      "Top-level 'hasTcRunUdf' flag indicates whether the project has Test Run UDFs configured. When false, a 'testRunUdfNote' field provides a professional explanation instead.",
     readOnly: true,
     idempotent: true,
   },

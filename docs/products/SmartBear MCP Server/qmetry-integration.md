@@ -136,7 +136,7 @@ The QMetry client provides the following test management capabilities as listed 
 -   Purpose: Get execution records for a specific test case by ID.
 -   Parameters: Test Case identifier (`tcID`).
 -   Returns: Complete list of test case executions.
--   Use case: Retrieve available test case execution records.
+-   Use case: Retrieve available test case execution records including Test Run UDFs.
 
 ### `create_test_suite`
 
@@ -206,7 +206,7 @@ The QMetry client provides the following test management capabilities as listed 
 -   Purpose: Get test case runs under a specific test suite run execution in QMetry.
 -   Parameters: Test Suite Run identifier (`test suite run ID`), Test Execution View identifier (`viewId`).
 -   Returns: Complete list of test case runs with detailed execution information, status, tester details, and run metadata.
--   Use case: Retrieve individual test case execution results and status within a specific test suite run.
+-   Use case: Retrieve individual test case execution results and status within a specific test suite run, including Test Run UDFs.
 
 ### `update_testcase_execution_status`
 
@@ -256,6 +256,13 @@ The QMetry client provides the following test management capabilities as listed 
 -   Parameters: Test Case Run identifier (`entityId`).
 -   Returns: Complete list of issues linked to the test case run with issue details, priorities, status, owner information, and linkage metadata.
 -   Use case: Retrieve issues associated with specific test case executions for defect tracking, traceability analysis, and test execution quality monitoring.
+
+### `fetch_issue_executions`
+
+ -   Purpose: Get test case executions that are linked to a specific QMetry-native (non-Jira) defect/issue.
+ -   Parameters: Defect/issue numeric ID (`linkedAssetId`), optional filter (`filter`), optional platform filter (`platformID`), and pagination (`start`, `page`, `limit`).
+ -   Returns: Complete list of executions linked to the defect/issue, including Test Run UDF values when configured.
+ -   Use case: Retrieve test executions associated with a defect for traceability/coverage analysis and inspect Test Run UDFs captured during execution.
 
 ### `import_automation_test_results`
 

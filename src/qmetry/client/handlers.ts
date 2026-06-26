@@ -2,6 +2,7 @@ import { QMetryToolsHandlers } from "../config/constants";
 import { getAutomationStatus, importAutomationResults } from "./automation";
 import {
   createIssue,
+  fetchIssueExecutions,
   fetchIssues,
   fetchIssuesLinkedToTestCase,
   linkIssuesToTestcaseRun,
@@ -47,6 +48,14 @@ import {
   reqLinkedTestCasesToTestSuite,
   updateTestSuite,
 } from "./testsuite";
+import {
+  bulkUpdateTestRunUdfs,
+  fetchCascadeChildValues,
+  fetchTestRunUdfMetadata,
+  fetchTestRunUdfValues,
+  fetchUdfFieldTypes,
+  fetchUdfModules,
+} from "./udf";
 
 /**
  * Mapping of QMetry tool handlers to their implementation functions
@@ -112,4 +121,11 @@ export const QMETRY_HANDLER_MAP: Record<string, QMetryHandler> = {
   [QMetryToolsHandlers.LINK_PLATFORMS_TO_TESTSUITE]: linkPlatformsToTestSuite,
   [QMetryToolsHandlers.IMPORT_AUTOMATION_RESULTS]: importAutomationResults,
   [QMetryToolsHandlers.FETCH_AUTOMATION_STATUS]: getAutomationStatus,
+  [QMetryToolsHandlers.FETCH_UDF_FIELD_TYPES]: fetchUdfFieldTypes,
+  [QMetryToolsHandlers.FETCH_UDF_MODULES]: fetchUdfModules,
+  [QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS]: bulkUpdateTestRunUdfs,
+  [QMetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA]: fetchTestRunUdfMetadata,
+  [QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES]: fetchTestRunUdfValues,
+  [QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS]: fetchIssueExecutions,
+  [QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES]: fetchCascadeChildValues,
 };

@@ -20,6 +20,9 @@ export async function qmetryRequest<T>({
   project,
   baseUrl,
   body,
+  scopeId,
+  orgCode,
+  extraHeaders,
 }: RequestOptions): Promise<T> {
   const url: string = `${baseUrl}${path}`;
   const headers: Record<string, string> = {
@@ -28,6 +31,15 @@ export async function qmetryRequest<T>({
     "User-Agent": USER_AGENT,
     "qmetry-source": "smartbear-mcp",
   };
+  if (scopeId !== undefined) {
+    headers.scope = String(scopeId);
+  }
+  if (orgCode !== undefined) {
+    headers.orgcode = orgCode;
+  }
+  if (extraHeaders) {
+    Object.assign(headers, extraHeaders);
+  }
   if (body) {
     headers["Content-Type"] = "application/json";
   }

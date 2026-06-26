@@ -3,6 +3,64 @@ export const QMETRY_DEFAULTS = {
   PROJECT_KEY: "default",
 };
 
+export const UDF_MODULES = [
+  { id: 1, name: "Requirement" },
+  { id: 3, name: "Test Case" },
+  { id: 5, name: "Test Step" },
+  { id: 6, name: "Test Suite" },
+  { id: 11, name: "Issue" },
+  { id: 32, name: "Test Run" },
+] as const;
+
+export const UDF_FIELD_TYPES = [
+  {
+    Id: 6,
+    Fieldtype: "STRING",
+    Description: "Any text string can be entered in this field in plain text.",
+    Preview: "ad-string-ico",
+  },
+  {
+    Id: 2,
+    Fieldtype: "LARGETEXT",
+    Description: "A large plain text field.",
+    Preview: "ad-large-text-ico",
+  },
+  {
+    Id: 3,
+    Fieldtype: "LOOKUPLIST",
+    Description:
+      "An input which can be associated to any custom list define within the current project. Only one item can be selected at a time from this list.",
+    Preview: "ad-lookup-list-ico",
+  },
+  {
+    Id: 4,
+    Fieldtype: "MULTILOOKUPLIST",
+    Description:
+      "An input which can be associated to any custom list define within the current project. Multiple is can be selected at a time.",
+    Preview: "ad-multi-select-lookup-list-ico",
+  },
+  {
+    Id: 5,
+    Fieldtype: "NUMBER",
+    Description: "Any number can be entered into this field.",
+    Preview: "ad-number-ico",
+  },
+  {
+    Id: 1,
+    Fieldtype: "DATETIMEPICKER",
+    Description:
+      "This will open a calendar control which will allow the user to select a date.",
+    Preview: "ad-date-picker-ico",
+  },
+  {
+    Id: 7,
+    Fieldtype: "CASCADINGLIST",
+    Description:
+      "A single-level cascading select list where child values depend on the parent selection.",
+    Preview: "ad-cascading-list-ico",
+  },
+] as const;
+
 export const QMetryToolsHandlers = {
   FETCH_PROJECTS: "getProjects",
   SET_PROJECT_INFO: "setProjectInfo",
@@ -44,4 +102,11 @@ export const QMetryToolsHandlers = {
   CREATE_RELEASE: "createRelease",
   CREATE_CYCLE: "createCycle",
   UPDATE_CYCLE: "updateCycle",
+  FETCH_UDF_FIELD_TYPES: "fetchUdfFieldTypes",
+  FETCH_UDF_MODULES: "fetchUdfModules",
+  BULK_UPDATE_TEST_RUN_UDFS: "bulkUpdateTestRunUdfs",
+  FETCH_TEST_RUN_UDF_METADATA: "fetchTestRunUdfMetadata",
+  FETCH_TEST_RUN_UDF_VALUES: "fetchTestRunUdfValues",
+  FETCH_ISSUE_EXECUTIONS: "getIssueExecutions",
+  FETCH_CASCADE_CHILD_VALUES: "fetchCascadeChildValues",
 };
