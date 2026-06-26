@@ -19,10 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Extended Swagger Functional Testing integration with `run_test`, and `get_test_status` tools for executing available API tests and querying their execution.
 
-### Fixed
-
-- [Swagger] Extracted `READ_ONLY`, `MUTATING`, and `DELETING` constants into `tool-constants.ts` to resolve a circular dependency between `tools.ts` and `functional-testing-tools.ts` that caused a `ReferenceError` at runtime.
-
 ## [0.26.1] - 2026-06-24
 
 ### Fixed
