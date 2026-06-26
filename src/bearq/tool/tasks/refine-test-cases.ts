@@ -15,6 +15,7 @@ const inputSchema = z.object({
 export class RefineTestCases extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Refine Test Cases",
+    toolset: "Tasks",
     summary:
       "Refines specific BearQ draft test cases — improves their steps so they can eventually be promoted to regression tests. Use when a draft is incomplete or has drifted from its intent.",
     inputSchema,

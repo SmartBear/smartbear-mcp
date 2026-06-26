@@ -8,6 +8,7 @@ import { API_HOSTNAME } from "../../config/constants";
 export class ListSuites extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "List Suites",
+    toolset: "Suites",
     summary: "Retrieve a list of all reflect suites available",
     inputSchema: z.object({}),
   };

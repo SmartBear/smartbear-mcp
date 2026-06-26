@@ -4,8 +4,10 @@ import type { ApiClient } from "../http/api-client";
 import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver";
 import { ComponentResolver } from "./resolvers/component-resolver";
 import { LabelResolver } from "./resolvers/label-resolver";
+import { RequirementIdResolver } from "./resolvers/requirement-id-resolver";
 import type { Resolver } from "./resolvers/resolver.ts";
 import { TestCaseUidResolver } from "./resolvers/test-case-uid-resolver.ts";
+import { TestCycleUidResolver } from "./resolvers/test-cycle-uid-resolver";
 
 const ERROR_NO_PROJECT_CONTEXT =
   "No active project set. Please call set_project_context before performing this operation.";
@@ -24,6 +26,8 @@ export class ResolverRegistry {
     this.testCaseUidResolver = new TestCaseUidResolver(apiClient);
     const labelResolver = new LabelResolver(apiClient, cacheService);
     const componentResolver = new ComponentResolver(apiClient, cacheService);
+    const requirementIdResolver = new RequirementIdResolver(apiClient);
+    const testcycleUidResolver = new TestCycleUidResolver(apiClient);
 
     this.resolverByKey = new Map();
     for (const resolver of [
@@ -31,6 +35,8 @@ export class ResolverRegistry {
       labelResolver,
       componentResolver,
       this.testCaseUidResolver,
+      requirementIdResolver,
+      testcycleUidResolver,
     ]) {
       for (const key of resolver.fieldKeys) {
         this.resolverByKey.set(key, resolver);

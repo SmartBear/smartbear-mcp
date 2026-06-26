@@ -32,6 +32,7 @@ export const ResolverKeys = {
     TEST_CYCLE_STATUS: "testcycle_status",
     PRIORITY: "priority",
     TESTCASE_FOLDER: "testcase_folder",
+    TEST_CYCLE_FOLDER: "testcycle_folder",
   } as const,
 
   /**
@@ -42,6 +43,8 @@ export const ResolverKeys = {
     LABEL: "label",
     COMPONENTS: "components",
     TEST_CASE_KEY_TO_UID: "testCaseKeyToUid",
+    TEST_CYCLE_KEY_TO_UID: "testCycleKeyToUid",
+    REQUIREMENT_KEY_TO_ID: "requirementKeyToId",
   } as const,
 } as const;
 

@@ -34,9 +34,74 @@ export const ENDPOINTS = {
   RESOLVE_TEST_CASE_IDS: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcases/resolve-ids`,
 
+  /** Update test cycle endpoint */
+  UPDATE_TEST_CYCLE: (id: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${id}`,
+
+  /** Create test cycle endpoint */
+  CREATE_TEST_CYCLE: `${API_CONFIG.API_VERSION}/testcycles`,
+
+  /** Search test cycles endpoint */
+  SEARCH_TEST_CYCLES: `${API_CONFIG.API_VERSION}/testcycles/search`,
+
   /** Update test case endpoint */
   UPDATE_TEST_CASE: (id: string, versionNo: number) =>
     `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}`,
+
+  RESOLVE_TEST_CYCLE_IDS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/testcycles/resolve-ids`,
+
+  /** Resolve requirement keys → internal Jira issue IDs for a given project */
+  RESOLVE_REQUIREMENT_IDS: (projectId: number) =>
+    `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/requirement/resolve-ids`,
+
+  /** Link requirements to test case endpoint */
+  LINK_REQUIREMENTS: (id: string, versionNo: number) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/version/${versionNo}/requirements/link`,
+
+  /** Unlink requirements from test case endpoint */
+  UNLINK_REQUIREMENTS: (id: string, versionNo: number) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/versions/${versionNo}/requirements/unlink`,
+
+  /** Link test cases to requirement endpoint */
+  LINK_TESTCASES_TO_REQUIREMENT: (requirementId: number) =>
+    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases/link`,
+
+  /** Unlink test cases from requirement endpoint */
+  UNLINK_TESTCASES_FROM_REQUIREMENT: (requirementId: number) =>
+    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases/unlink`,
+
+  /** Get linked requirements for a test case endpoint */
+  GET_LINKED_REQUIREMENTS: (id: string) =>
+    `${API_CONFIG.API_VERSION}/testcases/${id}/requirements`,
+
+  /** Get linked test cases for a requirement endpoint */
+  GET_LINKED_TESTCASES_FOR_REQUIREMENT: (requirementId: number) =>
+    `${API_CONFIG.API_VERSION}/requirements/${requirementId}/testcases`,
+
+  /** Link test cases to test cycle endpoint */
+  LINK_TESTCASES_TO_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases`,
+
+  /** Unlink test cases from test cycle endpoint */
+  UNLINK_TESTCASES_FROM_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases`,
+
+  /** Search test cases linked to a test cycle endpoint */
+  SEARCH_LINKED_TESTCASES_IN_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/testcases/search`,
+
+  /** Get linked requirements for a test cycle endpoint */
+  GET_LINKED_REQUIREMENTS_FOR_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements`,
+
+  /** Link requirements to test cycle endpoint */
+  LINK_REQUIREMENTS_TO_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements/link`,
+
+  /** Unlink requirements from test cycle endpoint */
+  UNLINK_REQUIREMENTS_FROM_CYCLE: (cycleId: string) =>
+    `${API_CONFIG.API_VERSION}/testcycles/${cycleId}/requirements/unlink`,
 
   /** Test steps search endpoint */
   TEST_STEPS: (id: string, versionNo: number) =>
@@ -53,6 +118,15 @@ export const ENDPOINTS = {
   /** Components search endpoint */
   COMPONENTS: (projectId: number) =>
     `${API_CONFIG.API_VERSION}/projects/${projectId}/mcp/components`,
+
+  /** Automation: initiate result file import — returns pre-signed S3 upload URL + trackingId */
+  AUTOMATION_IMPORT: "/rest/api/automation/importresult",
+
+  /** Automation: poll import progress by trackingId */
+  AUTOMATION_IMPORT_TRACK: "/rest/api/automation/importresult/track",
+
+  /** Automation: paginated history of past automation result uploads */
+  AUTOMATION_HISTORY: "/rest/api/automation/importresult/history",
 } as const;
 
 /**
@@ -81,6 +155,9 @@ export const HTTP_HEADERS = {
 export const CONTENT_TYPES = {
   /** JSON content type */
   JSON: "application/json",
+
+  /** Multipart form-data content type (used for S3 automation file uploads) */
+  MULTIPART: "multipart/form-data",
 } as const;
 
 /**
@@ -140,8 +217,22 @@ export const PAGINATION = {
   /** Maximum allowed results per request for test steps */
   MAX_ALLOWED_RESULTS_TEST_STEPS: 100,
 
+  /** Default maximum results for test cycles */
+  DEFAULT_MAX_RESULTS_TEST_CYCLES: 20,
+
+  /** Maximum allowed results per request for test cycles */
+  MAX_ALLOWED_RESULTS_TEST_CYCLES: 100,
+
   /** Minimum allowed results per request */
   MIN_ALLOWED_RESULTS: 1,
+} as const;
+
+/**
+ * Automation Upload Limits
+ */
+export const AUTOMATION_LIMITS = {
+  /** Maximum allowed upload file size in bytes (10 MB) */
+  MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024,
 } as const;
 
 /**
@@ -154,6 +245,10 @@ export const ERROR_MESSAGES = {
   /** Request failed template */
   REQUEST_FAILED: (status: number, errorText: string) =>
     `Request failed with status ${status}: ${errorText}`,
+
+  /** Automation API key not configured */
+  AUTOMATION_API_KEY_NOT_CONFIGURED:
+    "QTM4J Automation API key not configured. Set the QTM4J_AUTOMATION_API_KEY environment variable or pass the Qtm4j-Automation-Api-Key header.",
 } as const;
 
 /**
@@ -201,6 +296,146 @@ export const TOOL_NAMES = {
     SUMMARY:
       "Update an existing test case in QTM4J. Supports auto-resolving human-readable names for priority, status, labels, and components. Labels and components support add/delete operations.",
   },
+
+  /** Upload Automation Result tool */
+  UPLOAD_AUTOMATION_RESULT: {
+    TITLE: "Upload Automation Result",
+    SUMMARY:
+      "Upload an automation result file to QTM4J and map the results to a test cycle. Supports JUnit XML, TestNG XML, Cucumber JSON, QAF, HP UFT, and SpecFlow formats.",
+  },
+
+  /** Get Automation History tool */
+  GET_AUTOMATION_HISTORY: {
+    TITLE: "Get Automation History",
+    SUMMARY:
+      "Retrieve a paginated history of past automation result uploads for a QTM4J project.",
+  },
+
+  /** Search Test Cycles tool */
+  SEARCH_TEST_CYCLES: {
+    TITLE: "Search Test Cycles",
+    SUMMARY:
+      "Search for test cycles in a QTM4J project by status, owner, folder, date range, or keyword. " +
+      "projectId is injected automatically from the active project context.",
+  },
+
+  /** Create Test Cycle tool */
+  CREATE_TEST_CYCLE: {
+    TITLE: "Create Test Cycle",
+    SUMMARY:
+      "Create a new test cycle in a QTM4J project. Supports auto-resolving human-readable names for priority and status. Always creates in the 'MCP Generated' folder. projectId is injected automatically from the active project context.",
+  },
+
+  /** Update Test Cycle tool */
+  UPDATE_TEST_CYCLE: {
+    TITLE: "Update Test Cycle",
+    SUMMARY:
+      "Update an existing test cycle in QTM4J by its human-readable key (e.g. 'SCRUM-TR-101'). " +
+      "Supports auto-resolving human-readable names for status and priority. " +
+      "Labels and components support add/delete operations. " +
+      "Only the fields you provide are changed — omitted fields are left as-is. " +
+      "projectId is injected automatically from the active project context.",
+  },
+
+  /** Link Requirements tool */
+  LINK_REQUIREMENTS: {
+    TITLE: "Link Requirements to Test Case",
+    SUMMARY:
+      "Link one or more Jira requirements to a test case in QTM4J by requirement keys or JQL filter. Requirement keys are resolved to internal IDs automatically.",
+  },
+
+  /** Unlink Requirements tool */
+  UNLINK_REQUIREMENTS: {
+    TITLE: "Unlink Requirements from Test Case",
+    SUMMARY:
+      "Unlink one or more Jira requirements from a test case in QTM4J by requirement keys, or unlink all requirements at once with unLinkAll.",
+  },
+
+  /** Link Test Cases to Requirement tool */
+  LINK_TESTCASES_TO_REQUIREMENT: {
+    TITLE: "Link Test Cases to Requirement",
+    SUMMARY:
+      "Link test cases to a Jira requirement in QTM4J by test case keys or filter criteria. Test case keys are resolved to internal IDs automatically.",
+  },
+
+  /** Unlink Test Cases from Requirement tool */
+  UNLINK_TESTCASES_FROM_REQUIREMENT: {
+    TITLE: "Unlink Test Cases from Requirement",
+    SUMMARY:
+      "Unlink test cases from a Jira requirement in QTM4J by test case keys or filter criteria. Test case keys are resolved to internal IDs automatically.",
+  },
+
+  /** Get Linked Requirements tool */
+  GET_LINKED_REQUIREMENTS: {
+    TITLE: "Get Linked Requirements",
+    SUMMARY:
+      "Retrieve the Jira requirements linked to a specific test case in QTM4J. Test case key is resolved to internal ID automatically.",
+  },
+
+  /** Get Linked Test Cases for Requirement tool */
+  GET_LINKED_TESTCASES_FOR_REQUIREMENT: {
+    TITLE: "Get Linked Test Cases for Requirement",
+    SUMMARY:
+      "Retrieve the test cases linked to a Jira requirement in QTM4J. Requirement key is resolved to internal ID automatically.",
+  },
+
+  /** Link Test Cases to Test Cycle tool */
+  LINK_TESTCASES_TO_CYCLE: {
+    TITLE: "Link Test Cases to Test Cycle",
+    SUMMARY:
+      "Link test cases to a QTM4J test cycle by test case keys or filter criteria. Test case keys are resolved to internal IDs and latest versions automatically.",
+  },
+
+  /** Unlink Test Cases from Test Cycle tool */
+  UNLINK_TESTCASES_FROM_CYCLE: {
+    TITLE: "Unlink Test Cases from Test Cycle",
+    SUMMARY:
+      "Unlink test cases from a QTM4J test cycle by test case keys, filter criteria, or all at once with unlinkAll.",
+  },
+
+  /** Search Linked Test Cases in Test Cycle tool */
+  SEARCH_LINKED_TESTCASES_IN_CYCLE: {
+    TITLE: "Search Linked Test Cases in Test Cycle",
+    SUMMARY:
+      "Search and filter test case executions linked to a QTM4J test cycle. Supports pagination, field selection, sorting, and rich filter criteria.",
+  },
+
+  /** Get Linked Requirements for Test Cycle tool */
+  GET_LINKED_REQUIREMENTS_FOR_CYCLE: {
+    TITLE: "Get Linked Requirements for Test Cycle",
+    SUMMARY:
+      "Retrieve Jira requirements linked to a QTM4J test cycle. Test cycle key is resolved to internal UID automatically.",
+  },
+
+  /** Link Requirements to Test Cycle tool */
+  LINK_REQUIREMENTS_TO_CYCLE: {
+    TITLE: "Link Requirements to Test Cycle",
+    SUMMARY:
+      "Link one or more Jira requirements to a QTM4J test cycle by requirement keys or JQL filter. Requirement keys are resolved to internal IDs automatically.",
+  },
+
+  /** Unlink Requirements from Test Cycle tool */
+  UNLINK_REQUIREMENTS_FROM_CYCLE: {
+    TITLE: "Unlink Requirements from Test Cycle",
+    SUMMARY:
+      "Unlink one or more Jira requirements from a QTM4J test cycle by requirement keys, or unlink all requirements at once with unLinkAll.",
+  },
+} as const;
+
+/**
+ * Toolsets
+ */
+export const TOOLSETS = {
+  /** Test Automation toolset */
+  TEST_AUTOMATION: "Test Automation",
+  /** Test Cases toolset */
+  TEST_CASES: "Test Cases",
+  /** Test Cycle Management toolset */
+  TEST_CYCLES: "Test Cycles",
+  /** Projects toolset */
+  PROJECTS: "Projects",
+
+  REQUIREMENTS: "Requirements",
 } as const;
 
 /**
@@ -209,6 +444,9 @@ export const TOOL_NAMES = {
 export const CONFIG_KEYS = {
   /** API key configuration key */
   API_KEY: "api_key",
+
+  /** Automation API key configuration key */
+  AUTOMATION_API_KEY: "automation_api_key",
 
   /** Base URL configuration key */
   BASE_URL: "base_url",
@@ -220,6 +458,10 @@ export const CONFIG_KEYS = {
 export const SCHEMA_DESCRIPTIONS = {
   /** API key description */
   API_KEY: "QTM4J API key for authentication",
+
+  /** Automation API key description */
+  AUTOMATION_API_KEY:
+    "QTM4J Automation API key for uploading automation result files. This is a separate key from the regular API key and can be found in QTM4J under Automation settings.",
 
   /** Base URL description */
   BASE_URL:
@@ -316,7 +558,68 @@ export const SCHEMA_DESCRIPTIONS = {
 
   /** Test case object description */
   TEST_CASE_OBJECT: "Test case object",
+
+  /** Automation result file path */
+  AUTOMATION_FILE_PATH:
+    "Path to the automation result file on disk. Filesystem contents can change between turns — always resolve this from a fresh scan, never from a previously seen path. Supported extensions: .xml, .json, .zip",
+
+  /** Automation result format */
+  AUTOMATION_FORMAT:
+    "Format of the result file. Supported values: cucumber, testng, junit, qaf, hpuft, specflow",
+
+  /** Test cycle to reuse */
+  AUTOMATION_TEST_CYCLE_TO_REUSE:
+    "Work key of an existing test cycle to reuse (e.g. 'TR-PRJ-1'). If omitted, a new test cycle is created.",
+
+  /** Automation environment */
+  AUTOMATION_ENVIRONMENT:
+    "Name of the environment on which the test cycle was executed (e.g. 'Chrome', 'Staging'). Defaults to 'No Environment'.",
+
+  /** Automation build */
+  AUTOMATION_BUILD:
+    "Build name or version for the test cycle execution (e.g. '1.0.0-beta'). Defaults to blank.",
+
+  /** isZip flag */
+  AUTOMATION_IS_ZIP:
+    "Set to true when uploading a ZIP archive containing result files. Required for QAF format.",
+
+  /** attachFile flag */
+  AUTOMATION_ATTACH_FILE:
+    "Set to true to upload attachments referenced in execution results.",
+
+  /** matchTestSteps flag */
+  AUTOMATION_MATCH_TEST_STEPS:
+    "true — match test cases by summary AND test steps. false — match by summary or key only.",
+
+  /** appendTestName flag */
+  AUTOMATION_APPEND_TEST_NAME:
+    "Applicable to JUnit/TestNG only. Appends suite/test name to method name in test case summary.",
+
+  /** fields object */
+  AUTOMATION_FIELDS:
+    "Additional fields to set on the test cycle, test case, and/or test case execution created during import.",
+
+  /** getAutomationHistory — pagination */
+  AUTOMATION_HISTORY_START_AT:
+    "Zero-indexed starting position for pagination (default: 0).",
+  AUTOMATION_HISTORY_MAX_RESULTS:
+    "Maximum number of records to return per page (default: 20, max: 100).",
 } as const;
+
+/**
+ * Default directories to search for automation result files when the user
+ * does not provide an explicit file path. Add entries here to support
+ * additional build tools or CI output locations.
+ */
+export const AUTOMATION_RESULT_DIRS = [
+  "target/surefire-reports",
+  "target/failsafe-reports",
+  "build/reports/tests",
+  "build/test-results",
+  "test-results",
+  "reports",
+  "cucumber-reports",
+] as const;
 
 /**
  * Response Field Names
@@ -343,6 +646,14 @@ export const RESPONSE_FIELDS = {
   FIELDS: "fields",
 
   SORT: "sort",
+} as const;
+
+/**
+ * Sort Defaults
+ */
+export const SORT_DEFAULTS = {
+  /** Default sort expression for test cycle search */
+  TEST_CYCLES: "key:asc",
 } as const;
 
 /**

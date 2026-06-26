@@ -22,6 +22,7 @@ const inputSchema = z.object({
 export class GetError extends Tool<BugsnagClient> {
   specification: ToolParams = {
     title: "Get Error",
+    toolset: "Errors",
     summary:
       "Get full details on an error, including aggregated and summarized data across all events (occurrences) and details of the latest event (occurrence), such as breadcrumbs, metadata and the stacktrace. Use the filters parameter to narrow down the summaries further.",
     purpose:

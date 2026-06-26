@@ -102,6 +102,10 @@ export interface FetchTestCaseRunsByTestSuiteRunPayload
   extends PaginationPayload {
   tsrunID: string; // required - Test Suite Run ID (STRING format - get from executions API)
   viewId: number; // required - View ID for test execution (get from project info latestViews.TE.viewId)
+  filter?: string; // optional - standard field filter as JSON string (default '[]')
+  udfFilter?: string; // optional - test case UDF filter as JSON string (default '[]')
+  tcrUdfFilter?: string; // optional - test case run UDF filter as JSON string (default '[]')
+  showTcWithDefects?: boolean; // optional - show only test case runs with linked defects
 }
 
 export interface LinkedTestCasesToTestSuitePayload {

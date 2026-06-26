@@ -6,12 +6,66 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- [Qmetry]: add Test Run UDF workflow support and customer fixes [#538](https://github.com/SmartBear/smartbear-mcp/pull/538)
+
+### Added
+
+- [Swagger] Extended `publish_portal_product` to build published URLs dynamically from `SWAGGER_PORTAL_BASE_PATH`, support preview and section/table-of-contents paths, and return the resolved `liveUrl` or `previewUrl` plus product, portal, and table-of-contents metadata in the publish response. If `portal.customDomain` is present, the client now uses it as the full host without appending the portal UI suffix. For url generation product and portal details ar required and section and toc details are optional.
+[#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
+
+- [Swagger] Add `create_documentation_page` tool to create a documentation page in a portal product in a single call. Supports `markdown` and `html` content types with `internal` or `external` source. Returns page details and a `draftUrl` to edit the page in the portal admin.
+
+- [Swagger] Extended Swagger Functional Testing integration with `run_test`, and `get_test_status` tools for executing available API tests and querying their execution.
+
+## [0.26.1] - 2026-06-24
+
+### Fixed
+
+- [Swagger] Register Portal/Studio tools when authenticated via OAuth. Previously only an explicit API key (`SWAGGER_API_KEY` / `Swagger-Api-Key` header) enabled the tools, so OAuth-only sessions listed no Swagger tools. [#537](https://github.com/SmartBear/smartbear-mcp/pull/537)
+
+## [0.26.0] - 2026-06-19
+
+### Added
+
+- [Swagger] Add `scan_api_standardization_from_registry` tool to fetch and scan an API definition from the registry, returning results with total issue count and counts by severity [#510](https://github.com/SmartBear/smartbear-mcp/pull/510)
+- [Swagger] Add Swagger Functional Testing integration with `list_tests` tool for discovering available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+- [Swagger] Added `Resolve Organization Portal` tool to find or create a portal for an organization. [#526](https://github.com/SmartBear/smartbear-mcp/pull/526)
+- [Common] Added transport mode (stdio/http) to User-Agent header for all API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
+- [Collaborator] Add user agent header to API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
+- [Reflect] Added `get_test_detail` tool for retrieving full test details including name, description, and all recorded steps [#524](https://github.com/SmartBear/smartbear-mcp/pull/524)
+
+## [0.25.1] - 2026-06-08
+
+### Fixed
+
+- [Common] Reverted [#487](https://github.com/SmartBear/smartbear-mcp/pull/487) due to request scoping issue. [#512](https://github.com/SmartBear/smartbear-mcp/pull/512)
+
+## [0.25.0] - 2026-06-03
+
+### Added
+- [Common] Add `MCP_TOOLSETS` environment variable to allow tools to be grouped into sets for better organization and client control [#474](https://github.com/SmartBear/smartbear-mcp/pull/474)
+- [Common] Split authorization and configuration options to better suit OAuth flow [#487](https://github.com/SmartBear/smartbear-mcp/pull/487)
+- [QTM4J] Added support for linking and unlinking requirements, test cases, and test cycles through new tools. [#505](https://github.com/SmartBear/smartbear-mcp/pull/505)
+- [QTM4J] Added tools for retrieving linked requirements and test cases across requirements, test cases, and test cycles. [#505](https://github.com/SmartBear/smartbear-mcp/pull/505)
+
+## [0.24.0] - 2026-05-28
+
+### Added
+
+- [QTM4J] Added test cycle management capabilities, including create, search, and update operations. [#501](https://github.com/SmartBear/smartbear-mcp/pull/501)
+- [QTM4J] Added test automation capabilities, including automation result uploads and import history retrieval. [#501](https://github.com/SmartBear/smartbear-mcp/pull/501)
+
+### Fixed
+
+- [PactFlow] Remove `.email()` Zod validator from PactFlow admin user tool schemas — the generated JSON Schema pattern used regex lookahead which is rejected by strict JSON Schema validators (e.g. OpenAI gpt-5.5) [#491](https://github.com/SmartBear/smartbear-mcp/issues/491)
+- [BearQ] Fix BearQ integration page not appearing in live docs [#496](https://github.com/SmartBear/smartbear-mcp/pull/496)
+- [Swagger]  Add constraint in the create_portal tool schema description, that allows only one Portal per organization.
 
 ## [0.23.0] - 2026-05-22
 
 ### Added
 
-- [BearQ] Add BearQ integration with 11 tools for AI-powered QA: run regression tests, run/refine test cases and functional areas, expand the application model, chat with the QA lead agent, and manage async tasks (`get_task`, `get_task_status`, `wait_for_task`, `stop_task`) [#479](https://github.com/SmartBear/smartbear-mcp/pull/479)
+- [BearQ] Add BearQ integration with 11 tools for AI-powered QA: run regression tests, run/refine test cases and functional areas, expand the application model, chat with the QA lead agent, and manage async tasks (`get_task`, `get_task_status`, `wait_for_task`, `stop_task`) [#485](https://github.com/SmartBear/smartbear-mcp/pull/485)
 
 ## [0.22.0] - 2026-05-21
 
@@ -138,6 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zephyr] Added a tool `create-web-link` for creating a Web link for a Test Cycle [#354](https://github.com/SmartBear/smartbear-mcp/pull/354)
 - [Zephyr] Added a tool `create-test-execution-issue-link` for creating a link between a Jira issue and a Test Execution [#362](https://github.com/SmartBear/smartbear-mcp/pull/362)
 - [Zephyr] Added a tool `get-test-steps` for getting a list of test steps for test execution [#367](https://github.com/SmartBear/smartbear-mcp/pull/367)
+- [QMetry] Enhance LLM prompt handling with contextual metadata and usage tracking [#371](https://github.com/SmartBear/smartbear-mcp/pull/371)
 - [Zephyr] Added a tool `get-links` for fetching links associated with given Test Cycle [#372](https://github.com/SmartBear/smartbear-mcp/pull/372)
 - [Zephyr] Added a tool `get-links` for fetching links associated with given Test Case [#373](https://github.com/SmartBear/smartbear-mcp/pull/373)
 - [Zephyr] Added a tool `get-test-cycles` for fetching Test Cycles linked to a Jira issue [#374](https://github.com/SmartBear/smartbear-mcp/pull/374)

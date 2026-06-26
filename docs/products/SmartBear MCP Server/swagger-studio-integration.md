@@ -54,7 +54,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 #### `scan_api_standardization`
 
 -   Purpose: Run a standardization scan against an API definition using the organization's governance and standardization configuration. Validates OpenAPI/AsyncAPI definitions against configured rules and style guides.
--   Returns: Standardization result with a list of validation errors and warnings. Each error includes severity level, rule name, and location information.
+-   Returns: Standardization result with a list of validation errors, the total issue count, and counts grouped by severity (e.g. `count: 12`, `countsBySeverity: { "Critical": 5, "Warning": 7 }`). Each error includes line number, description, and severity.
 -   Use case: Validate API definitions against organization standards before publishing, ensure compliance with API governance policies, and identify design inconsistencies early in the development process.
 -   Parameters:
 
@@ -62,6 +62,19 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | --- | --- | --- | --- |
 | `orgName` | Organization name to use for governance and standardization rules | string | Yes |
 | `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. | string | Yes |
+
+#### `scan_api_standardization_from_registry`
+
+-   Purpose: Run a standardization scan on an API that already exists in the SwaggerHub Registry, identified by organization name, API name, and version. The tool fetches the API definition from the registry and scans it against the organization's governance and standardization rules internally.
+-   Returns: The standardization scan results together with the total issue count, counts grouped by severity (e.g. `count: 137`, `countsBySeverity: { "Critical": 92, "Warning": 45 }`), and a SwaggerHub UI URL for the scanned API. Returns a clear error if the API is not found or the scan fails.
+-   Use case: Validate, scan, or check the governance or standardization of an existing API by its owner/name/version without manually fetching and passing the definition first.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `orgName` | Organization name. Used to fetch the API definition from the registry and to apply the organization's standardization rules (case-sensitive). | string | Yes |
+| `apiName` | API name (case-sensitive) | string | Yes |
+| `version` | Version identifier | string | Yes |
 
 #### `create_api_from_prompt`
 
@@ -89,6 +102,22 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | `owner` | API owner (organization or user, case-sensitive) | string | Yes |
 | `api` | API name (case-sensitive) | string | Yes |
 | `version` | Version identifier | string | Yes |
+| `newVersion` | The version to save the fixed definition as (e.g. `1.0.1`). Omitting this will overwrite the current version - prefer providing a patch bump (e.g. `1.0.0` -> `1.0.1`) unless the user specifies otherwise. | string | No |
+
+#### `list_organizations`
+
+-   Purpose: Get organizations for the authenticated user. Returns a list of organizations that the authenticating user is a member of. On-Premise admins get a list of all organizations in the system.
+-   Returns: Paged list of organizations, each including id, name, description, email, url, and memberCount.
+-   Use case: Discover which organizations the current user belongs to before performing organization-scoped operations (e.g., `scan_api_standardization`, creating APIs under a specific owner), or enumerate organizations on On-Premise installations.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `q` | Search organizations by partial or full name (case-insensitive) | string | No |
+| `sortBy` | The property to sort the results by.<br />Options: `NAME`, `EMAIL` | string | No |
+| `order` | Sort order.<br />Options: `ASC`, `DESC` | string | No |
+| `page` | 0-based index of the page to return | number | No |
+| `pageSize` | Number of results per page to return.<br />Min: `1`, Max: `1000` | number | No |
 
 ## Configuration
 

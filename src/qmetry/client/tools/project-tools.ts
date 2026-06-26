@@ -14,6 +14,7 @@ import type { QMetryToolParams } from "./types";
 export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
     title: "Fetch QMetry list Projects",
+    toolset: "Projects",
     summary:
       "Fetch QMetry projects list including projectID, name, projectKey, isArchived, viewIds and folderPath needed for other operations",
     handler: QMetryToolsHandlers.FETCH_PROJECTS,
@@ -91,6 +92,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Set QMetry Project Info",
+    toolset: "Projects",
     summary: "Set current QMetry project for your account",
     handler: QMetryToolsHandlers.SET_PROJECT_INFO,
     inputSchema: ProjectArgsSchema,
@@ -138,6 +140,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch QMetry Project Info",
+    toolset: "Projects",
     summary:
       "Fetch QMetry project information including viewId and folderPath needed for other operations",
     handler: QMetryToolsHandlers.FETCH_PROJECT_INFO,
@@ -180,6 +183,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Releases and Cycles",
+    toolset: "Projects",
     summary: "Fetch QMetry releases and cycles from the current project",
     handler: QMetryToolsHandlers.FETCH_RELEASES_CYCLES,
     inputSchema: ReleasesCyclesArgsSchema,
@@ -236,6 +240,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Builds",
+    toolset: "Projects",
     summary: "Fetch QMetry builds from the current project",
     handler: QMetryToolsHandlers.FETCH_BUILDS,
     inputSchema: BuildArgsSchema,
@@ -298,6 +303,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Platforms",
+    toolset: "Projects",
     summary: "Fetch QMetry platforms from the current project",
     handler: QMetryToolsHandlers.FETCH_PLATFORMS,
     inputSchema: PlatformArgsSchema,
@@ -385,6 +391,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Create Release",
+    toolset: "Projects",
     summary:
       "Create a new release in QMetry with optional cycle for test planning and execution tracking",
     handler: QMetryToolsHandlers.CREATE_RELEASE,
@@ -486,6 +493,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Create Cycle",
+    toolset: "Projects",
     summary:
       "Create a new cycle within an existing release in QMetry for test execution planning",
     handler: QMetryToolsHandlers.CREATE_CYCLE,
@@ -612,6 +620,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Update Cycle",
+    toolset: "Projects",
     summary: "Update an existing cycle in QMetry for test execution planning",
     handler: QMetryToolsHandlers.UPDATE_CYCLE,
     inputSchema: UpdateCycleArgsSchema,

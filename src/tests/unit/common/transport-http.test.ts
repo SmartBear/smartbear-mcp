@@ -19,10 +19,6 @@ function fakeRequest(
   return { headers } as unknown as IncomingMessage;
 }
 
-function fakeClient(configPrefix: string): Client {
-  return { configPrefix } as unknown as Client;
-}
-
 /**
  * Create a mock ServerResponse that captures writeHead/end calls
  */
@@ -170,49 +166,43 @@ describe("transport-http helpers", () => {
 
   describe("getHeaderName", () => {
     it("should convert snake_case key to kebab-case with client prefix", () => {
-      const client = fakeClient("Bugsnag");
-      expect(getHeaderName(client, "auth_token")).toBe("Bugsnag-Auth-Token");
+      expect(getHeaderName("Bugsnag", "auth_token")).toBe("Bugsnag-Auth-Token");
     });
 
     it("should handle single-word keys", () => {
-      const client = fakeClient("Reflect");
-      expect(getHeaderName(client, "token")).toBe("Reflect-Token");
+      expect(getHeaderName("Reflect", "token")).toBe("Reflect-Token");
     });
 
     it("should handle multi-word keys", () => {
-      const client = fakeClient("Bugsnag");
-      expect(getHeaderName(client, "project_api_key")).toBe(
+      expect(getHeaderName("Bugsnag", "project_api_key")).toBe(
         "Bugsnag-Project-Api-Key",
       );
     });
 
     it("should handle different client prefixes", () => {
-      const client = fakeClient("Zephyr");
-      expect(getHeaderName(client, "api_token")).toBe("Zephyr-Api-Token");
+      expect(getHeaderName("Zephyr", "api_token")).toBe("Zephyr-Api-Token");
     });
   });
 
   describe("getQueryStringName", () => {
     it("should convert snake_case key to pascalCase with client prefix", () => {
-      const client = fakeClient("Bugsnag");
-      expect(getQueryStringName(client, "auth_token")).toBe("bugsnagAuthToken");
+      expect(getQueryStringName("Bugsnag", "auth_token")).toBe(
+        "bugsnagAuthToken",
+      );
     });
 
     it("should handle single-word keys", () => {
-      const client = fakeClient("Reflect");
-      expect(getQueryStringName(client, "token")).toBe("reflectToken");
+      expect(getQueryStringName("Reflect", "token")).toBe("reflectToken");
     });
 
     it("should handle multi-word keys", () => {
-      const client = fakeClient("Bugsnag");
-      expect(getQueryStringName(client, "project_api_key")).toBe(
+      expect(getQueryStringName("Bugsnag", "project_api_key")).toBe(
         "bugsnagProjectApiKey",
       );
     });
 
     it("should handle different client prefixes", () => {
-      const client = fakeClient("Zephyr");
-      expect(getQueryStringName(client, "api_token")).toBe("zephyrApiToken");
+      expect(getQueryStringName("Zephyr", "api_token")).toBe("zephyrApiToken");
     });
   });
 });
@@ -291,6 +281,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -330,6 +321,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -366,6 +358,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -397,6 +390,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -438,6 +432,7 @@ describe("newServer (OAuth flow)", () => {
           setElicitationSupported: vi.fn(),
           cleanupSession: vi.fn(),
           server: { elicitInput: vi.fn() },
+          isClientEnabled: () => true,
         }) as any,
     );
 
@@ -695,6 +690,7 @@ describe("handleStreamableHttpRequest (session routing)", () => {
         setElicitationSupported: vi.fn(),
         cleanupSession: vi.fn(),
         server: { elicitInput: vi.fn() },
+        isClientEnabled: () => true,
       } as any;
     });
 

@@ -10,6 +10,7 @@ import {
 export class CreateTestCycleWebLink extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Create Test Cycle Web Link",
+    toolset: "Test Cycles",
     summary: "Create a new Web Link for a Test Cycle in Zephyr",
     readOnly: false,
     idempotent: false,

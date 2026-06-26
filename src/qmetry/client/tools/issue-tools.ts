@@ -1,6 +1,7 @@
 import { QMetryToolsHandlers } from "../../config/constants";
 import {
   CreateIssueArgsSchema,
+  IssueExecutionsArgsSchema,
   IssuesLinkedToTestCaseArgsSchema,
   IssuesListArgsSchema,
   LinkedIssuesByTestCaseRunArgsSchema,
@@ -12,6 +13,7 @@ import type { QMetryToolParams } from "./types";
 export const ISSUE_TOOLS: QMetryToolParams[] = [
   {
     title: "Create Defect or Issue",
+    toolset: "Issues",
     summary: "Create a new defect/issue internally in QMetry.",
     handler: QMetryToolsHandlers.CREATE_ISSUE,
     inputSchema: CreateIssueArgsSchema,
@@ -147,6 +149,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Update Issue",
+    toolset: "Issues",
     summary: "Update an existing QMetry issue by DefectId and/or entityKey.",
     handler: QMetryToolsHandlers.UPDATE_ISSUE,
     inputSchema: UpdateIssueArgsSchema,
@@ -201,6 +204,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Defects or Issues",
+    toolset: "Issues",
     summary:
       "Fetch QMetry defects or issues - automatically handles viewId resolution based on project",
     handler: QMetryToolsHandlers.FETCH_ISSUES,
@@ -321,6 +325,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Fetch Linked Issues of Test Case Run",
+    toolset: "Issues",
     summary:
       "Get issues that are linked (or not linked) to a specific test case run in QMetry",
     handler: QMetryToolsHandlers.FETCH_LINKED_ISSUES_BY_TESTCASE_RUN,
@@ -463,6 +468,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
   },
   {
     title: "Link Issues to Testcase Run",
+    toolset: "Issues",
     summary: "Link one or more issues to a QMetry Testcase Run (execution).",
     handler: QMetryToolsHandlers.LINK_ISSUES_TO_TESTCASE_RUN,
     inputSchema: LinkIssuesToTestcaseRunArgsSchema,
@@ -501,7 +507,206 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     idempotent: false,
   },
   {
+    title: "Fetch Issue Executions",
+    toolset: "Issues",
+    summary:
+      "Get test case executions linked to a QMetry-native (non-Jira) defect/issue. " +
+      "ALWAYS present results as a unified table: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label columns…>. " +
+      "NEVER show a separate type+value UDF breakdown — always combine identification fields and UDF values in one table per execution row.",
+    handler: QMetryToolsHandlers.FETCH_ISSUE_EXECUTIONS,
+    inputSchema: IssueExecutionsArgsSchema,
+    purpose:
+      "Retrieve all test case execution runs that are linked to a specific QMetry-native defect or issue. " +
+      "This tool is for local QMetry issues only (not Jira-integrated projects). " +
+      "Returns execution details including test case name, run status, platform, release/cycle, and UDF fields. " +
+      "The issue execution API (/rest/execution/getExecutionsForIssue) already returns Test Run UDF saved values in each row's udfjson field. " +
+      "This tool parses that udfjson and enriches it with Test Run UDF metadata so all configured UDF fields are included, even when a value is empty. " +
+      "Do NOT call 'Fetch Test Run UDF Values' after this tool for issue execution UDFs; that generic UDF tool uses the test-suite-run execution API, which is not the correct issue execution source. " +
+      "To get linkedAssetId, call Fetch Defects or Issues tool and use data[<index>].id from the response. " +
+      "IMPORTANT: Every execution record always contains key identification fields — " +
+      "Test Suite Key (tsEntityKey), Test Suite Name (tsName), Release (releaseName), Cycle (cycleName), " +
+      "Platform (platformName), Executed Version (executedVersion), and Test Run UDF values (testRunUdfs). " +
+      "These MUST always be shown in the response so users can identify which test suite run each execution belongs to.",
+    useCases: [
+      "Get all test executions linked to a specific defect",
+      "Audit which test cases were run against a given issue",
+      "Filter executions by run status (failed, passed, etc.) for an issue",
+      "Filter executions by platform/environment for an issue",
+      "Filter executions by tester/executor for an issue",
+      "Show archived and active test suite executions for an issue",
+      "View UDF (custom field) values on executions linked to an issue",
+      "Track test coverage and execution progress for a defect",
+    ],
+    examples: [
+      {
+        description: "Get all executions linked to issue ID 9598240",
+        parameters: {
+          linkedAssetId: 9598240,
+        },
+        expectedOutput:
+          "Present as ONE unified table — never as a separate type+value UDF breakdown. Example:\n" +
+          "| Test Suite Key | Test Suite Name  | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type |\n" +
+          "| MAC-TS-42      | Regression Suite | R1      | Sprint1 | Chrome   | 1               | Failed           | varis     | chrome, edge, safari | Functional     |\n" +
+          "| MAC-TS-43      | Login Suite      | R1      | Sprint1 | Firefox  | 2               | Blocked          | john      | firefox              | Regression     |\n" +
+          "Columns in order: Test Suite Key (tsEntityKey) | Test Suite Name (tsName) | Release (releaseName) | Cycle (cycleName) | Platform (platformName) | Executed Version (executedVersion) | Execution Status (runStatusName) | then one column per UDF label. " +
+          "Use the UDF 'label' as column header. Show null UDF values as '-'.",
+      },
+      {
+        description: "Get executions with pagination (page 1, 20 records)",
+        parameters: {
+          linkedAssetId: 9598240,
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput: "First 20 executions linked to the issue",
+      },
+      {
+        description: "Filter executions by run status (failed or passed)",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter:
+            '[{"type":"list","field":"runStatusName","value":["failed","passed"]}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput: "Executions with failed or passed status for the issue",
+      },
+      {
+        description: "Filter executions by test case name",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter: '[{"type":"string","value":"login","field":"tcName"}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput: "Executions where test case name contains 'login'",
+      },
+      {
+        description: "Filter by platform, status, and tester",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter:
+            '[{"type":"list","field":"runStatusName","value":["failed"]},{"type":"list","field":"platformID","value":[100145]},{"type":"list","field":"executionCreatedByLoginAlias","value":["Varis Khan"]}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput:
+          "Failed executions on platform 100145 created by Varis Khan",
+      },
+      {
+        description:
+          "Filter by status and include archived test suite executions",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter:
+            '[{"type":"list","field":"runStatusName","value":["failed","passed"]},{"value":[1,0],"type":"list","field":"isTestSuiteArchived"}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput:
+          "Executions with failed/passed status including archived test suites",
+      },
+      {
+        description: "Filter by execution version and linkage level",
+        parameters: {
+          linkedAssetId: 9509016,
+          filter:
+            '[{"type":"string","value":"1","field":"executedVersion"},{"type":"string","value":"Test Case","field":"linkageLevel"}]',
+          page: 1,
+          start: 0,
+          limit: 20,
+        },
+        expectedOutput: "Executions at Test Case linkage level for version 1",
+      },
+    ],
+    hints: [
+      "=== MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT ===",
+      "",
+      "PIVOT RULE — CRITICAL:",
+      "The 'testRunUdfs' field on each execution is an array of { name, label, fieldID, fieldType, value }.",
+      "You MUST pivot this array into TABLE COLUMNS — do NOT render it as rows.",
+      "  → Each testRunUdfs[i].label  = a column header in the unified table",
+      "  → Each testRunUdfs[i].value  = the cell value for that execution's row",
+      "  → testRunUdfs[i].fieldType   = INTERNAL METADATA — NEVER show this as a column",
+      "  → testRunUdfs[i].fieldID     = INTERNAL METADATA — NEVER show this as a column",
+      "",
+      "FORBIDDEN PATTERNS — NEVER do any of these:",
+      "  ❌ Do NOT render a separate sub-table (UDF Label | Type | Value) per execution",
+      "  ❌ Do NOT show 'Type' or 'fieldType' as a visible column",
+      "  ❌ Do NOT group output by tcRunID with individual breakdowns beneath each",
+      "  ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as headers — use 'label'",
+      "",
+      "REQUIRED OUTPUT — ONE unified table, all executions as rows:",
+      "| Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... |",
+      "|----------------|-----------------|---------|-------|----------|------------------|------------------|---------------|---------------|-----|",
+      "| MAC-TS-42      | Login Suite     | R1      | S1    | Chrome   | v1               | Failed           | varis         | chrome, edge  | ... |",
+      "",
+      "MANDATORY COLUMNS (always first, in this order):",
+      "  1. Test Suite Key    → tsEntityKey    (e.g. 'MAC-TS-42')",
+      "  2. Test Suite Name   → tsName         (test suite display name)",
+      "  3. Release           → releaseName",
+      "  4. Cycle             → cycleName",
+      "  5. Platform          → platformName",
+      "  6. Executed Version  → executedVersion",
+      "  7. Execution Status  → runStatusName",
+      "  8. Tested By         → executionCreatedByLoginAlias/testedBy when present",
+      "  9+. One column per UDF field — use testRunUdfs[i].label as header, testRunUdfs[i].value as cell.",
+      "",
+      "Null UDF values → show as '-'. If hasTcRunUdf is false, show columns 1-8 only.",
+      "ISSUE EXECUTION UDF SOURCE — CRITICAL:",
+      "Do NOT call 'Fetch Test Run UDF Values' for issue execution UDFs.",
+      "Do NOT create or use another issue-specific UDF fetch tool.",
+      "Use this tool's response directly: it calls /rest/execution/getExecutionsForIssue for execution rows, parses each row's udfjson for saved UDF values, and uses Test Run UDF metadata to include all configured UDF labels with null/empty values.",
+      "=== END MANDATORY RESPONSE FORMAT ===",
+      "",
+      "CRITICAL: linkedAssetId is REQUIRED - this is the numeric defect ID from QMetry (not entity key like VKT-IS-5)",
+      "HOW TO GET linkedAssetId: Call Fetch Defects or Issues tool → use data[<index>].id from the response",
+      "AUTO-RESOLVE: If user provides an issue entity key (e.g. VKT-IS-5, MAC-IS-10), first call Fetch Defects or Issues with that entity key as filter, extract data[<index>].id, then use it as linkedAssetId",
+      'AUTO-RESOLVE FILTER EXAMPLE: to resolve VKT-IS-5 → use filter \'[{"type":"string","value":"VKT-IS-5","field":"entityKeyId"}]\' in Fetch Defects or Issues tool',
+      "This tool supports QMetry-native issues only — do NOT use for Jira-integrated projects",
+      "API SOURCE: Execution rows and saved UDF values come from /rest/execution/getExecutionsForIssue. The udfjson field contains saved Test Run UDF values, e.g. Tested_By, execution_type, Country_mcp_udf, environments_udf.",
+      "METADATA SOURCE: This tool also calls Test Run UDF metadata once to get all available labels, fieldIDs, field types, and empty fields. Merge metadata fields with udfjson values by UDF name.",
+      "RESPONSE FIELDS: hasTcRunUdf=true means executions have UDF data; each execution includes a 'testRunUdfs' array with ALL project-defined UDF fields",
+      "ALL UDF FIELDS: ALL project-defined Test Run UDF fields are returned for every execution — including fields not yet set (value: null)",
+      "Each element in testRunUdfs: { name, label, fieldID, fieldType, value } — use fieldID when calling 'Bulk Update Test Run UDFs'",
+      'EXAMPLE testRunUdfs: [{ "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "test" }, { "name": "dateField", "label": "Date", "fieldID": 229255, "fieldType": "DATETIMEPICKER", "value": null }]',
+      "FILTER FIELDS:",
+      "  - tcName (string): filter by test case name substring",
+      "  - linkageLevel (string): 'Test Case' or 'Test Step'",
+      "  - executedVersion (string): version number as string e.g. '1'",
+      '  - runStatusName (list): e.g. ["failed","passed","in progress"]',
+      "  - platformID (list): numeric platform IDs e.g. [100145]. Get from FETCH_PLATFORMS tool",
+      '  - executionCreatedByLoginAlias (list): usernames/login aliases e.g. ["john.doe"]',
+      "  - isTestSuiteArchived (list): [1] active only, [0] archived only, [1,0] both",
+      'FILTER FORMAT: JSON string array — \'[{"type":"list","field":"runStatusName","value":["failed"]}]\'',
+      "Multiple filter conditions are combined with AND logic",
+      "Use pagination (page, start, limit) for large result sets",
+      "Get platform IDs using the FETCH_PLATFORMS tool before filtering by platformID",
+      "Execution status names are case-sensitive — use lowercase: 'failed', 'passed', 'in progress', 'blocked', 'not run'",
+      "hasTcRunUdf: false → No Test Run UDFs configured; testRunUdfs will not appear; a 'testRunUdfNote' field explains this.",
+    ],
+    outputDescription:
+      "JSON object with 'data' array of execution records, 'hasTcRunUdf' boolean flag, and 'total' count. " +
+      "Each execution record ALWAYS contains these mandatory identification fields: " +
+      "'tsEntityKey' (Test Suite Key, e.g. 'MAC-TS-42'), 'tsName' (Test Suite Name), " +
+      "'releaseName' (Release), 'cycleName' (Cycle), 'platformName' (Platform/environment), " +
+      "'executedVersion' (Executed Version of the test case), 'runStatusName' (Execution Status label), " +
+      "'tcRunID' (numeric Test Run ID), 'tcName' (Test Case Name), 'tcEntityKey' (Test Case Key), " +
+      "and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). " +
+      "ALL project-defined UDF fields are always included, even those with no value. " +
+      "When hasTcRunUdf is false, a 'testRunUdfNote' field provides a professional explanation instead.",
+    readOnly: true,
+    idempotent: true,
+    openWorld: false,
+  },
+  {
     title: "Fetch Issues Linked to Test Case",
+    toolset: "Issues",
     summary:
       "Get issues that are linked (or not linked) to a specific test case in QMetry",
     handler: QMetryToolsHandlers.FETCH_ISSUES_LINKED_TO_TESTCASE,

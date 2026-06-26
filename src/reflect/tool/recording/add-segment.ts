@@ -9,6 +9,7 @@ import type { ReflectClient } from "../../client";
 export class AddSegment extends Tool<ReflectClient> {
   specification: ToolParams = {
     title: "Add Segment",
+    toolset: "Recording",
     summary:
       "Insert a reusable test segment into an active Reflect recording session",
     readOnly: false,

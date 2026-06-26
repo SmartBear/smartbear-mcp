@@ -11,6 +11,7 @@ import {
 export class GetTestCaseLinks extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Get Test Case Links",
+    toolset: "Test Cases",
     summary:
       "Get all links (issue links and web links) associated with a test case in Zephyr",
     readOnly: true,

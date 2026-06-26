@@ -12,6 +12,7 @@ const inputSchema = z.object({
 export class StopTask extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "Stop Task",
+    toolset: "Tasks",
     summary: "Cancels a running task.",
     inputSchema,
   };

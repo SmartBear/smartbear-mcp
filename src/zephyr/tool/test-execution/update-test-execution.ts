@@ -11,6 +11,7 @@ import {
 export class UpdateTestExecution extends Tool<ZephyrClient> {
   specification: ToolParams = {
     title: "Update Test Execution",
+    toolset: "Test Executions",
     summary:
       "Update an existing Test Execution in Zephyr. This operation only updates specified fields in the payload and ignores `null` or `undefined` values.",
     readOnly: false,

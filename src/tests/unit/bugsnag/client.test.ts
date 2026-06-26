@@ -15,7 +15,7 @@ import type {
 } from "../../../bugsnag/client/api/index.js";
 import type { ProjectAPI } from "../../../bugsnag/client/api/Project.js";
 import { BugsnagClient } from "../../../bugsnag/client.js";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info.js";
+import { USER_AGENT } from "../../../common/info.js";
 import { ToolError } from "../../../common/tools.js";
 import {
   getMockError,
@@ -202,7 +202,7 @@ describe("BugsnagClient", () => {
           basePath: "https://api.bugsnag.smartbear.com",
           apiKey: expect.any(Function),
           headers: expect.objectContaining({
-            "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+            "User-Agent": USER_AGENT,
             "Content-Type": "application/json",
             "X-Bugsnag-API": "true",
             "X-Version": "2",
@@ -687,7 +687,7 @@ describe("BugsnagClient", () => {
 
       const configCall = MockedConfiguration.mock.calls[0][0];
       expect(configCall?.headers).toEqual({
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": USER_AGENT,
         "Content-Type": "application/json",
         "X-Bugsnag-API": "true",
         "X-Version": "2",
