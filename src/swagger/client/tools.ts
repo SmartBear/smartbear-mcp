@@ -48,6 +48,7 @@ import {
   StandardizeApiOutputSchema,
   StandardizeApiParamsSchema,
 } from "./registry-types";
+import { DELETING, MUTATING, READ_ONLY } from "./tool-constants";
 import {
   OrganizationsListOutputSchema,
   OrganizationsQuerySchema,
@@ -57,25 +58,6 @@ export interface SwaggerToolParams extends ToolParams {
   handler: string;
   formatResponse?: (result: any) => any;
 }
-
-export const READ_ONLY = {
-  readOnly: true,
-  destructive: false,
-  openWorld: false,
-} as const;
-
-const MUTATING = {
-  readOnly: false,
-  destructive: false,
-  openWorld: true,
-} as const;
-
-const DELETING = {
-  readOnly: false,
-  destructive: true,
-  openWorld: true,
-} as const;
-
 export const TOOLS: SwaggerToolParams[] = [
   {
     title: "List Portals",
