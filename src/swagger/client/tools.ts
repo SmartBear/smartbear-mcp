@@ -8,7 +8,6 @@
 
 import type { ToolParams } from "../../common/types";
 import { FUNCTIONAL_TESTING_TOOLS } from "./functional-testing-tools";
-import { DELETING, MUTATING, READ_ONLY } from "./tool-constants";
 import {
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
@@ -47,6 +46,7 @@ import {
   StandardizeApiOutputSchema,
   StandardizeApiParamsSchema,
 } from "./registry-types";
+import { DELETING, MUTATING, READ_ONLY } from "./tool-constants";
 import {
   OrganizationsListOutputSchema,
   OrganizationsQuerySchema,
