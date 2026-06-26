@@ -15,6 +15,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Use this tool when you need to discover available tests before running them or checking their status. " +
       "Do not use this tool to retrieve test execution results or history.",
     handler: "listFunctionalTestingTests",
+    idempotent: true,
+    readOnly: true,
   },
   {
     title: "Run Test",
@@ -37,7 +39,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "as well as the break down of the status of each test step.",
     inputSchema: GetFunctionalTestingExecutionTestSchema,
     handler: "getFunctionalTestingExecution",
-    idempotent: false,
+    idempotent: true,
+    readOnly: true,
   },
   {
     title: "List Suites",
@@ -74,6 +77,7 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Requires both `suiteId` and the `executionId` arguments returned by `swagger_run_suite`.",
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
     handler: "getFunctionalTestingSuiteExecution",
-    idempotent: false,
+    idempotent: true,
+    readOnly: true,
   },
 ];
