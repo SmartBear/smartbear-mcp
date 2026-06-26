@@ -130,6 +130,8 @@ export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
 
 # Required for Swagger Functional Testing tools
 export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
+# Optional: Override the Swagger Functional Testing API base URL (defaults to https://api.reflect.run/v1)
+export SWAGGER_FUNCTIONAL_TESTING_BASE_PATH=https://api.reflect.run/v1
 ```
 
 > ⚠️ The `MCP_SERVER_BUGSNAG_API_KEY` is used for monitoring the MCP server itself and should be different from your main application's API key.
@@ -170,7 +172,8 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
-        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
       }
     }
   },
@@ -282,6 +285,12 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "type": "promptString",
       "description": "Swagger Functional Testing API Token",
       "password": true
+    },
+    {
+      "id": "swagger_functional_testing_base_path",
+      "type": "promptString",
+      "description": "Swagger Functional Testing API Base URL (leave blank for default https://api.reflect.run/v1)",
+      "password": false
     }
   ]
 }
@@ -460,7 +469,8 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
-        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
       }
     }
   },
@@ -572,6 +582,12 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "type": "promptString",
       "description": "Swagger Functional Testing API Token",
       "password": true
+    },
+    {
+      "id": "swagger_functional_testing_base_path",
+      "type": "promptString",
+      "description": "Swagger Functional Testing API Base URL (leave blank for default https://api.reflect.run/v1)",
+      "password": false
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
+import { withRequestContext } from "../../../common/request-context";
 import { SwaggerClient } from "../../../swagger/client";
 import { TOOLS } from "../../../swagger/client/tools";
 
@@ -32,6 +33,61 @@ describe("SwaggerClient", () => {
     it("should create configuration and API instances", () => {
       // Test that the client was constructed successfully
       expect(client).toBeDefined();
+    });
+  });
+
+  describe("configure (authentication)", () => {
+    const registeredTitles = (client: SwaggerClient) => {
+      const mockRegister = vi.fn();
+      client.registerTools(mockRegister, vi.fn());
+      return mockRegister.mock.calls.map((call) => call[0].title);
+    };
+
+    it("registers Portal/Studio tools when configured with an api_key", async () => {
+      const freshClient = new SwaggerClient();
+      await freshClient.configure({} as any, { api_key: "test-token" });
+
+      expect(freshClient.isConfigured()).toBe(true);
+      expect(registeredTitles(freshClient)).toContain("List Portals");
+    });
+
+    it("registers Portal/Studio tools when an OAuth bearer token is present", async () => {
+      const freshClient = new SwaggerClient();
+      await withRequestContext(
+        { headers: { authorization: "Bearer oauth-token" } } as any,
+        () => freshClient.configure({} as any, {}),
+      );
+
+      expect(freshClient.isConfigured()).toBe(true);
+      expect(registeredTitles(freshClient)).toContain("List Portals");
+    });
+
+    it("registers Portal/Studio tools when a Swagger-Api-Key header is present", async () => {
+      const freshClient = new SwaggerClient();
+      await withRequestContext(
+        { headers: { "swagger-api-key": "header-key" } } as any,
+        () => freshClient.configure({} as any, {}),
+      );
+
+      expect(freshClient.isConfigured()).toBe(true);
+      expect(registeredTitles(freshClient)).toContain("List Portals");
+    });
+
+    it("does not register Portal/Studio tools when only an FT token is configured", async () => {
+      const freshClient = new SwaggerClient();
+      await freshClient.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      expect(freshClient.isConfigured()).toBe(true);
+      expect(registeredTitles(freshClient)).not.toContain("List Portals");
+    });
+
+    it("is not configured when no auth is supplied", async () => {
+      const freshClient = new SwaggerClient();
+      await freshClient.configure({} as any, {});
+
+      expect(freshClient.isConfigured()).toBe(false);
     });
   });
 
@@ -183,7 +239,8 @@ describe("SwaggerClient", () => {
       const result = await handler({}, {});
 
       expect(result).toEqual({
-        content: [{ type: "text", text: JSON.stringify(mockResponse) }],
+        structuredContent: mockResponse,
+        content: [],
       });
     });
 
@@ -207,7 +264,8 @@ describe("SwaggerClient", () => {
       const result = await handler(args, {});
 
       expect(result).toEqual({
-        content: [{ type: "text", text: JSON.stringify(mockResponse) }],
+        structuredContent: mockResponse,
+        content: [],
       });
     });
 
@@ -237,6 +295,7 @@ describe("SwaggerClient", () => {
       const result = await handler({}, {});
 
       expect(result).toEqual({
+        isError: true,
         content: [{ type: "text", text: "Error: Network error" }],
       });
     });
@@ -275,7 +334,8 @@ describe("SwaggerClient", () => {
       );
 
       expect(result).toEqual({
-        content: [{ type: "text", text: JSON.stringify(mockResponse) }],
+        structuredContent: mockResponse,
+        content: [],
       });
     });
 
@@ -303,6 +363,7 @@ describe("SwaggerClient", () => {
       const result = await handler({}, {});
 
       expect(result).toEqual({
+        isError: true,
         content: [
           {
             type: "text",

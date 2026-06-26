@@ -1,9 +1,12 @@
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
 import type {
+  CreateDocumentationPageArgs,
+  CreateDocumentationPageResult,
   CreatePortalArgs,
   CreateProductBody,
   CreateTableOfContentsBody,
+  CreateTableOfContentsItemResponse,
   DeleteTableOfContentsArgs,
   Document,
   FallbackResponse,
@@ -14,6 +17,7 @@ import type {
   PortalsListResponse,
   Product,
   ProductsListResponse,
+  PublishPortalProductResponse,
   ResolvedPortalProduct,
   ResolveOrganizationPortalArgs,
   ResolveOrganizationPortalResponse,
@@ -42,8 +46,11 @@ import type {
   CreateApiFromPromptResponse,
   CreateApiParams,
   CreateApiResponse,
+  ScanApiStandardizationFromRegistryParams,
+  ScanApiStandardizationFromRegistryResult,
   ScanStandardizationParams,
   StandardizationResult,
+  StandardizationScanApiResponse,
   StandardizeApiParams,
   StandardizeApiResponse,
 } from "./registry-types";
@@ -52,6 +59,11 @@ import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
 } from "./user-management-types";
+import {
+  buildPortalLiveUrl,
+  findTableOfContentsItem,
+  normalizeSlug,
+} from "./utils";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
@@ -88,6 +100,20 @@ function hasErrorsFound(
   value: unknown,
 ): value is { errorsFound: number } & Record<string, unknown> {
   return typeof value === "object" && value !== null && "errorsFound" in value;
+}
+
+/**
+ * Type guard to check if a value is a StandardizationScanApiResponse
+ */
+function isStandardizationResult(
+  value: unknown,
+): value is StandardizationScanApiResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "validation" in value &&
+    Array.isArray((value as StandardizationScanApiResponse).validation)
+  );
 }
 
 export class SwaggerAPI {
@@ -551,10 +577,149 @@ export class SwaggerAPI {
     } as SuccessResponse);
   }
 
+  /**
+   * Prepare publication metadata and URL for a portal product and page.
+   * Fetches product, portal, and section details step-by-step, gracefully handling failures.
+   * Product and portal details are essential for URL generation; sections are optional.
+   * @param productId - ID of the product to publish
+   * @param preview - Whether this is a preview publish
+   * @param tableOfContentsId - Optional table of contents UUID or identifier
+   * @returns Publication metadata with optional fields based on what could be fetched
+   */
+  private async preparePublicationMetadata(
+    productId: string,
+    preview: boolean,
+    tableOfContentsId: string | null,
+  ): Promise<{
+    publicationUrl: string | null;
+    product?: Pick<Product, "id" | "name" | "slug">;
+    portal?: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
+    tableOfContentsItem?: Pick<
+      TableOfContentsItem,
+      "id" | "slug" | "title" | "order" | "parentId"
+    >;
+    warning?: {
+      step: string;
+      message: string;
+    };
+  }> {
+    // Step 1: Fetch product details (required for URL generation)
+    let productDetails: Product | null = null;
+    try {
+      productDetails = await this.getPortalProduct(productId);
+    } catch (error) {
+      console.warn("Failed to fetch product details:", error);
+      return {
+        publicationUrl: null,
+        warning: {
+          step: "product",
+          message: `Product published ${preview ? "in preview mode" : "in live mode"} successfully, but failed to fetch product details for URL generation`,
+        },
+      };
+    }
+
+    // Step 2: Fetch portal details (required for URL generation)
+    let portalDetails: Portal | null = null;
+    if (productDetails?.portalId) {
+      try {
+        portalDetails = await this.getPortal(String(productDetails.portalId));
+      } catch (error) {
+        console.warn("Failed to fetch portal details:", error);
+      }
+    }
+
+    // If we don't have both product and portal, return empty URL only
+    if (!portalDetails) {
+      return {
+        publicationUrl: null,
+        product: productDetails
+          ? {
+              id: productDetails.id,
+              name: productDetails.name,
+              slug: productDetails.slug,
+            }
+          : undefined,
+        warning: {
+          step: "portal",
+          message: `Product published ${preview ? "in preview mode" : "in live mode"} successfully, but failed to fetch portal details for URL generation`,
+        },
+      };
+    }
+
+    // Step 3: Fetch sections (optional, for page-specific URLs)
+    let sections: SectionsListResponse | null = null;
+    try {
+      sections = await this.getPortalProductSections(productId, {
+        embed: ["tableOfContents", "tableOfContents.swaggerhubApi"],
+      });
+    } catch (error) {
+      console.warn("Failed to fetch sections:", error);
+    }
+
+    const targetSection = sections?.items[0] ?? null;
+
+    const targetTocItem =
+      tableOfContentsId && targetSection
+        ? findTableOfContentsItem(
+            targetSection.tableOfContents ?? [],
+            tableOfContentsId,
+          )
+        : null;
+
+    // Build URL with available data (product + portal required, section + toc optional)
+    const publicationUrl = buildPortalLiveUrl(
+      this.config,
+      portalDetails,
+      productDetails.slug,
+      targetSection,
+      targetTocItem,
+      preview,
+    );
+
+    return {
+      publicationUrl,
+      product: {
+        id: productDetails.id,
+        name: productDetails.name,
+        slug: productDetails.slug,
+      },
+      portal: {
+        id: portalDetails.id,
+        name: portalDetails.name,
+        subdomain: portalDetails.subdomain,
+        customDomain: portalDetails.customDomain,
+      },
+      ...(targetTocItem
+        ? {
+            tableOfContentsItem: {
+              id: targetTocItem.id,
+              slug: targetTocItem.slug,
+              title: targetTocItem.title,
+              order: targetTocItem.order,
+              parentId: targetTocItem.parentId,
+            },
+          }
+        : {}),
+    };
+  }
+
+  /**
+   * Publish a portal product and generate a published URL with environment-specific domain.
+   * The publish operation always succeeds if the API call succeeds. URL generation is done separately and may fail gracefully.
+   * Returns `liveUrl` for live publishes and `previewUrl` for preview publishes (null if URL building fails).
+   * When metadata/URL building fails, response includes `success: true` (publish succeeded), `liveUrl/previewUrl: null`,
+   * and a `warning` object explaining which step failed (product/portal fetch or URL building).
+   * @param productId - ID of the product to publish
+   * @param preview - Whether to publish in preview mode (default: false)
+   * @param tableOfContentsId - Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'
+   * @returns Complete publish response with `success: true`, optional URL/metadata, and optional warning details
+   */
   async publishPortalProduct(
     productId: string,
     preview: boolean = false,
-  ): Promise<SuccessResponse | FallbackResponse> {
+    tableOfContentsId: string | null = null,
+  ): Promise<PublishPortalProductResponse | FallbackResponse> {
+    // Execute the publish operation first (primary action)
     const response = await fetch(
       `${this.config.portalBasePath}/products/${productId}/published-content?preview=${preview}`,
       {
@@ -562,9 +727,57 @@ export class SwaggerAPI {
         headers: this.headers,
       },
     );
-    return this.handleResponse<SuccessResponse>(response, {
+
+    const result = await this.handleResponse<SuccessResponse>(response, {
       success: true,
     } as SuccessResponse);
+
+    // Attempt to build metadata and URLs
+    try {
+      const metadata = await this.preparePublicationMetadata(
+        productId,
+        preview,
+        tableOfContentsId,
+      );
+
+      // Build complete response with metadata
+      return {
+        ...result,
+        preview,
+        [preview ? "previewUrl" : "liveUrl"]: metadata.publicationUrl,
+        ...(metadata.product ? { product: metadata.product } : {}),
+        ...(metadata.portal ? { portal: metadata.portal } : {}),
+        ...(metadata.tableOfContentsItem
+          ? { tableOfContentsItem: metadata.tableOfContentsItem }
+          : {}),
+        ...(metadata.warning
+          ? {
+              warning: {
+                code: "METADATA_FETCH_FAILED",
+                step: metadata.warning.step,
+                message: metadata.warning.message,
+              },
+            }
+          : {}),
+      } as PublishPortalProductResponse;
+    } catch (error) {
+      console.warn(
+        "Failed to build publication metadata — returning publish success with empty URL:",
+        error,
+      );
+
+      // Return publish success with null URL field and warning details
+      return {
+        ...result,
+        preview,
+        [preview ? "previewUrl" : "liveUrl"]: null,
+        warning: {
+          code: "METADATA_BUILD_FAILED",
+          step: "url_build",
+          message: `Product published ${preview ? "in preview mode" : "in live mode"} successfully, but failed to build publication URL`,
+        },
+      } as PublishPortalProductResponse;
+    }
   }
 
   async getPortalProductSections(
@@ -592,9 +805,19 @@ export class SwaggerAPI {
       headers: this.headers,
     });
 
+    const defaultResponse: SectionsListResponse = {
+      page: {
+        number: 0,
+        size: 0,
+        totalElements: 0,
+        totalPages: 0,
+      },
+      items: [],
+    };
+
     const result = await this.handleResponse<SectionsListResponse>(
       response,
-      [] as SectionsListResponse,
+      defaultResponse,
     );
     return result as SectionsListResponse;
   }
@@ -608,7 +831,7 @@ export class SwaggerAPI {
   async createTableOfContents(
     sectionId: string,
     body: CreateTableOfContentsBody,
-  ): Promise<TableOfContentsItem> {
+  ): Promise<CreateTableOfContentsItemResponse> {
     const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents`;
 
     const response = await fetch(url, {
@@ -625,7 +848,7 @@ export class SwaggerAPI {
     }
 
     const result = await response.json();
-    return result as TableOfContentsItem;
+    return result as CreateTableOfContentsItemResponse;
   }
 
   /**
@@ -652,7 +875,6 @@ export class SwaggerAPI {
     }
 
     const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-
     const response = await fetch(url, {
       method: "GET",
       headers: this.headers,
@@ -667,8 +889,12 @@ export class SwaggerAPI {
 
     const result = await response.json();
 
-    // The API returns a paginated response, so we extract the items array
-    return result.items as TableOfContentsListResponse;
+    // The API may return either a raw array or a paginated response with an items array.
+    if (Array.isArray(result)) {
+      return result as TableOfContentsListResponse;
+    }
+
+    return (result.items ?? []) as TableOfContentsListResponse;
   }
 
   /**
@@ -722,6 +948,91 @@ export class SwaggerAPI {
     }
 
     return { success: true };
+  }
+
+  async createDocumentationPage(
+    args: CreateDocumentationPageArgs,
+  ): Promise<CreateDocumentationPageResult> {
+    const {
+      portalId,
+      productId,
+      pageTitle,
+      pageContent,
+      contentType = "markdown",
+      source = "internal",
+      order = 0,
+      parentId = null,
+    } = args;
+
+    if (
+      contentType === "html" &&
+      source === "internal" &&
+      pageContent !== undefined
+    ) {
+      throw new ToolError(
+        "Cannot create an html + internal page with content via API. Use 'external' source for html, or 'markdown' with 'internal' source.",
+      );
+    }
+
+    const portal = await this.getPortal(portalId);
+    const product = await this.getPortalProduct(productId);
+    const productSlug = (product as Record<string, unknown>)?.slug as string;
+
+    const sections = await this.getPortalProductSections(productId, {});
+
+    if (sections.items.length === 0) {
+      throw new ToolError(
+        `Product ${productId} has no sections. Create a section first before adding documentation pages.`,
+      );
+    }
+    const section = sections.items[0];
+
+    const pageSlug = normalizeSlug(pageTitle);
+    const normalizedTitle = pageTitle.slice(0, 255);
+
+    const tocItem = await this.createTableOfContents(section.id, {
+      type: "new",
+      title: normalizedTitle,
+      slug: pageSlug,
+      order,
+      parentId,
+      content: {
+        type: contentType,
+        source,
+      },
+    });
+    const documentId = tocItem.documentId;
+
+    if (pageContent !== undefined) {
+      await this.updateDocument({
+        documentId,
+        content: pageContent,
+        type: contentType,
+      });
+    }
+
+    const host = portal?.customDomain ?? portal?.subdomain;
+    const portalUiDomain = portal?.customDomain
+      ? ""
+      : this.config.getPortalUiDomainSuffix();
+    const draftUrl = `https://${host}${portalUiDomain}/sp-admin/products/${productSlug}/edit/content/${tocItem.id}`;
+
+    return {
+      productId,
+      sectionId: section.id,
+      sectionSlug: section.slug,
+      pageDetails: {
+        tableOfContentsId: tocItem.id,
+        slug: pageSlug,
+        title: normalizedTitle,
+        content: {
+          type: contentType,
+          source,
+          documentId,
+        },
+      },
+      draftUrl,
+    };
   }
 
   /**
@@ -847,9 +1158,13 @@ export class SwaggerAPI {
   /**
    * Get API definition from SwaggerHub Registry
    * @param params Parameters including owner, api name, version, and options
+   * @param options Optional transport options
    * @returns API definition (OpenAPI/Swagger specification)
    */
-  async getApiDefinition(params: ApiDefinitionParams): Promise<unknown> {
+  async getApiDefinition(
+    params: ApiDefinitionParams,
+    options?: { accept?: "text/plain" | "application/json" },
+  ): Promise<unknown> {
     const searchParams = new URLSearchParams();
 
     if (params.resolved !== undefined)
@@ -861,7 +1176,9 @@ export class SwaggerAPI {
 
     const response = await fetch(url, {
       method: "GET",
-      headers: this.headers,
+      headers: options?.accept
+        ? { ...this.headers, Accept: options.accept }
+        : this.headers,
     });
 
     if (!response.ok) {
@@ -1032,7 +1349,7 @@ export class SwaggerAPI {
    */
   async scanStandardization(
     params: ScanStandardizationParams,
-  ): Promise<StandardizationResult> {
+  ): Promise<StandardizationResult | FallbackResponse> {
     // Auto-detect format from the definition content
     const format = this.detectDefinitionFormat(params.definition);
 
@@ -1077,7 +1394,51 @@ export class SwaggerAPI {
       );
     }
 
-    return await this.handleResponse<StandardizationResult>(response);
+    const results =
+      await this.handleResponse<StandardizationScanApiResponse>(response);
+
+    if (isStandardizationResult(results)) {
+      const errors = results.validation ?? [];
+      const countsBySeverity: Record<string, number> = {};
+      for (const error of errors) {
+        const severity = error.severity ?? "Unknown";
+        countsBySeverity[severity] = (countsBySeverity[severity] ?? 0) + 1;
+      }
+
+      return { ...results, count: errors.length, countsBySeverity };
+    }
+    return results;
+  }
+
+  /**
+   * Fetch an API definition from the registry and run a standardization scan
+   * @param params Parameters including organization name, API name, and version
+   * @returns Scan results with total count and counts grouped by severity
+   */
+  async scanApiStandardizationFromRegistry(
+    params: ScanApiStandardizationFromRegistryParams,
+  ): Promise<ScanApiStandardizationFromRegistryResult | FallbackResponse> {
+    const definition = await this.getApiDefinition(
+      {
+        owner: params.orgName,
+        api: params.apiName,
+        version: params.version,
+      },
+      { accept: "text/plain" },
+    );
+
+    const results = await this.scanStandardization({
+      orgName: params.orgName,
+      definition: definition as string,
+    });
+
+    if (isStandardizationResult(results)) {
+      return {
+        ...results,
+        url: `${this.config.uiBasePath}/apis/${params.orgName}/${params.apiName}/${params.version}`,
+      };
+    }
+    return results;
   }
 
   /**
@@ -1110,14 +1471,12 @@ export class SwaggerAPI {
 
     const result = await this.handleResponse<StandardizeApiResponse>(response);
 
-    // Validate that we have the expected response structure
     if (!hasMessage(result)) {
       throw new ToolError(
         "Unexpected response format from standardizeApi endpoint",
       );
     }
 
-    // If errorsFound is not present, default to 0 (no errors found)
     if (!hasErrorsFound(result)) {
       return { ...result, errorsFound: 0 } as StandardizeApiResponse;
     }

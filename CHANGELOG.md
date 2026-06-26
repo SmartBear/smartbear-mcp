@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [Swagger] Add output schemas and TOC discriminated union [#535](https://github.com/SmartBear/smartbear-mcp/pull/535)
+
+- [Swagger] Extended `publish_portal_product` to build published URLs dynamically from `SWAGGER_PORTAL_BASE_PATH`, support preview and section/table-of-contents paths, and return the resolved `liveUrl` or `previewUrl` plus product, portal, and table-of-contents metadata in the publish response. If `portal.customDomain` is present, the client now uses it as the full host without appending the portal UI suffix. For url generation product and portal details ar required and section and toc details are optional.
+[#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
+
+- [Swagger] Add `create_documentation_page` tool to create a documentation page in a portal product in a single call. Supports `markdown` and `html` content types with `internal` or `external` source. Returns page details and a `draftUrl` to edit the page in the portal admin.
+
+- [Swagger] Extended Swagger Functional Testing integration with `run_test`, and `get_test_status` tools for executing available API tests and querying their execution.
+
+### Fixed
+
+- [Swagger] Extracted `READ_ONLY`, `MUTATING`, and `DELETING` constants into `tool-constants.ts` to resolve a circular dependency between `tools.ts` and `functional-testing-tools.ts` that caused a `ReferenceError` at runtime.
+
+## [0.26.1] - 2026-06-24
+
+### Fixed
+
+- [Swagger] Register Portal/Studio tools when authenticated via OAuth. Previously only an explicit API key (`SWAGGER_API_KEY` / `Swagger-Api-Key` header) enabled the tools, so OAuth-only sessions listed no Swagger tools. [#537](https://github.com/SmartBear/smartbear-mcp/pull/537)
+
+## [0.26.0] - 2026-06-19
+
+### Added
+
+- [Swagger] Add `scan_api_standardization_from_registry` tool to fetch and scan an API definition from the registry, returning results with total issue count and counts by severity [#510](https://github.com/SmartBear/smartbear-mcp/pull/510)
 - [Swagger] Add Swagger Functional Testing integration with `list_tests` tool for discovering available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 - [Swagger] Added `Resolve Organization Portal` tool to find or create a portal for an organization. [#526](https://github.com/SmartBear/smartbear-mcp/pull/526)
 - [Common] Added transport mode (stdio/http) to User-Agent header for all API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)

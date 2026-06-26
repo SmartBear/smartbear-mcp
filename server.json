@@ -62,6 +62,12 @@
           "isSecret": true
         },
         {
+          "name": "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH",
+          "description": "Override the Swagger Functional Testing API base URL (optional). Defaults to https://api.reflect.run/v1",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
           "name": "PACT_BROKER_BASE_URL",
           "description": "PactFlow/Pact Broker base URL. Leave empty to disable Pact tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/contract-testing-with-pactflow",
           "isRequired": false,
