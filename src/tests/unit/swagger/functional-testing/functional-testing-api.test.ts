@@ -167,6 +167,20 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(executionMock);
     });
 
+    it("should strip videoUrl from response", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify({
+          ...executionMock,
+          videoUrl: "https://cdn.reflect.run/video/42.mp4",
+        }),
+      );
+
+      const result = await api.getTestExecution({ executionId: "42" });
+
+      expect((result as Record<string, unknown>).videoUrl).toBeUndefined();
+      expect((result as Record<string, unknown>).executionId).toBe("42");
+    });
+
     it("should throw ToolError when executionId is missing", async () => {
       await expect(api.getTestExecution({ executionId: "" })).rejects.toThrow(
         "executionId argument is required",
