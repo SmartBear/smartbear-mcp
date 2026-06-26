@@ -189,7 +189,7 @@ export interface ApiMetadata {
   url?: string;
 }
 
-export type ApiSearchResponse = ApiMetadata[];
+export type ApiSearchResponse = { apis: ApiMetadata[] };
 
 // Response type for created or updated API
 export interface CreateApiResponse {
@@ -268,7 +268,9 @@ export const ApiMetadataOutputSchema = z.object({
   url: z.string().optional(),
 });
 
-export const ApiSearchOutputSchema = z.array(ApiMetadataOutputSchema);
+export const ApiSearchOutputSchema = z.object({
+  apis: z.array(ApiMetadataOutputSchema),
+});
 
 export const CreateApiOutputSchema = z.object({
   owner: z.string(),

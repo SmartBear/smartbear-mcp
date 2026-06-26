@@ -1404,4 +1404,89 @@ describe("SwaggerAPI", () => {
       expect(createCalls).toHaveLength(1);
     });
   });
+
+  describe("searchApis", () => {
+    const mockApisJsonResponse = {
+      name: "SmartBear APIs",
+      description: "",
+      url: "https://api.swaggerhub.com/specs",
+      offset: 0,
+      totalCount: 1,
+      blocked: false,
+      apis: [
+        {
+          name: "petstore",
+          description: "Sample pet store API",
+          summary: "Pet Store",
+          tags: [],
+          properties: [
+            {
+              type: "Swagger",
+              url: "https://app.swaggerhub.com/apis/smartbear/petstore/1.0.0",
+            },
+            { type: "X-Version", value: "1.0.0" },
+            { type: "X-Specification", value: "OpenAPI 3.0" },
+          ],
+        },
+      ],
+    };
+
+    it("should return apis wrapped in object", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(mockApisJsonResponse));
+
+      const result = await api.searchApis({});
+
+      expect(result).toHaveProperty("apis");
+      expect(Array.isArray(result.apis)).toBe(true);
+    });
+
+    it("should transform ApisJson response to ApiMetadata format", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(mockApisJsonResponse));
+
+      const result = await api.searchApis({});
+
+      expect(result.apis[0]).toMatchObject({
+        owner: "smartbear",
+        name: "petstore",
+        description: "Sample pet store API",
+        summary: "Pet Store",
+        version: "1.0.0",
+        specification: "OpenAPI 3.0",
+        url: "https://app.swaggerhub.com/apis/smartbear/petstore/1.0.0",
+      });
+    });
+
+    it("should pass query params to fetch URL", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(mockApisJsonResponse));
+
+      await api.searchApis({ owner: "smartbear", limit: 10 });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("owner=smartbear"),
+        expect.any(Object),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("limit=10"),
+        expect.any(Object),
+      );
+    });
+
+    it("should throw on non-ok response", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(api.searchApis({})).rejects.toThrow(
+        "SwaggerHub Registry API searchApis failed",
+      );
+    });
+
+    it("should return empty apis array when no results", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify({ ...mockApisJsonResponse, apis: [] }),
+      );
+
+      const result = await api.searchApis({});
+
+      expect(result).toEqual({ apis: [] });
+    });
+  });
 });

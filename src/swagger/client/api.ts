@@ -38,6 +38,7 @@ import {
 } from "./portal-utils";
 import type {
   ApiDefinitionParams,
+  ApiMetadata,
   ApiProperty,
   ApiSearchParams,
   ApiSearchResponse,
@@ -1127,7 +1128,7 @@ export class SwaggerAPI {
     const apisJsonResponse = (await response.json()) as ApisJsonResponse;
 
     // Transform APIs.json response to our ApiMetadata format
-    return this.transformApisJsonToMetadata(apisJsonResponse.apis);
+    return { apis: this.transformApisJsonToMetadata(apisJsonResponse.apis) };
   }
 
   /**
@@ -1137,7 +1138,7 @@ export class SwaggerAPI {
    */
   private transformApisJsonToMetadata(
     specs: ApiSpecification[],
-  ): ApiSearchResponse {
+  ): ApiMetadata[] {
     return specs.map((spec) => {
       // Extract useful properties from the properties array
       const properties = spec.properties || [];
