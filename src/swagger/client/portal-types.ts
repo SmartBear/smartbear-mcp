@@ -625,6 +625,23 @@ export interface CreateDocumentationPageResult {
   draftUrl?: string;
 }
 
+export const CreateDocumentationPageOutputSchema = z.object({
+  productId: z.string(),
+  sectionId: z.string(),
+  sectionSlug: z.string(),
+  pageDetails: z.object({
+    tableOfContentsId: z.string(),
+    slug: z.string(),
+    title: z.string(),
+    content: z.object({
+      type: z.enum(["markdown", "html"]),
+      source: z.enum(["internal", "external"]),
+      documentId: z.string(),
+    }),
+  }),
+  draftUrl: z.string().optional(),
+});
+
 // Output schemas for MCP tool responses
 export const PortalOutputSchema = z.looseObject({
   id: z.string(),
