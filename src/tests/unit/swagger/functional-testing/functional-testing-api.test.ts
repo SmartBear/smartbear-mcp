@@ -269,7 +269,7 @@ describe("FunctionalTestingAPI", () => {
       executionId: 7,
       isFinished: true,
       status: "Passed",
-      tests: { items: [] },
+      tests: [],
     };
 
     it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
