@@ -15,7 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Extended `publish_portal_product` to build published URLs dynamically from `SWAGGER_PORTAL_BASE_PATH`, support preview and section/table-of-contents paths, and return the resolved `liveUrl` or `previewUrl` plus product, portal, and table-of-contents metadata in the publish response. If `portal.customDomain` is present, the client now uses it as the full host without appending the portal UI suffix. For url generation product and portal details ar required and section and toc details are optional.
 [#525](https://github.com/SmartBear/smartbear-mcp/pull/525)
 
+- [Swagger] Add `create_documentation_page` tool to create a documentation page in a portal product in a single call. Supports `markdown` and `html` content types with `internal` or `external` source. Returns page details and a `draftUrl` to edit the page in the portal admin.
+
 - [Swagger] Extended Swagger Functional Testing integration with `run_test`, and `get_test_status` tools for executing available API tests and querying their execution.
+
+### Fixed
+
+- [Swagger] Extracted `READ_ONLY`, `MUTATING`, and `DELETING` constants into `tool-constants.ts` to resolve a circular dependency between `tools.ts` and `functional-testing-tools.ts` that caused a `ReferenceError` at runtime.
 
 ## [0.26.1] - 2026-06-24
 
@@ -29,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Add `scan_api_standardization_from_registry` tool to fetch and scan an API definition from the registry, returning results with total issue count and counts by severity [#510](https://github.com/SmartBear/smartbear-mcp/pull/510)
 - [Swagger] Add Swagger Functional Testing integration with `list_tests` tool for discovering available API tests. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+- [Swagger] Added `Resolve Organization Portal` tool to find or create a portal for an organization. [#526](https://github.com/SmartBear/smartbear-mcp/pull/526)
 - [Common] Added transport mode (stdio/http) to User-Agent header for all API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
 - [Collaborator] Add user agent header to API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
 - [Reflect] Added `get_test_detail` tool for retrieving full test details including name, description, and all recorded steps [#524](https://github.com/SmartBear/smartbear-mcp/pull/524)

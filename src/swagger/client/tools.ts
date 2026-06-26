@@ -9,6 +9,8 @@
 import type { ToolParams } from "../../common/types";
 import { FUNCTIONAL_TESTING_TOOLS } from "./functional-testing-tools";
 import {
+  CreateDocumentationPageArgsSchema,
+  CreateDocumentationPageOutputSchema,
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   CreateTableOfContentsArgsSchema,
@@ -24,6 +26,8 @@ import {
   ProductListOutputSchema,
   ProductOutputSchema,
   PublishProductArgsSchema,
+  ResolveOrganizationPortalArgsSchema,
+  ResolveOrganizationPortalOutputSchema,
   SectionListOutputSchema,
   SuccessOutputSchema,
   TableOfContentsItemOutputSchema,
@@ -46,6 +50,7 @@ import {
   StandardizeApiOutputSchema,
   StandardizeApiParamsSchema,
 } from "./registry-types";
+import { DELETING, MUTATING, READ_ONLY } from "./tool-constants";
 import {
   OrganizationsListOutputSchema,
   OrganizationsQuerySchema,
@@ -55,25 +60,6 @@ export interface SwaggerToolParams extends ToolParams {
   handler: string;
   formatResponse?: (result: any) => any;
 }
-
-export const READ_ONLY = {
-  readOnly: true,
-  destructive: false,
-  openWorld: false,
-} as const;
-
-const MUTATING = {
-  readOnly: false,
-  destructive: false,
-  openWorld: true,
-} as const;
-
-const DELETING = {
-  readOnly: false,
-  destructive: true,
-  openWorld: true,
-} as const;
-
 export const TOOLS: SwaggerToolParams[] = [
   {
     title: "List Portals",
@@ -110,6 +96,16 @@ export const TOOLS: SwaggerToolParams[] = [
     inputSchema: UpdatePortalArgsSchema,
     handler: "updatePortal",
     outputSchema: PortalOutputSchema,
+  },
+  {
+    title: "Resolve Organization Portal",
+    toolset: "Portals",
+    summary:
+      "Resolve portal details for a Swagger organization in a single step. Given an organization UUID, returns the portal ID, subdomain, customDomain (when configured), and the list of products (with productId, productSlug, and productName) for the organization's portal. If the organization has no portal yet, a new portal is created automatically. Use this tool to obtain all portal context needed for subsequent portal and product operations.",
+    ...MUTATING,
+    inputSchema: ResolveOrganizationPortalArgsSchema,
+    handler: "resolveOrganizationPortal",
+    outputSchema: ResolveOrganizationPortalOutputSchema,
   },
   {
     title: "List Portal Products",
@@ -208,6 +204,16 @@ export const TOOLS: SwaggerToolParams[] = [
   },
 
   // Document management tools
+  {
+    title: "Create Documentation Page",
+    toolset: "Documents",
+    summary:
+      "Create a documentation page in a portal product in a single tool call. Supports markdown and html content types. Returns the page location details (productId, sectionId, slug) and a draftUrl to edit it in the portal.",
+    ...MUTATING,
+    inputSchema: CreateDocumentationPageArgsSchema,
+    handler: "createDocumentationPage",
+    outputSchema: CreateDocumentationPageOutputSchema,
+  },
   {
     title: "Get Document",
     toolset: "Documents",
