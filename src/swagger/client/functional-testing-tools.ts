@@ -3,8 +3,8 @@ import {
   GetFunctionalTestingExecutionTestSchema,
   RunFunctionalTestingTestParamsSchema,
 } from "./functional-testing-types";
-import { READ_ONLY } from "./tool-constants";
 import type { SwaggerToolParams } from "./tools";
+import { READ_ONLY } from "./tools";
 
 const ListTestsOutputSchema = z.array(
   z.looseObject({

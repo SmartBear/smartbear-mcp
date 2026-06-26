@@ -405,14 +405,10 @@ export class SwaggerClient implements Client {
 
           const result = await handlerFn.call(this, args);
 
+          // Use custom formatter if available, otherwise return JSON
           const formattedResult = formatResponse
             ? formatResponse(result)
             : result;
-
-          if (toolParams.outputSchema) {
-            return { structuredContent: formattedResult, content: [] };
-          }
-
           const responseText =
             typeof formattedResult === "string"
               ? formattedResult
@@ -423,7 +419,6 @@ export class SwaggerClient implements Client {
           };
         } catch (error) {
           return {
-            isError: true,
             content: [
               {
                 type: "text",
