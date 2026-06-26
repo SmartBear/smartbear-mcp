@@ -204,6 +204,26 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 **Note**: Documents are managed as part of table of contents items. To delete a document, use `delete_table_of_contents` which will remove the table of contents entry and any associated document content.
 
+#### `create_documentation_page`
+
+- Purpose: Create a documentation page in a portal product in a single tool call. Supports markdown and html content types. Shortcut for adding a new table of contents page to a portal product without managing sections or table of contents separately.
+- Returns: Page location details (`productId`, `sectionId`, `sectionSlug`, `pageDetails`) and a `draftUrl` to edit the page in the portal admin.
+- Use case: Quickly add a new documentation page to an existing product.
+- Parameters:
+
+| Parameter     | Description                                                                                                            | Type        | Required |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------- | -------- |
+| `portalId`    | Portal UUID or subdomain - unique identifier for the portal                                                            | string      | Yes      |
+| `productId`   | Product UUID - unique identifier for the product                                                                       | string      | Yes      |
+| `pageTitle`   | Title of the documentation page - displayed in navigation and used to generate the page slug (3-255 characters)        | string      | Yes      |
+| `pageContent` | Content of the documentation page. Provide HTML when `contentType` is `html`, Markdown when `contentType` is `markdown` | string      | No       |
+| `contentType` | Content type of the page: `markdown` (default) or `html`.                                                              | string      | No       |
+| `source`      | Where content is managed: `internal` (default, editable in portal UI and API) or `external` (API only).               | string      | No       |
+| `order`       | Order position of the page within its parent section or item (default: 0)                                              | number      | No       |
+| `parentId`    | Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure (default: null) | string/null | No       |
+
+**Note:** `html` + `internal` is not supported — creating a page with content with this combination via MCP or API will return an error.
+
 #### `get_document`
 
 - Purpose: Get document content and metadata by document ID. Useful for retrieving HTML or Markdown content from table of contents items.
@@ -217,17 +237,17 @@ The Swagger Portal client provides comprehensive portal and product management c
 
 #### `update_document`
 
-- Purpose: Update the content or source of an existing document. Supports both HTML and Markdown content types.
+- Purpose: Update the content or source of an existing document. Supports HTML and Markdown content types.
 - Returns: Updated document metadata.
 - Use case: Modify existing documentation content within portal products.
 - Parameters:
 
-| Parameter    | Description                                                               | Type   | Required |
-| ------------ | ------------------------------------------------------------------------- | ------ | -------- |
-| `documentId` | Document UUID - unique identifier for the document                        | string | Yes      |
-| `content`    | The document content to update (HTML or Markdown based on document type)  | string | No       |
-| `type`       | Content type - 'html' for HTML content or 'markdown' for Markdown content | string | No       |
-| `source`     | Source - 'external' to manage document only in the API or 'internal' for API and UI | string | No       |
+| Parameter    | Description                                                                                                                              | Type   | Required |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- |
+| `documentId` | Document UUID - unique identifier for the document                                                                                       | string | Yes      |
+| `content`    | The document content to update (HTML or Markdown based on document type)                                                                 | string | No       |
+| `type`       | Content type: `html` or `markdown`. Note: `html` + `internal` documents cannot be edited via API.                                       | string | No       |
+| `source`     | Where content is managed: `internal` (editable in portal UI and API) or `external` (API only). Note: `html` + `internal` cannot be updated via API. | string | No       |
 
 ## Configuration
 

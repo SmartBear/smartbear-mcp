@@ -697,6 +697,277 @@ describe("SwaggerAPI", () => {
     });
   });
 
+  describe("createDocumentationPage", () => {
+    const BASE = "https://api.portal.swaggerhub.com/v1";
+    const headers = {
+      Authorization: "Bearer test-token",
+      "Content-Type": "application/json",
+      "User-Agent": "SmartBear-MCP/1.0.0",
+    };
+
+    const portalId = "portal-abc";
+    const productId = "prod-xyz";
+    const sectionId = "section-1";
+    const documentId = "doc-111";
+    const tocItemId = "toc-222";
+
+    const portalResponse = {
+      id: portalId,
+      name: "My Portal",
+      subdomain: "myportal",
+    };
+
+    const productResponse = {
+      id: productId,
+      name: "My Product",
+      slug: "my-product",
+      portalId,
+    };
+
+    const sectionsResponse = {
+      page: { number: 0, size: 20, totalElements: 1, totalPages: 1 },
+      items: [
+        {
+          id: sectionId,
+          productId,
+          title: "Docs",
+          slug: "docs",
+          tableOfContents: [],
+          order: 0,
+        },
+      ],
+    };
+
+    const sectionsWithEmbedResponse = {
+      page: { number: 0, size: 20, totalElements: 1, totalPages: 1 },
+      items: [],
+    };
+
+    const tocItemResponse = { id: tocItemId, documentId };
+    const updateDocumentResponse = { success: true };
+
+    const setupFetchRoutes = () => {
+      fetchMock.mockResponse((req) => {
+        const { url, method } = req;
+
+        if (url === `${BASE}/portals/${portalId}`) {
+          return Promise.resolve(JSON.stringify(portalResponse));
+        }
+        if (url === `${BASE}/products/${productId}` && method === "GET") {
+          return Promise.resolve(JSON.stringify(productResponse));
+        }
+        if (url === `${BASE}/products/${productId}/sections`) {
+          return Promise.resolve(JSON.stringify(sectionsResponse));
+        }
+        if (url.startsWith(`${BASE}/products/${productId}/sections?`)) {
+          return Promise.resolve(JSON.stringify(sectionsWithEmbedResponse));
+        }
+        if (url === `${BASE}/sections/${sectionId}/table-of-contents`) {
+          return Promise.resolve(JSON.stringify(tocItemResponse));
+        }
+        if (url === `${BASE}/documents/${documentId}`) {
+          return Promise.resolve(JSON.stringify(updateDocumentResponse));
+        }
+
+        return Promise.reject(new Error(`Unexpected fetch: ${method} ${url}`));
+      });
+    };
+
+    it("should create a documentation page and return draftUrl", async () => {
+      setupFetchRoutes();
+
+      const result = await api.createDocumentationPage({
+        portalId,
+        productId,
+        pageTitle: "Getting Started",
+        pageContent: "# Hello",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/portals/${portalId}`, {
+        method: "GET",
+        headers,
+      });
+      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/products/${productId}`, {
+        method: "GET",
+        headers,
+      });
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/products/${productId}/sections`,
+        { method: "GET", headers },
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/sections/${sectionId}/table-of-contents`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            type: "new",
+            title: "Getting Started",
+            slug: "getting-started",
+            order: 0,
+            parentId: null,
+            content: { type: "markdown", source: "internal" },
+          }),
+        },
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/documents/${documentId}`,
+        {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ content: "# Hello", type: "markdown" }),
+        },
+      );
+
+      expect(result).toEqual({
+        productId,
+        sectionId,
+        sectionSlug: "docs",
+        pageDetails: {
+          tableOfContentsId: tocItemId,
+          slug: "getting-started",
+          title: "Getting Started",
+          content: { type: "markdown", source: "internal", documentId },
+        },
+        draftUrl:
+          "https://myportal.portal.swaggerhub.com/sp-admin/products/my-product/edit/content/toc-222",
+      });
+    });
+
+    it("should pass order and parentId to createTableOfContents", async () => {
+      setupFetchRoutes();
+
+      await api.createDocumentationPage({
+        portalId,
+        productId,
+        pageTitle: "Advanced Guide",
+        pageContent: "content",
+        order: 3,
+        parentId: "parent-toc-id",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/sections/${sectionId}/table-of-contents`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            type: "new",
+            title: "Advanced Guide",
+            slug: "advanced-guide",
+            order: 3,
+            parentId: "parent-toc-id",
+            content: { type: "markdown", source: "internal" },
+          }),
+        },
+      );
+    });
+
+    it("should throw ToolError for html + internal with content", async () => {
+      await expect(
+        api.createDocumentationPage({
+          portalId,
+          productId,
+          pageTitle: "My Page",
+          pageContent: "<h1>Hello</h1>",
+          contentType: "html",
+          source: "internal",
+        }),
+      ).rejects.toThrow(
+        "Cannot create an html + internal page with content via API",
+      );
+    });
+
+    it("should throw ToolError when product has no sections", async () => {
+      const emptySections = {
+        page: { number: 0, size: 0, totalElements: 0, totalPages: 0 },
+        items: [],
+      };
+
+      fetchMock.mockResponse((req) => {
+        const { url } = req;
+        if (url === `${BASE}/portals/${portalId}`) {
+          return Promise.resolve(JSON.stringify(portalResponse));
+        }
+        if (url === `${BASE}/products/${productId}`) {
+          return Promise.resolve(JSON.stringify(productResponse));
+        }
+        if (url === `${BASE}/products/${productId}/sections`) {
+          return Promise.resolve(JSON.stringify(emptySections));
+        }
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+      });
+
+      await expect(
+        api.createDocumentationPage({
+          portalId,
+          productId,
+          pageTitle: "My Page",
+          pageContent: "content",
+        }),
+      ).rejects.toThrow(`Product ${productId} has no sections`);
+    });
+
+    it("should create an html + external documentation page", async () => {
+      setupFetchRoutes();
+
+      const result = await api.createDocumentationPage({
+        portalId,
+        productId,
+        pageTitle: "API Reference",
+        pageContent: "<h1>API Reference</h1>",
+        contentType: "html",
+        source: "external",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/sections/${sectionId}/table-of-contents`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            type: "new",
+            title: "API Reference",
+            slug: "api-reference",
+            order: 0,
+            parentId: null,
+            content: { type: "html", source: "external" },
+          }),
+        },
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/documents/${documentId}`,
+        {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({
+            content: "<h1>API Reference</h1>",
+            type: "html",
+          }),
+        },
+      );
+      expect(result.pageDetails.content).toEqual({
+        type: "html",
+        source: "external",
+        documentId,
+      });
+    });
+
+    it("should normalise page title into a slug", async () => {
+      setupFetchRoutes();
+
+      const result = await api.createDocumentationPage({
+        portalId,
+        productId,
+        pageTitle: "Hello World! 123",
+        pageContent: "content",
+      });
+
+      expect(result.pageDetails.slug).toBe("hello-world-123");
+      expect(result.draftUrl).toContain(`/edit/content/${tocItemId}`);
+    });
+  });
+
   describe("error handling", () => {
     it("should handle fetch errors gracefully", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));

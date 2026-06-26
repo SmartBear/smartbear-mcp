@@ -1,9 +1,12 @@
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
 import type {
+  CreateDocumentationPageArgs,
+  CreateDocumentationPageResult,
   CreatePortalArgs,
   CreateProductBody,
   CreateTableOfContentsBody,
+  CreateTableOfContentsItemResponse,
   DeleteTableOfContentsArgs,
   Document,
   FallbackResponse,
@@ -42,12 +45,15 @@ import type {
   StandardizeApiParams,
   StandardizeApiResponse,
 } from "./registry-types";
-
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
 } from "./user-management-types";
-import { buildPortalLiveUrl, findTableOfContentsItem } from "./utils";
+import {
+  buildPortalLiveUrl,
+  findTableOfContentsItem,
+  normalizeSlug,
+} from "./utils";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
@@ -628,7 +634,7 @@ export class SwaggerAPI {
   async createTableOfContents(
     sectionId: string,
     body: CreateTableOfContentsBody,
-  ): Promise<TableOfContentsItem> {
+  ): Promise<CreateTableOfContentsItemResponse> {
     const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents`;
 
     const response = await fetch(url, {
@@ -645,7 +651,7 @@ export class SwaggerAPI {
     }
 
     const result = await response.json();
-    return result as TableOfContentsItem;
+    return result as CreateTableOfContentsItemResponse;
   }
 
   /**
@@ -672,7 +678,6 @@ export class SwaggerAPI {
     }
 
     const url = `${this.config.portalBasePath}/sections/${sectionId}/table-of-contents${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-
     const response = await fetch(url, {
       method: "GET",
       headers: this.headers,
@@ -746,6 +751,91 @@ export class SwaggerAPI {
     }
 
     return { success: true };
+  }
+
+  async createDocumentationPage(
+    args: CreateDocumentationPageArgs,
+  ): Promise<CreateDocumentationPageResult> {
+    const {
+      portalId,
+      productId,
+      pageTitle,
+      pageContent,
+      contentType = "markdown",
+      source = "internal",
+      order = 0,
+      parentId = null,
+    } = args;
+
+    if (
+      contentType === "html" &&
+      source === "internal" &&
+      pageContent !== undefined
+    ) {
+      throw new ToolError(
+        "Cannot create an html + internal page with content via API. Use 'external' source for html, or 'markdown' with 'internal' source.",
+      );
+    }
+
+    const portal = await this.getPortal(portalId);
+    const product = await this.getPortalProduct(productId);
+    const productSlug = (product as Record<string, unknown>)?.slug as string;
+
+    const sections = await this.getPortalProductSections(productId, {});
+
+    if (sections.items.length === 0) {
+      throw new ToolError(
+        `Product ${productId} has no sections. Create a section first before adding documentation pages.`,
+      );
+    }
+    const section = sections.items[0];
+
+    const pageSlug = normalizeSlug(pageTitle);
+    const normalizedTitle = pageTitle.slice(0, 255);
+
+    const tocItem = await this.createTableOfContents(section.id, {
+      type: "new",
+      title: normalizedTitle,
+      slug: pageSlug,
+      order,
+      parentId,
+      content: {
+        type: contentType,
+        source,
+      },
+    });
+    const documentId = tocItem.documentId;
+
+    if (pageContent !== undefined) {
+      await this.updateDocument({
+        documentId,
+        content: pageContent,
+        type: contentType,
+      });
+    }
+
+    const host = portal?.customDomain ?? portal?.subdomain;
+    const portalUiDomain = portal?.customDomain
+      ? ""
+      : this.config.getPortalUiDomainSuffix();
+    const draftUrl = `https://${host}${portalUiDomain}/sp-admin/products/${productSlug}/edit/content/${tocItem.id}`;
+
+    return {
+      productId,
+      sectionId: section.id,
+      sectionSlug: section.slug,
+      pageDetails: {
+        tableOfContentsId: tocItem.id,
+        slug: pageSlug,
+        title: normalizedTitle,
+        content: {
+          type: contentType,
+          source,
+          documentId,
+        },
+      },
+      draftUrl,
+    };
   }
 
   /**
