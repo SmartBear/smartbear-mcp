@@ -1360,5 +1360,48 @@ describe("SwaggerAPI", () => {
         api.resolveOrganizationPortal({ organizationId }),
       ).rejects.toThrow("HTTP 403");
     });
+
+    it("should surface an access error when a portal exists for the organization but is not visible to the caller", async () => {
+      const createCalls: any[] = [];
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        // A consumer-role user cannot see the organization's portal, so the
+        // list is always empty for them.
+        if (url.includes("/portals?page=1")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        if (url.includes("/user-management/v1/orgs")) {
+          return {
+            body: JSON.stringify({
+              items: [{ id: organizationId, name: "Acme Corp" }],
+              totalCount: 1,
+              pageSize: 100,
+              page: 0,
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.endsWith("/portals") && req.method === "POST") {
+          createCalls.push(JSON.parse(await req.text()));
+          return {
+            body: JSON.stringify({
+              detail:
+                "A portal already exists for this SwaggerHub organization ID",
+            }),
+            status: 409,
+            headers: { "content-type": "application/problem+json" },
+          };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      await expect(
+        api.resolveOrganizationPortal({ organizationId }),
+      ).rejects.toThrow("Access denied");
+
+      // The org-level conflict must short-circuit instead of retrying other
+      // subdomain candidates.
+      expect(createCalls).toHaveLength(1);
+    });
   });
 });

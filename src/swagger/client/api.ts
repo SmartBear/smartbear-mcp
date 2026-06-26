@@ -34,6 +34,7 @@ import {
   buildSubdomainCandidate,
   buildSuffixedSubdomain,
   isConflictError,
+  isOrganizationPortalConflict,
 } from "./portal-utils";
 import type {
   ApiDefinitionParams,
@@ -487,6 +488,17 @@ export class SwaggerAPI {
         const existing = await this.findPortalByOrganizationId(organizationId);
         if (existing) {
           return { portal: existing, created: false };
+        }
+        // The conflict says a portal already exists for the organization, yet
+        // listing portals did not surface it. This happens when the caller
+        // lacks permission to view the organization's portal (e.g. a
+        // consumer-role user); retrying other subdomains only repeats the same
+        // 409, so surface a clear access error instead of the misleading
+        // "portal already exists" conflict.
+        if (isOrganizationPortalConflict(error)) {
+          throw new ToolError(
+            `Access denied: a portal already exists for organization ${organizationId}, but you do not have permission to view it. A portal owner or designer role is required.`,
+          );
         }
       }
     }

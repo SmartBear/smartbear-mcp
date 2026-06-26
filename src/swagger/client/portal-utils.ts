@@ -98,3 +98,18 @@ export function isConflictError(error: unknown): boolean {
       error.message.startsWith("HTTP 409"))
   );
 }
+
+/**
+ * Whether a 409 conflict reports that a portal is already mapped to the
+ * organization (as opposed to a subdomain-taken conflict). The Portal API
+ * returns a message such as "A portal already exists for this SwaggerHub
+ * organization ID". This distinguishes the org-level conflict, which retrying
+ * with a different subdomain cannot resolve.
+ */
+export function isOrganizationPortalConflict(error: unknown): boolean {
+  if (!(error instanceof ToolError)) {
+    return false;
+  }
+  const message = error.message.toLowerCase();
+  return message.includes("already exists") && message.includes("organization");
+}
