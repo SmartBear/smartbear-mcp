@@ -10,7 +10,7 @@ const API_HOSTNAME = "api.reflect.run";
 export const FUNCTIONAL_TESTING_API_KEY_HEADER = "X-API-KEY";
 
 export class FunctionalTestingAPI {
-  private baseUrl: string;
+  private readonly baseUrl: string;
 
   constructor(
     private readonly getToken: () => string | null,
@@ -94,7 +94,7 @@ export class FunctionalTestingAPI {
   async listSuites(): Promise<ListSuitesResponse> {
     let response: Response;
     try {
-      response = await fetch(`https://${API_HOSTNAME}/v1/suites`, {
+      response = await fetch(`${this.baseUrl}/suites`, {
         method: "GET",
         headers: this.getFtHeaders(),
       });
