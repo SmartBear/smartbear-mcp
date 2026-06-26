@@ -21,7 +21,6 @@ export function normalizeSlug(value: string): string {
   return slug;
 }
 
-
 /**
  * Recursively search for a table of contents item by ID.
  */
