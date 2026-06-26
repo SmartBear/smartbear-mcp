@@ -14,6 +14,10 @@ import {
   FUNCTIONAL_TESTING_API_KEY_HEADER,
   FunctionalTestingAPI,
 } from "./client/functional-testing-api";
+import type {
+  GetFunctionalTestingExecutionTestParams,
+  RunFunctionalTestingTestParams,
+} from "./client/functional-testing-types";
 import {
   type ApiDefinitionParams,
   type ApiSearchParams,
@@ -35,7 +39,10 @@ import {
   type PortalsListResponse,
   type Product,
   type ProductsListResponse,
+  type PublishPortalProductResponse,
   type PublishProductArgs,
+  type ScanApiStandardizationFromRegistryParams,
+  type ScanApiStandardizationFromRegistryResult,
   type ScanStandardizationParams,
   type SectionsListResponse,
   type StandardizationResult,
@@ -51,7 +58,6 @@ import {
   type UpdatePortalArgs,
   type UpdateProductArgs,
 } from "./client/index";
-
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
@@ -77,6 +83,12 @@ const ConfigurationSchema = z.object({
     .describe(
       "Swagger Functional Testing API token. Leave empty to disable Functional Testing tools.",
     ),
+  functional_testing_base_path: z
+    .string()
+    .optional()
+    .describe(
+      "Base URL for Swagger Functional Testing API requests (optional)",
+    ),
 });
 
 // Tool definitions for API Hub API client
@@ -96,7 +108,19 @@ export class SwaggerClient implements Client {
     config: z.infer<typeof ConfigurationSchema>,
     _cache?: any,
   ): Promise<void> {
-    if (config.api_key) {
+    // The Swagger API key can be supplied directly as config (env var /
+    // Swagger-Api-Key header) or via an OAuth bearer token on the request's
+    // Authorization header. The bearer token is only available per-request and
+    // is resolved lazily in getAuthToken(), so check the request context here to
+    // decide whether to enable the Portal/Studio API. Without this, an
+    // OAuth-only request would leave this.api undefined and no Swagger tools
+    // would be registered.
+    const hasSwaggerAuth =
+      !!config.api_key ||
+      !!getRequestHeader("Swagger-Api-Key") ||
+      !!getRequestHeader("Authorization");
+
+    if (hasSwaggerAuth) {
       this._apiKey = config.api_key;
       this.api = new SwaggerAPI(
         new SwaggerConfiguration({
@@ -114,6 +138,7 @@ export class SwaggerClient implements Client {
       this.ftApi = new FunctionalTestingAPI(
         () => this.getFtAuthToken(),
         USER_AGENT,
+        config.functional_testing_base_path,
       );
     }
   }
@@ -215,9 +240,13 @@ export class SwaggerClient implements Client {
 
   async publishPortalProduct(
     args: PublishProductArgs,
-  ): Promise<SuccessResponse | FallbackResponse> {
-    const { productId, preview } = args;
-    return this.getApi().publishPortalProduct(productId, preview);
+  ): Promise<PublishPortalProductResponse | FallbackResponse> {
+    const { productId, preview, tableOfContentsId } = args;
+    return this.getApi().publishPortalProduct(
+      productId,
+      preview,
+      tableOfContentsId ?? null,
+    );
   }
 
   async getPortalProductSections(
@@ -297,17 +326,48 @@ export class SwaggerClient implements Client {
     return this.getApi().scanStandardization(args);
   }
 
+  async scanApiStandardizationFromRegistry(
+    args: ScanApiStandardizationFromRegistryParams,
+  ): Promise<ScanApiStandardizationFromRegistryResult | FallbackResponse> {
+    return this.getApi().scanApiStandardizationFromRegistry(args);
+  }
+
   async standardizeApi(
     args: StandardizeApiParams,
   ): Promise<StandardizeApiResponse | FallbackResponse> {
     return this.getApi().standardizeApi(args);
   }
 
+  // Functional Testing methods
+
   async listFunctionalTestingTests(): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.listTests());
+  }
+
+  async runFunctionalTestingTest(
+    args: RunFunctionalTestingTestParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.runTest(args));
+  }
+
+  async getFunctionalTestingExecution(
+    args: GetFunctionalTestingExecutionTestParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.getTestExecution(args));
+  }
+
+  /**
+   * Perform an operation with the Functional Testing API.
+   * Throws a ToolError if Functional Testing is not configured
+   */
+  private async withFunctionalTesting<T>(
+    fn: (ftApi: FunctionalTestingAPI) => Promise<T>,
+  ): Promise<T> {
     if (!this.ftApi) {
       throw new ToolError("Functional Testing API not configured");
     }
-    return this.ftApi.listTests();
+
+    return fn(this.ftApi);
   }
 
   async registerTools(

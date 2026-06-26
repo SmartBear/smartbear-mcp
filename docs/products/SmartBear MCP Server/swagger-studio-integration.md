@@ -54,7 +54,7 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 #### `scan_api_standardization`
 
 -   Purpose: Run a standardization scan against an API definition using the organization's governance and standardization configuration. Validates OpenAPI/AsyncAPI definitions against configured rules and style guides.
--   Returns: Standardization result with a list of validation errors and warnings. Each error includes severity level, rule name, and location information.
+-   Returns: Standardization result with a list of validation errors, the total issue count, and counts grouped by severity (e.g. `count: 12`, `countsBySeverity: { "Critical": 5, "Warning": 7 }`). Each error includes line number, description, and severity.
 -   Use case: Validate API definitions against organization standards before publishing, ensure compliance with API governance policies, and identify design inconsistencies early in the development process.
 -   Parameters:
 
@@ -62,6 +62,19 @@ The Swagger Studio client provides comprehensive API and Domain management capab
 | --- | --- | --- | --- |
 | `orgName` | Organization name to use for governance and standardization rules | string | Yes |
 | `definition` | API definition content (OpenAPI/AsyncAPI specification in JSON or YAML format). Format is automatically detected. | string | Yes |
+
+#### `scan_api_standardization_from_registry`
+
+-   Purpose: Run a standardization scan on an API that already exists in the SwaggerHub Registry, identified by organization name, API name, and version. The tool fetches the API definition from the registry and scans it against the organization's governance and standardization rules internally.
+-   Returns: The standardization scan results together with the total issue count, counts grouped by severity (e.g. `count: 137`, `countsBySeverity: { "Critical": 92, "Warning": 45 }`), and a SwaggerHub UI URL for the scanned API. Returns a clear error if the API is not found or the scan fails.
+-   Use case: Validate, scan, or check the governance or standardization of an existing API by its owner/name/version without manually fetching and passing the definition first.
+-   Parameters:
+
+| Parameter | Description | Type | Required |
+| --- | --- | --- | --- |
+| `orgName` | Organization name. Used to fetch the API definition from the registry and to apply the organization's standardization rules (case-sensitive). | string | Yes |
+| `apiName` | API name (case-sensitive) | string | Yes |
+| `version` | Version identifier | string | Yes |
 
 #### `create_api_from_prompt`
 

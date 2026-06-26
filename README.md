@@ -110,7 +110,8 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
-        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
       }
     }
   },
@@ -258,6 +259,12 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
           "type": "promptString",
           "description": "Swagger Functional Testing API Token - leave blank to disable Functional Testing tools",
           "password": true
+    },
+    {
+          "id": "swagger_functional_testing_base_path",
+          "type": "promptString",
+          "description": "Swagger Functional Testing API Base URL - leave blank to use the default (https://api.reflect.run/v1)",
+          "password": false
     }
   ]
 }
@@ -300,7 +307,8 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "QTM4J_API_KEY": "your_qtm4j_key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
         "QTM4J_AUTOMATION_API_KEY": "your_qtm4j_automation_api_key",
-        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your_swagger_functional_testing_api_token"
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your_swagger_functional_testing_api_token",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "https://api.reflect.run/v1"
       }
     }
   }
