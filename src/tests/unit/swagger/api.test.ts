@@ -1029,4 +1029,379 @@ describe("SwaggerAPI", () => {
       ).rejects.toThrow(/^HTTP 400$/);
     });
   });
+
+  describe("resolveOrganizationPortal", () => {
+    const organizationId = "d36ff595-6406-4a1b-a1d5-90153ac8f334";
+    const jsonHeaders = { "content-type": "application/json" };
+
+    it("should return portal details and products for an existing portal", async () => {
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        if (url.includes("/portals?page=1")) {
+          return {
+            body: JSON.stringify({
+              items: [
+                {
+                  id: "portal-1",
+                  name: "Other Portal",
+                  subdomain: "other",
+                  swaggerHubOrganizationId:
+                    "11111111-1111-1111-1111-111111111111",
+                },
+                {
+                  id: "portal-2",
+                  name: "Pet Co.",
+                  subdomain: "petco",
+                  // Uppercase to verify case-insensitive matching
+                  swaggerHubOrganizationId: organizationId.toUpperCase(),
+                },
+              ],
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.includes("/portals/portal-2/products")) {
+          return {
+            body: JSON.stringify({
+              items: [
+                { id: "prod-1", name: "Pet API", slug: "pet-api" },
+                { id: "prod-2", name: "Store API", slug: "store-api" },
+              ],
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      const result = await api.resolveOrganizationPortal({ organizationId });
+
+      expect(result).toEqual({
+        organizationId,
+        portalId: "portal-2",
+        subdomain: "petco",
+        portalCreated: false,
+        products: [
+          {
+            productId: "prod-1",
+            productSlug: "pet-api",
+            productName: "Pet API",
+          },
+          {
+            productId: "prod-2",
+            productSlug: "store-api",
+            productName: "Store API",
+          },
+        ],
+      });
+    });
+
+    it("should include customDomain when the existing portal has one", async () => {
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        if (url.includes("/portals?page=1")) {
+          return {
+            body: JSON.stringify({
+              items: [
+                {
+                  id: "portal-2",
+                  name: "Pet Co.",
+                  subdomain: "petco",
+                  customDomain: "docs.petco.com",
+                  swaggerHubOrganizationId: organizationId,
+                },
+              ],
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.includes("/portals/portal-2/products")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      const result = await api.resolveOrganizationPortal({ organizationId });
+
+      expect(result).toEqual({
+        organizationId,
+        portalId: "portal-2",
+        subdomain: "petco",
+        customDomain: "docs.petco.com",
+        portalCreated: false,
+        products: [],
+      });
+    });
+
+    it("should create a portal when the organization has none", async () => {
+      let createBody: any;
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        if (url.includes("/portals?page=1")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        if (url.includes("/user-management/v1/orgs")) {
+          return {
+            body: JSON.stringify({
+              items: [{ id: organizationId, name: "Acme Corp" }],
+              totalCount: 1,
+              pageSize: 100,
+              page: 0,
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.endsWith("/portals") && req.method === "POST") {
+          createBody = JSON.parse(await req.text());
+          return {
+            body: JSON.stringify({ id: "new-portal-id" }),
+            status: 201,
+            headers: jsonHeaders,
+          };
+        }
+        if (url.includes("/portals/new-portal-id/products")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      const result = await api.resolveOrganizationPortal({ organizationId });
+
+      expect(createBody).toEqual({
+        subdomain: "acme-corp",
+        swaggerHubOrganizationId: organizationId,
+        name: "Acme Corp",
+      });
+      expect(result).toEqual({
+        organizationId,
+        portalId: "new-portal-id",
+        subdomain: "acme-corp",
+        portalCreated: true,
+        products: [],
+      });
+    });
+
+    it("should fall back to a UUID-derived subdomain when the organization is not found", async () => {
+      let createBody: any;
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        if (url.includes("/portals?page=1")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        if (url.includes("/user-management/v1/orgs")) {
+          return {
+            body: JSON.stringify({
+              items: [],
+              totalCount: 0,
+              pageSize: 100,
+              page: 0,
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.endsWith("/portals") && req.method === "POST") {
+          createBody = JSON.parse(await req.text());
+          return {
+            body: JSON.stringify({ id: "new-portal-id" }),
+            status: 201,
+            headers: jsonHeaders,
+          };
+        }
+        if (url.includes("/portals/new-portal-id/products")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      const result = await api.resolveOrganizationPortal({ organizationId });
+
+      expect(createBody).toEqual({
+        subdomain: "portal-d36ff595",
+        swaggerHubOrganizationId: organizationId,
+      });
+      expect(result.subdomain).toBe("portal-d36ff595");
+      expect(result.portalCreated).toBe(true);
+    });
+
+    it("should reuse the portal found on re-check after a 409 conflict", async () => {
+      let portalListCalls = 0;
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        if (url.includes("/portals?page=1")) {
+          portalListCalls++;
+          // Empty on the first check, present on the re-check after 409
+          if (portalListCalls === 1) {
+            return {
+              body: JSON.stringify({ items: [] }),
+              headers: jsonHeaders,
+            };
+          }
+          return {
+            body: JSON.stringify({
+              items: [
+                {
+                  id: "existing-portal",
+                  name: "Acme Corp",
+                  subdomain: "acme-corp",
+                  swaggerHubOrganizationId: organizationId,
+                },
+              ],
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.includes("/user-management/v1/orgs")) {
+          return {
+            body: JSON.stringify({
+              items: [{ id: organizationId, name: "Acme Corp" }],
+              totalCount: 1,
+              pageSize: 100,
+              page: 0,
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.endsWith("/portals") && req.method === "POST") {
+          return {
+            body: JSON.stringify({
+              detail: "Portal already exists for this organization",
+            }),
+            status: 409,
+            headers: { "content-type": "application/problem+json" },
+          };
+        }
+        if (url.includes("/portals/existing-portal/products")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      const result = await api.resolveOrganizationPortal({ organizationId });
+
+      expect(result.portalId).toBe("existing-portal");
+      expect(result.portalCreated).toBe(false);
+    });
+
+    it("should retry with a suffixed subdomain when the subdomain is taken", async () => {
+      const createBodies: any[] = [];
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        if (url.includes("/portals?page=1")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        if (url.includes("/user-management/v1/orgs")) {
+          return {
+            body: JSON.stringify({
+              items: [{ id: organizationId, name: "Acme Corp" }],
+              totalCount: 1,
+              pageSize: 100,
+              page: 0,
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.endsWith("/portals") && req.method === "POST") {
+          createBodies.push(JSON.parse(await req.text()));
+          if (createBodies.length === 1) {
+            return {
+              body: JSON.stringify({ detail: "Subdomain already taken" }),
+              status: 409,
+              headers: { "content-type": "application/problem+json" },
+            };
+          }
+          return {
+            body: JSON.stringify({ id: "new-portal-id" }),
+            status: 201,
+            headers: jsonHeaders,
+          };
+        }
+        if (url.includes("/portals/new-portal-id/products")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      const result = await api.resolveOrganizationPortal({ organizationId });
+
+      expect(createBodies[0].subdomain).toBe("acme-corp");
+      expect(createBodies[1].subdomain).toBe("acme-corp-d36f");
+      expect(result.subdomain).toBe("acme-corp-d36f");
+      expect(result.portalCreated).toBe(true);
+    });
+
+    it("should propagate non-conflict errors from portal creation", async () => {
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        if (url.includes("/portals?page=1")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        if (url.includes("/user-management/v1/orgs")) {
+          return {
+            body: JSON.stringify({
+              items: [{ id: organizationId, name: "Acme Corp" }],
+              totalCount: 1,
+              pageSize: 100,
+              page: 0,
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.endsWith("/portals") && req.method === "POST") {
+          return {
+            body: JSON.stringify({ detail: "Forbidden" }),
+            status: 403,
+            headers: { "content-type": "application/problem+json" },
+          };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      await expect(
+        api.resolveOrganizationPortal({ organizationId }),
+      ).rejects.toThrow("HTTP 403");
+    });
+
+    it("should surface an access error when a portal exists for the organization but is not visible to the caller", async () => {
+      const createCalls: any[] = [];
+      fetchMock.mockResponse(async (req) => {
+        const url = req.url;
+        // A consumer-role user cannot see the organization's portal, so the
+        // list is always empty for them.
+        if (url.includes("/portals?page=1")) {
+          return { body: JSON.stringify({ items: [] }), headers: jsonHeaders };
+        }
+        if (url.includes("/user-management/v1/orgs")) {
+          return {
+            body: JSON.stringify({
+              items: [{ id: organizationId, name: "Acme Corp" }],
+              totalCount: 1,
+              pageSize: 100,
+              page: 0,
+            }),
+            headers: jsonHeaders,
+          };
+        }
+        if (url.endsWith("/portals") && req.method === "POST") {
+          createCalls.push(JSON.parse(await req.text()));
+          return {
+            body: JSON.stringify({
+              detail:
+                "A portal already exists for this SwaggerHub organization ID",
+            }),
+            status: 409,
+            headers: { "content-type": "application/problem+json" },
+          };
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      });
+
+      await expect(
+        api.resolveOrganizationPortal({ organizationId }),
+      ).rejects.toThrow("Access denied");
+
+      // The org-level conflict must short-circuit instead of retrying other
+      // subdomain candidates.
+      expect(createCalls).toHaveLength(1);
+    });
+  });
 });

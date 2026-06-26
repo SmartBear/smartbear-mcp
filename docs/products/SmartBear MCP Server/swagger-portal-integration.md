@@ -57,6 +57,17 @@ The Swagger Portal client provides comprehensive portal and product management c
 | `openapiRenderer`    | Change OpenAPI renderer: 'SWAGGER_UI' (Swagger UI), 'ELEMENTS' (Stoplight Elements), or 'TOGGLE' (switch between both)                              | string  | No       |
 | `pageContentFormat`  | Update page content format for documentation rendering: 'HTML', 'MARKDOWN', or 'BOTH'                                                               | string  | No       |
 
+#### `resolve_organization_portal`
+
+- Purpose: Resolve portal details for a Swagger organization in a single step. Finds the portal mapped to the given organization and returns its details along with the portal's products. If the organization has no portal yet, a new portal is created automatically (with a subdomain derived from the organization name).
+- Returns: The organization ID, portal ID, subdomain, `customDomain` (only when the portal has one configured), a `portalCreated` flag indicating whether a new portal was created, and the list of products (`productId`, `productSlug`, `productName`).
+- Use case: Obtain all portal context needed for subsequent portal and product operations without performing multiple manual lookup steps.
+- Parameters:
+
+| Parameter        | Description                                                        | Type          | Required |
+| ---------------- | ------------------------------------------------------------------ | ------------- | -------- |
+| `organizationId` | Swagger organization UUID to resolve portal details for            | string (uuid) | Yes      |
+
 #### `list_portal_products`
 
 - Purpose: Get products for a specific portal.

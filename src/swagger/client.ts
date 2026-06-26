@@ -44,6 +44,8 @@ import {
   type ProductsListResponse,
   type PublishPortalProductResponse,
   type PublishProductArgs,
+  type ResolveOrganizationPortalArgs,
+  type ResolveOrganizationPortalResponse,
   type ScanApiStandardizationFromRegistryParams,
   type ScanApiStandardizationFromRegistryResult,
   type ScanStandardizationParams,
@@ -206,6 +208,12 @@ export class SwaggerClient implements Client {
   ): Promise<Portal | FallbackResponse> {
     const { portalId, ...body } = args;
     return this.getApi().updatePortal(portalId, body);
+  }
+
+  async resolveOrganizationPortal(
+    args: ResolveOrganizationPortalArgs,
+  ): Promise<ResolveOrganizationPortalResponse | FallbackResponse> {
+    return this.getApi().resolveOrganizationPortal(args);
   }
 
   async getPortalProducts(args: {

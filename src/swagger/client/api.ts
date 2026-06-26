@@ -18,6 +18,9 @@ import type {
   Product,
   ProductsListResponse,
   PublishPortalProductResponse,
+  ResolvedPortalProduct,
+  ResolveOrganizationPortalArgs,
+  ResolveOrganizationPortalResponse,
   SectionsListResponse,
   SuccessResponse,
   TableOfContentsItem,
@@ -26,6 +29,13 @@ import type {
   UpdatePortalBody,
   UpdateProductBody,
 } from "./portal-types";
+import {
+  buildPortalName,
+  buildSubdomainCandidate,
+  buildSuffixedSubdomain,
+  isConflictError,
+  isOrganizationPortalConflict,
+} from "./portal-utils";
 import type {
   ApiDefinitionParams,
   ApiProperty,
@@ -46,6 +56,7 @@ import type {
   StandardizeApiResponse,
 } from "./registry-types";
 import type {
+  Organization,
   OrganizationsListResponse,
   OrganizationsQueryParams,
 } from "./user-management-types";
@@ -201,6 +212,8 @@ export class SwaggerAPI {
         response.statusText;
       throw new ToolError(
         `HTTP ${response.status}${detail ? `: ${detail}` : ""}`,
+        undefined,
+        new Map([["status", response.status]]),
       );
     }
 
@@ -299,6 +312,202 @@ export class SwaggerAPI {
     );
 
     return this.handleResponse<Portal>(response);
+  }
+
+  /**
+   * Resolve portal details and product list for a Swagger organization.
+   * Finds the portal mapped to the organization, creating one if it does not
+   * exist yet, and returns the portal ID, subdomain, and products.
+   * @param params Parameters containing the organization UUID
+   * @returns Portal details and product list for the organization
+   */
+  async resolveOrganizationPortal(
+    params: ResolveOrganizationPortalArgs,
+  ): Promise<ResolveOrganizationPortalResponse> {
+    const { organizationId } = params;
+
+    let portal = await this.findPortalByOrganizationId(organizationId);
+    let portalCreated = false;
+
+    if (!portal) {
+      const created = await this.createPortalForOrganization(organizationId);
+      portal = created.portal;
+      portalCreated = created.created;
+    }
+
+    const products = this.extractListItems<Product>(
+      await this.getPortalProducts(portal.id),
+    );
+
+    const customDomain =
+      typeof portal.customDomain === "string" && portal.customDomain.length > 0
+        ? portal.customDomain
+        : undefined;
+
+    return {
+      organizationId,
+      portalId: portal.id,
+      subdomain: typeof portal.subdomain === "string" ? portal.subdomain : "",
+      ...(customDomain ? { customDomain } : {}),
+      portalCreated,
+      products: products.map(
+        (product): ResolvedPortalProduct => ({
+          productId: product.id,
+          productSlug: typeof product.slug === "string" ? product.slug : "",
+          productName: product.name,
+        }),
+      ),
+    };
+  }
+
+  /**
+   * Extract item arrays from list responses that may be returned either as a
+   * plain array or as a paginated object with an 'items' property.
+   */
+  private extractListItems<T>(result: unknown): T[] {
+    if (Array.isArray(result)) {
+      return result as T[];
+    }
+    if (
+      typeof result === "object" &&
+      result !== null &&
+      Array.isArray((result as { items?: unknown }).items)
+    ) {
+      return (result as { items: T[] }).items;
+    }
+    return [];
+  }
+
+  /**
+   * Find the portal mapped to a Swagger organization. The Portal API does not
+   * support filtering by organization, so pages are scanned client-side.
+   *
+   * Permission/role problems surface as thrown errors: handleResponse throws on
+   * any non-2xx status (e.g. 401/403), so a lack of access never masquerades as
+   * an empty result. An empty list therefore means the user can see portals but
+   * none is mapped to this organization, in which case a new portal is created.
+   */
+  private async findPortalByOrganizationId(
+    organizationId: string,
+  ): Promise<Portal | undefined> {
+    const size = 100;
+    const maxPages = 20;
+    const target = organizationId.toLowerCase();
+
+    for (let page = 1; page <= maxPages; page++) {
+      const response = await fetch(
+        `${this.config.portalBasePath}/portals?page=${page}&size=${size}`,
+        {
+          method: "GET",
+          headers: this.headers,
+        },
+      );
+      const result = await this.handleResponse<unknown>(response, []);
+      const portals = this.extractListItems<Portal>(result);
+
+      const match = portals.find(
+        (portal) =>
+          typeof portal.swaggerHubOrganizationId === "string" &&
+          portal.swaggerHubOrganizationId.toLowerCase() === target,
+      );
+      if (match) {
+        return match;
+      }
+      if (portals.length < size) {
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Find an organization by UUID using the User Management API, which only
+   * supports listing the user's organizations (no lookup by ID).
+   */
+  private async findOrganizationById(
+    organizationId: string,
+  ): Promise<Organization | undefined> {
+    const pageSize = 100;
+    const maxPages = 10;
+    const target = organizationId.toLowerCase();
+
+    for (let page = 0; page < maxPages; page++) {
+      const result = await this.getOrganizations({ page, pageSize });
+      const items = result.items ?? [];
+
+      const match = items.find((org) => org.id?.toLowerCase() === target);
+      if (match) {
+        return match;
+      }
+      if (items.length < pageSize) {
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Create a portal for an organization that has none yet. The subdomain is
+   * derived from the organization name; on a subdomain conflict a candidate
+   * suffixed with part of the organization UUID is retried.
+   */
+  private async createPortalForOrganization(
+    organizationId: string,
+  ): Promise<{ portal: Portal; created: boolean }> {
+    const organization = await this.findOrganizationById(organizationId);
+    const baseSubdomain = buildSubdomainCandidate(
+      organizationId,
+      organization?.name,
+    );
+    const candidates = [
+      baseSubdomain,
+      buildSuffixedSubdomain(baseSubdomain, organizationId),
+    ];
+
+    const portalName = buildPortalName(organization?.name);
+
+    let lastError: unknown;
+    for (const subdomain of candidates) {
+      try {
+        const created = await this.createPortal({
+          subdomain,
+          swaggerHubOrganizationId: organizationId,
+          ...(portalName ? { name: portalName } : {}),
+        });
+        return {
+          portal: { ...created, subdomain: created.subdomain ?? subdomain },
+          created: true,
+        };
+      } catch (error) {
+        if (!isConflictError(error)) {
+          throw error;
+        }
+        lastError = error;
+        // HTTP 409 can mean either the subdomain is taken or a portal was
+        // mapped to the organization concurrently - re-check before retrying
+        const existing = await this.findPortalByOrganizationId(organizationId);
+        if (existing) {
+          return { portal: existing, created: false };
+        }
+        // The conflict says a portal already exists for the organization, yet
+        // listing portals did not surface it. This happens when the caller
+        // lacks permission to view the organization's portal (e.g. a
+        // consumer-role user); retrying other subdomains only repeats the same
+        // 409, so surface a clear access error instead of the misleading
+        // "portal already exists" conflict.
+        if (isOrganizationPortalConflict(error)) {
+          throw new ToolError(
+            `Access denied: a portal already exists for organization ${organizationId}, but you do not have permission to view it. A portal owner or designer role is required.`,
+          );
+        }
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new ToolError(
+          `Failed to create portal for organization ${organizationId}`,
+        );
   }
 
   async getPortalProducts(portalId: string): Promise<ProductsListResponse> {

@@ -10642,6 +10642,33 @@ None",
     ],
     "title": "Swagger: Publish Portal Product",
   },
+  "swagger_resolve_organization_portal": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": false,
+      "title": "Swagger: Resolve Organization Portal",
+    },
+    "description": "Resolve portal details for a Swagger organization in a single step. Given an organization UUID, returns the portal ID, subdomain, customDomain (when configured), and the list of products (with productId, productSlug, and productName) for the organization's portal. If the organization has no portal yet, a new portal is created automatically. Use this tool to obtain all portal context needed for subsequent portal and product operations.
+
+**Toolset:** Portals
+
+**Parameters:**
+- organizationId (string) *required*: Swagger organization UUID - the organization to resolve portal details for",
+    "inputSchema": [
+      "organizationId",
+    ],
+    "outputSchema": [
+      "customDomain",
+      "organizationId",
+      "portalCreated",
+      "portalId",
+      "products",
+      "subdomain",
+    ],
+    "title": "Swagger: Resolve Organization Portal",
+  },
   "swagger_scan_api_standardization": {
     "annotations": {
       "destructiveHint": false,

@@ -335,6 +335,15 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
     ),
 });
 
+export const ResolveOrganizationPortalArgsSchema = z.object({
+  organizationId: z
+    .string()
+    .uuid()
+    .describe(
+      "Swagger organization UUID - the organization to resolve portal details for",
+    ),
+});
+
 export const PublishProductArgsSchema = ProductArgsSchema.extend({
   tableOfContentsId: z
     .string()
@@ -359,6 +368,9 @@ export type UpdatePortalArgs = z.infer<typeof UpdatePortalArgsSchema>;
 export type CreateProductArgs = z.infer<typeof CreateProductArgsSchema>;
 export type UpdateProductArgs = z.infer<typeof UpdateProductArgsSchema>;
 export type PublishProductArgs = z.infer<typeof PublishProductArgsSchema>;
+export type ResolveOrganizationPortalArgs = z.infer<
+  typeof ResolveOrganizationPortalArgsSchema
+>;
 export type GetProductSectionsArgs = z.infer<
   typeof GetProductSectionsArgsSchema
 >;
@@ -535,6 +547,24 @@ export type ContentReference = ApiUrlContent | HtmlContent | MarkdownContent;
 
 export interface TableOfContentsItemSwaggerhubApi {
   _private: boolean;
+}
+
+// Response type for the Resolve Organization Portal tool. Product keys follow
+// the camelCase naming convention used across the MCP server.
+export interface ResolvedPortalProduct {
+  productId: string;
+  productSlug: string;
+  productName: string;
+}
+
+export interface ResolveOrganizationPortalResponse {
+  organizationId: string;
+  portalId: string;
+  subdomain: string;
+  // Present only when the portal has a custom domain configured.
+  customDomain?: string;
+  portalCreated: boolean;
+  products: ResolvedPortalProduct[];
 }
 
 // Response collection types
@@ -716,3 +746,18 @@ export const SectionOutputSchema = z.object({
 });
 
 export const SectionListOutputSchema = z.array(SectionOutputSchema);
+
+export const ResolvedPortalProductOutputSchema = z.object({
+  productId: z.string(),
+  productSlug: z.string(),
+  productName: z.string(),
+});
+
+export const ResolveOrganizationPortalOutputSchema = z.object({
+  organizationId: z.string(),
+  portalId: z.string(),
+  subdomain: z.string(),
+  customDomain: z.string().optional(),
+  portalCreated: z.boolean(),
+  products: z.array(ResolvedPortalProductOutputSchema),
+});
