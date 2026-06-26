@@ -89,7 +89,10 @@ export class FunctionalTestingAPI {
       );
     }
 
-    return response.json();
+    const data = (await response.json()) as Record<string, unknown>;
+    // Reflect API returns video recording URL for each test, which SFT does not need so we remove it.
+    delete data.videoUrl;
+    return data;
   }
 
   async runSuite(args: RunFunctionalTestingSuiteParams): Promise<unknown> {
