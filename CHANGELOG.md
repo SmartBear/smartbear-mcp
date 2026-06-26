@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- [Zephyr] Fixed `get_test_case_steps` returning a schema validation error.
+
 ### Added
 
 - [Swagger] Add output schemas and TOC discriminated union [#535](https://github.com/SmartBear/smartbear-mcp/pull/535)
