@@ -11396,7 +11396,9 @@ None",
       "state",
       "tag",
     ],
-    "outputSchema": undefined,
+    "outputSchema": [
+      "apis",
+    ],
     "title": "Swagger: Search APIs and Domains",
   },
   "swagger_standardize_api": {

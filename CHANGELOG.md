@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Extracted `READ_ONLY`, `MUTATING`, and `DELETING` constants into `tool-constants.ts` to resolve a circular dependency between `tools.ts` and `functional-testing-tools.ts` that caused a `ReferenceError` at runtime.
 
+- [Swagger] Fix `swagger_search_apis_and_domains` tool returning MCP error `-32602` by wrapping the result array in an object `{ apis: [...] }` to satisfy the MCP protocol requirement that `structuredContent` be a record, not an array.
+
 ## [0.26.1] - 2026-06-24
 
 ### Fixed
