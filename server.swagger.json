@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/ServerDetail",
+  "title": "Swagger MCP",
+  "name": "com.smartbear/swagger-mcp",
+  "description": "MCP server for AI access to Swagger by SmartBear.",
+  "repository": {
+    "url": "https://github.com/SmartBear/smartbear-mcp",
+    "source": "github"
+  },
+  "version": "0.17.1",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://swagger.mcp.smartbear.com/mcp"
+    }
+  ]
+}
