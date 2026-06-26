@@ -406,15 +406,21 @@ describe("UpdateTestCycle", () => {
         project: {
           id: 10006,
         },
-        jiraProjectVersion: 10006,
+        jiraProjectVersion: {
+          id: 10006,
+        },
         status: {
           id: 10006,
         },
-        folder: 10006,
+        folder: {
+          id: 10006,
+        },
         description: "Updated description",
         plannedStartDate: "2035-03-19T13:15:13Z",
         plannedEndDate: "2035-05-20T13:15:13Z",
-        owner: "9",
+        owner: {
+          accountId: "9",
+        },
         customFields: {
           Browser: "Safari",
           Implemented: true,
