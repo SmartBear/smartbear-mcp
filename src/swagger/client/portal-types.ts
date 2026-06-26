@@ -746,3 +746,18 @@ export const SectionOutputSchema = z.object({
 });
 
 export const SectionListOutputSchema = z.array(SectionOutputSchema);
+
+export const ResolvedPortalProductOutputSchema = z.object({
+  productId: z.string(),
+  productSlug: z.string(),
+  productName: z.string(),
+});
+
+export const ResolveOrganizationPortalOutputSchema = z.object({
+  organizationId: z.string(),
+  portalId: z.string(),
+  subdomain: z.string(),
+  customDomain: z.string().optional(),
+  portalCreated: z.boolean(),
+  products: z.array(ResolvedPortalProductOutputSchema),
+});

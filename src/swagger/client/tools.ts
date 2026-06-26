@@ -27,6 +27,7 @@ import {
   ProductOutputSchema,
   PublishProductArgsSchema,
   ResolveOrganizationPortalArgsSchema,
+  ResolveOrganizationPortalOutputSchema,
   SectionListOutputSchema,
   SuccessOutputSchema,
   TableOfContentsItemOutputSchema,
@@ -101,9 +102,10 @@ export const TOOLS: SwaggerToolParams[] = [
     toolset: "Portals",
     summary:
       "Resolve portal details for a Swagger organization in a single step. Given an organization UUID, returns the portal ID, subdomain, customDomain (when configured), and the list of products (with productId, productSlug, and productName) for the organization's portal. If the organization has no portal yet, a new portal is created automatically. Use this tool to obtain all portal context needed for subsequent portal and product operations.",
+    ...MUTATING,
     inputSchema: ResolveOrganizationPortalArgsSchema,
-    readOnly: false,
     handler: "resolveOrganizationPortal",
+    outputSchema: ResolveOrganizationPortalOutputSchema,
   },
   {
     title: "List Portal Products",
