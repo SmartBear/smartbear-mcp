@@ -12,8 +12,17 @@ import type {
 import { AUTHORIZATION_HEADER, DEFAULT_API_BASE_URL } from "./config/constants";
 import { CreateProject } from "./tool/project/create-project";
 import { ListProjects } from "./tool/project/list-projects";
+import { CreateScenario } from "./tool/scenario/create-scenario";
 import { GetScenario } from "./tool/scenario/get-scenario";
+import { ListScenarios } from "./tool/scenario/list-scenarios";
+import { ListScripts } from "./tool/script/list-scripts";
+import { GetTestRunRawStats } from "./tool/test-run/get-test-run-raw-stats";
+import { GetTestRunStats } from "./tool/test-run/get-test-run-stats";
 import { GetTestRunStatus } from "./tool/test-run/get-test-run-status";
+import { GetTestRunSummary } from "./tool/test-run/get-test-run-summary";
+import { ListTestRuns } from "./tool/test-run/list-test-runs";
+import { StartTestRun } from "./tool/test-run/start-test-run";
+import { StopTestRun } from "./tool/test-run/stop-test-run";
 
 const ConfigurationSchema = z.object({
   api_key: z.string().describe("LoadNinja API key (32-symbol key)."),
@@ -80,7 +89,16 @@ export class LoadNinjaClient implements Client {
       new ListProjects(this),
       new CreateProject(this),
       new GetScenario(this),
+      new CreateScenario(this),
+      new ListScenarios(this),
+      new ListScripts(this),
       new GetTestRunStatus(this),
+      new GetTestRunSummary(this),
+      new GetTestRunStats(this),
+      new GetTestRunRawStats(this),
+      new ListTestRuns(this),
+      new StartTestRun(this),
+      new StopTestRun(this),
     ];
     for (const tool of tools) {
       register(tool.specification, tool.handle);
