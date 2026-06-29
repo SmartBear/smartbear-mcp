@@ -66,3 +66,4 @@ export class Cache {
     return this.get(projectKey, fieldKey)?.[name.toLowerCase()];
   }
 }
+export type { FieldValues };
