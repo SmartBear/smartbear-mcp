@@ -261,7 +261,7 @@ export const CLIENT_CONFIG = {
   /** Client name */
   NAME: "QTM4J",
 
-  /** Fixed value sent in Request-Source to identify MCP-originated requests */
+  /** Fixed value sent in X-Request-Source to identify MCP-originated requests */
   SOURCE_VALUE: "QTM4J_MCP",
 
   /** Tool prefix for all QTM4J tools */
@@ -276,7 +276,7 @@ export const CLIENT_CONFIG = {
  * These are request body field names (camelCase), distinct from HTTP header names.
  */
 export const IMPORT_BODY_FIELDS = {
-  REQUEST_SOURCE_TYPE: "xRequestSource",
+  REQUEST_SOURCE: "xRequestSource",
   ALLOW_TRACKING: "xAllowTracking",
 } as const;
 

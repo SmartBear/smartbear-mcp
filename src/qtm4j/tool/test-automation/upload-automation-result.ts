@@ -152,7 +152,7 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     const importBody: Record<string, unknown> = {
       format,
       isZip,
-      [IMPORT_BODY_FIELDS.REQUEST_SOURCE_TYPE]: CLIENT_CONFIG.SOURCE_VALUE,
+      [IMPORT_BODY_FIELDS.REQUEST_SOURCE]: CLIENT_CONFIG.SOURCE_VALUE,
       [IMPORT_BODY_FIELDS.ALLOW_TRACKING]: true,
       ...rest,
       ...(fields ? { fields } : {}),
