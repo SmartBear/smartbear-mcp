@@ -247,6 +247,16 @@ export class Qtm4jClient implements Client {
       "./tool/test-cycle/get-linked-requirements"
     );
 
+    const { StartExecution } = await import(
+      "./tool/test-execution/start-execution"
+    );
+    const { UpdateTestCaseExecution } = await import(
+      "./tool/test-execution/update-test-case-execution"
+    );
+    const { UpdateTestStepExecution } = await import(
+      "./tool/test-execution/update-test-step-execution"
+    );
+
     const tools = [
       new GetProjects(this),
       new SetProjectContext(this),
@@ -257,6 +267,9 @@ export class Qtm4jClient implements Client {
       new CreateTestCycle(this),
       new SearchTestCycles(this),
       new UpdateTestCycle(this),
+      new StartExecution(this),
+      new UpdateTestCaseExecution(this),
+      new UpdateTestStepExecution(this),
       new UploadAutomationResult(this),
       new GetAutomationHistory(this),
       new LinkRequirements(this),
