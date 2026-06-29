@@ -266,9 +266,9 @@ describe("FunctionalTestingAPI", () => {
   describe("getSuiteExecution", () => {
     const suiteExecutionMock = {
       suiteId: "checkout-suite",
-      executionId: 7,
+      executionId: "7",
       isFinished: true,
-      status: "Passed",
+      status: "passed",
       tests: [],
     };
 

@@ -154,8 +154,10 @@ export class FunctionalTestingAPI {
     delete data.url;
     if (Array.isArray(data.tests)) {
       for (const test of data.tests as Record<string, unknown>[]) {
-        // Reflect API returns video recording URL for each test, which SFT does not need so we remove it.
-        delete test.videoUrl;
+        if (test && typeof test === "object") {
+          // Reflect API returns video recording URL for each test, which SFT does not need so we remove it.
+          delete test.videoUrl;
+        }
       }
     }
     return data;
