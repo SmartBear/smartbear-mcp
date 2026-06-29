@@ -163,6 +163,88 @@ describe("FunctionalTestingAPI", () => {
     });
   });
 
+  describe("listSuiteExecutions", () => {
+    const suiteExecutionsMock = {
+      suiteId: "regression-tests",
+      executions: {
+        data: [
+          { executionId: 12, status: "pending", isFinished: false },
+          { executionId: 47, status: "passed", isFinished: true },
+          { executionId: 30, status: "failed", isFinished: true },
+        ],
+      },
+    };
+
+    it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionsMock));
+
+      await api.listSuiteExecutions({ suiteId: "regression-tests" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/regression-tests/executions",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return executions in the order the API returns them", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionsMock));
+
+      const result = (await api.listSuiteExecutions({
+        suiteId: "regression-tests",
+      })) as typeof suiteExecutionsMock;
+
+      expect(result.executions.data.map((e) => e.executionId)).toEqual([
+        12, 47, 30,
+      ]);
+    });
+
+    it("should return empty list as-is when no executions exist", async () => {
+      const empty = { suiteId: "regression-tests", executions: { data: [] } };
+      fetchMock.mockResponseOnce(JSON.stringify(empty));
+
+      const result = await api.listSuiteExecutions({
+        suiteId: "regression-tests",
+      });
+
+      expect(result).toEqual(empty);
+    });
+
+    it("should throw ToolError when suiteId is missing", async () => {
+      await expect(
+        api.listSuiteExecutions({ suiteId: "" }),
+      ).rejects.toThrow("suiteId argument is required");
+    });
+
+    it("should map 404 to a suite-not-found message", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(
+        api.listSuiteExecutions({ suiteId: "missing" }),
+      ).rejects.toThrow(
+        "Test suite not found. Verify the suiteId is correct and belongs to your workspace.",
+      );
+    });
+
+    it("should fall back to a generic message for other HTTP errors", async () => {
+      fetchMock.mockResponseOnce("Boom", { status: 500 });
+
+      await expect(
+        api.listSuiteExecutions({ suiteId: "regression-tests" }),
+      ).rejects.toThrow("Failed to list suite executions: 500");
+    });
+
+    it("should propagate network errors", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.listSuiteExecutions({ suiteId: "regression-tests" }),
+      ).rejects.toThrow("Network error");
+    });
+  });
+
   describe("getFtHeaders", () => {
     it("should return headers with X-API-KEY and Content-Type", () => {
       const headers = api.getFtHeaders();

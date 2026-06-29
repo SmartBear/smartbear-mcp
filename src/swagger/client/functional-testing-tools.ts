@@ -1,5 +1,6 @@
 import {
   GetFunctionalTestingExecutionTestSchema,
+  ListFunctionalTestingSuiteExecutionsSchema,
   RunFunctionalTestingTestParamsSchema,
 } from "./functional-testing-types";
 import type { SwaggerToolParams } from "./tools";
@@ -36,5 +37,16 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     inputSchema: GetFunctionalTestingExecutionTestSchema,
     handler: "getFunctionalTestingExecution",
     idempotent: false,
+  },
+  {
+    title: "List Suite Executions",
+    toolset: "Functional Testing",
+    summary:
+      "Lists all executions for a given test suite in your Swagger Functional Testing workspace. " +
+      "Use this tool when you need to review execution history and timings for a specific suite. " +
+      "Do not use this tool to retrieve the status of a single execution or individual test results.",
+    inputSchema: ListFunctionalTestingSuiteExecutionsSchema,
+    handler: "listFunctionalTestingSuiteExecutions",
+    readOnly: true,
   },
 ];

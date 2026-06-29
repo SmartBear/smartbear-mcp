@@ -1,6 +1,7 @@
 import { ToolError } from "../../common/tools";
 import type {
   GetFunctionalTestingExecutionTestParams,
+  ListFunctionalTestingSuiteExecutionsParams,
   RunFunctionalTestingTestParams,
 } from "./functional-testing-types";
 
@@ -88,5 +89,38 @@ export class FunctionalTestingAPI {
     }
 
     return response.json();
+  }
+
+  async listSuiteExecutions(
+    args: ListFunctionalTestingSuiteExecutionsParams,
+  ): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+
+    const response = await fetch(
+      `${this.baseUrl}/suites/${args.suiteId}/executions`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+    );
+
+    if (!response.ok) {
+      throw new ToolError(suiteExecutionsErrorMessage(response));
+    }
+
+    return response.json();
+  }
+}
+
+function suiteExecutionsErrorMessage(response: Response): string {
+  switch (response.status) {
+    // Defensive: the Reflect API currently returns 200 with an empty
+    // `executions.data` list for an unknown suiteId rather than a 404, so this
+    // branch is not expected to fire today. Kept in case the API starts
+    // returning 404 for missing suites.
+    case 404:
+      return "Test suite not found. Verify the suiteId is correct and belongs to your workspace.";
+    default:
+      return `Failed to list suite executions: ${response.status} ${response.statusText}`;
   }
 }
