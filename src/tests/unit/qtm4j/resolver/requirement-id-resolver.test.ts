@@ -10,6 +10,7 @@ describe("RequirementIdResolver", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockApiClient = { get: vi.fn() };
+    mockApiClient.skipAnalytics = vi.fn().mockReturnValue(mockApiClient);
     resolver = new RequirementIdResolver(mockApiClient);
   });
 

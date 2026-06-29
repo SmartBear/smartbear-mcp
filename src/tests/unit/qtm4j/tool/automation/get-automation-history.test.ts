@@ -46,6 +46,7 @@ describe("GetAutomationHistory", () => {
     mockApiClient = {
       getAutomation: vi.fn().mockResolvedValue(fakeHistoryResponse),
     };
+    mockApiClient.skipAnalytics = vi.fn().mockReturnValue(mockApiClient);
 
     mockClient = {
       getApiClient: vi.fn().mockReturnValue(mockApiClient),
