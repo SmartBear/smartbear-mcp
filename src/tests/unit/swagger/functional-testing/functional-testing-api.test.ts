@@ -213,9 +213,9 @@ describe("FunctionalTestingAPI", () => {
     });
 
     it("should throw ToolError when suiteId is missing", async () => {
-      await expect(
-        api.listSuiteExecutions({ suiteId: "" }),
-      ).rejects.toThrow("suiteId argument is required");
+      await expect(api.listSuiteExecutions({ suiteId: "" })).rejects.toThrow(
+        "suiteId argument is required",
+      );
     });
 
     it("should map 404 to a suite-not-found message", async () => {
