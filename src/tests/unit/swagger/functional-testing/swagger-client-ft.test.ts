@@ -246,4 +246,63 @@ describe("SwaggerClient — Functional Testing integration", () => {
       );
     });
   });
+
+  describe("runFunctionalTestingSuite", () => {
+    it("should POST to suite executions endpoint and return result", async () => {
+      const executionMock = { executionId: "42", status: "pending" };
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.runFunctionalTestingSuite({ suiteId: "checkout-suite" }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/checkout-suite/executions",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(executionMock);
+    });
+  });
+
+  describe("getFunctionalTestingSuiteExecution", () => {
+    it("should GET suite execution endpoint and return result", async () => {
+      const suiteExecutionMock = {
+        suiteId: "checkout-suite",
+        executionId: "42",
+        isFinished: true,
+        status: "passed",
+        tests: [],
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.getFunctionalTestingSuiteExecution({
+          suiteId: "checkout-suite",
+          executionId: "42",
+        }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/checkout-suite/executions/42",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(suiteExecutionMock);
+    });
+  });
 });
