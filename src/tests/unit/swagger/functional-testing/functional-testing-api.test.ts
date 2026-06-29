@@ -215,11 +215,11 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should throw a service-unavailable error on other HTTP errors", async () => {
+    it("should throw an error with the response status on other HTTP errors", async () => {
       fetchMock.mockResponseOnce("Server Error", { status: 503 });
 
       await expect(api.listSuites()).rejects.toThrow(
-        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+        "Failed to list Functional Testing suites",
       );
     });
 

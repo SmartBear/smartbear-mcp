@@ -14,9 +14,9 @@ The Swagger Functional Testing client provides tools for discovering and executi
 
 #### `list_suites`
 
-- Purpose: Lists all test suites available in your Swagger Functional Testing workspace. Use this tool when you need to discover available suites before running them or checking their execution history. Do not use this tool to retrieve individual tests or test suite execution results.
-- Returns: Complete list of test suites in the workspace. An empty list (`[]`) is returned when no suites exist.
-- Use case: Discover available test suites.
+- Purpose: Lists all test Suites available in your Swagger Functional Testing workspace. Use this tool when you need to discover available Suites before running them or checking their execution history. Do not use this tool to retrieve individual tests or test Suite execution results.
+- Returns: Complete list of test Suites in the workspace. An empty list (`[]`) is returned when no Suites exist.
+- Use case: Discover available test Suites.
 
 ---
 

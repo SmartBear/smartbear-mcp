@@ -387,10 +387,7 @@ export class SwaggerClient implements Client {
   }
 
   async listFunctionalTestingSuites(): Promise<unknown> {
-    if (!this.ftApi) {
-      throw new ToolError("Functional Testing API not configured");
-    }
-    return this.ftApi.listSuites();
+    return this.withFunctionalTesting((ftApi) => ftApi.listSuites());
   }
 
   async registerTools(

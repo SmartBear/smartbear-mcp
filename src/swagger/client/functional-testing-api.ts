@@ -112,7 +112,7 @@ export class FunctionalTestingAPI {
 
     if (!response.ok) {
       throw new ToolError(
-        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+        `Failed to list Functional Testing suites: ${response.status} ${response.statusText}`,
       );
     }
 

@@ -24,7 +24,7 @@ export type GetFunctionalTestingExecutionTestParams = z.infer<
 >;
 
 export interface Suite {
-  id: number;
+  id: string;
   accountId: number;
   name: string;
   slug: string;
@@ -34,7 +34,7 @@ export interface Suite {
 
 export interface ListSuitesResponse {
   suites: Suite[];
-  stats: {
+  stats?: {
     executions: number;
     passRate: number;
     avgRuntimeSecs: number;
