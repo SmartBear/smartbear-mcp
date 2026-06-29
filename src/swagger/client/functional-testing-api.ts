@@ -2,6 +2,7 @@ import { ToolError } from "../../common/tools";
 import type {
   GetFunctionalTestingExecutionTestParams,
   ListFunctionalTestingSuiteExecutionsParams,
+  ListSuiteExecutionsResponse,
   RunFunctionalTestingTestParams,
 } from "./functional-testing-types";
 
@@ -93,7 +94,7 @@ export class FunctionalTestingAPI {
 
   async listSuiteExecutions(
     args: ListFunctionalTestingSuiteExecutionsParams,
-  ): Promise<unknown> {
+  ): Promise<ListSuiteExecutionsResponse> {
     if (!args.suiteId) throw new ToolError("suiteId argument is required");
 
     const response = await fetch(

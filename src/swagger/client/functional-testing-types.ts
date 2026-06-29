@@ -33,3 +33,17 @@ export type GetFunctionalTestingExecutionTestParams = z.infer<
 export type ListFunctionalTestingSuiteExecutionsParams = z.infer<
   typeof ListFunctionalTestingSuiteExecutionsSchema
 >;
+
+export interface SuiteExecution {
+  executionId: number;
+  url: string;
+  status: string;
+  isFinished: boolean;
+}
+
+export interface ListSuiteExecutionsResponse {
+  suiteId: string;
+  executions: {
+    data: SuiteExecution[];
+  };
+}
