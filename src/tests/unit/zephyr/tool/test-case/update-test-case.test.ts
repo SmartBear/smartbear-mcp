@@ -236,6 +236,18 @@ describe("UpdateTestCase", () => {
         id: 1,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/7463",
       },
+      folder: {
+        id: 200,
+        self: "https://api.zephyrscale-dev.smartbear.com/v2/folders/200",
+      },
+      component: {
+        id: 300,
+        self: "https://api.zephyrscale-dev.smartbear.com/v2/components/300",
+      },
+      owner: {
+        accountId: "original-account-id",
+        self: "https://jira.example/rest/api/2/user?accountId=original-account-id",
+      },
       objective: "Original objective",
       labels: ["existing-label"],
       customFields: {
@@ -506,6 +518,9 @@ describe("UpdateTestCase", () => {
         project: { id: 100 },
         priority: { id: 2 }, // Object update
         status: { id: 1 },
+        folder: { id: 999 }, // Object update (id-only input)
+        component: { id: 888 }, // Object update (id-only input)
+        owner: { accountId: "9" }, // Object update (accountId-only input)
         labels: ["regression", "automated"], // Array replacement
         customFields: {
           // Nested object merge
@@ -532,6 +547,20 @@ describe("UpdateTestCase", () => {
       expect(mergedBody.status).toEqual({
         id: 1,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/7463",
+      });
+      // id-only input is mapped to { id } and merged with the existing
+      // resource, preserving its self link (no double-nesting like { id: { id } })
+      expect(mergedBody.folder).toEqual({
+        id: 999,
+        self: "https://api.zephyrscale-dev.smartbear.com/v2/folders/200",
+      });
+      expect(mergedBody.component).toEqual({
+        id: 888,
+        self: "https://api.zephyrscale-dev.smartbear.com/v2/components/300",
+      });
+      expect(mergedBody.owner).toEqual({
+        accountId: "9",
+        self: "https://jira.example/rest/api/2/user?accountId=original-account-id",
       });
       expect(mergedBody.labels).toEqual(["regression", "automated"]);
       expect(mergedBody.customFields).toEqual({
