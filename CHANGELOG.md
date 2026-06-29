@@ -27,8 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.27.0] - 2026-06-29
 - [Qmetry]: add Test Run UDF workflow support and customer fixes [#538](https://github.com/SmartBear/smartbear-mcp/pull/538)
 
-## [0.26.1] - 2026-06-25
-
 ### Added
 
 - [Swagger] Extended `publish_portal_product` to build published URLs dynamically from `SWAGGER_PORTAL_BASE_PATH`, support preview and section/table-of-contents paths, and return the resolved `liveUrl` or `previewUrl` plus product, portal, and table-of-contents metadata in the publish response. If `portal.customDomain` is present, the client now uses it as the full host without appending the portal UI suffix. For url generation product and portal details ar required and section and toc details are optional.
