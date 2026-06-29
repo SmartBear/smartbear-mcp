@@ -548,8 +548,6 @@ describe("UpdateTestCase", () => {
         id: 1,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/7463",
       });
-      // id-only input is mapped to { id } and merged with the existing
-      // resource, preserving its self link (no double-nesting like { id: { id } })
       expect(mergedBody.folder).toEqual({
         id: 999,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/folders/200",

@@ -95,27 +95,7 @@ export class UpdateTestCase extends Tool<ZephyrClient> {
       args,
     );
 
-    const { testCaseKey, ...rawUpdates } = parsed;
-
-    const nullValuesObject: Record<string, any> = {};
-
-    if (rawUpdates.folder) {
-      //do nothing when null or undefined
-      nullValuesObject.folder = { id: rawUpdates.folder.id };
-    }
-    if (rawUpdates.owner) {
-      //do nothing when null or undefined
-      nullValuesObject.owner = { accountId: rawUpdates.owner.accountId };
-    }
-    if (rawUpdates.component) {
-      //do nothing when null or undefined
-      nullValuesObject.component = { id: rawUpdates.component.id };
-    }
-
-    const updates = {
-      ...rawUpdates,
-      ...nullValuesObject,
-    };
+    const { testCaseKey, ...updates } = parsed;
 
     // Fetch the existing test case to ensure we have all properties
     // This is necessary because Zephyr's PUT endpoints requires the complete resource
