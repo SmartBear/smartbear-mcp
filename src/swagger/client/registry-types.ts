@@ -251,3 +251,64 @@ export interface StandardizeApiResponse {
     severity?: string;
   }>;
 }
+
+// Output schemas for MCP tool responses — all fields optional to tolerate partial API responses
+export const CreateApiOutputSchema = z.looseObject({
+  owner: z.string().optional(),
+  apiName: z.string().optional(),
+  version: z.string().optional(),
+  url: z.string().optional(),
+  operation: z.enum(["create", "update"]).optional(),
+});
+
+export const CreateApiFromPromptOutputSchema = z.looseObject({
+  owner: z.string().optional(),
+  apiName: z.string().optional(),
+  specType: z.string().optional(),
+  version: z.string().optional(),
+  url: z.string().optional(),
+  operation: z.enum(["create", "update"]).optional(),
+});
+
+const StandardizationErrorSchema = z.object({
+  line: z.number().optional(),
+  description: z.string().optional(),
+  severity: z.string().optional(),
+});
+
+export const ScanOutputSchema = z.looseObject({
+  count: z.number().optional(),
+  countsBySeverity: z.record(z.string(), z.number()).optional(),
+  validation: z.array(StandardizationErrorSchema).optional(),
+});
+
+export const ScanFromRegistryOutputSchema = z.looseObject({
+  count: z.number().optional(),
+  countsBySeverity: z.record(z.string(), z.number()).optional(),
+  validation: z.array(StandardizationErrorSchema).optional(),
+  url: z.string().optional(),
+});
+
+export const StandardizeOutputSchema = z.looseObject({
+  message: z.string().optional(),
+  errorsFound: z.number().optional(),
+  fixedDefinition: z.string().optional(),
+  savedVersion: z.string().optional(),
+});
+
+export const ApiDefinitionOutputSchema = z.object({
+  definition: z.string(),
+});
+
+export const SearchApisOutputSchema = z.object({
+  items: z.array(
+    z.looseObject({
+      owner: z.string().optional(),
+      name: z.string().optional(),
+      version: z.string().optional(),
+      description: z.string().optional(),
+      specification: z.string().optional(),
+      url: z.string().optional(),
+    }),
+  ),
+});

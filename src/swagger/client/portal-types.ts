@@ -653,3 +653,117 @@ export interface CreateDocumentationPageResult {
   };
   draftUrl?: string;
 }
+
+// Output schemas for MCP tool responses — all fields optional to tolerate partial API responses
+const PageSchema = z.object({
+  number: z.number().optional(),
+  size: z.number().optional(),
+  totalElements: z.number().optional(),
+  totalPages: z.number().optional(),
+});
+
+export const PortalOutputSchema = z.looseObject({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  subdomain: z.string().optional(),
+  customDomain: z.string().optional(),
+  offline: z.boolean().optional(),
+  openapiRenderer: z.string().optional(),
+  routing: z.string().optional(),
+  credentialsEnabled: z.boolean().optional(),
+  swaggerHubOrganizationId: z.string().optional(),
+});
+
+export const PortalsListOutputSchema = z.object({
+  page: PageSchema.optional(),
+  items: z.array(PortalOutputSchema).optional(),
+});
+
+export const ProductOutputSchema = z.looseObject({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  slug: z.string().optional(),
+  portalId: z.string().optional(),
+  description: z.string().optional(),
+  public: z.boolean().optional(),
+  hidden: z.boolean().optional(),
+});
+
+export const ProductsListOutputSchema = z.object({
+  page: PageSchema.optional(),
+  items: z.array(ProductOutputSchema).optional(),
+});
+
+export const SectionOutputSchema = z.looseObject({
+  id: z.string().optional(),
+  productId: z.string().optional(),
+  title: z.string().optional(),
+  slug: z.string().optional(),
+  order: z.number().optional(),
+});
+
+export const SectionsListOutputSchema = z.object({
+  page: PageSchema.optional(),
+  items: z.array(SectionOutputSchema).optional(),
+});
+
+export const CreateTocOutputSchema = z.object({
+  id: z.string().optional(),
+  documentId: z.string().optional(),
+});
+
+export const DocumentOutputSchema = z.object({
+  id: z.string().optional(),
+  type: z.enum(["html", "markdown"]).optional(),
+  source: z.enum(["internal", "external"]).optional(),
+  content: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const PublishOutputSchema = z.looseObject({
+  success: z.boolean().optional(),
+  preview: z.boolean().optional(),
+  liveUrl: z.string().nullable().optional(),
+  previewUrl: z.string().nullable().optional(),
+});
+
+export const ResolvePortalOutputSchema = z.object({
+  organizationId: z.string().optional(),
+  portalId: z.string().optional(),
+  subdomain: z.string().optional(),
+  customDomain: z.string().optional(),
+  portalCreated: z.boolean().optional(),
+  products: z
+    .array(
+      z.object({
+        productId: z.string().optional(),
+        productSlug: z.string().optional(),
+        productName: z.string().optional(),
+      }),
+    )
+    .optional(),
+});
+
+export const CreateDocPageOutputSchema = z.looseObject({
+  productId: z.string().optional(),
+  sectionId: z.string().optional(),
+  sectionSlug: z.string().optional(),
+  draftUrl: z.string().optional(),
+});
+
+export const DeleteProductOutputSchema = z.object({
+  message: z.string(),
+});
+
+export const TocListOutputSchema = z.object({
+  items: z.array(
+    z.looseObject({
+      id: z.string().optional(),
+      slug: z.string().optional(),
+      title: z.string().optional(),
+      order: z.number().optional(),
+      parentId: z.string().nullable().optional(),
+    }),
+  ),
+});
