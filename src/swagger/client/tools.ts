@@ -11,12 +11,11 @@ import { FUNCTIONAL_TESTING_TOOLS } from "./functional-testing-tools";
 import {
   CreateDocPageOutputSchema,
   CreateDocumentationPageArgsSchema,
-  DeleteProductOutputSchema,
-  TocListOutputSchema,
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   CreateTableOfContentsArgsSchema,
   CreateTocOutputSchema,
+  DeleteProductOutputSchema,
   DeleteTableOfContentsArgsSchema,
   DocumentOutputSchema,
   GetDocumentArgsSchema,
@@ -33,6 +32,7 @@ import {
   ResolveOrganizationPortalArgsSchema,
   ResolvePortalOutputSchema,
   SectionsListOutputSchema,
+  TocListOutputSchema,
   UpdateDocumentArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
@@ -54,15 +54,15 @@ import {
   StandardizeOutputSchema,
 } from "./registry-types";
 import {
-  OrganizationsListOutputSchema,
-  OrganizationsQuerySchema,
-} from "./user-management-types";
-import {
   READ_ONLY,
   WRITE,
   WRITE_DESTRUCTIVE,
   WRITE_INTERNAL,
 } from "./tool-constants";
+import {
+  OrganizationsListOutputSchema,
+  OrganizationsQuerySchema,
+} from "./user-management-types";
 
 export interface SwaggerToolParams extends ToolParams {
   handler: string;
