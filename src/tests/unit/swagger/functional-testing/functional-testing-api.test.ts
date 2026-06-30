@@ -10,6 +10,12 @@ const testsMock = [
   { id: "test-2", name: "Checkout Test" },
 ];
 
+const UNREACHABLE_MESSAGE =
+  "Swagger Functional Testing service is currently unreachable. Retry after a moment.";
+
+const AUTH_FAILED_MESSAGE =
+  "Authentication failed. Verify your API token is valid and has not expired.";
+
 describe("FunctionalTestingAPI", () => {
   let api: FunctionalTestingAPI;
 
@@ -53,17 +59,17 @@ describe("FunctionalTestingAPI", () => {
     });
 
     it("should throw ToolError on HTTP error", async () => {
-      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
 
       await expect(api.listTests()).rejects.toThrow(
         "Failed to list Functional Testing tests",
       );
     });
 
-    it("should propagate network errors", async () => {
+    it("should map network errors to an unreachable message", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
-      await expect(api.listTests()).rejects.toThrow("Network error");
+      await expect(api.listTests()).rejects.toThrow(UNREACHABLE_MESSAGE);
     });
   });
 
@@ -106,11 +112,11 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should propagate network errors", async () => {
+    it("should map network errors to an unreachable message", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       await expect(api.runTest({ testId: "94" })).rejects.toThrow(
-        "Network error",
+        UNREACHABLE_MESSAGE,
       );
     });
   });
@@ -154,11 +160,11 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should propagate network errors", async () => {
+    it("should map network errors to an unreachable message", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       await expect(api.getTestExecution({ executionId: "42" })).rejects.toThrow(
-        "Network error",
+        UNREACHABLE_MESSAGE,
       );
     });
   });
@@ -236,12 +242,26 @@ describe("FunctionalTestingAPI", () => {
       ).rejects.toThrow("Failed to list suite executions: 500");
     });
 
-    it("should propagate network errors", async () => {
+    it("should map network errors to an unreachable message", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       await expect(
         api.listSuiteExecutions({ suiteId: "regression-tests" }),
-      ).rejects.toThrow("Network error");
+      ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+  });
+
+  describe("ftFetch authentication errors", () => {
+    it("should map 401 responses to an auth-failed message", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(api.listTests()).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+
+    it("should map 403 responses to an auth-failed message", async () => {
+      fetchMock.mockResponseOnce("Forbidden", { status: 403 });
+
+      await expect(api.listTests()).rejects.toThrow(AUTH_FAILED_MESSAGE);
     });
   });
 
