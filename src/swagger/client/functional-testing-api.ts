@@ -71,7 +71,7 @@ export class FunctionalTestingAPI {
     if (!args.testId) throw new ToolError("testId argument is required");
 
     const response = await this.ftFetch(
-      `${this.baseUrl}/tests/${args.testId}/executions`,
+      `${this.baseUrl}/tests/${encodeURIComponent(args.testId)}/executions`,
       {
         method: "POST",
         headers: this.getFtHeaders(),
@@ -95,7 +95,7 @@ export class FunctionalTestingAPI {
     }
 
     const response = await this.ftFetch(
-      `${this.baseUrl}/executions/${args.executionId}`,
+      `${this.baseUrl}/executions/${encodeURIComponent(args.executionId)}`,
       {
         method: "GET",
         headers: this.getFtHeaders(),
@@ -117,7 +117,7 @@ export class FunctionalTestingAPI {
     if (!args.suiteId) throw new ToolError("suiteId argument is required");
 
     const response = await this.ftFetch(
-      `${this.baseUrl}/suites/${args.suiteId}/executions`,
+      `${this.baseUrl}/suites/${encodeURIComponent(args.suiteId)}/executions`,
       {
         method: "GET",
         headers: this.getFtHeaders(),
