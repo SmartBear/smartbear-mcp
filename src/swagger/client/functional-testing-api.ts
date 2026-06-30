@@ -33,10 +33,7 @@ export class FunctionalTestingAPI {
     };
   }
 
-  private async ftFetch(
-    input: string,
-    init: RequestInit,
-  ): Promise<Response> {
+  private async ftFetch(input: string, init: RequestInit): Promise<Response> {
     let response: Response;
     try {
       response = await fetch(input, init);
