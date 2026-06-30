@@ -95,6 +95,11 @@ describe("Qtm4jClient", () => {
     );
   });
 
+  it("should return null from getAuthToken when not configured", () => {
+    const client = new Qtm4jClient();
+    expect(client.getAuthToken()).toBeNull();
+  });
+
   it("should get auth token from configuration", async () => {
     const client = new Qtm4jClient();
     await client.configure(
@@ -133,5 +138,51 @@ describe("Qtm4jClient", () => {
       { api_key: "config-token" } as any,
     );
     expect(client.getAuthToken()).toBe("array-token");
+  });
+
+  it("should return null from getAutomationApiKey when not configured", async () => {
+    vi.mocked(getRequestHeader).mockReturnValue(undefined);
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "token" } as any,
+    );
+    expect(client.getAutomationApiKey()).toBeNull();
+  });
+
+  it("should return automation api key from configuration", async () => {
+    vi.mocked(getRequestHeader).mockReturnValue(undefined);
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "token", automation_api_key: "auto-key-123" } as any,
+    );
+    expect(client.getAutomationApiKey()).toBe("auto-key-123");
+  });
+
+  it("should prefer automation header over configured automation api key", async () => {
+    vi.mocked(getRequestHeader).mockImplementation((key: string) =>
+      key === "Qtm4j-Automation-Api-Key" ? "header-auto-key" : undefined,
+    );
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "token", automation_api_key: "config-auto-key" } as any,
+    );
+    expect(client.getAutomationApiKey()).toBe("header-auto-key");
+  });
+
+  it("should handle array automation header by using first element", async () => {
+    vi.mocked(getRequestHeader).mockImplementation((key: string) =>
+      key === "Qtm4j-Automation-Api-Key"
+        ? ["array-auto-key", "other"]
+        : undefined,
+    );
+    const client = new Qtm4jClient();
+    await client.configure(
+      { getCache: () => undefined } as any,
+      { api_key: "token" } as any,
+    );
+    expect(client.getAutomationApiKey()).toBe("array-auto-key");
   });
 });

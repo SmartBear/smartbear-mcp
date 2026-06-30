@@ -162,6 +162,23 @@ describe("UploadAutomationResult", () => {
       });
       expect(result.content).toEqual([]);
     });
+
+    it("uses default message when API response has no message", async () => {
+      mockApiClient.postAutomation.mockResolvedValueOnce({
+        url: fakeInitResponse.url,
+        trackingId: fakeInitResponse.trackingId,
+        message: undefined,
+      });
+
+      const result = await instance.handle({
+        filePath: "./results/junit.xml",
+        format: "junit",
+      });
+
+      expect(result.structuredContent).toMatchObject({
+        message: "File uploaded successfully. Import is processing.",
+      });
+    });
   });
 
   // ─── fields passthrough ───────────────────────────────────────────────────

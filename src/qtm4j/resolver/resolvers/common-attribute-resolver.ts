@@ -67,9 +67,9 @@ export class CommonAttributeResolver extends Resolver {
     projectKey: string,
     projectId: number,
   ): Promise<Record<string, FieldValues>> {
-    const response = await this.apiClient.get(
-      ENDPOINTS.COMMON_ATTRIBUTES(projectId),
-    );
+    const response = await this.apiClient
+      .skipAnalytics()
+      .get(ENDPOINTS.COMMON_ATTRIBUTES(projectId));
     const attributes = response as Record<string, FieldValues>;
     for (const [key, values] of Object.entries(attributes)) {
       this.cache.set(projectKey, key, values);
