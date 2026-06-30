@@ -26,9 +26,12 @@ import {
   type CreateApiFromPromptResponse,
   type CreateApiParams,
   type CreateApiResponse,
+  type CreateDocumentationPageArgs,
+  type CreateDocumentationPageResult,
   type CreatePortalArgs,
   type CreateProductArgs,
   type CreateTableOfContentsArgs,
+  type CreateTableOfContentsItemResponse,
   type DeleteTableOfContentsArgs,
   type Document,
   type FallbackResponse,
@@ -41,6 +44,8 @@ import {
   type ProductsListResponse,
   type PublishPortalProductResponse,
   type PublishProductArgs,
+  type ResolveOrganizationPortalArgs,
+  type ResolveOrganizationPortalResponse,
   type ScanApiStandardizationFromRegistryParams,
   type ScanApiStandardizationFromRegistryResult,
   type ScanStandardizationParams,
@@ -51,7 +56,6 @@ import {
   type SuccessResponse,
   SwaggerAPI,
   SwaggerConfiguration,
-  type TableOfContentsItem,
   type TableOfContentsListResponse,
   TOOLS,
   type UpdateDocumentArgs,
@@ -206,6 +210,12 @@ export class SwaggerClient implements Client {
     return this.getApi().updatePortal(portalId, body);
   }
 
+  async resolveOrganizationPortal(
+    args: ResolveOrganizationPortalArgs,
+  ): Promise<ResolveOrganizationPortalResponse | FallbackResponse> {
+    return this.getApi().resolveOrganizationPortal(args);
+  }
+
   async getPortalProducts(args: {
     portalId: string;
   }): Promise<ProductsListResponse | FallbackResponse> {
@@ -258,7 +268,7 @@ export class SwaggerClient implements Client {
 
   async createTableOfContents(
     args: CreateTableOfContentsArgs,
-  ): Promise<TableOfContentsItem | FallbackResponse> {
+  ): Promise<CreateTableOfContentsItemResponse | FallbackResponse> {
     const { sectionId, ...body } = args;
     return this.getApi().createTableOfContents(sectionId, body);
   }
@@ -285,6 +295,12 @@ export class SwaggerClient implements Client {
     args: DeleteTableOfContentsArgs,
   ): Promise<SuccessResponse | FallbackResponse> {
     return this.getApi().deleteTableOfContents(args);
+  }
+
+  async createDocumentationPage(
+    args: CreateDocumentationPageArgs,
+  ): Promise<CreateDocumentationPageResult> {
+    return this.getApi().createDocumentationPage(args);
   }
 
   // Registry API methods for SwaggerHub Design functionality

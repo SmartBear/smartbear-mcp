@@ -810,58 +810,286 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     title: "Fetch Test Case Runs by Test Suite Run",
     toolset: "Test Suites",
     summary:
-      "Get test case runs under a specific test suite run execution in QMetry",
+      "Get test case runs under a specific test suite run execution in QMetry, including Test Run UDF values. " +
+      "ALWAYS present results as a unified table: Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label columns…>. " +
+      "NEVER show a separate type+value breakdown — always combine identification fields and UDF values in one table per run.",
     handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
     inputSchema: TestCaseRunsByTestSuiteRunArgsSchema,
+    formatResponse: (result: any) => {
+      if (!result?.data || !Array.isArray(result.data)) return result;
+      if (result.hasTcRunUdf === false) {
+        return {
+          ...result,
+          testRunUdfNote:
+            "No Test Run UDFs are configured for this project. " +
+            "The 'testRunUdfs' field will not be present in execution records. " +
+            "To enable Test Run UDF features, a project administrator must define Test Run UDF fields in the project settings.",
+        };
+      }
+      return {
+        ...result,
+        data: result.data.map((row: any) => {
+          if (!row.udfjson) return row;
+          let testRunUdfs: Record<string, unknown> = {};
+          try {
+            const parsed = JSON.parse(row.udfjson);
+            testRunUdfs = Object.fromEntries(
+              Object.entries(parsed).map(([key, val]) => {
+                if (typeof val === "string" && /<[^>]+>/.test(val)) {
+                  const text = val
+                    .replace(/<[^>]*>/g, " ")
+                    .replace(/&(nbsp|amp|lt|gt|quot);/g, (_, entity) => {
+                      if (entity === "nbsp") return " ";
+                      if (entity === "amp") return "&";
+                      if (entity === "lt") return "<";
+                      if (entity === "gt") return ">";
+                      if (entity === "quot") return '"';
+                      return `&${entity};`;
+                    })
+                    .replace(/\s+/g, " ")
+                    .trim();
+                  return [key, text];
+                }
+                return [key, val];
+              }),
+            );
+          } catch {
+            testRunUdfs = {};
+          }
+          const { udfjson: _udfjson, ...rest } = row;
+          return { ...rest, testRunUdfs };
+        }),
+      };
+    },
     purpose:
       "Retrieve detailed test case run information for a specific test suite run execution. " +
       "This tool provides comprehensive test case run data including execution status, " +
-      "test results, tester information, execution dates, and other run metadata. " +
-      "Essential for detailed execution analysis, test run reporting, and execution audit trails. " +
-      "NOTE: Uses simplified payload structure with only essential parameters (start, page, limit, tsrunID, viewId).",
+      "test results, tester information, execution dates, Test Run UDF values, and other run metadata. " +
+      "Supports filtering by standard fields, test case UDFs (udfFilter), and Test Run UDFs (tcrUdfFilter). " +
+      "Essential for detailed execution analysis, test run reporting, UDF value inspection, and execution audit trails. " +
+      "IMPORTANT: Every response row contains key identification fields — Test Case Key (entityKey), " +
+      "Test Case Summary (summary), Executed Version (latestVersion), Execution Status (runStatus), and Test Run UDF values (testRunUdfs). " +
+      "These MUST always be shown in the response so users can identify which test case run each record represents.",
     useCases: [
       "Get all test case runs under a specific test suite run execution",
-      "Analyze individual test case execution results and status",
+      "Fetch Test Run UDF values for all test case executions in a test suite run — always show Test Case Key, Summary, and Execution Status alongside UDFs",
+      "Fetch Test Run UDF values for a specific test case execution by tcRunID",
+      "Filter test case runs by Test Run UDF field values (e.g. show only runs where dropdown UDF = specific option)",
+      "Analyze individual test case execution results, status, and custom UDF metadata",
       "Monitor test case run performance and execution trends",
-      "Generate detailed test execution reports for specific runs",
+      "Generate detailed test execution reports including custom UDF data",
       "Track test case run history and execution patterns",
       "Validate test case run coverage and execution completeness",
-      "Audit test case run data for compliance and quality assurance",
-      "Export detailed test case run data for external reporting",
+      "Audit test case run data with UDF values for compliance and quality assurance",
+      "Export detailed test case run data including Test Run UDFs for external reporting",
       "Retrieve paginated test case run results for large test suite executions",
     ],
     examples: [
       {
         description: "Get all test case runs for test suite run ID '107021'",
-        parameters: { tsrunID: "107021", viewId: 6887 }, // This is an example viewId, must be resolved per project TE viewId
+        parameters: { tsrunID: "107021", viewId: 6887 },
         expectedOutput:
-          "List of test case runs with execution details, status, and metadata",
+          "Present as ONE unified table — never as a separate type+value breakdown. Example:\n" +
+          "| Test Case Key | Test Case Summary        | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
+          "| MAC-TC-5      | Login - valid credential | v1               | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |\n" +
+          "| MAC-TC-6      | Login - invalid password | v2               | Failed           | john      | firefox              | Regression     | -          |\n" +
+          "Columns: Test Case Key (entityKey) | Test Case Summary (summary) | Executed Version (latestVersion) | Execution Status (runStatus) | then one column per UDF label. " +
+          "Use the UDF 'label' as column header. Show null UDF values as '-'.",
       },
       {
-        description: "Get test case runs with linked defects",
+        description:
+          "Fetch Test Run UDF values for all executions in test suite run '728995'",
         parameters: {
-          tsrunID: "107021",
-          viewId: 6887, // This is an example viewId, must be resolved per project TE viewId
+          tsrunID: "728995",
+          viewId: 79451,
+          start: 0,
           page: 1,
-          limit: 25,
+          limit: 20,
         },
         expectedOutput:
-          "Paginated list of test case runs with 25 items per page",
+          "Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:\n" +
+          "| Test Case Key | Test Case Summary | Executed Version | Execution Status | Tested By | Environments UDF     | Planned Execution Date | Execution Type |\n" +
+          "| MAC-TC-5      | Login test        | v1               | Passed           | varis     | chrome, edge, safari | -                      | Functional     |\n" +
+          "HTML is stripped from LARGETEXT UDF fields. Null values shown as '-'.",
       },
       {
-        description: "Get test case runs for test suite run ID '2362144'",
+        description:
+          "Filter by Test Run UDF list/dropdown field (single-select or multi-select lookup) — runs where UDF '8260LUP' has list item IDs 5108701 or 5108697",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          tcrUdfFilter:
+            '[{"type":"list","value":[5108701,5108697],"field":"8260LUP"}]',
+        },
+        expectedOutput:
+          "Filtered test case runs matching the lookup list UDF values",
+      },
+      {
+        description:
+          "Filter by Test Run UDF multi-lookup list field — runs where multi-select UDF 'PGTE_MULTILOOKUPLIST' contains list item IDs 5126503 or 5126502",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          tcrUdfFilter:
+            '[{"type":"list","value":[5126503,5126502],"field":"PGTE_MULTILOOKUPLIST"}]',
+        },
+        expectedOutput:
+          "Filtered test case runs where multi-lookup UDF matches any of the given list item IDs",
+      },
+      {
+        description:
+          "Filter by Test Run UDF cascading dropdown field — runs where cascading UDF 'cascade_vK' has list item IDs 5126498 or 5126499 (must set isCascading:true)",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          tcrUdfFilter:
+            '[{"type":"list","value":[5126498,5126499],"field":"cascade_vK","isCascading":true}]',
+        },
+        expectedOutput:
+          "Filtered test case runs matching the cascading dropdown UDF values",
+      },
+      {
+        description:
+          "Filter by Test Run UDF short text field — runs where text UDF 'TRString' contains the value 'str'",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          tcrUdfFilter: '[{"type":"string","field":"TRString","value":"str"}]',
+        },
+        expectedOutput:
+          "Filtered test case runs where short text UDF matches the search string",
+      },
+      {
+        description:
+          "Filter by Test Run UDF large text field — runs where large text UDF 'vk_large_text' contains 'this is large text'",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          tcrUdfFilter:
+            '[{"type":"string","field":"vk_large_text","value":"this is large text"}]',
+        },
+        expectedOutput:
+          "Filtered test case runs where large text UDF matches the search string",
+      },
+      {
+        description:
+          "Filter by Test Run UDF date field — runs where date UDF 'PGTE_DATEPICKER' is after a specific date (comparison: gt) and before another date (comparison: lt)",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          tcrUdfFilter:
+            '[{"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"},{"type":"date","field":"PGTE_DATEPICKER","comparison":"lt","value":"06-30-2026"}]',
+        },
+        expectedOutput:
+          "Filtered test case runs where date UDF falls within the specified range",
+      },
+      {
+        description:
+          "Filter by Test Run UDF numeric field — runs where numeric UDF 'NB_number_TR' equals 2",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          tcrUdfFilter: '[{"type":"numeric","value":2,"field":"NB_number_TR"}]',
+        },
+        expectedOutput:
+          "Filtered test case runs where numeric UDF equals the specified value",
+      },
+      {
+        description:
+          "Combine multiple Test Run UDF filters — filter by list UDF AND string UDF AND numeric UDF simultaneously",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          start: 0,
+          page: 1,
+          limit: 20,
+          tcrUdfFilter:
+            '[{"type":"list","value":[5108701,5108697],"field":"8260LUP"},{"type":"string","field":"TRString","value":"str"},{"type":"numeric","value":2,"field":"NB_number_TR"}]',
+        },
+        expectedOutput:
+          "Test case runs matching ALL specified UDF filter conditions (AND logic)",
+      },
+      {
+        description:
+          "Full filter combination — standard field filter + Test Run UDF filter + show only runs with defects",
+        parameters: {
+          tsrunID: "728995",
+          viewId: 79451,
+          start: 0,
+          page: 1,
+          limit: 20,
+          filter: "[]",
+          udfFilter: "[]",
+          tcrUdfFilter:
+            '[{"type":"list","value":[5108701,5108697],"field":"8260LUP"},{"type":"string","field":"TRString","value":"str"},{"type":"string","field":"vk_large_text","value":"this is large text"},{"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":""},{"type":"date","field":"PGTE_DATEPICKER","comparison":"lt","value":""},{"type":"list","value":[5126503,5126502],"field":"PGTE_MULTILOOKUPLIST"},{"type":"list","value":[5126498,5126499],"field":"cascade_vK","isCascading":true},{"type":"numeric","value":2,"field":"NB_number_TR"}]',
+          showTcWithDefects: false,
+        },
+        expectedOutput:
+          "Test case runs filtered by all 7 UDF field type conditions simultaneously",
+      },
+      {
+        description:
+          "Get paginated test case runs with standard runStatus filter",
         parameters: {
           tsrunID: "2362144",
-          viewId: 104123, // This is an example viewId, must be resolved per project TE viewId
+          viewId: 104123,
           start: 0,
           page: 1,
           limit: 25,
+          filter: '[{"type":"string","value":"Failed","field":"runStatus"}]',
         },
         expectedOutput:
-          "Test case runs from the specified test suite run execution",
+          "Paginated list of Failed test case runs with 25 items per page including testRunUdfs",
+      },
+      {
+        description:
+          "Show only test case runs with linked defects, filtered by Test Run UDF list value",
+        parameters: {
+          tsrunID: "107021",
+          viewId: 6887,
+          showTcWithDefects: true,
+          tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
+        },
+        expectedOutput:
+          "Test case runs with defects where the specified Test Run UDF matches",
       },
     ],
     hints: [
+      "=== MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT ===",
+      "",
+      "PIVOT RULE — CRITICAL:",
+      "The 'testRunUdfs' field on each row is a key-value map (object) of UDF field keys to their values.",
+      "You MUST pivot this into TABLE COLUMNS — do NOT render it as rows.",
+      "  → Each key in testRunUdfs   = use the UDF human-readable label as the column header",
+      "  → Each value in testRunUdfs = the cell value for that run's row",
+      "  → 'fieldType' / 'fieldID'   = INTERNAL METADATA — NEVER show these as columns",
+      "",
+      "FORBIDDEN PATTERNS — NEVER do any of these:",
+      "  ❌ Do NOT render a separate sub-table (Label | Type | Value) per tcRunID",
+      "  ❌ Do NOT show 'Type' or 'fieldType' as a visible column",
+      "  ❌ Do NOT group output by tcRunID with individual breakdowns beneath each",
+      "  ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as column headers — use human-readable labels",
+      "",
+      "REQUIRED OUTPUT — ONE unified table, all runs as rows:",
+      "| Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... |",
+      "|---------------|-------------------|------------------|------------------|---------------|---------------|-----|",
+      "| VKMCP-TC-1    | Login test        | v1               | Not Run          | varis         | chrome, edge  | ... |",
+      "| VKMCP-TC-2    | Invalid password  | v2               | Not Run          | john          | firefox       | ... |",
+      "",
+      "MANDATORY COLUMNS (always first, in this order):",
+      "  1. Test Case Key     → entityKey     (e.g. 'VKMCP-TC-1')",
+      "  2. Test Case Summary → summary       (test case name)",
+      "  3. Executed Version  → latestVersion (e.g. 'v1', 'v2')",
+      "  4. Execution Status  → runStatus     (e.g. 'Not Run', 'Passed', 'Failed')",
+      "  5. Tested By         → testedBy/executedBy when present",
+      "  6+. One column per UDF field — use the human-readable label as header, the value as the cell.",
+      "",
+      "Null UDF values → show as '-' in the cell.",
+      "If testRunUdfs is empty or hasTcRunUdf is false, still show columns 1-5.",
+      "CHAINING WITH FETCH TEST RUN UDF VALUES:",
+      "If the user explicitly asks for Test Run UDFs with these test case runs, call 'Fetch Test Run UDF Values' after this tool with sourceContext='testSuiteRun' and sourceRows=<this response data>. Render that tool's unifiedTableRows as the final answer.",
+      "=== END MANDATORY RESPONSE FORMAT ===",
+      "",
       "CRITICAL WORKFLOW FOR FETCHING ALL EXECUTIONS OF A TEST SUITE:",
       "When user asks to:",
       "  - 'fetch all executions'",
@@ -941,26 +1169,124 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       "Example:",
       "   {",
       '     tsrunID: "2362144",',
-      "     viewId: 104123,", // This is an example viewId, must be resolved per project TE viewId
+      "     viewId: 104123,",
       "     start: 0,",
       "     page: 1,",
       "     limit: 25",
       "   }",
       "This ensures the tool fetches the proper execution runs data for the selected project context.",
-      "SIMPLIFIED PAYLOAD: API only accepts essential parameters",
-      "SUPPORTED PARAMETERS: start, page, limit, tsrunID, viewId",
-      "REMOVED PARAMETERS: filter, sort, showTcWithDefects, udfFilter (cause API errors)",
+      "SUPPORTED PARAMETERS: start, page, limit, tsrunID, viewId, filter, udfFilter, tcrUdfFilter, showTcWithDefects",
       "PAGINATION: Use start, page, and limit for result pagination",
-      "API REQUIREMENT: Must use exact payload structure that works in Postman",
-      'PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123}', // Example payload, must use resolved viewId per project TE viewId
+      'PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123}',
+      "",
+      "=== TEST RUN UDF (tcrUdfFilter) — ALL 7 FIELD TYPE FORMATS ===",
+      "tcrUdfFilter filters test case RUNS by Test Run UDF values (not test case UDFs — use udfFilter for those).",
+      "Value is a JSON array string. Multiple conditions are combined with AND logic.",
+      'Base structure: {"type":"<fieldType>", "field":"<udfFieldKey>", "value":<value> [,"comparison":"..."] [,"isCascading":true]}',
+      "",
+      "--- TYPE 1: list (single-select lookup / dropdown) ---",
+      "Use for: single-select lookup list UDF fields (one value selected from a list).",
+      "value: array of numeric list item IDs — get IDs from FETCH_CUSTOM_LIST_ITEMS tool.",
+      'Format: {"type":"list", "field":"<fieldKey>", "value":[<id1>,<id2>]}',
+      'Example: [{"type":"list","value":[5108701,5108697],"field":"8260LUP"}]',
+      "Matches runs where the UDF value is ANY of the provided list item IDs (OR within the array).",
+      "",
+      "--- TYPE 2: list (multi-select lookup list) ---",
+      "Use for: multi-select lookup list UDF fields (multiple values can be selected).",
+      "Syntax identical to single-select list — same format, just the UDF field itself is multi-select.",
+      'Format: {"type":"list", "field":"<fieldKey>", "value":[<id1>,<id2>]}',
+      'Example: [{"type":"list","value":[5126503,5126502],"field":"PGTE_MULTILOOKUPLIST"}]',
+      "Matches runs where ANY of the UDF's selected values match any of the provided IDs.",
+      "",
+      "--- TYPE 3: list (cascading dropdown) ---",
+      "Use for: cascading dropdown UDF fields (parent-child linked dropdowns). MUST add isCascading:true.",
+      'Format: {"type":"list", "field":"<fieldKey>", "value":[<id1>,<id2>], "isCascading":true}',
+      'Example: [{"type":"list","value":[5126498,5126499],"field":"cascade_vK","isCascading":true}]',
+      "CRITICAL: missing isCascading:true on a cascading field will cause incorrect results or API error.",
+      "",
+      "--- TYPE 4: string (short text) ---",
+      "Use for: single-line text UDF fields.",
+      "value: the string to search for (partial match / contains).",
+      'Format: {"type":"string", "field":"<fieldKey>", "value":"<searchText>"}',
+      'Example: [{"type":"string","field":"TRString","value":"str"}]',
+      "",
+      "--- TYPE 5: string (large text / rich text) ---",
+      "Use for: multi-line or rich text UDF fields. Syntax is identical to short text string type.",
+      'Format: {"type":"string", "field":"<fieldKey>", "value":"<searchText>"}',
+      'Example: [{"type":"string","field":"vk_large_text","value":"this is large text"}]',
+      "NOTE: Search is against the raw (HTML) content stored in the field; plain text search terms work fine.",
+      "",
+      "--- TYPE 6: date ---",
+      "Use for: date picker UDF fields. REQUIRES a 'comparison' property.",
+      "comparison: 'gt' = after the date (greater than), 'lt' = before the date (less than).",
+      "value: date string in 'MM-DD-YYYY' format, or empty string '' to leave the bound open.",
+      'Format: {"type":"date", "field":"<fieldKey>", "comparison":"gt"|"lt", "value":"MM-DD-YYYY"}',
+      'Example — date range: [{"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"},{"type":"date","field":"PGTE_DATEPICKER","comparison":"lt","value":"06-30-2026"}]',
+      'Example — open-ended (no upper bound): [{"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"}]',
+      "To filter by a single date use two conditions (gt day-before AND lt day-after) or just one bound.",
+      "CRITICAL: 'comparison' field is mandatory for date type — omitting it causes API error.",
+      "",
+      "--- TYPE 7: numeric ---",
+      "Use for: number UDF fields.",
+      "value: a number (integer or decimal).",
+      'Format: {"type":"numeric", "field":"<fieldKey>", "value":<number>}',
+      'Example: [{"type":"numeric","value":2,"field":"NB_number_TR"}]',
+      "",
+      "--- COMBINING MULTIPLE FILTERS ---",
+      "All conditions in tcrUdfFilter array use AND logic — runs must satisfy ALL conditions.",
+      "Full example (all 7 types combined):",
+      "[",
+      '  {"type":"list","value":[5108701,5108697],"field":"8260LUP"},',
+      '  {"type":"list","value":[5126503,5126502],"field":"PGTE_MULTILOOKUPLIST"},',
+      '  {"type":"list","value":[5126498,5126499],"field":"cascade_vK","isCascading":true},',
+      '  {"type":"string","field":"TRString","value":"str"},',
+      '  {"type":"string","field":"vk_large_text","value":"large text"},',
+      '  {"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"},',
+      '  {"type":"date","field":"PGTE_DATEPICKER","comparison":"lt","value":"06-30-2026"},',
+      '  {"type":"numeric","value":2,"field":"NB_number_TR"}',
+      "]",
+      "--- FILTER PARAMETER SUMMARY ---",
+      "tcrUdfFilter: filter by Test Run UDF fields (this section)",
+      "udfFilter: filter by Test Case UDF fields (different from test run UDFs)",
+      "filter: filter by standard execution fields (runStatus, executedBy, etc.)",
+      "All three can be combined in a single request — they are independently applied with AND logic.",
+      "",
+      "hasTcRunUdf FLAG — IMPORTANT:",
+      "The response contains a 'hasTcRunUdf' boolean flag at the top level.",
+      "hasTcRunUdf: true  → Project has Test Run UDFs configured; each record includes 'testRunUdfs' object.",
+      "hasTcRunUdf: false → Project has NO Test Run UDFs configured.",
+      "  When hasTcRunUdf is false, the response includes a 'testRunUdfNote' with a professional explanation.",
+      "  Inform the user: 'No Test Run UDFs are configured for this project. Contact a project administrator to set up Test Run UDF fields.'",
+      "NEVER attempt to read testRunUdfs from records when hasTcRunUdf is false — the field will not be present.",
+      "",
+      "TEST RUN UDF RESPONSE (testRunUdfs):",
+      "When the API returns Test Run UDF data, each row will include a 'testRunUdfs' object.",
+      "This is a key-value map of UDF field keys to their values, parsed from the API's 'udfjson' field.",
+      "HTML is stripped from rich text (large text) UDF fields for readable LLM output.",
+      "Example testRunUdfs in response:",
+      "  testRunUdfs: {",
+      '    "8260LUP": "l1",',
+      '    "look_554": "99",',
+      '    "cascade_vK": {"child": "aa", "parent": "abc"},',
+      '    "dateNJ": "06-02-2026",',
+      '    "NB_Multilppup_TR": ["ahd"],',
+      '    "Jal_Largetext": "asdef asdfads asdfasf asdf asdf asfd a sdfa"',
+      "  }",
       "Use pagination for large result sets (start, page, limit parameters)",
       "This tool is essential for detailed test execution analysis and reporting",
-      "Critical for monitoring individual test case execution performance",
+      "Critical for monitoring individual test case execution performance and UDF values",
       "Use for compliance reporting and execution audit trails",
       "Essential for test execution quality assurance and trend analysis",
     ],
     outputDescription:
-      "JSON object with test case runs array containing detailed execution information, status, tester details, and run metadata",
+      "JSON object with test case runs array. Each row ALWAYS contains these mandatory identification fields: " +
+      "'entityKey' (Test Case Key, e.g. 'MAC-TC-123'), 'summary' (Test Case Summary/name), " +
+      "'latestVersion' (Executed Version, e.g. 'v1', 'v2'), " +
+      "'runStatus' (Execution Status label, e.g. 'Passed', 'Failed', 'Not Run'), 'runStatusID' (numeric status ID), " +
+      "'tcRunID' (numeric Test Run ID), " +
+      "and 'testRunUdfs' (object with Test Run UDF field keys mapped to their values, parsed from the raw 'udfjson' field; HTML stripped from rich text). " +
+      "UDF values can also be fetched in enriched form via FETCH_TEST_RUN_UDF_VALUES or field metadata via FETCH_TEST_RUN_UDF_METADATA. " +
+      "The top-level response includes 'hasTcRunUdf' (boolean), 'total' (count), and pagination metadata.",
     readOnly: true,
     idempotent: true,
   },

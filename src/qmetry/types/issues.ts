@@ -96,6 +96,24 @@ export interface FetchIssuesPayload
   isFilterSaveRequired: boolean;
 }
 
+export interface FetchIssueExecutionsPayload
+  extends PaginationPayload,
+    FilterPayload {
+  linkedAsset: {
+    type: "DF";
+    id: number;
+  };
+  platformID?: string;
+}
+
+export const DEFAULT_FETCH_ISSUE_EXECUTIONS_PAYLOAD: Omit<
+  FetchIssueExecutionsPayload,
+  "linkedAsset"
+> = {
+  ...DEFAULT_PAGINATION,
+  filter: "[]",
+};
+
 export const DEFAULT_FETCH_ISSUES_PAYLOAD: Omit<FetchIssuesPayload, "viewId"> =
   {
     ...DEFAULT_PAGINATION,

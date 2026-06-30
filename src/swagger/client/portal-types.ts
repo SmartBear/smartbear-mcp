@@ -103,53 +103,52 @@ export const CreateTableOfContentsArgsSchema = z.object({
       "Parent table of contents item ID - null for top-level items, or ID of parent item for nested structure",
     ),
   content: z
-    .discriminatedUnion("type", [
-      z.object({
-        type: z.literal("apiUrl"),
-        url: z
-          .string()
-          .regex(/(\/swagger\.(json|yaml))$/)
-          .describe(
-            "API reference URL - must end with '/swagger.json' or '/swagger.yaml'",
-          ),
-        apiSpec: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("API specification format for API URL content"),
-      }),
-      z.object({
-        type: z.literal("html"),
-        source: z
-          .enum(["internal", "external"])
-          .optional()
-          .describe(
-            "Source of the document - 'internal' allows editing in UI and API, 'external' enables API-only editing",
-          ),
-        documentId: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("Document ID for HTML content"),
-      }),
-      z.object({
-        type: z.literal("markdown"),
-        source: z
-          .enum(["internal", "external"])
-          .optional()
-          .describe(
-            "Source of the document - 'internal' allows editing in UI and API, 'external' enables API-only editing",
-          ),
-        documentId: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("Document ID for Markdown content"),
-      }),
-    ])
+    .object({
+      type: z
+        .enum(["apiUrl", "html", "markdown"])
+        .describe(
+          "Content type - 'apiUrl' for API references, 'html' for HTML content, or 'markdown' for Markdown content",
+        ),
+      source: z
+        .enum(["internal", "external"])
+        .optional()
+        .describe(
+          "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+        ),
+      url: z
+        .string()
+        .optional()
+        .describe(
+          "URL for API reference content (required when type is 'apiUrl')",
+        ),
+      apiSpec: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("API specification format for API URL content"),
+      documentId: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Document ID for HTML or Markdown content"),
+    })
     .optional()
-    .describe(
-      "Content configuration for the table of contents item. Use type 'apiUrl' for API references, 'html' for HTML documents, or 'markdown' for Markdown documents",
+    .describe("Content configuration for the table of contents item")
+    .refine(
+      (content) => {
+        if (content?.type === "apiUrl") {
+          return (
+            content.url?.endsWith("/swagger.json") ||
+            content.url?.endsWith("/swagger.yaml")
+          );
+        }
+        return true;
+      },
+      {
+        message:
+          "URL must end with '/swagger.json' or '/swagger.yaml' when content type is 'apiUrl'",
+        path: ["url"],
+      },
     ),
 });
 
@@ -335,6 +334,15 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
     ),
 });
 
+export const ResolveOrganizationPortalArgsSchema = z.object({
+  organizationId: z
+    .string()
+    .uuid()
+    .describe(
+      "Swagger organization UUID - the organization to resolve portal details for",
+    ),
+});
+
 export const PublishProductArgsSchema = ProductArgsSchema.extend({
   tableOfContentsId: z
     .string()
@@ -359,6 +367,9 @@ export type UpdatePortalArgs = z.infer<typeof UpdatePortalArgsSchema>;
 export type CreateProductArgs = z.infer<typeof CreateProductArgsSchema>;
 export type UpdateProductArgs = z.infer<typeof UpdateProductArgsSchema>;
 export type PublishProductArgs = z.infer<typeof PublishProductArgsSchema>;
+export type ResolveOrganizationPortalArgs = z.infer<
+  typeof ResolveOrganizationPortalArgsSchema
+>;
 export type GetProductSectionsArgs = z.infer<
   typeof GetProductSectionsArgsSchema
 >;
@@ -390,13 +401,13 @@ export const UpdateDocumentArgsSchema = z.object({
     .enum(["html", "markdown"])
     .optional()
     .describe(
-      "Content type - 'html' for HTML content or 'markdown' for Markdown content",
+      "Content type of the document. Note: documents with type 'html' and source 'internal' cannot be edited via API — only 'html' + 'external' and all 'markdown' combinations are supported.",
     ),
   source: z
     .enum(["internal", "external"])
     .optional()
     .describe(
-      "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+      "Where the document content is managed. 'internal': editable in both portal UI and API. 'external': editable via API only. Note: 'html' + 'internal' documents cannot be updated via API.",
     ),
 });
 
@@ -485,6 +496,11 @@ export interface Section {
   order: number;
 }
 
+export interface CreateTableOfContentsItemResponse {
+  id: string;
+  documentId: string;
+}
+
 export interface TableOfContentsItem {
   id: string;
   slug: string;
@@ -532,6 +548,24 @@ export interface TableOfContentsItemSwaggerhubApi {
   _private: boolean;
 }
 
+// Response type for the Resolve Organization Portal tool. Product keys follow
+// the camelCase naming convention used across the MCP server.
+export interface ResolvedPortalProduct {
+  productId: string;
+  productSlug: string;
+  productName: string;
+}
+
+export interface ResolveOrganizationPortalResponse {
+  organizationId: string;
+  portalId: string;
+  subdomain: string;
+  // Present only when the portal has a custom domain configured.
+  customDomain?: string;
+  portalCreated: boolean;
+  products: ResolvedPortalProduct[];
+}
+
 // Response collection types
 export type PortalsListResponse = Portal[];
 export type ProductsListResponse = Product[];
@@ -549,77 +583,73 @@ export interface PaginatedResponse<T> {
 export type SectionsListResponse = PaginatedResponse<Section>;
 export type TableOfContentsListResponse = TableOfContentsItem[];
 
-// Output schemas for MCP tool responses
-export const PortalOutputSchema = z.looseObject({
-  id: z.string(),
-  name: z.string(),
-  subdomain: z.string().optional(),
+export const CreateDocumentationPageArgsSchema = z.object({
+  portalId: z
+    .string()
+    .describe("Portal UUID or subdomain - unique identifier for the portal"),
+  productId: z
+    .string()
+    .uuid()
+    .describe("Product UUID - unique identifier for the product"),
+  pageTitle: z
+    .string()
+    .describe(
+      "Title of the documentation page - will be displayed in navigation (3-255 characters, used to generate the page slug)",
+    ),
+  pageContent: z
+    .string()
+    .optional()
+    .describe(
+      "Content of the documentation page. Provide HTML when contentType is 'html', Markdown when contentType is 'markdown'.",
+    ),
+  contentType: z
+    .enum(["markdown", "html"])
+    .default("markdown")
+    .optional()
+    .describe(
+      "Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return an error.",
+    ),
+  source: z
+    .enum(["internal", "external"])
+    .default("internal")
+    .optional()
+    .describe(
+      "Where the document content is managed. 'internal': editable in both the portal UI and via API. 'external': editable via API only, not in the portal UI. Constraint: 'html' content type only supports 'external' source.",
+    ),
+  order: z
+    .number()
+    .optional()
+    .default(0)
+    .describe(
+      "Order position of the documentation page within its parent section or item",
+    ),
+  parentId: z
+    .string()
+    .nullable()
+    .optional()
+    .default(null)
+    .describe(
+      "Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure",
+    ),
 });
 
-export const PortalListOutputSchema = z.array(PortalOutputSchema);
+export type CreateDocumentationPageArgs = z.input<
+  typeof CreateDocumentationPageArgsSchema
+>;
 
-export const ProductOutputSchema = z.looseObject({
-  id: z.string(),
-  name: z.string(),
-});
-
-export const ProductListOutputSchema = z.array(ProductOutputSchema);
-
-export const SuccessOutputSchema = z.object({ success: z.boolean() });
-
-export const DocumentOutputSchema = z.object({
-  id: z.string(),
-  type: z.enum(["html", "markdown"]),
-  source: z.enum(["internal", "external"]),
-  content: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  createdBy: z.string(),
-  updatedBy: z.string(),
-});
-
-const ContentReferenceOutputSchema = z.union([
-  z.object({
-    type: z.literal("apiUrl"),
-    url: z.string(),
-    apiSpec: z.string().nullable(),
-  }),
-  z.object({
-    type: z.literal("html"),
-    source: z.enum(["internal", "external"]),
-    documentId: z.string().nullable(),
-  }),
-  z.object({
-    type: z.literal("markdown"),
-    source: z.enum(["internal", "external"]),
-    documentId: z.string().nullable(),
-  }),
-]);
-
-export const TableOfContentsItemOutputSchema: z.ZodType<any> = z.lazy(() =>
-  z.object({
-    id: z.string(),
-    slug: z.string(),
-    title: z.string(),
-    order: z.number(),
-    parentId: z.string().nullable(),
-    children: z.array(TableOfContentsItemOutputSchema),
-    swaggerhubApi: z.object({ _private: z.boolean() }).nullable(),
-    content: ContentReferenceOutputSchema.nullable(),
-  }),
-);
-
-export const TableOfContentsListOutputSchema = z.array(
-  TableOfContentsItemOutputSchema,
-);
-
-export const SectionOutputSchema = z.object({
-  id: z.string(),
-  productId: z.string(),
-  title: z.string(),
-  slug: z.string(),
-  order: z.number(),
-  tableOfContents: TableOfContentsListOutputSchema,
-});
-
-export const SectionListOutputSchema = z.array(SectionOutputSchema);
+export interface CreateDocumentationPageResult {
+  productId: string;
+  sectionId: string;
+  sectionSlug: string;
+  pageDetails: {
+    tableOfContentsId: string;
+    slug: string;
+    title: string;
+    content: {
+      type: "markdown" | "html";
+      source: "internal" | "external";
+      documentId: string;
+    };
+  };
+  draftUrl?: string;
+}

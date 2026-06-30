@@ -7,13 +7,13 @@
     "url": "https://github.com/SmartBear/smartbear-mcp",
     "source": "github"
   },
-  "version": "0.17.1",
+  "version": "0.25.0",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@smartbear/mcp",
-      "version": "0.17.1",
+      "version": "0.25.0",
       "transport": {
         "type": "stdio"
       },
@@ -125,10 +125,6 @@
     }
   ],
   "remotes": [
-    {
-      "type": "streamable-http",
-      "url": "https://swagger.mcp.smartbear.com/mcp"
-    },
     {
       "type": "streamable-http",
       "url": "https://bugsnag.mcp.smartbear.com/mcp"
