@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Common] Added transport mode (stdio/http) to User-Agent header for all API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
 - [Collaborator] Add user agent header to API requests [#517](https://github.com/SmartBear/smartbear-mcp/pull/517)
 - [Reflect] Added `get_test_detail` tool for retrieving full test details including name, description, and all recorded steps [#524](https://github.com/SmartBear/smartbear-mcp/pull/524)
+- [Common] Capture MCP client identity (`clientInfo.name`/`version`) from the `initialize` handshake and store it in the session context. The normalized client name and version are forwarded on the outbound User-Agent for all downstream API requests and attached to BugSnag event metadata, enabling usage attribution by originating MCP client (Claude, Cursor, Copilot Studio, etc.) without client-side changes [#532](https://github.com/SmartBear/smartbear-mcp/pull/532)
 
 ## [0.25.1] - 2026-06-08
 

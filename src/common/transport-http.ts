@@ -6,9 +6,9 @@ import querystring from "node:querystring";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-
+import { toClientIdentity } from "./client-identity";
 import { clientRegistry } from "./client-registry";
-import { withRequestContext } from "./request-context";
+import { setRequestMcpClient, withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { isDraining, registerShutdownHandler } from "./shutdown";
 import { getEnvVarName } from "./transport-stdio";
@@ -358,6 +358,17 @@ async function createNewTransport(
   });
   transport.onmessage = (message) => {
     if ("method" in message && message.method === "initialize") {
+      // Capture the self-reported client identity (protocol-guaranteed in the
+      // initialize handshake) so it can be attached to telemetry and forwarded
+      // to downstream APIs for source attribution.
+      const identity = toClientIdentity(
+        message.params?.clientInfo as
+          | { name?: string; version?: string }
+          | undefined,
+        message.params?.protocolVersion as string | undefined,
+      );
+      server.setMcpClientIdentity(identity);
+
       if (message.params?.protocolVersion === "2025-11-25") {
         const clientCapabilities = message.params?.capabilities as Record<
           string,
@@ -481,11 +492,19 @@ export async function handleStreamableHttpRequest(
       return;
     }
 
-    // Delegate to transport to handle the MCP protocol message
-    await withRequestContext(
-      req,
-      async () => await transport.handleRequest(req, res, parsedBody),
-    );
+    // Delegate to transport to handle the MCP protocol message. For requests on
+    // an established session, surface the client identity captured at
+    // `initialize` so downstream API calls (User-Agent) can forward it. New
+    // (initialize) requests have no identity yet and make no downstream calls.
+    const sessionServer = sessionId
+      ? transports.get(sessionId)?.server
+      : undefined;
+    await withRequestContext(req, async () => {
+      if (sessionServer) {
+        setRequestMcpClient(sessionServer.getMcpClientIdentity());
+      }
+      return await transport.handleRequest(req, res, parsedBody);
+    });
   } catch (error) {
     console.error("Error handling StreamableHTTP request:", error);
     res.writeHead(500, { "Content-Type": "text/plain" });
@@ -521,6 +540,21 @@ async function handleLegacySseRequest(
 
   // SSE transport keeps the connection open and sends events to the client
   const transport = new SSEServerTransport("/message", res);
+
+  // Capture the client identity from the initialize handshake (see the
+  // streamable HTTP transport for rationale). Set before connect() so the SDK
+  // chains this handler ahead of its own message processing.
+  transport.onmessage = (message) => {
+    if ("method" in message && message.method === "initialize") {
+      const identity = toClientIdentity(
+        message.params?.clientInfo as
+          | { name?: string; version?: string }
+          | undefined,
+        message.params?.protocolVersion as string | undefined,
+      );
+      server.setMcpClientIdentity(identity);
+    }
+  };
 
   // Store the session so POST /message requests can find it
   transports.set(transport.sessionId, { server, transport });
@@ -590,16 +624,14 @@ async function handleLegacyMessageRequest(
   req.on("end", async () => {
     try {
       const parsedBody = JSON.parse(body);
-      // Route message to the SSE transport for processing
-      await withRequestContext(
-        req,
-        async () =>
-          await (session.transport as SSEServerTransport).handlePostMessage(
-            req,
-            res,
-            parsedBody,
-          ),
-      );
+      // Route message to the SSE transport for processing, surfacing the client
+      // identity captured at `initialize` for downstream forwarding.
+      await withRequestContext(req, async () => {
+        setRequestMcpClient(session.server.getMcpClientIdentity());
+        return await (
+          session.transport as SSEServerTransport
+        ).handlePostMessage(req, res, parsedBody);
+      });
     } catch (error) {
       console.error("Error handling POST message:", error);
       res.writeHead(500, { "Content-Type": "text/plain" });

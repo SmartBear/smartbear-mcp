@@ -1,6 +1,7 @@
 import { enableCompileCache } from "node:module";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
+import { setProcessClientIdentity, toClientIdentity } from "./client-identity";
 import { clientRegistry } from "./client-registry";
 import { USER_AGENT } from "./info";
 import { SmartBearMcpServer } from "./server";
@@ -94,6 +95,18 @@ export async function runStdioMode() {
 
   transport.onmessage = (message) => {
     if ("method" in message && message.method === "initialize") {
+      // Capture the client identity for telemetry and downstream forwarding.
+      // stdio has a single connection per process, so the identity is also
+      // stored process-wide (no per-request AsyncLocalStorage context here).
+      const identity = toClientIdentity(
+        message.params?.clientInfo as
+          | { name?: string; version?: string }
+          | undefined,
+        message.params?.protocolVersion as string | undefined,
+      );
+      server.setMcpClientIdentity(identity);
+      setProcessClientIdentity(identity);
+
       if (message.params?.protocolVersion === "2025-11-25") {
         const clientCapabilities = message.params?.capabilities as Record<
           string,

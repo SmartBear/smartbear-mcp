@@ -1,4 +1,4 @@
-import { USER_AGENT } from "../../common/info";
+import { getUserAgent } from "../../common/info";
 
 export class AuthService {
   private readonly bearerToken: string;
@@ -11,7 +11,7 @@ export class AuthService {
     return {
       Authorization: `Bearer ${this.bearerToken}`,
       "Content-Type": "application/json",
-      "User-Agent": USER_AGENT,
+      "User-Agent": getUserAgent(),
       "zscale-source": "smartbear-mcp",
     };
   }

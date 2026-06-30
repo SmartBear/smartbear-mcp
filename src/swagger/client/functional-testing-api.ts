@@ -1,3 +1,4 @@
+import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type {
   GetFunctionalTestingExecutionTestParams,
@@ -27,7 +28,7 @@ export class FunctionalTestingAPI {
     return {
       [FUNCTIONAL_TESTING_API_KEY_HEADER]: token,
       "Content-Type": "application/json",
-      "User-Agent": this.userAgent,
+      "User-Agent": appendClientIdentity(this.userAgent),
     };
   }
 
