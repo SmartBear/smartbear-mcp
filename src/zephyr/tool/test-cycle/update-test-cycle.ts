@@ -96,7 +96,28 @@ export class UpdateTestCycle extends Tool<ZephyrClient> {
       UpdateTestCycleBody.partial(),
     ).parse(args);
 
-    const { testCycleIdOrKey, ...updates } = parsed;
+    const { testCycleIdOrKey, ...rawUpdates } = parsed;
+    const nullValuesObject: Record<string, any> = {};
+
+    if (rawUpdates.folder) {
+      //do nothing when null or undefined
+      nullValuesObject.folder = { id: rawUpdates.folder };
+    }
+    if (rawUpdates.owner) {
+      //do nothing when null or undefined
+      nullValuesObject.owner = { accountId: rawUpdates.owner };
+    }
+    if (rawUpdates.jiraProjectVersion) {
+      //do nothing when null or undefined
+      nullValuesObject.jiraProjectVersion = {
+        id: rawUpdates.jiraProjectVersion,
+      };
+    }
+
+    const updates: Record<string, unknown> = {
+      ...rawUpdates,
+      ...nullValuesObject,
+    };
 
     if (updates.plannedStartDate === null) delete updates.plannedStartDate;
     if (updates.plannedEndDate === null) delete updates.plannedEndDate;
