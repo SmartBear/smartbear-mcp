@@ -1086,6 +1086,93 @@ describe("QmetryClient tools", () => {
       expect(result.content[0].text).toContain("BUG-001");
       expect(result.content[0].text).toContain("Data validation error");
     });
+
+    it("should filter test case runs by Test Run UDF using tcrUdfFilter", async () => {
+      (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
+        data: [
+          {
+            tcRunID: 41572006,
+            entityKey: "VKT-TC-19",
+            runStatus: "Failed",
+            udfjson: '{"8260LUP":"l1","look_554":"99"}',
+          },
+        ],
+        total: 1,
+        tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
+      });
+
+      const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
+      const result = await handler({
+        tsrunID: "728995",
+        viewId: 79451,
+        projectKey: "VKT",
+        tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
+        page: 1,
+        limit: 20,
+      });
+
+      expect(testsuite.fetchTestCaseRunsByTestSuiteRun).toHaveBeenCalledWith(
+        "fake-token",
+        "https://qmetry.example",
+        "VKT",
+        expect.objectContaining({
+          tsrunID: "728995",
+          viewId: 79451,
+          tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
+        }),
+      );
+
+      expect(result.content[0].text).toContain("VKT-TC-19");
+      expect(result.content[0].text).toContain("testRunUdfs");
+      expect(result.content[0].text).toContain("8260LUP");
+      expect(result.content[0].text).toContain("l1");
+    });
+
+    it("should parse udfjson and strip HTML from rich text UDF values in response", async () => {
+      (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
+        data: [
+          {
+            tcRunID: 41572006,
+            entityKey: "VKT-TC-19",
+            runStatus: "Failed",
+            udfjson:
+              '{"8260LUP":"l1","NB_Multilppup_TR":["ahd"],"Jal_Largetext":"<b>hello</b><div>world</div>","cascade_vK":{"child":"aa","parent":"abc"}}',
+          },
+          {
+            tcRunID: 41572007,
+            entityKey: "VKT-TC-20",
+            runStatus: "Passed",
+          },
+        ],
+        total: 2,
+      });
+
+      const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
+      const result = await handler({
+        tsrunID: "728995",
+        viewId: 79451,
+        projectKey: "VKT",
+      });
+
+      const parsed = JSON.parse(result.content[0].text);
+
+      // Row with udfjson: udfjson removed, testRunUdfs populated
+      expect(parsed.data[0].udfjson).toBeUndefined();
+      expect(parsed.data[0].testRunUdfs).toBeDefined();
+      expect(parsed.data[0].testRunUdfs["8260LUP"]).toBe("l1");
+      expect(parsed.data[0].testRunUdfs["NB_Multilppup_TR"]).toEqual(["ahd"]);
+      expect(parsed.data[0].testRunUdfs["cascade_vK"]).toEqual({
+        child: "aa",
+        parent: "abc",
+      });
+      // HTML stripped from rich text field
+      expect(parsed.data[0].testRunUdfs["Jal_Largetext"]).toBe("hello world");
+
+      // Row without udfjson: no testRunUdfs added, original fields preserved
+      expect(parsed.data[1].udfjson).toBeUndefined();
+      expect(parsed.data[1].testRunUdfs).toBeUndefined();
+      expect(parsed.data[1].entityKey).toBe("VKT-TC-20");
+    });
   });
 
   describe("Fetch Linked Issues of Test Case Run", () => {

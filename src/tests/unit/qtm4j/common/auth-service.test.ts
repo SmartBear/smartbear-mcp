@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../../common/info";
+import { USER_AGENT } from "../../../../common/info";
 import {
   CONTENT_TYPES,
   HTTP_HEADERS,
@@ -24,9 +24,7 @@ describe("AuthService", () => {
 
     expect(headers[HTTP_HEADERS.API_KEY]).toBe("test-api-key-123");
     expect(headers[HTTP_HEADERS.CONTENT_TYPE]).toBe(CONTENT_TYPES.JSON);
-    expect(headers[HTTP_HEADERS.USER_AGENT]).toBe(
-      `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
-    );
+    expect(headers[HTTP_HEADERS.USER_AGENT]).toBe(USER_AGENT);
     expect(headers[HTTP_HEADERS.ACCEPT]).toBe(CONTENT_TYPES.JSON);
   });
 

@@ -7,7 +7,9 @@
  */
 
 import type { ToolParams } from "../../common/types";
+import { FUNCTIONAL_TESTING_TOOLS } from "./functional-testing-tools";
 import {
+  CreateDocumentationPageArgsSchema,
   CreatePortalArgsSchema,
   CreateProductArgsSchema,
   CreateTableOfContentsArgsSchema,
@@ -18,6 +20,7 @@ import {
   PortalArgsSchema,
   ProductArgsSchema,
   PublishProductArgsSchema,
+  ResolveOrganizationPortalArgsSchema,
   UpdateDocumentArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
@@ -27,6 +30,7 @@ import {
   ApiSearchParamsSchema,
   CreateApiFromPromptParamsSchema,
   CreateApiParamsSchema,
+  ScanApiStandardizationFromRegistryParamsSchema,
   ScanStandardizationParamsSchema,
   StandardizeApiParamsSchema,
 } from "./registry-types";
@@ -65,6 +69,14 @@ export const TOOLS: SwaggerToolParams[] = [
     summary: "Update a specific portal's configuration.",
     inputSchema: UpdatePortalArgsSchema,
     handler: "updatePortal",
+  },
+  {
+    title: "Resolve Organization Portal",
+    toolset: "Portals",
+    summary:
+      "Resolve portal details for a Swagger organization in a single step. Given an organization UUID, returns the portal ID, subdomain, customDomain (when configured), and the list of products (with productId, productSlug, and productName) for the organization's portal. If the organization has no portal yet, a new portal is created automatically. Use this tool to obtain all portal context needed for subsequent portal and product operations.",
+    inputSchema: ResolveOrganizationPortalArgsSchema,
+    handler: "resolveOrganizationPortal",
   },
   {
     title: "List Portal Products",
@@ -106,7 +118,7 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Publish Portal Product",
     toolset: "Products",
     summary:
-      "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.",
+      "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live. Optionally provide `tableOfContentsId` to get a page-specific URL. Returns publication status, a live or preview URL (null if URL building fails), product and portal metadata, and an optional `warning` when metadata/URL building failed — a warning does NOT mean the publish failed.",
     inputSchema: PublishProductArgsSchema,
     handler: "publishPortalProduct",
   },
@@ -143,6 +155,14 @@ export const TOOLS: SwaggerToolParams[] = [
   },
 
   // Document management tools
+  {
+    title: "Create Documentation Page",
+    toolset: "Documents",
+    summary:
+      "Create a documentation page in a portal product in a single tool call. Supports markdown and html content types. Returns the page location details (productId, sectionId, slug) and a draftUrl to edit it in the portal.",
+    inputSchema: CreateDocumentationPageArgsSchema,
+    handler: "createDocumentationPage",
+  },
   {
     title: "Get Document",
     toolset: "Documents",
@@ -198,9 +218,17 @@ export const TOOLS: SwaggerToolParams[] = [
     title: "Scan API Standardization",
     toolset: "Registry API",
     summary:
-      "Run a standardization scan against an API definition using the organization's governance and standardization rules. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of standardization errors and validation issues. Use this tool when users ask to validate, scan, or check API governance or standardization.",
+      "Run a standardization scan against an API definition using the organization's governance and standardization rules. Accepts a raw YAML or JSON OpenAPI/AsyncAPI definition and returns a list of validation errors, the total issue count, and counts grouped by severity. Use this tool when the user provides the API definition content directly (as raw YAML or JSON) and asks to validate, scan, or check the governance or standardization of the API.",
     inputSchema: ScanStandardizationParamsSchema,
     handler: "scanStandardization",
+  },
+  {
+    title: "Scan API Standardization from Registry",
+    toolset: "Registry API",
+    summary:
+      "Run a standardization scan on an API that already exists in SwaggerHub Registry, identified by organization name, API name, and version. Fetches the API definition from the registry internally and scans it against the organization's governance and standardization rules. Returns a list of validation errors, total issue count, counts grouped by severity, and a SwaggerHub UI URL for the scanned API. Use this tool when the user identifies the API by org name, API name, and version and asks to validate, scan, or check the governance or standardization of an existing API.",
+    inputSchema: ScanApiStandardizationFromRegistryParamsSchema,
+    handler: "scanApiStandardizationFromRegistry",
   },
   {
     title: "Create API from Prompt",
@@ -218,4 +246,6 @@ export const TOOLS: SwaggerToolParams[] = [
     inputSchema: StandardizeApiParamsSchema,
     handler: "standardizeApi",
   },
+
+  ...FUNCTIONAL_TESTING_TOOLS,
 ];

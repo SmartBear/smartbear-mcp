@@ -236,16 +236,20 @@ export async function fetchExecutionsByTestSuite(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchExecutionsByTestSuitePayload,
+  payload: FetchExecutionsByTestSuitePayload & {
+    scopeId?: number;
+    orgCode?: string;
+  },
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
+  const { scopeId, orgCode, ...payloadRest } = payload as any;
   const body: FetchExecutionsByTestSuitePayload = {
     ...DEFAULT_FETCH_EXECUTIONS_BY_TESTSUITE_PAYLOAD,
-    ...payload,
+    ...payloadRest,
   };
 
   if (typeof body.tsID !== "number") {
@@ -261,6 +265,8 @@ export async function fetchExecutionsByTestSuite(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+    scopeId,
+    orgCode,
   });
 }
 
@@ -272,16 +278,20 @@ export async function fetchTestCaseRunsByTestSuiteRun(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: FetchTestCaseRunsByTestSuiteRunPayload,
+  payload: FetchTestCaseRunsByTestSuiteRunPayload & {
+    scopeId?: number;
+    orgCode?: string;
+  },
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
+  const { scopeId, orgCode, ...payloadRest } = payload as any;
   const body: FetchTestCaseRunsByTestSuiteRunPayload = {
     ...DEFAULT_FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN_PAYLOAD,
-    ...payload,
+    ...payloadRest,
   };
 
   if (typeof body.tsrunID !== "string" || !body.tsrunID) {
@@ -303,6 +313,8 @@ export async function fetchTestCaseRunsByTestSuiteRun(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+    scopeId,
+    orgCode,
   });
 }
 
@@ -350,16 +362,20 @@ export async function linkTestCasesToTestSuite(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: LinkedTestCasesToTestSuitePayload,
+  payload: LinkedTestCasesToTestSuitePayload & {
+    scopeId?: number;
+    orgCode?: string;
+  },
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
+  const { scopeId, orgCode, ...payloadRest } = payload as any;
   const body: LinkedTestCasesToTestSuitePayload = {
     ...DEFAULT_LINKED_TESTCASE_TO_TESTSUITE_PAYLOAD,
-    ...payload,
+    ...payloadRest,
   };
 
   if (typeof body.tsID !== "number") {
@@ -379,6 +395,8 @@ export async function linkTestCasesToTestSuite(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+    scopeId,
+    orgCode,
   });
 }
 
@@ -390,16 +408,20 @@ export async function reqLinkedTestCasesToTestSuite(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  payload: ReqLinkedTestCasesToTestSuitePayload,
+  payload: ReqLinkedTestCasesToTestSuitePayload & {
+    scopeId?: number;
+    orgCode?: string;
+  },
 ) {
   const { resolvedBaseUrl, resolvedProject } = resolveDefaults(
     baseUrl,
     project,
   );
 
+  const { scopeId, orgCode, ...payloadRest } = payload as any;
   const body: ReqLinkedTestCasesToTestSuitePayload = {
     ...DEFAULT_REQLINKED_TESTCASE_TO_TESTSUITE_PAYLOAD,
-    ...payload,
+    ...payloadRest,
   };
 
   if (typeof body.tsID !== "number") {
@@ -421,6 +443,8 @@ export async function reqLinkedTestCasesToTestSuite(
     project: resolvedProject,
     baseUrl: resolvedBaseUrl,
     body,
+    scopeId,
+    orgCode,
   });
 }
 
