@@ -10,10 +10,32 @@ const testsMock = [
   { id: "test-2", name: "Checkout Test" },
 ];
 
-const suitesMock = [
-  { id: "suite-1", name: "Smoke Suite" },
-  { id: "suite-2", name: "Regression Suite" },
-];
+const suitesResponseMock = {
+  suites: [
+    {
+      id: "suite-1",
+      accountId: 42,
+      name: "Smoke Suite",
+      slug: "smoke-suite",
+      created: 1719400000000,
+      numTestInstances: 3,
+    },
+    {
+      id: "suite-2",
+      accountId: 42,
+      name: "Regression Suite",
+      slug: "regression-suite",
+      created: 1719500000000,
+      numTestInstances: 12,
+    },
+  ],
+  stats: {
+    executions: 15,
+    passRate: 0.93,
+    avgRuntimeSecs: 42,
+    cumExecTimeSecs: 630,
+  },
+};
 
 describe("FunctionalTestingAPI", () => {
   let api: FunctionalTestingAPI;
@@ -170,7 +192,7 @@ describe("FunctionalTestingAPI", () => {
 
   describe("listSuites", () => {
     it("should call the correct endpoint with X-API-KEY header", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
+      fetchMock.mockResponseOnce(JSON.stringify(suitesResponseMock));
 
       await api.listSuites();
 
@@ -184,19 +206,19 @@ describe("FunctionalTestingAPI", () => {
     });
 
     it("should return parsed JSON response", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
+      fetchMock.mockResponseOnce(JSON.stringify(suitesResponseMock));
 
       const result = await api.listSuites();
 
-      expect(result).toEqual(suitesMock);
+      expect(result).toEqual(suitesResponseMock);
     });
 
-    it("should return empty array when no suites exist", async () => {
-      fetchMock.mockResponseOnce(JSON.stringify([]));
+    it("should return an empty suites list when no suites exist", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify({ suites: [] }));
 
       const result = await api.listSuites();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ suites: [] });
     });
 
     it("should throw an authentication error on 401", async () => {
