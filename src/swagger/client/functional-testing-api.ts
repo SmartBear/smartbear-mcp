@@ -33,8 +33,30 @@ export class FunctionalTestingAPI {
     };
   }
 
+  private async ftFetch(
+    input: string,
+    init: RequestInit,
+  ): Promise<Response> {
+    let response: Response;
+    try {
+      response = await fetch(input, init);
+    } catch {
+      throw new ToolError(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new ToolError(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    }
+
+    return response;
+  }
+
   async listTests(): Promise<unknown> {
-    const response = await fetch(`${this.baseUrl}/tests`, {
+    const response = await this.ftFetch(`${this.baseUrl}/tests`, {
       method: "GET",
       headers: this.getFtHeaders(),
     });
@@ -51,7 +73,7 @@ export class FunctionalTestingAPI {
   async runTest(args: RunFunctionalTestingTestParams): Promise<unknown> {
     if (!args.testId) throw new ToolError("testId argument is required");
 
-    const response = await fetch(
+    const response = await this.ftFetch(
       `${this.baseUrl}/tests/${args.testId}/executions`,
       {
         method: "POST",
@@ -75,7 +97,7 @@ export class FunctionalTestingAPI {
       throw new ToolError("executionId argument is required");
     }
 
-    const response = await fetch(
+    const response = await this.ftFetch(
       `${this.baseUrl}/executions/${args.executionId}`,
       {
         method: "GET",
@@ -97,7 +119,7 @@ export class FunctionalTestingAPI {
   ): Promise<ListSuiteExecutionsResponse> {
     if (!args.suiteId) throw new ToolError("suiteId argument is required");
 
-    const response = await fetch(
+    const response = await this.ftFetch(
       `${this.baseUrl}/suites/${args.suiteId}/executions`,
       {
         method: "GET",
