@@ -261,4 +261,50 @@ describe("SwaggerClient — Functional Testing integration", () => {
       ]);
     });
   });
+
+  describe("cancelFunctionalTestingSuiteExecution", () => {
+    it("should register the Cancel Suite Execution tool when FT token is configured", async () => {
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      const mockRegister = vi.fn();
+      await client.registerTools(mockRegister, vi.fn());
+
+      const registeredTitles = mockRegister.mock.calls.map(
+        (call) => call[0].title,
+      );
+      expect(registeredTitles).toContain("Cancel Suite Execution");
+    });
+
+    it("should call the cancel endpoint with PATCH and return results", async () => {
+      const cancelledMock = {
+        executionId: 47,
+        status: "cancelled",
+        isFinished: true,
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(cancelledMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.cancelFunctionalTestingSuiteExecution({
+          suiteId: "regression-tests",
+          executionId: "47",
+        }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/regression-tests/executions/47/cancel",
+        expect.objectContaining({
+          method: "PATCH",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(cancelledMock);
+    });
+  });
 });

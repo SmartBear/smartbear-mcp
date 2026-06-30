@@ -251,6 +251,102 @@ describe("FunctionalTestingAPI", () => {
     });
   });
 
+  describe("cancelSuiteExecution", () => {
+    const cancelledMock = {
+      executionId: 47,
+      status: "cancelled",
+      isFinished: true,
+    };
+
+    it("should call the correct endpoint with PATCH method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(cancelledMock));
+
+      await api.cancelSuiteExecution({
+        suiteId: "regression-tests",
+        executionId: "47",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/regression-tests/executions/47/cancel",
+        expect.objectContaining({
+          method: "PATCH",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(cancelledMock));
+
+      const result = await api.cancelSuiteExecution({
+        suiteId: "regression-tests",
+        executionId: "47",
+      });
+
+      expect(result).toEqual(cancelledMock);
+    });
+
+    it("should throw ToolError when suiteId is missing", async () => {
+      await expect(
+        api.cancelSuiteExecution({ suiteId: "", executionId: "47" }),
+      ).rejects.toThrow("suiteId argument is required");
+    });
+
+    it("should throw ToolError when executionId is missing", async () => {
+      await expect(
+        api.cancelSuiteExecution({
+          suiteId: "regression-tests",
+          executionId: "",
+        }),
+      ).rejects.toThrow("executionId argument is required");
+    });
+
+    it("should map 404 to a not-found message", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(
+        api.cancelSuiteExecution({ suiteId: "missing", executionId: "47" }),
+      ).rejects.toThrow(
+        "Suite execution not found. Verify the suiteId and executionId are correct and belong to your workspace.",
+      );
+    });
+
+    it("should map 409 to an already-finished message", async () => {
+      fetchMock.mockResponseOnce("Conflict", { status: 409 });
+
+      await expect(
+        api.cancelSuiteExecution({
+          suiteId: "regression-tests",
+          executionId: "47",
+        }),
+      ).rejects.toThrow(
+        "Suite execution cannot be cancelled because it has already finished.",
+      );
+    });
+
+    it("should fall back to a generic message for other HTTP errors", async () => {
+      fetchMock.mockResponseOnce("Boom", { status: 500 });
+
+      await expect(
+        api.cancelSuiteExecution({
+          suiteId: "regression-tests",
+          executionId: "47",
+        }),
+      ).rejects.toThrow("Failed to cancel suite execution: 500");
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.cancelSuiteExecution({
+          suiteId: "regression-tests",
+          executionId: "47",
+        }),
+      ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+  });
+
   describe("ftFetch authentication errors", () => {
     it("should map 401 responses to an auth-failed message", async () => {
       fetchMock.mockResponseOnce("Unauthorized", { status: 401 });

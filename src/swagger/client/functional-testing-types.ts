@@ -24,6 +24,19 @@ export const ListFunctionalTestingSuiteExecutionsSchema = z.object({
     .min(1),
 });
 
+export const CancelFunctionalTestingSuiteExecutionSchema = z.object({
+  suiteId: z
+    .string()
+    .describe("ID of the Functional Testing suite the execution belongs to")
+    .trim()
+    .min(1),
+  executionId: z
+    .string()
+    .describe("ID of the Functional Testing suite execution to cancel")
+    .trim()
+    .min(1),
+});
+
 export type RunFunctionalTestingTestParams = z.infer<
   typeof RunFunctionalTestingTestParamsSchema
 >;
@@ -32,6 +45,9 @@ export type GetFunctionalTestingExecutionTestParams = z.infer<
 >;
 export type ListFunctionalTestingSuiteExecutionsParams = z.infer<
   typeof ListFunctionalTestingSuiteExecutionsSchema
+>;
+export type CancelFunctionalTestingSuiteExecutionParams = z.infer<
+  typeof CancelFunctionalTestingSuiteExecutionSchema
 >;
 
 export interface SuiteExecution {

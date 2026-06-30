@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Added `list_suite_executions` tool for reviewing the execution history and timings of a test suite in your Swagger Functional Testing workspace. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 
+- [Swagger] Added `cancel_suite_execution` tool for stopping an ongoing test suite execution in your Swagger Functional Testing workspace. Requires `suiteId` and `executionId`. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+
 ## [0.26.1] - 2026-06-24
 
 ### Fixed

@@ -1,5 +1,6 @@
 import { ToolError } from "../../common/tools";
 import type {
+  CancelFunctionalTestingSuiteExecutionParams,
   GetFunctionalTestingExecutionTestParams,
   ListFunctionalTestingSuiteExecutionsParams,
   ListSuiteExecutionsResponse,
@@ -130,6 +131,29 @@ export class FunctionalTestingAPI {
 
     return response.json();
   }
+
+  async cancelSuiteExecution(
+    args: CancelFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.executionId) {
+      throw new ToolError("executionId argument is required");
+    }
+
+    const response = await this.ftFetch(
+      `${this.baseUrl}/suites/${encodeURIComponent(args.suiteId)}/executions/${encodeURIComponent(args.executionId)}/cancel`,
+      {
+        method: "PATCH",
+        headers: this.getFtHeaders(),
+      },
+    );
+
+    if (!response.ok) {
+      throw new ToolError(cancelSuiteExecutionErrorMessage(response));
+    }
+
+    return response.json();
+  }
 }
 
 function suiteExecutionsErrorMessage(response: Response): string {
@@ -142,5 +166,16 @@ function suiteExecutionsErrorMessage(response: Response): string {
       return "Test suite not found. Verify the suiteId is correct and belongs to your workspace.";
     default:
       return `Failed to list suite executions: ${response.status} ${response.statusText}`;
+  }
+}
+
+function cancelSuiteExecutionErrorMessage(response: Response): string {
+  switch (response.status) {
+    case 404:
+      return "Suite execution not found. Verify the suiteId and executionId are correct and belong to your workspace.";
+    case 409:
+      return "Suite execution cannot be cancelled because it has already finished.";
+    default:
+      return `Failed to cancel suite execution: ${response.status} ${response.statusText}`;
   }
 }
