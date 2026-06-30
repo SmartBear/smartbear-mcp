@@ -48,5 +48,6 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     inputSchema: ListFunctionalTestingSuiteExecutionsSchema,
     handler: "listFunctionalTestingSuiteExecutions",
     readOnly: true,
+    idempotent: true,
   },
 ];
