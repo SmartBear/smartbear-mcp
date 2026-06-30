@@ -92,11 +92,12 @@ export class FunctionalTestingAPI {
   }
 
   async listSuites(): Promise<ListSuitesResponse> {
+    const headers = this.getFtHeaders();
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}/suites`, {
         method: "GET",
-        headers: this.getFtHeaders(),
+        headers,
       });
     } catch {
       throw new ToolError(
