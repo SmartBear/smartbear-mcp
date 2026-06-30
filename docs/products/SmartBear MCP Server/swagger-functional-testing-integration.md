@@ -31,7 +31,7 @@ The Swagger Functional Testing client provides tools for discovering and executi
 #### `list_suite_executions`
 
 - Purpose: Lists all executions for a given test suite in your Swagger Functional Testing workspace. Use this tool when you need to review execution history and timings for a specific suite. Do not use this tool to retrieve the status of a single execution or individual test results. Requires a `suiteId`.
-- Returns: Complete list of executions for the given suite, in the order returned by the API. An empty list is returned when no executions exist.
+- Returns: Complete list of executions for the given suite. An empty list is returned when no executions exist.
 - Use case: Review the execution history and timings of a test suite.
 
 ---
