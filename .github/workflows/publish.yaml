@@ -109,12 +109,21 @@ jobs:
           IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
         run: |
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          ECR_REPOSITORY="${{ secrets.ECR_PRIVATE_REGISTRY_URL }}"
+          ECR_REPOSITORY="${ECR_REPOSITORY#*/}"
           DEST=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}:${IMAGE_TAG}-${{ matrix.arch }}
           GHCR_DEST=ghcr.io/${REPO_LOWER}:${IMAGE_TAG}-${{ matrix.arch }}
+          TAG_ARGS=(--tag "$GHCR_DEST")
+
+          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="${IMAGE_TAG}-${{ matrix.arch }}" >/dev/null 2>&1; then
+            echo "::notice::Skipping ECR push for ${IMAGE_TAG}-${{ matrix.arch }} because immutable tag already exists"
+          else
+            TAG_ARGS+=(--tag "$DEST")
+          fi
+
           docker buildx build \
             --platform ${{ matrix.platform }} \
-            --tag "$DEST" \
-            --tag "$GHCR_DEST" \
+            "${TAG_ARGS[@]}" \
             --cache-from type=gha,scope=${{ matrix.arch }} \
             --provenance=false \
             --push \
@@ -162,16 +171,21 @@ jobs:
           IMAGE_TAG: ${{ steps.extract_version.outputs.VERSION }}
         run: |
           REGISTRY=${{ secrets.ECR_PRIVATE_REGISTRY_URL }}
+          ECR_REPOSITORY="${REGISTRY#*/}"
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           GHCR_REGISTRY=ghcr.io/${REPO_LOWER}
 
-          # Create manifest list combining both architectures
-          docker manifest create "${REGISTRY}:${IMAGE_TAG}" \
-            --amend "${REGISTRY}:${IMAGE_TAG}-amd64" \
-            --amend "${REGISTRY}:${IMAGE_TAG}-arm64"
+          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="${IMAGE_TAG}" >/dev/null 2>&1; then
+            echo "::notice::Skipping ECR manifest push for ${IMAGE_TAG} because immutable tag already exists"
+          else
+            # Create manifest list combining both architectures
+            docker manifest create "${REGISTRY}:${IMAGE_TAG}" \
+              --amend "${REGISTRY}:${IMAGE_TAG}-amd64" \
+              --amend "${REGISTRY}:${IMAGE_TAG}-arm64"
 
-          # Push the manifest
-          docker manifest push "${REGISTRY}:${IMAGE_TAG}"
+            # Push the manifest
+            docker manifest push "${REGISTRY}:${IMAGE_TAG}"
+          fi
 
           # Create manifest list combining both architectures for GHCR
           docker manifest create "${GHCR_REGISTRY}:${IMAGE_TAG}" \
