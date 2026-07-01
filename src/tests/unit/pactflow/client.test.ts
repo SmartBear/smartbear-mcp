@@ -15,9 +15,13 @@ async function createConfiguredClient(config: {
   username?: string;
   password?: string;
   base_url?: string;
+  clientInfo?: { name: string; version: string };
 }): Promise<PactflowClient> {
   const client = new PactflowClient();
-  const mockServer = { server: vi.fn() } as any;
+  const mockServer = {
+    server: vi.fn(),
+    getClientInfo: vi.fn().mockReturnValue(config.clientInfo),
+  } as any;
   const defaultConfig = {
     base_url: "https://example.com",
     token: config.token,
@@ -67,6 +71,29 @@ describe("PactFlowClient", () => {
             `Basic ${Buffer.from("user:pass").toString("base64")}`,
           ),
           "Content-Type": expect.stringContaining("application/json"),
+        }),
+      );
+    });
+
+    it("includes SOURCE_APPLICATION header when client info is available", async () => {
+      client = await createConfiguredClient({
+        token: "my-token",
+        clientInfo: { name: "Claude Code", version: "1.2.3" },
+      });
+
+      expect(client.requestHeaders).toEqual(
+        expect.objectContaining({
+          SOURCE_APPLICATION: "Claude Code/1.2.3",
+        }),
+      );
+    });
+
+    it("sends SOURCE_APPLICATION header as 'unknown' when client info is not available", async () => {
+      client = await createConfiguredClient({ token: "my-token" });
+
+      expect(client.requestHeaders).toEqual(
+        expect.objectContaining({
+          SOURCE_APPLICATION: "unknown",
         }),
       );
     });
