@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Zephyr] Fixed `get_test_case_steps` returning a schema validation error [#543](https://github.com/SmartBear/smartbear-mcp/pull/543)
 
+### Changed
+
+- [Swagger] `create_documentation_page` now accepts an optional `slug` parameter. When provided, it is used as the page URL slug; otherwise the slug is generated from the page title.
+
 ## [0.27.1] - 2026-06-29
 - [Swagger]: Removed the https://swagger.mcp.smartbear.com/mcp streamable-http remote from the remotes array in server.json.[#550](https://github.com/SmartBear/smartbear-mcp/pull/550)
 ## [0.27.0] - 2026-06-29
