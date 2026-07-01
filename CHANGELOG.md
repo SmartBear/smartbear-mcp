@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- [Pactflow]: Send the MCP client's name and version to Pactflow via a `SOURCE_APPLICATION` header on requests, captured from the client info supplied in the MCP `initialize` request. [#556](https://github.com/SmartBear/smartbear-mcp/pull/556)
+
 ### Fixed
 
-- [Zephyr] Fixed `get_test_case_steps` returning a schema validation error.
+- [Zephyr] Fixed `get_test_case_steps` returning a schema validation error [#543](https://github.com/SmartBear/smartbear-mcp/pull/543)
+
+## [0.27.1] - 2026-06-29
+- [Swagger]: Removed the https://swagger.mcp.smartbear.com/mcp streamable-http remote from the remotes array in server.json.[#550](https://github.com/SmartBear/smartbear-mcp/pull/550)
+## [0.27.0] - 2026-06-29
+- [Qmetry]: add Test Run UDF workflow support and customer fixes [#538](https://github.com/SmartBear/smartbear-mcp/pull/538)
 
 ### Added
 
@@ -19,11 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Add `create_documentation_page` tool to create a documentation page in a portal product in a single call. Supports `markdown` and `html` content types with `internal` or `external` source. Returns page details and a `draftUrl` to edit the page in the portal admin.
 
 - [Swagger] Extended Swagger Functional Testing integration with `run_test`, and `get_test_status` tools for executing available API tests and querying their execution.
-
-## [0.27.1] - 2026-06-29
-- [Swagger]: Removed the https://swagger.mcp.smartbear.com/mcp streamable-http remote from the remotes array in server.json.[#550](https://github.com/SmartBear/smartbear-mcp/pull/550)
-## [0.27.0] - 2026-06-29
-- [Qmetry]: add Test Run UDF workflow support and customer fixes [#538](https://github.com/SmartBear/smartbear-mcp/pull/538)
 
 ## [0.26.1] - 2026-06-24
 
