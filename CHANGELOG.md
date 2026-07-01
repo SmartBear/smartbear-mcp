@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- [Pactflow]: Send the MCP client's name and version to Pactflow via a `SOURCE_APPLICATION` header on requests, captured from the client info supplied in the MCP `initialize` request. [#556](https://github.com/SmartBear/smartbear-mcp/pull/556)
+
 ## [0.27.1] - 2026-06-29
 - [Swagger]: Removed the https://swagger.mcp.smartbear.com/mcp streamable-http remote from the remotes array in server.json.[#550](https://github.com/SmartBear/smartbear-mcp/pull/550)
 ## [0.27.0] - 2026-06-29
