@@ -74,6 +74,12 @@ export type GetInputFunction = (
   options?: RequestOptions,
 ) => Promise<ElicitResult>;
 
+export interface ClientInfo {
+  name: string;
+  version: string;
+  title?: string;
+}
+
 export interface Client {
   /** Human-readable name for the client - usually the product name */
   name: string;

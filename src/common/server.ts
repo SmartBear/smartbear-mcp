@@ -20,7 +20,7 @@ import {
   isElicitationPolyfillResult,
 } from "./pollyfills";
 import { ToolError } from "./tools";
-import type { Client, ToolParams } from "./types";
+import type { Client, ClientInfo, ToolParams } from "./types";
 import {
   getDefaultValue,
   getReadableTypeName,
@@ -32,6 +32,7 @@ export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
   private samplingSupported = false;
   private elicitationSupported = false;
+  private clientInfo?: ClientInfo;
   private clients: Client[] = [];
   private enabledToolsets?: string[];
 
@@ -75,6 +76,14 @@ export class SmartBearMcpServer extends McpServer {
 
   isElicitationSupported(): boolean {
     return this.elicitationSupported;
+  }
+
+  setClientInfo(info: ClientInfo): void {
+    this.clientInfo = info;
+  }
+
+  getClientInfo(): ClientInfo | undefined {
+    return this.clientInfo;
   }
 
   getClients(): Client[] {
