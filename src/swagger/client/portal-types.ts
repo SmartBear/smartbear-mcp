@@ -113,24 +113,40 @@ export const CreateTableOfContentsArgsSchema = z.object({
         .enum(["internal", "external"])
         .optional()
         .describe(
-          "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+          "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API. Not used when type is 'apiUrl'.",
         ),
       url: z
         .string()
         .optional()
         .describe(
-          "URL for API reference content (required when type is 'apiUrl')",
+          "URL for API reference content - required when type is 'apiUrl', must end with '/swagger.json' or '/swagger.yaml'. Not used for 'html'/'markdown'.",
         ),
       apiSpec: z
         .string()
         .nullable()
         .optional()
-        .describe("API specification format for API URL content"),
+        .describe(
+          "API specification format for API URL content - only used when type is 'apiUrl'",
+        ),
       documentId: z
         .string()
         .nullable()
         .optional()
-        .describe("Document ID for HTML or Markdown content"),
+        .describe(
+          "Document ID for HTML or Markdown content - only used when type is 'html' or 'markdown'",
+        ),
+    })
+    .meta({
+      // Structural rule (in addition to the .refine() below) so the generated
+      // JSON Schema states which fields are required per content.type, instead
+      // of leaving every field optional with the constraint only in prose.
+      allOf: [
+        {
+          if: { properties: { type: { const: "apiUrl" } } },
+          // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+          then: { required: ["url"] },
+        },
+      ],
     })
     .optional()
     .describe("Content configuration for the table of contents item")
