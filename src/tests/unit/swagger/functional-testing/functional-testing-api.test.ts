@@ -407,21 +407,23 @@ describe("FunctionalTestingAPI", () => {
       expect((result as Record<string, unknown>).url).toBeUndefined();
     });
 
-    it("should strip videoUrl from each test item in tests array", async () => {
+    it("should strip videoUrl from each run in tests.data array", async () => {
       const mockWithTests = {
         ...suiteExecutionMock,
-        tests: [
-          {
-            id: "test-1",
-            status: "passed",
-            videoUrl: "https://cdn.reflect.run/video/1.mp4",
-          },
-          {
-            id: "test-2",
-            status: "failed",
-            videoUrl: "https://cdn.reflect.run/video/2.mp4",
-          },
-        ],
+        tests: {
+          data: [
+            {
+              id: "test-1",
+              status: "passed",
+              runs: [{ runId: 1, videoUrl: "https://cdn.reflect.run/video/1.mp4" }],
+            },
+            {
+              id: "test-2",
+              status: "failed",
+              runs: [{ runId: 2, videoUrl: "https://cdn.reflect.run/video/2.mp4" }],
+            },
+          ],
+        },
       };
       fetchMock.mockResponseOnce(JSON.stringify(mockWithTests));
 
@@ -430,14 +432,15 @@ describe("FunctionalTestingAPI", () => {
         executionId: "7",
       });
 
-      const tests = (result as Record<string, unknown>).tests as Record<
-        string,
-        unknown
-      >[];
-      expect(tests[0].videoUrl).toBeUndefined();
-      expect(tests[1].videoUrl).toBeUndefined();
-      expect(tests[0].id).toBe("test-1");
-      expect(tests[1].id).toBe("test-2");
+      const testsData = (
+        (result as Record<string, unknown>).tests as Record<string, unknown>
+      ).data as Record<string, unknown>[];
+      const runs0 = testsData[0].runs as Record<string, unknown>[];
+      const runs1 = testsData[1].runs as Record<string, unknown>[];
+      expect(runs0[0].videoUrl).toBeUndefined();
+      expect(runs1[0].videoUrl).toBeUndefined();
+      expect(testsData[0].id).toBe("test-1");
+      expect(testsData[1].id).toBe("test-2");
     });
 
     it("should throw ToolError when suiteId is missing", async () => {
