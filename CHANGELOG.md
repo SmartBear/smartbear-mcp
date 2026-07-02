@@ -5,11 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.27.2] - 2026-07-01
+### Unreleased
 
 ### Changed
-
-- [CI] Extracted publishing of the standalone `com.smartbear/swagger-mcp` registry entry (`server.swagger.json`) into a dedicated, manually triggered `publish-swagger-mcp.yaml` workflow (`workflow_dispatch`), removing those steps from the main `publish.yaml`. [#554](https://github.com/SmartBear/smartbear-mcp/pull/554)
 
 - [Pactflow]: Send the MCP client's name and version to Pactflow via a `SOURCE_APPLICATION` header on requests, captured from the client info supplied in the MCP `initialize` request. [#556](https://github.com/SmartBear/smartbear-mcp/pull/556)
 
@@ -17,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Zephyr] Fixed `get_test_case_steps` returning a schema validation error [#543](https://github.com/SmartBear/smartbear-mcp/pull/543)
 
+## [0.27.2] - 2026-07-01
+- [CI] Extracted publishing of the standalone `com.smartbear/swagger-mcp` registry entry (`server.swagger.json`) into a dedicated, manually triggered `publish-swagger-mcp.yaml` workflow (`workflow_dispatch`), removing those steps from the main `publish.yaml`. [#554](https://github.com/SmartBear/smartbear-mcp/pull/554)
 ## [0.27.1] - 2026-06-29
 - [Swagger]: Removed the https://swagger.mcp.smartbear.com/mcp streamable-http remote from the remotes array in server.json.[#550](https://github.com/SmartBear/smartbear-mcp/pull/550)
 ## [0.27.0] - 2026-06-29
