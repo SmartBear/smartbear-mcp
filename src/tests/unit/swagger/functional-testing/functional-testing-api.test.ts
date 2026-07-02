@@ -140,6 +140,20 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(executionMock);
     });
 
+    it("should strip videoUrl from response", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify({
+          ...executionMock,
+          videoUrl: "https://cdn.reflect.run/video/42.mp4",
+        }),
+      );
+
+      const result = await api.getTestExecution({ executionId: "42" });
+
+      expect((result as Record<string, unknown>).videoUrl).toBeUndefined();
+      expect((result as Record<string, unknown>).executionId).toBe("42");
+    });
+
     it("should throw ToolError when executionId is missing", async () => {
       await expect(api.getTestExecution({ executionId: "" })).rejects.toThrow(
         "executionId argument is required",
@@ -160,6 +174,220 @@ describe("FunctionalTestingAPI", () => {
       await expect(api.getTestExecution({ executionId: "42" })).rejects.toThrow(
         "Network error",
       );
+    });
+  });
+
+  describe("runSuite", () => {
+    const executionMock = { executionId: "7", status: "pending" };
+
+    it("should call the correct endpoint with POST method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await api.runSuite({ suiteId: "checkout-suite" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/checkout-suite/executions",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should not send a request body when no tunnelAgentName is provided", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await api.runSuite({ suiteId: "checkout-suite" });
+
+      const [, init] = fetchMock.mock.calls[0];
+      expect((init as RequestInit | undefined)?.body).toBeUndefined();
+    });
+
+    it("should send tunnel agent override body when tunnelAgentName is provided", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      await api.runSuite({
+        suiteId: "checkout-suite",
+        tunnelAgentName: "my-tunnel",
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      expect((init as RequestInit | undefined)?.body).toBe(
+        JSON.stringify({
+          overrides: { agent: { name: "my-tunnel" } },
+        }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(executionMock));
+
+      const result = await api.runSuite({ suiteId: "checkout-suite" });
+
+      expect(result).toEqual(executionMock);
+    });
+
+    it("should strip url field from response", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify({
+          ...executionMock,
+          url: "https://app.reflect.run/suites/checkout-suite/executions/7",
+        }),
+      );
+
+      const result = await api.runSuite({ suiteId: "checkout-suite" });
+
+      expect((result as Record<string, unknown>).url).toBeUndefined();
+    });
+
+    it("should throw ToolError when suiteId is missing", async () => {
+      await expect(api.runSuite({ suiteId: "" })).rejects.toThrow(
+        "suiteId argument is required",
+      );
+    });
+
+    it("should throw ToolError on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+        "Failed to run suite",
+      );
+    });
+
+    it("should propagate network errors", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+        "Network error",
+      );
+    });
+  });
+
+  describe("getSuiteExecution", () => {
+    const suiteExecutionMock = {
+      suiteId: "checkout-suite",
+      executionId: "7",
+      isFinished: true,
+      status: "passed",
+      tests: [],
+    };
+
+    it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
+
+      await api.getSuiteExecution({
+        suiteId: "checkout-suite",
+        executionId: "7",
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/checkout-suite/executions/7",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionMock));
+
+      const result = await api.getSuiteExecution({
+        suiteId: "checkout-suite",
+        executionId: "7",
+      });
+
+      expect(result).toEqual(suiteExecutionMock);
+    });
+
+    it("should strip url field from response", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify({
+          ...suiteExecutionMock,
+          url: "https://app.reflect.run/suites/checkout-suite/executions/7",
+        }),
+      );
+
+      const result = await api.getSuiteExecution({
+        suiteId: "checkout-suite",
+        executionId: "7",
+      });
+
+      expect((result as Record<string, unknown>).url).toBeUndefined();
+    });
+
+    it("should strip videoUrl from each run in tests.data array", async () => {
+      const mockWithTests = {
+        ...suiteExecutionMock,
+        tests: {
+          data: [
+            {
+              id: "test-1",
+              status: "passed",
+              runs: [
+                { runId: 1, videoUrl: "https://cdn.reflect.run/video/1.mp4" },
+              ],
+            },
+            {
+              id: "test-2",
+              status: "failed",
+              runs: [
+                { runId: 2, videoUrl: "https://cdn.reflect.run/video/2.mp4" },
+              ],
+            },
+          ],
+        },
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(mockWithTests));
+
+      const result = await api.getSuiteExecution({
+        suiteId: "checkout-suite",
+        executionId: "7",
+      });
+
+      const testsData = (
+        (result as Record<string, unknown>).tests as Record<string, unknown>
+      ).data as Record<string, unknown>[];
+      const runs0 = testsData[0].runs as Record<string, unknown>[];
+      const runs1 = testsData[1].runs as Record<string, unknown>[];
+      expect(runs0[0].videoUrl).toBeUndefined();
+      expect(runs1[0].videoUrl).toBeUndefined();
+      expect(testsData[0].id).toBe("test-1");
+      expect(testsData[1].id).toBe("test-2");
+    });
+
+    it("should throw ToolError when suiteId is missing", async () => {
+      await expect(
+        api.getSuiteExecution({ suiteId: "", executionId: "7" }),
+      ).rejects.toThrow("suiteId argument is required");
+    });
+
+    it("should throw ToolError when executionId is missing", async () => {
+      await expect(
+        api.getSuiteExecution({ suiteId: "checkout-suite", executionId: "" }),
+      ).rejects.toThrow("executionId argument is required");
+    });
+
+    it("should throw ToolError on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
+
+      await expect(
+        api.getSuiteExecution({
+          suiteId: "checkout-suite",
+          executionId: "7",
+        }),
+      ).rejects.toThrow("Failed to get suite execution status");
+    });
+
+    it("should propagate network errors", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.getSuiteExecution({
+          suiteId: "checkout-suite",
+          executionId: "7",
+        }),
+      ).rejects.toThrow("Network error");
     });
   });
 

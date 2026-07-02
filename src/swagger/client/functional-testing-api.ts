@@ -1,6 +1,8 @@
 import { ToolError } from "../../common/tools";
 import type {
   GetFunctionalTestingExecutionTestParams,
+  GetFunctionalTestingSuiteExecutionParams,
+  RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
 } from "./functional-testing-types";
 
@@ -87,6 +89,84 @@ export class FunctionalTestingAPI {
       );
     }
 
-    return response.json();
+    // Reflect API returns video recording URL for each test, which SFT does not need so we remove it.
+    return this.withoutField("videoUrl", response);
+  }
+
+  async runSuite(args: RunFunctionalTestingSuiteParams): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+
+    const body = args.tunnelAgentName
+      ? JSON.stringify({
+          overrides: { agent: { name: args.tunnelAgentName } },
+        })
+      : undefined;
+
+    const response = await fetch(
+      `${this.baseUrl}/suites/${args.suiteId}/executions`,
+      {
+        method: "POST",
+        headers: this.getFtHeaders(),
+        body,
+      },
+    );
+
+    if (!response.ok) {
+      throw new ToolError(
+        `Failed to run suite: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
+    // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
+    return this.withoutField("url", response);
+  }
+
+  async getSuiteExecution(
+    args: GetFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+    if (!args.executionId) {
+      throw new ToolError("executionId argument is required");
+    }
+
+    const response = await fetch(
+      `${this.baseUrl}/suites/${args.suiteId}/executions/${args.executionId}`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+    );
+
+    if (!response.ok) {
+      throw new ToolError(
+        `Failed to get suite execution status: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
+    // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
+    const data = await this.withoutField("url", response);
+    const testsData = (data.tests as Record<string, unknown> | undefined)?.data;
+    if (Array.isArray(testsData)) {
+      for (const test of testsData as Record<string, unknown>[]) {
+        if (Array.isArray(test.runs)) {
+          for (const run of test.runs as Record<string, unknown>[]) {
+            // Reflect API returns video recording URL for each run, which SFT does not need so we remove it.
+            delete run.videoUrl;
+          }
+        }
+      }
+    }
+    return data;
+  }
+
+  private async withoutField(
+    field: string,
+    response: Response,
+  ): Promise<Record<string, unknown>> {
+    const data = (await response.json()) as Record<string, unknown>;
+    delete data[field];
+    return data;
   }
 }
