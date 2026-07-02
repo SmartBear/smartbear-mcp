@@ -52,3 +52,19 @@ export const OrganizationsQuerySchema = z.object({
 });
 
 export type OrganizationsQueryParams = z.infer<typeof OrganizationsQuerySchema>;
+
+export const OrganizationsListOutputSchema = z.object({
+  totalCount: z.number().optional(),
+  pageSize: z.number().optional(),
+  page: z.number().optional(),
+  items: z
+    .array(
+      z.looseObject({
+        id: z.string().optional(),
+        name: z.string().optional(),
+        email: z.string().optional(),
+        memberCount: z.number().optional(),
+      }),
+    )
+    .optional(),
+});

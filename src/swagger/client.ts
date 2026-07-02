@@ -422,8 +422,14 @@ export class SwaggerClient implements Client {
               ? formattedResult
               : JSON.stringify(formattedResult);
 
+          const isPlainObject =
+            typeof formattedResult === "object" &&
+            formattedResult !== null &&
+            !Array.isArray(formattedResult);
+
           return {
             content: [{ type: "text", text: responseText }],
+            ...(isPlainObject && { structuredContent: formattedResult }),
           };
         } catch (error) {
           return {
@@ -433,6 +439,7 @@ export class SwaggerClient implements Client {
                 text: `Error: ${error instanceof Error ? error.message : String(error)}`,
               },
             ],
+            isError: true,
           };
         }
       });
