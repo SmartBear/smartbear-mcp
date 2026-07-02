@@ -89,10 +89,8 @@ export class FunctionalTestingAPI {
       );
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
     // Reflect API returns video recording URL for each test, which SFT does not need so we remove it.
-    delete data.videoUrl;
-    return data;
+    return this.withoutField("videoUrl", response);
   }
 
   async runSuite(args: RunFunctionalTestingSuiteParams): Promise<unknown> {
@@ -119,11 +117,9 @@ export class FunctionalTestingAPI {
       );
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
     // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
     // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
-    delete data.url;
-    return data;
+    return this.withoutField("url", response);
   }
 
   async getSuiteExecution(
@@ -148,18 +144,29 @@ export class FunctionalTestingAPI {
       );
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
     // Reflect API returns suite URL, in format which currently is not supported within Private Workspaces epic.
     // We remove it for now, but will bring it back corrected in scope of https://smartbear.atlassian.net/browse/RF-5271.
-    delete data.url;
-    if (Array.isArray(data.tests)) {
-      for (const test of data.tests as Record<string, unknown>[]) {
-        if (test && typeof test === "object") {
-          // Reflect API returns video recording URL for each test, which SFT does not need so we remove it.
-          delete test.videoUrl;
+    const data = await this.withoutField("url", response);
+    const testsData = (data.tests as Record<string, unknown> | undefined)?.data;
+    if (Array.isArray(testsData)) {
+      for (const test of testsData as Record<string, unknown>[]) {
+        if (Array.isArray(test.runs)) {
+          for (const run of test.runs as Record<string, unknown>[]) {
+            // Reflect API returns video recording URL for each run, which SFT does not need so we remove it.
+            delete run.videoUrl;
+          }
         }
       }
     }
+    return data;
+  }
+
+  private async withoutField(
+    field: string,
+    response: Response,
+  ): Promise<Record<string, unknown>> {
+    const data = (await response.json()) as Record<string, unknown>;
+    delete data[field];
     return data;
   }
 }
