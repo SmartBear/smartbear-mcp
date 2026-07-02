@@ -324,12 +324,16 @@ describe("FunctionalTestingAPI", () => {
             {
               id: "test-1",
               status: "passed",
-              runs: [{ runId: 1, videoUrl: "https://cdn.reflect.run/video/1.mp4" }],
+              runs: [
+                { runId: 1, videoUrl: "https://cdn.reflect.run/video/1.mp4" },
+              ],
             },
             {
               id: "test-2",
               status: "failed",
-              runs: [{ runId: 2, videoUrl: "https://cdn.reflect.run/video/2.mp4" }],
+              runs: [
+                { runId: 2, videoUrl: "https://cdn.reflect.run/video/2.mp4" },
+              ],
             },
           ],
         },
