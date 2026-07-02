@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Zephyr] Fixed `get_test_case_steps` returning a schema validation error [#543](https://github.com/SmartBear/smartbear-mcp/pull/543)
 - [Swagger] Added a conditional required-field rule to the `create_table_of_contents` tool's `content` schema so `url` is structurally required only when `content.type` is `apiUrl`, instead of relying solely on prose descriptions. Addresses an "Unclear Arguments" flag from ChatGPT app review while keeping `content` as a flat object for manual tool testing.
+- [Swagger] Fixed a client-side "data should NOT have additional properties" validation error shown for tools like `get_portal_product` that return extra fields (e.g. `role`, `createdAt`, `updatedAt`) not modeled in their output schema. The MCP server now advertises the intended `additionalProperties: true` for these loosely-typed output schemas instead of losing that setting during tool registration. [#553](https://github.com/SmartBear/smartbear-mcp/pull/553)
 
 ## [0.27.2] - 2026-07-01
 - [CI] Extracted publishing of the standalone `com.smartbear/swagger-mcp` registry entry (`server.swagger.json`) into a dedicated, manually triggered `publish-swagger-mcp.yaml` workflow (`workflow_dispatch`), removing those steps from the main `publish.yaml`. [#554](https://github.com/SmartBear/smartbear-mcp/pull/554)

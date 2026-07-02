@@ -526,8 +526,11 @@ describe("SmartBearMcpServer", () => {
 
       expect(Object.keys(registerToolParams[1].inputSchema).length).toBe(4);
 
-      // Output schema should be raw shape of outputSchema
-      expect(registerToolParams[1].outputSchema.values.toString()).toBe(
+      // Output schema should be passed through as the full Zod schema (not a raw
+      // shape) so that additionalProperties handling (e.g. looseObject) is preserved
+      // when the SDK converts it to JSON schema.
+      expect(registerToolParams[1].outputSchema).toBe(outputSchema);
+      expect(registerToolParams[1].outputSchema.shape.values.toString()).toBe(
         z
           .array(
             z.object({

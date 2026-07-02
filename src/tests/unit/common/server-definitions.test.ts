@@ -5,6 +5,18 @@ import "../../../common/register-clients";
 import type { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { clientRegistry } from "../../../common/client-registry";
 
+// outputSchema/inputSchema may be a raw shape (plain object of Zod fields) or a
+// full Zod object schema (e.g. z.looseObject) — normalize to a sorted list of
+// field names either way so the snapshot reflects the schema's shape, not its
+// runtime representation.
+function schemaFieldNames(schema: any): string[] | undefined {
+  if (!schema) {
+    return undefined;
+  }
+  const shape = schema.shape ?? schema;
+  return Object.keys(shape).sort();
+}
+
 /**
  * This test verifies that all registered tools, prompts, and resources from all clients match the expected snapshot.
  * If it fails, verify the diff from the vitest output and, if it's expected, update the snapshot with `vitest -u`.
@@ -21,12 +33,8 @@ describe("server definitions are not changed unexpectedly", () => {
     ).mockImplementation(((toolName: string, config: any) => {
       registeredTools[toolName] = {
         ...config,
-        inputSchema: config.inputSchema
-          ? Object.keys(config.inputSchema).sort()
-          : undefined,
-        outputSchema: config.outputSchema
-          ? Object.keys(config.outputSchema).sort()
-          : undefined,
+        inputSchema: schemaFieldNames(config.inputSchema),
+        outputSchema: schemaFieldNames(config.outputSchema),
       };
     }) as any);
 
