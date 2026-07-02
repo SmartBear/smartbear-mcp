@@ -5771,6 +5771,13 @@ export const ListTestPlansCursorPaginatedQueryParams = zod.object({
     .min(listTestPlansCursorPaginatedQueryStartAtIdMin)
     .default(listTestPlansCursorPaginatedQueryStartAtIdDefault)
     .describe("Zero-indexed starting position for ID-based pagination."),
+  updatedAfter: zod
+    .string()
+    .datetime({})
+    .optional()
+    .describe(
+      "Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+    ),
 });
 
 export const listTestPlansCursorPaginated200ResponseOneNextStartAtIdMin = 0;
@@ -7215,6 +7222,13 @@ export const ListTestExecutionsNextgenQueryParams = zod.object({
     .min(listTestExecutionsNextgenQueryStartAtIdMin)
     .default(listTestExecutionsNextgenQueryStartAtIdDefault)
     .describe("Zero-indexed starting position for ID-based pagination."),
+  updatedAfter: zod
+    .string()
+    .datetime({})
+    .optional()
+    .describe(
+      "Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'",
+    ),
 });
 
 export const listTestExecutionsNextgen200ResponseOneNextStartAtIdMin = 0;
