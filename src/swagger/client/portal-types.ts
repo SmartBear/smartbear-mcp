@@ -145,21 +145,22 @@ export const CreateTableOfContentsArgsSchema = z.object({
           if: { properties: { type: { const: "apiUrl" } } },
           // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
           then: { required: ["url"] },
+          message: "URL is required when content type is 'apiUrl'",
         },
       ],
     })
     .optional()
     .describe("Content configuration for the table of contents item")
+    .refine((content) => content?.type !== "apiUrl" || !!content.url, {
+      message: "URL is required when content type is 'apiUrl'",
+      path: ["url"],
+    })
     .refine(
-      (content) => {
-        if (content?.type === "apiUrl") {
-          return (
-            content.url?.endsWith("/swagger.json") ||
-            content.url?.endsWith("/swagger.yaml")
-          );
-        }
-        return true;
-      },
+      (content) =>
+        content?.type !== "apiUrl" ||
+        !content.url ||
+        content.url.endsWith("/swagger.json") ||
+        content.url.endsWith("/swagger.yaml"),
       {
         message:
           "URL must end with '/swagger.json' or '/swagger.yaml' when content type is 'apiUrl'",
