@@ -17,6 +17,7 @@ import {
   CreateTocOutputSchema,
   DeleteProductOutputSchema,
   DeleteTableOfContentsArgsSchema,
+  DeleteTableOfContentsOutputSchema,
   DocumentOutputSchema,
   GetDocumentArgsSchema,
   GetProductSectionsArgsSchema,
@@ -57,7 +58,6 @@ import {
   READ_ONLY,
   WRITE,
   WRITE_DESTRUCTIVE,
-  WRITE_INTERNAL,
 } from "./tool-constants";
 import {
   OrganizationsListOutputSchema,
@@ -208,6 +208,7 @@ export const TOOLS: SwaggerToolParams[] = [
     summary:
       "Delete table of contents entry. Performs a soft-delete of an entry from the table of contents. Supports recursive deletion of nested items.",
     inputSchema: DeleteTableOfContentsArgsSchema,
+    outputSchema: DeleteTableOfContentsOutputSchema,
     handler: "deleteTableOfContents",
     ...WRITE_DESTRUCTIVE,
   },
@@ -278,7 +279,7 @@ export const TOOLS: SwaggerToolParams[] = [
     inputSchema: CreateApiParamsSchema,
     outputSchema: CreateApiOutputSchema,
     handler: "createOrUpdateApi",
-    ...WRITE_INTERNAL,
+    ...WRITE_DESTRUCTIVE,
   },
   // User Management API tools for organization management functionality
   {

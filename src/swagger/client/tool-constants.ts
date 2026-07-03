@@ -16,9 +16,3 @@ export const WRITE_DESTRUCTIVE = {
   destructive: true,
 } as const;
 
-// Registry operations that modify internal state but don't access external systems
-export const WRITE_INTERNAL = {
-  readOnly: false,
-  openWorld: false,
-  destructive: true,
-} as const;

@@ -773,6 +773,10 @@ export const DeleteProductOutputSchema = z.object({
   message: z.string(),
 });
 
+export const DeleteTableOfContentsOutputSchema = z.object({
+  success: z.boolean().optional(),
+});
+
 export const TocListOutputSchema = z.object({
   items: z.array(
     z.looseObject({

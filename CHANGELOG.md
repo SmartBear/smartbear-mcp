@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [Swagger] Added output schemas to Swagger Portal and Registry tools, enabling structured, validated responses for all portal, product, section, document, table-of-contents, and registry operations.
-- [Swagger] Introduced tool constants (`READ_ONLY`, `WRITE`, `WRITE_DESTRUCTIVE`, `WRITE_INTERNAL`) to annotate each Swagger tool with semantic flags (`readOnly`, `openWorld`, `destructive`) for better client-side tool classification.
+- [Swagger] Introduced tool constants (`READ_ONLY`, `WRITE`, `WRITE_DESTRUCTIVE`) to annotate each Swagger tool with semantic flags (`readOnly`, `openWorld`, `destructive`) for better client-side tool classification.
 
 ### Changed
 
