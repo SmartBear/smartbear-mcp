@@ -141,14 +141,27 @@ export class FunctionalTestingAPI {
         })
       : undefined;
 
-    const response = await fetch(
-      `${this.baseUrl}/suites/${args.suiteId}/executions`,
-      {
-        method: "POST",
-        headers: this.getFtHeaders(),
-        body,
-      },
-    );
+    let response: Response;
+    try {
+      response = await fetch(
+        `${this.baseUrl}/suites/${args.suiteId}/executions`,
+        {
+          method: "POST",
+          headers: this.getFtHeaders(),
+          body,
+        },
+      );
+    } catch {
+      throw new ToolError(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new ToolError(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    }
 
     if (!response.ok) {
       throw new ToolError(
@@ -169,13 +182,26 @@ export class FunctionalTestingAPI {
       throw new ToolError("executionId argument is required");
     }
 
-    const response = await fetch(
-      `${this.baseUrl}/suites/${args.suiteId}/executions/${args.executionId}`,
-      {
-        method: "GET",
-        headers: this.getFtHeaders(),
-      },
-    );
+    let response: Response;
+    try {
+      response = await fetch(
+        `${this.baseUrl}/suites/${args.suiteId}/executions/${args.executionId}`,
+        {
+          method: "GET",
+          headers: this.getFtHeaders(),
+        },
+      );
+    } catch {
+      throw new ToolError(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new ToolError(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    }
 
     if (!response.ok) {
       throw new ToolError(

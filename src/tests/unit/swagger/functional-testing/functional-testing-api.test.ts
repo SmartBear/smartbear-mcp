@@ -352,6 +352,22 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
+    it("should throw an authentication error on 401", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    });
+
+    it("should throw an authentication error on 403", async () => {
+      fetchMock.mockResponseOnce("Forbidden", { status: 403 });
+
+      await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    });
+
     it("should throw ToolError on HTTP error", async () => {
       fetchMock.mockResponseOnce("Not Found", { status: 404 });
 
@@ -360,11 +376,11 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should propagate network errors", async () => {
+    it("should throw a service-unavailable error on network failure", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       await expect(api.runSuite({ suiteId: "checkout-suite" })).rejects.toThrow(
-        "Network error",
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
       );
     });
   });
@@ -474,6 +490,32 @@ describe("FunctionalTestingAPI", () => {
       ).rejects.toThrow("executionId argument is required");
     });
 
+    it("should throw an authentication error on 401", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(
+        api.getSuiteExecution({
+          suiteId: "checkout-suite",
+          executionId: "7",
+        }),
+      ).rejects.toThrow(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    });
+
+    it("should throw an authentication error on 403", async () => {
+      fetchMock.mockResponseOnce("Forbidden", { status: 403 });
+
+      await expect(
+        api.getSuiteExecution({
+          suiteId: "checkout-suite",
+          executionId: "7",
+        }),
+      ).rejects.toThrow(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    });
+
     it("should throw ToolError on HTTP error", async () => {
       fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
 
@@ -485,7 +527,7 @@ describe("FunctionalTestingAPI", () => {
       ).rejects.toThrow("Failed to get suite execution status");
     });
 
-    it("should propagate network errors", async () => {
+    it("should throw a service-unavailable error on network failure", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       await expect(
@@ -493,7 +535,9 @@ describe("FunctionalTestingAPI", () => {
           suiteId: "checkout-suite",
           executionId: "7",
         }),
-      ).rejects.toThrow("Network error");
+      ).rejects.toThrow(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
     });
   });
 
