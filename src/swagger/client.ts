@@ -386,6 +386,10 @@ export class SwaggerClient implements Client {
     return fn(this.ftApi);
   }
 
+  async listFunctionalTestingSuites(): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.listSuites());
+  }
+
   async registerTools(
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
