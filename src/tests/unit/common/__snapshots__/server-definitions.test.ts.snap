@@ -13127,6 +13127,7 @@ Expected Output: Test execution steps for the specified test data row",
 Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the limit value in the response to confirm how many results were actually returned.
  (default: 10)
 - startAtId (number): Zero-indexed starting position for ID-based pagination. (default: 0)
+- updatedAfter (string): Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
 
 **Examples:**
 1. Get the first 10 test executions
@@ -13173,6 +13174,7 @@ Expected Output: Test executions with step links included",
       "startAtId",
       "testCase",
       "testCycle",
+      "updatedAfter",
     ],
     "outputSchema": [
       "limit",
