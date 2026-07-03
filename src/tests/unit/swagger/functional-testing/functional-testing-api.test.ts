@@ -140,17 +140,32 @@ describe("FunctionalTestingAPI", () => {
       expect(result).toEqual(executionMock);
     });
 
-    it("should strip videoUrl from response", async () => {
+    it("should strip videoUrl from nested test run", async () => {
       fetchMock.mockResponseOnce(
         JSON.stringify({
           ...executionMock,
-          videoUrl: "https://cdn.reflect.run/video/42.mp4",
+          tests: [
+            {
+              testId: 1,
+              run: {
+                runId: 10,
+                status: "passed",
+                videoUrl: "https://cdn.reflect.run/video/42.mp4",
+              },
+            },
+          ],
         }),
       );
 
       const result = await api.getTestExecution({ executionId: "42" });
+      const tests = (result as Record<string, unknown>).tests as Record<
+        string,
+        unknown
+      >[];
+      const run = tests[0].run as Record<string, unknown>;
 
-      expect((result as Record<string, unknown>).videoUrl).toBeUndefined();
+      expect(run.videoUrl).toBeUndefined();
+      expect(run.runId).toBe(10);
       expect((result as Record<string, unknown>).executionId).toBe("42");
     });
 
