@@ -15,4 +15,3 @@ export const WRITE_DESTRUCTIVE = {
   openWorld: true,
   destructive: true,
 } as const;
-

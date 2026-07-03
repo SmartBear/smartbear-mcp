@@ -54,11 +54,7 @@ import {
   StandardizeApiParamsSchema,
   StandardizeOutputSchema,
 } from "./registry-types";
-import {
-  READ_ONLY,
-  WRITE,
-  WRITE_DESTRUCTIVE,
-} from "./tool-constants";
+import { READ_ONLY, WRITE, WRITE_DESTRUCTIVE } from "./tool-constants";
 import {
   OrganizationsListOutputSchema,
   OrganizationsQuerySchema,
