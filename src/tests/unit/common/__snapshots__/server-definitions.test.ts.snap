@@ -112,6 +112,24 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     "outputSchema": undefined,
     "title": "BearQ: Get Task Status",
   },
+  "bearq_list_environments": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: List Environments",
+    },
+    "description": "Lists the environments configured in the workspace. Use this to discover valid environment names to pass to the test-running tools, and to identify the workspace default.
+
+**Toolset:** Tasks
+
+**Parameters:**
+None",
+    "inputSchema": [],
+    "outputSchema": undefined,
+    "title": "BearQ: List Environments",
+  },
   "bearq_refine_all_draft_tests": {
     "annotations": {
       "destructiveHint": false,
@@ -183,8 +201,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
+    "inputSchema": [
+      "environment",
+    ],
     "outputSchema": undefined,
     "title": "BearQ: Run Regression Tests",
   },
@@ -201,8 +221,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-- testCaseIds (array) *required*: IDs of BearQ regression test cases to run.",
+- testCaseIds (array) *required*: IDs of BearQ regression test cases to run.
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
     "inputSchema": [
+      "environment",
       "testCaseIds",
     ],
     "outputSchema": undefined,
@@ -221,8 +243,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-- functionalAreas (array) *required*: Functional areas to target, by ID or name.",
+- functionalAreas (array) *required*: Functional areas to target, by ID or name.
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
     "inputSchema": [
+      "environment",
       "functionalAreas",
     ],
     "outputSchema": undefined,
