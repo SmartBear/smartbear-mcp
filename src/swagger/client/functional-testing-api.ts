@@ -128,7 +128,18 @@ export class FunctionalTestingAPI {
       throw new ToolError(suiteExecutionsErrorMessage(response));
     }
 
-    return response.json();
+    const data: ListSuiteExecutionsResponse = await response.json();
+    // Will be adjusted after https://smartbear.atlassian.net/browse/RF-5271 is done
+    return {
+      ...data,
+      executions: {
+        data: data.executions.data.map(({ executionId, status, isFinished }) => ({
+          executionId,
+          status,
+          isFinished,
+        })),
+      },
+    };
   }
 }
 
