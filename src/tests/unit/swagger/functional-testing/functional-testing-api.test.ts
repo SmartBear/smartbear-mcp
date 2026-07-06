@@ -16,6 +16,33 @@ const UNREACHABLE_MESSAGE =
 const AUTH_FAILED_MESSAGE =
   "Authentication failed. Verify your API token is valid and has not expired.";
 
+const suitesResponseMock = {
+  suites: [
+    {
+      id: "suite-1",
+      accountId: 42,
+      name: "Smoke Suite",
+      slug: "smoke-suite",
+      created: 1719400000000,
+      numTestInstances: 3,
+    },
+    {
+      id: "suite-2",
+      accountId: 42,
+      name: "Regression Suite",
+      slug: "regression-suite",
+      created: 1719500000000,
+      numTestInstances: 12,
+    },
+  ],
+  stats: {
+    executions: 15,
+    passRate: 0.93,
+    avgRuntimeSecs: 42,
+    cumExecTimeSecs: 630,
+  },
+};
+
 describe("FunctionalTestingAPI", () => {
   let api: FunctionalTestingAPI;
 
@@ -358,6 +385,70 @@ describe("FunctionalTestingAPI", () => {
       fetchMock.mockResponseOnce("Forbidden", { status: 403 });
 
       await expect(api.listTests()).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+  });
+
+  describe("listSuites", () => {
+    it("should call the correct endpoint with X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suitesResponseMock));
+
+      await api.listSuites();
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return parsed JSON response", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suitesResponseMock));
+
+      const result = await api.listSuites();
+
+      expect(result).toEqual(suitesResponseMock);
+    });
+
+    it("should return an empty suites list when no suites exist", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify({ suites: [] }));
+
+      const result = await api.listSuites();
+
+      expect(result).toEqual({ suites: [] });
+    });
+
+    it("should throw an authentication error on 401", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(api.listSuites()).rejects.toThrow(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    });
+
+    it("should throw an authentication error on 403", async () => {
+      fetchMock.mockResponseOnce("Forbidden", { status: 403 });
+
+      await expect(api.listSuites()).rejects.toThrow(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    });
+
+    it("should throw an error with the response status on other HTTP errors", async () => {
+      fetchMock.mockResponseOnce("Server Error", { status: 503 });
+
+      await expect(api.listSuites()).rejects.toThrow(
+        "Failed to list Functional Testing suites",
+      );
+    });
+
+    it("should throw a service-unavailable error on network failure", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(api.listSuites()).rejects.toThrow(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
     });
   });
 

@@ -4,6 +4,7 @@ import type {
   GetFunctionalTestingExecutionTestParams,
   ListFunctionalTestingSuiteExecutionsParams,
   ListSuiteExecutionsResponse,
+  ListSuitesResponse,
   RunFunctionalTestingTestParams,
 } from "./functional-testing-types";
 
@@ -12,7 +13,7 @@ const API_HOSTNAME = "api.reflect.run";
 export const FUNCTIONAL_TESTING_API_KEY_HEADER = "X-API-KEY";
 
 export class FunctionalTestingAPI {
-  private baseUrl: string;
+  private readonly baseUrl: string;
 
   constructor(
     private readonly getToken: () => string | null,
@@ -127,6 +128,33 @@ export class FunctionalTestingAPI {
 
     if (!response.ok) {
       throw new ToolError(suiteExecutionsErrorMessage(response));
+    }
+
+    const data: ListSuiteExecutionsResponse = await response.json();
+    // Will be adjusted after https://smartbear.atlassian.net/browse/RF-5271 is done
+    return {
+      ...data,
+      executions: {
+        data: data.executions.data.map(
+          ({ executionId, status, isFinished }) => ({
+            executionId,
+            status,
+            isFinished,
+          }),
+        ),
+      },
+    };
+  }
+  async listSuites(): Promise<ListSuitesResponse> {
+    const response = await this.ftFetch(`${this.baseUrl}/suites`, {
+      method: "GET",
+      headers: this.getFtHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new ToolError(
+        `Failed to list Functional Testing suites: ${response.status} ${response.statusText}`,
+      );
     }
 
     return response.json();
