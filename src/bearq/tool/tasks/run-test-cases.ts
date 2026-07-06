@@ -10,6 +10,13 @@ const inputSchema = z.object({
     .array(z.number().int().positive())
     .min(1)
     .describe("IDs of BearQ regression test cases to run."),
+  environment: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Target environment name to run tests against. Omit to use the workspace default.",
+    ),
 });
 
 export class RunTestCases extends Tool<BearQClient> {
@@ -22,11 +29,17 @@ export class RunTestCases extends Tool<BearQClient> {
   };
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
-    const { testCaseIds } = inputSchema.parse(args);
+    const { testCaseIds, environment } = inputSchema.parse(args);
+    const body: Record<string, unknown> = {
+      agent: "tester",
+      mode: "run",
+      testCaseIds,
+    };
+    if (environment !== undefined) body.environment = environment;
     const res = await fetch(`${this.client.getBaseUrl()}/tasks`, {
       method: "POST",
       headers: this.client.getHeaders(),
-      body: JSON.stringify({ agent: "tester", mode: "run", testCaseIds }),
+      body: JSON.stringify(body),
     });
     if (!res.ok)
       throw new ToolError(
