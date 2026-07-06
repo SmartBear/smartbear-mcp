@@ -2,6 +2,7 @@ import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
+  GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
   ListFunctionalTestingSuiteExecutionsParams,
@@ -9,6 +10,7 @@ import type {
   ListSuitesResponse,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
+  TestRunHistoryResponse,
 } from "./functional-testing-types";
 
 const API_HOSTNAME = "api.reflect.run";
@@ -273,6 +275,53 @@ export class FunctionalTestingAPI {
       }
     }
     return data;
+  }
+
+  async getTestHistory(
+    args: GetFunctionalTestHistoryParams,
+  ): Promise<TestRunHistoryResponse> {
+    if (!args.testId) throw new ToolError("testId argument is required");
+
+    const params = new URLSearchParams();
+    if (args.limit !== undefined) params.set("limit", String(args.limit));
+    if (args.offset !== undefined) params.set("offset", String(args.offset));
+    const query = params.toString() ? `?${params}` : "";
+
+    const headers = this.getFtHeaders();
+    let response: Response;
+    try {
+      response = await fetch(
+        `${this.baseUrl}/tests/${args.testId}/runs${query}`,
+        {
+          method: "GET",
+          headers,
+        },
+      );
+    } catch {
+      throw new ToolError(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new ToolError(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    }
+
+    if (response.status === 404) {
+      throw new ToolError(
+        "Test not found. Verify the testId belongs to your workspace.",
+      );
+    }
+
+    if (!response.ok) {
+      throw new ToolError(
+        `Failed to get test execution history: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return response.json();
   }
 
   private async withoutField(

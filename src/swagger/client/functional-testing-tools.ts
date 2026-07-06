@@ -1,5 +1,6 @@
 import {
   CancelFunctionalTestingSuiteExecutionSchema,
+  GetFunctionalTestHistoryParamsSchema,
   GetFunctionalTestingExecutionTestSchema,
   GetFunctionalTestingSuiteExecutionSchema,
   ListFunctionalTestingSuiteExecutionsSchema,
@@ -103,6 +104,18 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
       "Requires both `suiteId` and the `executionId` arguments returned by `swagger_run_suite`.",
     inputSchema: GetFunctionalTestingSuiteExecutionSchema,
     handler: "getFunctionalTestingSuiteExecution",
+    idempotent: true,
+    readOnly: true,
+  },
+  {
+    title: "Get Test Execution History",
+    toolset: "Functional Testing",
+    summary:
+      "Retrieves the execution history for a given test in your Swagger Functional Testing workspace. " +
+      "Use this tool when you need to check past run results, identify failures, or assess test reliability over time. " +
+      "Do not use this tool to run a test or retrieve suite-level execution results.",
+    inputSchema: GetFunctionalTestHistoryParamsSchema,
+    handler: "getFunctionalTestingTestHistory",
     idempotent: true,
     readOnly: true,
   },
