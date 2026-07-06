@@ -10,7 +10,7 @@ const inputSchema = z.object({});
 export class ListEnvironments extends Tool<BearQClient> {
   specification: ToolParams = {
     title: "List Environments",
-    toolset: "Tasks",
+    toolset: "Environments",
     summary:
       "Lists the environments configured in the workspace. Use this to discover valid environment names to pass to the test-running tools, and to identify the workspace default.",
     inputSchema,

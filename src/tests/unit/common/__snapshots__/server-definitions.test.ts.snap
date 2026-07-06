@@ -122,7 +122,7 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     },
     "description": "Lists the environments configured in the workspace. Use this to discover valid environment names to pass to the test-running tools, and to identify the workspace default.
 
-**Toolset:** Tasks
+**Toolset:** Environments
 
 **Parameters:**
 None",
