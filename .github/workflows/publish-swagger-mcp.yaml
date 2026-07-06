@@ -17,7 +17,7 @@ on:
 jobs:
   publish-swagger-mcp:
     name: Publish swagger-mcp to MCP Registry
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: Production
     steps:
       - name: Checkout repository

@@ -203,8 +203,12 @@ async function fetchAllVersions(registry, server) {
   return results;
 }
 
+function isServerRecord(rec) {
+  return rec != null && typeof rec.server === "object" && rec.server !== null;
+}
+
 function serverHasRemote(serverJson, remoteUrl) {
-  return (serverJson.remotes ?? []).some((r) => r.url === remoteUrl);
+  return (serverJson.remotes ?? []).some((r) => r?.url === remoteUrl);
 }
 
 function statusOf(record) {
@@ -238,6 +242,18 @@ async function main() {
   const allVersions = await fetchAllVersions(args.registry, args.server);
   if (allVersions.length === 0) {
     fail(`No versions found for ${args.server}`);
+  }
+
+  // The registry contract guarantees every record carries a `server` object. If
+  // one doesn't, fail loudly rather than skip it: silently ignoring a record
+  // could leave a version still holding the URL while we report success — the
+  // opposite of what this tool is meant to guarantee.
+  const malformed = allVersions.filter((rec) => !isServerRecord(rec));
+  if (malformed.length > 0) {
+    fail(
+      `${malformed.length} registry record(s) are missing a 'server' object — ` +
+        `unexpected API response shape, aborting.`,
+    );
   }
 
   // Candidate = version whose server JSON still lists the remote URL.
