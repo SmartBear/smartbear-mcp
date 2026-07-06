@@ -143,24 +143,10 @@ export class FunctionalTestingAPI {
     };
   }
   async listSuites(): Promise<ListSuitesResponse> {
-    const headers = this.getFtHeaders();
-    let response: Response;
-    try {
-      response = await fetch(`${this.baseUrl}/suites`, {
-        method: "GET",
-        headers,
-      });
-    } catch {
-      throw new ToolError(
-        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
-      );
-    }
-
-    if (response.status === 401 || response.status === 403) {
-      throw new ToolError(
-        "Authentication failed. Verify your API token is valid and has not expired.",
-      );
-    }
+    const response = await this.ftFetch(`${this.baseUrl}/suites`, {
+      method: "GET",
+      headers: this.getFtHeaders(),
+    });
 
     if (!response.ok) {
       throw new ToolError(
