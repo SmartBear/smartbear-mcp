@@ -49,6 +49,7 @@ The following environment variables configure the Zephyr integration:
   - optional Folder ID (`folderId`)
   - optional max results to return (`limit`)
   - optional starting cursor position for pagination (`startAtId`)
+  - optional filter for entities updated after a given time (`updatedAfter`)
 - **Returns**: A list of Test Cases along with their properties.
 - **Use case**: Retrieve the Test Cases, it can be filtered by Project Key and Folder ID.
 
@@ -309,6 +310,7 @@ The following environment variables configure the Zephyr integration:
   - optional flag to include only last executions (`onlyLastExecutions`)
   - optional max results to return (`limit`)
   - optional starting cursor position for pagination (`startAtId`)
+  - optional filter for entities updated after a given time (`updatedAfter`)
 - **Returns**: A list of Test Executions along with their properties. Results are filtered based on the provided parameters.
 - **Use case**: Retrieve Test Executions, filtered by various criteria such as project, test cycle, test case, or execution dates.
 
