@@ -8,6 +8,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 
 import { clientRegistry } from "./client-registry";
+import { handleInitializeMessage } from "./initialize";
 import { withRequestContext } from "./request-context";
 import { SmartBearMcpServer } from "./server";
 import { isDraining, registerShutdownHandler } from "./shutdown";
@@ -356,27 +357,7 @@ async function createNewTransport(
       transports.set(newSessionId, { server, transport });
     },
   });
-  transport.onmessage = (message) => {
-    if ("method" in message && message.method === "initialize") {
-      if (message.params?.protocolVersion === "2025-11-25") {
-        const clientCapabilities = message.params?.capabilities as Record<
-          string,
-          unknown
-        >;
-
-        if (Object.hasOwn(clientCapabilities, "sampling")) {
-          server.setSamplingSupported(true);
-        }
-
-        if (Object.hasOwn(clientCapabilities, "elicitation")) {
-          server.setElicitationSupported(true);
-        }
-      }
-
-      // Other protocolVersion handling can be added below
-      // to maintain backwards compatibility.
-    }
-  };
+  transport.onmessage = (message) => handleInitializeMessage(server, message);
 
   // Clean up session on close
   transport.onclose = () => {

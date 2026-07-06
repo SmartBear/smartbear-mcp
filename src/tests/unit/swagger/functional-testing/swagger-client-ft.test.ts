@@ -122,6 +122,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
         (call) => call[0].title,
       );
       expect(registeredTitles).not.toContain("List Tests");
+      expect(registeredTitles).not.toContain("List Suites");
     });
 
     it("should register FT tools when FT token is configured", async () => {
@@ -137,6 +138,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
         (call) => call[0].title,
       );
       expect(registeredTitles).toContain("List Tests");
+      expect(registeredTitles).toContain("List Suites");
     });
 
     it("should not affect existing Swagger tools when FT token is absent", async () => {
@@ -164,6 +166,7 @@ describe("SwaggerClient — Functional Testing integration", () => {
         (call) => call[0].title,
       );
       expect(registeredTitles).toContain("List Tests");
+      expect(registeredTitles).toContain("List Suites");
       expect(registeredTitles).not.toContain("List Portals");
       expect(registeredTitles).not.toContain("Search APIs and Domains");
     });
@@ -259,6 +262,39 @@ describe("SwaggerClient — Functional Testing integration", () => {
       expect(result.executions.data.map((e) => e.executionId)).toEqual([
         12, 47,
       ]);
+    });
+  });
+
+  describe("listFunctionalTestingSuites", () => {
+    it("should call api.reflect.run and return results", async () => {
+      const suitesMock = [{ id: "suite-1", name: "Smoke Suite" }];
+      fetchMock.mockResponseOnce(JSON.stringify(suitesMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = await requestContextStorage.run({ headers: {} }, () =>
+        client.listFunctionalTestingSuites(),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result).toEqual(suitesMock);
+    });
+
+    it("should throw when FT API is not configured", async () => {
+      await client.configure({} as any, { api_key: "swagger-key" });
+
+      await expect(client.listFunctionalTestingSuites()).rejects.toThrow(
+        "Functional Testing API not configured",
+      );
     });
   });
 });

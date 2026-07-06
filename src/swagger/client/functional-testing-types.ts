@@ -48,3 +48,22 @@ export interface ListSuiteExecutionsResponse {
     data: SuiteExecution[];
   };
 }
+
+export interface Suite {
+  id: string;
+  accountId: number;
+  name: string;
+  slug: string;
+  created: number;
+  numTestInstances: number;
+}
+
+export interface ListSuitesResponse {
+  suites: Suite[];
+  stats?: {
+    executions: number;
+    passRate: number;
+    avgRuntimeSecs: number;
+    cumExecTimeSecs: number;
+  };
+}

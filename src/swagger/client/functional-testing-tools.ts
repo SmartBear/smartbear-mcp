@@ -50,4 +50,15 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     readOnly: true,
     idempotent: true,
   },
+  {
+    title: "List Suites",
+    toolset: "Functional Testing",
+    summary:
+      "Lists all test suites available in your Swagger Functional Testing workspace. " +
+      "Use this tool when you need to discover available suites before running them or checking their execution history. " +
+      "Do not use this tool to retrieve individual tests or test suite execution results.",
+    handler: "listFunctionalTestingSuites",
+    idempotent: true,
+    readOnly: true,
+  },
 ];
