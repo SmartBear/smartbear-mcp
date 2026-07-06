@@ -1000,7 +1000,7 @@ export class SwaggerAPI {
     }
     const section = sections.items[0];
 
-    const resolvedPageSlug = pageSlug ?? normalizeSlug(pageTitle);
+    const resolvedPageSlug = pageSlug || normalizeSlug(pageTitle);
     const normalizedTitle = pageTitle.slice(0, 255);
 
     const tocItem = await this.createTableOfContents(section.id, {
