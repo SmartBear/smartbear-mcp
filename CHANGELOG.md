@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [Swagger] `create_documentation_page` now accepts an optional `pageSlug` parameter. When provided, it is used as the page URL slug; otherwise the slug is generated from the page title.
 - [Swagger] Added `list_suites` tool for discovering test suites in your Swagger Functional Testing workspace. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 
 ### Fixed
