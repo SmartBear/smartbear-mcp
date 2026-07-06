@@ -134,11 +134,13 @@ export class FunctionalTestingAPI {
     return {
       ...data,
       executions: {
-        data: data.executions.data.map(({ executionId, status, isFinished }) => ({
-          executionId,
-          status,
-          isFinished,
-        })),
+        data: data.executions.data.map(
+          ({ executionId, status, isFinished }) => ({
+            executionId,
+            status,
+            isFinished,
+          }),
+        ),
       },
     };
   }
@@ -170,4 +172,3 @@ function suiteExecutionsErrorMessage(response: Response): string {
       return `Failed to list suite executions: ${response.status} ${response.statusText}`;
   }
 }
-
