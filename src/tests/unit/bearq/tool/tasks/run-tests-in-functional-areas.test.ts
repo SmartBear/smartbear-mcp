@@ -72,6 +72,27 @@ describe("RunTestsInFunctionalAreas", () => {
     );
   });
 
+  it("should include environment in body when provided", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ taskIds: [8] }));
+
+    await instance.handle(
+      { functionalAreas: [1, "Cart"], environment: "Staging" },
+      {} as any,
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.bearq.smartbear.com/tasks",
+      expect.objectContaining({
+        body: JSON.stringify({
+          agent: "tester",
+          mode: "run",
+          functionalAreas: [1, "Cart"],
+          environment: "Staging",
+        }),
+      }),
+    );
+  });
+
   it("should throw ToolError on non-2xx response", async () => {
     fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
     await expect(

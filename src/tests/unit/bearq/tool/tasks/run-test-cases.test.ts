@@ -49,6 +49,27 @@ describe("RunTestCases", () => {
     expect(parsed.taskIds).toEqual([42]);
   });
 
+  it("should include environment in body when provided", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ taskIds: [42] }));
+
+    await instance.handle(
+      { testCaseIds: [1, 2, 3], environment: "Staging" },
+      {} as any,
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.bearq.smartbear.com/tasks",
+      expect.objectContaining({
+        body: JSON.stringify({
+          agent: "tester",
+          mode: "run",
+          testCaseIds: [1, 2, 3],
+          environment: "Staging",
+        }),
+      }),
+    );
+  });
+
   it("should throw ToolError on non-2xx response", async () => {
     fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
     await expect(
