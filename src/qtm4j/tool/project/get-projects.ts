@@ -131,9 +131,7 @@ export class GetProjects extends Tool<Qtm4jClient> {
 
     // Make API request and validate response
     const apiClient = this.client.getApiClient();
-    const response = await apiClient
-      .skipAnalytics()
-      .post(ENDPOINTS.PROJECTS, body);
+    const response = await apiClient.post(ENDPOINTS.PROJECTS, body);
     const validatedResponse: GetProjectsResponseType =
       GetProjectsResponse.parse(response);
 
