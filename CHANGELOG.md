@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Swagger] Extended Swagger Functional Testing integration with `run_suite`, and `get_suite_status` tools for executing available suites and querying their execution.
 
+- [Swagger] Added `list_suite_executions` tool for reviewing the execution history and timings of a test suite in your Swagger Functional Testing workspace. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+
 ## [0.28.0] - 2026-07-07
 
 ### Changed

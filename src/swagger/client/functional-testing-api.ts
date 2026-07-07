@@ -2,6 +2,8 @@ import { ToolError } from "../../common/tools";
 import type {
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
+  ListFunctionalTestingSuiteExecutionsParams,
+  ListSuiteExecutionsResponse,
   ListSuitesResponse,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
@@ -34,8 +36,27 @@ export class FunctionalTestingAPI {
     };
   }
 
+  private async ftFetch(input: string, init: RequestInit): Promise<Response> {
+    let response: Response;
+    try {
+      response = await fetch(input, init);
+    } catch {
+      throw new ToolError(
+        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
+      );
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new ToolError(
+        "Authentication failed. Verify your API token is valid and has not expired.",
+      );
+    }
+
+    return response;
+  }
+
   async listTests(): Promise<unknown> {
-    const response = await fetch(`${this.baseUrl}/tests`, {
+    const response = await this.ftFetch(`${this.baseUrl}/tests`, {
       method: "GET",
       headers: this.getFtHeaders(),
     });
@@ -52,8 +73,8 @@ export class FunctionalTestingAPI {
   async runTest(args: RunFunctionalTestingTestParams): Promise<unknown> {
     if (!args.testId) throw new ToolError("testId argument is required");
 
-    const response = await fetch(
-      `${this.baseUrl}/tests/${args.testId}/executions`,
+    const response = await this.ftFetch(
+      `${this.baseUrl}/tests/${encodeURIComponent(args.testId)}/executions`,
       {
         method: "POST",
         headers: this.getFtHeaders(),
@@ -76,8 +97,8 @@ export class FunctionalTestingAPI {
       throw new ToolError("executionId argument is required");
     }
 
-    const response = await fetch(
-      `${this.baseUrl}/executions/${args.executionId}`,
+    const response = await this.ftFetch(
+      `${this.baseUrl}/executions/${encodeURIComponent(args.executionId)}`,
       {
         method: "GET",
         headers: this.getFtHeaders(),
@@ -103,25 +124,43 @@ export class FunctionalTestingAPI {
     return data;
   }
 
-  async listSuites(): Promise<ListSuitesResponse> {
-    const headers = this.getFtHeaders();
-    let response: Response;
-    try {
-      response = await fetch(`${this.baseUrl}/suites`, {
+  async listSuiteExecutions(
+    args: ListFunctionalTestingSuiteExecutionsParams,
+  ): Promise<ListSuiteExecutionsResponse> {
+    if (!args.suiteId) throw new ToolError("suiteId argument is required");
+
+    const response = await this.ftFetch(
+      `${this.baseUrl}/suites/${encodeURIComponent(args.suiteId)}/executions`,
+      {
         method: "GET",
-        headers,
-      });
-    } catch {
-      throw new ToolError(
-        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
-      );
+        headers: this.getFtHeaders(),
+      },
+    );
+
+    if (!response.ok) {
+      throw new ToolError(suiteExecutionsErrorMessage(response));
     }
 
-    if (response.status === 401 || response.status === 403) {
-      throw new ToolError(
-        "Authentication failed. Verify your API token is valid and has not expired.",
-      );
-    }
+    const data: ListSuiteExecutionsResponse = await response.json();
+    // Will be adjusted after https://smartbear.atlassian.net/browse/RF-5271 is done
+    return {
+      ...data,
+      executions: {
+        data: data.executions.data.map(
+          ({ executionId, status, isFinished }) => ({
+            executionId,
+            status,
+            isFinished,
+          }),
+        ),
+      },
+    };
+  }
+  async listSuites(): Promise<ListSuitesResponse> {
+    const response = await this.ftFetch(`${this.baseUrl}/suites`, {
+      method: "GET",
+      headers: this.getFtHeaders(),
+    });
 
     if (!response.ok) {
       throw new ToolError(
@@ -233,5 +272,18 @@ export class FunctionalTestingAPI {
     const data = (await response.json()) as Record<string, unknown>;
     delete data[field];
     return data;
+  }
+}
+
+function suiteExecutionsErrorMessage(response: Response): string {
+  switch (response.status) {
+    // Defensive: the Reflect API currently returns 200 with an empty
+    // `executions.data` list for an unknown suiteId rather than a 404, so this
+    // branch is not expected to fire today. Kept in case the API starts
+    // returning 404 for missing suites.
+    case 404:
+      return "Test suite not found. Verify the suiteId is correct and belongs to your workspace.";
+    default:
+      return `Failed to list suite executions: ${response.status} ${response.statusText}`;
   }
 }

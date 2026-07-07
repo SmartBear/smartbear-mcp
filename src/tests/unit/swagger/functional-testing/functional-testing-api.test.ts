@@ -10,6 +10,12 @@ const testsMock = [
   { id: "test-2", name: "Checkout Test" },
 ];
 
+const UNREACHABLE_MESSAGE =
+  "Swagger Functional Testing service is currently unreachable. Retry after a moment.";
+
+const AUTH_FAILED_MESSAGE =
+  "Authentication failed. Verify your API token is valid and has not expired.";
+
 const suitesResponseMock = {
   suites: [
     {
@@ -80,17 +86,17 @@ describe("FunctionalTestingAPI", () => {
     });
 
     it("should throw ToolError on HTTP error", async () => {
-      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
 
       await expect(api.listTests()).rejects.toThrow(
         "Failed to list Functional Testing tests",
       );
     });
 
-    it("should propagate network errors", async () => {
+    it("should map network errors to an unreachable message", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
-      await expect(api.listTests()).rejects.toThrow("Network error");
+      await expect(api.listTests()).rejects.toThrow(UNREACHABLE_MESSAGE);
     });
   });
 
@@ -133,11 +139,11 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should propagate network errors", async () => {
+    it("should map network errors to an unreachable message", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       await expect(api.runTest({ testId: "94" })).rejects.toThrow(
-        "Network error",
+        UNREACHABLE_MESSAGE,
       );
     });
   });
@@ -210,12 +216,108 @@ describe("FunctionalTestingAPI", () => {
       );
     });
 
-    it("should propagate network errors", async () => {
+    it("should map network errors to an unreachable message", async () => {
       fetchMock.mockRejectOnce(new Error("Network error"));
 
       await expect(api.getTestExecution({ executionId: "42" })).rejects.toThrow(
-        "Network error",
+        UNREACHABLE_MESSAGE,
       );
+    });
+  });
+
+  describe("listSuiteExecutions", () => {
+    const suiteExecutionsMock = {
+      suiteId: "regression-tests",
+      executions: {
+        data: [
+          { executionId: 12, status: "pending", isFinished: false },
+          { executionId: 47, status: "passed", isFinished: true },
+          { executionId: 30, status: "failed", isFinished: true },
+        ],
+      },
+    };
+
+    it("should call the correct endpoint with GET method and X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionsMock));
+
+      await api.listSuiteExecutions({ suiteId: "regression-tests" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/regression-tests/executions",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should return executions in the order the API returns them", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionsMock));
+
+      const result = (await api.listSuiteExecutions({
+        suiteId: "regression-tests",
+      })) as typeof suiteExecutionsMock;
+
+      expect(result.executions.data.map((e) => e.executionId)).toEqual([
+        12, 47, 30,
+      ]);
+    });
+
+    it("should return empty list as-is when no executions exist", async () => {
+      const empty = { suiteId: "regression-tests", executions: { data: [] } };
+      fetchMock.mockResponseOnce(JSON.stringify(empty));
+
+      const result = await api.listSuiteExecutions({
+        suiteId: "regression-tests",
+      });
+
+      expect(result).toEqual(empty);
+    });
+
+    it("should throw ToolError when suiteId is missing", async () => {
+      await expect(api.listSuiteExecutions({ suiteId: "" })).rejects.toThrow(
+        "suiteId argument is required",
+      );
+    });
+
+    it("should map 404 to a suite-not-found message", async () => {
+      fetchMock.mockResponseOnce("Not Found", { status: 404 });
+
+      await expect(
+        api.listSuiteExecutions({ suiteId: "missing" }),
+      ).rejects.toThrow(
+        "Test suite not found. Verify the suiteId is correct and belongs to your workspace.",
+      );
+    });
+
+    it("should fall back to a generic message for other HTTP errors", async () => {
+      fetchMock.mockResponseOnce("Boom", { status: 500 });
+
+      await expect(
+        api.listSuiteExecutions({ suiteId: "regression-tests" }),
+      ).rejects.toThrow("Failed to list suite executions: 500");
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(
+        api.listSuiteExecutions({ suiteId: "regression-tests" }),
+      ).rejects.toThrow(UNREACHABLE_MESSAGE);
+    });
+  });
+
+  describe("ftFetch authentication errors", () => {
+    it("should map 401 responses to an auth-failed message", async () => {
+      fetchMock.mockResponseOnce("Unauthorized", { status: 401 });
+
+      await expect(api.listTests()).rejects.toThrow(AUTH_FAILED_MESSAGE);
+    });
+
+    it("should map 403 responses to an auth-failed message", async () => {
+      fetchMock.mockResponseOnce("Forbidden", { status: 403 });
+
+      await expect(api.listTests()).rejects.toThrow(AUTH_FAILED_MESSAGE);
     });
   });
 

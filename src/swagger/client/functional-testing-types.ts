@@ -16,6 +16,14 @@ export const GetFunctionalTestingExecutionTestSchema = z.object({
     .min(1),
 });
 
+export const ListFunctionalTestingSuiteExecutionsSchema = z.object({
+  suiteId: z
+    .string()
+    .describe("ID of the Functional Testing suite to list executions for")
+    .trim()
+    .min(1),
+});
+
 export const RunFunctionalTestingSuiteParamsSchema = z.object({
   suiteId: z
     .string()
@@ -51,12 +59,30 @@ export type RunFunctionalTestingTestParams = z.infer<
 export type GetFunctionalTestingExecutionTestParams = z.infer<
   typeof GetFunctionalTestingExecutionTestSchema
 >;
+export type ListFunctionalTestingSuiteExecutionsParams = z.infer<
+  typeof ListFunctionalTestingSuiteExecutionsSchema
+>;
 export type RunFunctionalTestingSuiteParams = z.infer<
   typeof RunFunctionalTestingSuiteParamsSchema
 >;
 export type GetFunctionalTestingSuiteExecutionParams = z.infer<
   typeof GetFunctionalTestingSuiteExecutionSchema
 >;
+
+export interface SuiteExecution {
+  executionId: number;
+  // Will be brought back after https://smartbear.atlassian.net/browse/RF-5271 is done
+  // url: string;
+  status: string;
+  isFinished: boolean;
+}
+
+export interface ListSuiteExecutionsResponse {
+  suiteId: string;
+  executions: {
+    data: SuiteExecution[];
+  };
+}
 
 export interface Suite {
   id: string;

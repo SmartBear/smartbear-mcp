@@ -214,6 +214,57 @@ describe("SwaggerClient — Functional Testing integration", () => {
     });
   });
 
+  describe("listFunctionalTestingSuiteExecutions", () => {
+    it("should register the List Suite Executions tool when FT token is configured", async () => {
+      await client.configure({} as any, {
+        functional_testing_api_token: "ft-token",
+      });
+
+      const mockRegister = vi.fn();
+      await client.registerTools(mockRegister, vi.fn());
+
+      const registeredTitles = mockRegister.mock.calls.map(
+        (call) => call[0].title,
+      );
+      expect(registeredTitles).toContain("List Suite Executions");
+    });
+
+    it("should call the suite executions endpoint and return results", async () => {
+      const suiteExecutionsMock = {
+        suiteId: "regression-tests",
+        executions: {
+          data: [
+            { executionId: 12, status: "pending" },
+            { executionId: 47, status: "passed" },
+          ],
+        },
+      };
+      fetchMock.mockResponseOnce(JSON.stringify(suiteExecutionsMock));
+
+      await client.configure({} as any, {
+        api_key: "swagger-key",
+        functional_testing_api_token: "ft-token",
+      });
+
+      const result = (await requestContextStorage.run({ headers: {} }, () =>
+        client.listFunctionalTestingSuiteExecutions({
+          suiteId: "regression-tests",
+        }),
+      )) as typeof suiteExecutionsMock;
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/suites/regression-tests/executions",
+        expect.objectContaining({
+          method: "GET",
+          headers: expect.objectContaining({ "X-API-KEY": "ft-token" }),
+        }),
+      );
+      expect(result.executions.data.map((e) => e.executionId)).toEqual([
+        12, 47,
+      ]);
+    });
+  });
+
   describe("listFunctionalTestingSuites", () => {
     it("should call api.reflect.run and return results", async () => {
       const suitesMock = [{ id: "suite-1", name: "Smoke Suite" }];
