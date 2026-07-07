@@ -24,6 +24,35 @@ export const ListFunctionalTestingSuiteExecutionsSchema = z.object({
     .min(1),
 });
 
+export const RunFunctionalTestingSuiteParamsSchema = z.object({
+  suiteId: z
+    .string()
+    .describe("ID of the Functional Testing suite to run")
+    .trim()
+    .min(1),
+  tunnelAgentName: z
+    .string()
+    .describe(
+      "Optional tunnel agent name to override the suite's saved tunnel for this run. When omitted, the suite's saved tunnel overrides are used, falling back to each test's saved tunnel.",
+    )
+    .trim()
+    .min(1)
+    .optional(),
+});
+
+export const GetFunctionalTestingSuiteExecutionSchema = z.object({
+  suiteId: z
+    .string()
+    .describe("ID of the Functional Testing suite")
+    .trim()
+    .min(1),
+  executionId: z
+    .string()
+    .describe("ID of the Functional Testing suite execution")
+    .trim()
+    .min(1),
+});
+
 export type RunFunctionalTestingTestParams = z.infer<
   typeof RunFunctionalTestingTestParamsSchema
 >;
@@ -32,6 +61,12 @@ export type GetFunctionalTestingExecutionTestParams = z.infer<
 >;
 export type ListFunctionalTestingSuiteExecutionsParams = z.infer<
   typeof ListFunctionalTestingSuiteExecutionsSchema
+>;
+export type RunFunctionalTestingSuiteParams = z.infer<
+  typeof RunFunctionalTestingSuiteParamsSchema
+>;
+export type GetFunctionalTestingSuiteExecutionParams = z.infer<
+  typeof GetFunctionalTestingSuiteExecutionSchema
 >;
 
 export interface SuiteExecution {

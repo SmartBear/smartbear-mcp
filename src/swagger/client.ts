@@ -17,6 +17,8 @@ import {
 import type {
   GetFunctionalTestingExecutionTestParams,
   ListFunctionalTestingSuiteExecutionsParams,
+  GetFunctionalTestingSuiteExecutionParams,
+  RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
 } from "./client/functional-testing-types";
 import {
@@ -379,6 +381,18 @@ export class SwaggerClient implements Client {
     return this.withFunctionalTesting((ftApi) =>
       ftApi.listSuiteExecutions(args),
     );
+  }
+  
+  async runFunctionalTestingSuite(
+    args: RunFunctionalTestingSuiteParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.runSuite(args));
+  }
+
+  async getFunctionalTestingSuiteExecution(
+    args: GetFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.getSuiteExecution(args));
   }
 
   /**
