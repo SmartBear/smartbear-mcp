@@ -382,7 +382,7 @@ export class SwaggerClient implements Client {
       ftApi.listSuiteExecutions(args),
     );
   }
-  
+
   async runFunctionalTestingSuite(
     args: RunFunctionalTestingSuiteParams,
   ): Promise<unknown> {
