@@ -966,6 +966,54 @@ describe("SwaggerAPI", () => {
       expect(result.pageDetails.slug).toBe("hello-world-123");
       expect(result.draftUrl).toContain(`/edit/content/${tocItemId}`);
     });
+
+    it("should use provided slug instead of generating one from title", async () => {
+      setupFetchRoutes();
+
+      const result = await api.createDocumentationPage({
+        portalId,
+        productId,
+        pageTitle: "Hello World! 123",
+        pageContent: "content",
+        pageSlug: "my-custom-slug",
+      });
+
+      expect(result.pageDetails.slug).toBe("my-custom-slug");
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${BASE}/sections/${sectionId}/table-of-contents`,
+        expect.objectContaining({
+          body: expect.stringContaining('"slug":"my-custom-slug"'),
+        }),
+      );
+    });
+
+    it("should fall back to title-derived slug when pageSlug is undefined", async () => {
+      setupFetchRoutes();
+
+      const result = await api.createDocumentationPage({
+        portalId,
+        productId,
+        pageTitle: "Hello World! 123",
+        pageContent: "content",
+        pageSlug: undefined,
+      });
+
+      expect(result.pageDetails.slug).toBe("hello-world-123");
+    });
+
+    it("should fall back to title-derived slug when pageSlug is empty string", async () => {
+      setupFetchRoutes();
+
+      const result = await api.createDocumentationPage({
+        portalId,
+        productId,
+        pageTitle: "Hello World! 123",
+        pageContent: "content",
+        pageSlug: "",
+      });
+
+      expect(result.pageDetails.slug).toBe("hello-world-123");
+    });
   });
 
   describe("error handling", () => {
