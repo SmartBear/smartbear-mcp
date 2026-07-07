@@ -1230,6 +1230,32 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     "outputSchema": undefined,
     "title": "Collaborator: Create Review",
   },
+  "collaborator_create_review_line_comment": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Collaborator: Create Review Line Comment",
+    },
+    "description": "Posts a line comment on a review file using the review ID, version ID, line number, and comment text.
+
+**Toolset:** Review Management
+
+**Parameters:**
+- reviewId (union) *required*: The Collaborator review ID to comment on.
+- versionId (union) *required*: The review file version ID to comment on.
+- lineNumber (number) *required*: The line number to attach the comment to.
+- comment (string) *required*: The comment text to post.",
+    "inputSchema": [
+      "comment",
+      "lineNumber",
+      "reviewId",
+      "versionId",
+    ],
+    "outputSchema": undefined,
+    "title": "Collaborator: Create Review Line Comment",
+  },
   "collaborator_delete_remote_system_configuration": {
     "annotations": {
       "destructiveHint": false,
@@ -1249,6 +1275,26 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     ],
     "outputSchema": undefined,
     "title": "Collaborator: Delete Remote System Configuration",
+  },
+  "collaborator_download_review_diffs": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Collaborator: Download Review Diffs",
+    },
+    "description": "Downloads diffs for a Collaborator review using its review ID and returns the extracted diff text (base64 ZIP payload is decoded automatically).
+
+**Toolset:** Review Management
+
+**Parameters:**
+- reviewId (union) *required*: The Collaborator review ID to download diffs for.",
+    "inputSchema": [
+      "reviewId",
+    ],
+    "outputSchema": undefined,
+    "title": "Collaborator: Download Review Diffs",
   },
   "collaborator_edit_remote_system_configuration": {
     "annotations": {
@@ -1295,6 +1341,26 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
     ],
     "outputSchema": undefined,
     "title": "Collaborator: Find Review By ID",
+  },
+  "collaborator_get_review_comments": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Collaborator: Get Review Comments",
+    },
+    "description": "Retrieves comments for a Collaborator review by its review ID.
+
+**Toolset:** Review Management
+
+**Parameters:**
+- reviewId (union) *required*: The Collaborator review ID to fetch comments for.",
+    "inputSchema": [
+      "reviewId",
+    ],
+    "outputSchema": undefined,
+    "title": "Collaborator: Get Review Comments",
   },
   "collaborator_get_reviews": {
     "annotations": {
