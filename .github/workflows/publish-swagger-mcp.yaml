@@ -1,0 +1,50 @@
+name: Publish Swagger MCP
+
+# Publishes the standalone com.smartbear/swagger-mcp registry entry(server.swagger.json).
+
+permissions:
+  contents: read
+  id-token: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to publish from (e.g. v1.0.0). Defaults to the current ref."
+        required: false
+        type: string
+
+jobs:
+  publish-swagger-mcp:
+    name: Publish swagger-mcp to MCP Registry
+    runs-on: ubuntu-24.04
+    environment: Production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Extract version from package.json
+        id: extract_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update server.swagger.json version
+        run: |
+          jq --arg v "${{ steps.extract_version.outputs.VERSION }}" \
+            '.version = $v' \
+            server.swagger.json > server.swagger.json.tmp && mv server.swagger.json.tmp server.swagger.json
+
+      - name: prepare mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Login
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher login dns --domain smartbear.com --private-key "${{ secrets.GH_MCP_REGISTRY_KEY }}"
+
+      - name: Publish swagger-mcp to MCP Registry
+        run: ./mcp-publisher publish server.swagger.json
