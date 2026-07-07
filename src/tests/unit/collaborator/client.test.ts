@@ -92,6 +92,9 @@ describe("CollaboratorClient", () => {
       client.registerTools(mockRegister, mockGetInput);
       const titles = mockRegister.mock.calls.map((call) => call[0].title);
       expect(titles).toContain("Find Review By ID");
+      expect(titles).toContain("Get Review Comments");
+      expect(titles).toContain("Create Review Line Comment");
+      expect(titles).toContain("Download Review Diffs");
       expect(titles).toContain("Create Review");
       expect(titles).toContain("Reject Review");
       expect(titles).toContain("Get Reviews");
@@ -118,6 +121,63 @@ describe("CollaboratorClient", () => {
       ]);
       expect(result.reviewId).toBe("1");
       expect(result.status).toBe("open");
+    });
+
+    it("getComments handler calls API and returns result", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify([{ commentId: "c1", text: "Looks good" }]),
+      );
+      const result = await client.call([
+        { command: "ReviewService.getComments", args: { reviewId: 13 } },
+      ]);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result[0].commentId).toBe("c1");
+      expect(result[0].text).toBe("Looks good");
+    });
+
+    it("createLineComment handler calls API and returns result", async () => {
+      fetchMock.mockResponseOnce(
+        JSON.stringify({ commentId: "lc1", status: "created" }),
+      );
+      const result = await client.call([
+        {
+          command: "ReviewService.createLineComment",
+          args: {
+            reviewId: 13,
+            versionId: 5,
+            lineNumber: 10,
+            comment: "why the password is there??",
+          },
+        },
+      ]);
+      expect(result.commentId).toBe("lc1");
+      expect(result.status).toBe("created");
+    });
+
+    it("downloadDiffs handler decodes readable diff text when base64 ZIP is returned", async () => {
+      const mockZipResponse = [
+        { result: {} },
+        {
+          result: {
+            message:
+              "This response contains base64-encoded value, please decode this base64 data using an appropriate tool to access the zip archive containing diff file.",
+            base64OfZipFile: "UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==",
+          },
+        },
+      ];
+      vi.spyOn(client, "call").mockResolvedValueOnce(mockZipResponse as any);
+
+      const mockRegister = vi.fn();
+      const mockGetInput = vi.fn();
+      client.registerTools(mockRegister, mockGetInput);
+      const handlerEntry = mockRegister.mock.calls.find(
+        (call) => call[0].title === "Download Review Diffs",
+      );
+      expect(handlerEntry).toBeDefined();
+      const handler = handlerEntry?.[1] as ToolCallback<ZodRawShape>;
+
+      const result = await handler({ reviewId: 14 }, {} as any);
+      expect((result.content[0] as any).text).toContain("base64OfZipFile");
     });
 
     it("createReview handler calls API and returns result", async () => {
@@ -342,6 +402,47 @@ describe("CollaboratorClient", () => {
       const result = await handler({}, {} as any);
       expect((result.content[0] as any).text).toContain("43");
       expect((result.content[0] as any).text).toContain("open");
+    });
+
+    it("getComments handler processes reviewId", async () => {
+      const fakeResult = [{ commentId: "c1", text: "Looks good" }];
+      vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult);
+      const handler = handlers["Get Review Comments"];
+      const result = await handler({ reviewId: 13 }, {} as any);
+      expect((result.content[0] as any).text).toContain("c1");
+      expect((result.content[0] as any).text).toContain("Looks good");
+    });
+
+    it("createLineComment handler processes all arguments", async () => {
+      const fakeResult = { commentId: "lc1", status: "created" };
+      vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult);
+      const handler = handlers["Create Review Line Comment"];
+      const args = {
+        reviewId: 13,
+        versionId: 5,
+        lineNumber: 10,
+        comment: "why the password is there??",
+      };
+      const result = await handler(args, {} as any);
+      expect((result.content[0] as any).text).toContain("lc1");
+      expect((result.content[0] as any).text).toContain("created");
+    });
+
+    it("downloadDiffs handler decodes readable diff text", async () => {
+      const fakeResult = [
+        { result: {} },
+        {
+          result: {
+            message:
+              "This response contains base64-encoded value, please decode this base64 data using an appropriate tool to access the zip archive containing diff file.",
+            base64OfZipFile: "UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==",
+          },
+        },
+      ];
+      vi.spyOn(client, "call").mockResolvedValueOnce(fakeResult as any);
+      const handler = handlers["Download Review Diffs"];
+      const result = await handler({ reviewId: 14 }, {} as any);
+      expect((result.content[0] as any).text).toContain("base64OfZipFile");
     });
 
     it("updateWebhook handler processes id as string", async () => {

@@ -26,6 +26,24 @@ These credentials are used to authenticate all API requests automatically.
   - Parameters:
     - `reviewId` (required): The review ID.
 
+- **Get Collaborator Review Comments**
+  - Retrieves comments for a review by its review ID.
+  - Parameters:
+    - `reviewId` (required): The review ID.
+
+- **Create Collaborator Review Line Comment**
+  - Posts a line comment on a review file.
+  - Parameters:
+    - `reviewId` (required): The review ID.
+    - `versionId` (required): The review file version ID.
+    - `lineNumber` (required): The line number to attach the comment to.
+    - `comment` (required): The comment text.
+
+- **Download Collaborator Review Diffs**
+  - Downloads review diffs and decodes the ZIP payload into readable diff text.
+  - Parameters:
+    - `reviewId` (required): The review ID.
+
 - **Reject Collaborator Review**
   - Rejects a review by its review ID and reason.
   - Parameters:
@@ -75,9 +93,12 @@ These credentials are used to authenticate all API requests automatically.
 
 1. Create a new review.
 2. Find a review by id.
-3. Reject a review by id and reason.
-4. moveReviewToAnnotatePhase, cancel, reopen and un-cancel the review by id.
-5. Manage remote system configurations (create, edit, delete, test, update webhook).
+3. Retrieve review comments.
+4. Add a line comment to a review file.
+5. Download review diffs and inspect the decoded diff text.
+6. Reject a review by id and reason.
+7. moveReviewToAnnotatePhase, cancel, reopen and un-cancel the review by id.
+8. Manage remote system configurations (create, edit, delete, test, update webhook).
 
 ---
 

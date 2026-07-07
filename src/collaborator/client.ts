@@ -118,6 +118,106 @@ export class CollaboratorClient implements Client {
       },
     );
 
+    // getComments tool
+    register(
+      {
+        title: "Get Review Comments",
+        toolset: "Review Management",
+        summary:
+          "Retrieves comments for a Collaborator review by its review ID.",
+        inputSchema: z.object({
+          reviewId: z
+            .union([z.string(), z.number()])
+            .describe("The Collaborator review ID to fetch comments for."),
+        }),
+      },
+      async (args, _extra) => {
+        const { reviewId } = args;
+        const commands = [
+          {
+            command: "ReviewService.getComments",
+            args: { reviewId },
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      },
+    );
+
+    // createLineComment tool
+    register(
+      {
+        title: "Create Review Line Comment",
+        toolset: "Review Management",
+        summary:
+          "Posts a line comment on a review file using the review ID, version ID, line number, and comment text.",
+        inputSchema: z.object({
+          reviewId: z
+            .union([z.string(), z.number()])
+            .describe("The Collaborator review ID to comment on."),
+          versionId: z
+            .union([z.string(), z.number()])
+            .describe("The review file version ID to comment on."),
+          lineNumber: z
+            .number()
+            .int()
+            .positive()
+            .describe("The line number to attach the comment to."),
+          comment: z.string().min(1).describe("The comment text to post."),
+        }),
+      },
+      async (args, _extra) => {
+        const { reviewId, versionId, lineNumber, comment } = args;
+        const commands = [
+          {
+            command: "ReviewService.createLineComment",
+            args: {
+              reviewId,
+              versionId,
+              lineNumber,
+              comment,
+            },
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      },
+    );
+
+    // downloadDiffs tool
+    register(
+      {
+        title: "Download Review Diffs",
+        toolset: "Review Management",
+        summary:
+          "Downloads diffs for a Collaborator review using its review ID and returns the extracted diff text (base64 ZIP payload is decoded automatically).",
+        inputSchema: z.object({
+          reviewId: z
+            .union([z.string(), z.number()])
+            .describe("The Collaborator review ID to download diffs for."),
+        }),
+      },
+      async (args, _extra) => {
+        const { reviewId } = args;
+        const commands = [
+          {
+            command: "ReviewService.downloadDiffs",
+            args: {
+              reviewId,
+            },
+          },
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      },
+    );
+
     // createReview tool
     register(
       {
