@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- [Swagger] Extended Swagger Functional Testing integration with `run_suite`, and `get_suite_status` tools for executing available suites and querying their execution.
+
+## [0.28.0] - 2026-07-07
+
 ### Changed
 
 - [Pactflow]: Send the MCP client's name and version to Pactflow via a `SOURCE_APPLICATION` header on requests, captured from the client info supplied in the MCP `initialize` request. [#556](https://github.com/SmartBear/smartbear-mcp/pull/556)
 
 ### Added
 
+- [Swagger] `create_documentation_page` now accepts an optional `pageSlug` parameter. When provided, it is used as the page URL slug; otherwise the slug is generated from the page title.
 - [Swagger] Added `list_suites` tool for discovering test suites in your Swagger Functional Testing workspace. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 
 ### Fixed

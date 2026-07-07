@@ -1,6 +1,6 @@
 ![swagger-functional-testing.svg](./images/embedded/swagger-functional-testing.svg)
 
-The Swagger Functional Testing client provides tools for discovering and executing API tests. Tools for Swagger Functional Testing require a `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN`.
+The Swagger Functional Testing client provides tools for discovering and executing API tests and test Suites. Tools for Swagger Functional Testing require a `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN`.
 
 ## Available Tools
 
@@ -45,6 +45,22 @@ The Swagger Functional Testing client provides tools for discovering and executi
 - Purpose: Cancels an ongoing test suite execution in your Swagger Functional Testing workspace. Use this tool when you need to stop a long-running or accidentally triggered suite run. Do not use this tool to cancel individual test runs. Requires a `suiteId` and an `executionId`.
 - Returns: Confirmation of the cancellation. The cancelled execution is recorded in run history with status `cancelled`.
 - Use case: Stop a long-running or accidentally triggered suite run.
+
+---
+
+### Suite Execution
+
+#### `run_suite`
+
+- Purpose: Runs a specific test Suite in your Swagger Functional Testing workspace. Use this tool when you need to verify expected API functionality by executing all tests within your Suite. Requires a `suiteId`. Optionally accepts a `tunnelAgentName` that will override any tunnels saved on each API tests within that Suite; when omitted, each test's saved tunnel is used instead.
+- Returns: Run details including `suiteId`, `executionId` and current status. First two (`suiteId` and `executionId`) can be used in `get_suite_status` tool to poll the Suite run result.
+- Use case: Trigger a Suite run that exercises every test it contains.
+
+#### `get_suite_status`
+
+- Purpose: Retrieves the status and per-test result of triggered Suite execution. Requires the `suiteId` of your test Suite and the `executionId` returned by `run_suite`.
+- Returns: Execution details including `suiteId`, `executionId`, overall status (pending, canceled, passed, or failed), whether run finished, and a per-test breakdown. The per-test results include status (pending, canceled, passed, or failed), runtime and number of steps.
+- Use case: Poll for the outcome of a Suite run after calling `run_suite`.
 
 ---
 
