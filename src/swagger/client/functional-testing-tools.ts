@@ -1,7 +1,7 @@
 import {
   GetFunctionalTestingExecutionTestSchema,
-  ListFunctionalTestingSuiteExecutionsSchema,
   GetFunctionalTestingSuiteExecutionSchema,
+  ListFunctionalTestingSuiteExecutionsSchema,
   RunFunctionalTestingSuiteParamsSchema,
   RunFunctionalTestingTestParamsSchema,
 } from "./functional-testing-types";

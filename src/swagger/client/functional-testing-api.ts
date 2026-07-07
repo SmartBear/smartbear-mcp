@@ -1,9 +1,9 @@
 import { ToolError } from "../../common/tools";
 import type {
   GetFunctionalTestingExecutionTestParams,
+  GetFunctionalTestingSuiteExecutionParams,
   ListFunctionalTestingSuiteExecutionsParams,
   ListSuiteExecutionsResponse,
-  GetFunctionalTestingSuiteExecutionParams,
   ListSuitesResponse,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,

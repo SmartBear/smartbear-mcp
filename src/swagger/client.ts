@@ -16,8 +16,8 @@ import {
 } from "./client/functional-testing-api";
 import type {
   GetFunctionalTestingExecutionTestParams,
-  ListFunctionalTestingSuiteExecutionsParams,
   GetFunctionalTestingSuiteExecutionParams,
+  ListFunctionalTestingSuiteExecutionsParams,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
 } from "./client/functional-testing-types";
