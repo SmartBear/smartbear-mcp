@@ -1,3 +1,4 @@
+import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
 import type {
@@ -127,7 +128,7 @@ export class SwaggerAPI {
   }
 
   private get headers(): Record<string, string> {
-    return this.config.getHeaders(this.userAgent);
+    return this.config.getHeaders(appendClientIdentity(this.userAgent));
   }
 
   /**

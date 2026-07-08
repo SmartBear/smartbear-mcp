@@ -1,4 +1,4 @@
-import { USER_AGENT } from "../../common/info";
+import { getUserAgent } from "../../common/info";
 import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants";
 
 /**
@@ -20,7 +20,7 @@ export class AuthService {
     return {
       [HTTP_HEADERS.API_KEY]: this.apiKey,
       [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
-      [HTTP_HEADERS.USER_AGENT]: USER_AGENT,
+      [HTTP_HEADERS.USER_AGENT]: getUserAgent(),
       [HTTP_HEADERS.ACCEPT]: CONTENT_TYPES.JSON,
     };
   }

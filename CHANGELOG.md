@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- [Common] Capture MCP client identity (`clientInfo.name`/`version`) from the `initialize` handshake and store it in the session context. The normalized client name and version are forwarded on the outbound User-Agent for all downstream API requests and attached to BugSnag event metadata, enabling usage attribution by originating MCP client (Claude, Cursor, Copilot Studio, etc.) without client-side changes [#532](https://github.com/SmartBear/smartbear-mcp/pull/532)
+
 ### Added
 
 - [Swagger] Extended Swagger Functional Testing integration with `run_suite`, and `get_suite_status` tools for executing available suites and querying their execution.
@@ -14,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Swagger] Added `list_suite_executions` tool for reviewing the execution history and timings of a test suite in your Swagger Functional Testing workspace. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 
 - [Swagger] Added `cancel_suite_execution` tool for stopping an ongoing test suite execution in your Swagger Functional Testing workspace. Requires `suiteId` and `executionId`. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+
+- [BearQ] Add environment targeting to the run tools and a `bearq_list_environments` tool [#565](https://github.com/SmartBear/smartbear-mcp/pull/565)
 
 ## [0.28.0] - 2026-07-07
 

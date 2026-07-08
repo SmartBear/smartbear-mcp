@@ -2,6 +2,8 @@
 
 The Zephyr client provides test management and execution capabilities within Zephyr as listed on [Available Tools](#Available-Tools).
 
+**Note:** Zephyr MCP client is available on Zephyr Standard and Advanced plans only. Zephyr Essential is not supported.
+
 # Setup
 
 ## Environment Variables
