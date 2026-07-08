@@ -24,9 +24,9 @@
  *   npx vitest run src/tests/pact/pactflow.pact.test.ts
  */
 
-import { describe, it, expect } from "vitest";
-import { PactV4, MatchersV3 } from "@pact-foundation/pact";
 import path from "node:path";
+import { MatchersV3, PactV4 } from "@pact-foundation/pact";
+import { describe, expect, it } from "vitest";
 import { PactflowClient } from "../../pactflow/client";
 
 const { like, eachLike, regex } = MatchersV3;
