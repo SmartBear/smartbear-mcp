@@ -1,5 +1,4 @@
 import type { CacheService } from "../../../common/cache";
-import type { FieldValues } from "../../config/field-resolution.types";
 
 /** In-memory cache for field metadata, keyed by projectKey → fieldKey → name→value map. */
 export class Cache<V = string> {
@@ -67,4 +66,3 @@ export class Cache<V = string> {
     return this.get(projectKey, fieldKey)?.[name.toLowerCase()];
   }
 }
-export type { FieldValues };
