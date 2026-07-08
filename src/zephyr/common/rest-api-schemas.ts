@@ -402,7 +402,7 @@ export const createTestCaseBodyNameMax = 255;
 export const createTestCaseBodyNameRegExp = /^(?!\\s*$).+/;
 export const createTestCaseBodyEstimatedTimeMin = 0;
 
-export const createTestCaseBodyComponentIdMin = 0;
+export const createTestCaseBodyComponentIdMin = 1;
 
 export const createTestCaseBodyPriorityNameMax = 255;
 
