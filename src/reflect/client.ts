@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { USER_AGENT } from "../common/info";
+import { getUserAgent } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
@@ -119,7 +119,7 @@ export class ReflectClient implements Client {
     return {
       ...this.getAuthHeader(),
       "Content-Type": "application/json",
-      "User-Agent": USER_AGENT,
+      "User-Agent": getUserAgent(),
     };
   }
 
