@@ -22,6 +22,7 @@ import type {
   ListFunctionalTestingSuiteExecutionsParams,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
+  TestRunHistoryResponse,
 } from "./client/functional-testing-types";
 import {
   type ApiDefinitionParams,
@@ -425,7 +426,7 @@ export class SwaggerClient implements Client {
 
   async getFunctionalTestingTestHistory(
     args: GetFunctionalTestHistoryParams,
-  ): Promise<unknown> {
+  ): Promise<TestRunHistoryResponse> {
     return this.withFunctionalTesting((ftApi) => ftApi.getTestHistory(args));
   }
 
