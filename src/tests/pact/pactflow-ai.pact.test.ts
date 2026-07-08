@@ -67,10 +67,10 @@ describe("AI – entitlement", () => {
         b.jsonBody(
           like({
             organizationEntitlements: like({
-              name: like("test-org"),
-              planAiEnabled: like(true),
-              preferencesAiEnabled: like(true),
-              aiCredits: like({ total: like(1000), used: like(100) }),
+              name: "test-org",
+              planAiEnabled: true,
+              preferencesAiEnabled: true,
+              aiCredits: like({ total: 1000, used: 100 }),
             }),
             userEntitlements: like({
               aiPermissions: eachLike("ai:generate"),

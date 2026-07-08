@@ -191,7 +191,9 @@ describe("Core", () => {
   it("GET /environments – returns list of environments", () =>
     provider
       .addInteraction()
-      .given("environments exist")
+      .given(
+        "an environment with uuid 00000000-0000-0000-0000-000000000001 exists",
+      )
       .uponReceiving("a request to list all environments")
       .withRequest("GET", "/environments", (builder) => {
         builder.headers({ Authorization: like("Bearer test-token") });
