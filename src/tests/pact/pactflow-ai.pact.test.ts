@@ -6,10 +6,10 @@
  */
 
 import path from "node:path";
-import { MatchersV3, PactV4 } from "@pact-foundation/pact";
+import { Matchers, PactV4 } from "@pact-foundation/pact";
 import { describe, expect, it } from "vitest";
 
-const { like, eachLike, regex } = MatchersV3;
+const { like, eachLike, regex } = Matchers;
 
 const provider = new PactV4({
   consumer: "smartbear-mcp",
