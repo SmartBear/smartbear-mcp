@@ -5,7 +5,7 @@ FROM ${BUILDER_IMAGE_NAME} AS builder
 WORKDIR /app
 
 COPY src/ ./src/
-COPY package.json package-lock.json tsconfig.json vite.config.ts ./
+COPY package.json package-lock.json tsconfig.json vite.config.ts vitest.config.ts ./
 
 RUN --mount=type=cache,target=/root/.npm npm ci
 
