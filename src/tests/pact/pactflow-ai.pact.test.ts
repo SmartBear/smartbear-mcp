@@ -5,9 +5,9 @@
  * returned by the API and is not tested here.
  */
 
-import { describe, it, expect } from "vitest";
-import { PactV4, MatchersV3 } from "@pact-foundation/pact";
 import path from "node:path";
+import { MatchersV3, PactV4 } from "@pact-foundation/pact";
+import { describe, expect, it } from "vitest";
 
 const { like, eachLike, regex } = MatchersV3;
 
