@@ -17,6 +17,9 @@ export interface RequestOptions {
   project?: string; // Sent as HTTP header, not in body
   baseUrl: string; // Used for URL construction, not in body
   body?: any; // Only contains business logic parameters
+  scopeId?: number; // Sent as "scope" HTTP header (numeric project ID from currentProjectId)
+  orgCode?: string; // Sent as "orgcode" HTTP header (from clientCode in project info response)
+  extraHeaders?: Record<string, string>; // Additional HTTP headers for specific endpoints
 }
 export interface PaginationPayload {
   start?: number;
@@ -105,8 +108,7 @@ export const CommonFields = {
     .string()
     .url()
     .optional()
-    .describe("The base URL for the QMetry instance (must be a valid URL)")
-    .default(QMETRY_DEFAULTS.BASE_URL),
+    .describe("The base URL for the QMetry instance (must be a valid URL)"),
   start: z
     .number()
     .optional()
@@ -122,17 +124,19 @@ export const CommonFields = {
     .optional()
     .describe("Number of records (default 10).")
     .default(10),
-  tcID: z
+  tcID: z.coerce
     .number()
     .describe(
-      "Test Case numeric ID. " +
+      "Test Case numeric ID. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId', 'testCaseID', 'tcId', or other variants. " +
+        "Accepts a string or number. " +
         "This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. " +
         "You can get this ID from test case search results or by using filters.",
     ),
-  id: z
+  id: z.coerce
     .number()
     .describe(
       "Test Case numeric ID (required for fetching steps or version details). " +
+        "Accepts a string or number. " +
         "This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. " +
         "You can get this ID from test case search results.",
     ),
@@ -170,6 +174,7 @@ export const CommonFields = {
     ),
   tcViewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
@@ -178,6 +183,7 @@ export const CommonFields = {
     ),
   rqViewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
@@ -219,20 +225,19 @@ export const CommonFields = {
         "Use this to target a specific folder within the project hierarchy. " +
         "Applies to any entity type (test cases, requirements, test suites, etc.).",
     ),
-  tsFolderID: z
+  tsFolderID: z.coerce
     .number()
     .describe(
-      "Test Suite folder ID (required for fetching test suites). " +
-        "This is the numeric identifier for the test suite folder. " +
-        "IMPORTANT: Get from project info response → rootFolders.TS.id (e.g., 113557 for MAC project). " +
-        "Use FETCH_PROJECT_INFO tool first to get this ID if not provided by user. " +
-        "For root folder: use rootFolders.TS.id, for sub-folders: use specific folder IDs.",
+      "Test Suite folder ID. CRITICAL: the parameter name is 'tsFolderID' — do NOT use 'testSuiteFolderId', 'folderId', 'folderID', or other variants. " +
+        "Accepts a string or number. " +
+        "Get from project info response → rootFolders.TS.id. " +
+        "Use FETCH_PROJECT_INFO tool first if not provided by user.",
     ),
-  tsID: z
+  tsID: z.coerce
     .number()
     .describe(
-      "Test Suite numeric ID (required for fetching test cases linked to test suite). " +
-        "This is the internal numeric identifier, not the entity key. " +
+      "Test Suite numeric ID. CRITICAL: the parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', 'suiteId', or other variants. " +
+        "Accepts a string or number. " +
         "NOTE: To get the tsID - Call API 'Testsuite/Fetch Testsuite' " +
         "From the response, get value of following attribute -> data[<index>].id",
     ),
@@ -251,6 +256,7 @@ export const CommonFields = {
     ),
   tsfeViewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
@@ -259,30 +265,30 @@ export const CommonFields = {
     ),
   tsViewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
         "System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. " +
         "Manual viewId only needed if you want to override the automatic resolution.",
     ),
-  tsrunID: z
+  tsrunID: z.coerce
     .string()
     .describe(
-      "Test Suite Run ID (required for fetching test case runs). " +
-        "This is the string identifier for the test suite run execution. " +
-        "NOTE: To get the tsrunID - Call API 'Execution/Fetch Executions' " +
-        "From the response, get value of following attribute -> data[<index>].tsRunID",
+      "Test Suite Run ID. CRITICAL: the parameter name is 'tsrunID' — do NOT use 'testSuiteRunId', 'tsRunID', 'testSuiteRunID', or any other variant. " +
+        "Accepts a string or number (e.g. 731600 or '731600' — both are valid). " +
+        "To get this value: Call 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response.",
     ),
   showTcWithDefects: z
     .boolean()
     .optional()
     .describe("Show test case runs with linked defects")
     .default(false),
-  entityId: z
+  entityId: z.coerce
     .number()
     .describe(
-      "Id of Test case run (required for fetching linked issues). " +
-        "This is the internal numeric identifier for the test case run execution. " +
+      "Id of Test case run (required for fetching linked issues). CRITICAL: the parameter name is 'entityId' — do NOT use 'tcRunId', 'testCaseRunId', 'runId', or other variants. " +
+        "Accepts a string or number. " +
         "NOTE: To get the entityId - Call API 'Execution/Fetch Testcase Run ID' " +
         "From the response, get value of following attribute -> data[<index>].tcRunID",
     ),
@@ -318,6 +324,16 @@ export const CommonFields = {
     .string()
     .optional()
     .describe("User-defined field filter as JSON string (default '[]')")
+    .default("[]"),
+  tcrUdfFilter: z
+    .string()
+    .optional()
+    .describe(
+      "Test Case Run (TCR) UDF filter as JSON string (default '[]'). " +
+        "Used to filter test case runs by Test Run UDF field values. " +
+        'Format: \'[{"type":"list","value":[<listItemId1>,<listItemId2>],"field":"<udfFieldKey>"}]\'. ' +
+        'Example: \'[{"type":"list","value":[5108701,5108697],"field":"8260LUP"}]\' filters runs where the UDF field \'8260LUP\' has those list item IDs.',
+    )
     .default("[]"),
   showRootOnly: z
     .boolean()
@@ -543,7 +559,15 @@ export const UpdateTestCaseRemoveStepSchema = z.object({
 });
 
 export const CreateTestCaseArgsSchema = z.object({
-  tcFolderID: z.string(),
+  tcFolderID: z
+    .string()
+    .optional()
+    .describe(
+      "Test Case folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific folder ID. " +
+        "System will fetch project info using the projectKey and extract rootFolders.TC.id automatically. " +
+        "Manual folder ID only needed if you want to target a specific sub-folder.",
+    ),
   steps: z.array(CreateTestCaseStepSchema).optional(),
   name: z.string(),
   priority: z.number().optional(),
@@ -804,20 +828,18 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
         'Use empty string "" for root folder or specify path like "/Sample Template".',
     )
     .default(""),
-  releaseID: z
+  releaseID: z.coerce
     .string()
     .optional()
     .describe(
-      "Filter test cases by release ID. " +
-        "Use string representation of release ID (e.g., '7138'). " +
+      "Filter test cases by release ID. Accepts a string or number. " +
         "Get release IDs from FETCH_RELEASES_AND_CYCLES tool.",
     ),
-  cycleID: z
+  cycleID: z.coerce
     .string()
     .optional()
     .describe(
-      "Filter test cases by cycle ID. " +
-        "Use string representation of cycle ID (e.g., '13382'). " +
+      "Filter test cases by cycle ID. Accepts a string or number. " +
         "Get cycle IDs from FETCH_RELEASES_AND_CYCLES tool.",
     ),
   filter: CommonFields.filter,
@@ -834,7 +856,15 @@ export const TestCasesLinkedToRequirementArgsSchema = z.object({
 });
 
 export const CreateTestSuiteArgsSchema = z.object({
-  parentFolderId: z.string(),
+  parentFolderId: z
+    .string()
+    .optional()
+    .describe(
+      "Test Suite parent folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific folder ID. " +
+        "System will fetch project info using the projectKey and extract rootFolders.TS.id automatically. " +
+        "Manual folder ID only needed if you want to target a specific sub-folder.",
+    ),
   name: z.string(),
   isAutomatedFlag: z.boolean().optional(),
   description: z.string().optional(),
@@ -855,7 +885,13 @@ export const UpdateTestSuiteArgsSchema = z.object({
   id: z.number().describe("Id of Test Suite to be updated (required)"),
   TsFolderID: z
     .number()
-    .describe("Folder ID where Test Suite resides (required)"),
+    .optional()
+    .describe(
+      "Folder ID where Test Suite resides - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
+        "Leave empty unless you have a specific folder ID. " +
+        "System will fetch project info using the projectKey and extract rootFolders.TS.id automatically. " +
+        "Manual folder ID only needed if you want to override the automatic resolution.",
+    ),
   entityKey: z
     .string()
     .describe("Entity Key of Test Suite to be updated (required)"),
@@ -889,8 +925,8 @@ export const TestSuiteListArgsSchema = z.object({
 export const TestSuitesForTestCaseArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
-  tsFolderID: CommonFields.tsFolderID,
-  viewId: CommonFields.tsfeViewId.optional(),
+  tsFolderID: CommonFields.tsFolderID.optional(),
+  viewId: CommonFields.tsfeViewId,
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
@@ -900,11 +936,15 @@ export const TestSuitesForTestCaseArgsSchema = z.object({
 
 export const LinkTestCasesToTestSuiteArgsSchema = z
   .object({
-    tsID: z.number().describe("Id of Test Suite (required)"),
-    tcvdIDs: z
-      .array(z.number())
+    tsID: z.coerce
+      .number()
       .describe(
-        "Array of Test Case Version IDs (required if fromReqs is false)",
+        "Id of Test Suite (required). CRITICAL: parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', or other variants.",
+      ),
+    tcvdIDs: z
+      .array(z.coerce.number())
+      .describe(
+        "Array of Test Case Version IDs (required if fromReqs is false). CRITICAL: parameter name is 'tcvdIDs' — do NOT use 'tcVersionIds', 'testCaseVersionIds', or other variants.",
       ),
     fromReqs: z
       .boolean()
@@ -915,11 +955,15 @@ export const LinkTestCasesToTestSuiteArgsSchema = z
 
 export const RequirementsLinkedTestCasesToTestSuiteArgsSchema = z
   .object({
-    tsID: z.number().describe("Id of Test Suite (required)"),
-    tcvdIDs: z
-      .array(z.number())
+    tsID: z.coerce
+      .number()
       .describe(
-        "Array of Test Case Version IDs (required if fromReqs is true)",
+        "Id of Test Suite (required). CRITICAL: parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', or other variants.",
+      ),
+    tcvdIDs: z
+      .array(z.coerce.number())
+      .describe(
+        "Array of Test Case Version IDs (required if fromReqs is true). CRITICAL: parameter name is 'tcvdIDs' — do NOT use 'tcVersionIds', 'testCaseVersionIds', or other variants.",
       ),
     fromReqs: z
       .boolean()
@@ -967,10 +1011,14 @@ export const TestCaseRunsByTestSuiteRunArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
   tsrunID: CommonFields.tsrunID, // API payload param - sent in request body (REQUIRED)
-  viewId: CommonFields.teViewId.pipe(z.number()), // API payload param - sent in request body (REQUIRED)
+  viewId: CommonFields.teViewId, // auto-resolved via SYSTEM if not provided
   start: CommonFields.start,
   page: CommonFields.page,
   limit: CommonFields.limit,
+  filter: CommonFields.filter,
+  udfFilter: CommonFields.udfFilter,
+  tcrUdfFilter: CommonFields.tcrUdfFilter,
+  showTcWithDefects: CommonFields.showTcWithDefects,
 });
 
 export const LinkedIssuesByTestCaseRunArgsSchema = z.object({
@@ -1024,7 +1072,11 @@ export const CreateIssueArgsSchema = z.object({
 });
 
 export const UpdateIssueArgsSchema = z.object({
-  DefectId: z.number().describe("ID of the defect/issue to be updated"),
+  DefectId: z.coerce
+    .number()
+    .describe(
+      "ID of the defect/issue to be updated. CRITICAL: the parameter name is 'DefectId' (capital D) — do NOT use 'defectId', 'issueId', 'id', or other variants. Accepts a string or number.",
+    ),
   entityKey: z
     .string()
     .optional()
@@ -1061,6 +1113,7 @@ export const IssuesListArgsSchema = z.object({
   baseUrl: CommonFields.baseUrl,
   viewId: z
     .number()
+    .optional()
     .describe(
       "ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. " +
         "Leave empty unless you have a specific viewId. " +
@@ -1092,22 +1145,59 @@ export const LinkIssuesToTestcaseRunArgsSchema = z.object({
   issueIds: z
     .array(z.union([z.string(), z.number()]))
     .describe("ID of issues to be linked to Testcase Run"),
-  tcrId: z.number().describe("ID of Testcase Run to link issues with"),
+  tcrId: z.coerce
+    .number()
+    .describe(
+      "ID of Testcase Run to link issues with. CRITICAL: parameter name is 'tcrId' — do NOT use 'tcRunId', 'testCaseRunId', or other variants. Accepts a string or number.",
+    ),
+});
+
+export const IssueExecutionsArgsSchema = z.object({
+  projectKey: CommonFields.projectKeyOptional,
+  baseUrl: CommonFields.baseUrl,
+  linkedAssetId: z.coerce
+    .number()
+    .describe(
+      "Numeric defect ID of the QMetry issue. CRITICAL: parameter name is 'linkedAssetId' — do NOT use 'issueId', 'defectId', 'id', or other variants. " +
+        "Accepts a string or number. " +
+        "To get this ID, call the Fetch Defects or Issues tool and use data[<index>].id from the response.",
+    ),
+  start: CommonFields.start,
+  page: CommonFields.page,
+  limit: CommonFields.limit,
+  platformID: z
+    .string()
+    .optional()
+    .describe("Platform ID to filter executions by environment/platform"),
+  filter: z
+    .string()
+    .optional()
+    .describe(
+      "JSON filter string. Supported fields: tcName (string), linkageLevel (string), executedVersion (string), " +
+        "runStatusName (list of status names), platformID (list of numeric IDs), " +
+        "executionCreatedByLoginAlias (list of usernames), isTestSuiteArchived (list: [1] active, [0] archived, [1,0] both). " +
+        'Example: \'[{"type":"string","value":"login","field":"tcName"}]\'',
+    )
+    .default("[]"),
 });
 
 // Export for Link Platforms to Test Suite tool
 export const LinkPlatformsToTestSuiteArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
-  qmTsId: z
+  qmTsId: z.coerce
     .number()
     .describe(
-      "Id of Test Suite (required). To get the qmTsId - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id",
+      "Id of Test Suite (required). CRITICAL: the parameter name is 'qmTsId' — do NOT use 'tsId', 'testSuiteId', 'tsID', or other variants. " +
+        "Accepts a string or number. " +
+        "To get the qmTsId - Call API 'Testsuite/Fetch Testsuite'. From the response, get value -> data[<index>].id",
     ),
-  qmPlatformId: z
+  qmPlatformId: z.coerce
     .string()
     .describe(
-      "Comma-separated value of PlatformId (required). To get the qmPlatformId - Call API 'Platform/List' From the response, get value of following attribute -> data[<index>].platformID",
+      "Comma-separated Platform IDs (required). CRITICAL: the parameter name is 'qmPlatformId' — do NOT use 'platformId', 'platformID', 'platformIds', or other variants. " +
+        "Accepts a number or string. " +
+        "To get the qmPlatformId - Call API 'Platform/List'. From the response, get value -> data[<index>].platformID",
     ),
 });
 
@@ -1115,12 +1205,12 @@ export const LinkPlatformsToTestSuiteArgsSchema = z.object({
 export const BulkUpdateExecutionStatusArgsSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
-  entityIDs: z
+  entityIDs: z.coerce
     .string()
     .describe(
-      "Comma-separated IDs of Test Case Runs to update (e.g., '66095087' for single or '66095069,66095075' for bulk). " +
-        "To get the entityIDs - Call API 'Execution/Fetch Testcase Run ID' " +
-        "From the response, get value of following attribute -> data[<index>].tcRunID",
+      "Comma-separated IDs of Test Case Runs to update. CRITICAL: the parameter name is 'entityIDs' — do NOT use 'tcRunIDs', 'testCaseRunIds', 'runIds', or other variants. " +
+        "Accepts a number or string (e.g., 66095087 or '66095087' for single, '66095069,66095075' for bulk). " +
+        "To get the entityIDs - Call API 'Execution/Fetch Testcase Run ID'. From the response, get value -> data[<index>].tcRunID",
     ),
   entityType: z
     .enum(["TCR", "TCSR"])
@@ -1128,12 +1218,12 @@ export const BulkUpdateExecutionStatusArgsSchema = z.object({
       "Type of Entity to Execute: 'TCR' (Test Case Run) or 'TCSR' (Test Case Step Run)",
     )
     .default("TCR"),
-  qmTsRunId: z
+  qmTsRunId: z.coerce
     .string()
     .describe(
-      "Id of Test Suite Run to execute (required). " +
-        "To get the qmTsRunId - Call API 'Execution/Fetch Executions' " +
-        "From the response, get value of following attribute -> data[<index>].tsRunID",
+      "Id of Test Suite Run to execute (required). CRITICAL: the parameter name is 'qmTsRunId' — do NOT use 'tsrunID', 'testSuiteRunId', 'tsRunID', or other variants. " +
+        "Accepts a number or string. " +
+        "To get the qmTsRunId - Call API 'Execution/Fetch Executions'. From the response, get value -> data[<index>].tsRunID",
     ),
   runStatusID: z
     .number()
@@ -1329,9 +1419,11 @@ export const ImportAutomationResultsPayloadSchema = z.object({
 export const FetchAutomationStatusPayloadSchema = z.object({
   projectKey: CommonFields.projectKeyOptional,
   baseUrl: CommonFields.baseUrl,
-  requestID: z
+  requestID: z.coerce
     .number()
-    .describe("Numeric request ID from import automation response"),
+    .describe(
+      "Numeric request ID from import automation response. CRITICAL: parameter name is 'requestID' — do NOT use 'requestId', 'jobId', or other variants. Accepts a string or number.",
+    ),
 });
 
 export const AnalyticsQueryArgsSchema = z.object({

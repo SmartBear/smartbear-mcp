@@ -35,6 +35,7 @@ See individual guides for suggested prompts and supported tools and resources:
   - [Portal](https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration) - Portal and product management capabilities
   - [Studio](https://developer.smartbear.com/smartbear-mcp/docs/swagger-studio-integration) - API and Domain management capabilities, including AI-powered API generation from prompts and automatic standardization
   - [Contract Testing (PactFlow)](https://developer.smartbear.com/pactflow/default/getting-started) - Contract testing capabilities
+  - [Functional Testing](https://developer.smartbear.com/smartbear-mcp/docs/swagger-functional-testing-integration) - API test discovery capabilities
 - [QMetry](https://developer.smartbear.com/smartbear-mcp/docs/qmetry-integration) - QMetry Test Management capabilities
 - [Zephyr](https://developer.smartbear.com/smartbear-mcp/docs/zephyr-integration) - Zephyr Test Management capabilities
 - [Collaborator](https://developer.smartbear.com/smartbear-mcp/docs/collaborator-integration) - Review and Remote System Configuration management capabilities
@@ -52,7 +53,7 @@ For BugSnag, Swagger, and Zephyr, SmartBear hosts Remote MCP Servers that you ca
 
 See the [Remote MCP Servers guide](https://developer.smartbear.com/smartbear-mcp/docs/remote-mcp-servers) for per-client setup instructions. You can connect to multiple remote servers at the same time.
 
-> **Need BearQ, Reflect, QMetry, QTM4J, PactFlow, or Collaborator?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
+> **Need BearQ, Reflect, QMetry, QTM4J, PactFlow, Collaborator, or Functional Testing?** These products are only available via the local npm package below, which bundles all products into a single MCP server.
 
 ## Prerequisites
 
@@ -108,7 +109,9 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
         "COLLABORATOR_LOGIN_TICKET": "${input:collab_login_ticket}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
-        "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}"
+        "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
       }
     }
   },
@@ -250,6 +253,18 @@ Alternatively, you can use `npx` (or globally install) the `@smartbear/mcp` pack
           "type": "promptString",
           "description": "QTM4J Automation API Key - required for automation tools, leave blank to disable them",
           "password": true
+    },
+    {
+          "id": "swagger_functional_testing_api_token",
+          "type": "promptString",
+          "description": "Swagger Functional Testing API Token - leave blank to disable Functional Testing tools",
+          "password": true
+    },
+    {
+          "id": "swagger_functional_testing_base_path",
+          "type": "promptString",
+          "description": "Swagger Functional Testing API Base URL - leave blank to use the default (https://api.reflect.run/v1)",
+          "password": false
     }
   ]
 }
@@ -291,7 +306,9 @@ Add the following configuration to your `claude_desktop_config.json` to launch t
         "COLLABORATOR_LOGIN_TICKET": "your collab login ticket",
         "QTM4J_API_KEY": "your_qtm4j_key",
         "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
-        "QTM4J_AUTOMATION_API_KEY": "your_qtm4j_automation_api_key"
+        "QTM4J_AUTOMATION_API_KEY": "your_qtm4j_automation_api_key",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your_swagger_functional_testing_api_token",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "https://api.reflect.run/v1"
       }
     }
   }

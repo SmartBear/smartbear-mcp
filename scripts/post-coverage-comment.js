@@ -155,7 +155,7 @@ function buildUncoveredFilesSection(coverage) {
  * @param {Object} context - GitHub Actions context object.
  * @returns {string} Markdown body for the coverage comment.
  */
-function buildCoverageComment(coverage, github, context) {
+function buildCoverageComment(coverage, _github, context) {
   const total = coverage.total;
   const thresholds = { lines: 75, functions: 75, branches: 80, statements: 75 };
   const overallPass =

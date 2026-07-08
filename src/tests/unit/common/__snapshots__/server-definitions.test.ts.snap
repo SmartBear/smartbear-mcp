@@ -112,6 +112,24 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     "outputSchema": undefined,
     "title": "BearQ: Get Task Status",
   },
+  "bearq_list_environments": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: List Environments",
+    },
+    "description": "Lists the environments configured in the workspace. Use this to discover valid environment names to pass to the test-running tools, and to identify the workspace default.
+
+**Toolset:** Environments
+
+**Parameters:**
+None",
+    "inputSchema": [],
+    "outputSchema": undefined,
+    "title": "BearQ: List Environments",
+  },
   "bearq_refine_all_draft_tests": {
     "annotations": {
       "destructiveHint": false,
@@ -183,8 +201,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
+    "inputSchema": [
+      "environment",
+    ],
     "outputSchema": undefined,
     "title": "BearQ: Run Regression Tests",
   },
@@ -201,8 +221,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-- testCaseIds (array) *required*: IDs of BearQ regression test cases to run.",
+- testCaseIds (array) *required*: IDs of BearQ regression test cases to run.
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
     "inputSchema": [
+      "environment",
       "testCaseIds",
     ],
     "outputSchema": undefined,
@@ -221,8 +243,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-- functionalAreas (array) *required*: Functional areas to target, by ID or name.",
+- functionalAreas (array) *required*: Functional areas to target, by ID or name.
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
     "inputSchema": [
+      "environment",
       "functionalAreas",
     ],
     "outputSchema": undefined,
@@ -3755,10 +3779,10 @@ None",
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- entityIDs (string) *required*: Comma-separated IDs of Test Case Runs to update (e.g., '66095087' for single or '66095069,66095075' for bulk). To get the entityIDs - Call API 'Execution/Fetch Testcase Run ID' From the response, get value of following attribute -> data[<index>].tcRunID
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- entityIDs (string) *required*: Comma-separated IDs of Test Case Runs to update. CRITICAL: the parameter name is 'entityIDs' — do NOT use 'tcRunIDs', 'testCaseRunIds', 'runIds', or other variants. Accepts a number or string (e.g., 66095087 or '66095087' for single, '66095069,66095075' for bulk). To get the entityIDs - Call API 'Execution/Fetch Testcase Run ID'. From the response, get value -> data[<index>].tcRunID
 - entityType (enum): Type of Entity to Execute: 'TCR' (Test Case Run) or 'TCSR' (Test Case Step Run) (default: "TCR")
-- qmTsRunId (string) *required*: Id of Test Suite Run to execute (required). To get the qmTsRunId - Call API 'Execution/Fetch Executions' From the response, get value of following attribute -> data[<index>].tsRunID
+- qmTsRunId (string) *required*: Id of Test Suite Run to execute (required). CRITICAL: the parameter name is 'qmTsRunId' — do NOT use 'tsrunID', 'testSuiteRunId', 'tsRunID', or other variants. Accepts a number or string. To get the qmTsRunId - Call API 'Execution/Fetch Executions'. From the response, get value -> data[<index>].tsRunID
 - runStatusID (number) *required*: Id of the execution status to set (required). To get the runStatusID - Call API 'Admin/Project GET info Service' From the response, get value of following attribute -> allstatus[<index>].id Common statuses: Pass, Fail, Not Run, Blocked, WIP, etc.
 - dropID (union): Unique identifier of drop/build on which execution is to be performed (optional). To get the dropID - Call API 'Fetch Build/List' From the response, get value of following attribute -> data[<index>].dropID
 - isAutoExecuted (enum): Set '1' for automated and '0' for manual Execution Type
@@ -3884,6 +3908,238 @@ Expected Output: Execution 1/4 updated. The MCP Agent will automatically repeat 
     "outputSchema": undefined,
     "title": "QMetry: Bulk Update Test Case Execution Status",
   },
+  "qmetry_bulk_update_test_run_udfs": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "QMetry: Bulk Update Test Run UDFs",
+    },
+    "description": "Bulk update User Defined Field (UDF) values for one or more Test Case Runs in a test execution. Runs asynchronously in the background.
+
+**Toolset:** UDF
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tcRunIDs (array) *required*: Array of Test Case Run IDs to update UDF values for. To get tcRunIDs — Call 'Fetch Test Case Runs by Test Suite Run' tool. From the response, get value of data[<index>].tcRunID. Example: [41572006, 41572009, 41572013]
+- UDF (record<string, object>) *required*: Object mapping UDF field names to their new values. Each key is the UDF field name (e.g. 'test_env', 'priority_field'). Each value is an object with fieldID and value (and optionally multiSelectAction for multi-select fields). All UDF fields are optional — include only the fields you want to update.
+
+**Output Description:** JSON object with success status, code 'CO.BULK_TC_EXECUTION_UDF_UPDATE_STARTED', and message confirming the background job was queued.
+
+**Use Cases:** 1. Bulk update a string UDF (e.g. build version, environment name) for multiple test runs 2. Set a date UDF field (e.g. execution date) across multiple test case runs 3. Update a numeric UDF field (e.g. story points, priority score) in bulk 4. Set a single-select lookup UDF to a new value for multiple runs 5. Append new values to a multi-select UDF field across multiple test runs 6. Replace all existing selections in a multi-select UDF with new values 7. Update a cascading list UDF (parent + child) for multiple test runs 8. Update multiple UDF fields of different types in a single bulk operation 9. Reset a UDF field value for all runs in a test suite execution 10. Sync automated test result metadata (environment, build, platform) into UDF fields after execution
+
+**Examples:**
+1. Bulk update a STRING UDF for multiple test runs
+\`\`\`json
+{
+  "tcRunIDs": [
+    41572006,
+    41572009,
+    41572013
+  ],
+  "UDF": {
+    "8190_String": {
+      "fieldID": 229241,
+      "value": "regression-v2.1"
+    }
+  }
+}
+\`\`\`
+Expected Output: Bulk updates to execution UDF values will run in the background. Go to 'Scheduled Task' to track the process.
+
+2. Bulk update a DATE UDF field for multiple test runs (MM-DD-YYYY format)
+\`\`\`json
+{
+  "tcRunIDs": [
+    41572006,
+    41572009
+  ],
+  "UDF": {
+    "KN_DATE": {
+      "fieldID": 229255,
+      "value": "06-20-2026"
+    }
+  }
+}
+\`\`\`
+Expected Output: Bulk updates to execution UDF values will run in the background.
+
+3. Bulk update a NUMBER UDF field for multiple test runs
+\`\`\`json
+{
+  "tcRunIDs": [
+    41572006,
+    41572009,
+    41572013,
+    41572015
+  ],
+  "UDF": {
+    "defaultNum": {
+      "fieldID": 229003,
+      "value": 5
+    }
+  }
+}
+\`\`\`
+Expected Output: Bulk updates to execution UDF values will run in the background.
+
+4. Bulk update a single-select LOOKUPLIST UDF for multiple test runs
+\`\`\`json
+{
+  "tcRunIDs": [
+    41572006,
+    41572009
+  ],
+  "UDF": {
+    "8260LUP": {
+      "fieldID": 228563,
+      "value": 5108697
+    }
+  }
+}
+\`\`\`
+Expected Output: Bulk updates to execution UDF values will run in the background.
+
+5. Bulk update a MULTILOOKUPLIST UDF — APPEND new values to existing selections
+\`\`\`json
+{
+  "tcRunIDs": [
+    41572006,
+    41572009,
+    41572013
+  ],
+  "UDF": {
+    "m_selections": {
+      "fieldID": 229223,
+      "value": [
+        5158524,
+        5158525
+      ],
+      "multiSelectAction": "append"
+    }
+  }
+}
+\`\`\`
+Expected Output: Bulk updates to execution UDF values will run in the background.
+
+6. Bulk update a MULTILOOKUPLIST UDF — REPLACE existing selections with new values
+\`\`\`json
+{
+  "tcRunIDs": [
+    41572006,
+    41572009
+  ],
+  "UDF": {
+    "mullt_env": {
+      "fieldID": 229425,
+      "value": [
+        5108697,
+        5108698
+      ],
+      "multiSelectAction": "replace"
+    }
+  }
+}
+\`\`\`
+Expected Output: Bulk updates to execution UDF values will run in the background.
+
+7. Bulk update a CASCADINGLIST UDF (parent + child) for multiple test runs
+\`\`\`json
+{
+  "tcRunIDs": [
+    41572006,
+    41572009,
+    41572013
+  ],
+  "UDF": {
+    "cascade_mcp": {
+      "fieldID": 229426,
+      "value": {
+        "parent": 5126498,
+        "child": 5126499
+      }
+    }
+  }
+}
+\`\`\`
+Expected Output: Bulk updates to execution UDF values will run in the background.
+
+8. Bulk update multiple UDF fields of different types in a single operation
+\`\`\`json
+{
+  "tcRunIDs": [
+    41572006,
+    41572009,
+    41572013,
+    41572015,
+    41579875
+  ],
+  "UDF": {
+    "8190_String": {
+      "fieldID": 229241,
+      "value": "smoke-test"
+    },
+    "KN_DATE": {
+      "fieldID": 229255,
+      "value": "06-20-2026"
+    },
+    "defaultNum": {
+      "fieldID": 229003,
+      "value": 3
+    },
+    "8260LUP": {
+      "fieldID": 228563,
+      "value": 5108697
+    },
+    "m_selections": {
+      "fieldID": 229223,
+      "value": [
+        5158524,
+        5158525
+      ],
+      "multiSelectAction": "append"
+    },
+    "mullt_env": {
+      "fieldID": 229425,
+      "value": [
+        5108697,
+        5108698
+      ],
+      "multiSelectAction": "replace"
+    },
+    "cascade_mcp": {
+      "fieldID": 229426,
+      "value": {
+        "parent": 5126498,
+        "child": 5126499
+      }
+    }
+  }
+}
+\`\`\`
+Expected Output: Bulk updates to execution UDF values will run in the background. Go to 'Scheduled Task' to track the process.
+
+**Hints:** 1. REQUIRED: 'tcRunIDs' must be a non-empty array of numeric Test Case Run IDs. Get IDs from 'Fetch Test Case Runs by Test Suite Run' tool → data[<index>].tcRunID. 2. REQUIRED: 'UDF' must be an object with at least one field entry. Each key is the UDF field name; each value has 'fieldID' and 'value'. 3. VALUE FORMATS by field type:
+  STRING: plain string, e.g. 'regression-build'
+  NUMBER: number, e.g. 3
+  DATETIMEPICKER: date string in MM-DD-YYYY format, e.g. '06-20-2026'
+  LOOKUPLIST (single select): numeric item ID, e.g. 5108697
+  MULTILOOKUPLIST (multi-select): array of item IDs, e.g. [5158524, 5158525]
+  CASCADINGLIST: object with parent and child keys, e.g. {parent: 5126498, child: 5126499}. To get valid child IDs for a CASCADINGLIST field — first call 'Fetch Test Run UDF Metadata' to get the parent item IDs from lookupOptions, then call 'Fetch Cascade Child Values' with a parent item ID to get the available child IDs, then use {parent: <parentId>, child: <childId>} as the value here. 4. MULTILOOKUPLIST — multiSelectAction rules:
+  'append' (default): new values are ADDED to existing selections. Use when user says 'add', 'include', 'append'.
+  'replace': existing selections are CLEARED and replaced with only the new values. Use when user says 'replace', 'set to', 'overwrite', 'change to'.
+  If user does not specify, ALWAYS default to 'append'. Never assume 'replace'. 5. MULTILOOKUPLIST — apply multiSelectAction per field individually. Different multi-select fields in the same request can have different multiSelectAction values. 6. DATE FORMAT: Always use MM-DD-YYYY format for DATETIMEPICKER fields (e.g. '06-20-2026', not '2026-06-20'). Convert from any user-supplied date format before calling the tool. 7. ASYNC OPERATION: This API runs in the background. The success response means the job was queued, not that it completed. Tell the user to check 'Scheduled Task' in QMetry UI to track completion. 8. CRITICAL — FIELD IDs: The 'fieldID' for each UDF entry MUST be the exact numeric ID from QMetry's UDF definition — do NOT guess, infer, or fabricate fieldIDs. If the user has not provided a fieldID, ask the user to supply it or look it up in QMetry admin settings before calling this tool. Using a wrong fieldID will silently fail or update the wrong field. 9. CRITICAL — WORKFLOW: When user asks to bulk-update a UDF across all executions of a test suite run (e.g. tsRunID 731600), ALWAYS call 'Fetch Test Case Runs by Test Suite Run' first with that tsRunID to collect ALL tcRunIDs from the response (data[].tcRunID), THEN call this tool. Never skip the fetch step or hard-code tcRunIDs. 10. ALL UDF FIELDS ARE OPTIONAL: Only include the UDF fields the user wants to update. Do not include fields with no change. 11. tcRunIDs vs entityIDs: This tool uses 'tcRunIDs' (array of numbers). Do NOT confuse with 'Bulk Update Test Case Execution Status' which uses 'entityIDs' (comma-separated string).",
+    "inputSchema": [
+      "UDF",
+      "baseUrl",
+      "projectKey",
+      "tcRunIDs",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Bulk Update Test Run UDFs",
+  },
   "qmetry_create_cycle": {
     "annotations": {
       "destructiveHint": false,
@@ -3898,7 +4154,7 @@ Expected Output: Execution 1/4 updated. The MCP Agent will automatically repeat 
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - cycle (object) *required*
 
 **Output Description:** JSON object containing the created cycle ID, cycle details, and association with the release
@@ -3985,7 +4241,7 @@ Expected Output: Cycle 'Sprint 3 - Feature Testing' created with dates and proje
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - issueType (number) *required*: Issue type ID (e.g. Bug, Enhancement, etc.)
 - issuePriority (number) *required*: Issue priority ID (e.g. High, Medium, Low, etc.)
 - summary (string) *required*: Summary or title of the defect/issue
@@ -4125,7 +4381,7 @@ Expected Output: Issue created in summary details with release and cycles
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - release (object) *required*
 - cycle (object): Optional cycle to create within the release
 
@@ -4213,7 +4469,7 @@ Expected Output: Release 'Summer 2024 Release' created with dates and 'Beta Test
 **Toolset:** Test Cases
 
 **Parameters:**
-- tcFolderID (string) *required*
+- tcFolderID (string): Test Case folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific folder ID. System will fetch project info using the projectKey and extract rootFolders.TC.id automatically. Manual folder ID only needed if you want to target a specific sub-folder.
 - steps (array)
 - name (string) *required*
 - priority (number)
@@ -4322,7 +4578,7 @@ Expected Output: Test case created with steps and metadata
 **Toolset:** Test Suites
 
 **Parameters:**
-- parentFolderId (string) *required*
+- parentFolderId (string): Test Suite parent folder ID - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific folder ID. System will fetch project info using the projectKey and extract rootFolders.TS.id automatically. Manual folder ID only needed if you want to target a specific sub-folder.
 - name (string) *required*
 - isAutomatedFlag (boolean)
 - description (string)
@@ -4467,8 +4723,8 @@ Expected Output: First page of test cases ordered by entity key
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- requestID (number) *required*: Numeric request ID from import automation response
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- requestID (number) *required*: Numeric request ID from import automation response. CRITICAL: parameter name is 'requestID' — do NOT use 'requestId', 'jobId', or other variants. Accepts a string or number.
 
 **Use Cases:** 1. 1. Check if an automation import job is completed or still in progress. 2. 2. Retrieve status, progress, and details for a specific automation import request. 3. 3. Monitor automation result processing for CI/CD integrations.
 
@@ -4502,7 +4758,7 @@ Expected Output: Status, progress, and details of the automation import job for 
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
@@ -4557,6 +4813,59 @@ Expected Output: List of builds filtered by archive status (archived and non-arc
     "outputSchema": undefined,
     "title": "QMetry: Fetch Builds",
   },
+  "qmetry_fetch_cascade_child_values": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Cascade Child Values",
+    },
+    "description": "Fetch the child values of a CASCADINGLIST UDF field for a given parent item ID. Use this before bulk-updating a CASCADINGLIST Test Run UDF to discover valid child item IDs.
+
+**Toolset:** UDF
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- id (number) *required*: Numeric ID of the parent cascade list item to fetch child values for. Get this from the 'lookupOptions' returned by 'Fetch Test Run UDF Metadata' for a CASCADINGLIST field — each option has an 'id' field.
+- isArchReq (boolean): Whether to include archived child items in the response (default: false). (default: false)
+
+**Output Description:** JSON object with 'parentId' (the input ID), 'parentName' (the parent item's display name), 'children' array (each item has id, name, uniqueLabel, isArchived), and a '_note' explaining how to use the IDs.
+
+**Use Cases:** 1. Find valid child values for a CASCADINGLIST UDF before bulk-updating test runs 2. List all child options available under a specific parent cascade item 3. Resolve child item ID when user knows the parent but not the child 4. Discover cascade hierarchy for a UDF field before setting it on test executions
+
+**Examples:**
+1. Fetch child values for parent cascade item with ID 5173534
+\`\`\`json
+{
+  "id": 5173534
+}
+\`\`\`
+Expected Output: { parentId: 5173534, parentName: "India", children: [{ id: 5173535, name: "i1", uniqueLabel: "i1", isArchived: false }, ...], _note: "Use 'id' from 'children' as the 'child' value in the CASCADINGLIST update." }
+
+2. Fetch child values including archived items for parent ID 5126498
+\`\`\`json
+{
+  "id": 5126498,
+  "isArchReq": true
+}
+\`\`\`
+Expected Output: { parentId: 5126498, parentName: "abc", children: [...], _note: "..." }
+
+**Hints:** 1. MANDATORY WORKFLOW for CASCADINGLIST bulk update:
+  1. Call 'Fetch Test Run UDF Metadata' → get the CASCADINGLIST field's 'fieldID' (projectUserFieldID)      and parent item options from 'lookupOptions'.
+  2. Call this tool ('Fetch Cascade Child Values') with a parent item 'id' from step 1 → get child item IDs.
+  3. Call 'Bulk Update Test Run UDFs' with value: { parent: <parentId>, child: <childId> } and the 'fieldID' from step 1. 2. The parent item IDs are in the 'lookupOptions' map returned by 'Fetch Test Run UDF Metadata'. Each entry under the field's listName contains items with 'id' — use that 'id' as the 'id' parameter here. 3. The response 'children' array contains objects with 'id', 'name', 'uniqueLabel', and 'isArchived'. Use 'id' as the 'child' value in the bulk update payload. 4. Set 'isArchReq: true' only if the user explicitly asks to include archived/inactive child options. 5. This endpoint requires 'scope' and 'orgcode' headers — these are injected automatically from the session context when 'Set Project Info' has been called. If you see an authorization error, call 'Set Project Info' first. 6. Do NOT call this tool for STRING, NUMBER, DATETIMEPICKER, LOOKUPLIST, or MULTILOOKUPLIST fields — only CASCADINGLIST (fieldType: 'CASCADINGLIST') fields have a parent-child hierarchy.",
+    "inputSchema": [
+      "baseUrl",
+      "id",
+      "isArchReq",
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Cascade Child Values",
+  },
   "qmetry_fetch_defects_or_issues": {
     "annotations": {
       "destructiveHint": false,
@@ -4571,8 +4880,8 @@ Expected Output: List of builds filtered by archive status (archived and non-arc
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- viewId (number) *required*: ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- viewId (number): ViewId for issues - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.IS.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
@@ -4691,9 +5000,9 @@ Expected Output: Issues matching any of the specified entity keys
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tsID (number) *required*: Test Suite numeric ID (required for fetching test cases linked to test suite). This is the internal numeric identifier, not the entity key. NOTE: To get the tsID - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id
-- tsFolderID (number): Test Suite folder ID (required for fetching test suites). This is the numeric identifier for the test suite folder. IMPORTANT: Get from project info response → rootFolders.TS.id (e.g., 113557 for MAC project). Use FETCH_PROJECT_INFO tool first to get this ID if not provided by user. For root folder: use rootFolders.TS.id, for sub-folders: use specific folder IDs.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tsID (number) *required*: Test Suite numeric ID. CRITICAL: the parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', 'suiteId', or other variants. Accepts a string or number. NOTE: To get the tsID - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id
+- tsFolderID (number): Test Suite folder ID. CRITICAL: the parameter name is 'tsFolderID' — do NOT use 'testSuiteFolderId', 'folderId', 'folderID', or other variants. Accepts a string or number. Get from project info response → rootFolders.TS.id. Use FETCH_PROJECT_INFO tool first if not provided by user.
 - gridName (string): Grid Name to be displayed (default 'TESTEXECUTIONLIST')
 - viewId (number): ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
@@ -4778,6 +5087,130 @@ Expected Output: Paginated list of executions with 25 items per page using speci
     "outputSchema": undefined,
     "title": "QMetry: Fetch Executions by Test Suite",
   },
+  "qmetry_fetch_issue_executions": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Issue Executions",
+    },
+    "description": "Get test case executions linked to a QMetry-native (non-Jira) defect/issue. ALWAYS present results as a unified table: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label columns…>. NEVER show a separate type+value UDF breakdown — always combine identification fields and UDF values in one table per execution row.
+
+**Toolset:** Issues
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- linkedAssetId (number) *required*: Numeric defect ID of the QMetry issue. CRITICAL: parameter name is 'linkedAssetId' — do NOT use 'issueId', 'defectId', 'id', or other variants. Accepts a string or number. To get this ID, call the Fetch Defects or Issues tool and use data[<index>].id from the response.
+- start (number): Start index for pagination - defaults to 0 (default: 0)
+- page (number): Page number to return (starts from 1) (default: 1)
+- limit (number): Number of records (default 10). (default: 10)
+- platformID (string): Platform ID to filter executions by environment/platform
+- filter (string): JSON filter string. Supported fields: tcName (string), linkageLevel (string), executedVersion (string), runStatusName (list of status names), platformID (list of numeric IDs), executionCreatedByLoginAlias (list of usernames), isTestSuiteArchived (list: [1] active, [0] archived, [1,0] both). Example: '[{"type":"string","value":"login","field":"tcName"}]' (default: "[]")
+
+**Output Description:** JSON object with 'data' array of execution records, 'hasTcRunUdf' boolean flag, and 'total' count. Each execution record ALWAYS contains these mandatory identification fields: 'tsEntityKey' (Test Suite Key, e.g. 'MAC-TS-42'), 'tsName' (Test Suite Name), 'releaseName' (Release), 'cycleName' (Cycle), 'platformName' (Platform/environment), 'executedVersion' (Executed Version of the test case), 'runStatusName' (Execution Status label), 'tcRunID' (numeric Test Run ID), 'tcName' (Test Case Name), 'tcEntityKey' (Test Case Key), and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). ALL project-defined UDF fields are always included, even those with no value. When hasTcRunUdf is false, a 'testRunUdfNote' field provides a professional explanation instead.
+
+**Use Cases:** 1. Get all test executions linked to a specific defect 2. Audit which test cases were run against a given issue 3. Filter executions by run status (failed, passed, etc.) for an issue 4. Filter executions by platform/environment for an issue 5. Filter executions by tester/executor for an issue 6. Show archived and active test suite executions for an issue 7. View UDF (custom field) values on executions linked to an issue 8. Track test coverage and execution progress for a defect
+
+**Examples:**
+1. Get all executions linked to issue ID 9598240
+\`\`\`json
+{
+  "linkedAssetId": 9598240
+}
+\`\`\`
+Expected Output: Present as ONE unified table — never as a separate type+value UDF breakdown. Example:
+| Test Suite Key | Test Suite Name  | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type |
+| MAC-TS-42      | Regression Suite | R1      | Sprint1 | Chrome   | 1               | Failed           | varis     | chrome, edge, safari | Functional     |
+| MAC-TS-43      | Login Suite      | R1      | Sprint1 | Firefox  | 2               | Blocked          | john      | firefox              | Regression     |
+Columns in order: Test Suite Key (tsEntityKey) | Test Suite Name (tsName) | Release (releaseName) | Cycle (cycleName) | Platform (platformName) | Executed Version (executedVersion) | Execution Status (runStatusName) | then one column per UDF label. Use the UDF 'label' as column header. Show null UDF values as '-'.
+
+2. Get executions with pagination (page 1, 20 records)
+\`\`\`json
+{
+  "linkedAssetId": 9598240,
+  "page": 1,
+  "start": 0,
+  "limit": 20
+}
+\`\`\`
+Expected Output: First 20 executions linked to the issue
+
+3. Filter executions by run status (failed or passed)
+\`\`\`json
+{
+  "linkedAssetId": 9509016,
+  "filter": "[{\\"type\\":\\"list\\",\\"field\\":\\"runStatusName\\",\\"value\\":[\\"failed\\",\\"passed\\"]}]",
+  "page": 1,
+  "start": 0,
+  "limit": 20
+}
+\`\`\`
+Expected Output: Executions with failed or passed status for the issue
+
+4. Filter executions by test case name
+\`\`\`json
+{
+  "linkedAssetId": 9509016,
+  "filter": "[{\\"type\\":\\"string\\",\\"value\\":\\"login\\",\\"field\\":\\"tcName\\"}]",
+  "page": 1,
+  "start": 0,
+  "limit": 20
+}
+\`\`\`
+Expected Output: Executions where test case name contains 'login'
+
+5. Filter by platform, status, and tester
+\`\`\`json
+{
+  "linkedAssetId": 9509016,
+  "filter": "[{\\"type\\":\\"list\\",\\"field\\":\\"runStatusName\\",\\"value\\":[\\"failed\\"]},{\\"type\\":\\"list\\",\\"field\\":\\"platformID\\",\\"value\\":[100145]},{\\"type\\":\\"list\\",\\"field\\":\\"executionCreatedByLoginAlias\\",\\"value\\":[\\"Varis Khan\\"]}]",
+  "page": 1,
+  "start": 0,
+  "limit": 20
+}
+\`\`\`
+Expected Output: Failed executions on platform 100145 created by Varis Khan
+
+6. Filter by status and include archived test suite executions
+\`\`\`json
+{
+  "linkedAssetId": 9509016,
+  "filter": "[{\\"type\\":\\"list\\",\\"field\\":\\"runStatusName\\",\\"value\\":[\\"failed\\",\\"passed\\"]},{\\"value\\":[1,0],\\"type\\":\\"list\\",\\"field\\":\\"isTestSuiteArchived\\"}]",
+  "page": 1,
+  "start": 0,
+  "limit": 20
+}
+\`\`\`
+Expected Output: Executions with failed/passed status including archived test suites
+
+7. Filter by execution version and linkage level
+\`\`\`json
+{
+  "linkedAssetId": 9509016,
+  "filter": "[{\\"type\\":\\"string\\",\\"value\\":\\"1\\",\\"field\\":\\"executedVersion\\"},{\\"type\\":\\"string\\",\\"value\\":\\"Test Case\\",\\"field\\":\\"linkageLevel\\"}]",
+  "page": 1,
+  "start": 0,
+  "limit": 20
+}
+\`\`\`
+Expected Output: Executions at Test Case linkage level for version 1
+
+**Hints:** 1. === MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT === 2.  3. PIVOT RULE — CRITICAL: 4. The 'testRunUdfs' field on each execution is an array of { name, label, fieldID, fieldType, value }. 5. You MUST pivot this array into TABLE COLUMNS — do NOT render it as rows. 6.   → Each testRunUdfs[i].label  = a column header in the unified table 7.   → Each testRunUdfs[i].value  = the cell value for that execution's row 8.   → testRunUdfs[i].fieldType   = INTERNAL METADATA — NEVER show this as a column 9.   → testRunUdfs[i].fieldID     = INTERNAL METADATA — NEVER show this as a column 10.  11. FORBIDDEN PATTERNS — NEVER do any of these: 12.   ❌ Do NOT render a separate sub-table (UDF Label | Type | Value) per execution 13.   ❌ Do NOT show 'Type' or 'fieldType' as a visible column 14.   ❌ Do NOT group output by tcRunID with individual breakdowns beneath each 15.   ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as headers — use 'label' 16.  17. REQUIRED OUTPUT — ONE unified table, all executions as rows: 18. | Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... | 19. |----------------|-----------------|---------|-------|----------|------------------|------------------|---------------|---------------|-----| 20. | MAC-TS-42      | Login Suite     | R1      | S1    | Chrome   | v1               | Failed           | varis         | chrome, edge  | ... | 21.  22. MANDATORY COLUMNS (always first, in this order): 23.   1. Test Suite Key    → tsEntityKey    (e.g. 'MAC-TS-42') 24.   2. Test Suite Name   → tsName         (test suite display name) 25.   3. Release           → releaseName 26.   4. Cycle             → cycleName 27.   5. Platform          → platformName 28.   6. Executed Version  → executedVersion 29.   7. Execution Status  → runStatusName 30.   8. Tested By         → executionCreatedByLoginAlias/testedBy when present 31.   9+. One column per UDF field — use testRunUdfs[i].label as header, testRunUdfs[i].value as cell. 32.  33. Null UDF values → show as '-'. If hasTcRunUdf is false, show columns 1-8 only. 34. ISSUE EXECUTION UDF SOURCE — CRITICAL: 35. Do NOT call 'Fetch Test Run UDF Values' for issue execution UDFs. 36. Do NOT create or use another issue-specific UDF fetch tool. 37. Use this tool's response directly: it calls /rest/execution/getExecutionsForIssue for execution rows, parses each row's udfjson for saved UDF values, and uses Test Run UDF metadata to include all configured UDF labels with null/empty values. 38. === END MANDATORY RESPONSE FORMAT === 39.  40. CRITICAL: linkedAssetId is REQUIRED - this is the numeric defect ID from QMetry (not entity key like VKT-IS-5) 41. HOW TO GET linkedAssetId: Call Fetch Defects or Issues tool → use data[<index>].id from the response 42. AUTO-RESOLVE: If user provides an issue entity key (e.g. VKT-IS-5, MAC-IS-10), first call Fetch Defects or Issues with that entity key as filter, extract data[<index>].id, then use it as linkedAssetId 43. AUTO-RESOLVE FILTER EXAMPLE: to resolve VKT-IS-5 → use filter '[{"type":"string","value":"VKT-IS-5","field":"entityKeyId"}]' in Fetch Defects or Issues tool 44. This tool supports QMetry-native issues only — do NOT use for Jira-integrated projects 45. API SOURCE: Execution rows and saved UDF values come from /rest/execution/getExecutionsForIssue. The udfjson field contains saved Test Run UDF values, e.g. Tested_By, execution_type, Country_mcp_udf, environments_udf. 46. METADATA SOURCE: This tool also calls Test Run UDF metadata once to get all available labels, fieldIDs, field types, and empty fields. Merge metadata fields with udfjson values by UDF name. 47. RESPONSE FIELDS: hasTcRunUdf=true means executions have UDF data; each execution includes a 'testRunUdfs' array with ALL project-defined UDF fields 48. ALL UDF FIELDS: ALL project-defined Test Run UDF fields are returned for every execution — including fields not yet set (value: null) 49. Each element in testRunUdfs: { name, label, fieldID, fieldType, value } — use fieldID when calling 'Bulk Update Test Run UDFs' 50. EXAMPLE testRunUdfs: [{ "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "test" }, { "name": "dateField", "label": "Date", "fieldID": 229255, "fieldType": "DATETIMEPICKER", "value": null }] 51. FILTER FIELDS: 52.   - tcName (string): filter by test case name substring 53.   - linkageLevel (string): 'Test Case' or 'Test Step' 54.   - executedVersion (string): version number as string e.g. '1' 55.   - runStatusName (list): e.g. ["failed","passed","in progress"] 56.   - platformID (list): numeric platform IDs e.g. [100145]. Get from FETCH_PLATFORMS tool 57.   - executionCreatedByLoginAlias (list): usernames/login aliases e.g. ["john.doe"] 58.   - isTestSuiteArchived (list): [1] active only, [0] archived only, [1,0] both 59. FILTER FORMAT: JSON string array — '[{"type":"list","field":"runStatusName","value":["failed"]}]' 60. Multiple filter conditions are combined with AND logic 61. Use pagination (page, start, limit) for large result sets 62. Get platform IDs using the FETCH_PLATFORMS tool before filtering by platformID 63. Execution status names are case-sensitive — use lowercase: 'failed', 'passed', 'in progress', 'blocked', 'not run' 64. hasTcRunUdf: false → No Test Run UDFs configured; testRunUdfs will not appear; a 'testRunUdfNote' field explains this.",
+    "inputSchema": [
+      "baseUrl",
+      "filter",
+      "limit",
+      "linkedAssetId",
+      "page",
+      "platformID",
+      "projectKey",
+      "start",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Issue Executions",
+  },
   "qmetry_fetch_issues_linked_to_test_case": {
     "annotations": {
       "destructiveHint": false,
@@ -4792,8 +5225,8 @@ Expected Output: Paginated list of executions with 25 items per page using speci
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tcID (number) *required*: Test Case numeric ID. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tcID (number) *required*: Test Case numeric ID. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId', 'testCaseID', 'tcId', or other variants. Accepts a string or number. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
 - getLinked (boolean): True to get only those issues that are linked with this Test case Run, False to get those issues which are not linked with this Test case Run. Default value true (get linked issues). (default: true)
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -4899,8 +5332,8 @@ Expected Output: Issues linked to version 2 of the test case execution
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- entityId (number) *required*: Id of Test case run (required for fetching linked issues). This is the internal numeric identifier for the test case run execution. NOTE: To get the entityId - Call API 'Execution/Fetch Testcase Run ID' From the response, get value of following attribute -> data[<index>].tcRunID
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- entityId (number) *required*: Id of Test case run (required for fetching linked issues). CRITICAL: the parameter name is 'entityId' — do NOT use 'tcRunId', 'testCaseRunId', 'runId', or other variants. Accepts a string or number. NOTE: To get the entityId - Call API 'Execution/Fetch Testcase Run ID' From the response, get value of following attribute -> data[<index>].tcRunID
 - getLinked (boolean): True to get only those issues that are linked with this Test case Run, False to get those issues which are not linked with this Test case Run. Default value true (get linked issues). (default: true)
 - getColumns (boolean): Whether to get column information in response. (default: true)
 - istcrFlag (boolean): Set True for test case run operations (default: true)
@@ -5008,7 +5441,7 @@ Expected Output: Issues owned by specific user and created in QMetry
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
@@ -5103,7 +5536,7 @@ Expected Output: List of platforms sorted by name in ascending order
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - params (object) *required*
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -5283,7 +5716,7 @@ Expected Output: List of all releases and cycles including archived ones (showAr
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - id (number) *required*: Requirement numeric ID (required for fetching specific requirement details). This is the internal numeric identifier, not the entity key like 'MAC-RQ-730'. You can get this ID from requirement search results or by using filters.
 - version (number) *required*: Requirement version number (required for fetching specific requirement version details). This is the internal numeric identifier for the version.
 
@@ -5325,8 +5758,8 @@ Expected Output: Detailed requirement information including summary, description
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- viewId (number) *required*: ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- viewId (number): ViewId for requirements - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.RQ.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
 - folderPath (string): Folder path for requirements - SYSTEM AUTOMATICALLY SETS TO ROOT. Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). Only specify if user wants specific folder like "Automation/Regression". (default: "")
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -5532,8 +5965,8 @@ Expected Output: All requirements associated with Release 8.12 (ID: 55178)
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tcID (number) *required*: Test Case numeric ID. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tcID (number) *required*: Test Case numeric ID. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId', 'testCaseID', 'tcId', or other variants. Accepts a string or number. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
 - getLinked (boolean): True to get only requirements that are linked with this test case, false to get requirements which are not linked with this test case. Defaults to true (get linked requirements). (default: true)
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -5664,8 +6097,8 @@ Expected Output: Linked requirements in Release 8.12 and Cycle 8.12.1
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tcID (number) *required*: Test Case numeric ID. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tcID (number) *required*: Test Case numeric ID. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId', 'testCaseID', 'tcId', or other variants. Accepts a string or number. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
@@ -5703,14 +6136,14 @@ Expected Output: Detailed test case information including summary, description, 
       "readOnlyHint": true,
       "title": "QMetry: Fetch Test Case Executions",
     },
-    "description": "Get execution records for a specific test case by numeric ID
+    "description": "Get execution records for a specific test case by numeric ID, including Test Run UDF values. ALWAYS present results as a unified table: Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label columns…>. NEVER show a separate type+value UDF breakdown — always combine identification fields and UDF values in one table per execution row.
 
 **Toolset:** Test Cases
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tcid (number) *required*: Test Case numeric ID. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tcid (number) *required*: Test Case numeric ID. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId', 'testCaseID', 'tcId', or other variants. Accepts a string or number. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
 - tcversion (number): Test Case version number (optional, defaults to 1). This is the internal numeric identifier for the version.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -5718,9 +6151,9 @@ Expected Output: Detailed test case information including summary, description, 
 - scope (string): Scope of the operation - defines the context for data retrieval. Common values: 'project' (default), 'folder', 'release', 'cycle'. Applies to any entity type being fetched or operated upon. (default: "project")
 - filter (string): Filter criteria as JSON string (default '[]') (default: "[]")
 
-**Output Description:** JSON object with executions array containing execution records, status, timestamps, and metadata
+**Output Description:** JSON object with executions array. Each execution record ALWAYS contains these mandatory identification fields: 'tsEntityKey' (Test Suite Key, e.g. 'MAC-TS-42'), 'testsuiteName' (Test Suite Name), 'releaseName' (Release), 'cycleName' (Cycle), 'platform' (Platform/environment), 'executedVersion' (Executed Version of the test case), 'executionStatus' (Execution Status label), 'tcRunID' (numeric Test Run ID), and 'testRunUdfs' (array of objects each with name, label, fieldID, fieldType, value — use 'label' for display headers, null if not set). ALL project-defined UDF fields are always included, even those with no value. Top-level 'hasTcRunUdf' flag indicates whether the project has Test Run UDFs configured. When false, a 'testRunUdfNote' field provides a professional explanation instead.
 
-**Use Cases:** 1. Get execution history for a specific test case 2. Retrieve test case execution results for reporting 3. Filter executions by test suite, platform, or execution status 4. Get execution data for test case analysis 5. Monitor test case execution trends over time 6. Filter executions by release, cycle, or execution date 7. Get execution details for specific test case versions 8. Audit test execution history for compliance 9. Analyze test case execution performance across different environments 10. Track test execution by specific users or teams
+**Use Cases:** 1. Get execution history for a specific test case 2. Retrieve test case execution results for reporting 3. Filter executions by test suite, platform, or execution status 4. Get execution data for test case analysis 5. Monitor test case execution trends over time 6. Filter executions by release, cycle, or execution date 7. Get execution details for specific test case versions 8. Audit test execution history for compliance 9. Analyze test case execution performance across different environments 10. Track test execution by specific users or teams 11. Fetch Test Run UDF values for a specific test case's execution records 12. Inspect custom metadata captured during test execution via Test Run UDFs 13. Check whether the project has Test Run UDFs configured (hasTcRunUdf flag)
 
 **Examples:**
 1. Get all executions for test case ID 1223922
@@ -5729,7 +6162,11 @@ Expected Output: Detailed test case information including summary, description, 
   "tcid": 1223922
 }
 \`\`\`
-Expected Output: List of execution records for test case with execution details, status, and metadata
+Expected Output: Present as ONE unified table — never as a separate type+value UDF breakdown. Example:
+| Test Suite Key | Test Suite Name  | Release | Cycle  | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type |
+| MAC-TS-42      | Regression Suite | R1      | Sprint1| Chrome   | v1               | Passed           | varis     | chrome, edge, safari | Functional     |
+| MAC-TS-42      | Regression Suite | R1      | Sprint1| Firefox  | v2               | Failed           | john      | firefox              | Regression     |
+Columns in order: Test Suite Key (tsEntityKey) | Test Suite Name (testsuiteName) | Release (releaseName) | Cycle (cycleName) | Platform (platform) | Executed Version (executedVersion) | Execution Status | then one column per UDF label. Use the UDF 'label' as column header. Show null UDF values as '-'.
 
 2. Get executions for specific test case version
 \`\`\`json
@@ -5785,7 +6222,26 @@ Expected Output: Execution records within the specified date range
 \`\`\`
 Expected Output: Execution records executed by specific user
 
-**Hints:** 1. This API requires a numeric tcid parameter, not entity key 2. If user provides entityKey (e.g., MAC-TC-1684), first call FETCH_TEST_CASES with filter on entityKeyId to resolve the tcid 3. After resolving entityKey → tcid, call this tool with the resolved numeric tcid 4. tcversion parameter is optional - omit to get executions for all versions 5.  6. CRITICAL WORKFLOW FOR LINKED ISSUES: When user asks 'fetch linked issues of test case [ID]' or 'linked issues of execution': 7. YOU MUST FIRST get the execution data using this tool to extract tcRunID before fetching issues! 8.  9. COMPLETE WORKFLOW FOR TEST CASE → LINKED ISSUES: 10. STEP 1: Resolve Test Case ID (if needed) - Use FETCH_TEST_CASES if user provides entity key 11. STEP 2: Fetch Test Case Executions (THIS TOOL) - Input: tcid, Extract: data[].tcRunID values 12. STEP 3: Fetch Linked Issues - Tool: FETCH_LINKED_ISSUES_BY_TESTCASE_RUN, Input: entityId = tcRunID 13.  14. ID MAPPING CRITICAL UNDERSTANDING: 15. - tcid/tcID = Test Case ID (for getting execution data with this tool) 16. - tcRunID = Test Case Run/Execution ID (THIS is entityId for linked issues API) 17. - entityId = tcRunID (what the linked issues API actually needs) 18.  19. NEVER USE tcid DIRECTLY as entityId for linked issues! 20. ALWAYS get tcRunID from executions and use THAT as entityId! 21.  22. EXAMPLE RESPONSE STRUCTURE FROM THIS TOOL: 23. { "data": [{ "tcRunID": 58312120, "testSuiteName": "Suite 1", "executionStatus": "PASS" }] } 24. → Use tcRunID (58312120) as entityId for linked issues API 25.  26. FILTER CAPABILITIES: Support extensive filtering by test suite, platform, status, user, release, cycle, dates, and archive status 27. FILTER FIELDS: testSuiteName (string), platformID (list), executionStatus (list), executedBy (list), project (list), release (list), cycle (list), executedDate (date with comparison), isPlatformArchived (list), isTestSuiteArchived (list), executedVersion (numeric) 28. DATE FILTERING: Use 'gt' (greater than) and 'lt' (less than) comparisons for executedDate field 29. EXECUTION STATUS: Common values include 'PASS', 'FAIL', 'BLOCKED', 'NOT_EXECUTED', 'WIP' (verify with your QMetry instance) 30. PLATFORM/SUITE ARCHIVE: Use [1,0] for both archived and non-archived, [1] for archived only, [0] for active only 31. Multiple filter conditions are combined with AND logic 32. Use pagination for large execution result sets (start, page, limit parameters) 33. Get platform IDs from FETCH_PLATFORMS tool and release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool 34. This tool is essential for test execution reporting, trend analysis, and compliance auditing 35. Execution data includes timestamps, user information, environment details, and test results 36. Use scope parameter to define retrieval context (project, folder, release, cycle)",
+8. Fetch Test Run UDF values for all executions of test case ID 41571999
+\`\`\`json
+{
+  "tcid": 41571999
+}
+\`\`\`
+Expected Output: Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:
+| Test Suite Key | Test Suite Name | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |
+| MAC-TS-42      | Login Suite     | R1      | Sprint1 | Chrome   | v1               | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |
+UDF column headers use the UDF 'label' (not raw field key). Null values shown as '-'.
+
+9. Check if project has Test Run UDFs — response includes hasTcRunUdf flag
+\`\`\`json
+{
+  "tcid": 1223922
+}
+\`\`\`
+Expected Output: Response contains hasTcRunUdf: true (UDFs present, testRunUdfs populated) or hasTcRunUdf: false (no UDFs configured, testRunUdfNote explains this)
+
+**Hints:** 1. === MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT === 2.  3. PIVOT RULE — CRITICAL: 4. The 'testRunUdfs' field on each execution is an array of { name, label, fieldID, fieldType, value }. 5. You MUST pivot this array into TABLE COLUMNS — do NOT render it as rows. 6.   → Each testRunUdfs[i].label  = a column header in the unified table 7.   → Each testRunUdfs[i].value  = the cell value for that execution's row 8.   → testRunUdfs[i].fieldType   = INTERNAL METADATA — NEVER show this as a column 9.   → testRunUdfs[i].fieldID     = INTERNAL METADATA — NEVER show this as a column 10.  11. FORBIDDEN PATTERNS — NEVER do any of these: 12.   ❌ Do NOT render a separate sub-table (UDF Label | Type | Value) per execution 13.   ❌ Do NOT show 'Type' or 'fieldType' as a visible column 14.   ❌ Do NOT group output by tcRunID with individual breakdowns beneath each 15.   ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as headers — use 'label' 16.  17. REQUIRED OUTPUT — ONE unified table, all executions as rows: 18. | Test Suite Key | Test Suite Name | Release | Cycle | Platform | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... | 19. |----------------|-----------------|---------|-------|----------|------------------|------------------|---------------|---------------|-----| 20. | MAC-TS-42      | Login Suite     | R1      | S1    | Chrome   | v1               | Passed           | varis         | chrome, edge  | ... | 21.  22. MANDATORY COLUMNS (always first, in this order): 23.   1. Test Suite Key    → tsEntityKey    (e.g. 'MAC-TS-42') 24.   2. Test Suite Name   → testsuiteName  (test suite display name) 25.   3. Release           → releaseName 26.   4. Cycle             → cycleName 27.   5. Platform          → platform 28.   6. Executed Version  → executedVersion 29.   7. Execution Status  → executionStatus 30.   8. Tested By         → testedBy/executedBy when present 31.   9+. One column per UDF field — use testRunUdfs[i].label as header, testRunUdfs[i].value as cell. 32.  33. Null UDF values → show as '-'. If hasTcRunUdf is false, show columns 1-8 only. 34. UDF DATA SOURCE — THIS TOOL IS SELF-CONTAINED: 35. This tool automatically calls Test Run UDF metadata once (project-wide) and parses the udfjson field from each execution row. 36. The 'testRunUdfs' array in every execution record already contains ALL configured UDF fields — including fields with no value (null). 37. DO NOT call 'Fetch Test Run UDF Values' after this tool for test case executions — that tool uses GET_TESTCASE_RUNS_BY_TESTSUITE_RUN which is for test suite runs, not test case executions. 38. NEVER chain 'Fetch Test Run UDF Values' when the user asks for UDF values of test case executions — use testRunUdfs from THIS response directly. 39. === END MANDATORY RESPONSE FORMAT === 40.  41. This API requires a numeric tcid parameter, not entity key 42. If user provides entityKey (e.g., MAC-TC-1684), first call FETCH_TEST_CASES with filter on entityKeyId to resolve the tcid 43. After resolving entityKey → tcid, call this tool with the resolved numeric tcid 44. tcversion parameter is optional - omit to get executions for all versions 45.  46. CRITICAL WORKFLOW FOR LINKED ISSUES: When user asks 'fetch linked issues of test case [ID]' or 'linked issues of execution': 47. YOU MUST FIRST get the execution data using this tool to extract tcRunID before fetching issues! 48.  49. COMPLETE WORKFLOW FOR TEST CASE → LINKED ISSUES: 50. STEP 1: Resolve Test Case ID (if needed) - Use FETCH_TEST_CASES if user provides entity key 51. STEP 2: Fetch Test Case Executions (THIS TOOL) - Input: tcid, Extract: data[].tcRunID values 52. STEP 3: Fetch Linked Issues - Tool: FETCH_LINKED_ISSUES_BY_TESTCASE_RUN, Input: entityId = tcRunID 53.  54. ID MAPPING CRITICAL UNDERSTANDING: 55. - tcid/tcID = Test Case ID (for getting execution data with this tool) 56. - tcRunID = Test Case Run/Execution ID (THIS is entityId for linked issues API) 57. - entityId = tcRunID (what the linked issues API actually needs) 58.  59. NEVER USE tcid DIRECTLY as entityId for linked issues! 60. ALWAYS get tcRunID from executions and use THAT as entityId! 61.  62. EXAMPLE RESPONSE STRUCTURE FROM THIS TOOL: 63. { "data": [{ "tcRunID": 58312120, "testSuiteName": "Suite 1", "executionStatus": "PASS", "testRunUdfs": [...] }] } 64. → Use tcRunID (58312120) as entityId for linked issues API 65.  66. FILTER CAPABILITIES: Support extensive filtering by test suite, platform, status, user, release, cycle, dates, and archive status 67. FILTER FIELDS: testSuiteName (string), platformID (list), executionStatus (list), executedBy (list), project (list), release (list), cycle (list), executedDate (date with comparison), isPlatformArchived (list), isTestSuiteArchived (list), executedVersion (numeric) 68. DATE FILTERING: Use 'gt' (greater than) and 'lt' (less than) comparisons for executedDate field 69. EXECUTION STATUS: Common values include 'PASS', 'FAIL', 'BLOCKED', 'NOT_EXECUTED', 'WIP' (verify with your QMetry instance) 70. PLATFORM/SUITE ARCHIVE: Use [1,0] for both archived and non-archived, [1] for archived only, [0] for active only 71. Multiple filter conditions are combined with AND logic 72. Use pagination for large execution result sets (start, page, limit parameters) 73. Get platform IDs from FETCH_PLATFORMS tool and release/cycle IDs from FETCH_RELEASES_AND_CYCLES tool 74. This tool is essential for test execution reporting, trend analysis, and compliance auditing 75. Execution data includes timestamps, user information, environment details, and test results 76. Use scope parameter to define retrieval context (project, folder, release, cycle) 77.  78. TEST RUN UDF SUPPORT: 79. This tool automatically fetches UDF metadata (project-wide, one call for all executions) and enriches each execution record. 80. ALL project-defined Test Run UDF fields are returned for every execution — including fields with no value (value: null). 81. HTML is stripped from rich text (LARGETEXT) UDF field values for clean output. 82. Each execution's 'testRunUdfs' is an array of objects: 83.   testRunUdfs: [ 84.     { "name": "8260LUP", "label": "Lookup Field", "fieldID": 228563, "fieldType": "LOOKUPLIST", "value": "l1" }, 85.     { "name": "TRString", "label": "TR String", "fieldID": 229241, "fieldType": "STRING", "value": "dsf" }, 86.     { "name": "notes_run", "label": "Notes Run", "fieldID": 229242, "fieldType": "LARGETEXT", "value": null }, 87.     { "name": "cascade_vK", "label": "Cascade VK", "fieldID": 229426, "fieldType": "CASCADINGLIST", "value": { "child": "qq", "parent": "vkc" } } 88.   ] 89. Use 'fieldID' from testRunUdfs entries when calling 'Bulk Update Test Run UDFs'. 90.  91. hasTcRunUdf FLAG — IMPORTANT: 92. The response contains a 'hasTcRunUdf' boolean flag at the top level. 93. hasTcRunUdf: true  → Project has Test Run UDFs configured; each execution record includes 'testRunUdfs' array with all fields. 94. hasTcRunUdf: false → Project has NO Test Run UDFs configured. 95.   When hasTcRunUdf is false, the response includes a 'testRunUdfNote' field with a professional explanation. 96.   Inform the user: 'No Test Run UDFs are configured for this project. Contact a project administrator to set up Test Run UDF fields.' 97. NEVER attempt to read testRunUdfs from records when hasTcRunUdf is false — the field will not be present.",
     "inputSchema": [
       "baseUrl",
       "filter",
@@ -5808,22 +6264,26 @@ Expected Output: Execution records executed by specific user
       "readOnlyHint": true,
       "title": "QMetry: Fetch Test Case Runs by Test Suite Run",
     },
-    "description": "Get test case runs under a specific test suite run execution in QMetry
+    "description": "Get test case runs under a specific test suite run execution in QMetry, including Test Run UDF values. ALWAYS present results as a unified table: Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label columns…>. NEVER show a separate type+value breakdown — always combine identification fields and UDF values in one table per run.
 
 **Toolset:** Test Suites
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tsrunID (string) *required*: Test Suite Run ID (required for fetching test case runs). This is the string identifier for the test suite run execution. NOTE: To get the tsrunID - Call API 'Execution/Fetch Executions' From the response, get value of following attribute -> data[<index>].tsRunID
-- viewId (any) *required*
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tsrunID (string) *required*: Test Suite Run ID. CRITICAL: the parameter name is 'tsrunID' — do NOT use 'testSuiteRunId', 'tsRunID', 'testSuiteRunID', or any other variant. Accepts a string or number (e.g. 731600 or '731600' — both are valid). To get this value: Call 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response.
+- viewId (number): ViewId for test execution - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TE.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
+- filter (string): Filter criteria as JSON string (default '[]') (default: "[]")
+- udfFilter (string): User-defined field filter as JSON string (default '[]') (default: "[]")
+- tcrUdfFilter (string): Test Case Run (TCR) UDF filter as JSON string (default '[]'). Used to filter test case runs by Test Run UDF field values. Format: '[{"type":"list","value":[<listItemId1>,<listItemId2>],"field":"<udfFieldKey>"}]'. Example: '[{"type":"list","value":[5108701,5108697],"field":"8260LUP"}]' filters runs where the UDF field '8260LUP' has those list item IDs. (default: "[]")
+- showTcWithDefects (boolean): Show test case runs with linked defects (default: false)
 
-**Output Description:** JSON object with test case runs array containing detailed execution information, status, tester details, and run metadata
+**Output Description:** JSON object with test case runs array. Each row ALWAYS contains these mandatory identification fields: 'entityKey' (Test Case Key, e.g. 'MAC-TC-123'), 'summary' (Test Case Summary/name), 'latestVersion' (Executed Version, e.g. 'v1', 'v2'), 'runStatus' (Execution Status label, e.g. 'Passed', 'Failed', 'Not Run'), 'runStatusID' (numeric status ID), 'tcRunID' (numeric Test Run ID), and 'testRunUdfs' (object with Test Run UDF field keys mapped to their values, parsed from the raw 'udfjson' field; HTML stripped from rich text). UDF values can also be fetched in enriched form via FETCH_TEST_RUN_UDF_VALUES or field metadata via FETCH_TEST_RUN_UDF_METADATA. The top-level response includes 'hasTcRunUdf' (boolean), 'total' (count), and pagination metadata.
 
-**Use Cases:** 1. Get all test case runs under a specific test suite run execution 2. Analyze individual test case execution results and status 3. Monitor test case run performance and execution trends 4. Generate detailed test execution reports for specific runs 5. Track test case run history and execution patterns 6. Validate test case run coverage and execution completeness 7. Audit test case run data for compliance and quality assurance 8. Export detailed test case run data for external reporting 9. Retrieve paginated test case run results for large test suite executions
+**Use Cases:** 1. Get all test case runs under a specific test suite run execution 2. Fetch Test Run UDF values for all test case executions in a test suite run — always show Test Case Key, Summary, and Execution Status alongside UDFs 3. Fetch Test Run UDF values for a specific test case execution by tcRunID 4. Filter test case runs by Test Run UDF field values (e.g. show only runs where dropdown UDF = specific option) 5. Analyze individual test case execution results, status, and custom UDF metadata 6. Monitor test case run performance and execution trends 7. Generate detailed test execution reports including custom UDF data 8. Track test case run history and execution patterns 9. Validate test case run coverage and execution completeness 10. Audit test case run data with UDF values for compliance and quality assurance 11. Export detailed test case run data including Test Run UDFs for external reporting 12. Retrieve paginated test case run results for large test suite executions
 
 **Examples:**
 1. Get all test case runs for test suite run ID '107021'
@@ -5833,39 +6293,162 @@ Expected Output: Execution records executed by specific user
   "viewId": 6887
 }
 \`\`\`
-Expected Output: List of test case runs with execution details, status, and metadata
+Expected Output: Present as ONE unified table — never as a separate type+value breakdown. Example:
+| Test Case Key | Test Case Summary        | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |
+| MAC-TC-5      | Login - valid credential | v1               | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |
+| MAC-TC-6      | Login - invalid password | v2               | Failed           | john      | firefox              | Regression     | -          |
+Columns: Test Case Key (entityKey) | Test Case Summary (summary) | Executed Version (latestVersion) | Execution Status (runStatus) | then one column per UDF label. Use the UDF 'label' as column header. Show null UDF values as '-'.
 
-2. Get test case runs with linked defects
+2. Fetch Test Run UDF values for all executions in test suite run '728995'
 \`\`\`json
 {
-  "tsrunID": "107021",
-  "viewId": 6887,
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "start": 0,
   "page": 1,
-  "limit": 25
+  "limit": 20
 }
 \`\`\`
-Expected Output: Paginated list of test case runs with 25 items per page
+Expected Output: Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:
+| Test Case Key | Test Case Summary | Executed Version | Execution Status | Tested By | Environments UDF     | Planned Execution Date | Execution Type |
+| MAC-TC-5      | Login test        | v1               | Passed           | varis     | chrome, edge, safari | -                      | Functional     |
+HTML is stripped from LARGETEXT UDF fields. Null values shown as '-'.
 
-3. Get test case runs for test suite run ID '2362144'
+3. Filter by Test Run UDF list/dropdown field (single-select or multi-select lookup) — runs where UDF '8260LUP' has list item IDs 5108701 or 5108697
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "tcrUdfFilter": "[{\\"type\\":\\"list\\",\\"value\\":[5108701,5108697],\\"field\\":\\"8260LUP\\"}]"
+}
+\`\`\`
+Expected Output: Filtered test case runs matching the lookup list UDF values
+
+4. Filter by Test Run UDF multi-lookup list field — runs where multi-select UDF 'PGTE_MULTILOOKUPLIST' contains list item IDs 5126503 or 5126502
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "tcrUdfFilter": "[{\\"type\\":\\"list\\",\\"value\\":[5126503,5126502],\\"field\\":\\"PGTE_MULTILOOKUPLIST\\"}]"
+}
+\`\`\`
+Expected Output: Filtered test case runs where multi-lookup UDF matches any of the given list item IDs
+
+5. Filter by Test Run UDF cascading dropdown field — runs where cascading UDF 'cascade_vK' has list item IDs 5126498 or 5126499 (must set isCascading:true)
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "tcrUdfFilter": "[{\\"type\\":\\"list\\",\\"value\\":[5126498,5126499],\\"field\\":\\"cascade_vK\\",\\"isCascading\\":true}]"
+}
+\`\`\`
+Expected Output: Filtered test case runs matching the cascading dropdown UDF values
+
+6. Filter by Test Run UDF short text field — runs where text UDF 'TRString' contains the value 'str'
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "tcrUdfFilter": "[{\\"type\\":\\"string\\",\\"field\\":\\"TRString\\",\\"value\\":\\"str\\"}]"
+}
+\`\`\`
+Expected Output: Filtered test case runs where short text UDF matches the search string
+
+7. Filter by Test Run UDF large text field — runs where large text UDF 'vk_large_text' contains 'this is large text'
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "tcrUdfFilter": "[{\\"type\\":\\"string\\",\\"field\\":\\"vk_large_text\\",\\"value\\":\\"this is large text\\"}]"
+}
+\`\`\`
+Expected Output: Filtered test case runs where large text UDF matches the search string
+
+8. Filter by Test Run UDF date field — runs where date UDF 'PGTE_DATEPICKER' is after a specific date (comparison: gt) and before another date (comparison: lt)
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "tcrUdfFilter": "[{\\"type\\":\\"date\\",\\"field\\":\\"PGTE_DATEPICKER\\",\\"comparison\\":\\"gt\\",\\"value\\":\\"06-01-2026\\"},{\\"type\\":\\"date\\",\\"field\\":\\"PGTE_DATEPICKER\\",\\"comparison\\":\\"lt\\",\\"value\\":\\"06-30-2026\\"}]"
+}
+\`\`\`
+Expected Output: Filtered test case runs where date UDF falls within the specified range
+
+9. Filter by Test Run UDF numeric field — runs where numeric UDF 'NB_number_TR' equals 2
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "tcrUdfFilter": "[{\\"type\\":\\"numeric\\",\\"value\\":2,\\"field\\":\\"NB_number_TR\\"}]"
+}
+\`\`\`
+Expected Output: Filtered test case runs where numeric UDF equals the specified value
+
+10. Combine multiple Test Run UDF filters — filter by list UDF AND string UDF AND numeric UDF simultaneously
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "start": 0,
+  "page": 1,
+  "limit": 20,
+  "tcrUdfFilter": "[{\\"type\\":\\"list\\",\\"value\\":[5108701,5108697],\\"field\\":\\"8260LUP\\"},{\\"type\\":\\"string\\",\\"field\\":\\"TRString\\",\\"value\\":\\"str\\"},{\\"type\\":\\"numeric\\",\\"value\\":2,\\"field\\":\\"NB_number_TR\\"}]"
+}
+\`\`\`
+Expected Output: Test case runs matching ALL specified UDF filter conditions (AND logic)
+
+11. Full filter combination — standard field filter + Test Run UDF filter + show only runs with defects
+\`\`\`json
+{
+  "tsrunID": "728995",
+  "viewId": 79451,
+  "start": 0,
+  "page": 1,
+  "limit": 20,
+  "filter": "[]",
+  "udfFilter": "[]",
+  "tcrUdfFilter": "[{\\"type\\":\\"list\\",\\"value\\":[5108701,5108697],\\"field\\":\\"8260LUP\\"},{\\"type\\":\\"string\\",\\"field\\":\\"TRString\\",\\"value\\":\\"str\\"},{\\"type\\":\\"string\\",\\"field\\":\\"vk_large_text\\",\\"value\\":\\"this is large text\\"},{\\"type\\":\\"date\\",\\"field\\":\\"PGTE_DATEPICKER\\",\\"comparison\\":\\"gt\\",\\"value\\":\\"\\"},{\\"type\\":\\"date\\",\\"field\\":\\"PGTE_DATEPICKER\\",\\"comparison\\":\\"lt\\",\\"value\\":\\"\\"},{\\"type\\":\\"list\\",\\"value\\":[5126503,5126502],\\"field\\":\\"PGTE_MULTILOOKUPLIST\\"},{\\"type\\":\\"list\\",\\"value\\":[5126498,5126499],\\"field\\":\\"cascade_vK\\",\\"isCascading\\":true},{\\"type\\":\\"numeric\\",\\"value\\":2,\\"field\\":\\"NB_number_TR\\"}]",
+  "showTcWithDefects": false
+}
+\`\`\`
+Expected Output: Test case runs filtered by all 7 UDF field type conditions simultaneously
+
+12. Get paginated test case runs with standard runStatus filter
 \`\`\`json
 {
   "tsrunID": "2362144",
   "viewId": 104123,
   "start": 0,
   "page": 1,
-  "limit": 25
+  "limit": 25,
+  "filter": "[{\\"type\\":\\"string\\",\\"value\\":\\"Failed\\",\\"field\\":\\"runStatus\\"}]"
 }
 \`\`\`
-Expected Output: Test case runs from the specified test suite run execution
+Expected Output: Paginated list of Failed test case runs with 25 items per page including testRunUdfs
 
-**Hints:** 1. CRITICAL WORKFLOW FOR FETCHING ALL EXECUTIONS OF A TEST SUITE: 2. When user asks to: 3.   - 'fetch all executions' 4.   - 'get all test runs' 5.   - 'fetch all tcRunIDs for test suite X' 6.   - 'update status for all executions of test suite X' 7. STEP 1: First call FETCH_EXECUTIONS_BY_TESTSUITE tool with the test suite ID (tsID, not entityKey) 8.   - This returns ALL execution records for that test suite (could be 3, 5, 9, or any number) 9.   - Extract ALL tsRunID values from the response data array 10.   - Example response: data: [{tsRunID: '2739237', ...}, {tsRunID: '2739236', ...}, {tsRunID: '2739235', ...}] 11. STEP 2: For EACH tsRunID from Step 1, call this tool (FETCH_TEST_CASE_RUNS_BY_TESTSUITE_RUN) 12.   - This returns all test case runs (tcRunID values) for that specific execution 13.   - Repeat for ALL tsRunID values discovered in Step 1 14. STEP 3: Collect all tcRunID values from all executions 15.   - Now you have the complete list of test case runs across ALL executions 16.   - Use these for bulk status updates or other operations 17. CRITICAL ERROR TO AVOID: 18. - NEVER assume or hard-code only 2-3 execution IDs 19. - NEVER skip Step 1 - always discover ALL executions first 20. - NEVER fetch tcRunIDs for only some executions - get ALL of them 21. - If there are 9 executions, you must fetch tcRunIDs for all 9, not just 2 22. EXAMPLE WORKFLOW: 23. User: 'Fetch all test case runs for test suite VKMCP-TS-21' 24. Step 1: Call FETCH_EXECUTIONS_BY_TESTSUITE with tsID (resolved from VKMCP-TS-21) 25.   Result: Found 9 executions with tsRunIDs: 2739237, 2739236, 2739235, 2739234, 2739233, 2739232, 2739231, 2739230, 2739229 26. Step 2: Call this tool 9 times (once for each tsRunID) 27.   Call 1: tsrunID='2739237' -> returns 54 tcRunIDs 28.   Call 2: tsrunID='2739236' -> returns 54 tcRunIDs 29.   ... (repeat for all 9) 30. Step 3: Total collected: 9 executions × 54 test cases = 486 total tcRunIDs 31.  32. PERFORMANCE CONSIDERATIONS FOR LARGE TEST RUNS: 33. When dealing with large numbers of test case runs (500+, 1000+), follow these guidelines: 34. 1. ALWAYS inform the user about the scale BEFORE starting operations: 35.    Example: 'Found 9 executions with approximately 486 test case runs. This will require fetching data from all 9 executions and may take a moment.' 36. 2. For bulk status updates on 1000+ test case runs: 37.    - NEVER attempt to update all 1000+ in a single operation 38.    - Break into smaller batches of 10-20 test case runs per update 39.    - Inform user: 'Found 1000 test case runs. Will process in batches of 20 to ensure reliability and performance.' 40.    - Show progress: 'Processing batch 1/50 (20 test runs)...', 'Batch 2/50...' 41. 3. Recommended batch sizes: 42.    - For status updates: 10-20 test case runs per batch 43.    - For fetching data: Can handle larger batches (50-100) 44.    - Adjust based on API response times and timeout limits 45. 4. Always provide progress updates for long-running operations: 46.    - Before: 'Processing 1000 test runs in 50 batches of 20...' 47.    - During: 'Completed 200/1000 test runs (10 batches)...' 48.    - After: 'Successfully updated all 1000 test case runs.' 49. 5. Error handling for batch operations: 50.    - If a batch fails, report which batch and continue with remaining 51.    - Provide summary at the end: 'Completed 48/50 batches. 2 batches failed (batch 23, 45).' 52.    - Allow user to retry failed batches specifically 53. EXAMPLE LARGE-SCALE WORKFLOW: 54. User: 'Update status to Failed for all test runs in VKMCP-TS-21' 55. Step 1: Discover all executions (9 found) 56. Step 2: Fetch all tcRunIDs (486 total) 57. Step 3: Inform user: 'Found 486 test case runs across 9 executions. Will update in 25 batches of 20 runs each.' 58. Step 4: Process in batches with progress updates 59. Step 5: Report completion: 'Successfully updated all 486 test case runs to Failed status.' 60.  61. CRITICAL: tsrunID and viewId parameters are REQUIRED 62. tsrunID is a STRING identifier for the test suite run execution 63. viewId is a NUMERIC identifier for the test execution view 64. !MOST IMPORTANT HOW TO GET tsrunID: 65. 1. Call API 'Execution/Fetch Executions' (FETCH_EXECUTIONS_BY_TESTSUITE) to get ALL available executions 66. 2. From the response, get value of following attribute -> data[<index>].tsRunID for EVERY execution 67. 3. Example: Test Suite might have multiple executions with IDs '107021', '107022', '107023', etc. 68. 4. NEVER assume there are only 2-3 executions - always fetch to discover the actual count 69. !MOST IMPORTANT HOW TO GET viewId: 70. CRITICAL: Always resolve and use the correct test execution viewId for the current project when calling this tool. 71. The viewId parameter must be fetched from the active project's info (latestViews.TE.viewId). 72. Each QMetry project may have a different test execution viewId, so using a stale or incorrect viewId will result in incomplete or invalid test case run data. 73. Usage workflow: 74. 1. Fetch project info for the current project (Admin/Get info Service). 75. 2. Extract latestViews.TE.viewId from the response. 76. 3. Use this viewId in the Fetch Test Case Runs by Test Suite Run API call. 77. Example: 78.    { 79.      tsrunID: "2362144", 80.      viewId: 104123, 81.      start: 0, 82.      page: 1, 83.      limit: 25 84.    } 85. This ensures the tool fetches the proper execution runs data for the selected project context. 86. SIMPLIFIED PAYLOAD: API only accepts essential parameters 87. SUPPORTED PARAMETERS: start, page, limit, tsrunID, viewId 88. REMOVED PARAMETERS: filter, sort, showTcWithDefects, udfFilter (cause API errors) 89. PAGINATION: Use start, page, and limit for result pagination 90. API REQUIREMENT: Must use exact payload structure that works in Postman 91. PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123} 92. Use pagination for large result sets (start, page, limit parameters) 93. This tool is essential for detailed test execution analysis and reporting 94. Critical for monitoring individual test case execution performance 95. Use for compliance reporting and execution audit trails 96. Essential for test execution quality assurance and trend analysis",
+13. Show only test case runs with linked defects, filtered by Test Run UDF list value
+\`\`\`json
+{
+  "tsrunID": "107021",
+  "viewId": 6887,
+  "showTcWithDefects": true,
+  "tcrUdfFilter": "[{\\"type\\":\\"list\\",\\"value\\":[5108701],\\"field\\":\\"8260LUP\\"}]"
+}
+\`\`\`
+Expected Output: Test case runs with defects where the specified Test Run UDF matches
+
+**Hints:** 1. === MANDATORY RESPONSE FORMAT — READ THIS BEFORE RENDERING ANY OUTPUT === 2.  3. PIVOT RULE — CRITICAL: 4. The 'testRunUdfs' field on each row is a key-value map (object) of UDF field keys to their values. 5. You MUST pivot this into TABLE COLUMNS — do NOT render it as rows. 6.   → Each key in testRunUdfs   = use the UDF human-readable label as the column header 7.   → Each value in testRunUdfs = the cell value for that run's row 8.   → 'fieldType' / 'fieldID'   = INTERNAL METADATA — NEVER show these as columns 9.  10. FORBIDDEN PATTERNS — NEVER do any of these: 11.   ❌ Do NOT render a separate sub-table (Label | Type | Value) per tcRunID 12.   ❌ Do NOT show 'Type' or 'fieldType' as a visible column 13.   ❌ Do NOT group output by tcRunID with individual breakdowns beneath each 14.   ❌ Do NOT show raw UDF field keys (e.g. 'TRString', '8260LUP') as column headers — use human-readable labels 15.  16. REQUIRED OUTPUT — ONE unified table, all runs as rows: 17. | Test Case Key | Test Case Summary | Executed Version | Execution Status | <UDF Label 1> | <UDF Label 2> | ... | 18. |---------------|-------------------|------------------|------------------|---------------|---------------|-----| 19. | VKMCP-TC-1    | Login test        | v1               | Not Run          | varis         | chrome, edge  | ... | 20. | VKMCP-TC-2    | Invalid password  | v2               | Not Run          | john          | firefox       | ... | 21.  22. MANDATORY COLUMNS (always first, in this order): 23.   1. Test Case Key     → entityKey     (e.g. 'VKMCP-TC-1') 24.   2. Test Case Summary → summary       (test case name) 25.   3. Executed Version  → latestVersion (e.g. 'v1', 'v2') 26.   4. Execution Status  → runStatus     (e.g. 'Not Run', 'Passed', 'Failed') 27.   5. Tested By         → testedBy/executedBy when present 28.   6+. One column per UDF field — use the human-readable label as header, the value as the cell. 29.  30. Null UDF values → show as '-' in the cell. 31. If testRunUdfs is empty or hasTcRunUdf is false, still show columns 1-5. 32. CHAINING WITH FETCH TEST RUN UDF VALUES: 33. If the user explicitly asks for Test Run UDFs with these test case runs, call 'Fetch Test Run UDF Values' after this tool with sourceContext='testSuiteRun' and sourceRows=<this response data>. Render that tool's unifiedTableRows as the final answer. 34. === END MANDATORY RESPONSE FORMAT === 35.  36. CRITICAL WORKFLOW FOR FETCHING ALL EXECUTIONS OF A TEST SUITE: 37. When user asks to: 38.   - 'fetch all executions' 39.   - 'get all test runs' 40.   - 'fetch all tcRunIDs for test suite X' 41.   - 'update status for all executions of test suite X' 42. STEP 1: First call FETCH_EXECUTIONS_BY_TESTSUITE tool with the test suite ID (tsID, not entityKey) 43.   - This returns ALL execution records for that test suite (could be 3, 5, 9, or any number) 44.   - Extract ALL tsRunID values from the response data array 45.   - Example response: data: [{tsRunID: '2739237', ...}, {tsRunID: '2739236', ...}, {tsRunID: '2739235', ...}] 46. STEP 2: For EACH tsRunID from Step 1, call this tool (FETCH_TEST_CASE_RUNS_BY_TESTSUITE_RUN) 47.   - This returns all test case runs (tcRunID values) for that specific execution 48.   - Repeat for ALL tsRunID values discovered in Step 1 49. STEP 3: Collect all tcRunID values from all executions 50.   - Now you have the complete list of test case runs across ALL executions 51.   - Use these for bulk status updates or other operations 52. CRITICAL ERROR TO AVOID: 53. - NEVER assume or hard-code only 2-3 execution IDs 54. - NEVER skip Step 1 - always discover ALL executions first 55. - NEVER fetch tcRunIDs for only some executions - get ALL of them 56. - If there are 9 executions, you must fetch tcRunIDs for all 9, not just 2 57. EXAMPLE WORKFLOW: 58. User: 'Fetch all test case runs for test suite VKMCP-TS-21' 59. Step 1: Call FETCH_EXECUTIONS_BY_TESTSUITE with tsID (resolved from VKMCP-TS-21) 60.   Result: Found 9 executions with tsRunIDs: 2739237, 2739236, 2739235, 2739234, 2739233, 2739232, 2739231, 2739230, 2739229 61. Step 2: Call this tool 9 times (once for each tsRunID) 62.   Call 1: tsrunID='2739237' -> returns 54 tcRunIDs 63.   Call 2: tsrunID='2739236' -> returns 54 tcRunIDs 64.   ... (repeat for all 9) 65. Step 3: Total collected: 9 executions × 54 test cases = 486 total tcRunIDs 66.  67. PERFORMANCE CONSIDERATIONS FOR LARGE TEST RUNS: 68. When dealing with large numbers of test case runs (500+, 1000+), follow these guidelines: 69. 1. ALWAYS inform the user about the scale BEFORE starting operations: 70.    Example: 'Found 9 executions with approximately 486 test case runs. This will require fetching data from all 9 executions and may take a moment.' 71. 2. For bulk status updates on 1000+ test case runs: 72.    - NEVER attempt to update all 1000+ in a single operation 73.    - Break into smaller batches of 10-20 test case runs per update 74.    - Inform user: 'Found 1000 test case runs. Will process in batches of 20 to ensure reliability and performance.' 75.    - Show progress: 'Processing batch 1/50 (20 test runs)...', 'Batch 2/50...' 76. 3. Recommended batch sizes: 77.    - For status updates: 10-20 test case runs per batch 78.    - For fetching data: Can handle larger batches (50-100) 79.    - Adjust based on API response times and timeout limits 80. 4. Always provide progress updates for long-running operations: 81.    - Before: 'Processing 1000 test runs in 50 batches of 20...' 82.    - During: 'Completed 200/1000 test runs (10 batches)...' 83.    - After: 'Successfully updated all 1000 test case runs.' 84. 5. Error handling for batch operations: 85.    - If a batch fails, report which batch and continue with remaining 86.    - Provide summary at the end: 'Completed 48/50 batches. 2 batches failed (batch 23, 45).' 87.    - Allow user to retry failed batches specifically 88. EXAMPLE LARGE-SCALE WORKFLOW: 89. User: 'Update status to Failed for all test runs in VKMCP-TS-21' 90. Step 1: Discover all executions (9 found) 91. Step 2: Fetch all tcRunIDs (486 total) 92. Step 3: Inform user: 'Found 486 test case runs across 9 executions. Will update in 25 batches of 20 runs each.' 93. Step 4: Process in batches with progress updates 94. Step 5: Report completion: 'Successfully updated all 486 test case runs to Failed status.' 95.  96. CRITICAL: tsrunID and viewId parameters are REQUIRED 97. tsrunID is a STRING identifier for the test suite run execution 98. viewId is a NUMERIC identifier for the test execution view 99. !MOST IMPORTANT HOW TO GET tsrunID: 100. 1. Call API 'Execution/Fetch Executions' (FETCH_EXECUTIONS_BY_TESTSUITE) to get ALL available executions 101. 2. From the response, get value of following attribute -> data[<index>].tsRunID for EVERY execution 102. 3. Example: Test Suite might have multiple executions with IDs '107021', '107022', '107023', etc. 103. 4. NEVER assume there are only 2-3 executions - always fetch to discover the actual count 104. !MOST IMPORTANT HOW TO GET viewId: 105. CRITICAL: Always resolve and use the correct test execution viewId for the current project when calling this tool. 106. The viewId parameter must be fetched from the active project's info (latestViews.TE.viewId). 107. Each QMetry project may have a different test execution viewId, so using a stale or incorrect viewId will result in incomplete or invalid test case run data. 108. Usage workflow: 109. 1. Fetch project info for the current project (Admin/Get info Service). 110. 2. Extract latestViews.TE.viewId from the response. 111. 3. Use this viewId in the Fetch Test Case Runs by Test Suite Run API call. 112. Example: 113.    { 114.      tsrunID: "2362144", 115.      viewId: 104123, 116.      start: 0, 117.      page: 1, 118.      limit: 25 119.    } 120. This ensures the tool fetches the proper execution runs data for the selected project context. 121. SUPPORTED PARAMETERS: start, page, limit, tsrunID, viewId, filter, udfFilter, tcrUdfFilter, showTcWithDefects 122. PAGINATION: Use start, page, and limit for result pagination 123. PAYLOAD FORMAT: {"start": 0, "page": 1, "limit": 10, "tsrunID": "2362144", "viewId": 104123} 124.  125. === TEST RUN UDF (tcrUdfFilter) — ALL 7 FIELD TYPE FORMATS === 126. tcrUdfFilter filters test case RUNS by Test Run UDF values (not test case UDFs — use udfFilter for those). 127. Value is a JSON array string. Multiple conditions are combined with AND logic. 128. Base structure: {"type":"<fieldType>", "field":"<udfFieldKey>", "value":<value> [,"comparison":"..."] [,"isCascading":true]} 129.  130. --- TYPE 1: list (single-select lookup / dropdown) --- 131. Use for: single-select lookup list UDF fields (one value selected from a list). 132. value: array of numeric list item IDs — get IDs from FETCH_CUSTOM_LIST_ITEMS tool. 133. Format: {"type":"list", "field":"<fieldKey>", "value":[<id1>,<id2>]} 134. Example: [{"type":"list","value":[5108701,5108697],"field":"8260LUP"}] 135. Matches runs where the UDF value is ANY of the provided list item IDs (OR within the array). 136.  137. --- TYPE 2: list (multi-select lookup list) --- 138. Use for: multi-select lookup list UDF fields (multiple values can be selected). 139. Syntax identical to single-select list — same format, just the UDF field itself is multi-select. 140. Format: {"type":"list", "field":"<fieldKey>", "value":[<id1>,<id2>]} 141. Example: [{"type":"list","value":[5126503,5126502],"field":"PGTE_MULTILOOKUPLIST"}] 142. Matches runs where ANY of the UDF's selected values match any of the provided IDs. 143.  144. --- TYPE 3: list (cascading dropdown) --- 145. Use for: cascading dropdown UDF fields (parent-child linked dropdowns). MUST add isCascading:true. 146. Format: {"type":"list", "field":"<fieldKey>", "value":[<id1>,<id2>], "isCascading":true} 147. Example: [{"type":"list","value":[5126498,5126499],"field":"cascade_vK","isCascading":true}] 148. CRITICAL: missing isCascading:true on a cascading field will cause incorrect results or API error. 149.  150. --- TYPE 4: string (short text) --- 151. Use for: single-line text UDF fields. 152. value: the string to search for (partial match / contains). 153. Format: {"type":"string", "field":"<fieldKey>", "value":"<searchText>"} 154. Example: [{"type":"string","field":"TRString","value":"str"}] 155.  156. --- TYPE 5: string (large text / rich text) --- 157. Use for: multi-line or rich text UDF fields. Syntax is identical to short text string type. 158. Format: {"type":"string", "field":"<fieldKey>", "value":"<searchText>"} 159. Example: [{"type":"string","field":"vk_large_text","value":"this is large text"}] 160. NOTE: Search is against the raw (HTML) content stored in the field; plain text search terms work fine. 161.  162. --- TYPE 6: date --- 163. Use for: date picker UDF fields. REQUIRES a 'comparison' property. 164. comparison: 'gt' = after the date (greater than), 'lt' = before the date (less than). 165. value: date string in 'MM-DD-YYYY' format, or empty string '' to leave the bound open. 166. Format: {"type":"date", "field":"<fieldKey>", "comparison":"gt"|"lt", "value":"MM-DD-YYYY"} 167. Example — date range: [{"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"},{"type":"date","field":"PGTE_DATEPICKER","comparison":"lt","value":"06-30-2026"}] 168. Example — open-ended (no upper bound): [{"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"}] 169. To filter by a single date use two conditions (gt day-before AND lt day-after) or just one bound. 170. CRITICAL: 'comparison' field is mandatory for date type — omitting it causes API error. 171.  172. --- TYPE 7: numeric --- 173. Use for: number UDF fields. 174. value: a number (integer or decimal). 175. Format: {"type":"numeric", "field":"<fieldKey>", "value":<number>} 176. Example: [{"type":"numeric","value":2,"field":"NB_number_TR"}] 177.  178. --- COMBINING MULTIPLE FILTERS --- 179. All conditions in tcrUdfFilter array use AND logic — runs must satisfy ALL conditions. 180. Full example (all 7 types combined): 181. [ 182.   {"type":"list","value":[5108701,5108697],"field":"8260LUP"}, 183.   {"type":"list","value":[5126503,5126502],"field":"PGTE_MULTILOOKUPLIST"}, 184.   {"type":"list","value":[5126498,5126499],"field":"cascade_vK","isCascading":true}, 185.   {"type":"string","field":"TRString","value":"str"}, 186.   {"type":"string","field":"vk_large_text","value":"large text"}, 187.   {"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"}, 188.   {"type":"date","field":"PGTE_DATEPICKER","comparison":"lt","value":"06-30-2026"}, 189.   {"type":"numeric","value":2,"field":"NB_number_TR"} 190. ] 191. --- FILTER PARAMETER SUMMARY --- 192. tcrUdfFilter: filter by Test Run UDF fields (this section) 193. udfFilter: filter by Test Case UDF fields (different from test run UDFs) 194. filter: filter by standard execution fields (runStatus, executedBy, etc.) 195. All three can be combined in a single request — they are independently applied with AND logic. 196.  197. hasTcRunUdf FLAG — IMPORTANT: 198. The response contains a 'hasTcRunUdf' boolean flag at the top level. 199. hasTcRunUdf: true  → Project has Test Run UDFs configured; each record includes 'testRunUdfs' object. 200. hasTcRunUdf: false → Project has NO Test Run UDFs configured. 201.   When hasTcRunUdf is false, the response includes a 'testRunUdfNote' with a professional explanation. 202.   Inform the user: 'No Test Run UDFs are configured for this project. Contact a project administrator to set up Test Run UDF fields.' 203. NEVER attempt to read testRunUdfs from records when hasTcRunUdf is false — the field will not be present. 204.  205. TEST RUN UDF RESPONSE (testRunUdfs): 206. When the API returns Test Run UDF data, each row will include a 'testRunUdfs' object. 207. This is a key-value map of UDF field keys to their values, parsed from the API's 'udfjson' field. 208. HTML is stripped from rich text (large text) UDF fields for readable LLM output. 209. Example testRunUdfs in response: 210.   testRunUdfs: { 211.     "8260LUP": "l1", 212.     "look_554": "99", 213.     "cascade_vK": {"child": "aa", "parent": "abc"}, 214.     "dateNJ": "06-02-2026", 215.     "NB_Multilppup_TR": ["ahd"], 216.     "Jal_Largetext": "asdef asdfads asdfasf asdf asdf asfd a sdfa" 217.   } 218. Use pagination for large result sets (start, page, limit parameters) 219. This tool is essential for detailed test execution analysis and reporting 220. Critical for monitoring individual test case execution performance and UDF values 221. Use for compliance reporting and execution audit trails 222. Essential for test execution quality assurance and trend analysis",
     "inputSchema": [
       "baseUrl",
+      "filter",
       "limit",
       "page",
       "projectKey",
+      "showTcWithDefects",
       "start",
+      "tcrUdfFilter",
       "tsrunID",
+      "udfFilter",
       "viewId",
     ],
     "outputSchema": undefined,
@@ -5885,8 +6468,8 @@ Expected Output: Test case runs from the specified test suite run execution
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- id (number) *required*: Test Case numeric ID (required for fetching steps or version details). This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- id (number) *required*: Test Case numeric ID (required for fetching steps or version details). Accepts a string or number. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results.
 - version (number): Test Case version number (optional, defaults to 1). This is the internal numeric identifier for the version.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -5932,8 +6515,8 @@ Expected Output: Detailed steps with actions and expected results for test case 
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- id (number) *required*: Test Case numeric ID (required for fetching steps or version details). This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- id (number) *required*: Test Case numeric ID (required for fetching steps or version details). Accepts a string or number. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results.
 - version (number) *required*: Test Case version number. This is the internal numeric identifier for the version.
 - scope (string): Scope of the operation - defines the context for data retrieval. Common values: 'project' (default), 'folder', 'release', 'cycle'. Applies to any entity type being fetched or operated upon. (default: "project")
 
@@ -5976,8 +6559,8 @@ Expected Output: Version 2 details for test case 123
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- viewId (number) *required*: ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- viewId (number): ViewId for test cases - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TC.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
 - folderPath (string): Folder path for test cases - SYSTEM AUTOMATICALLY SETS TO ROOT. Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). Only specify if user wants specific folder like "Automation/Regression". (default: "")
 - folderID (number): Folder ID - unique numeric identifier for the specific folder. Use this to target a specific folder within the project hierarchy. Applies to any entity type (test cases, requirements, test suites, etc.).
 - start (number): Start index for pagination - defaults to 0 (default: 0)
@@ -6114,7 +6697,7 @@ Expected Output: Test cases matching any of the specified entity keys
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - rqID (number) *required*: Requirement numeric ID (required for fetching specific requirement details). This is the internal numeric identifier, not the entity key like 'MAC-RQ-730'. You can get this ID from requirement search results or by using filters.
 - getLinked (boolean): True to get only test cases that are linked with this requirement, false to get test cases which are not linked with this requirement. Defaults to true (get linked test cases). (default: true)
 - showEntityWithReleaseCycle (boolean): True to list only test cases which have given release and cycle, false for all test cases regardless of release/cycle association. Defaults to false (show all). (default: false)
@@ -6122,8 +6705,8 @@ Expected Output: Test cases matching any of the specified entity keys
 - page (number): Page number to return (starts from 1) (default: 1)
 - limit (number): Number of records (default 10). (default: 10)
 - tcFolderPath (string): Folder path to get test cases under specific folder. Use empty string "" for root folder or specify path like "/Sample Template". (default: "")
-- releaseID (string): Filter test cases by release ID. Use string representation of release ID (e.g., '7138'). Get release IDs from FETCH_RELEASES_AND_CYCLES tool.
-- cycleID (string): Filter test cases by cycle ID. Use string representation of cycle ID (e.g., '13382'). Get cycle IDs from FETCH_RELEASES_AND_CYCLES tool.
+- releaseID (string): Filter test cases by release ID. Accepts a string or number. Get release IDs from FETCH_RELEASES_AND_CYCLES tool.
+- cycleID (string): Filter test cases by cycle ID. Accepts a string or number. Get cycle IDs from FETCH_RELEASES_AND_CYCLES tool.
 - filter (string): Filter criteria as JSON string (default '[]') (default: "[]")
 - getSubEntities (boolean): Allow filter of sub-entities for requirement. (default: true)
 - getColumns (boolean): True to get column information in response. (default: true)
@@ -6303,8 +6886,8 @@ Expected Output: Active, high priority, automated test cases linked to requireme
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tsID (number) *required*: Test Suite numeric ID (required for fetching test cases linked to test suite). This is the internal numeric identifier, not the entity key. NOTE: To get the tsID - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tsID (number) *required*: Test Suite numeric ID. CRITICAL: the parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', 'suiteId', or other variants. Accepts a string or number. NOTE: To get the tsID - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id
 - getLinked (boolean): True to get only those issues that are linked with this Test case Run, False to get those issues which are not linked with this Test case Run. Default value true (get linked issues). (default: true)
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -6386,6 +6969,95 @@ Expected Output: Active test cases linked to the test suite
     "outputSchema": undefined,
     "title": "QMetry: Fetch Test Cases Linked to Test Suite",
   },
+  "qmetry_fetch_test_run_udf_metadata": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Test Run UDF Metadata",
+    },
+    "description": "Fetch the metadata (field definitions) for all Test Run UDF (User Defined Fields) configured in this QMetry project. Returns each field's name, display label, type, and numeric fieldID (projectUserFieldID) required for bulk updates.
+
+**Toolset:** UDF
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+
+**Output Description:** JSON object with 'fields' array (each item has fieldID, name, label, fieldType, allowBlank, and optional listName/listMasterID) and 'lookupOptions' map for list-based fields.
+
+**Use Cases:** 1. Get the fieldID for 'planned_execution_date' before bulk updating it 2. List all available Test Run UDF fields and their types in the project 3. Find the lookup list item IDs for a LOOKUPLIST or MULTILOOKUPLIST Test Run UDF 4. Discover UDF field names and IDs when user says 'what Test Run UDF fields are available'
+
+**Examples:**
+1. List all Test Run UDF fields in the project
+\`\`\`json
+{}
+\`\`\`
+Expected Output: Array of fields with fieldID, name, label, fieldType, and lookupOptions for list-based fields.
+
+**Hints:** 1. ALWAYS call this tool before 'Bulk Update Test Run UDFs' when the user has not explicitly provided a numeric fieldID. The 'fieldID' in the bulk update corresponds to 'projectUserFieldID' in this response. 2. This tool is the authoritative source of fieldIDs for all Test Run UDF fields — do NOT guess or hard-code fieldIDs. 3. For LOOKUPLIST and MULTILOOKUPLIST fields, the response 'lookupOptions' contains the valid item IDs and labels to use as values in bulk updates. 4. DATE fields use MM-DD-YYYY format (e.g. '06-23-2026') when setting values via Bulk Update Test Run UDFs.",
+    "inputSchema": [
+      "baseUrl",
+      "projectKey",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Test Run UDF Metadata",
+  },
+  "qmetry_fetch_test_run_udf_values": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "QMetry: Fetch Test Run UDF Values",
+    },
+    "description": "Fetch the Test Run UDF (User Defined Field) values for all test case runs in a given test suite run. Returns each run's UDF values enriched with field label and type information from metadata. Use this tool for test suite run UDF values (sourceContext='testSuiteRun'). Do NOT use this tool for test case executions — 'Fetch Test Case Executions' already calls metadata internally and returns 'testRunUdfs' in every execution row.
+
+**Toolset:** UDF
+
+**Parameters:**
+- projectKey (string): Project key - unique identifier for the project (default: "default")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tsrunID (string): Test Suite Run ID. CRITICAL: the parameter name is 'tsrunID' — do NOT use 'testSuiteRunId', 'tsRunID', or any other variant. Accepts a string or number (e.g. 731600 or '731600' — both are valid). Get this from 'Fetch Executions by Test Suite' → use data[<index>].tsRunID from the response. Required when sourceRows is not provided.
+- viewId (number): View ID for the test execution list (latestViews.TE.viewId from project info). Auto-resolved from project info when omitted. Required when sourceRows is not provided.
+- sourceContext (enum): Which parent tool produced sourceRows. Use 'testSuiteRun' for Fetch Test Case Runs by Test Suite Run. Do NOT use this tool for Fetch Test Case Executions — that tool calls metadata internally and returns testRunUdfs on every execution row; use that data directly. Do NOT use this tool for Fetch Issue Executions; that tool already reads udfjson and enriches it with metadata. (default: "testSuiteRun")
+- sourceRows (array): Optional rows already returned by Fetch Test Case Runs by Test Suite Run. The UDF tool will reuse these rows, enrich/pivot UDF values, and preserve identification fields instead of making the same execution-list API call again. Do NOT pass Fetch Test Case Executions rows here — those rows already have testRunUdfs enriched. Do not pass issue execution rows here; use Fetch Issue Executions output directly for issue UDFs.
+- startIndex (number): Zero-based start index for pagination (default: 0). (default: 0)
+- size (number): Number of test case runs to return per page (default: 50). (default: 50)
+
+**Output Description:** JSON with hasTcRunUdf boolean, sourceContext, total count, defaultColumns, udfColumns, unifiedTableRows, runs array, and availableUdfFields array describing all UDF fields in the project. Render unifiedTableRows directly as the final table: default identification fields first, then one column per UDF label.
+
+**Use Cases:** 1. Show me the UDF values for all runs in test suite run 731600 2. What is the planned execution date set on each run in this test cycle? 3. List the Test Run UDF values for test suite run 87039 4. Fetch test run UDFs of executions for tsRunID 731600
+
+**Examples:**
+1. Fetch UDF values for all runs in test suite run 731600
+\`\`\`json
+{
+  "tsrunID": "731600",
+  "sourceContext": "testSuiteRun"
+}
+\`\`\`
+Expected Output: Present as ONE unified table — never as a separate type+value breakdown. Example:
+| Test Case Key | Test Case Summary        | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |
+| MAC-TC-5      | Login - valid credential | 1                | Passed           | varis     | chrome, edge, safari | Functional     | India > i3 |
+| MAC-TC-6      | Login - invalid password | 2                | Failed           | john      | firefox              | Regression     | -          |
+Columns: Test Case Key (entityKey) | Test Case Summary (summary) | Executed Version (latestVersion) | Execution Status (runStatus) | Tested By | then one column per UDF label. Use the UDF 'label' as column header. Show null UDF values as '-'.
+
+**Hints:** 1. DEFAULT DISPLAY CONTRACT: Always render 'unifiedTableRows' as ONE table. Do not render UDFs as Label | Type | Value rows. 2. When sourceContext='testSuiteRun', mandatory columns are: Test Case Key | Test Case Summary | Executed Version | Execution Status | Tested By | then one column per UDF label. 3. PARENT-TO-UDF WORKFLOW: If Fetch Test Case Runs by Test Suite Run was already called, pass parentResponse.data as sourceRows with sourceContext='testSuiteRun'. This preserves identification fields and avoids repeating the same API call. 4. For prompts like 'Fetch test case runs of VKMCP-TS-1 and its Test Run UDFs': call Fetch Test Case Runs by Test Suite Run, then call this tool with sourceContext='testSuiteRun' and sourceRows=<that response data>. 5. For prompts like 'Fetch Test Case Executions and show Test Run UDFs': call Fetch Test Case Executions ONLY — that tool already calls metadata internally and returns testRunUdfs on every execution row. Do NOT call this tool for test case executions. 6. For prompts like 'Fetch Issue Executions and Test Run UDFs': call Fetch Issue Executions only. Do not call this tool, because issue UDF values come from /rest/execution/getExecutionsForIssue udfjson and are already enriched by the issue tool with metadata. 7. If no parent rows are available, use 'tsrunID' from the 'Fetch Executions by Test Suite' tool (data[<index>].tsRunID field). 8. 'viewId' is auto-resolved from latestViews.TE.viewId — leave blank unless explicitly overriding. It is only needed when sourceRows is not supplied. 9. If 'hasTcRunUdf' is false in the response, no Test Run UDFs are configured for this project. 10. The 'testRunUdfs' array on each run contains enriched UDF values with label and fieldID — use fieldID from here when calling 'Bulk Update Test Run UDFs'. 11. This tool calls UDF metadata internally — no need to call 'Fetch Test Run UDF Metadata' separately when viewing values. 12. When sourceRows is omitted, this tool also calls the test-suite-run execution list API internally. When sourceRows is provided, it reuses those rows and does not refetch the parent execution list.",
+    "inputSchema": [
+      "baseUrl",
+      "projectKey",
+      "size",
+      "sourceContext",
+      "sourceRows",
+      "startIndex",
+      "tsrunID",
+      "viewId",
+    ],
+    "outputSchema": undefined,
+    "title": "QMetry: Fetch Test Run UDF Values",
+  },
   "qmetry_fetch_test_suites": {
     "annotations": {
       "destructiveHint": false,
@@ -6400,8 +7072,8 @@ Expected Output: Active test cases linked to the test suite
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- viewId (number) *required*: ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- viewId (number): ViewId for test suites - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TS.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
 - folderPath (string): Folder path for test suites - SYSTEM AUTOMATICALLY SETS TO ROOT. Leave empty unless you want specific folder. System will automatically use empty string "" (root directory). Only specify if user wants specific folder like "Automation/Regression". (default: "")
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -6528,8 +7200,8 @@ Expected Output: Test suites matching any of the specified entity keys
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tsFolderID (number) *required*: Test Suite folder ID (required for fetching test suites). This is the numeric identifier for the test suite folder. IMPORTANT: Get from project info response → rootFolders.TS.id (e.g., 113557 for MAC project). Use FETCH_PROJECT_INFO tool first to get this ID if not provided by user. For root folder: use rootFolders.TS.id, for sub-folders: use specific folder IDs.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tsFolderID (number): Test Suite folder ID. CRITICAL: the parameter name is 'tsFolderID' — do NOT use 'testSuiteFolderId', 'folderId', 'folderID', or other variants. Accepts a string or number. Get from project info response → rootFolders.TS.id. Use FETCH_PROJECT_INFO tool first if not provided by user.
 - viewId (number): ViewId for test suite folders - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific viewId. System will fetch project info using the projectKey and extract latestViews.TSFS.viewId automatically. Manual viewId only needed if you want to override the automatic resolution.
 - start (number): Start index for pagination - defaults to 0 (default: 0)
 - page (number): Page number to return (starts from 1) (default: 1)
@@ -6821,9 +7493,9 @@ Expected Output: Test suite and test cases created with custom fields and UDFs
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - issueIds (array) *required*: ID of issues to be linked to Testcase Run
-- tcrId (number) *required*: ID of Testcase Run to link issues with
+- tcrId (number) *required*: ID of Testcase Run to link issues with. CRITICAL: parameter name is 'tcrId' — do NOT use 'tcRunId', 'testCaseRunId', or other variants. Accepts a string or number.
 
 **Output Description:** JSON object with linkage status and details.
 
@@ -6877,9 +7549,9 @@ Expected Output: Issues 5054834, 5054835 linked to testcase run 567890 successfu
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- qmTsId (number) *required*: Id of Test Suite (required). To get the qmTsId - Call API 'Testsuite/Fetch Testsuite' From the response, get value of following attribute -> data[<index>].id
-- qmPlatformId (string) *required*: Comma-separated value of PlatformId (required). To get the qmPlatformId - Call API 'Platform/List' From the response, get value of following attribute -> data[<index>].platformID
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- qmTsId (number) *required*: Id of Test Suite (required). CRITICAL: the parameter name is 'qmTsId' — do NOT use 'tsId', 'testSuiteId', 'tsID', or other variants. Accepts a string or number. To get the qmTsId - Call API 'Testsuite/Fetch Testsuite'. From the response, get value -> data[<index>].id
+- qmPlatformId (string) *required*: Comma-separated Platform IDs (required). CRITICAL: the parameter name is 'qmPlatformId' — do NOT use 'platformId', 'platformID', 'platformIds', or other variants. Accepts a number or string. To get the qmPlatformId - Call API 'Platform/List'. From the response, get value -> data[<index>].platformID
 
 **Output Description:** JSON object with linkage status, success message, and details.
 
@@ -6968,8 +7640,8 @@ Expected Output: Requirements linked to test case VT-TC-26 successfully.
 **Toolset:** Test Suites
 
 **Parameters:**
-- tsID (number) *required*: Id of Test Suite (required)
-- tcvdIDs (array) *required*: Array of Test Case Version IDs (required if fromReqs is false)
+- tsID (number) *required*: Id of Test Suite (required). CRITICAL: parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', or other variants.
+- tcvdIDs (array) *required*: Array of Test Case Version IDs (required if fromReqs is false). CRITICAL: parameter name is 'tcvdIDs' — do NOT use 'tcVersionIds', 'testCaseVersionIds', or other variants.
 - fromReqs (boolean): Link TestCases from Requirements (optional, default false)
 
 **Output Description:** JSON object with linkage status and details.
@@ -7040,8 +7712,8 @@ Expected Output: Test cases VT-TC-4, VT-TC-1, VT-TC-101, and VT-TC-22 linked to 
 **Toolset:** Test Suites
 
 **Parameters:**
-- tsID (number) *required*: Id of Test Suite (required)
-- tcvdIDs (array) *required*: Array of Test Case Version IDs (required if fromReqs is true)
+- tsID (number) *required*: Id of Test Suite (required). CRITICAL: parameter name is 'tsID' — do NOT use 'testSuiteId', 'testSuiteID', or other variants.
+- tcvdIDs (array) *required*: Array of Test Case Version IDs (required if fromReqs is true). CRITICAL: parameter name is 'tcvdIDs' — do NOT use 'tcVersionIds', 'testCaseVersionIds', or other variants.
 - fromReqs (boolean): Link TestCases from Requirements (optional, default true)
 
 **Output Description:** JSON object with linkage status and details.
@@ -7164,7 +7836,7 @@ Expected Output: Project context set to 'MAC' with viewIds and folder structure
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
 - cycle (object) *required*
 
 **Output Description:** JSON object containing the updated cycle details and confirmation of update
@@ -7233,7 +7905,7 @@ Expected Output: Cycle updated with new name and dates successfully
 **Toolset:** Issues
 
 **Parameters:**
-- DefectId (number) *required*: ID of the defect/issue to be updated
+- DefectId (number) *required*: ID of the defect/issue to be updated. CRITICAL: the parameter name is 'DefectId' (capital D) — do NOT use 'defectId', 'issueId', 'id', or other variants. Accepts a string or number.
 - entityKey (string): Entity Key of the defect/issue to be updated
 - issueType (number): Issue type ID (e.g. Bug, Enhancement, etc.)
 - issuePriority (number): Issue priority ID (e.g. High, Medium, Low, etc.)
@@ -7313,8 +7985,8 @@ Expected Output: Affected release updated successfully.
 
 **Parameters:**
 - projectKey (string): Project key - unique identifier for the project (default: "default")
-- baseUrl (string): The base URL for the QMetry instance (must be a valid URL) (default: "https://testmanagement.qmetry.com")
-- tcID (number) *required*: Test Case numeric ID. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
+- baseUrl (string): The base URL for the QMetry instance (must be a valid URL)
+- tcID (number) *required*: Test Case numeric ID. CRITICAL: the parameter name is 'tcID' — do NOT use 'testCaseId', 'testCaseID', 'tcId', or other variants. Accepts a string or number. This is the internal numeric identifier, not the entity key like 'MAC-TC-1684'. You can get this ID from test case search results or by using filters.
 - tcVersionID (number) *required*: Test Case version number. This is the internal numeric identifier for the version.
 - tcVersion (number): Test Case version number (required when withVersion=true for creating new version). This is the current version number from which a new version will be created.
 - withVersion (boolean): Pass 'true' if you want to create a new version of the test case with incremented version number. When true, a new version is created (e.g., if current version is 2, new version 3 is created). When false or omitted, updates the existing version specified by tcVersionID. IMPORTANT: Always send proper tcVersionID to identify which version the request is for.
@@ -7606,7 +8278,7 @@ Expected Output: New version 3 created successfully from version 2. Test case no
 
 **Parameters:**
 - id (number) *required*: Id of Test Suite to be updated (required)
-- TsFolderID (number) *required*: Folder ID where Test Suite resides (required)
+- TsFolderID (number): Folder ID where Test Suite resides - SYSTEM AUTOMATICALLY RESOLVES THIS. Leave empty unless you have a specific folder ID. System will fetch project info using the projectKey and extract rootFolders.TS.id automatically. Manual folder ID only needed if you want to override the automatic resolution.
 - entityKey (string) *required*: Entity Key of Test Suite to be updated (required)
 - name (string): Name of the Test Suite
 - description (string): Description of the Test Suite
@@ -10062,6 +10734,26 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     "outputSchema": undefined,
     "title": "Reflect: Get Suite Execution Status",
   },
+  "reflect_get_test_detail": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Reflect: Get Test Detail",
+    },
+    "description": "Get the full detail of a reflect test, including its name, description, and all recorded steps
+
+**Toolset:** Tests
+
+**Parameters:**
+- testId (string) *required*: ID of the reflect test to retrieve details for",
+    "inputSchema": [
+      "testId",
+    ],
+    "outputSchema": undefined,
+    "title": "Reflect: Get Test Detail",
+  },
   "reflect_get_test_status": {
     "annotations": {
       "destructiveHint": false,
@@ -10207,6 +10899,42 @@ None",
     ],
     "outputSchema": undefined,
     "title": "Swagger: Create API from Prompt",
+  },
+  "swagger_create_documentation_page": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Swagger: Create Documentation Page",
+    },
+    "description": "Create a documentation page in a portal product in a single tool call. Supports markdown and html content types. Returns the page location details (productId, sectionId, slug) and a draftUrl to edit it in the portal.
+
+**Toolset:** Documents
+
+**Parameters:**
+- portalId (string) *required*: Portal UUID or subdomain - unique identifier for the portal
+- productId (string) *required*: Product UUID - unique identifier for the product
+- pageTitle (string) *required*: Title of the documentation page - will be displayed in navigation (3-255 characters)
+- pageSlug (string): URL slug for the documentation page. 3-255 characters, lowercase, alphanumeric with hyphens, underscores, or dots (e.g. 'my-page'). If not provided, the slug is generated from the page title.
+- pageContent (string): Content of the documentation page. Provide HTML when contentType is 'html', Markdown when contentType is 'markdown'.
+- contentType (enum): Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return an error. (default: "markdown")
+- source (enum): Where the document content is managed. 'internal': editable in both the portal UI and via API. 'external': editable via API only, not in the portal UI. Constraint: 'html' content type only supports 'external' source. (default: "internal")
+- order (number): Order position of the documentation page within its parent section or item (default: 0)
+- parentId (string): Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure",
+    "inputSchema": [
+      "contentType",
+      "order",
+      "pageContent",
+      "pageSlug",
+      "pageTitle",
+      "parentId",
+      "portalId",
+      "productId",
+      "source",
+    ],
+    "outputSchema": undefined,
+    "title": "Swagger: Create Documentation Page",
   },
   "swagger_create_or_update_api": {
     "annotations": {
@@ -10506,7 +11234,7 @@ None",
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product
 - embed (array): List of related entities to embed in the response - e.g., ['tableOfContents', 'tableOfContents.swaggerhubApi'] to include table of contents and SwaggerHub API details
 - page (number): Page number for paginated results - specifies which page of results to retrieve (default is 1)
-- size (number): Number of items per page for pagination - controls how many results are returned per page (default is 20)",
+- size (number): Number of items per page for pagination - controls how many results are returned per page (default is 10)",
     "inputSchema": [
       "embed",
       "page",
@@ -10585,19 +11313,41 @@ None",
       "readOnlyHint": true,
       "title": "Swagger: Publish Portal Product",
     },
-    "description": "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live.
+    "description": "Publish a product's content to make it live or as preview. This endpoint publishes the current content of a product, making it visible to portal visitors. Use preview mode to test before going live. Optionally provide \`tableOfContentsId\` to get a page-specific URL. Returns publication status, a live or preview URL (null if URL building fails), product and portal metadata, and an optional \`warning\` when metadata/URL building failed — a warning does NOT mean the publish failed.
 
 **Toolset:** Products
 
 **Parameters:**
 - productId (string) *required*: Product UUID or identifier in the format 'portal-subdomain:product-slug' - unique identifier for the product
+- tableOfContentsId (string): Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'. When provided, publishPortalProduct uses it to resolve the published URL path for the returned preview/live link.
 - preview (boolean): Whether to publish as preview (true) or live (false). Preview allows testing before going live. Defaults to false (live publication) (default: false)",
     "inputSchema": [
       "preview",
       "productId",
+      "tableOfContentsId",
     ],
     "outputSchema": undefined,
     "title": "Swagger: Publish Portal Product",
+  },
+  "swagger_resolve_organization_portal": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Swagger: Resolve Organization Portal",
+    },
+    "description": "Resolve portal details for a Swagger organization in a single step. Given an organization UUID, returns the portal ID, subdomain, customDomain (when configured), and the list of products (with productId, productSlug, and productName) for the organization's portal. If the organization has no portal yet, a new portal is created automatically. Use this tool to obtain all portal context needed for subsequent portal and product operations.
+
+**Toolset:** Portals
+
+**Parameters:**
+- organizationId (string) *required*: Swagger organization UUID - the organization to resolve portal details for",
+    "inputSchema": [
+      "organizationId",
+    ],
+    "outputSchema": undefined,
+    "title": "Swagger: Resolve Organization Portal",
   },
   "swagger_scan_api_standardization": {
     "annotations": {
@@ -10607,7 +11357,7 @@ None",
       "readOnlyHint": true,
       "title": "Swagger: Scan API Standardization",
     },
-    "description": "Run a standardization scan against an API definition using the organization's governance and standardization rules. Accepts a YAML or JSON OpenAPI/AsyncAPI definition and returns a list of standardization errors and validation issues. Use this tool when users ask to validate, scan, or check API governance or standardization.
+    "description": "Run a standardization scan against an API definition using the organization's governance and standardization rules. Accepts a raw YAML or JSON OpenAPI/AsyncAPI definition and returns a list of validation errors, the total issue count, and counts grouped by severity. Use this tool when the user provides the API definition content directly (as raw YAML or JSON) and asks to validate, scan, or check the governance or standardization of the API.
 
 **Toolset:** Registry API
 
@@ -10620,6 +11370,30 @@ None",
     ],
     "outputSchema": undefined,
     "title": "Swagger: Scan API Standardization",
+  },
+  "swagger_scan_api_standardization_from_registry": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Swagger: Scan API Standardization from Registry",
+    },
+    "description": "Run a standardization scan on an API that already exists in SwaggerHub Registry, identified by organization name, API name, and version. Fetches the API definition from the registry internally and scans it against the organization's governance and standardization rules. Returns a list of validation errors, total issue count, counts grouped by severity, and a SwaggerHub UI URL for the scanned API. Use this tool when the user identifies the API by org name, API name, and version and asks to validate, scan, or check the governance or standardization of an existing API.
+
+**Toolset:** Registry API
+
+**Parameters:**
+- orgName (string) *required*: The organization name that owns the API and provides the standardization rules (case-sensitive)
+- apiName (string) *required*: API name (case-sensitive)
+- version (string) *required*: Version identifier",
+    "inputSchema": [
+      "apiName",
+      "orgName",
+      "version",
+    ],
+    "outputSchema": undefined,
+    "title": "Swagger: Scan API Standardization from Registry",
   },
   "swagger_search_apis_and_domains": {
     "annotations": {
@@ -10698,8 +11472,8 @@ None",
 **Parameters:**
 - documentId (string) *required*: Document UUID - unique identifier for the document
 - content (string): The document content to update (HTML or Markdown based on document type)
-- type (enum): Content type - 'html' for HTML content or 'markdown' for Markdown content
-- source (enum): Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+- type (enum): Content type of the document. Note: documents with type 'html' and source 'internal' cannot be edited via API — only 'html' + 'external' and all 'markdown' combinations are supported.
+- source (enum): Where the document content is managed. 'internal': editable in both portal UI and API. 'external': editable via API only. Note: 'html' + 'internal' documents cannot be updated via API.",
     "inputSchema": [
       "content",
       "documentId",
@@ -12445,6 +13219,7 @@ Expected Output: Test execution steps for the specified test data row",
 Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the limit value in the response to confirm how many results were actually returned.
  (default: 10)
 - startAtId (number): Zero-indexed starting position for ID-based pagination. (default: 0)
+- updatedAfter (string): Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
 
 **Examples:**
 1. Get the first 10 test executions
@@ -12491,6 +13266,7 @@ Expected Output: Test executions with step links included",
       "startAtId",
       "testCase",
       "testCycle",
+      "updatedAfter",
     ],
     "outputSchema": [
       "limit",

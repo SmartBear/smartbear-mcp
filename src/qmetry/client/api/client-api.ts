@@ -1,4 +1,4 @@
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../../../common/info";
+import { USER_AGENT } from "../../../common/info";
 import { QMETRY_DEFAULTS } from "../../config/constants";
 import type { RequestOptions } from "../../types/common";
 import { handleQMetryApiError, handleQMetryFetchError } from "./error-handler";
@@ -20,13 +20,25 @@ export async function qmetryRequest<T>({
   project,
   baseUrl,
   body,
+  scopeId,
+  orgCode,
+  extraHeaders,
 }: RequestOptions): Promise<T> {
   const url: string = `${baseUrl}${path}`;
   const headers: Record<string, string> = {
     project: project || QMETRY_DEFAULTS.PROJECT_KEY,
-    "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+    "User-Agent": USER_AGENT,
     "qmetry-source": "smartbear-mcp",
   };
+  if (scopeId !== undefined) {
+    headers.scope = String(scopeId);
+  }
+  if (orgCode !== undefined) {
+    headers.orgcode = orgCode;
+  }
+  if (extraHeaders) {
+    Object.assign(headers, extraHeaders);
+  }
   if (body) {
     headers["Content-Type"] = "application/json";
   }

@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { USER_AGENT } from "../common/info";
 import {
   isSamplingPolyfillResult,
   type SamplingPolyfillResult,
@@ -285,6 +285,13 @@ export class PactflowClient implements Client {
       contextToken = contextToken[0];
     }
 
+    const clientInfo = this._server?.getClientInfo();
+    const sourceApplicationHeader: Record<string, string> = {
+      SOURCE_APPLICATION: clientInfo
+        ? `${clientInfo.name}/${clientInfo.version}`
+        : "unknown",
+    };
+
     if (contextToken) {
       let authHeader = contextToken;
       if (
@@ -297,7 +304,8 @@ export class PactflowClient implements Client {
       return {
         Authorization: authHeader,
         "Content-Type": "application/json",
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": USER_AGENT,
+        ...sourceApplicationHeader,
       };
     }
 
@@ -313,14 +321,16 @@ export class PactflowClient implements Client {
       return {
         Authorization: authHeader,
         "Content-Type": "application/json",
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": USER_AGENT,
+        ...sourceApplicationHeader,
       };
     } else if (this.username && this.password) {
       const authString = `${this.username}:${this.password}`;
       return {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
         "Content-Type": "application/json",
-        "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+        "User-Agent": USER_AGENT,
+        ...sourceApplicationHeader,
       };
     }
     return undefined;

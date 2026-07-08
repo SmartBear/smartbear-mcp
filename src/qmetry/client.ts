@@ -7,12 +7,13 @@ import type {
 } from "../common/types";
 import {
   autoResolveViewIdAndFolderPath,
+  extractProjectContext,
   findAutoResolveConfig,
 } from "./client/auto-resolve";
 import { QMETRY_HANDLER_MAP } from "./client/handlers";
 import { getProjectInfo } from "./client/project";
 import { TOOLS } from "./client/tools/index";
-import { QMETRY_DEFAULTS } from "./config/constants";
+import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants";
 
 const ConfigurationSchema = z.object({
   api_key: z
@@ -39,6 +40,8 @@ export class QmetryClient implements Client {
   private token: string | undefined;
   private projectApiKey: string = QMETRY_DEFAULTS.PROJECT_KEY;
   private endpoint: string = QMETRY_DEFAULTS.BASE_URL;
+  private projectNumericId: number | undefined;
+  private orgCode: string | undefined;
 
   async configure(
     _server: any,
@@ -94,6 +97,12 @@ export class QmetryClient implements Client {
 
   getBaseUrl() {
     return this.endpoint;
+  }
+
+  private persistProjectContext(projectInfo: any) {
+    const { scopeId, orgCode } = extractProjectContext(projectInfo);
+    if (scopeId !== undefined) this.projectNumericId = scopeId;
+    if (orgCode !== undefined) this.orgCode = orgCode;
   }
 
   async registerTools(
@@ -184,18 +193,48 @@ export class QmetryClient implements Client {
                   autoResolveConfig,
                 ),
               );
+
+              // Also persist numeric project context from this project info response
+              this.persistProjectContext(projectInfo);
             }
           }
 
           // Extract projectKey and baseUrl from arguments to prevent them from being sent in request body
           const { projectKey: _, baseUrl: __, ...cleanArgs } = a;
 
+          // Inject persisted numeric project context only for handlers that explicitly support
+          // scope/orgcode headers and strip them from the request body before forwarding.
+          // Injecting into all handlers would silently add these fields to API request bodies.
+          const SCOPE_AWARE_HANDLERS = new Set([
+            QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
+            QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS,
+            QMetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA,
+            QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
+            QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES,
+          ]);
+          const isScopeAware = SCOPE_AWARE_HANDLERS.has(tool.handler);
+          const enrichedArgs = {
+            ...cleanArgs,
+            ...(isScopeAware &&
+              this.projectNumericId !== undefined && {
+                scopeId: this.projectNumericId,
+              }),
+            ...(isScopeAware &&
+              this.orgCode !== undefined && { orgCode: this.orgCode }),
+          };
+
           const result = await handlerFn(
             this.getToken(),
             baseUrl,
             projectKey,
-            cleanArgs,
+            enrichedArgs,
           );
+
+          // Persist project context only after successful API call
+          if (tool.handler === QMetryToolsHandlers.SET_PROJECT_INFO) {
+            this.projectApiKey = projectKey;
+            this.persistProjectContext(result);
+          }
 
           // Use custom formatter if available, otherwise return JSON
           const formatted = tool.formatResponse

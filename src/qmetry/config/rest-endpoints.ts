@@ -41,6 +41,7 @@ export const QMETRY_PATHS = {
     CREATE_UPDATE_ISSUE: "/rest/issues",
     GET_ISSUES_LINKED_TO_TC: "/rest/issues/list/ForTC",
     LINK_ISSUES_TO_TESTCASE_RUN: "/rest/execution/link/issue",
+    GET_ISSUE_EXECUTIONS: "/rest/execution/getExecutionsForIssue",
   },
   AUTOMATION: {
     IMPORT_RESULTS: "/rest/import/createandscheduletestresults/1",
@@ -48,5 +49,10 @@ export const QMETRY_PATHS = {
   },
   ANALYTICS: {
     EXECUTE_QUERY: "/rest/analytics/latest/query/execute",
+  },
+  UDF: {
+    BULK_UPDATE_TEST_RUN_UDFS: "/rest/execution/udf/bulkupdate",
+    TEST_RUN_UDF_METADATA: "/rest/admin/udf/metadata",
+    FETCH_CASCADE_CHILD_VALUES: "/rest/admin/udf/cascade/childValue",
   },
 };

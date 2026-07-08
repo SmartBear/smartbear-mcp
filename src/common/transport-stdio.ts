@@ -2,7 +2,8 @@ import { enableCompileCache } from "node:module";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { clientRegistry } from "./client-registry";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
+import { USER_AGENT } from "./info";
+import { handleInitializeMessage } from "./initialize";
 import { SmartBearMcpServer } from "./server";
 import { registerShutdownHandler } from "./shutdown";
 import { getTypeDescription, isOptionalType } from "./zod-utils";
@@ -32,7 +33,7 @@ function getNoConfigMessage(): string[] {
  */
 export async function runStdioMode() {
   if (process.argv.includes("--version")) {
-    console.log(`${MCP_SERVER_NAME}: v${MCP_SERVER_VERSION}`);
+    console.log(`User-Agent: ${USER_AGENT}`);
     process.exit(0);
   } else if (process.argv.includes("--help")) {
     console.log(
@@ -92,27 +93,7 @@ export async function runStdioMode() {
     }
   });
 
-  transport.onmessage = (message) => {
-    if ("method" in message && message.method === "initialize") {
-      if (message.params?.protocolVersion === "2025-11-25") {
-        const clientCapabilities = message.params?.capabilities as Record<
-          string,
-          unknown
-        >;
-
-        if (Object.hasOwn(clientCapabilities, "sampling")) {
-          server.setSamplingSupported(true);
-        }
-
-        if (Object.hasOwn(clientCapabilities, "elicitation")) {
-          server.setElicitationSupported(true);
-        }
-      }
-
-      // Other protocolVersion handling can be added below
-      // to maintain backwards compatibility.
-    }
-  };
+  transport.onmessage = (message) => handleInitializeMessage(server, message);
   await server.connect(transport);
 }
 

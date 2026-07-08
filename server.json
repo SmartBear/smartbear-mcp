@@ -7,13 +7,13 @@
     "url": "https://github.com/SmartBear/smartbear-mcp",
     "source": "github"
   },
-  "version": "0.17.1",
+  "version": "0.25.0",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@smartbear/mcp",
-      "version": "0.17.1",
+      "version": "0.25.0",
       "transport": {
         "type": "stdio"
       },
@@ -54,6 +54,18 @@
           "description": "Swagger API key. Leave empty to disable Swagger tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/swagger-portal-integration",
           "isRequired": false,
           "isSecret": true
+        },
+        {
+          "name": "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN",
+          "description": "Swagger Functional Testing API token. Leave empty to disable Functional Testing tools. Learn more: https://developer.smartbear.com/smartbear-mcp/docs/functional-testing-integration",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH",
+          "description": "Override the Swagger Functional Testing API base URL (optional). Defaults to https://api.reflect.run/v1",
+          "isRequired": false,
+          "isSecret": false
         },
         {
           "name": "PACT_BROKER_BASE_URL",
@@ -113,10 +125,6 @@
     }
   ],
   "remotes": [
-    {
-      "type": "streamable-http",
-      "url": "https://swagger.mcp.smartbear.com/mcp"
-    },
     {
       "type": "streamable-http",
       "url": "https://bugsnag.mcp.smartbear.com/mcp"

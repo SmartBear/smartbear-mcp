@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "../common/info";
+import { USER_AGENT } from "../common/info";
 import { getRequestHeader } from "../common/request-context";
 import type { SmartBearMcpServer } from "../common/server";
 import { ToolError } from "../common/tools";
@@ -10,6 +10,7 @@ import type {
   RegisterToolsFunction,
 } from "../common/types";
 import { AUTHORIZATION_HEADER, DEFAULT_API_BASE_URL } from "./config/constants";
+import { ListEnvironments } from "./tool/environments/list-environments";
 import { ChatWithQaLead } from "./tool/tasks/chat-with-qa-lead";
 import { ExpandApplicationModel } from "./tool/tasks/expand-application-model";
 import { GetTask } from "./tool/tasks/get-task";
@@ -76,7 +77,7 @@ export class BearQClient implements Client {
     return {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "User-Agent": `${MCP_SERVER_NAME}/${MCP_SERVER_VERSION}`,
+      "User-Agent": USER_AGENT,
     };
   }
 
@@ -97,6 +98,7 @@ export class BearQClient implements Client {
       new GetTaskStatus(this),
       new StopTask(this),
       new WaitForTask(this),
+      new ListEnvironments(this),
     ];
     for (const tool of tools) {
       register(tool.specification, tool.handle);

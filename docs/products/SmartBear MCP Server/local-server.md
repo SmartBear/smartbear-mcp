@@ -70,6 +70,10 @@ The SmartBear MCP Server supports multiple SmartBear products, each requiring it
 
   Generate your QTM4J API key by following the instructions [here](https://support.smartbear.com/qmetry-test-management-for-jira-cloud/docs/en/user-guide/qmetry-open-api.html). To use automation tools, also generate a separate `QTM4J_AUTOMATION_API_KEY` from the same page.
 
+- **Swagger Functional Testing**
+
+  Generate an API key from your Swagger Functional Testing account dashboard at [`app.reflect.run`](https://app.reflect.run/settings/account).
+
 > 🔐 Store your tokens securely. They provide access to sensitive data and should be treated like passwords. You can use any combination of the supported products — tokens for unused products can be omitted.
 
 ## Configure Environment Variables
@@ -123,6 +127,11 @@ export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
 # Optional: Set your QTM4J base URL based on your region
 # US (default): https://qtmcloud.qmetry.com Australia: https://syd-qtmcloud.qmetry.com
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
+
+# Required for Swagger Functional Testing tools
+export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
+# Optional: Override the Swagger Functional Testing API base URL (defaults to https://api.reflect.run/v1)
+export SWAGGER_FUNCTIONAL_TESTING_BASE_PATH=https://api.reflect.run/v1
 ```
 
 > ⚠️ The `MCP_SERVER_BUGSNAG_API_KEY` is used for monitoring the MCP server itself and should be different from your main application's API key.
@@ -162,7 +171,9 @@ Create or edit `.vscode/mcp.json` in your workspace:
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
-        "QTM4J_BASE_URL": "${input:qtm4j_base_url}"
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
       }
     }
   },
@@ -268,6 +279,18 @@ Create or edit `.vscode/mcp.json` in your workspace:
       "type": "promptString",
       "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
       "password": false
+    },
+    {
+      "id": "swagger_functional_testing_api_token",
+      "type": "promptString",
+      "description": "Swagger Functional Testing API Token",
+      "password": true
+    },
+    {
+      "id": "swagger_functional_testing_base_path",
+      "type": "promptString",
+      "description": "Swagger Functional Testing API Base URL (leave blank for default https://api.reflect.run/v1)",
+      "password": false
     }
   ]
 }
@@ -303,7 +326,8 @@ Add to your `mcp.json` configuration:
         "ZEPHYR_BASE_URL": "https://api.zephyrscale.smartbear.com/v2",
         "QTM4J_API_KEY": "your-qtm4j-api-key",
         "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
-        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
   }
@@ -340,7 +364,8 @@ Edit your `claude_desktop_config.json` file:
         "ZEPHYR_BASE_URL": "your-zephyr-base-url",
         "QTM4J_API_KEY": "your-qtm4j-api-key",
         "QTM4J_AUTOMATION_API_KEY": "your-qtm4j-automation-api-key",
-        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com"
+        "QTM4J_BASE_URL": "https://qtmcloud.qmetry.com",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "your-functional-testing-api-token"
       }
     }
   }
@@ -382,6 +407,7 @@ export PACT_BROKER_TOKEN=your-pact-broker-token
 export QTM4J_API_KEY="your-qtm4j-api-key"
 export QTM4J_AUTOMATION_API_KEY="your-qtm4j-automation-api-key"
 export QTM4J_BASE_URL="https://qtmcloud.qmetry.com"
+export SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your-functional-testing-api-token
 ```
 
 Launch Claude Code with:
@@ -442,7 +468,9 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
         "ZEPHYR_BASE_URL": "${input:zephyr_base_url}",
         "QTM4J_API_KEY": "${input:qtm4j_api_key}",
         "QTM4J_AUTOMATION_API_KEY": "${input:qtm4j_automation_api_key}",
-        "QTM4J_BASE_URL": "${input:qtm4j_base_url}"
+        "QTM4J_BASE_URL": "${input:qtm4j_base_url}",
+        "SWAGGER_FUNCTIONAL_TESTING_API_TOKEN": "${input:swagger_functional_testing_api_token}",
+        "SWAGGER_FUNCTIONAL_TESTING_BASE_PATH": "${input:swagger_functional_testing_base_path}"
       }
     }
   },
@@ -548,6 +576,18 @@ To run the built server locally in VS Code, add the following to `.vscode/mcp.js
       "type": "promptString",
       "description": "US region (default): https://qtmcloud.qmetry.com. Australia region: https://syd-qtmcloud.qmetry.com.",
       "password": false
+    },
+    {
+      "id": "swagger_functional_testing_api_token",
+      "type": "promptString",
+      "description": "Swagger Functional Testing API Token",
+      "password": true
+    },
+    {
+      "id": "swagger_functional_testing_base_path",
+      "type": "promptString",
+      "description": "Swagger Functional Testing API Base URL (leave blank for default https://api.reflect.run/v1)",
+      "password": false
     }
   ]
 }
@@ -572,6 +612,7 @@ ZEPHYR_BASE_URL=https://api.zephyrscale.smartbear.com/v2 \
 QTM4J_API_KEY=your_qtm4j_key \
 QTM4J_AUTOMATION_API_KEY=your_qtm4j_automation_key \
 QTM4J_BASE_URL=https://qtmcloud.qmetry.com \
+SWAGGER_FUNCTIONAL_TESTING_API_TOKEN=your_functional_testing_token \
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
 

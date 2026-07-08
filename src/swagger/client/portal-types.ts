@@ -39,7 +39,7 @@ export const GetProductSectionsArgsSchema = z.object({
     .number()
     .optional()
     .describe(
-      "Number of items per page for pagination - controls how many results are returned per page (default is 20)",
+      "Number of items per page for pagination - controls how many results are returned per page (default is 10)",
     ),
 });
 
@@ -334,7 +334,22 @@ export const UpdateProductArgsSchema = ProductArgsSchema.extend({
     ),
 });
 
+export const ResolveOrganizationPortalArgsSchema = z.object({
+  organizationId: z
+    .string()
+    .uuid()
+    .describe(
+      "Swagger organization UUID - the organization to resolve portal details for",
+    ),
+});
+
 export const PublishProductArgsSchema = ProductArgsSchema.extend({
+  tableOfContentsId: z
+    .string()
+    .optional()
+    .describe(
+      "Optional table of contents UUID, or identifier in the format 'portal-subdomain:product-slug:section-slug:table-of-contents-slug'. When provided, publishPortalProduct uses it to resolve the published URL path for the returned preview/live link.",
+    ),
   preview: z
     .boolean()
     .optional()
@@ -352,6 +367,9 @@ export type UpdatePortalArgs = z.infer<typeof UpdatePortalArgsSchema>;
 export type CreateProductArgs = z.infer<typeof CreateProductArgsSchema>;
 export type UpdateProductArgs = z.infer<typeof UpdateProductArgsSchema>;
 export type PublishProductArgs = z.infer<typeof PublishProductArgsSchema>;
+export type ResolveOrganizationPortalArgs = z.infer<
+  typeof ResolveOrganizationPortalArgsSchema
+>;
 export type GetProductSectionsArgs = z.infer<
   typeof GetProductSectionsArgsSchema
 >;
@@ -383,13 +401,13 @@ export const UpdateDocumentArgsSchema = z.object({
     .enum(["html", "markdown"])
     .optional()
     .describe(
-      "Content type - 'html' for HTML content or 'markdown' for Markdown content",
+      "Content type of the document. Note: documents with type 'html' and source 'internal' cannot be edited via API — only 'html' + 'external' and all 'markdown' combinations are supported.",
     ),
   source: z
     .enum(["internal", "external"])
     .optional()
     .describe(
-      "Source of the document content - 'internal' allows to edit content in both UI and API, 'external' enables editing only via API.",
+      "Where the document content is managed. 'internal': editable in both portal UI and API. 'external': editable via API only. Note: 'html' + 'internal' documents cannot be updated via API.",
     ),
 });
 
@@ -424,6 +442,23 @@ export type CreateTableOfContentsBody = Omit<
 >;
 export type UpdateDocumentBody = Omit<UpdateDocumentArgs, "documentId">;
 
+export type PublishPortalProductResponse = SuccessResponse & {
+  preview: boolean;
+  liveUrl?: string | null;
+  previewUrl?: string | null;
+  product?: Pick<Product, "id" | "name" | "slug">;
+  portal?: Pick<Portal, "id" | "name" | "subdomain" | "customDomain">;
+  tableOfContentsItem?: Pick<
+    TableOfContentsItem,
+    "id" | "slug" | "title" | "order" | "parentId"
+  > | null;
+  warning?: {
+    code: string;
+    step: string;
+    message: string;
+  };
+};
+
 // Response types for better type safety
 export type FallbackResponse =
   | {
@@ -440,12 +475,15 @@ export interface Portal {
   id: string;
   name: string;
   subdomain?: string;
+  customDomain?: string;
   [key: string]: unknown;
 }
 
 export interface Product {
   id: string;
   name: string;
+  slug: string;
+  portalId?: string;
   [key: string]: unknown;
 }
 
@@ -456,6 +494,11 @@ export interface Section {
   slug: string;
   tableOfContents: TableOfContentsItem[];
   order: number;
+}
+
+export interface CreateTableOfContentsItemResponse {
+  id: string;
+  documentId: string;
 }
 
 export interface TableOfContentsItem {
@@ -505,8 +548,114 @@ export interface TableOfContentsItemSwaggerhubApi {
   _private: boolean;
 }
 
+// Response type for the Resolve Organization Portal tool. Product keys follow
+// the camelCase naming convention used across the MCP server.
+export interface ResolvedPortalProduct {
+  productId: string;
+  productSlug: string;
+  productName: string;
+}
+
+export interface ResolveOrganizationPortalResponse {
+  organizationId: string;
+  portalId: string;
+  subdomain: string;
+  // Present only when the portal has a custom domain configured.
+  customDomain?: string;
+  portalCreated: boolean;
+  products: ResolvedPortalProduct[];
+}
+
 // Response collection types
 export type PortalsListResponse = Portal[];
 export type ProductsListResponse = Product[];
-export type SectionsListResponse = Section[];
+
+export interface PaginatedResponse<T> {
+  page: {
+    number: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+  items: T[];
+}
+
+export type SectionsListResponse = PaginatedResponse<Section>;
 export type TableOfContentsListResponse = TableOfContentsItem[];
+
+export const CreateDocumentationPageArgsSchema = z.object({
+  portalId: z
+    .string()
+    .describe("Portal UUID or subdomain - unique identifier for the portal"),
+  productId: z
+    .string()
+    .uuid()
+    .describe("Product UUID - unique identifier for the product"),
+  pageTitle: z
+    .string()
+    .describe(
+      "Title of the documentation page - will be displayed in navigation (3-255 characters)",
+    ),
+  pageSlug: z
+    .string()
+    .optional()
+    .describe(
+      "URL slug for the documentation page. 3-255 characters, lowercase, alphanumeric with hyphens, underscores, or dots (e.g. 'my-page'). If not provided, the slug is generated from the page title.",
+    ),
+  pageContent: z
+    .string()
+    .optional()
+    .describe(
+      "Content of the documentation page. Provide HTML when contentType is 'html', Markdown when contentType is 'markdown'.",
+    ),
+  contentType: z
+    .enum(["markdown", "html"])
+    .default("markdown")
+    .optional()
+    .describe(
+      "Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return an error.",
+    ),
+  source: z
+    .enum(["internal", "external"])
+    .default("internal")
+    .optional()
+    .describe(
+      "Where the document content is managed. 'internal': editable in both the portal UI and via API. 'external': editable via API only, not in the portal UI. Constraint: 'html' content type only supports 'external' source.",
+    ),
+  order: z
+    .number()
+    .optional()
+    .default(0)
+    .describe(
+      "Order position of the documentation page within its parent section or item",
+    ),
+  parentId: z
+    .string()
+    .nullable()
+    .optional()
+    .default(null)
+    .describe(
+      "Parent table of contents item ID - null for top-level pages, or ID of parent item for nested structure",
+    ),
+});
+
+export type CreateDocumentationPageArgs = z.input<
+  typeof CreateDocumentationPageArgsSchema
+>;
+
+export interface CreateDocumentationPageResult {
+  productId: string;
+  sectionId: string;
+  sectionSlug: string;
+  pageDetails: {
+    tableOfContentsId: string;
+    slug: string;
+    title: string;
+    content: {
+      type: "markdown" | "html";
+      source: "internal" | "external";
+      documentId: string;
+    };
+  };
+  draftUrl?: string;
+}
