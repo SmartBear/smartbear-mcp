@@ -45,7 +45,7 @@
     "test:coverage": "vitest --coverage",
     "test:coverage:ci": "vitest --coverage --reporter=verbose",
     "test:run": "vitest run",
-    "test:pact": "vitest run src/tests/pact",
+    "test:pact": "vitest run --config vitest.pact.config.ts",
     "coverage:check": "vitest --coverage --reporter=verbose",
     "bump": "node scripts/bump.js"
   },
