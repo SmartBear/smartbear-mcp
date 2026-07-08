@@ -112,6 +112,8 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     toolset: "Functional Testing",
     summary:
       "Retrieves the execution history for a given test in your Swagger Functional Testing workspace. " +
+      "Returns a list of past runs, each including pass/fail status, run time, creation timestamp, " +
+      "and — for failed runs — a per-step breakdown of failure details. " +
       "Use this tool when you need to check past run results, identify failures, or assess test reliability over time. " +
       "Do not use this tool to run a test or retrieve suite-level execution results.",
     inputSchema: GetFunctionalTestHistoryParamsSchema,
