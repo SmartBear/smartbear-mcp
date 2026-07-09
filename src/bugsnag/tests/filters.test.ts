@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  type FilterObject,
-  toUrlSearchParams,
-} from "../client/filters.js";
+import { type FilterObject, toUrlSearchParams } from "../client/filters.js";
 
 describe("Filter Utilities", () => {
   describe("toUrlSearchParams", () => {

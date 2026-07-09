@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { BearQClient } from "../client";
 import { requestContextStorage } from "../../common/request-context";
+import { BearQClient } from "../client";
 
 describe("BearQClient", () => {
   let client: BearQClient;

@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolError } from "../../../../common/tools";
-import {
-  AUTOMATION_LIMITS,
-  ENDPOINTS,
-} from "../../../config/constants";
+import { AUTOMATION_LIMITS, ENDPOINTS } from "../../../config/constants";
 import { UploadAutomationResult } from "../../../tool/test-automation/upload-automation-result";
 
 vi.mock("node:fs/promises", () => ({

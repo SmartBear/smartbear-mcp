@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { USER_AGENT } from "../../common/info.js";
+import { ToolError } from "../../common/tools.js";
 import type {
   ErrorApiView,
   EventApiView,
@@ -9,14 +11,9 @@ import type {
   TraceField,
 } from "../client/api/api.js";
 import type { BaseAPI } from "../client/api/base.js";
-import type {
-  CurrentUserAPI,
-  ErrorAPI,
-} from "../client/api/index.js";
+import type { CurrentUserAPI, ErrorAPI } from "../client/api/index.js";
 import type { ProjectAPI } from "../client/api/Project.js";
 import { BugsnagClient } from "../client.js";
-import { USER_AGENT } from "../../common/info.js";
-import { ToolError } from "../../common/tools.js";
 import {
   getMockError,
   getMockEvent,
@@ -86,9 +83,7 @@ vi.mock("../client/api/configuration.ts", () => ({
 
 vi.mock("../client/api/index.js", async (importOriginal) => {
   const actual =
-    await importOriginal<
-      typeof import("../client/api/index.js")
-    >();
+    await importOriginal<typeof import("../client/api/index.js")>();
   return {
     ...actual,
     ErrorUpdateRequest: {

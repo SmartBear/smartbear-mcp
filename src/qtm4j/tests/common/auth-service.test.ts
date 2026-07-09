@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { USER_AGENT } from "../../../common/info";
-import {
-  CONTENT_TYPES,
-  HTTP_HEADERS,
-} from "../../config/constants";
+import { CONTENT_TYPES, HTTP_HEADERS } from "../../config/constants";
 import { AuthService } from "../../http/auth-service";
 
 describe("AuthService", () => {
