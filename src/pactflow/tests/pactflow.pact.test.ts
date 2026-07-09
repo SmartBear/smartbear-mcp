@@ -50,13 +50,9 @@ async function createClient(baseUrl: string): Promise<PactflowClient> {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const authHeader = {
-  Authorization: like("Bearer test-token"),
-  Accept: "application/json",
-};
+const authHeader = { Authorization: like("Bearer test-token") };
 const jsonHeaders = {
   Authorization: like("Bearer test-token"),
-  Accept: "application/json",
   "Content-Type": regex("application/json.*", "application/json"),
 };
 const halJsonResponseHeaders = {
@@ -1401,7 +1397,6 @@ describe("Webhooks", () => {
           method: "POST",
           headers: {
             Authorization: "Bearer test-token",
-            Accept: "application/json",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
