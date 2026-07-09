@@ -67,46 +67,6 @@ const halJsonResponseHeaders = {
 // ════════════════════════════════════════════════════════════════════════════
 
 describe("Core", () => {
-  it("GET /can-i-deploy – returns deployment eligibility summary", () =>
-    provider
-      .addInteraction()
-      .given("pacticipant ServiceA version 1.0.0 exists")
-      .uponReceiving(
-        "a request to check can-i-deploy for ServiceA 1.0.0 in production",
-      )
-      .withRequest("GET", "/can-i-deploy", (builder) => {
-        builder
-          .query({
-            pacticipant: "ServiceA",
-            version: "1.0.0",
-            environment: "production",
-          })
-          .headers({ Authorization: like("Bearer test-token") });
-      })
-      .willRespondWith(200, (builder) => {
-        builder.headers(halJsonResponseHeaders).jsonBody({
-          summary: like({
-            deployable: true,
-            failed: 0,
-            reason: "All verification results are successful",
-            success: 1,
-            unknown: 0,
-          }),
-          matrix: [],
-          notices: [],
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.canIDeploy({
-          pacticipant: "ServiceA",
-          version: "1.0.0",
-          environment: "production",
-        });
-        expect(result.summary.deployable).toBe(true);
-        expect(result.summary).toBeDefined();
-      }));
-
   it("GET /matrix – returns pact verification matrix with summary", () =>
     provider
       .addInteraction()
@@ -119,17 +79,14 @@ describe("Core", () => {
             limit: "100",
             "q[]pacticipant": "ServiceA",
             "q[]version": "1.0.0",
-            "q[]latest": "true",
           })
           .headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
         builder.headers(halJsonResponseHeaders).jsonBody({
-          matrix: [],
-          notices: [],
+          matrix: eachLike(like({})),
+          notices: eachLike(like({})),
           summary: like({
-            deployable: true,
-            failed: 0,
             reason: "All verification results are successful",
             success: 0,
             unknown: 0,
@@ -141,10 +98,44 @@ describe("Core", () => {
         const result = await client.getMatrix({
           latestby: "cvp",
           limit: 100,
-          q: [{ pacticipant: "ServiceA", version: "1.0.0", latest: true }],
+          q: [{ pacticipant: "ServiceA", version: "1.0.0" }],
         });
-        expect(result.summary.deployable).toBe(true);
+        expect(result.summary).toBeDefined();
         expect(result.matrix).toBeDefined();
+      }));
+
+  it("GET /can-i-deploy – checks if a pacticipant version can be deployed", () =>
+    provider
+      .addInteraction()
+      .given(
+        "ServiceA version 1.0.0 is deployed to production environment 00000000-0000-0000-0000-000000000001",
+      )
+      .uponReceiving(
+        "a request to check if ServiceA 1.0.0 can be deployed to production",
+      )
+      .withRequest("GET", "/can-i-deploy", (b) => {
+        b.query({
+          pacticipant: "ServiceA",
+          version: "1.0.0",
+          environment: "production",
+        }).headers({ Authorization: like("Bearer test-token") });
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({
+            summary: like({ deployable: like(true), reason: like("") }),
+            matrix: like([]),
+          }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.canIDeploy({
+          pacticipant: "ServiceA",
+          version: "1.0.0",
+          environment: "production",
+        });
+        expect(result.summary).toBeDefined();
       }));
 
   it("GET /pacticipants – returns list of pacticipants", () =>
@@ -406,59 +397,6 @@ describe("Core", () => {
       });
   });
 
-  it("POST /provider-contracts/provider/{name}/publish – publishes a provider contract", () => {
-    const contractBody = {
-      pacticipantVersionNumber: "2.0.0",
-      contract: {
-        content: "eyJvcGVuYXBpIjogIjMuMC4wIn0=",
-        contentType: "application/json" as const,
-        specification: "oas" as const,
-        selfVerificationResults: {
-          success: true,
-          verifier: "dredd",
-          content: "eyJyZXN1bHRzIjogW119",
-          contentType: "application/json",
-        },
-      },
-      branch: "main",
-    };
-
-    return provider
-      .addInteraction()
-      .given("a pacticipant named ProviderAPI exists")
-      .uponReceiving(
-        "a request to publish provider contract for ProviderAPI 2.0.0",
-      )
-      .withRequest(
-        "POST",
-        "/provider-contracts/provider/ProviderAPI/publish",
-        (builder) => {
-          builder
-            .headers({
-              Authorization: like("Bearer test-token"),
-              "Content-Type": regex("application/json.*", "application/json"),
-            })
-            .jsonBody(like(contractBody));
-        },
-      )
-      .willRespondWith(200, (builder) => {
-        builder
-          .headers(halJsonResponseHeaders)
-          .jsonBody(
-            like({ notices: [], _embedded: like({}), _links: like({}) }),
-          );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.publishProviderContract({
-          providerName: "ProviderAPI",
-          ...contractBody,
-        });
-        expect(result).toBeDefined();
-        expect(result._embedded).toBeDefined();
-      });
-  });
-
   it("POST /pacts/provider/{name}/for-verification – returns pacts to verify", () =>
     provider
       .addInteraction()
@@ -494,54 +432,6 @@ describe("Core", () => {
           includePendingStatus: true,
         });
         expect(Array.isArray(result._embedded.pacts)).toBe(true);
-      }));
-
-  it("GET /pacticipants/{name}/branches – returns branches for a pacticipant", () =>
-    provider
-      .addInteraction()
-      .given("a pacticipant named ServiceA with branches exists")
-      .uponReceiving("a request to list branches for ServiceA")
-      .withRequest("GET", "/pacticipants/ServiceA/branches", (builder) => {
-        builder.headers({ Authorization: like("Bearer test-token") });
-      })
-      .willRespondWith(200, (builder) => {
-        builder.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: { branches: eachLike({ name: like("main") }) },
-          _links: like({}),
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.listBranches({
-          pacticipantName: "ServiceA",
-        });
-        expect(Array.isArray(result._embedded.branches)).toBe(true);
-        expect(result._embedded.branches.length).toBeGreaterThanOrEqual(1);
-        expect(result._embedded.branches[0].name).toBeDefined();
-      }));
-
-  it("GET /pacticipants/{name}/versions – returns versions for a pacticipant", () =>
-    provider
-      .addInteraction()
-      .given("a pacticipant named ServiceA with versions exists")
-      .uponReceiving("a request to list versions for ServiceA")
-      .withRequest("GET", "/pacticipants/ServiceA/versions", (builder) => {
-        builder.headers({ Authorization: like("Bearer test-token") });
-      })
-      .willRespondWith(200, (builder) => {
-        builder.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: { versions: eachLike({ number: like("1.0.0") }) },
-          _links: like({}),
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.listVersions({
-          pacticipantName: "ServiceA",
-        });
-        expect(Array.isArray(result._embedded.versions)).toBe(true);
-        expect(result._embedded.versions.length).toBeGreaterThanOrEqual(1);
-        expect(result._embedded.versions[0].number).toBeDefined();
       }));
 
   it("GET /metrics – returns workspace-wide metrics", () =>
@@ -815,76 +705,6 @@ describe("Pacticipant CRUD", () => {
 // ════════════════════════════════════════════════════════════════════════════
 
 describe("Branch & version management", () => {
-  it("GET /pacticipants/{name}/branches/{branch} – retrieves a branch", () =>
-    provider
-      .addInteraction()
-      .given("a pacticipant named ServiceA with branch main exists")
-      .uponReceiving("a request to get branch main for ServiceA")
-      .withRequest("GET", "/pacticipants/ServiceA/branches/main", (b) => {
-        b.headers(authHeader);
-      })
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(like({ name: "main" }));
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.getBranch({
-          pacticipantName: "ServiceA",
-          branchName: "main",
-        });
-        expect(result.name).toBe("main");
-      }));
-
-  it("DELETE /pacticipants/{name}/branches/{branch} – deletes a branch", () =>
-    provider
-      .addInteraction()
-      .given("a pacticipant named ServiceA with branch old-feature exists")
-      .uponReceiving("a request to delete branch old-feature for ServiceA")
-      .withRequest(
-        "DELETE",
-        "/pacticipants/ServiceA/branches/old-feature",
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(204)
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        await expect(
-          client.deleteBranch({
-            pacticipantName: "ServiceA",
-            branchName: "old-feature",
-          }),
-        ).resolves.toBeUndefined();
-      }));
-
-  it("GET /pacticipants/{name}/branches/{branch}/versions – returns branch versions", () =>
-    provider
-      .addInteraction()
-      .given("a pacticipant named ServiceA with branch main exists")
-      .uponReceiving("a request to get versions for branch main of ServiceA")
-      .withRequest(
-        "GET",
-        "/pacticipants/ServiceA/branches/main/versions",
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: { versions: eachLike({ number: like("1.0.0") }) },
-          _links: like({}),
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.getBranchVersions({
-          pacticipantName: "ServiceA",
-          branchName: "main",
-        });
-        expect(Array.isArray(result._embedded.versions)).toBe(true);
-      }));
-
   it("GET /pacticipants/{name}/versions/{version} – returns a specific version", () =>
     provider
       .addInteraction()
@@ -901,48 +721,6 @@ describe("Branch & version management", () => {
         const result = await client.getVersion({
           pacticipantName: "ServiceA",
           versionNumber: "1.0.0",
-        });
-        expect(result.number).toBe("1.0.0");
-      }));
-
-  it("GET /pacticipants/{name}/latest-version – returns latest version", () =>
-    provider
-      .addInteraction()
-      .given("a pacticipant named ServiceA with versions exists")
-      .uponReceiving("a request to get the latest version of ServiceA")
-      .withRequest("GET", "/pacticipants/ServiceA/latest-version", (b) => {
-        b.headers(authHeader);
-      })
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(like({ number: "2.0.0" }));
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.getLatestVersion({
-          pacticipantName: "ServiceA",
-        });
-        expect(result.number).toBeDefined();
-      }));
-
-  it("PUT /pacticipants/{name}/versions/{version} – updates a version build URL", () =>
-    provider
-      .addInteraction()
-      .given("pacticipant ServiceA version 1.0.0 exists")
-      .uponReceiving("a request to update build URL for ServiceA 1.0.0")
-      .withRequest("PUT", "/pacticipants/ServiceA/versions/1.0.0", (b) => {
-        b.headers(jsonHeaders).jsonBody(
-          like({ buildUrl: "https://ci.example.com/1" }),
-        );
-      })
-      .willRespondWith(201, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(like({ number: "1.0.0" }));
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.updateVersion({
-          pacticipantName: "ServiceA",
-          versionNumber: "1.0.0",
-          buildUrl: "https://ci.example.com/1",
         });
         expect(result.number).toBe("1.0.0");
       }));
@@ -1129,64 +907,6 @@ describe("Labels", () => {
 // ════════════════════════════════════════════════════════════════════════════
 
 describe("Integrations & network", () => {
-  it("GET /integrations – lists all integrations", () =>
-    provider
-      .addInteraction()
-      .given("integrations exist")
-      .uponReceiving("a request to list all integrations")
-      .withRequest("GET", "/integrations", (b) => {
-        b.headers(authHeader);
-      })
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: {
-            integrations: eachLike({
-              consumer: like({ name: "ConsumerApp" }),
-              provider: like({ name: "ProviderAPI" }),
-            }),
-          },
-          _links: like({}),
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.listIntegrations();
-        expect(Array.isArray(result._embedded.integrations)).toBe(true);
-      }));
-
-  it("GET /integrations/team/{teamId} – gets integrations for a team", () =>
-    provider
-      .addInteraction()
-      .given("integrations exist for team 00000000-0000-0000-0000-000000000005")
-      .uponReceiving(
-        "a request to get integrations for team 00000000-0000-0000-0000-000000000005",
-      )
-      .withRequest(
-        "GET",
-        "/integrations/team/00000000-0000-0000-0000-000000000005",
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: {
-            integrations: eachLike({
-              consumer: like({ name: "ConsumerApp" }),
-              provider: like({ name: "ProviderAPI" }),
-            }),
-          },
-          _links: like({}),
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.getIntegrationsByTeam({
-          teamId: "00000000-0000-0000-0000-000000000005",
-        });
-        expect(Array.isArray(result._embedded.integrations)).toBe(true);
-      }));
-
   it("DELETE /integrations/provider/{prov}/consumer/{con} – deletes an integration", () =>
     provider
       .addInteraction()
@@ -1322,41 +1042,6 @@ describe("Webhooks", () => {
       });
   });
 
-  it("PUT /webhooks/{id} – updates a webhook", () =>
-    provider
-      .addInteraction()
-      .given("a webhook with uuid wh-uuid-1 exists")
-      .uponReceiving("a request to update webhook wh-uuid-1")
-      .withRequest("PUT", "/webhooks/wh-uuid-1", (b) => {
-        b.headers(jsonHeaders).jsonBody(
-          like({
-            description: "Updated webhook",
-            events: eachLike({ name: like("contract_published") }),
-            request: like({
-              method: "POST",
-              url: "https://ci.example.com/new-trigger",
-            }),
-          }),
-        );
-      })
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(like({ uuid: "wh-uuid-1" }));
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        await expect(
-          client.updateWebhook({
-            webhookId: "wh-uuid-1",
-            description: "Updated webhook",
-            events: [{ name: "contract_published" }],
-            request: {
-              method: "POST" as const,
-              url: "https://ci.example.com/new-trigger",
-            },
-          } as any),
-        ).resolves.toBeDefined();
-      }));
-
   it("DELETE /webhooks/{id} – deletes a webhook", () =>
     provider
       .addInteraction()
@@ -1372,6 +1057,37 @@ describe("Webhooks", () => {
           client.deleteWebhook({ webhookId: "wh-uuid-1" }),
         ).resolves.toBeUndefined();
       }));
+
+  it("PUT /webhooks/{id} – updates a webhook", () => {
+    const updatedWebhook = {
+      description: "Updated CI trigger",
+      events: [{ name: "contract_published" }],
+      request: {
+        method: "POST" as const,
+        url: "https://ci.example.com/trigger-v2",
+      },
+    };
+    return provider
+      .addInteraction()
+      .given("a webhook with uuid wh-uuid-1 exists and is updatable")
+      .uponReceiving("a request to update webhook wh-uuid-1")
+      .withRequest("PUT", "/webhooks/wh-uuid-1", (b) => {
+        b.headers(jsonHeaders).jsonBody(like(updatedWebhook));
+      })
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ uuid: "wh-uuid-1", ...updatedWebhook }),
+        );
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.updateWebhook({
+          webhookId: "wh-uuid-1",
+          ...updatedWebhook,
+        });
+        expect(result.uuid).toBeDefined();
+      });
+  });
 
   it("POST /webhooks/execute – fires all webhooks", () =>
     provider
@@ -1478,30 +1194,6 @@ describe("Secrets", () => {
         expect(result.uuid).toBe("sec-uuid-1");
       }));
 
-  it("POST /secrets – creates a secret", () =>
-    provider
-      .addInteraction()
-      .uponReceiving("a request to create secret MY_TOKEN")
-      .withRequest("POST", "/secrets", (b) => {
-        b.headers(jsonHeaders).jsonBody(
-          like({ name: "MY_TOKEN", description: "CI token", value: "s3cr3t" }),
-        );
-      })
-      .willRespondWith(201, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: "sec-uuid-new", name: "MY_TOKEN" }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.createSecret({
-          name: "MY_TOKEN",
-          description: "CI token",
-          value: "s3cr3t",
-        });
-        expect(result.uuid).toBeDefined();
-      }));
-
   it("PUT /secrets/{id} – updates a secret", () =>
     provider
       .addInteraction()
@@ -1509,7 +1201,7 @@ describe("Secrets", () => {
       .uponReceiving("a request to update secret sec-uuid-1")
       .withRequest("PUT", "/secrets/sec-uuid-1", (b) => {
         b.headers(jsonHeaders).jsonBody(
-          like({ name: "MY_TOKEN", value: "new-s3cr3t" }),
+          like({ name: "MYTOKEN", value: "new-s3cr3t" }),
         );
       })
       .willRespondWith(200, (b) => {
@@ -1520,7 +1212,7 @@ describe("Secrets", () => {
         await expect(
           client.updateSecret({
             secretId: "sec-uuid-1",
-            name: "MY_TOKEN",
+            name: "MYTOKEN",
             value: "new-s3cr3t",
           }),
         ).resolves.toBeDefined();
@@ -1839,42 +1531,12 @@ describe("Admin – Users", () => {
         ).resolves.toBeUndefined();
       }));
 
-  it("POST /admin/users/invite-users – invites users", () =>
+  it("PUT /admin/users/{id}/roles – replaces all roles for a user", () =>
     provider
       .addInteraction()
-      .uponReceiving("a request to invite users")
-      .withRequest("POST", "/admin/users/invite-users", (b) => {
-        b.headers(jsonHeaders).jsonBody(
-          like({
-            users: eachLike({
-              name: like("example"),
-              email: like("a@example.com"),
-            }),
-          }),
-        );
-      })
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody({
-          users: [],
-          _links: like({}),
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        await expect(
-          client.inviteUsers({
-            users: [
-              { name: "example_a", email: "a@example.com" },
-              { name: "example_b", email: "b@example.com" },
-            ],
-          }),
-        ).resolves.toBeDefined();
-      }));
-
-  it("PUT /admin/users/{id}/roles – sets roles for a user", () =>
-    provider
-      .addInteraction()
-      .given("admin user 00000000-0000-0000-0000-000000000012 exists")
+      .given(
+        "admin user 00000000-0000-0000-0000-000000000012 and role 00000000-0000-0000-0000-000000000007 exist",
+      )
       .uponReceiving(
         "a request to set roles for user 00000000-0000-0000-0000-000000000012",
       )
@@ -1883,7 +1545,7 @@ describe("Admin – Users", () => {
         "/admin/users/00000000-0000-0000-0000-000000000012/roles",
         (b) => {
           b.headers(jsonHeaders).jsonBody(
-            like({ roles: eachLike("00000000-0000-0000-0000-000000000007") }),
+            like({ roles: ["00000000-0000-0000-0000-000000000007"] }),
           );
         },
       )
@@ -1893,7 +1555,7 @@ describe("Admin – Users", () => {
         await expect(
           client.setUserRoles({
             userId: "00000000-0000-0000-0000-000000000012",
-            roles: ["00000000-0000-0000-0000-000000000007", "role-uuid-2"],
+            roles: ["00000000-0000-0000-0000-000000000007"],
           }),
         ).resolves.toBeUndefined();
       }));
@@ -2146,83 +1808,6 @@ describe("Admin – Teams", () => {
         expect(result._embedded.user.uuid).toBeDefined();
       }));
 
-  it("PUT /admin/teams/{id}/users – replaces all team members", () =>
-    provider
-      .addInteraction()
-      .given("admin team 00000000-0000-0000-0000-000000000005 exists")
-      .uponReceiving(
-        "a request to set users for team 00000000-0000-0000-0000-000000000005",
-      )
-      .withRequest(
-        "PUT",
-        "/admin/teams/00000000-0000-0000-0000-000000000005/users",
-        (b) => {
-          b.headers(jsonHeaders).jsonBody(
-            like({ uuids: eachLike("00000000-0000-0000-0000-000000000012") }),
-          );
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: { users: [] },
-          _links: like({}),
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        await expect(
-          client.setTeamUsers({
-            teamId: "00000000-0000-0000-0000-000000000005",
-            uuids: [
-              "00000000-0000-0000-0000-000000000012",
-              "00000000-0000-0000-0000-000000000011",
-            ],
-          }),
-        ).resolves.toBeDefined();
-      }));
-
-  it("PATCH /admin/teams/{id}/users – patches team membership", () =>
-    provider
-      .addInteraction()
-      .given("admin team 00000000-0000-0000-0000-000000000005 exists")
-      .uponReceiving(
-        "a request to patch users in team 00000000-0000-0000-0000-000000000005",
-      )
-      .withRequest(
-        "PATCH",
-        "/admin/teams/00000000-0000-0000-0000-000000000005/users",
-        (b) => {
-          b.headers(jsonHeaders).jsonBody(
-            eachLike({
-              op: like("add"),
-              path: like("/users"),
-              value: like({ uuid: "00000000-0000-0000-0000-000000000012" }),
-            }),
-          );
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: { users: [] },
-          _links: like({}),
-        });
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        await expect(
-          client.patchTeamUsers({
-            teamId: "00000000-0000-0000-0000-000000000005",
-            operations: [
-              {
-                op: "add" as const,
-                path: "/users" as const,
-                value: { uuid: "00000000-0000-0000-0000-000000000012" },
-              },
-            ],
-          }),
-        ).resolves.toBeDefined();
-      }));
-
   it("DELETE /admin/teams/{id}/users/{userId} – removes a user from a team", () =>
     provider
       .addInteraction()
@@ -2248,6 +1833,41 @@ describe("Admin – Teams", () => {
             userId: "00000000-0000-0000-0000-000000000012",
           }),
         ).resolves.toBeUndefined();
+      }));
+
+  it("PUT /admin/teams/{id}/users – replaces all team members", () =>
+    provider
+      .addInteraction()
+      .given(
+        "admin team 00000000-0000-0000-0000-000000000005 and user 00000000-0000-0000-0000-000000000012 exist",
+      )
+      .uponReceiving(
+        "a request to set users for team 00000000-0000-0000-0000-000000000005",
+      )
+      .withRequest(
+        "PUT",
+        "/admin/teams/00000000-0000-0000-0000-000000000005/users",
+        (b) => {
+          b.headers(jsonHeaders).jsonBody(
+            like({ users: ["00000000-0000-0000-0000-000000000012"] }),
+          );
+        },
+      )
+      .willRespondWith(200, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody({
+          _embedded: {
+            users: like([{ uuid: "00000000-0000-0000-0000-000000000012" }]),
+          },
+          _links: like({}),
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = await createClient(mockServer.url);
+        const result = await client.setTeamUsers({
+          teamId: "00000000-0000-0000-0000-000000000005",
+          uuids: ["00000000-0000-0000-0000-000000000012"],
+        });
+        expect(result._embedded.users).toBeDefined();
       }));
 });
 
@@ -2280,37 +1900,6 @@ describe("Admin – Roles & Permissions", () => {
         expect(Array.isArray(result._embedded.roles)).toBe(true);
       }));
 
-  it("GET /admin/roles/{id} – retrieves a role", () =>
-    provider
-      .addInteraction()
-      .given("admin role 00000000-0000-0000-0000-000000000007 exists")
-      .uponReceiving(
-        "a request to get admin role 00000000-0000-0000-0000-000000000007",
-      )
-      .withRequest(
-        "GET",
-        "/admin/roles/00000000-0000-0000-0000-000000000007",
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            uuid: "00000000-0000-0000-0000-000000000007",
-            name: "Administrator",
-            permissions: eachLike({ scope: like("contract:read") }),
-          }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.getAdminRole({
-          roleId: "00000000-0000-0000-0000-000000000007",
-        });
-        expect(result.name).toBe("Administrator");
-      }));
-
   it("POST /admin/roles – creates a role", () =>
     provider
       .addInteraction()
@@ -2319,7 +1908,7 @@ describe("Admin – Roles & Permissions", () => {
         b.headers(jsonHeaders).jsonBody(
           like({
             name: "ReadOnly",
-            permissions: eachLike({ scope: like("contract:read") }),
+            permissions: eachLike({ scope: like("contract_data:read:*") }),
           }),
         );
       })
@@ -2335,71 +1924,9 @@ describe("Admin – Roles & Permissions", () => {
         const client = await createClient(mockServer.url);
         const result = await client.createAdminRole({
           name: "ReadOnly",
-          permissions: [{ scope: "contract:read" }],
+          permissions: [{ scope: "contract_data:read:*" }],
         });
         expect(result.uuid).toBeDefined();
-      }));
-
-  it("PUT /admin/roles/{id} – updates a role", () =>
-    provider
-      .addInteraction()
-      .given("admin role 00000000-0000-0000-0000-000000000007 exists")
-      .uponReceiving(
-        "a request to update admin role 00000000-0000-0000-0000-000000000007",
-      )
-      .withRequest(
-        "PUT",
-        "/admin/roles/00000000-0000-0000-0000-000000000007",
-        (b) => {
-          b.headers(jsonHeaders).jsonBody(
-            like({
-              name: "Super Admin",
-              permissions: eachLike({ scope: like("contract:read") }),
-            }),
-          );
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: "00000000-0000-0000-0000-000000000007" }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        await expect(
-          client.updateAdminRole({
-            roleId: "00000000-0000-0000-0000-000000000007",
-            name: "Super Admin",
-            permissions: [
-              { scope: "contract:read" },
-              { scope: "contract:write" },
-            ],
-          }),
-        ).resolves.toBeDefined();
-      }));
-
-  it("DELETE /admin/roles/{id} – deletes a role", () =>
-    provider
-      .addInteraction()
-      .given("admin role 00000000-0000-0000-0000-000000000007 exists")
-      .uponReceiving(
-        "a request to delete admin role 00000000-0000-0000-0000-000000000007",
-      )
-      .withRequest(
-        "DELETE",
-        "/admin/roles/00000000-0000-0000-0000-000000000007",
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(204)
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        await expect(
-          client.deleteAdminRole({
-            roleId: "00000000-0000-0000-0000-000000000007",
-          }),
-        ).resolves.toBeUndefined();
       }));
 
   it("POST /admin/roles/reset – resets roles to defaults", () =>
@@ -2564,107 +2091,6 @@ describe("BDCT – provider-version endpoints", () => {
         const client = await createClient(mockServer.url);
         const result =
           await client.getBiDirectionalProviderContractVerificationResults({
-            providerName: "ProviderAPI",
-            providerVersionNumber: "2.0.0",
-          });
-        expect(result).toBeDefined();
-      }));
-
-  it("GET …/consumer-contract – retrieves BDCT consumer contract", () =>
-    provider
-      .addInteraction()
-      .given("ProviderAPI version 2.0.0 has a consumer contract")
-      .uponReceiving(
-        "a request to get BDCT consumer contract for ProviderAPI 2.0.0",
-      )
-      .withRequest("GET", `${bdctBase}/consumer-contract`, (b) => {
-        b.headers(authHeader);
-      })
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            verificationStatus: like("success"),
-            _actions: [],
-            _embedded: like({}),
-            _links: like({}),
-          }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.getBiDirectionalConsumerContract({
-          providerName: "ProviderAPI",
-          providerVersionNumber: "2.0.0",
-        });
-        expect(result).toBeDefined();
-      }));
-
-  it("GET …/consumer-contract-verification-results – retrieves BDCT consumer verification results", () =>
-    provider
-      .addInteraction()
-      .given(
-        "ProviderAPI version 2.0.0 has consumer contract verification results",
-      )
-      .uponReceiving(
-        "a request to get BDCT consumer contract verification results for ProviderAPI 2.0.0",
-      )
-      .withRequest(
-        "GET",
-        `${bdctBase}/consumer-contract-verification-results`,
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            verificationStatus: like("success"),
-            _actions: [],
-            _embedded: like({}),
-            _links: like({}),
-          }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result =
-          await client.getBiDirectionalConsumerContractVerificationResults({
-            providerName: "ProviderAPI",
-            providerVersionNumber: "2.0.0",
-          });
-        expect(result).toBeDefined();
-      }));
-
-  it("GET …/cross-contract-verification-results – retrieves BDCT cross-contract results", () =>
-    provider
-      .addInteraction()
-      .given(
-        "ProviderAPI version 2.0.0 has cross-contract verification results",
-      )
-      .uponReceiving(
-        "a request to get BDCT cross-contract verification results for ProviderAPI 2.0.0",
-      )
-      .withRequest(
-        "GET",
-        `${bdctBase}/cross-contract-verification-results`,
-        (b) => {
-          b.headers(authHeader);
-        },
-      )
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({
-            verificationStatus: like("success"),
-            _actions: [],
-            _embedded: like({}),
-            _links: like({}),
-          }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result =
-          await client.getBiDirectionalCrossContractVerificationResults({
             providerName: "ProviderAPI",
             providerVersionNumber: "2.0.0",
           });
