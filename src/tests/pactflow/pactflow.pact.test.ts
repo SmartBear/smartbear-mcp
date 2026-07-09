@@ -50,9 +50,13 @@ async function createClient(baseUrl: string): Promise<PactflowClient> {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const authHeader = { Authorization: like("Bearer test-token") };
+const authHeader = {
+  Authorization: like("Bearer test-token"),
+  Accept: "application/json",
+};
 const jsonHeaders = {
   Authorization: like("Bearer test-token"),
+  Accept: "application/json",
   "Content-Type": regex("application/json.*", "application/json"),
 };
 const halJsonResponseHeaders = {
@@ -934,7 +938,7 @@ describe("Branch & version management", () => {
           like({ buildUrl: "https://ci.example.com/1" }),
         );
       })
-      .willRespondWith(201, (b) => {
+      .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(like({ number: "1.0.0" }));
       })
       .executeTest(async (mockServer) => {
@@ -1235,7 +1239,7 @@ describe("Integrations & network", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody({
-          integrations: [],
+          integrations: like([]),
           _links: like({}),
         });
       })
@@ -1397,6 +1401,7 @@ describe("Webhooks", () => {
           method: "POST",
           headers: {
             Authorization: "Bearer test-token",
+            Accept: "application/json",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -1967,10 +1972,12 @@ describe("Admin – Teams", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody({
-          teams: eachLike({
-            uuid: like("00000000-0000-0000-0000-000000000005"),
-            name: like("Infra"),
-          }),
+          teams: like([
+            {
+              uuid: "00000000-0000-0000-0000-000000000005",
+              name: "Infra",
+            },
+          ]),
           _links: like({}),
         });
       })
@@ -2098,9 +2105,7 @@ describe("Admin – Teams", () => {
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
-            users: eachLike({
-              uuid: like("00000000-0000-0000-0000-000000000012"),
-            }),
+            users: like([{ uuid: "00000000-0000-0000-0000-000000000012" }]),
           },
           _links: like({}),
         });
@@ -2411,7 +2416,7 @@ describe("Admin – Roles & Permissions", () => {
       })
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody({
-          _embedded: { roles: [] },
+          _embedded: { roles: like([]) },
           _links: like({}),
         });
       })
