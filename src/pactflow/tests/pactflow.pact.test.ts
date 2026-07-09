@@ -27,7 +27,7 @@
 import path from "node:path";
 import { Matchers, PactV4 } from "@pact-foundation/pact";
 import { describe, expect, it } from "vitest";
-import { PactflowClient } from "../../pactflow/client";
+import { PactflowClient } from "../client";
 
 const { like, eachLike, regex } = Matchers;
 

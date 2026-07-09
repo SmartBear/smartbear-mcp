@@ -55,7 +55,7 @@ export default defineConfig({
       reportsDirectory: "./coverage",
     },
     include: ["src/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    exclude: ["src/tests/pactflow/**"],
+    exclude: ["src/pactflow/tests/**"],
     // Setup files
     // Placeholder for future setup files. Remove if not needed.
     setupFiles: [],
