@@ -21,7 +21,7 @@
  * Generated pact files land in ./pacts/ at the project root.
  *
  * Run with:
- *   npx vitest run src/tests/pact/pactflow.pact.test.ts
+ *   npx vitest run src/tests/pactflow/pactflow.pact.test.ts
  */
 
 import path from "node:path";
