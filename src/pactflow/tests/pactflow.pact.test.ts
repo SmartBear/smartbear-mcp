@@ -938,7 +938,7 @@ describe("Branch & version management", () => {
           like({ buildUrl: "https://ci.example.com/1" }),
         );
       })
-      .willRespondWith(200, (b) => {
+      .willRespondWith(201, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(like({ number: "1.0.0" }));
       })
       .executeTest(async (mockServer) => {
