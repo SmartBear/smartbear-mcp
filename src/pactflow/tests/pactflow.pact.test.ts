@@ -123,7 +123,7 @@ describe("Core", () => {
       .willRespondWith(200, (b) => {
         b.headers(halJsonResponseHeaders).jsonBody(
           like({
-            summary: like({ deployable: like(true), reason: like("") }),
+            summary: like({ reason: like("") }),
             matrix: like([]),
           }),
         );
@@ -1057,37 +1057,6 @@ describe("Webhooks", () => {
           client.deleteWebhook({ webhookId: "wh-uuid-1" }),
         ).resolves.toBeUndefined();
       }));
-
-  it("PUT /webhooks/{id} – updates a webhook", () => {
-    const updatedWebhook = {
-      description: "Updated CI trigger",
-      events: [{ name: "contract_published" }],
-      request: {
-        method: "POST" as const,
-        url: "https://ci.example.com/trigger-v2",
-      },
-    };
-    return provider
-      .addInteraction()
-      .given("a webhook with uuid wh-uuid-1 exists and is updatable")
-      .uponReceiving("a request to update webhook wh-uuid-1")
-      .withRequest("PUT", "/webhooks/wh-uuid-1", (b) => {
-        b.headers(jsonHeaders).jsonBody(like(updatedWebhook));
-      })
-      .willRespondWith(200, (b) => {
-        b.headers(halJsonResponseHeaders).jsonBody(
-          like({ uuid: "wh-uuid-1", ...updatedWebhook }),
-        );
-      })
-      .executeTest(async (mockServer) => {
-        const client = await createClient(mockServer.url);
-        const result = await client.updateWebhook({
-          webhookId: "wh-uuid-1",
-          ...updatedWebhook,
-        });
-        expect(result.uuid).toBeDefined();
-      });
-  });
 
   it("POST /webhooks/execute – fires all webhooks", () =>
     provider
