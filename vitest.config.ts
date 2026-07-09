@@ -10,7 +10,7 @@ export default defineConfig({
       exclude: [
         "dist/**",
         "node_modules/**",
-        "src/tests/**",
+        "src/*/tests/**",
         "*.config.*",
         "**/*.d.ts",
         // Auto-generated API client files
@@ -54,8 +54,8 @@ export default defineConfig({
       // Include source map support
       reportsDirectory: "./coverage",
     },
-    include: ["src/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    exclude: ["src/pactflow/tests/**"],
+    include: ["src/*/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+    exclude: ["**/*.pact.test.*"],
     // Setup files
     // Placeholder for future setup files. Remove if not needed.
     setupFiles: [],

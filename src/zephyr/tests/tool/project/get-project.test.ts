@@ -1,0 +1,72 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  GetProjectParams,
+  GetProject200Response as GetProjectResponse,
+} from "../../../common/rest-api-schemas";
+import { GetProject } from "../../../tool/project/get-project";
+
+describe("GetProject", () => {
+  let mockClient: any;
+  let instance: GetProject;
+
+  beforeEach(() => {
+    mockClient = {
+      getApiClient: vi.fn().mockReturnValue({
+        get: vi.fn(),
+      }),
+    };
+    instance = new GetProject(mockClient as any);
+  });
+
+  it("should set specification correctly", () => {
+    expect(instance.specification.title).toBe("Get Project");
+    expect(instance.specification.summary).toBe(
+      "Get details of project specified by id or key in Zephyr",
+    );
+    expect(instance.specification.readOnly).toBe(true);
+    expect(instance.specification.idempotent).toBe(true);
+    expect(instance.specification.inputSchema).toBe(GetProjectParams);
+    expect(instance.specification.outputSchema).toBe(GetProjectResponse);
+  });
+
+  it("should call apiClient.get with string projectIdOrKey and return formatted content", async () => {
+    const responseMock = {
+      id: 1,
+      jiraProjectId: 10000,
+      key: "PROJ",
+      enabled: true,
+    };
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
+    const args = { projectIdOrKey: "PROJ" };
+    const result = await instance.handle(args, {} as any);
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
+      "/projects/PROJ",
+    );
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
+  it("should call apiClient.get with numeric string projectIdOrKey and return formatted content", async () => {
+    const responseMock = {
+      id: 39,
+      jiraProjectId: 10003,
+      key: "PRIV",
+      enabled: true,
+    };
+    mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
+    const args = { projectIdOrKey: "39" }; // Pass as string
+    const result = await instance.handle(args, {} as any);
+    expect(mockClient.getApiClient().get).toHaveBeenCalledWith("/projects/39");
+    expect(result.structuredContent).toBe(responseMock);
+  });
+
+  it("should handle apiClient.get throwing error", async () => {
+    mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
+    await expect(
+      instance.handle({ projectIdOrKey: "PROJ" }, {} as any),
+    ).rejects.toThrow("API error");
+  });
+
+  it("should throw validation error if projectIdOrKey is missing", async () => {
+    await expect(instance.handle({}, {} as any)).rejects.toThrow();
+  });
+});
