@@ -3199,7 +3199,7 @@ describe("PactFlowClient", () => {
           {
             method: "PUT",
             headers: client.requestHeaders,
-            body: JSON.stringify({ uuids: ["user-uuid-1", "user-uuid-2"] }),
+            body: JSON.stringify({ users: ["user-uuid-1", "user-uuid-2"] }),
           },
         );
       });

@@ -2171,7 +2171,7 @@ export class PactflowClient implements Client {
       `${this.baseUrl}/admin/teams/${encodeURIComponent(teamId)}/users`,
       {
         method: "PUT",
-        body: { uuids },
+        body: { users: uuids },
         errorContext: "Set Team Users",
       },
     );
