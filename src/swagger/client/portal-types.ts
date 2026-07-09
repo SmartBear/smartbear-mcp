@@ -144,8 +144,16 @@ export const CreateTableOfContentsArgsSchema = z.object({
         {
           if: { properties: { type: { const: "apiUrl" } } },
           // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
-          then: { required: ["url"] },
-          message: "URL is required when content type is 'apiUrl'",
+          then: { required: ["url"], properties: { documentId: false } },
+          message:
+            "URL is required and documentId must not be set when content type is 'apiUrl'",
+        },
+        {
+          if: { properties: { type: { enum: ["html", "markdown"] } } },
+          // biome-ignore lint/suspicious/noThenProperty: JSON Schema if/then/else keyword, not a thenable
+          then: { properties: { url: false, apiSpec: false } },
+          message:
+            "url and apiSpec must not be set when content type is 'html' or 'markdown'",
         },
       ],
     })
