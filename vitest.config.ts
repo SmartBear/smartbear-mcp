@@ -54,8 +54,8 @@ export default defineConfig({
       // Include source map support
       reportsDirectory: "./coverage",
     },
-    // Include TypeScript files
     include: ["src/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+    exclude: ["src/pactflow/tests/**"],
     // Setup files
     // Placeholder for future setup files. Remove if not needed.
     setupFiles: [],
