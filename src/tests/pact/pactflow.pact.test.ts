@@ -55,6 +55,12 @@ const jsonHeaders = {
   Authorization: like("Bearer test-token"),
   "Content-Type": regex("application/json.*", "application/json"),
 };
+const halJsonResponseHeaders = {
+  "Content-Type": regex(
+    "application/(hal\\+json|json)(;.*)?",
+    "application/json",
+  ),
+};
 
 // ════════════════════════════════════════════════════════════════════════════
 // Core
@@ -78,7 +84,7 @@ describe("Core", () => {
           .headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody({
+        builder.headers(halJsonResponseHeaders).jsonBody({
           summary: like({
             deployable: true,
             failed: 0,
@@ -118,7 +124,7 @@ describe("Core", () => {
           .headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody({
+        builder.headers(halJsonResponseHeaders).jsonBody({
           matrix: [],
           notices: [],
           summary: like({
@@ -150,7 +156,7 @@ describe("Core", () => {
         builder.headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody({
+        builder.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { pacticipants: eachLike({ name: like("ServiceA") }) },
           _links: like({}),
         });
@@ -172,7 +178,7 @@ describe("Core", () => {
         builder.headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody(
+        builder.headers(halJsonResponseHeaders).jsonBody(
           like({
             name: "ServiceA",
             mainBranch: "main",
@@ -199,7 +205,7 @@ describe("Core", () => {
         builder.headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody({
+        builder.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             environments: eachLike({
               name: like("production"),
@@ -235,7 +241,7 @@ describe("Core", () => {
         },
       )
       .willRespondWith(200, (builder) => {
-        builder.jsonBody(
+        builder.headers(halJsonResponseHeaders).jsonBody(
           like({
             name: "production",
             uuid: "00000000-0000-0000-0000-000000000001",
@@ -275,7 +281,7 @@ describe("Core", () => {
         },
       )
       .willRespondWith(201, (builder) => {
-        builder.jsonBody(like({}));
+        builder.headers(halJsonResponseHeaders).jsonBody(like({}));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -310,7 +316,7 @@ describe("Core", () => {
         },
       )
       .willRespondWith(201, (builder) => {
-        builder.jsonBody(like({}));
+        builder.headers(halJsonResponseHeaders).jsonBody(like({}));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -340,10 +346,9 @@ describe("Core", () => {
         },
       )
       .willRespondWith(200, (builder) => {
-        builder.jsonBody({
-          _embedded: { deployedVersions: [] },
-          _links: like({}),
-        });
+        builder
+          .headers(halJsonResponseHeaders)
+          .jsonBody({ _embedded: { deployedVersions: [] }, _links: like({}) });
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -384,7 +389,7 @@ describe("Core", () => {
           .jsonBody(like(publishBody));
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody(
+        builder.headers(halJsonResponseHeaders).jsonBody(
           like({
             logs: [],
             notices: [],
@@ -437,9 +442,11 @@ describe("Core", () => {
         },
       )
       .willRespondWith(200, (builder) => {
-        builder.jsonBody(
-          like({ notices: [], _embedded: like({}), _links: like({}) }),
-        );
+        builder
+          .headers(halJsonResponseHeaders)
+          .jsonBody(
+            like({ notices: [], _embedded: like({}), _links: like({}) }),
+          );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -475,10 +482,9 @@ describe("Core", () => {
         },
       )
       .willRespondWith(200, (builder) => {
-        builder.jsonBody({
-          _embedded: { pacts: [] },
-          _links: like({}),
-        });
+        builder
+          .headers(halJsonResponseHeaders)
+          .jsonBody({ _embedded: { pacts: [] }, _links: like({}) });
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -499,7 +505,7 @@ describe("Core", () => {
         builder.headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody({
+        builder.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { branches: eachLike({ name: like("main") }) },
           _links: like({}),
         });
@@ -523,7 +529,7 @@ describe("Core", () => {
         builder.headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody({
+        builder.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { versions: eachLike({ number: like("1.0.0") }) },
           _links: like({}),
         });
@@ -546,7 +552,7 @@ describe("Core", () => {
         builder.headers({ Authorization: like("Bearer test-token") });
       })
       .willRespondWith(200, (builder) => {
-        builder.jsonBody(
+        builder.headers(halJsonResponseHeaders).jsonBody(
           like({
             interactions: like({
               latestInteractionsCount: 42,
@@ -591,7 +597,7 @@ describe("Environment management", () => {
         );
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000003",
             name: "production",
@@ -632,7 +638,7 @@ describe("Environment management", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000002",
             name: "staging",
@@ -693,7 +699,7 @@ describe("Environment management", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { releasedVersions: [] },
           _links: like({}),
         });
@@ -726,7 +732,9 @@ describe("Pacticipant CRUD", () => {
         );
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(like({ name: "NewService", displayName: "New Service" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ name: "NewService", displayName: "New Service" }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -765,7 +773,9 @@ describe("Pacticipant CRUD", () => {
         );
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ name: "ServiceA", mainBranch: "main" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ name: "ServiceA", mainBranch: "main" }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -786,7 +796,9 @@ describe("Pacticipant CRUD", () => {
         b.headers(jsonHeaders).jsonBody(like({ mainBranch: "develop" }));
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ name: "ServiceA", mainBranch: "develop" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ name: "ServiceA", mainBranch: "develop" }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -812,7 +824,7 @@ describe("Branch & version management", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ name: "main" }));
+        b.headers(halJsonResponseHeaders).jsonBody(like({ name: "main" }));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -859,7 +871,7 @@ describe("Branch & version management", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { versions: eachLike({ number: like("1.0.0") }) },
           _links: like({}),
         });
@@ -882,7 +894,7 @@ describe("Branch & version management", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ number: "1.0.0" }));
+        b.headers(halJsonResponseHeaders).jsonBody(like({ number: "1.0.0" }));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -902,7 +914,7 @@ describe("Branch & version management", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ number: "2.0.0" }));
+        b.headers(halJsonResponseHeaders).jsonBody(like({ number: "2.0.0" }));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -923,7 +935,7 @@ describe("Branch & version management", () => {
         );
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(like({ number: "1.0.0" }));
+        b.headers(halJsonResponseHeaders).jsonBody(like({ number: "1.0.0" }));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -952,7 +964,7 @@ describe("Branch & version management", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             deployedVersions: eachLike({ currentlyDeployed: like(true) }),
           },
@@ -986,7 +998,7 @@ describe("Branch & version management", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             releasedVersions: eachLike({ currentlySupported: like(true) }),
           },
@@ -1018,7 +1030,7 @@ describe("Labels", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { labels: eachLike({ name: like("team-a") }) },
           _links: like({}),
         });
@@ -1038,7 +1050,7 @@ describe("Labels", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ name: "team-a" }));
+        b.headers(halJsonResponseHeaders).jsonBody(like({ name: "team-a" }));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1058,7 +1070,7 @@ describe("Labels", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { pacticipants: eachLike({ name: like("ServiceA") }) },
           _links: like({}),
         });
@@ -1079,8 +1091,8 @@ describe("Labels", () => {
       .withRequest("PUT", "/pacticipants/ConsumerApp/labels/mobile", (b) => {
         b.headers(jsonHeaders).jsonBody(like({}));
       })
-      .willRespondWith(200, (b) => {
-        b.jsonBody(like({ name: "mobile" }));
+      .willRespondWith(201, (b) => {
+        b.headers(halJsonResponseHeaders).jsonBody(like({ name: "mobile" }));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1126,7 +1138,7 @@ describe("Integrations & network", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             integrations: eachLike({
               consumer: like({ name: "ConsumerApp" }),
@@ -1157,7 +1169,7 @@ describe("Integrations & network", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             integrations: eachLike({
               consumer: like({ name: "ConsumerApp" }),
@@ -1222,7 +1234,7 @@ describe("Integrations & network", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           integrations: [],
           _links: like({}),
         });
@@ -1250,7 +1262,7 @@ describe("Webhooks", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { webhooks: eachLike({ uuid: like("wh-uuid-1") }) },
           _links: like({}),
         });
@@ -1270,7 +1282,7 @@ describe("Webhooks", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "wh-uuid-1",
             request: like({ url: "https://ci.example.com/trigger" }),
@@ -1299,7 +1311,9 @@ describe("Webhooks", () => {
         b.headers(jsonHeaders).jsonBody(like(webhookBody));
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(like({ uuid: "wh-uuid-new", ...webhookBody }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ uuid: "wh-uuid-new", ...webhookBody }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1326,7 +1340,7 @@ describe("Webhooks", () => {
         );
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ uuid: "wh-uuid-1" }));
+        b.headers(halJsonResponseHeaders).jsonBody(like({ uuid: "wh-uuid-1" }));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1374,7 +1388,9 @@ describe("Webhooks", () => {
         );
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ success: like(true), _links: like({}) }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ success: like(true), _links: like({}) }),
+        );
       })
       .executeTest(async (mockServer) => {
         const response = await fetch(`${mockServer.url}/webhooks/execute`, {
@@ -1401,7 +1417,9 @@ describe("Webhooks", () => {
         b.headers(jsonHeaders).jsonBody(like({}));
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ success: like(true), _links: like({}) }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ success: like(true), _links: like({}) }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1425,7 +1443,7 @@ describe("Secrets", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             secrets: eachLike({
               uuid: like("sec-uuid-1"),
@@ -1450,7 +1468,9 @@ describe("Secrets", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ uuid: "sec-uuid-1", name: "CI_TOKEN" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ uuid: "sec-uuid-1", name: "CI_TOKEN" }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1468,7 +1488,9 @@ describe("Secrets", () => {
         );
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(like({ uuid: "sec-uuid-new", name: "MY_TOKEN" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ uuid: "sec-uuid-new", name: "MY_TOKEN" }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1491,7 +1513,7 @@ describe("Secrets", () => {
         );
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({}));
+        b.headers(halJsonResponseHeaders).jsonBody(like({}));
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1534,7 +1556,7 @@ describe("User, settings & audit", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000012",
             email: "user@example.com",
@@ -1556,7 +1578,7 @@ describe("User, settings & audit", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             items: eachLike({
               uuid: like("00000000-0000-0000-0000-000000000009"),
@@ -1587,7 +1609,7 @@ describe("User, settings & audit", () => {
         },
       )
       .willRespondWith(201, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000009",
             value: "new-token-value",
@@ -1610,7 +1632,7 @@ describe("User, settings & audit", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { preferences: [] },
           _links: like({}),
         });
@@ -1629,7 +1651,7 @@ describe("User, settings & audit", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { preferences: [] },
           _links: like({}),
         });
@@ -1648,7 +1670,10 @@ describe("User, settings & audit", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({ events: [], _links: like({}) });
+        b.headers(halJsonResponseHeaders).jsonBody({
+          events: [],
+          _links: like({}),
+        });
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1664,8 +1689,8 @@ describe("User, settings & audit", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
-          teams: eachLike({ name: like("Platform Team") }),
+        b.headers(halJsonResponseHeaders).jsonBody({
+          teams: like([{ name: "Platform Team" }]),
           _links: like({}),
         });
       })
@@ -1689,7 +1714,7 @@ describe("Admin – Users", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           users: eachLike({
             uuid: like("00000000-0000-0000-0000-000000000012"),
           }),
@@ -1717,7 +1742,7 @@ describe("Admin – Users", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000012",
             email: "admin@example.com",
@@ -1742,7 +1767,7 @@ describe("Admin – Users", () => {
         );
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000010",
             email: "new@example.com",
@@ -1775,7 +1800,7 @@ describe("Admin – Users", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({ uuid: "00000000-0000-0000-0000-000000000012", active: false }),
         );
       })
@@ -1829,7 +1854,10 @@ describe("Admin – Users", () => {
         );
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({ users: [], _links: like({}) });
+        b.headers(halJsonResponseHeaders).jsonBody({
+          users: [],
+          _links: like({}),
+        });
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -1938,7 +1966,7 @@ describe("Admin – Teams", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           teams: eachLike({
             uuid: like("00000000-0000-0000-0000-000000000005"),
             name: like("Infra"),
@@ -1967,7 +1995,7 @@ describe("Admin – Teams", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({ uuid: "00000000-0000-0000-0000-000000000005", name: "Infra" }),
         );
       })
@@ -1987,7 +2015,7 @@ describe("Admin – Teams", () => {
         b.headers(jsonHeaders).jsonBody(like({ name: "Platform" }));
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000004",
             name: "Platform",
@@ -2015,7 +2043,9 @@ describe("Admin – Teams", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ uuid: "00000000-0000-0000-0000-000000000005" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ uuid: "00000000-0000-0000-0000-000000000005" }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -2066,7 +2096,7 @@ describe("Admin – Teams", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             users: eachLike({
               uuid: like("00000000-0000-0000-0000-000000000012"),
@@ -2100,7 +2130,7 @@ describe("Admin – Teams", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             user: like({ uuid: like("00000000-0000-0000-0000-000000000012") }),
           },
@@ -2133,7 +2163,7 @@ describe("Admin – Teams", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { users: [] },
           _links: like({}),
         });
@@ -2172,7 +2202,7 @@ describe("Admin – Teams", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { users: [] },
           _links: like({}),
         });
@@ -2234,7 +2264,7 @@ describe("Admin – Roles & Permissions", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             roles: eachLike({
               uuid: like("00000000-0000-0000-0000-000000000007"),
@@ -2265,7 +2295,7 @@ describe("Admin – Roles & Permissions", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000007",
             name: "Administrator",
@@ -2294,7 +2324,7 @@ describe("Admin – Roles & Permissions", () => {
         );
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             uuid: "00000000-0000-0000-0000-000000000006",
             name: "ReadOnly",
@@ -2330,7 +2360,9 @@ describe("Admin – Roles & Permissions", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(like({ uuid: "00000000-0000-0000-0000-000000000007" }));
+        b.headers(halJsonResponseHeaders).jsonBody(
+          like({ uuid: "00000000-0000-0000-0000-000000000007" }),
+        );
       })
       .executeTest(async (mockServer) => {
         const client = await createClient(mockServer.url);
@@ -2378,7 +2410,7 @@ describe("Admin – Roles & Permissions", () => {
         b.headers(jsonHeaders).jsonBody(like({}));
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: { roles: [] },
           _links: like({}),
         });
@@ -2396,7 +2428,7 @@ describe("Admin – Roles & Permissions", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           permissions: eachLike({ scope: like("contract:read") }),
           _links: like({}),
         });
@@ -2421,7 +2453,7 @@ describe("Admin – System Accounts", () => {
         b.headers(jsonHeaders).jsonBody(like({ name: "CI Bot" }));
       })
       .willRespondWith(201, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({ uuid: like("00000000-0000-0000-0000-000000000008") }),
         );
       })
@@ -2446,7 +2478,7 @@ describe("Admin – System Accounts", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody({
+        b.headers(halJsonResponseHeaders).jsonBody({
           _embedded: {
             items: eachLike({
               uuid: like("00000000-0000-0000-0000-000000000009"),
@@ -2484,7 +2516,7 @@ describe("BDCT – provider-version endpoints", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2519,7 +2551,7 @@ describe("BDCT – provider-version endpoints", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2549,7 +2581,7 @@ describe("BDCT – provider-version endpoints", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2584,7 +2616,7 @@ describe("BDCT – provider-version endpoints", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2620,7 +2652,7 @@ describe("BDCT – provider-version endpoints", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2663,7 +2695,7 @@ describe("BDCT – consumer-version endpoints", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2692,7 +2724,7 @@ describe("BDCT – consumer-version endpoints", () => {
         b.headers(authHeader);
       })
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2725,7 +2757,7 @@ describe("BDCT – consumer-version endpoints", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2760,7 +2792,7 @@ describe("BDCT – consumer-version endpoints", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
@@ -2795,7 +2827,7 @@ describe("BDCT – consumer-version endpoints", () => {
         },
       )
       .willRespondWith(200, (b) => {
-        b.jsonBody(
+        b.headers(halJsonResponseHeaders).jsonBody(
           like({
             verificationStatus: like("success"),
             _actions: [],
