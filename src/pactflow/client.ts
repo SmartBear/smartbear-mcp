@@ -303,6 +303,7 @@ export class PactflowClient implements Client {
 
       return {
         Authorization: authHeader,
+        Accept: "application/json",
         "Content-Type": "application/json",
         "User-Agent": USER_AGENT,
         ...sourceApplicationHeader,
@@ -320,6 +321,7 @@ export class PactflowClient implements Client {
       }
       return {
         Authorization: authHeader,
+        Accept: "application/json",
         "Content-Type": "application/json",
         "User-Agent": USER_AGENT,
         ...sourceApplicationHeader,
@@ -328,6 +330,7 @@ export class PactflowClient implements Client {
       const authString = `${this.username}:${this.password}`;
       return {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
+        Accept: "application/json",
         "Content-Type": "application/json",
         "User-Agent": USER_AGENT,
         ...sourceApplicationHeader,
