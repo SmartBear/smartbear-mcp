@@ -112,6 +112,24 @@ exports[`server definitions are not changed unexpectedly > registered tools 1`] 
     "outputSchema": undefined,
     "title": "BearQ: Get Task Status",
   },
+  "bearq_list_environments": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "BearQ: List Environments",
+    },
+    "description": "Lists the environments configured in the workspace. Use this to discover valid environment names to pass to the test-running tools, and to identify the workspace default.
+
+**Toolset:** Environments
+
+**Parameters:**
+None",
+    "inputSchema": [],
+    "outputSchema": undefined,
+    "title": "BearQ: List Environments",
+  },
   "bearq_refine_all_draft_tests": {
     "annotations": {
       "destructiveHint": false,
@@ -183,8 +201,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-None",
-    "inputSchema": [],
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
+    "inputSchema": [
+      "environment",
+    ],
     "outputSchema": undefined,
     "title": "BearQ: Run Regression Tests",
   },
@@ -201,8 +221,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-- testCaseIds (array) *required*: IDs of BearQ regression test cases to run.",
+- testCaseIds (array) *required*: IDs of BearQ regression test cases to run.
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
     "inputSchema": [
+      "environment",
       "testCaseIds",
     ],
     "outputSchema": undefined,
@@ -221,8 +243,10 @@ None",
 **Toolset:** Tasks
 
 **Parameters:**
-- functionalAreas (array) *required*: Functional areas to target, by ID or name.",
+- functionalAreas (array) *required*: Functional areas to target, by ID or name.
+- environment (string): Target environment name to run tests against. Omit to use the workspace default.",
     "inputSchema": [
+      "environment",
       "functionalAreas",
     ],
     "outputSchema": undefined,
@@ -10832,7 +10856,8 @@ None",
 **Parameters:**
 - portalId (string) *required*: Portal UUID or subdomain - unique identifier for the portal
 - productId (string) *required*: Product UUID - unique identifier for the product
-- pageTitle (string) *required*: Title of the documentation page - will be displayed in navigation (3-255 characters, used to generate the page slug)
+- pageTitle (string) *required*: Title of the documentation page - will be displayed in navigation (3-255 characters)
+- pageSlug (string): URL slug for the documentation page. 3-255 characters, lowercase, alphanumeric with hyphens, underscores, or dots (e.g. 'my-page'). If not provided, the slug is generated from the page title.
 - pageContent (string): Content of the documentation page. Provide HTML when contentType is 'html', Markdown when contentType is 'markdown'.
 - contentType (enum): Content type of the documentation page. 'markdown' works with both 'internal' and 'external' source. 'html' only works with 'external' source — html + internal is not supported by the API and will return an error. (default: "markdown")
 - source (enum): Where the document content is managed. 'internal': editable in both the portal UI and via API. 'external': editable via API only, not in the portal UI. Constraint: 'html' content type only supports 'external' source. (default: "internal")
@@ -10842,6 +10867,7 @@ None",
       "contentType",
       "order",
       "pageContent",
+      "pageSlug",
       "pageTitle",
       "parentId",
       "portalId",
@@ -13266,6 +13292,7 @@ Expected Output: Test execution steps for the specified test data row",
 Note that the server may enforce a lower limit than requested, depending on resource availability or other internal constraints. If this happens, the result set may be truncated. Always check the limit value in the response to confirm how many results were actually returned.
  (default: 10)
 - startAtId (number): Zero-indexed starting position for ID-based pagination. (default: 0)
+- updatedAfter (string): Filter only entities updated after the given time. Format: yyyy-MM-dd'T'HH:mm:ss'Z'
 
 **Examples:**
 1. Get the first 10 test executions
@@ -13312,6 +13339,7 @@ Expected Output: Test executions with step links included",
       "startAtId",
       "testCase",
       "testCycle",
+      "updatedAfter",
     ],
     "outputSchema": [
       "limit",

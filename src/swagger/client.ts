@@ -16,6 +16,9 @@ import {
 } from "./client/functional-testing-api";
 import type {
   GetFunctionalTestingExecutionTestParams,
+  GetFunctionalTestingSuiteExecutionParams,
+  ListFunctionalTestingSuiteExecutionsParams,
+  RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
 } from "./client/functional-testing-types";
 import {
@@ -372,6 +375,26 @@ export class SwaggerClient implements Client {
     return this.withFunctionalTesting((ftApi) => ftApi.getTestExecution(args));
   }
 
+  async listFunctionalTestingSuiteExecutions(
+    args: ListFunctionalTestingSuiteExecutionsParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) =>
+      ftApi.listSuiteExecutions(args),
+    );
+  }
+
+  async runFunctionalTestingSuite(
+    args: RunFunctionalTestingSuiteParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.runSuite(args));
+  }
+
+  async getFunctionalTestingSuiteExecution(
+    args: GetFunctionalTestingSuiteExecutionParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.getSuiteExecution(args));
+  }
+
   /**
    * Perform an operation with the Functional Testing API.
    * Throws a ToolError if Functional Testing is not configured
@@ -384,6 +407,10 @@ export class SwaggerClient implements Client {
     }
 
     return fn(this.ftApi);
+  }
+
+  async listFunctionalTestingSuites(): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.listSuites());
   }
 
   async registerTools(

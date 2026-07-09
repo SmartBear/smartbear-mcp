@@ -733,7 +733,9 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     );
     fakeTransport.handleRequest = handleRequest;
     transports.set("known-session", {
-      server: {} as any,
+      server: {
+        getMcpClientIdentity: () => ({ name: undefined }),
+      } as any,
       transport: fakeTransport,
     });
 

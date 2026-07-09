@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Publish Pact consumer contracts to PactFlow
+#
+# Publishes generated pact files from ./pacts/ to the configured Pact broker.
+#
+# Usage:
+#   scripts/ci/pact-publish-consumer-contracts
+#
+# Environment:
+#   PACT_BROKER_BASE_URL - PactFlow base URL
+#   PACT_BROKER_TOKEN    - PactFlow API token
+#   GITHUB_SHA           - Consumer version (git commit SHA)
+#   GITHUB_REF_NAME      - Consumer branch name
+#
+set -euo pipefail
+
+: "${PACT_BROKER_BASE_URL:?need PACT_BROKER_BASE_URL}"
+: "${PACT_BROKER_TOKEN:?need PACT_BROKER_TOKEN}"
+: "${GITHUB_SHA:?need GITHUB_SHA}"
+: "${GITHUB_REF_NAME:?need GITHUB_REF_NAME}"
+
+pact-broker publish ./pacts \
+  --consumer-app-version="${GITHUB_SHA}" \
+  --branch="${GITHUB_REF_NAME}" \
+  --verbose

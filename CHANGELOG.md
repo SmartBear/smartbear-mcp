@@ -7,20 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Security
+
+- [Common] Upgraded `libcrypto3` and `libssl3` Alpine packages from `3.5.6-r0` to `3.5.7-r0` in the Docker release image to address CVE-2026-34182 (CRITICAL), CVE-2026-45447 (HIGH), CVE-2026-7383 (HIGH), and CVE-2026-45445 (HIGH) [#572](https://github.com/SmartBear/smartbear-mcp/pull/572)
+
+- [Common] Capture MCP client identity (`clientInfo.name`/`version`) from the `initialize` handshake and store it in the session context. The normalized client name and version are forwarded on the outbound User-Agent for all downstream API requests and attached to BugSnag event metadata, enabling usage attribution by originating MCP client (Claude, Cursor, Copilot Studio, etc.) without client-side changes [#532](https://github.com/SmartBear/smartbear-mcp/pull/532)
+- [Zephyr] Update Zephyr Schemas - Change ComponentID min in Create Test Case to 1 [#574](https://github.com/SmartBear/smartbear-mcp/pull/574)
+
 ### Added
+
+- [Pactflow] Added Pact V4 consumer contract tests covering all 98 PactflowClient HTTP interactions, with a dedicated CI pipeline that publishes pacts to PactFlow and triggers bi-directional contract verification on every PR merge.
+
+- [Swagger] Extended Swagger Functional Testing integration with `run_suite`, and `get_suite_status` tools for executing available suites and querying their execution.
+
+- [Swagger] Added `list_suite_executions` tool for reviewing the execution history and timings of a test suite in your Swagger Functional Testing workspace. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
+
+- [BearQ] Add environment targeting to the run tools and a `bearq_list_environments` tool [#565](https://github.com/SmartBear/smartbear-mcp/pull/565)
 
 - [Swagger] Added output schemas to Swagger Portal and Registry tools, enabling structured, validated responses for all portal, product, section, document, table-of-contents, and registry operations.
 - [Swagger] Introduced tool constants (`READ_ONLY`, `WRITE`, `WRITE_DESTRUCTIVE`) to annotate each Swagger tool with semantic flags (`readOnly`, `openWorld`, `destructive`) for better client-side tool classification.
 
+## [0.28.0] - 2026-07-07
+
 ### Changed
 
 - [Pactflow]: Send the MCP client's name and version to Pactflow via a `SOURCE_APPLICATION` header on requests, captured from the client info supplied in the MCP `initialize` request. [#556](https://github.com/SmartBear/smartbear-mcp/pull/556)
+
+### Added
+
+- [Swagger] `create_documentation_page` now accepts an optional `pageSlug` parameter. When provided, it is used as the page URL slug; otherwise the slug is generated from the page title.
+- [Swagger] Added `list_suites` tool for discovering test suites in your Swagger Functional Testing workspace. Requires `SWAGGER_FUNCTIONAL_TESTING_API_TOKEN` env var.
 
 ### Fixed
 
 - [Zephyr] Fixed `get_test_case_steps` returning a schema validation error [#543](https://github.com/SmartBear/smartbear-mcp/pull/543)
 - [Swagger] Added a conditional required-field rule to the `create_table_of_contents` tool's `content` schema so `url` is structurally required only when `content.type` is `apiUrl`, instead of relying solely on prose descriptions. Addresses an "Unclear Arguments" flag from ChatGPT app review while keeping `content` as a flat object for manual tool testing.
 - [Swagger] Fixed a client-side "data should NOT have additional properties" validation error shown for tools like `get_portal_product` that return extra fields (e.g. `role`, `createdAt`, `updatedAt`) not modeled in their output schema. The MCP server now advertises the intended `additionalProperties: true` for these loosely-typed output schemas instead of losing that setting during tool registration. [#553](https://github.com/SmartBear/smartbear-mcp/pull/553)
+- [Zephyr] Update Zephyr schemas [#562](https://github.com/SmartBear/smartbear-mcp/pull/562)
 
 ## [0.27.2] - 2026-07-01
 - [CI] Extracted publishing of the standalone `com.smartbear/swagger-mcp` registry entry (`server.swagger.json`) into a dedicated, manually triggered `publish-swagger-mcp.yaml` workflow (`workflow_dispatch`), removing those steps from the main `publish.yaml`. [#554](https://github.com/SmartBear/smartbear-mcp/pull/554)

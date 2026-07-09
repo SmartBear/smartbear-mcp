@@ -1,3 +1,4 @@
+import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type { SwaggerConfiguration } from "./configuration";
 import type {
@@ -127,7 +128,7 @@ export class SwaggerAPI {
   }
 
   private get headers(): Record<string, string> {
-    return this.config.getHeaders(this.userAgent);
+    return this.config.getHeaders(appendClientIdentity(this.userAgent));
   }
 
   /**
@@ -974,6 +975,7 @@ export class SwaggerAPI {
       source = "internal",
       order = 0,
       parentId = null,
+      pageSlug,
     } = args;
 
     if (
@@ -999,13 +1001,13 @@ export class SwaggerAPI {
     }
     const section = sections.items[0];
 
-    const pageSlug = normalizeSlug(pageTitle);
+    const resolvedPageSlug = pageSlug || normalizeSlug(pageTitle);
     const normalizedTitle = pageTitle.slice(0, 255);
 
     const tocItem = await this.createTableOfContents(section.id, {
       type: "new",
       title: normalizedTitle,
-      slug: pageSlug,
+      slug: resolvedPageSlug,
       order,
       parentId,
       content: {
@@ -1035,7 +1037,7 @@ export class SwaggerAPI {
       sectionSlug: section.slug,
       pageDetails: {
         tableOfContentsId: tocItem.id,
-        slug: pageSlug,
+        slug: resolvedPageSlug,
         title: normalizedTitle,
         content: {
           type: contentType,

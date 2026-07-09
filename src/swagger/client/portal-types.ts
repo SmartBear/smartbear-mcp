@@ -611,7 +611,13 @@ export const CreateDocumentationPageArgsSchema = z.object({
   pageTitle: z
     .string()
     .describe(
-      "Title of the documentation page - will be displayed in navigation (3-255 characters, used to generate the page slug)",
+      "Title of the documentation page - will be displayed in navigation (3-255 characters)",
+    ),
+  pageSlug: z
+    .string()
+    .optional()
+    .describe(
+      "URL slug for the documentation page. 3-255 characters, lowercase, alphanumeric with hyphens, underscores, or dots (e.g. 'my-page'). If not provided, the slug is generated from the page title.",
     ),
   pageContent: z
     .string()

@@ -18,21 +18,21 @@ The BearQ client provides AI-powered QA test management and execution capabiliti
 #### `bearq_run_regression_tests`
 
 - Purpose: Runs the full BearQ regression suite — every regression-ready test case in the workspace.
-- Parameters: None.
+- Parameters: `environment` (optional) — target environment name to run against; omit to use the workspace default.
 - Returns: Task IDs for the started run.
 - Use case: CI/CD pipelines or pre-release smoke checks.
 
 #### `bearq_run_test_cases`
 
 - Purpose: Runs specific BearQ regression test cases by ID.
-- Parameters: `testCaseIds` — list of regression test case IDs.
+- Parameters: `testCaseIds` — list of regression test case IDs. `environment` (optional) — target environment name to run against; omit to use the workspace default.
 - Returns: Task IDs for the started run.
 - Use case: Targeted re-run of a subset of regression tests after a code change.
 
 #### `bearq_run_tests_in_functional_areas`
 
 - Purpose: Runs every regression test case tagged with one or more functional areas.
-- Parameters: `functionalAreas` — list of functional area IDs or names.
+- Parameters: `functionalAreas` — list of functional area IDs or names. `environment` (optional) — target environment name to run against; omit to use the workspace default.
 - Returns: Task IDs for the started run.
 - Use case: Run only the tests relevant to a feature area touched by a change.
 
@@ -82,6 +82,17 @@ The BearQ client provides AI-powered QA test management and execution capabiliti
 - Parameters: `instruction` — natural language instruction.
 - Returns: Task ID for the started QA lead task.
 - Use case: Catch-all when no other BearQ tool fits. The QA lead can list, create, and update test cases, manage functional areas, and read the application model — enough surface area to handle most QA workflow requests.
+
+---
+
+### Environments
+
+#### `bearq_list_environments`
+
+- Purpose: Lists the environments configured in the workspace.
+- Parameters: None.
+- Returns: `{ environments }` — each with `id`, `name`, `url`, `isDefault`, `createdAt`, and `updatedAt`.
+- Use case: Discover valid environment names to pass to the run tools, and identify the workspace default.
 
 ---
 
