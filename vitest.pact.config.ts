@@ -5,7 +5,7 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: [
-      "src/pactflow/**/*.pact.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "**/*.pact.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
   },
   resolve: {

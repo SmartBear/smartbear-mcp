@@ -54,8 +54,13 @@ export default defineConfig({
       // Include source map support
       reportsDirectory: "./coverage",
     },
-    include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    exclude: ["**/*.pact.test.*"],
+    include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.{idea,git,cache,output,temp}/**",
+      "**/*.pact.test.*",
+    ],
     // Setup files
     // Placeholder for future setup files. Remove if not needed.
     setupFiles: [],
