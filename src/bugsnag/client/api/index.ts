@@ -1,5 +1,6 @@
 import type {
   OrganizationApiView,
+  CollaboratorApiView,
   ProjectApiView,
   ReleaseApiView,
   ReleaseGroup,
@@ -13,11 +14,13 @@ export {
   ErrorsApiFetchParamCreator,
   ErrorUpdateRequest,
   EventApiView,
+  CollaboratorApiView,
   EventField,
   OrganizationApiView,
   PivotApiView,
   ProjectNetworkGroupingRuleset,
   ProjectsApiFetchParamCreator,
+  OrganizationsApiFetchParamCreator,
   Span,
   SpanGroup,
   TraceField,
@@ -26,8 +29,11 @@ export { CurrentUserAPI } from "./CurrentUser";
 export { Configuration } from "./configuration";
 export { ErrorAPI } from "./Error";
 export { ProjectAPI } from "./Project";
-
+export { OrganizationAPI } from "./Organization";
 export interface Organization extends OrganizationApiView {
+  id: string; // ID is always present
+}
+export interface Collaborator extends CollaboratorApiView {
   id: string; // ID is always present
 }
 
