@@ -31,11 +31,14 @@ describe("AI – generate", () => {
       .withRequest("POST", "/api/ai/generate", (b) => {
         b.headers(jsonHeaders).jsonBody(like({ language: "typescript" }));
       })
-      .willRespondWith(200, (b) => {
+      .willRespondWith(202, (b) => {
         b.jsonBody(
           like({
-            code: like("// generated code"),
-            language: like("typescript"),
+            status: like("accepted"),
+            session_id: like("abc123"),
+            submitted_at: like("2024-01-01T00:00:00.000Z"),
+            status_url: like("https://example.com/api/ai/status/abc123"),
+            result_url: like("https://example.com/api/ai/result/abc123"),
           }),
         );
       })
@@ -48,10 +51,12 @@ describe("AI – generate", () => {
           },
           body: JSON.stringify({ language: "typescript" }),
         });
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(202);
         const body = await response.json();
-        expect(body.code).toBeDefined();
-        expect(body.language).toBeDefined();
+        expect(body.status).toBeDefined();
+        expect(body.session_id).toBeDefined();
+        expect(body.status_url).toBeDefined();
+        expect(body.result_url).toBeDefined();
       }));
 });
 
@@ -106,12 +111,14 @@ describe("AI – review", () => {
           }),
         );
       })
-      .willRespondWith(200, (b) => {
+      .willRespondWith(202, (b) => {
         b.jsonBody(
           like({
-            recommendations: eachLike({
-              recommendation: like("Improve test coverage"),
-            }),
+            status: like("accepted"),
+            session_id: like("abc123"),
+            submitted_at: like("2024-01-01T00:00:00.000Z"),
+            status_url: like("https://example.com/api/ai/status/abc123"),
+            result_url: like("https://example.com/api/ai/result/abc123"),
           }),
         );
       })
@@ -131,8 +138,11 @@ describe("AI – review", () => {
             language: "javascript",
           }),
         });
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(202);
         const body = await response.json();
-        expect(body.recommendations).toBeDefined();
+        expect(body.status).toBeDefined();
+        expect(body.session_id).toBeDefined();
+        expect(body.status_url).toBeDefined();
+        expect(body.result_url).toBeDefined();
       }));
 });
