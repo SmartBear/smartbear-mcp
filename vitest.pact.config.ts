@@ -4,9 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: [
-      "**/*.pact.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-    ],
+    include: ["**/*.pact.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
   },
   resolve: {
     alias: {
