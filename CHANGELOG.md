@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [Common] Co-located all unit test files with their source files (`path/to/file.ts` → `path/to/file.test.ts`), removing the top-level `src/tests/unit/` directory. Updated `vitest.config.ts` include/exclude globs and coverage excludes accordingly.
+
 ### Security
 
 - [Common] Upgraded `libcrypto3` and `libssl3` Alpine packages from `3.5.6-r0` to `3.5.7-r0` in the Docker release image to address CVE-2026-34182 (CRITICAL), CVE-2026-45447 (HIGH), CVE-2026-7383 (HIGH), and CVE-2026-45445 (HIGH) [#572](https://github.com/SmartBear/smartbear-mcp/pull/572)
