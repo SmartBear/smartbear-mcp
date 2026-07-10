@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- [Common] Relocated all product unit tests from the top-level `src/tests/unit/<product>/` directory into each product's own `src/<product>/tests/` folder. The `vitest.config.ts` include/exclude globs and coverage excludes were updated accordingly.
+- [Common] Co-located all unit test files with their source files (`path/to/file.ts` → `path/to/file.test.ts`), removing the top-level `src/tests/unit/` directory. Updated `vitest.config.ts` include/exclude globs and coverage excludes accordingly.
 
 ### Security
 
