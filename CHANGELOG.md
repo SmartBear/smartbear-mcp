@@ -7,9 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [Common] Co-located all unit test files with their source files (`path/to/file.ts` → `path/to/file.test.ts`), removing the top-level `src/tests/unit/` directory. Updated `vitest.config.ts` include/exclude globs and coverage excludes accordingly.
+
+### Security
+
+- [Common] Upgraded `libcrypto3` and `libssl3` Alpine packages from `3.5.6-r0` to `3.5.7-r0` in the Docker release image to address CVE-2026-34182 (CRITICAL), CVE-2026-45447 (HIGH), CVE-2026-7383 (HIGH), and CVE-2026-45445 (HIGH) [#572](https://github.com/SmartBear/smartbear-mcp/pull/572)
+
 - [Common] Capture MCP client identity (`clientInfo.name`/`version`) from the `initialize` handshake and store it in the session context. The normalized client name and version are forwarded on the outbound User-Agent for all downstream API requests and attached to BugSnag event metadata, enabling usage attribution by originating MCP client (Claude, Cursor, Copilot Studio, etc.) without client-side changes [#532](https://github.com/SmartBear/smartbear-mcp/pull/532)
+- [Zephyr] Update Zephyr Schemas - Change ComponentID min in Create Test Case to 1 [#574](https://github.com/SmartBear/smartbear-mcp/pull/574)
+
+### Fixed
+
+- [Pactflow] Fixed CDCT failures: removed `deployable` from the `can-i-deploy` summary matcher (the API legitimately returns `null` when no verification result exists between integrated services, not a boolean) and removed the `PUT /webhooks/{id}` consumer interaction which fails provider-side UUID validation due to the 16-character minimum enforced by the webhook contract. [#578](https://github.com/SmartBear/smartbear-mcp/pull/578)
 
 ### Added
+
+- [Pactflow] Added Pact V4 consumer contract tests covering PactflowClient HTTP interactions, with a dedicated CI pipeline that publishes pacts to PactFlow and gates on CDCT verification. Tests cover can-i-deploy, matrix, pacticipants, environments, deployments, webhooks, secrets, labels, admin users/teams/roles, system accounts, API tokens, BDCT endpoints, and more. Fixed `setTeamUsers` request body key (`uuids` → `users`) to match the provider API contract.
 
 - [Swagger] Extended Swagger Functional Testing integration with `run_suite`, and `get_suite_status` tools for executing available suites and querying their execution.
 
