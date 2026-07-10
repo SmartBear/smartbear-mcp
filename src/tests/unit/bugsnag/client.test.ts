@@ -904,7 +904,9 @@ describe("BugsnagClient", () => {
       expect(registeredTools).toContain("List Trace Fields");
       expect(registeredTools).toContain("Get Network Endpoint Groupings");
       expect(registeredTools).toContain("Set Network Endpoint Groupings");
-      expect(registeredTools.length).toBe(19);
+      expect(registeredTools).toContain("List Error Comments");
+      expect(registeredTools).toContain("Create Error Comment");
+      expect(registeredTools.length).toBe(21);
     });
   });
 
