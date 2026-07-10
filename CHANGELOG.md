@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Pactflow] Fixed CDCT failures: removed `deployable` from the `can-i-deploy` summary matcher (the API legitimately returns `null` when no verification result exists between integrated services, not a boolean) and removed the `PUT /webhooks/{id}` consumer interaction which fails provider-side UUID validation due to the 16-character minimum enforced by the webhook contract. [#578](https://github.com/SmartBear/smartbear-mcp/pull/578)
 
+- [Pactflow] Fixed consumer pact tests for AI generate and review endpoints: updated both interactions to expect `202 Accepted` with a `StatusResponse` body (`status`, `session_id`, `submitted_at`, `status_url`, `result_url`) instead of a synchronous `200` response, matching the async job pattern the `pactflow-ai-api` provider now uses.
+
 ### Added
 
 - [Pactflow] Added Pact V4 consumer contract tests covering PactflowClient HTTP interactions, with a dedicated CI pipeline that publishes pacts to PactFlow and gates on CDCT verification. Tests cover can-i-deploy, matrix, pacticipants, environments, deployments, webhooks, secrets, labels, admin users/teams/roles, system accounts, API tokens, BDCT endpoints, and more. Fixed `setTeamUsers` request body key (`uuids` → `users`) to match the provider API contract.
