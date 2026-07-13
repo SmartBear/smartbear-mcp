@@ -164,3 +164,73 @@ export interface TestRunHistoryResponse {
   totalRuns: number;
   runs: TestRun[];
 }
+
+export const CreateFunctionalTestingTestHeaderSchema = z.object({
+  name: z.string().describe("Header name"),
+  value: z.string().describe("Header value"),
+});
+
+export const CreateFunctionalTestingTestStepSchema = z.object({
+  type: z
+    .string()
+    .describe('Step type, e.g. "api", "browser-navigate", "wait"')
+    .trim()
+    .min(1),
+  url: z.string().describe("URL for navigate or API call steps").optional(),
+  httpMethod: z
+    .string()
+    .describe('HTTP method for API steps, e.g. "GET", "POST"')
+    .optional(),
+  requestBody: z
+    .string()
+    .describe("Request body for API steps")
+    .optional(),
+  requestHeaders: z
+    .array(CreateFunctionalTestingTestHeaderSchema)
+    .describe("HTTP headers for API steps")
+    .optional(),
+  followRedirects: z
+    .boolean()
+    .describe("Whether to follow redirects for API steps")
+    .optional(),
+  description: z
+    .string()
+    .describe("Human-readable label for this step")
+    .optional(),
+  inputText: z.string().describe("Text to type for input steps").optional(),
+  selector: z
+    .string()
+    .describe("CSS selector for element-targeting steps")
+    .optional(),
+  seconds: z
+    .number()
+    .int()
+    .describe("Wait duration in seconds for wait steps")
+    .optional(),
+});
+
+export const CreateFunctionalTestingTestParamsSchema = z.object({
+  name: z.string().describe("Name for the new test").trim().min(1),
+  type: z
+    .enum(["api", "web", "native-mobile"])
+    .describe('Test type. Defaults to "api" for API testing.')
+    .default("api"),
+  description: z
+    .string()
+    .describe("Optional description for the test")
+    .optional(),
+  deviceProfile: z
+    .string()
+    .describe(
+      "Optional device profile name (required for native-mobile tests)",
+    )
+    .optional(),
+  steps: z
+    .array(CreateFunctionalTestingTestStepSchema)
+    .describe("Test steps to include in the test")
+    .optional(),
+});
+
+export type CreateFunctionalTestingTestParams = z.infer<
+  typeof CreateFunctionalTestingTestParamsSchema
+>;

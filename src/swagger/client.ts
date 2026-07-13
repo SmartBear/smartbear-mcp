@@ -16,6 +16,7 @@ import {
 } from "./client/functional-testing-api";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
+  CreateFunctionalTestingTestParams,
   GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
@@ -361,6 +362,12 @@ export class SwaggerClient implements Client {
   }
 
   // Functional Testing methods
+
+  async createFunctionalTest(
+    args: CreateFunctionalTestingTestParams,
+  ): Promise<unknown> {
+    return this.withFunctionalTesting((ftApi) => ftApi.createTest(args));
+  }
 
   async listFunctionalTestingTests(): Promise<unknown> {
     return this.withFunctionalTesting((ftApi) => ftApi.listTests());

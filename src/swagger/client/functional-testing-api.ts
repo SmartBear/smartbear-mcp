@@ -2,6 +2,7 @@ import { appendClientIdentity } from "../../common/info";
 import { ToolError } from "../../common/tools";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
+  CreateFunctionalTestingTestParams,
   GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
@@ -73,6 +74,20 @@ export class FunctionalTestingAPI {
     }
 
     return response;
+  }
+
+  async createTest(args: CreateFunctionalTestingTestParams): Promise<unknown> {
+    const response = await this.ftFetch(
+      `tests`,
+      {
+        method: "POST",
+        headers: this.getFtHeaders(),
+        body: JSON.stringify(args),
+      },
+      errorMessageFor(`create Functional Testing test`),
+    );
+
+    return response.json();
   }
 
   async listTests(): Promise<unknown> {
