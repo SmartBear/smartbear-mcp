@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [Common] Co-located all unit test files with their source files (`path/to/file.ts` → `path/to/file.test.ts`), removing the top-level `src/tests/unit/` directory. Updated `vitest.config.ts` include/exclude globs and coverage excludes accordingly.
+- [Swagger] Refactor error handling for Functional Testing tools
 
 ### Security
 
