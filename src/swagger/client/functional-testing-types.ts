@@ -129,8 +129,9 @@ export const GetFunctionalTestHistoryParamsSchema = z.object({
     .number()
     .int()
     .min(1)
+    .max(100)
     .optional()
-    .describe("Number of most recent runs to return (default: 10)"),
+    .describe("Number of most recent runs to return (default: 25, max: 100)"),
   offset: z
     .number()
     .int()

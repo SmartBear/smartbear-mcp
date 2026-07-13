@@ -285,13 +285,13 @@ export class FunctionalTestingAPI {
     const params = new URLSearchParams();
     if (args.limit !== undefined) params.set("limit", String(args.limit));
     if (args.offset !== undefined) params.set("offset", String(args.offset));
-    const query = params.toString() ? `?${params}` : "";
+    const query = params.toString() ? `?${params.toString()}` : "";
 
     const headers = this.getFtHeaders();
     let response: Response;
     try {
       response = await fetch(
-        `${this.baseUrl}/tests/${args.testId}/runs${query}`,
+        `${this.baseUrl}/tests/${encodeURIComponent(args.testId)}/runs${query}`,
         {
           method: "GET",
           headers,
