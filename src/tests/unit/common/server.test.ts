@@ -40,6 +40,31 @@ describe("SmartBearMcpServer", () => {
     vi.mocked(Bugsnag.notify).mockClear();
   });
 
+  describe("clientInfo", () => {
+    it("returns undefined before any clientInfo is set", () => {
+      expect(server.getClientInfo()).toBeUndefined();
+    });
+
+    it("stores and returns the client info set via setClientInfo", () => {
+      server.setClientInfo({ name: "Claude Code", version: "1.2.3" });
+
+      expect(server.getClientInfo()).toEqual({
+        name: "Claude Code",
+        version: "1.2.3",
+      });
+    });
+
+    it("overwrites previously stored client info", () => {
+      server.setClientInfo({ name: "Claude Code", version: "1.2.3" });
+      server.setClientInfo({ name: "Cursor", version: "0.9.0" });
+
+      expect(server.getClientInfo()).toEqual({
+        name: "Cursor",
+        version: "0.9.0",
+      });
+    });
+  });
+
   describe("addClient", () => {
     let mockClient: any;
 
