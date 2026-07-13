@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- [Reflect] Add create_test and create_segment tools to enable agents to port tests from open source frameworks (Selenium, Cypress, Playwright) and other SmartBear products (TestComplete, BearQ) to Reflect.
+
 ### Fixed
 
 - [Pactflow] Corrected MCP tool hint annotations for all 102 PactFlow tools. Previously, `readOnlyHint` defaulted to `true` for every tool because no tool explicitly set `readOnly`, causing write/delete operations to be misreported as read-only. All tools now declare all four hints explicitly: `readOnly` (58 read-only, 44 write), `destructive` (true for DELETE ops, `resetAdminRoles`, and `regenerateToken`), `idempotent` (false for creates, records, patch, execute, and invite operations), and `openWorld` (true for `executeWebhook`, `executeWebhooks`, and `inviteUsers` which trigger external HTTP requests or send emails).
