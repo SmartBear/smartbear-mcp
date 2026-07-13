@@ -1,8 +1,7 @@
 import type { CacheService } from "../../../common/cache";
-import type { FieldValues } from "../../config/field-resolution.types";
 
-/** In-memory cache for field metadata, keyed by projectKey → fieldKey → name→ID map. */
-export class Cache {
+/** In-memory cache for field metadata, keyed by projectKey → fieldKey → name→value map. */
+export class Cache<V = string> {
   private readonly trackedKeys = new Map<string, Set<string>>();
   private readonly cacheService: CacheService;
 
@@ -14,16 +13,17 @@ export class Cache {
     return `qtm4j:${projectKey}:${fieldKey}`;
   }
 
-  get(projectKey: string, fieldKey: string): FieldValues | undefined {
-    return this.cacheService.get<FieldValues>(
+  get(projectKey: string, fieldKey: string): Record<string, V> | undefined {
+    return this.cacheService.get<Record<string, V>>(
       this.compositeKey(projectKey, fieldKey),
     );
   }
 
-  set(projectKey: string, fieldKey: string, values: FieldValues): void {
+  set(projectKey: string, fieldKey: string, values: Record<string, V>): void {
     const key = this.compositeKey(projectKey, fieldKey);
     const existing =
-      this.cacheService.get<FieldValues>(key) ?? ({} as FieldValues);
+      this.cacheService.get<Record<string, V>>(key) ??
+      ({} as Record<string, V>);
     this.cacheService.set(key, { ...existing, ...values });
     if (!this.trackedKeys.has(projectKey)) {
       this.trackedKeys.set(projectKey, new Set());
@@ -62,7 +62,7 @@ export class Cache {
     projectKey: string,
     fieldKey: string,
     name: string,
-  ): string | undefined {
+  ): V | undefined {
     return this.get(projectKey, fieldKey)?.[name.toLowerCase()];
   }
 }
