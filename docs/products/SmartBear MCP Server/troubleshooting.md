@@ -47,6 +47,24 @@ Remove-Item -Path $(if ($env:NPM_CONFIG_CACHE) { "$env:NPM_CONFIG_CACHE\_npx" } 
 
 After doing the above you can reinstall the MCP server.
 
+### VS Code OAuth Authentication Error
+
+If you encounter the following error when signing in via VS Code:
+
+```
+An error occurred while signing in:
+Unknown or expired client_id; re-register via dynamic client registration
+```
+
+This means VS Code's cached OAuth dynamic client registration has expired or become invalid. To fix this:
+
+1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
+2. Run the command: **`Authentication: Remove Dynamic Authentication Providers`**.
+3. Remove the problematic authentication provider from the list.
+4. Restart VS Code and sign in again.
+
+For more details, see [VS Code issue #250960](https://github.com/microsoft/vscode/issues/250960).
+
 ## Getting help
 
 For additional support and troubleshooting:
