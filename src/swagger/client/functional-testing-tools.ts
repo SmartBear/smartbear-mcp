@@ -1,4 +1,5 @@
 import {
+  CancelFunctionalTestingSuiteExecutionSchema,
   GetFunctionalTestingExecutionTestSchema,
   GetFunctionalTestingSuiteExecutionSchema,
   ListFunctionalTestingSuiteExecutionsSchema,
@@ -54,6 +55,18 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     handler: "listFunctionalTestingSuiteExecutions",
     readOnly: true,
     idempotent: true,
+  },
+  {
+    title: "Cancel Suite Execution",
+    toolset: "Functional Testing",
+    summary:
+      "Cancels an ongoing test suite execution in your Swagger Functional Testing workspace. " +
+      "Use this tool when you need to stop a long-running or accidentally triggered suite run. " +
+      "Do not use this tool to cancel individual test runs.",
+    inputSchema: CancelFunctionalTestingSuiteExecutionSchema,
+    handler: "cancelFunctionalTestingSuiteExecution",
+    readOnly: false,
+    idempotent: false,
   },
   {
     title: "List Suites",
