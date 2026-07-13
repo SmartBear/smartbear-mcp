@@ -40,6 +40,12 @@ The Swagger Functional Testing client provides tools for discovering and executi
 - Returns: Complete list of executions for the given suite. An empty list is returned when no executions exist.
 - Use case: Review the execution history and timings of a test suite.
 
+#### `cancel_suite_execution`
+
+- Purpose: Cancels an ongoing test suite execution in your Swagger Functional Testing workspace. Use this tool when you need to stop a long-running or accidentally triggered suite run. Do not use this tool to cancel individual test runs. Requires a `suiteId` and an `executionId`.
+- Returns: Confirmation of the cancellation. The cancelled execution is persisted in run history with status `cancelled`.
+- Use case: Stop a long-running or accidentally triggered suite run.
+
 ---
 
 ### Suite Execution
