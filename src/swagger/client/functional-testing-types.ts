@@ -172,41 +172,23 @@ export const CreateFunctionalTestingTestHeaderSchema = z.object({
 });
 
 export const CreateFunctionalTestingTestStepSchema = z.object({
-  type: z
-    .string()
-    .describe('Step type, e.g. "api", "browser-navigate", "wait"')
-    .trim()
-    .min(1),
-  url: z.string().describe("URL for navigate or API call steps").optional(),
+  url: z.string().url().describe("URL for the API call").optional(),
   httpMethod: z
     .string()
-    .describe('HTTP method for API steps, e.g. "GET", "POST"')
+    .describe('HTTP method, e.g. "GET", "POST"')
     .optional(),
-  requestBody: z
-    .string()
-    .describe("Request body for API steps")
-    .optional(),
+  requestBody: z.string().describe("Request body").optional(),
   requestHeaders: z
     .array(CreateFunctionalTestingTestHeaderSchema)
-    .describe("HTTP headers for API steps")
+    .describe("HTTP headers")
     .optional(),
   followRedirects: z
     .boolean()
-    .describe("Whether to follow redirects for API steps")
+    .describe("Whether to follow redirects")
     .optional(),
   description: z
     .string()
     .describe("Human-readable label for this step")
-    .optional(),
-  inputText: z.string().describe("Text to type for input steps").optional(),
-  selector: z
-    .string()
-    .describe("CSS selector for element-targeting steps")
-    .optional(),
-  seconds: z
-    .number()
-    .int()
-    .describe("Wait duration in seconds for wait steps")
     .optional(),
 });
 
@@ -215,12 +197,6 @@ export const CreateFunctionalTestingTestParamsSchema = z.object({
   description: z
     .string()
     .describe("Optional description for the test")
-    .optional(),
-  deviceProfile: z
-    .string()
-    .describe(
-      "Optional device profile name (required for native-mobile tests)",
-    )
     .optional(),
   steps: z
     .array(CreateFunctionalTestingTestStepSchema)
@@ -231,3 +207,7 @@ export const CreateFunctionalTestingTestParamsSchema = z.object({
 export type CreateFunctionalTestingTestParams = z.infer<
   typeof CreateFunctionalTestingTestParamsSchema
 >;
+
+export interface CreateFunctionalTestingTestResponse {
+  id: string;
+}

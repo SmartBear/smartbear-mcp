@@ -54,6 +54,87 @@ describe("FunctionalTestingAPI", () => {
     );
   });
 
+  describe("createTest", () => {
+    const createResponseMock = { id: "test-abc123" };
+
+    it("should POST to the correct endpoint with X-API-KEY header", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({ name: "My New Test" });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.reflect.run/v1/tests",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "X-API-KEY": "test-api-key" }),
+        }),
+      );
+    });
+
+    it("should inject type: api at top level of request body", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({ name: "My New Test" });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.type).toBe("api");
+      expect(body.name).toBe("My New Test");
+    });
+
+    it("should inject type: api into each step", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({
+        name: "My New Test",
+        steps: [
+          { url: "https://example.com/api", httpMethod: "GET" },
+          { url: "https://example.com/api/users", httpMethod: "POST" },
+        ],
+      });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps[0].type).toBe("api");
+      expect(body.steps[1].type).toBe("api");
+      expect(body.steps[0].url).toBe("https://example.com/api");
+    });
+
+    it("should handle test with no steps", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      await api.createTest({ name: "Empty Test" });
+
+      const [, init] = fetchMock.mock.calls[0];
+      const body = JSON.parse((init as RequestInit).body as string);
+      expect(body.steps).toBeUndefined();
+    });
+
+    it("should return the new test id", async () => {
+      fetchMock.mockResponseOnce(JSON.stringify(createResponseMock));
+
+      const result = await api.createTest({ name: "My New Test" });
+
+      expect(result).toEqual({ id: "test-abc123" });
+    });
+
+    it("should throw ToolError on HTTP error", async () => {
+      fetchMock.mockResponseOnce("Internal Server Error", { status: 500 });
+
+      await expect(api.createTest({ name: "My New Test" })).rejects.toThrow(
+        "Failed to create Functional Testing test",
+      );
+    });
+
+    it("should map network errors to an unreachable message", async () => {
+      fetchMock.mockRejectOnce(new Error("Network error"));
+
+      await expect(api.createTest({ name: "My New Test" })).rejects.toThrow(
+        UNREACHABLE_MESSAGE,
+      );
+    });
+  });
+
   describe("listTests", () => {
     it("should call the correct endpoint with X-API-KEY header", async () => {
       fetchMock.mockResponseOnce(JSON.stringify(testsMock));
