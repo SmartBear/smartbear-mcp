@@ -21,8 +21,7 @@ export class GetTestDetail extends Tool<ReflectClient> {
 
   handle: ToolCallback<ZodRawShape> = async (args) => {
     const { testId } = args as { testId: string };
-    if (!testId || !testId.trim())
-      throw new ToolError("testId argument is required");
+    if (!testId?.trim()) throw new ToolError("testId argument is required");
 
     const response = await fetch(
       `https://${API_HOSTNAME}/v1/tests/${encodeURIComponent(testId)}`,

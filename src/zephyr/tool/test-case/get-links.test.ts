@@ -217,13 +217,13 @@ describe("GetTestCaseLinks", () => {
     );
     expect(result.structuredContent).toBe(responseMock);
     expect(result.structuredContent?.webLinks).toHaveLength(3);
-    expect((result.structuredContent?.webLinks as any)[0].url).toBe(
+    expect((result.structuredContent as any).webLinks[0].url).toBe(
       "not-a-valid-url",
     );
-    expect((result.structuredContent?.webLinks as any)[1].url).toBe(
+    expect((result.structuredContent as any).webLinks[1].url).toBe(
       "//incomplete",
     );
-    expect((result.structuredContent?.webLinks as any)[2].url).toBe(
+    expect((result.structuredContent as any).webLinks[2].url).toBe(
       "http://example.com/path with spaces",
     );
   });
