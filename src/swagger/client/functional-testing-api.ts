@@ -3,6 +3,7 @@ import { ToolError } from "../../common/tools";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
   CreateFunctionalTestingTestParams,
+  CreateFunctionalTestingTestResponse,
   GetFunctionalTestHistoryParams,
   GetFunctionalTestingExecutionTestParams,
   GetFunctionalTestingSuiteExecutionParams,
@@ -76,13 +77,19 @@ export class FunctionalTestingAPI {
     return response;
   }
 
-  async createTest(args: CreateFunctionalTestingTestParams): Promise<unknown> {
+  async createTest(
+    args: CreateFunctionalTestingTestParams,
+  ): Promise<CreateFunctionalTestingTestResponse> {
     const response = await this.ftFetch(
       `tests`,
       {
         method: "POST",
         headers: this.getFtHeaders(),
-        body: JSON.stringify({ type: "api", ...args }),
+        body: JSON.stringify({
+          type: "api",
+          ...args,
+          steps: args.steps?.map((step) => ({ type: "api", ...step })),
+        }),
       },
       errorMessageFor(`create Functional Testing test`),
     );
