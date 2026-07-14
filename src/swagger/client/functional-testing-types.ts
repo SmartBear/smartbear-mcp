@@ -211,10 +211,6 @@ export const CreateFunctionalTestingTestStepSchema = z.object({
 
 export const CreateFunctionalTestingTestParamsSchema = z.object({
   name: z.string().describe("Name for the new test").trim().min(1),
-  type: z
-    .enum(["api", "web", "native-mobile"])
-    .describe('Test type. Defaults to "api" for API testing.')
-    .default("api"),
   description: z
     .string()
     .describe("Optional description for the test")

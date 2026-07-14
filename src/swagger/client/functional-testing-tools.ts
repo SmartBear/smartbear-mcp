@@ -15,10 +15,9 @@ export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
     title: "Create Test",
     toolset: "Functional Testing",
     summary:
-      "Creates a new test in your Swagger Functional Testing workspace. " +
-      "Use this when you need to programmatically create an API test with a defined set of steps. " +
-      'Defaults to type "api" for API testing. ' +
-      'API steps ("type": "api") execute HTTP calls but do not support inline assertions — use a "javascript" step after an API step to validate the response. ' +
+      "Creates a new API test in your Swagger Functional Testing workspace. " +
+      "Use this when you need to programmatically create a test with a defined set of steps. " +
+      'API steps execute HTTP calls but do not support inline assertions — use a "javascript" step after an API step to validate the response. ' +
       "Returns the ID of the newly created test, which can be used with swagger_run_test.",
     inputSchema: CreateFunctionalTestingTestParamsSchema,
     handler: "createFunctionalTest",
