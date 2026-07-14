@@ -268,7 +268,6 @@ export class Qtm4jClient implements Client {
     const { GetTestStepBugs } = await import(
       "./tool/test-execution/get-test-step-bugs"
     );
-
     const tools = [
       new GetProjects(this),
       new SetProjectContext(this),
