@@ -39,8 +39,7 @@ export class LinkTestCaseBugs extends Tool<Qtm4jClient> {
     outputSchema: LinkBugsResponse,
     purpose: "Link Jira bugs to a test case execution.",
     useCases: [
-      "Link a Jira bug to a test case execution",
-      "Link multiple Jira bug to a test case execution in a single bulk operation.",
+      "Link one or more Jira bugs to a test case execution in a single request, supporting both single and bulk linking operations.",
     ],
     examples: [
       {

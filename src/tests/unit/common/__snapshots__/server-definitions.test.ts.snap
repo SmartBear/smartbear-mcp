@@ -9071,7 +9071,7 @@ Expected Output: First 10 steps in sequence order
 
 **Output Description:** Confirmation object with testCycleKey, testCaseKey, linked: true, and linkedDefectCount (by default). warningMessages is included when the server reports per-bug issues.
 
-**Use Cases:** 1. Link a Jira bug to a test case execution 2. Link multiple Jira bug to a test case execution in a single bulk operation.
+**Use Cases:** 1. Link one or more Jira bugs to a test case execution in a single request, supporting both single and bulk linking operations.
 
 **Examples:**
 1. Link two bugs to a test case execution
@@ -9151,7 +9151,7 @@ Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', linke
 
 **Output Description:** Confirmation object with testCycleKey, testCaseKey, linked: true, and linkedDefectCount (by default). warningMessages is included when the server reports per-bug issues.
 
-**Use Cases:** 1. Link a Jira bug to a specific test step execution 2. Link multiple Jira bugs to a test step execution in a single request
+**Use Cases:** 1. Link one or more Jira bugs to a specific test step execution in a single request, supporting both single and bulk linking operations.
 
 **Examples:**
 1. Link a bug to step 2 of a test case execution
