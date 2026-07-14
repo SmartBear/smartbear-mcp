@@ -5,7 +5,7 @@
  *
  * Updates an existing test step execution. The test cycle key is used directly as the
  * path parameter; testStepExecutionId is resolved from testCycleKey + testCaseKey +
- * testStepSeqNo via the execution-context and step-execution-context resolvers.
+ * testStepSeqNo via the step-execution-context resolver.
  * At least one updatable field must be supplied.
  */
 import * as zod from "zod";

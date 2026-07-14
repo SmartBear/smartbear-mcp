@@ -21,7 +21,7 @@ const FIELD_CONFIG: Record<string, string> = {
  * PUT /testcycles/{cycleKey}/teststep-executions/{testStepExecutionId}
  * The cycle key is used directly as the path parameter (no UID resolution).
  * testStepExecutionId is resolved from testCycleKey + testCaseKey + testStepSeqNo
- * via ExecutionContextResolver and StepExecutionContextResolver.
+ * via StepExecutionContextResolver.
  * Returns 200 OK on success.
  */
 export class UpdateTestStepExecution extends Tool<Qtm4jClient> {
@@ -35,7 +35,7 @@ export class UpdateTestStepExecution extends Tool<Qtm4jClient> {
     outputSchema: UpdateTestStepExecutionResponse,
     purpose: "Update an existing test step execution.",
     useCases: [
-      "Set a test step result (e.g. Pass, Fail, Blocked)",
+      "Set a test step execution result (e.g. Pass, Fail, Blocked)",
       "Update actual result text or comment on a test step execution",
     ],
     examples: [

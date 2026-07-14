@@ -57,7 +57,7 @@ export const UpdateTestCaseExecutionBody = zod.object({
     .string()
     .optional()
     .describe(
-      "Environment name (e.g. 'Production', 'Staging'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.",
+      "Environment name (e.g. 'Production', 'Staging', 'Google Chrome', 'Firefox'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.",
     ),
   executionPlannedDate: zod
     .string()
@@ -87,10 +87,6 @@ export const UpdateTestCaseExecutionResponse = zod.object({
       "True when the server returned 204 No Content, confirming the execution was updated successfully.",
     ),
 });
-
-export type UpdateTestCaseExecutionBodyType = zod.infer<
-  typeof UpdateTestCaseExecutionBody
->;
 export type UpdateTestCaseExecutionResponseType = zod.infer<
   typeof UpdateTestCaseExecutionResponse
 >;

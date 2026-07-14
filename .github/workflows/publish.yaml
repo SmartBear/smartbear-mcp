@@ -251,9 +251,6 @@ jobs:
           jq --arg v "${{ steps.extract_version.outputs.VERSION }}" \
             '.version = $v | .packages[0].version = $v' \
             server.json > server.json.tmp && mv server.json.tmp server.json
-          jq --arg v "${{ steps.extract_version.outputs.VERSION }}" \
-            '.version = $v' \
-            server.swagger.json > server.swagger.json.tmp && mv server.swagger.json.tmp server.swagger.json
 
       - name: Install dependencies
         run: npm ci
@@ -278,10 +275,6 @@ jobs:
       - name: Publish to MCP Registry
         if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
         run: ./mcp-publisher publish
-
-      - name: Publish swagger-mcp to MCP Registry
-        if: ${{ env.RUN_PUBLISH_MCP == 'true' }}
-        run: ./mcp-publisher publish server.swagger.json
 
       - name: Build and pack .mcpb
         if: ${{ env.RUN_PUBLISH_MCPB == 'true' }}

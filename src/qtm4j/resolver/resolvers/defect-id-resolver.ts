@@ -39,11 +39,15 @@ export class DefectIdResolver extends Resolver {
     const value = body[inputField];
     if (value == null) return;
 
-    const keys = (Array.isArray(value) ? value : [value]).map(String);
+    const keys = (Array.isArray(value) ? value : [value]).map((v) =>
+      String(v).trim(),
+    );
     if (keys.length === 0) return;
 
     const defectMap = await this.resolveAndReturn(context.projectId, keys);
-    const resolvedIds = Object.values(defectMap);
+    const resolvedIds = keys
+      .filter((k) => k in defectMap)
+      .map((k) => defectMap[k]);
 
     if (resolvedIds.length > 0) {
       body[inputField] = resolvedIds;
