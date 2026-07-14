@@ -78,13 +78,12 @@ export class UpdateTestCaseExecution extends Tool<Qtm4jClient> {
     hints: [
       "Call set_project_context before this tool.",
       "At least one updatable field must be provided.",
-      "An execution must already be started before it can be updated.",
       "environmentId and buildId accept environment/build name as strings that are resolved to numeric IDs; unresolved names are dropped and a warning is returned.",
       "actualTime must be in 'HH:mm:ss' format (e.g. '01:30:00'). Always include seconds",
     ],
     outputDescription:
       "Confirmation object with testCycleKey, testCaseKey, and updated: true. " +
-      "Warnings are returned in content if executionResultId name could not be resolved.",
+      "Warnings are returned in content if any resolvable field (executionResultId, environmentId, buildId) could not be resolved and was dropped.",
   };
 
   handle = async (rawArgs: any) => {

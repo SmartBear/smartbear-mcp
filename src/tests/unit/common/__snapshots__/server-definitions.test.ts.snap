@@ -9877,11 +9877,11 @@ Expected Output: Project context switched to AD
 - testCaseKey (string) *required*: Test case key in the format '{PROJECT_KEY}-TC-{number}', e.g. 'SCRUM-TC-145'.
 - assignee (string): Jira account ID of the user to assign this execution to (e.g. '5e4a642c1c9d440008f2a2b4'). This is the account ID, not a display name.
 - executionPlannedDate (string): Planned execution date. Format: 'dd/MMM/yyyy' e.g. '15/Oct/2025'. Month must be capitalised (Oct, not oct or OCT).
-- environmentId (string): Environment name (e.g. 'Production', 'Staging'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.
+- environmentId (string): Environment name (e.g. 'Production', 'Staging', 'Google Chrome', 'Firefox'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.
 - buildId (string): Build name (e.g. 'Build 2.0', '1.0.0'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.
 - actualTime (string): Time already spent on the execution. Format: 'HH:mm:ss' e.g. '02:30:00' (2 hours 30 minutes 0 seconds).
 - cloneFrom (number): Source testCaseExecutionId to clone. When set, the new execution copies the source's execution and all other body fields are ignored by the server.
-- cloneExecutionCustomFields (boolean): When true (only meaningful together with cloneFrom), execution-level custom field values are also copied from the source execution.
+- cloneExecutionCustomFields (boolean): When true, custom field values from the previous execution of this test case are copied into the new execution.
 
 **Output Description:** Confirmation object with testCycleKey, testCaseKey, and created: true (set when server returns 204).
 
@@ -9915,13 +9915,22 @@ Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', creat
 {
   "testCycleKey": "PROJ-TR-101",
   "testCaseKey": "PROJ-TC-42",
-  "cloneFrom": 725981,
+  "cloneFrom": 725981
+}
+\`\`\`
+Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', created: true }
+
+4. Start a fresh execution and carry over custom field values from the previous execution
+\`\`\`json
+{
+  "testCycleKey": "PROJ-TR-101",
+  "testCaseKey": "PROJ-TC-42",
   "cloneExecutionCustomFields": true
 }
 \`\`\`
 Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', created: true }
 
-**Hints:** 1. Call set_project_context before this tool. 2. executionPlannedDate must be in 'dd/MMM/yyyy' format (e.g. '15/Oct/2025', month 3-letter capitalised). Normalize from any user-provided format before calling. 3. When cloneFrom is non-zero, the server ignores all body fields except cloneExecutionCustomFields. 4. assignee must be a Jira account ID (e.g. '5e4a642c1c9d440008f2a2b4'), not a display name. 5. environmentId and buildId accept name as strings that are resolved to numeric IDs; unresolved names are dropped and a warning is returned. 6. actualTime must be in 'HH:mm:ss' format (e.g. '02:30:00'). Always include seconds.",
+**Hints:** 1. Call set_project_context before this tool. 2. executionPlannedDate must be in 'dd/MMM/yyyy' format (e.g. '15/Oct/2025', month 3-letter capitalised). Normalize from any user-provided format before calling. 3. When cloneFrom is non-zero, the server ignores all body fields. 4. assignee must be a Jira account ID (e.g. '5e4a642c1c9d440008f2a2b4'), not a display name. 5. environmentId and buildId accept name as strings that are resolved to numeric IDs; unresolved names are dropped and a warning is returned. 6. actualTime must be in 'HH:mm:ss' format (e.g. '02:30:00'). Always include seconds.",
     "inputSchema": [
       "actualTime",
       "assignee",
@@ -10323,11 +10332,11 @@ Expected Output: Version 2 of test case updated with new assignee and estimated 
 - comment (string): Execution comment. Pass null to clear the existing comment.
 - actualTime (string): Time already spent on the execution. Format: 'HH:mm:ss' e.g. '02:30:00' (2 hours 30 minutes 0 seconds). Pass null to clear.
 - executionAssignee (string): Jira account ID of the assignee (not a display name). Pass null to unassign.
-- environmentId (string): Environment name (e.g. 'Production', 'Staging'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.
+- environmentId (string): Environment name (e.g. 'Production', 'Staging', 'Google Chrome', 'Firefox'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.
 - executionPlannedDate (string): Planned execution date. Format: 'dd/MMM/yyyy' e.g. '15/Oct/2025'. Month must be capitalised (Oct, not oct or OCT). Pass null to clear.
 - buildId (string): Build name (e.g. 'Build 2.0', '1.0.0'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned. Pass null to clear.
 
-**Output Description:** Confirmation object with testCycleKey, testCaseKey, and updated: true. Warnings are returned in content if executionResultId name could not be resolved.
+**Output Description:** Confirmation object with testCycleKey, testCaseKey, and updated: true. Warnings are returned in content if any resolvable field (executionResultId, environmentId, buildId) could not be resolved and was dropped.
 
 **Use Cases:** 1. Set a test case execution result (e.g. Pass, Fail, Blocked) 2. Update comment, environment, build, assignee, planned date, or actual time on an execution
 
@@ -10365,7 +10374,7 @@ Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', updat
 \`\`\`
 Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', updated: true }
 
-**Hints:** 1. Call set_project_context before this tool. 2. At least one updatable field must be provided. 3. An execution must already be started before it can be updated. 4. environmentId and buildId accept environment/build name as strings that are resolved to numeric IDs; unresolved names are dropped and a warning is returned. 5. actualTime must be in 'HH:mm:ss' format (e.g. '01:30:00'). Always include seconds",
+**Hints:** 1. Call set_project_context before this tool. 2. At least one updatable field must be provided. 3. environmentId and buildId accept environment/build name as strings that are resolved to numeric IDs; unresolved names are dropped and a warning is returned. 4. actualTime must be in 'HH:mm:ss' format (e.g. '01:30:00'). Always include seconds",
     "inputSchema": [
       "actualTime",
       "buildId",
@@ -10544,7 +10553,7 @@ Expected Output: Test cycle updated with all specified fields
 
 **Output Description:** Confirmation object with testCycleKey, testCaseKey, testStepSeqNo, and updated: true. executionResultName is included when the server returns it. Warnings are returned in content if executionResultId name could not be resolved.
 
-**Use Cases:** 1. Set a test step result (e.g. Pass, Fail, Blocked) 2. Update actual result text or comment on a test step execution
+**Use Cases:** 1. Set a test step execution result (e.g. Pass, Fail, Blocked) 2. Update actual result text or comment on a test step execution
 
 **Examples:**
 1. Mark step 2 as Pass

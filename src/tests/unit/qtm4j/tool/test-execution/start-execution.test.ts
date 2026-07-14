@@ -315,11 +315,21 @@ describe("StartExecution", () => {
       expect(calledEndpoint).not.toContain("cloneFrom");
     });
 
-    it("should include cloneExecutionCustomFields in the POST body", async () => {
+    it("should send empty body when cloneFrom is set (server ignores all body fields)", async () => {
       await instance.handle({
         testCycleKey: "PROJ-TR-101",
         testCaseKey: "PROJ-TC-42",
         cloneFrom: 725981,
+        cloneExecutionCustomFields: true,
+      });
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {});
+    });
+
+    it("should include cloneExecutionCustomFields in POST body when cloneFrom is not set", async () => {
+      await instance.handle({
+        testCycleKey: "PROJ-TR-101",
+        testCaseKey: "PROJ-TC-42",
         cloneExecutionCustomFields: true,
       });
 

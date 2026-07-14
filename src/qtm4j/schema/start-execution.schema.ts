@@ -46,7 +46,7 @@ export const StartExecutionBody = zod.object({
     .string()
     .optional()
     .describe(
-      "Environment name (e.g. 'Production', 'Staging'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.",
+      "Environment name (e.g. 'Production', 'Staging', 'Google Chrome', 'Firefox'). Auto-resolved to its numeric ID; an unresolved name is dropped and a warning is returned.",
     ),
   buildId: zod
     .string()
@@ -73,7 +73,7 @@ export const StartExecutionBody = zod.object({
     .boolean()
     .optional()
     .describe(
-      "When true (only meaningful together with cloneFrom), execution-level custom field values are also copied from the source execution.",
+      "When true, custom field values from the previous execution of this test case are copied into the new execution.",
     ),
 });
 
@@ -85,7 +85,7 @@ export const StartExecutionResponse = zod.object({
     ),
   testCaseKey: zod
     .string()
-    .describe("Test case key of the created execution.(e.g. 'SCRUM-TC-145')."),
+    .describe("Test case key of the created execution (e.g. 'SCRUM-TC-145')."),
   created: zod
     .literal(true)
     .describe(

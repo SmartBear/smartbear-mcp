@@ -67,6 +67,16 @@ export class StartExecution extends Tool<Qtm4jClient> {
           testCycleKey: "PROJ-TR-101",
           testCaseKey: "PROJ-TC-42",
           cloneFrom: 725981,
+        },
+        expectedOutput:
+          "{ testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', created: true }",
+      },
+      {
+        description:
+          "Start a fresh execution and carry over custom field values from the previous execution",
+        parameters: {
+          testCycleKey: "PROJ-TR-101",
+          testCaseKey: "PROJ-TC-42",
           cloneExecutionCustomFields: true,
         },
         expectedOutput:
@@ -76,7 +86,7 @@ export class StartExecution extends Tool<Qtm4jClient> {
     hints: [
       "Call set_project_context before this tool.",
       "executionPlannedDate must be in 'dd/MMM/yyyy' format (e.g. '15/Oct/2025', month 3-letter capitalised). Normalize from any user-provided format before calling.",
-      "When cloneFrom is non-zero, the server ignores all body fields except cloneExecutionCustomFields.",
+      "When cloneFrom is non-zero, the server ignores all body fields.",
       "assignee must be a Jira account ID (e.g. '5e4a642c1c9d440008f2a2b4'), not a display name.",
       "environmentId and buildId accept name as strings that are resolved to numeric IDs; unresolved names are dropped and a warning is returned.",
       "actualTime must be in 'HH:mm:ss' format (e.g. '02:30:00'). Always include seconds.",
@@ -170,6 +180,9 @@ export class StartExecution extends Tool<Qtm4jClient> {
     >,
     warnings: string[],
   ): Promise<Record<string, unknown>> {
+    // Server ignores all body fields when cloneFrom is set — skip resolution entirely.
+    if (args.cloneFrom !== undefined && args.cloneFrom > 0) return {};
+
     // Destructure path/query params; spread the rest directly as the API body.
     const {
       testCycleKey: _tc,
@@ -196,7 +209,8 @@ export class StartExecution extends Tool<Qtm4jClient> {
     cloneFrom: number | undefined,
   ): string {
     const params = new URLSearchParams();
-    if (cloneFrom !== undefined) params.set("cloneFrom", String(cloneFrom));
+    if (cloneFrom !== undefined && cloneFrom > 0)
+      params.set("cloneFrom", String(cloneFrom));
     const query = params.toString();
     return `${ENDPOINTS.START_NEW_EXECUTION(testCycleKey, testCycleTestCaseMapId)}${query ? `?${query}` : ""}`;
   }
