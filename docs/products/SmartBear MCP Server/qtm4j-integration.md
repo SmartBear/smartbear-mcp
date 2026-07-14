@@ -361,8 +361,8 @@ The following environment variables configure the QTM4J integration:
   - optional environment name (`environmentId`) — e.g., `"Production"`.
   - optional build name (`buildId`) — e.g., `"Build 2.0"`.
   - optional actual time spent (`actualTime`) — format: `HH:mm:ss`, e.g., `"02:30:00"`
-  - optional source execution ID to clone from (`cloneFrom`) — when set, the server ignores all other body fields
-  - optional flag to also copy custom fields when cloning (`cloneExecutionCustomFields`)
+  - optional source execution ID to clone from (`cloneFrom`) — when set, the server ignores all body fields.
+  - optional flag to copy custom field values from the previous execution into this new execution (`cloneExecutionCustomFields`).
 - **Returns**: Confirmation object with `testCycleKey`, `testCaseKey`, and `created: true`.
 - **Use case**: Starting a new execution before recording results; Creating a new execution by cloning an existing execution.
 - **Note**: The test case must already be linked to the test cycle.
