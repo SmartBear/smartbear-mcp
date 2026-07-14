@@ -10878,7 +10878,7 @@ Expected Output: Test cycle updated with all specified fields
 
 **Output Description:** Confirmation object with testCycleKey, testCaseKey, testStepSeqNo, and updated: true. executionResultName is included when the server returns it. Warnings are returned in content if executionResultId name could not be resolved.
 
-**Use Cases:** 1. Set a test step execution result (e.g. Pass, Fail, Blocked) 2. Update actual result text or comment on a test step execution
+**Use Cases:** 1. Set a test step execution result (e.g. Pass, Fail, Blocked) 2. Update actualResult or comment on a test step execution
 
 **Examples:**
 1. Mark step 2 as Pass
@@ -10892,7 +10892,7 @@ Expected Output: Test cycle updated with all specified fields
 \`\`\`
 Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testStepSeqNo: 2, executionResultName: 'Pass', updated: true }
 
-2. Update step 3 with result text and comment
+2. Update step 3 with actualResult and comment
 \`\`\`json
 {
   "testCycleKey": "PROJ-TR-101",
@@ -10905,7 +10905,7 @@ Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testS
 \`\`\`
 Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testStepSeqNo: 3, executionResultName: 'Fail', updated: true }
 
-3. Clear actual result on step 1
+3. Clear actualResult on step 1
 \`\`\`json
 {
   "testCycleKey": "PROJ-TR-101",
@@ -10916,7 +10916,7 @@ Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testS
 \`\`\`
 Expected Output: { testCycleKey: 'PROJ-TR-101', testCaseKey: 'PROJ-TC-42', testStepSeqNo: 1, updated: true }
 
-**Hints:** 1. Call set_project_context before this tool. 2. At least one updatable field must be provided. 3. An execution must already be started for the test case before steps can be updated.",
+**Hints:** 1. Call set_project_context before this tool. 2. At least one updatable field must be provided.",
     "inputSchema": [
       "actualResult",
       "comment",
