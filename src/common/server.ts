@@ -152,7 +152,14 @@ export class SmartBearMcpServer extends McpServer {
             inputSchema: params.inputSchema
               ? this.schemaToRawShape(params.inputSchema)
               : {},
-            outputSchema: this.schemaToRawShape(params.outputSchema),
+            // Pass ZodObject-based schemas through as-is (rather than via schemaToRawShape)
+            // so that z.looseObject()'s additionalProperties:true is preserved in the JSON
+            // schema sent to clients — extracting `.shape` would rebuild a strict object and
+            // cause "additional properties" validation errors on real API responses.
+            outputSchema:
+              params.outputSchema instanceof ZodObject
+                ? params.outputSchema
+                : this.schemaToRawShape(params.outputSchema),
             annotations: this.getAnnotations(toolTitle, params),
           },
           async (args: any, extra: any) => {

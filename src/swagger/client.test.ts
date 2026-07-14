@@ -240,6 +240,7 @@ describe("SwaggerClient", () => {
 
       expect(result).toEqual({
         content: [{ type: "text", text: JSON.stringify(mockResponse) }],
+        structuredContent: mockResponse,
       });
     });
 
@@ -264,6 +265,7 @@ describe("SwaggerClient", () => {
 
       expect(result).toEqual({
         content: [{ type: "text", text: JSON.stringify(mockResponse) }],
+        structuredContent: mockResponse,
       });
     });
 
@@ -293,6 +295,7 @@ describe("SwaggerClient", () => {
       const result = await handler({}, {});
 
       expect(result).toEqual({
+        isError: true,
         content: [{ type: "text", text: "Error: Network error" }],
       });
     });
@@ -332,6 +335,7 @@ describe("SwaggerClient", () => {
 
       expect(result).toEqual({
         content: [{ type: "text", text: JSON.stringify(mockResponse) }],
+        structuredContent: mockResponse,
       });
     });
 
@@ -359,6 +363,7 @@ describe("SwaggerClient", () => {
       const result = await handler({}, {});
 
       expect(result).toEqual({
+        isError: true,
         content: [
           {
             type: "text",
