@@ -82,7 +82,7 @@ export class FunctionalTestingAPI {
       {
         method: "POST",
         headers: this.getFtHeaders(),
-        body: JSON.stringify(args),
+        body: JSON.stringify({ type: "api", ...args }),
       },
       errorMessageFor(`create Functional Testing test`),
     );
