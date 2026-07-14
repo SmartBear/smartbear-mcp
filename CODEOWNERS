@@ -1,5 +1,61 @@
-/*.ts                      @SmartBear/bugsnag-dev
-/*.json                    @SmartBear/bugsnag-dev
-/src/common                @SmartBear/bugsnag-dev @SmartBear/pactflow
-/src/bugsnag               @SmartBear/bugsnag-dev
-/src/pactflow              @SmartBear/pactflow
+# CODEOWNERS
+#
+# This repository is a plugin-per-product monorepo: each SmartBear product
+# integration lives under its own `src/<product>/` directory and is owned by
+# that product's team. Shared framework code, CI, and repo-level config are
+# owned by the MCP maintainers.
+#
+# Rules are evaluated top-to-bottom; the LAST matching pattern wins. The
+# maintainer default is therefore listed first, and more specific product
+# rules override it below.
+
+################################################################################
+# Default / repo-level ownership
+#
+# Catches root config, entrypoint, tooling, and anything not matched below.
+*                               @SmartBear/mcp-maintainers
+
+################################################################################
+# Shared framework
+# Cross-cutting MCP server plumbing shared by every product integration.
+/src/common/                    @SmartBear/mcp-maintainers
+/src/index.ts                   @SmartBear/mcp-maintainers
+
+################################################################################
+# Product integrations (source)
+/src/bearq/                     @SmartBear/bearq
+/src/bugsnag/                   @SmartBear/bugsnag
+/src/collaborator/              @SmartBear/collaborator
+/src/pactflow/                  @SmartBear/pactflow
+/src/qmetry/                    @SmartBear/qmetry
+/src/qtm4j/                     @SmartBear/qmetry
+/src/reflect/                   @SmartBear/reflect
+/src/swagger/                   @SmartBear/swagger
+/src/zephyr/                    @SmartBear/zephyr
+
+################################################################################
+# Product documentation
+# Root docs (getting-started, best-practices, server capabilities) stay with
+# maintainers; per-product integration guides go to the product teams.
+/docs/                                                              @SmartBear/mcp-maintainers
+/docs/products/SmartBear\ MCP\ Server/bearq-integration.md          @SmartBear/bearq
+/docs/products/SmartBear\ MCP\ Server/bugsnag-integration.md        @SmartBear/bugsnag
+/docs/products/SmartBear\ MCP\ Server/remote-bugsnag.md             @SmartBear/bugsnag
+/docs/products/SmartBear\ MCP\ Server/collaborator-integration.md   @SmartBear/collaborator
+/docs/products/SmartBear\ MCP\ Server/contract-testing-with-pactflow.md @SmartBear/pactflow
+/docs/products/SmartBear\ MCP\ Server/qmetry-integration.md         @SmartBear/qmetry
+/docs/products/SmartBear\ MCP\ Server/qtm4j-integration.md          @SmartBear/qmetry
+/docs/products/SmartBear\ MCP\ Server/reflect-integration.md        @SmartBear/reflect
+/docs/products/SmartBear\ MCP\ Server/swagger-functional-testing-integration.md @SmartBear/swagger
+/docs/products/SmartBear\ MCP\ Server/swagger-portal-integration.md @SmartBear/swagger
+/docs/products/SmartBear\ MCP\ Server/swagger-studio-integration.md @SmartBear/swagger
+/docs/products/SmartBear\ MCP\ Server/remote-swagger.md             @SmartBear/swagger
+/docs/products/SmartBear\ MCP\ Server/zephyr-integration.md         @SmartBear/zephyr
+/docs/products/SmartBear\ MCP\ Server/remote-zephyr.md              @SmartBear/zephyr
+
+################################################################################
+# CI, tooling, and packaging
+/.github/                       @SmartBear/mcp-maintainers
+/scripts/                       @SmartBear/mcp-maintainers
+/packaging/                     @SmartBear/mcp-maintainers
+/Dockerfile                     @SmartBear/mcp-maintainers
