@@ -1,5 +1,7 @@
-/*.ts                      @SmartBear/bugsnag-dev
-/*.json                    @SmartBear/bugsnag-dev
-/src/common                @SmartBear/bugsnag-dev @SmartBear/pactflow
-/src/bugsnag               @SmartBear/bugsnag-dev
-/src/pactflow              @SmartBear/pactflow
+/*.ts                            @SmartBear/bugsnag-dev
+/*.json                          @SmartBear/bugsnag-dev
+/src/common                      @SmartBear/bugsnag-dev @SmartBear/pactflow
+/src/bugsnag                     @SmartBear/bugsnag-dev
+/src/pactflow                    @SmartBear/pactflow
+/src/swagger                     @szymon-pleszkun-sb @KrzysztofNocen @lukasikp
+/src/swagger/functional-testing  @SmartBear/sft-team-devs
