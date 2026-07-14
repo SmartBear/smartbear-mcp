@@ -287,27 +287,13 @@ export class FunctionalTestingAPI {
     if (args.offset !== undefined) params.set("offset", String(args.offset));
     const query = params.toString() ? `?${params.toString()}` : "";
 
-    const headers = this.getFtHeaders();
-    let response: Response;
-    try {
-      response = await fetch(
-        `${this.baseUrl}/tests/${encodeURIComponent(args.testId)}/runs${query}`,
-        {
-          method: "GET",
-          headers,
-        },
-      );
-    } catch {
-      throw new ToolError(
-        "Swagger Functional Testing service is currently unreachable. Retry after a moment.",
-      );
-    }
-
-    if (response.status === 401 || response.status === 403) {
-      throw new ToolError(
-        "Authentication failed. Verify your API token is valid and has not expired.",
-      );
-    }
+    const response = await this.ftFetch(
+      `${this.baseUrl}/tests/${encodeURIComponent(args.testId)}/runs${query}`,
+      {
+        method: "GET",
+        headers: this.getFtHeaders(),
+      },
+    );
 
     if (response.status === 404) {
       throw new ToolError(
