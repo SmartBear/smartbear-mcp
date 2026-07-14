@@ -167,7 +167,7 @@ export class FunctionalTestingAPI {
             executionId,
             status,
             isFinished,
-            url
+            url,
           }),
         ),
       },
