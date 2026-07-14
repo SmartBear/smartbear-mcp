@@ -1439,9 +1439,9 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   "contract-testing_add_label_to_pacticipant": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Add Label to Pacticipant",
     },
     "description": "Apply a label to a pacticipant.
@@ -1461,9 +1461,9 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   "contract-testing_admin_add_role_to_user": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Add Role to User",
     },
     "description": "Add a single role to a user (admin).
@@ -1483,9 +1483,9 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   "contract-testing_admin_create_role": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Create Role",
     },
     "description": "Create a new role with specific permissions (admin).
@@ -1507,9 +1507,9 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   "contract-testing_admin_create_system_account": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Create System Account",
     },
     "description": "Create a new system account (admin).
@@ -1527,9 +1527,9 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   "contract-testing_admin_create_team": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Create Team",
     },
     "description": "Create a new team (admin).
@@ -1553,9 +1553,9 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   "contract-testing_admin_create_user": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Create User",
     },
     "description": "Create a new user account (admin).
@@ -1582,10 +1582,10 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   },
   "contract-testing_admin_delete_role": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Delete Role",
     },
     "description": "Delete a role (admin).
@@ -1602,10 +1602,10 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   },
   "contract-testing_admin_delete_team": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Delete Team",
     },
     "description": "Delete a team (admin).
@@ -1622,10 +1622,10 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   },
   "contract-testing_admin_delete_user": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Delete User",
     },
     "description": "Delete a user account (admin).
@@ -1745,9 +1745,9 @@ Expected Output: Success response indicating the Jira issue was unlinked from th
   "contract-testing_admin_invite_users": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Invite Users",
     },
     "description": "Send invitations to new users (admin).
@@ -1873,9 +1873,9 @@ None",
   "contract-testing_admin_patch_team_users": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Patch Team Users",
     },
     "description": "Add or remove individual users from a team using JSON Patch (admin).
@@ -1894,10 +1894,10 @@ None",
   },
   "contract-testing_admin_remove_role_from_user": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Remove Role from User",
     },
     "description": "Remove a single role from a user (admin).
@@ -1916,10 +1916,10 @@ None",
   },
   "contract-testing_admin_remove_user_from_team": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Remove User from Team",
     },
     "description": "Remove a specific user from a team (admin).
@@ -1938,10 +1938,10 @@ None",
   },
   "contract-testing_admin_reset_roles": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Reset Roles",
     },
     "description": "Reset all roles to their factory defaults (admin).
@@ -1959,7 +1959,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Set Team Users",
     },
     "description": "Replace all members of a team (admin).
@@ -1981,7 +1981,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Set User Roles",
     },
     "description": "Replace all roles assigned to a user (admin).
@@ -2003,7 +2003,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Update Role",
     },
     "description": "Update an existing role's name and permissions (admin).
@@ -2029,7 +2029,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Update Team",
     },
     "description": "Replace a team's configuration (admin).
@@ -2057,7 +2057,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Admin Update User",
     },
     "description": "Update a user's profile or active status (admin).
@@ -2126,9 +2126,9 @@ None",
   "contract-testing_create_environment": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Create Environment",
     },
     "description": "Create a new deployment environment in PactFlow.
@@ -2152,9 +2152,9 @@ None",
   "contract-testing_create_pacticipant": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Create Pacticipant",
     },
     "description": "Register a new application/service (pacticipant) in the workspace.
@@ -2182,9 +2182,9 @@ None",
   "contract-testing_create_secret": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Create Secret",
     },
     "description": "Create a new secret for use in webhook authentication.
@@ -2208,9 +2208,9 @@ None",
   "contract-testing_create_webhook": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Create Webhook",
     },
     "description": "Create a new webhook to trigger on contract events.
@@ -2239,10 +2239,10 @@ None",
   },
   "contract-testing_delete_all_integrations": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Delete All Integrations",
     },
     "description": "Delete ALL consumer-provider integrations in the workspace.
@@ -2257,10 +2257,10 @@ None",
   },
   "contract-testing_delete_branch": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Delete Branch",
     },
     "description": "Delete a branch from a pacticipant.
@@ -2279,10 +2279,10 @@ None",
   },
   "contract-testing_delete_environment": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Delete Environment",
     },
     "description": "Delete an environment by UUID.
@@ -2299,10 +2299,10 @@ None",
   },
   "contract-testing_delete_integration": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Delete Integration",
     },
     "description": "Delete a specific consumer-provider integration.
@@ -2321,10 +2321,10 @@ None",
   },
   "contract-testing_delete_pacticipant": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Delete Pacticipant",
     },
     "description": "Delete a pacticipant and all its associated data.
@@ -2341,10 +2341,10 @@ None",
   },
   "contract-testing_delete_secret": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Delete Secret",
     },
     "description": "Delete a secret by UUID.
@@ -2361,10 +2361,10 @@ None",
   },
   "contract-testing_delete_webhook": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Delete Webhook",
     },
     "description": "Delete a webhook by UUID.
@@ -2382,9 +2382,9 @@ None",
   "contract-testing_execute_webhook": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Execute Webhook",
     },
     "description": "Trigger a test execution of a specific webhook.
@@ -3398,9 +3398,9 @@ None",
   "contract-testing_patch_pacticipant": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Patch Pacticipant",
     },
     "description": "Partially update a pacticipant's metadata — only fields provided are changed.
@@ -3430,7 +3430,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Publish Consumer Contracts",
     },
     "description": "Publish one or more consumer Pact contracts to the Pact Broker or PactFlow, with branch and tag metadata.
@@ -3460,7 +3460,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Publish Provider Contract",
     },
     "description": "Publish a provider OpenAPI contract and self-verification results to PactFlow (Bi-Directional Contract Testing).
@@ -3488,9 +3488,9 @@ None",
   "contract-testing_record_deployment": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Record Deployment",
     },
     "description": "Record that a version of a pacticipant has been deployed to an environment.
@@ -3514,9 +3514,9 @@ None",
   "contract-testing_record_release": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Record Release",
     },
     "description": "Record that a version of a pacticipant has been released to an environment (for mobile/library release workflows).
@@ -3537,10 +3537,10 @@ None",
   },
   "contract-testing_regenerate_api_token": {
     "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
+      "destructiveHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Regenerate API Token",
     },
     "description": "Regenerate (rotate) an API token by ID.
@@ -3557,10 +3557,10 @@ None",
   },
   "contract-testing_remove_label_from_pacticipant": {
     "annotations": {
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Remove Label from Pacticipant",
     },
     "description": "Remove a label from a pacticipant.
@@ -3608,9 +3608,9 @@ None",
   "contract-testing_test_execute_webhooks": {
     "annotations": {
       "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Test Execute Webhooks",
     },
     "description": "Trigger a test execution of all matching webhooks without a real event.
@@ -3628,7 +3628,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Update Environment",
     },
     "description": "Update an existing environment's metadata.
@@ -3656,7 +3656,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Update Pacticipant",
     },
     "description": "Fully replace a pacticipant's metadata (display name, main branch, repository URL, etc.).
@@ -3686,7 +3686,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Update Pacticipant Version",
     },
     "description": "Update metadata for a specific pacticipant version.
@@ -3710,7 +3710,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Update Secret",
     },
     "description": "Update an existing secret's name, value, or description.
@@ -3736,7 +3736,7 @@ None",
       "destructiveHint": false,
       "idempotentHint": true,
       "openWorldHint": false,
-      "readOnlyHint": true,
+      "readOnlyHint": false,
       "title": "Contract Testing: Update Webhook",
     },
     "description": "Update an existing webhook's configuration.
