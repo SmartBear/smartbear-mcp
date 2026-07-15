@@ -10584,6 +10584,66 @@ Expected Output: Tool is NOT called yet. Inform the user that 'critical' was not
     "outputSchema": undefined,
     "title": "Reflect: Connect To Session",
   },
+  "reflect_create_segment": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Reflect: Create Segment",
+    },
+    "description": "Create a new Reflect segment which contains an ordered list of steps. Segments are reusable groups of steps that can be referenced from tests, and cannot reference other segments.
+
+**Toolset:** Tests
+
+**Parameters:**
+- name (string) *required*: Name of the segment to create.
+- type (enum) *required*: Platform of the segment.
+- description (string): Optional description of the segment.
+- deviceProfile (string): Device profile id. Required for a 'web' segment; ignored for 'api' and 'native-mobile'. One of: 'desktop', 'tablet', 'mobile'.
+- steps (array) *required*: Ordered list of steps that make up the segment. Segments cannot reference other segments. Prefer deterministic, selector-based steps ('click', 'input', 'submit', 'text-validation', 'hover', etc.) over AI-driven 'prompt' steps whenever a stable selector is available. Reserve 'prompt' steps for behavior that can't be expressed with a selector. Any text field in a step (e.g. 'inputText', 'url', 'expectedText', 'requestBody', header values, prompt text) may embed Reflect variable and function references using '\${...}' syntax, which are resolved at run time: '\${var(name)}' inserts the value of a parameter/variable named 'name' (declare parameters via the top-level 'parameters' field, or assign them mid-run with an 'update-parameters' step); '\${sec(name)}' inserts the value of the account secret 'name'. Functions generate dynamic values: '\${alphanum(n)}', '\${alpha(n)}', '\${num(n)}' (random alphanumeric / alphabetic / numeric string of length n), '\${range(min, max)}' (random integer, inclusive), '\${time(offsetMs)}' and '\${datetime(offsetMs)}' (current epoch-millis / date-time, with an optional millisecond offset), and '\${date(format, offsetDays)}' (current date formatted with tokens like 'MM/dd/yyyy', with an optional day offset).
+- parameters (array): Optional named parameters (variables) for the segment, each with a 'name' and optional default 'value'. Reference a parameter's value inside any step text field with '\${var(name)}'.",
+    "inputSchema": [
+      "description",
+      "deviceProfile",
+      "name",
+      "parameters",
+      "steps",
+      "type",
+    ],
+    "outputSchema": undefined,
+    "title": "Reflect: Create Segment",
+  },
+  "reflect_create_test": {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+      "title": "Reflect: Create Test",
+    },
+    "description": "Create a new Reflect test which contains an ordered list of steps.
+
+**Toolset:** Tests
+
+**Parameters:**
+- name (string) *required*: Name of the test to create.
+- type (enum) *required*: Platform of the test.
+- description (string): Optional description of the test.
+- deviceProfile (string): Device profile id. Required for a 'web' test; ignored for 'api' and 'native-mobile'. One of: 'desktop', 'tablet', 'mobile'.
+- steps (array) *required*: Ordered list of steps that make up the test. Web tests must begin with a 'browser-navigate' step. Prefer deterministic, selector-based steps ('click', 'input', 'submit', 'text-validation', 'hover', etc.) over AI-driven 'prompt' steps whenever a stable selector is available. Reserve 'prompt' steps for behavior that can't be expressed with a selector. Any text field in a step (e.g. 'inputText', 'url', 'expectedText', 'requestBody', header values, prompt text) may embed Reflect variable and function references using '\${...}' syntax, which are resolved at run time: '\${var(name)}' inserts the value of a parameter/variable named 'name' (declare parameters via the top-level 'parameters' field, or assign them mid-run with an 'update-parameters' step); '\${sec(name)}' inserts the value of the account secret 'name'. Functions generate dynamic values: '\${alphanum(n)}', '\${alpha(n)}', '\${num(n)}' (random alphanumeric / alphabetic / numeric string of length n), '\${range(min, max)}' (random integer, inclusive), '\${time(offsetMs)}' and '\${datetime(offsetMs)}' (current epoch-millis / date-time, with an optional millisecond offset), and '\${date(format, offsetDays)}' (current date formatted with tokens like 'MM/dd/yyyy', with an optional day offset).
+- parameters (array): Optional named parameters (variables) for the test, each with a 'name' and optional default 'value'. Reference a parameter's value inside any step text field with '\${var(name)}'.",
+    "inputSchema": [
+      "description",
+      "deviceProfile",
+      "name",
+      "parameters",
+      "steps",
+      "type",
+    ],
+    "outputSchema": undefined,
+    "title": "Reflect: Create Test",
+  },
   "reflect_delete_previous_step": {
     "annotations": {
       "destructiveHint": true,
