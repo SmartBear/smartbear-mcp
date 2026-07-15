@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GetTestCycleParams,
   GetTestCycle200Response as GetTestCycleResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestCycle } from "./get-test-cycle";
+} from "../../common/rest-api-schemas.ts";
+import { GetTestCycle } from "./get-test-cycle.ts";
 
 describe("GetTestCycle", () => {
   let mockClient: any;
@@ -39,7 +39,7 @@ describe("GetTestCycle", () => {
         self: "http://localhost:5051/v2/projects/39",
       },
       jiraProjectVersion: {
-        id: 10000,
+        id: 10_000,
         self: "https://test.atlassian.net/rest/api/2/version/10000",
       },
       status: {
@@ -66,7 +66,7 @@ describe("GetTestCycle", () => {
         issues: [
           {
             self: "http://localhost:5051/v2/links/531",
-            issueId: 10200,
+            issueId: 10_200,
             id: 531,
             target: "https://test.atlassian.net/rest/api/2/issue/10200",
             type: "RELATED",

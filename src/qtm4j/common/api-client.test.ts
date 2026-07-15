@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../common/tools";
-import { ApiClient } from "../http/api-client";
+import { ToolError } from "../../common/tools.ts";
+import { ApiClient } from "../http/api-client.ts";
 
 // Mock fetch globally
 global.fetch = vi.fn();

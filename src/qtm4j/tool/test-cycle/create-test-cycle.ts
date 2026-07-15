@@ -1,13 +1,16 @@
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
-import { InputField, ResolverKeys } from "../../config/field-resolution.types";
+import { Tool } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants.ts";
+import {
+  InputField,
+  ResolverKeys,
+} from "../../config/field-resolution.types.ts";
 import {
   CreateTestCycleBody,
   CreateTestCycleResponse,
   type CreateTestCycleResponseType,
-} from "../../schema/test-cycle.schema";
+} from "../../schema/test-cycle.schema.ts";
 
 // Maps each input field to its resolver key. Add entries here to resolve new fields.
 const FIELD_CONFIG: Record<string, string> = {

@@ -1,13 +1,13 @@
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import type { ResolvedRequirement } from "../../resolver/resolvers/requirement-id-resolver";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import type { ResolvedRequirement } from "../../resolver/resolvers/requirement-id-resolver.ts";
 import {
   GetLinkedTestCasesForRequirementBody,
   GetLinkedTestCasesResponse,
-} from "../../schema/linked-items.schema";
+} from "../../schema/linked-items.schema.ts";
 
 export class GetLinkedTestCasesForRequirement extends Tool<Qtm4jClient> {
   specification: ToolParams = {

@@ -1,17 +1,17 @@
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
+import { Tool } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants.ts";
 import {
   InputField,
   type ProjectContext,
   ResolverKeys,
-} from "../../config/field-resolution.types";
+} from "../../config/field-resolution.types.ts";
 import type { Resolver } from "../../resolver/resolvers/resolver.ts";
 import {
   UpdateTestCycleBody,
   UpdateTestCycleResponse,
-} from "../../schema/update-test-cycle.schema";
+} from "../../schema/update-test-cycle.schema.ts";
 
 // Scalar fields resolved from human-readable name → numeric ID.
 const SIMPLE_FIELD_CONFIG: Record<string, string> = {

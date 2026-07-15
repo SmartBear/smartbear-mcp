@@ -1,8 +1,9 @@
+import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { clientRegistry } from "./client-registry";
-import type { SmartBearMcpServer } from "./server";
-import type { Client } from "./types";
+import { clientRegistry } from "./client-registry.ts";
+import type { SmartBearMcpServer } from "./server.ts";
+import type { Client } from "./types.ts";
 
 describe("ClientRegistry", () => {
   let mockServer: SmartBearMcpServer;

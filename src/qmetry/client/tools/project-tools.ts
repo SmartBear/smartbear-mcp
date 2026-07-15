@@ -1,4 +1,4 @@
-import { QMetryToolsHandlers } from "../../config/constants";
+import { QMetryToolsHandlers } from "../../config/constants.ts";
 import {
   BuildArgsSchema,
   CreateCycleArgsSchema,
@@ -8,8 +8,8 @@ import {
   ProjectListArgsSchema,
   ReleasesCyclesArgsSchema,
   UpdateCycleArgsSchema,
-} from "../../types/common";
-import type { QMetryToolParams } from "./types";
+} from "../../types/common.ts";
+import type { QMetryToolParams } from "./types.ts";
 
 export const PROJECT_TOOLS: QMetryToolParams[] = [
   {
@@ -517,7 +517,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
         parameters: {
           cycle: {
             name: "Sprint 2",
-            releaseID: 12345,
+            releaseID: 12_345,
           },
         },
         expectedOutput:
@@ -531,7 +531,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
             description: "Full regression testing for release 2.0",
             startDate: "15-01-2024",
             targetDate: "31-01-2024",
-            releaseID: 12345,
+            releaseID: 12_345,
           },
         },
         expectedOutput:
@@ -545,7 +545,7 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
             description: "Locked cycle for final QA testing",
             isLocked: true,
             isArchived: false,
-            releaseID: 12345,
+            releaseID: 12_345,
           },
         },
         expectedOutput:
@@ -562,8 +562,8 @@ export const PROJECT_TOOLS: QMetryToolParams[] = [
             targetDate: "15-02-2024",
             isLocked: false,
             isArchived: false,
-            projectID: 67890,
-            releaseID: 12345,
+            projectID: 67_890,
+            releaseID: 12_345,
           },
         },
         expectedOutput:

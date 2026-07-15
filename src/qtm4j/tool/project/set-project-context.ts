@@ -1,20 +1,20 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import {
   ENDPOINTS,
   PAGINATION,
   RESPONSE_FIELDS,
   TOOL_NAMES,
   TOOLSETS,
-} from "../../config/constants";
+} from "../../config/constants.ts";
 import {
   GetProjectsResponse,
   SetProjectContextBody,
   SetProjectContextResponse,
-} from "../../schema/project.schema";
+} from "../../schema/project.schema.ts";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 

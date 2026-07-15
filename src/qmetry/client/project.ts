@@ -1,5 +1,5 @@
-import { QMETRY_DEFAULTS } from "../config/constants";
-import { QMETRY_PATHS } from "../config/rest-endpoints";
+import { QMETRY_DEFAULTS } from "../config/constants.ts";
+import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import {
   type CreateCyclePayload,
   type CreateReleasePayload,
@@ -12,9 +12,9 @@ import {
   type FetchPlatformsPayload,
   type FetchProjectsPayload,
   type UpdateCyclePayload,
-} from "../types/project";
-import { qmetryRequest } from "./api/client-api";
-import { resolveDefaults } from "./utils";
+} from "../types/project.ts";
+import { qmetryRequest } from "./api/client-api.ts";
+import { resolveDefaults } from "./utils.ts";
 
 /**
  * Retrieves project information from QMetry
@@ -77,10 +77,10 @@ export async function getReleasesCycles(
 ) {
   let showArchiveValue: boolean;
 
-  if (payload.showArchive !== undefined) {
-    showArchiveValue = payload.showArchive;
-  } else {
+  if (payload.showArchive === undefined) {
     showArchiveValue = false;
+  } else {
+    showArchiveValue = payload.showArchive;
   }
 
   const body: { showArchive: boolean } = {

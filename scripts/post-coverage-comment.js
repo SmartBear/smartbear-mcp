@@ -10,6 +10,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import process from "node:process";
 
 const ROOT = path.resolve(new URL("..", import.meta.url).pathname);
 const COVERAGE_PATH = path.join(ROOT, "coverage", "coverage-summary.json");
@@ -206,7 +207,7 @@ function buildFallbackComment(error, context) {
   const actionsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions`;
   return [
     COVERAGE_MARKER,
-    `❌ **Coverage Report Failed**`,
+    "❌ **Coverage Report Failed**",
     `Could not generate coverage report: ${error.message}`,
     `Please check the [workflow logs](${actionsUrl}) for more details.`,
   ].join("\n");

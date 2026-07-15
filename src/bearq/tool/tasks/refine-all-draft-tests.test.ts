@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { RefineAllDraftTests } from "./refine-all-draft-tests";
+import { RefineAllDraftTests } from "./refine-all-draft-tests.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

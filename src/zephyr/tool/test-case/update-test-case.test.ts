@@ -4,12 +4,12 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UpdateTestCase } from "./update-test-case";
+import { UpdateTestCase } from "./update-test-case.ts";
 
 describe("UpdateTestCase", () => {
   let mockClient: any;
   let instance: UpdateTestCase;
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -62,7 +62,7 @@ describe("UpdateTestCase", () => {
 
   describe("handle method", () => {
     const existingTestCase = {
-      id: 12345,
+      id: 12_345,
       key: "SA-T10",
       name: "Original Test Case",
       project: {
@@ -99,7 +99,7 @@ describe("UpdateTestCase", () => {
 
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Updated Test Case",
         project: { id: 100 },
@@ -108,7 +108,7 @@ describe("UpdateTestCase", () => {
         objective: "Updated objective",
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
         "/testcases/SA-T10",
@@ -144,7 +144,7 @@ describe("UpdateTestCase", () => {
 
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Updated Test Case",
         project: { id: 100 },
@@ -152,7 +152,7 @@ describe("UpdateTestCase", () => {
         status: { id: 1 },
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -185,7 +185,7 @@ describe("UpdateTestCase", () => {
 
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Updated Test Case",
         project: { id: 100 },
@@ -193,9 +193,9 @@ describe("UpdateTestCase", () => {
         status: { id: 1 },
       };
 
-      await expect(
-        instance.handle(args, EXTRA_REQUEST_HANDLER),
-      ).rejects.toThrow("Test case not found");
+      await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
+        "Test case not found",
+      );
     });
 
     it("should handle API errors when updating test case", async () => {
@@ -205,7 +205,7 @@ describe("UpdateTestCase", () => {
 
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Updated Test Case",
         project: { id: 100 },
@@ -213,15 +213,15 @@ describe("UpdateTestCase", () => {
         status: { id: 1 },
       };
 
-      await expect(
-        instance.handle(args, EXTRA_REQUEST_HANDLER),
-      ).rejects.toThrow("Update failed");
+      await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
+        "Update failed",
+      );
     });
   });
 
   describe("deepMerge functionality", () => {
     const existingTestCase = {
-      id: 12345,
+      id: 12_345,
       key: "SA-T10",
       name: "Original Test Case",
       project: {
@@ -274,7 +274,7 @@ describe("UpdateTestCase", () => {
     it("should deep merge nested objects like customFields", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Original Test Case",
         project: { id: 100 },
@@ -286,7 +286,7 @@ describe("UpdateTestCase", () => {
         },
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -302,7 +302,7 @@ describe("UpdateTestCase", () => {
     it("should replace arrays instead of merging them", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Original Test Case",
         project: { id: 100 },
@@ -312,7 +312,7 @@ describe("UpdateTestCase", () => {
         labels: ["new-label", "another-label"],
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -324,7 +324,7 @@ describe("UpdateTestCase", () => {
     it("should skip undefined values in updates", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Updated Test Case",
         project: { id: 100 },
@@ -333,7 +333,7 @@ describe("UpdateTestCase", () => {
         objective: undefined, // Should be skipped
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -345,7 +345,7 @@ describe("UpdateTestCase", () => {
     it("should handle null values by overwriting", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Original Test Case",
         project: { id: 100 },
@@ -354,7 +354,7 @@ describe("UpdateTestCase", () => {
         objective: null, // Should overwrite with null
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -365,7 +365,7 @@ describe("UpdateTestCase", () => {
     it("should handle empty objects in updates", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Original Test Case",
         project: { id: 100 },
@@ -374,7 +374,7 @@ describe("UpdateTestCase", () => {
         customFields: {}, // Empty object should not remove existing fields
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -410,7 +410,7 @@ describe("UpdateTestCase", () => {
 
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Original Test Case",
         project: { id: 100 },
@@ -428,7 +428,7 @@ describe("UpdateTestCase", () => {
         },
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -448,7 +448,7 @@ describe("UpdateTestCase", () => {
     it("should handle primitive value updates", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Completely New Name",
         project: { id: 200 }, // Changed
@@ -456,7 +456,7 @@ describe("UpdateTestCase", () => {
         status: { id: 3 }, // Changed
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -479,28 +479,28 @@ describe("UpdateTestCase", () => {
     it("should handle updating with estimatedTime", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Original Test Case",
         project: { id: 100 },
         priority: { id: 1 },
         status: { id: 1 },
-        estimatedTime: 3600000, // Add estimated time
+        estimatedTime: 3_600_000, // Add estimated time
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
 
-      expect(mergedBody.estimatedTime).toBe(3600000);
+      expect(mergedBody.estimatedTime).toBe(3_600_000);
       expect(mergedBody.name).toBe("Original Test Case"); // Preserved
     });
 
     it("should handle complex merge scenario with multiple field types", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Updated Name", // Primitive update
         project: { id: 100 },
@@ -512,10 +512,10 @@ describe("UpdateTestCase", () => {
           Browser: "Safari", // Update existing
           NewField: "NewValue", // Add new
         },
-        estimatedTime: 7200000, // Add new field
+        estimatedTime: 7_200_000, // Add new field
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const putCall = mockClient.getApiClient().put.mock.calls[0];
       const mergedBody = putCall[1];
@@ -540,14 +540,14 @@ describe("UpdateTestCase", () => {
         Region: "US", // Preserved
         NewField: "NewValue", // Added
       });
-      expect(mergedBody.estimatedTime).toBe(7200000);
+      expect(mergedBody.estimatedTime).toBe(7_200_000);
       expect(mergedBody.objective).toBe("Original objective"); // Preserved
     });
 
     it("Links and the createdOn field should not be included in the PUT request", async () => {
       const args = {
         testCaseKey: "SA-T10",
-        id: 12345,
+        id: 12_345,
         key: "SA-T10",
         name: "Updated Test Case",
         project: { id: 100 },
@@ -555,7 +555,7 @@ describe("UpdateTestCase", () => {
         status: { id: 1 },
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
 

@@ -1,7 +1,7 @@
 import type { PromptCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type ZodRawShape, z } from "zod";
-import { Prompt } from "../../common/prompts";
-import type { ReflectClient } from "../client";
+import { Prompt } from "../../common/prompts.ts";
+import type { ReflectClient } from "../client.ts";
 
 export class SapTest extends Prompt<ReflectClient> {
   specification = {

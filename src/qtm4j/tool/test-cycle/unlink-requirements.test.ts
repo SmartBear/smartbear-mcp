@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { UnlinkRequirementsFromCycle } from "./unlink-requirements";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { UnlinkRequirementsFromCycle } from "./unlink-requirements.ts";
 
 describe("UnlinkRequirementsFromCycle", () => {
   let mockClient: any;
@@ -14,7 +14,7 @@ describe("UnlinkRequirementsFromCycle", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -81,16 +81,16 @@ describe("UnlinkRequirementsFromCycle", () => {
         requirementKeys: ["SCRUM-1", "SCRUM-2"],
       });
 
-      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TR-1",
       ]);
-      expect(mockReqResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockReqResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-1",
         "SCRUM-2",
       ]);
       expect(mockApiClient.post).toHaveBeenCalledWith(
         ENDPOINTS.UNLINK_REQUIREMENTS_FROM_CYCLE("cycle-uid-abc"),
-        { requirementIds: [10001, 10002] },
+        { requirementIds: [10_001, 10_002] },
       );
       expect(result.structuredContent).toEqual({
         cycleKey: "SCRUM-TR-1",
@@ -132,7 +132,7 @@ describe("UnlinkRequirementsFromCycle", () => {
         text: expect.stringContaining("SCRUM-999"),
       });
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
-        requirementIds: [10001],
+        requirementIds: [10_001],
       });
     });
 

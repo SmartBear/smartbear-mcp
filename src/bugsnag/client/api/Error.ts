@@ -1,12 +1,12 @@
-import { type FilterObject, toUrlSearchParams } from "../filters";
-import { type ApiResponse, BaseAPI } from "./base";
+import { type FilterObject, toUrlSearchParams } from "../filters.ts";
+import { type ApiResponse, BaseAPI } from "./base.ts";
 import {
   type ErrorApiView,
   ErrorsApiFetchParamCreator,
   type ErrorUpdateRequest,
   type EventApiView,
   type PivotApiView,
-} from "./index";
+} from "./index.ts";
 
 export class ErrorAPI extends BaseAPI {
   static filterFields: string[] = ["url", "project_url", "events_url"];

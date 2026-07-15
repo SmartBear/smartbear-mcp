@@ -1,5 +1,5 @@
-import type { SwaggerConfiguration } from "./configuration";
-import type { TableOfContentsItem } from "./portal-types";
+import type { SwaggerConfiguration } from "./configuration.ts";
+import type { TableOfContentsItem } from "./portal-types.ts";
 
 type UrlSegmentSource = { slug?: string } | null;
 type PortalHostSource = {
@@ -51,14 +51,14 @@ export function buildPortalLiveUrl(
   productSlug: string | undefined,
   section: UrlSegmentSource,
   tocItem: UrlSegmentSource,
-  preview: boolean = false,
+  preview = false,
 ): string {
   const host = portal?.customDomain ?? portal?.subdomain;
   const portalUiDomain = portal?.customDomain
     ? ""
     : config.getPortalUiDomainSuffix();
 
-  if (!host || !productSlug) {
+  if (!(host && productSlug)) {
     return "";
   }
 

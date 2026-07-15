@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { ListSuites } from "./list-suites";
+import { ListSuites } from "./list-suites.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

@@ -4,13 +4,13 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestCycleIssueLink } from "./create-issue-link";
+import { CreateTestCycleIssueLink } from "./create-issue-link.ts";
 
 describe("CreateTestCycleIssueLink", () => {
   let mockClient: any;
   let instance: CreateTestCycleIssueLink;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -51,7 +51,7 @@ describe("CreateTestCycleIssueLink", () => {
       issueId: 53,
     };
 
-    await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/SA-R1/links/issues",
@@ -69,7 +69,7 @@ describe("CreateTestCycleIssueLink", () => {
       issueId: 54,
     };
 
-    await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/1001/links/issues",
@@ -86,9 +86,7 @@ describe("CreateTestCycleIssueLink", () => {
       extraField: "should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -101,7 +99,7 @@ describe("CreateTestCycleIssueLink", () => {
       issueId: 53,
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -111,9 +109,7 @@ describe("CreateTestCycleIssueLink", () => {
       testCycleIdOrKey: "SA-R1",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if testCycleIdOrKey is missing", async () => {
@@ -121,8 +117,6 @@ describe("CreateTestCycleIssueLink", () => {
       issueId: 53,
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

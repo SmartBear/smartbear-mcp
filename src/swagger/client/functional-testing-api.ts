@@ -1,5 +1,5 @@
-import { appendClientIdentity } from "../../common/info";
-import { ToolError } from "../../common/tools";
+import { appendClientIdentity } from "../../common/info.ts";
+import { ToolError } from "../../common/tools.ts";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
   GetFunctionalTestingExecutionTestParams,
@@ -9,7 +9,7 @@ import type {
   ListSuitesResponse,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
-} from "./functional-testing-types";
+} from "./functional-testing-types.ts";
 
 const API_HOSTNAME = "api.reflect.run";
 

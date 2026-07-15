@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { GetTestSteps } from "./get-test-steps";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { GetTestSteps } from "./get-test-steps.ts";
 
 describe("GetTestSteps", () => {
   let mockClient: any;
@@ -13,7 +13,7 @@ describe("GetTestSteps", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -85,7 +85,7 @@ describe("GetTestSteps", () => {
       expect(mockRegistry.getResolver).toHaveBeenCalledWith(
         ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID,
       );
-      expect(mockUidResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockUidResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TC-145",
       ]);
       expect(result.structuredContent).toEqual(mockStepsResponse);

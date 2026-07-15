@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ResolverKeys } from "../config/field-resolution.types";
-import { ResolverRegistry } from "./resolver-registry";
-import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver";
-import { ComponentResolver } from "./resolvers/component-resolver";
-import { LabelResolver } from "./resolvers/label-resolver";
-import { TestCaseUidResolver } from "./resolvers/test-case-uid-resolver";
+import { ResolverKeys } from "../config/field-resolution.types.ts";
+import { ResolverRegistry } from "./resolver-registry.ts";
+import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver.ts";
+import { ComponentResolver } from "./resolvers/component-resolver.ts";
+import { LabelResolver } from "./resolvers/label-resolver.ts";
+import { TestCaseUidResolver } from "./resolvers/test-case-uid-resolver.ts";
 
 vi.mock("./resolvers/common-attribute-resolver");
 vi.mock("./resolvers/label-resolver");
@@ -102,7 +102,7 @@ describe("ResolverRegistry", () => {
     it("should store project context", () => {
       registry.setProjectContext({
         projectKey: "PROJ",
-        projectId: 10000,
+        projectId: 10_000,
         projectName: "Project Name",
       });
       expect(() => registry.requireProjectContext()).not.toThrow();
@@ -111,17 +111,17 @@ describe("ResolverRegistry", () => {
     it("should allow updating project context", () => {
       registry.setProjectContext({
         projectKey: "PROJ1",
-        projectId: 10000,
+        projectId: 10_000,
         projectName: "Project 1",
       });
       registry.setProjectContext({
         projectKey: "PROJ2",
-        projectId: 20000,
+        projectId: 20_000,
         projectName: "Project 2",
       });
       expect(registry.requireProjectContext()).toEqual({
         projectKey: "PROJ2",
-        projectId: 20000,
+        projectId: 20_000,
         projectName: "Project 2",
       });
     });
@@ -137,7 +137,7 @@ describe("ResolverRegistry", () => {
     it("should return context when set", () => {
       const context = {
         projectKey: "PROJ",
-        projectId: 10000,
+        projectId: 10_000,
         projectName: "Project Name",
       };
       registry.setProjectContext(context);

@@ -4,13 +4,13 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestExecutionIssueLink } from "./create-issue-link";
+import { CreateTestExecutionIssueLink } from "./create-issue-link.ts";
 
 describe("CreateTestExecutionIssueLink", () => {
   let mockClient: any;
   let instance: CreateTestExecutionIssueLink;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -51,10 +51,10 @@ describe("CreateTestExecutionIssueLink", () => {
 
     const args = {
       testExecutionIdOrKey: "SA-E40",
-      issueId: 10100,
+      issueId: 10_100,
     };
 
-    await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testexecutions/SA-E40/links/issues",
@@ -69,10 +69,10 @@ describe("CreateTestExecutionIssueLink", () => {
 
     const args = {
       testExecutionIdOrKey: "1",
-      issueId: 20050,
+      issueId: 20_050,
     };
 
-    await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testexecutions/1/links/issues",
@@ -89,9 +89,7 @@ describe("CreateTestExecutionIssueLink", () => {
       extraField: "should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -101,10 +99,10 @@ describe("CreateTestExecutionIssueLink", () => {
 
     const args = {
       testExecutionIdOrKey: "SA-E40",
-      issueId: 10100,
+      issueId: 10_100,
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -114,18 +112,14 @@ describe("CreateTestExecutionIssueLink", () => {
       testExecutionIdOrKey: "SA-E40",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if testExecutionIdOrKey is missing", async () => {
     const args = {
-      issueId: 10100,
+      issueId: 10_100,
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

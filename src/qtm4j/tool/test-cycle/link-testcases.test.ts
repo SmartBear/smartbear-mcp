@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { LinkTestCasesToCycle } from "./link-testcases";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { LinkTestCasesToCycle } from "./link-testcases.ts";
 
 describe("LinkTestCasesToCycle", () => {
   let mockClient: any;
@@ -14,7 +14,7 @@ describe("LinkTestCasesToCycle", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -81,10 +81,10 @@ describe("LinkTestCasesToCycle", () => {
         testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-11"],
       });
 
-      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TR-1",
       ]);
-      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TC-10",
         "SCRUM-TC-11",
       ]);
@@ -117,7 +117,7 @@ describe("LinkTestCasesToCycle", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(
         ENDPOINTS.LINK_TESTCASES_TO_CYCLE("cycle-uid-abc"),
         expect.objectContaining({
-          filter: { priority: ["High"], status: ["To Do"], projectId: 10000 },
+          filter: { priority: ["High"], status: ["To Do"], projectId: 10_000 },
         }),
       );
     });

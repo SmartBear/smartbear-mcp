@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { bulkUpdateExecutionStatus } from "../client/testsuite.js";
-import type { BulkUpdateExecutionStatusPayload } from "../types/testsuite.js";
+import { bulkUpdateExecutionStatus } from "../client/testsuite.ts";
+import type { BulkUpdateExecutionStatusPayload } from "../types/testsuite.ts";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -22,7 +22,7 @@ describe("testsuite bulk update execution status API", () => {
         entityIDs: "66095069,66095075",
         entityType: "TCR",
         qmTsRunId: "2720260",
-        runStatusID: 123268,
+        runStatusID: 123_268,
         isBulkOperation: true,
         comments: "All test cases passed successfully",
       };
@@ -62,7 +62,7 @@ describe("testsuite bulk update execution status API", () => {
         entityIDs: "66095087",
         entityType: "TCR",
         qmTsRunId: "2720260",
-        runStatusID: 123266,
+        runStatusID: 123_266,
         isBulkOperation: false,
         dropID: 947,
       };
@@ -90,7 +90,7 @@ describe("testsuite bulk update execution status API", () => {
       expect(bodyData.entityIDs).toBe("66095087");
       expect(bodyData.entityType).toBe("TCR");
       expect(bodyData.qmTsRunId).toBe("2720260");
-      expect(bodyData.runStatusID).toBe(123266);
+      expect(bodyData.runStatusID).toBe(123_266);
       expect(bodyData.isBulkOperation).toBe(false);
     });
   });

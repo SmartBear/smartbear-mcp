@@ -1,9 +1,9 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { BugsnagClient } from "../../client.ts";
 
 const inputSchema = z.object({
   link: z
@@ -49,7 +49,7 @@ export class GetEventDetailsFromDashboardUrl extends Tool<BugsnagClient> {
     const url = new URL(params.link);
     const eventId = url.searchParams.get("event_id");
     const projectSlug = url.pathname.split("/")[2];
-    if (!projectSlug || !eventId)
+    if (!(projectSlug && eventId))
       throw new ToolError(
         "Both projectSlug and eventId must be present in the link",
       );

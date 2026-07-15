@@ -1,7 +1,10 @@
-import { getUserAgent } from "../../../common/info";
-import { QMETRY_DEFAULTS } from "../../config/constants";
-import type { RequestOptions } from "../../types/common";
-import { handleQMetryApiError, handleQMetryFetchError } from "./error-handler";
+import { getUserAgent } from "../../../common/info.ts";
+import { QMETRY_DEFAULTS } from "../../config/constants.ts";
+import type { RequestOptions } from "../../types/common.ts";
+import {
+  handleQMetryApiError,
+  handleQMetryFetchError,
+} from "./error-handler.ts";
 
 /**
  * QMetry API request function with centralized error handling.

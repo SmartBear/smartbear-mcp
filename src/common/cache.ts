@@ -1,3 +1,4 @@
+import process from "node:process";
 import NodeCache from "node-cache";
 
 /**
@@ -14,7 +15,7 @@ export class CacheService {
     this.enabled = process.env.CACHE_ENABLED !== "false";
     const ttl = process.env.CACHE_TTL
       ? Number.parseInt(process.env.CACHE_TTL, 10)
-      : 86400; // Default 24 hours
+      : 86_400; // Default 24 hours
 
     this.cache = this.enabled
       ? new NodeCache({
@@ -27,8 +28,8 @@ export class CacheService {
    * Get a value from the cache
    */
   get<T>(key: string): T | undefined {
-    if (!this.enabled || !this.cache) {
-      return undefined;
+    if (!(this.enabled && this.cache)) {
+      return;
     }
     return this.cache.get<T>(key);
   }
@@ -37,7 +38,7 @@ export class CacheService {
    * Set a value in the cache
    */
   set<T>(key: string, value: T): boolean {
-    if (!this.enabled || !this.cache) {
+    if (!(this.enabled && this.cache)) {
       return false;
     }
     return this.cache.set(key, value);
@@ -47,7 +48,7 @@ export class CacheService {
    * Delete a value from the cache
    */
   del(key: string): number {
-    if (!this.enabled || !this.cache) {
+    if (!(this.enabled && this.cache)) {
       return 0;
     }
     return this.cache.del(key);

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { GetTestDetail } from "./get-test-detail";
+import { GetTestDetail } from "./get-test-detail.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

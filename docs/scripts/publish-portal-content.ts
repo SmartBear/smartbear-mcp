@@ -17,6 +17,7 @@
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
+import process from "node:process";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -76,7 +77,7 @@ interface ProcessCtx {
 const PORTAL_BASE_URL = "https://api.portal.swaggerhub.com/v1";
 const API_KEY = process.env.SWAGGERHUB_API_KEY;
 const PORTAL_SUBDOMAIN = process.env.SWAGGERHUB_PORTAL_SUBDOMAIN;
-const LOG_LEVEL = parseInt(process.env.LOG_LEVEL ?? "2", 10);
+const LOG_LEVEL = Number.parseInt(process.env.LOG_LEVEL ?? "2", 10);
 const DRY_RUN =
   process.env.DRY_RUN === "true" || process.argv.includes("--dry-run");
 
@@ -454,7 +455,7 @@ async function upsertTocMarkdown(
     json: {
       title,
       order,
-      ...(slug !== existing.slug ? { slug } : {}),
+      ...(slug === existing.slug ? {} : { slug }),
       parentId: parentTocId ?? null,
     },
   });
@@ -510,7 +511,7 @@ async function upsertTocApiRef(
       title,
       order,
       content,
-      ...(slug !== existing.slug ? { slug } : {}),
+      ...(slug === existing.slug ? {} : { slug }),
       parentId: parentTocId ?? null,
     },
   });
@@ -654,15 +655,7 @@ async function processProduct(productDir: string): Promise<void> {
   const portalId = await getPortalId();
   let productId = await getProductId(portalId, productName);
 
-  if (!productId) {
-    productId = await createProduct(portalId, {
-      name: productName,
-      description: productMetadata.description,
-      slug: productMetadata.slug,
-      isPublic: productMetadata.public,
-      isHidden: productMetadata.hidden,
-    });
-  } else {
+  if (productId) {
     info(`Updating existing product: ${productId}`);
     await patchProduct(productId, {
       name: productName,
@@ -670,6 +663,14 @@ async function processProduct(productDir: string): Promise<void> {
       slug: productMetadata.slug,
       public: productMetadata.public,
       hidden: productMetadata.hidden,
+    });
+  } else {
+    productId = await createProduct(portalId, {
+      name: productName,
+      description: productMetadata.description,
+      slug: productMetadata.slug,
+      isPublic: productMetadata.public,
+      isHidden: productMetadata.hidden,
     });
   }
 

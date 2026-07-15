@@ -1,6 +1,6 @@
-import { appendClientIdentity } from "../../common/info";
-import { ToolError } from "../../common/tools";
-import type { SwaggerConfiguration } from "./configuration";
+import { appendClientIdentity } from "../../common/info.ts";
+import { ToolError } from "../../common/tools.ts";
+import type { SwaggerConfiguration } from "./configuration.ts";
 import type {
   CreateDocumentationPageArgs,
   CreateDocumentationPageResult,
@@ -29,14 +29,14 @@ import type {
   UpdateDocumentArgs,
   UpdatePortalBody,
   UpdateProductBody,
-} from "./portal-types";
+} from "./portal-types.ts";
 import {
   buildPortalName,
   buildSubdomainCandidate,
   buildSuffixedSubdomain,
   isConflictError,
   isOrganizationPortalConflict,
-} from "./portal-utils";
+} from "./portal-utils.ts";
 import type {
   ApiDefinitionParams,
   ApiProperty,
@@ -55,17 +55,17 @@ import type {
   StandardizationScanApiResponse,
   StandardizeApiParams,
   StandardizeApiResponse,
-} from "./registry-types";
+} from "./registry-types.ts";
 import type {
   Organization,
   OrganizationsListResponse,
   OrganizationsQueryParams,
-} from "./user-management-types";
+} from "./user-management-types.ts";
 import {
   buildPortalLiveUrl,
   findTableOfContentsItem,
   normalizeSlug,
-} from "./utils";
+} from "./utils.ts";
 
 // Regex to extract owner, name, and version from SwaggerHub URLs.
 // Matches /apis/owner/name/version, /domains/owner/name/version, or /templates/owner/name/version
@@ -415,10 +415,9 @@ export class SwaggerAPI {
         return match;
       }
       if (portals.length < size) {
-        return undefined;
+        return;
       }
     }
-    return undefined;
   }
 
   /**
@@ -441,10 +440,9 @@ export class SwaggerAPI {
         return match;
       }
       if (items.length < pageSize) {
-        return undefined;
+        return;
       }
     }
-    return undefined;
   }
 
   /**
@@ -729,7 +727,7 @@ export class SwaggerAPI {
    */
   async publishPortalProduct(
     productId: string,
-    preview: boolean = false,
+    preview = false,
     tableOfContentsId: string | null = null,
   ): Promise<PublishPortalProductResponse | FallbackResponse> {
     // Execute the publish operation first (primary action)
@@ -1205,9 +1203,8 @@ export class SwaggerAPI {
     const contentType = response.headers.get("content-type");
     if (contentType?.includes("application/json")) {
       return response.json();
-    } else {
-      return response.text();
     }
+    return response.text();
   }
 
   /**
@@ -1277,7 +1274,7 @@ export class SwaggerAPI {
     return {
       owner: params.owner,
       apiName: params.apiName,
-      version: version,
+      version,
       url: `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`,
       operation,
     };
@@ -1328,7 +1325,7 @@ export class SwaggerAPI {
     return {
       owner: params.owner,
       apiName: params.apiName,
-      specType: specType,
+      specType,
       version: version || undefined,
       url: version
         ? `${this.config.uiBasePath}/apis/${params.owner}/${params.apiName}/${version}`

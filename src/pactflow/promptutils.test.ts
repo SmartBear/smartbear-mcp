@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { isSamplingPolyfillResult } from "../common/pollyfills";
-import type { SmartBearMcpServer } from "../common/server";
+import { isSamplingPolyfillResult } from "../common/pollyfills.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
-} from "./client/prompt-utils";
+} from "./client/prompt-utils.ts";
 
 describe("Prompt Utils", () => {
   describe("getOADMatcherRecommendations tests", () => {

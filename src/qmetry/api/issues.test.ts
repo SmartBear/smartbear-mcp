@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchIssueExecutions,
   fetchIssuesLinkedToTestCase,
-} from "../client/issues.js";
+} from "../client/issues.ts";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -28,7 +28,7 @@ describe("issues API clients", () => {
   describe("fetchIssuesLinkedToTestCase", () => {
     it("should POST with correct URL and required tcID parameter", async () => {
       const payload = {
-        tcID: 3878816,
+        tcID: 3_878_816,
       };
       const mockResponse = {
         data: [
@@ -92,7 +92,7 @@ describe("issues API clients", () => {
 
     it("should include optional parameters in the request", async () => {
       const payload = {
-        tcID: 3878816,
+        tcID: 3_878_816,
         filter:
           '[{"value":"authentication","type":"string","field":"summary"}]',
         limit: 20,
@@ -170,7 +170,7 @@ describe("issues API clients", () => {
         .mockResolvedValue(mockFail(404, "Test case not found"));
 
       const payload = {
-        tcID: 99999,
+        tcID: 99_999,
       };
 
       await expect(
@@ -213,15 +213,15 @@ describe("issues API clients", () => {
     const mockExecutionResponse = {
       data: [
         {
-          tcRunID: 39605534,
-          tcID: 4551203,
-          dfID: 9598240,
+          tcRunID: 39_605_534,
+          tcID: 4_551_203,
+          dfID: 9_598_240,
           linkageLevel: "Test Case",
           executedVersion: 1,
           tcEntityKey: "VKT-TC-17",
           tcName: "test story - updated from vk",
           runStatusName: "failed",
-          platformID: 95443,
+          platformID: 95_443,
           platformName: "Chrome",
           tsName: "test story - updated from vk",
           cycleName: "My_Cycle1.2",
@@ -241,7 +241,7 @@ describe("issues API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockExecutionResponse));
 
       const result = await fetchIssueExecutions(token, baseUrl, projectKey, {
-        linkedAssetId: 9598240,
+        linkedAssetId: 9_598_240,
       } as any);
 
       expect(global.fetch).toHaveBeenCalledWith(
@@ -259,7 +259,7 @@ describe("issues API clients", () => {
       const body = JSON.parse(
         (global.fetch as any).mock.calls[0][1].body as string,
       );
-      expect(body.linkedAsset).toEqual({ type: "DF", id: 9598240 });
+      expect(body.linkedAsset).toEqual({ type: "DF", id: 9_598_240 });
       expect(result).toHaveProperty("data");
       expect((result as any).hasTcRunUdf).toBe(true);
       expect((result as any).total).toBe(1);
@@ -269,20 +269,20 @@ describe("issues API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockExecutionResponse));
 
       await fetchIssueExecutions(token, baseUrl, projectKey, {
-        linkedAsset: { type: "DF", id: 9598240 },
+        linkedAsset: { type: "DF", id: 9_598_240 },
       });
 
       const body = JSON.parse(
         (global.fetch as any).mock.calls[0][1].body as string,
       );
-      expect(body.linkedAsset).toEqual({ type: "DF", id: 9598240 });
+      expect(body.linkedAsset).toEqual({ type: "DF", id: 9_598_240 });
     });
 
     it("should include filter and pagination in request body", async () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockExecutionResponse));
 
       await fetchIssueExecutions(token, baseUrl, projectKey, {
-        linkedAsset: { type: "DF", id: 9509016 },
+        linkedAsset: { type: "DF", id: 9_509_016 },
         filter:
           '[{"type":"list","field":"runStatusName","value":["failed","passed"]}]',
         page: 1,

@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ListTestExecutionsNextgenQueryParams,
   ListTestExecutionsNextgen200Response as ListTestExecutionsNextgenResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestExecutions } from "./get-test-executions";
+} from "../../common/rest-api-schemas.ts";
+import { GetTestExecutions } from "./get-test-executions.ts";
 
 describe("GetTestExecutions", () => {
   let mockClient: any;
@@ -63,8 +63,8 @@ describe("GetTestExecutions", () => {
             self: "https://api.example.com/statuses/1",
           },
           actualEndDate: "2024-01-15T10:30:00Z",
-          estimatedTime: 3600000,
-          executionTime: 3500000,
+          estimatedTime: 3_600_000,
+          executionTime: 3_500_000,
           executedById: "account-id-123",
           assignedToId: "account-id-456",
           comment: "Test completed successfully",

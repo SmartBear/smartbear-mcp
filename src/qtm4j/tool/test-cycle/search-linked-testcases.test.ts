@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { SearchLinkedTestCasesInCycle } from "./search-linked-testcases";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { SearchLinkedTestCasesInCycle } from "./search-linked-testcases.ts";
 
 describe("SearchLinkedTestCasesInCycle", () => {
   let mockClient: any;
@@ -13,7 +13,7 @@ describe("SearchLinkedTestCasesInCycle", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -96,7 +96,7 @@ describe("SearchLinkedTestCasesInCycle", () => {
 
       const result = await instance.handle({ cycleKey: "SCRUM-TR-1" });
 
-      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TR-1",
       ]);
       expect(mockApiClient.post).toHaveBeenCalledWith(
@@ -104,7 +104,7 @@ describe("SearchLinkedTestCasesInCycle", () => {
           ENDPOINTS.SEARCH_LINKED_TESTCASES_IN_CYCLE("cycle-uid-abc"),
         ),
         expect.objectContaining({
-          filter: { projectId: [10000] },
+          filter: { projectId: [10_000] },
         }),
       );
       expect(result.structuredContent).toEqual(mockApiResponse);
@@ -127,7 +127,7 @@ describe("SearchLinkedTestCasesInCycle", () => {
           filter: {
             executionResult: ["Fail"],
             priority: ["High"],
-            projectId: [10000],
+            projectId: [10_000],
           },
         }),
       );
@@ -269,7 +269,7 @@ describe("SearchLinkedTestCasesInCycle", () => {
         expect.any(String),
         expect.objectContaining({
           filter: expect.objectContaining({
-            projectId: [10000],
+            projectId: [10_000],
             executionResult: ["Pass", "Fail"],
             tcWithDefects: true,
           }),

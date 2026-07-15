@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { StopTask } from "./stop-task";
+import { StopTask } from "./stop-task.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

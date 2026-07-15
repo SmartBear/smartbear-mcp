@@ -8,16 +8,16 @@
  * 3. Specify if the client needs the MCP server instance or async initialization
  */
 
-import { BearQClient } from "../bearq/client";
-import { BugsnagClient } from "../bugsnag/client";
-import { CollaboratorClient } from "../collaborator/client";
-import { PactflowClient } from "../pactflow/client";
-import { QmetryClient } from "../qmetry/client";
-import { Qtm4jClient } from "../qtm4j/client";
-import { ReflectClient } from "../reflect/client";
-import { SwaggerClient } from "../swagger/client";
-import { ZephyrClient } from "../zephyr/client";
-import { clientRegistry } from "./client-registry";
+import { BearQClient } from "../bearq/client.ts";
+import { BugsnagClient } from "../bugsnag/client.ts";
+import { CollaboratorClient } from "../collaborator/client.ts";
+import { PactflowClient } from "../pactflow/client.ts";
+import { QmetryClient } from "../qmetry/client.ts";
+import { Qtm4jClient } from "../qtm4j/client.ts";
+import { ReflectClient } from "../reflect/client.ts";
+import { SwaggerClient } from "../swagger/client/index.ts";
+import { ZephyrClient } from "../zephyr/client.ts";
+import { clientRegistry } from "./client-registry.ts";
 
 // Register BearQ client
 clientRegistry.register(new BearQClient());

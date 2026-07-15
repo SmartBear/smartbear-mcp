@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ListTestCyclesQueryParams,
   ListTestCycles200Response as ListTestCyclesResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestCycles } from "./get-test-cycles";
+} from "../../common/rest-api-schemas.ts";
+import { GetTestCycles } from "./get-test-cycles.ts";
 
 describe("GetTestCycles", () => {
   let mockClient: any;
@@ -42,19 +42,19 @@ describe("GetTestCycles", () => {
           key: "SA-R40",
           name: "Sprint 1 Regression Test Cycle",
           project: {
-            id: 10005,
+            id: 10_005,
             self: "https://api.example.com/projects/10005",
           },
           jiraProjectVersion: {
-            id: 10000,
+            id: 10_000,
             self: "https://jira.example.com/rest/api/2/version/10000",
           },
           status: {
-            id: 10000,
+            id: 10_000,
             self: "https://api.example.com/statuses/10000",
           },
           folder: {
-            id: 100006,
+            id: 100_006,
             self: "https://api.example.com/folders/10006",
           },
           description: "Regression test cycle 1 to ensure no breaking changes",
@@ -78,7 +78,7 @@ describe("GetTestCycles", () => {
             issues: [
               {
                 self: 'https://api.zephyrscale.smartbear.com/v2/testcycles/14/links",',
-                issueId: 10100,
+                issueId: 10_100,
                 id: 1,
                 target: "https://jira.example.com/rest/api/2/issue/10000",
                 type: "COVERAGE",
@@ -129,19 +129,19 @@ describe("GetTestCycles", () => {
           key: "SA-R40",
           name: "Sprint 1 Regression Test Cycle",
           project: {
-            id: 10005,
+            id: 10_005,
             self: "https://api.example.com/projects/10005",
           },
           jiraProjectVersion: {
-            id: 10000,
+            id: 10_000,
             self: "https://jira.example.com/rest/api/2/version/10000",
           },
           status: {
-            id: 10000,
+            id: 10_000,
             self: "https://api.example.com/statuses/10000",
           },
           folder: {
-            id: 100006,
+            id: 100_006,
             self: "https://api.example.com/folders/10006",
           },
           description: "Regression test cycle 1 to ensure no breaking changes",
@@ -165,7 +165,7 @@ describe("GetTestCycles", () => {
             issues: [
               {
                 self: 'https://api.zephyrscale.smartbear.com/v2/testcycles/14/links",',
-                issueId: 10100,
+                issueId: 10_100,
                 id: 1,
                 target: "https://jira.example.com/rest/api/2/issue/10000",
                 type: "COVERAGE",

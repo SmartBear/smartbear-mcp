@@ -1,5 +1,5 @@
-import { type FilterObject, toUrlSearchParams } from "../filters";
-import { type ApiResponse, BaseAPI, getQueryParams } from "./base";
+import { type FilterObject, toUrlSearchParams } from "../filters.ts";
+import { type ApiResponse, BaseAPI, getQueryParams } from "./base.ts";
 import {
   type Build,
   type EventField,
@@ -10,7 +10,7 @@ import {
   type Span,
   type SpanGroup,
   type TraceField,
-} from "./index";
+} from "./index.ts";
 
 export class ProjectAPI extends BaseAPI {
   static projectFields: (keyof Project)[] = [

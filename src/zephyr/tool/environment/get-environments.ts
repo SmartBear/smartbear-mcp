@@ -1,12 +1,12 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { ZephyrClient } from "../../client";
+import { Tool } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { ZephyrClient } from "../../client.ts";
 import {
   ListEnvironmentsQueryParams,
   ListEnvironments200Response as ListEnvironmentsResponse,
-} from "../../common/rest-api-schemas";
+} from "../../common/rest-api-schemas.ts";
 
 export class GetEnvironments extends Tool<ZephyrClient> {
   specification: ToolParams = {

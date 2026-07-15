@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { GetLinkedTestCasesForRequirement } from "./get-linked-testcases";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { GetLinkedTestCasesForRequirement } from "./get-linked-testcases.ts";
 
 describe("GetLinkedTestCasesForRequirement", () => {
   let mockClient: any;
@@ -13,7 +13,7 @@ describe("GetLinkedTestCasesForRequirement", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -91,11 +91,11 @@ describe("GetLinkedTestCasesForRequirement", () => {
       expect(mockRegistry.getResolver).toHaveBeenCalledWith(
         ResolverKeys.SearchableField.REQUIREMENT_KEY_TO_ID,
       );
-      expect(mockReqResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockReqResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-1",
       ]);
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        ENDPOINTS.GET_LINKED_TESTCASES_FOR_REQUIREMENT(10001),
+        ENDPOINTS.GET_LINKED_TESTCASES_FOR_REQUIREMENT(10_001),
         {},
         expect.objectContaining({ maxResults: undefined, startAt: undefined }),
       );
@@ -115,7 +115,7 @@ describe("GetLinkedTestCasesForRequirement", () => {
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
         expect.any(String),
-        { filter: { priority: ["High"], projectId: 10000 } },
+        { filter: { priority: ["High"], projectId: 10_000 } },
         expect.any(Object),
       );
     });

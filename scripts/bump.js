@@ -3,6 +3,7 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import process from "node:process";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
@@ -18,9 +19,8 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-const askQuestion = (query) => {
-  return new Promise((resolve) => rl.question(query, resolve));
-};
+const askQuestion = (query) =>
+  new Promise((resolve) => rl.question(query, resolve));
 
 const runCommand = (command) => {
   try {
@@ -70,7 +70,7 @@ const updateChangelog = (newVersion) => {
   content = content.replace("## Unreleased", header);
 
   fs.writeFileSync(CHANGELOG_PATH, content);
-  console.log(`Updated CHANGELOG.md`);
+  console.log("Updated CHANGELOG.md");
 };
 
 const main = async () => {
@@ -138,9 +138,9 @@ const main = async () => {
   runCommand(`git push -u origin ${branchName}`);
 
   console.log("\n✅ Release preparation complete!");
-  console.log(`\nNext steps:`);
-  console.log(`1. Review the changes: git show HEAD`);
-  console.log(`3. Create a PR to main.`);
+  console.log("\nNext steps:");
+  console.log("1. Review the changes: git show HEAD");
+  console.log("3. Create a PR to main.");
 
   rl.close();
 };

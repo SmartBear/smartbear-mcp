@@ -1,28 +1,31 @@
 import { z } from "zod";
 
-import { getUserAgent } from "../common/info";
-import { getRequestHeader } from "../common/request-context";
-import type { SmartBearMcpServer } from "../common/server";
-import { ToolError } from "../common/tools";
+import { getUserAgent } from "../common/info.ts";
+import { getRequestHeader } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
+import { ToolError } from "../common/tools.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types";
-import { AUTHORIZATION_HEADER, DEFAULT_API_BASE_URL } from "./config/constants";
-import { ListEnvironments } from "./tool/environments/list-environments";
-import { ChatWithQaLead } from "./tool/tasks/chat-with-qa-lead";
-import { ExpandApplicationModel } from "./tool/tasks/expand-application-model";
-import { GetTask } from "./tool/tasks/get-task";
-import { GetTaskStatus } from "./tool/tasks/get-task-status";
-import { RefineAllDraftTests } from "./tool/tasks/refine-all-draft-tests";
-import { RefineTestCases } from "./tool/tasks/refine-test-cases";
-import { RefineTestsInFunctionalAreas } from "./tool/tasks/refine-tests-in-functional-areas";
-import { RunRegressionTests } from "./tool/tasks/run-regression-tests";
-import { RunTestCases } from "./tool/tasks/run-test-cases";
-import { RunTestsInFunctionalAreas } from "./tool/tasks/run-tests-in-functional-areas";
-import { StopTask } from "./tool/tasks/stop-task";
-import { WaitForTask } from "./tool/tasks/wait-for-task";
+} from "../common/types.ts";
+import {
+  AUTHORIZATION_HEADER,
+  DEFAULT_API_BASE_URL,
+} from "./config/constants.ts";
+import { ListEnvironments } from "./tool/environments/list-environments.ts";
+import { ChatWithQaLead } from "./tool/tasks/chat-with-qa-lead.ts";
+import { ExpandApplicationModel } from "./tool/tasks/expand-application-model.ts";
+import { GetTask } from "./tool/tasks/get-task.ts";
+import { GetTaskStatus } from "./tool/tasks/get-task-status.ts";
+import { RefineAllDraftTests } from "./tool/tasks/refine-all-draft-tests.ts";
+import { RefineTestCases } from "./tool/tasks/refine-test-cases.ts";
+import { RefineTestsInFunctionalAreas } from "./tool/tasks/refine-tests-in-functional-areas.ts";
+import { RunRegressionTests } from "./tool/tasks/run-regression-tests.ts";
+import { RunTestCases } from "./tool/tasks/run-test-cases.ts";
+import { RunTestsInFunctionalAreas } from "./tool/tasks/run-tests-in-functional-areas.ts";
+import { StopTask } from "./tool/tasks/stop-task.ts";
+import { WaitForTask } from "./tool/tasks/wait-for-task.ts";
 
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("BearQ workspace API token (Bearer)."),

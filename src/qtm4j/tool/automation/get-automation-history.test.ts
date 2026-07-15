@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { GetAutomationHistory } from "../test-automation/get-automation-history";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { GetAutomationHistory } from "../test-automation/get-automation-history.ts";
 
 describe("GetAutomationHistory", () => {
   let mockClient: any;

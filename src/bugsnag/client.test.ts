@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { USER_AGENT } from "../common/info.js";
-import { ToolError } from "../common/tools.js";
+import { USER_AGENT } from "../common/info.ts";
+import { ToolError } from "../common/tools.ts";
 import type {
   ErrorApiView,
   EventApiView,
@@ -9,11 +9,11 @@ import type {
   Span,
   SpanGroup,
   TraceField,
-} from "./client/api/api.js";
-import type { BaseAPI } from "./client/api/base.js";
-import type { CurrentUserAPI, ErrorAPI } from "./client/api/index.js";
-import type { ProjectAPI } from "./client/api/Project.js";
-import { BugsnagClient } from "./client.js";
+} from "./client/api/api.ts";
+import type { BaseAPI } from "./client/api/base.ts";
+import type { CurrentUserAPI, ErrorAPI } from "./client/api/index.ts";
+import type { ProjectAPI } from "./client/api/Project.ts";
+import { BugsnagClient } from "./client.ts";
 import {
   getMockError,
   getMockEvent,
@@ -27,12 +27,12 @@ import {
 } from "./utils/factories.ts";
 
 // Mock the dependencies
-const mockCurrentUserAPI = {
+const mockCurrentUserApi = {
   listUserOrganizations: vi.fn(),
   getOrganizationProjects: vi.fn(),
 } satisfies Omit<CurrentUserAPI, keyof BaseAPI>;
 
-const mockErrorAPI = {
+const mockErrorApi = {
   viewErrorOnProject: vi.fn(),
   listEventsOnProject: vi.fn(),
   viewEventById: vi.fn(),
@@ -42,7 +42,7 @@ const mockErrorAPI = {
   getPivotValuesOnAnError: vi.fn(),
 } satisfies Omit<ErrorAPI, keyof BaseAPI>;
 
-const mockProjectAPI = {
+const mockProjectApi = {
   listProjectEventFields: vi.fn(),
   getProjectReleaseById: vi.fn(),
   listProjectReleaseGroups: vi.fn(),
@@ -66,15 +66,15 @@ const mockCache = {
 };
 
 vi.mock("./client/api/CurrentUser.ts", () => ({
-  CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserAPI),
+  CurrentUserAPI: vi.fn().mockImplementation(() => mockCurrentUserApi),
 }));
 
 vi.mock("./client/api/Error.ts", () => ({
-  ErrorAPI: vi.fn().mockImplementation(() => mockErrorAPI),
+  ErrorAPI: vi.fn().mockImplementation(() => mockErrorApi),
 }));
 
 vi.mock("./client/api/Project.ts", () => ({
-  ProjectAPI: vi.fn().mockImplementation(() => mockProjectAPI),
+  ProjectAPI: vi.fn().mockImplementation(() => mockProjectApi),
 }));
 
 vi.mock("./client/api/configuration.ts", () => ({
@@ -184,7 +184,7 @@ describe("BugsnagClient", () => {
     });
 
     it("should configure endpoints correctly during construction", async () => {
-      const { Configuration } = await import("./client/api/index.js");
+      const { Configuration } = await import("./client/api/index.ts");
       const MockedConfiguration = vi.mocked(Configuration);
 
       await createConfiguredClient("test-token", "00000hub-key");
@@ -221,7 +221,7 @@ describe("BugsnagClient", () => {
     it("should return token from Bugsnag-Auth-Token header with 'token' prefix", async () => {
       const client = await createConfiguredClient("configured-token");
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { "Bugsnag-Auth-Token": "my-pat" } },
@@ -233,7 +233,7 @@ describe("BugsnagClient", () => {
     it("should strip existing 'token ' prefix from header value", async () => {
       const client = await createConfiguredClient("configured-token");
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { "Bugsnag-Auth-Token": "token already-prefixed" } },
@@ -245,7 +245,7 @@ describe("BugsnagClient", () => {
     it("should fall back to Authorization Bearer header for OAuth", async () => {
       const client = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { authorization: "Bearer oauth-jwt-token" } },
@@ -257,7 +257,7 @@ describe("BugsnagClient", () => {
     it("should fall back to configured auth_token with 'token' prefix", async () => {
       const client = await createConfiguredClient("my-configured-pat");
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run({ headers: {} }, () =>
         client.getAuthToken(),
@@ -270,7 +270,7 @@ describe("BugsnagClient", () => {
       const mockServer = { getCache: () => mockCache } as any;
       await client.configure(mockServer, {} as any);
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run({ headers: {} }, () =>
         client.getAuthToken(),
@@ -281,7 +281,7 @@ describe("BugsnagClient", () => {
     it("should prefer Bugsnag-Auth-Token over Authorization header", async () => {
       const client = await createConfiguredClient("configured-token");
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         {
@@ -298,7 +298,7 @@ describe("BugsnagClient", () => {
     it("should handle array header values", async () => {
       const client = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { "Bugsnag-Auth-Token": ["first-token", "second-token"] } },
@@ -312,7 +312,7 @@ describe("BugsnagClient", () => {
     it("should extract Bearer token from Authorization header", async () => {
       const client = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { authorization: "Bearer my-jwt" } },
@@ -324,7 +324,7 @@ describe("BugsnagClient", () => {
     it("should add Bearer prefix when not present", async () => {
       const client = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         { headers: { authorization: "raw-token-value" } },
@@ -336,7 +336,7 @@ describe("BugsnagClient", () => {
     it("should return null when no Authorization header", async () => {
       const client = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run({ headers: {} }, () =>
         client.getBearerToken(),
@@ -347,7 +347,7 @@ describe("BugsnagClient", () => {
     it("should handle array Authorization header values", async () => {
       const client = await createConfiguredClient();
       const { requestContextStorage } = await import(
-        "../common/request-context.js"
+        "../common/request-context.ts"
       );
       const result = requestContextStorage.run(
         {
@@ -644,7 +644,7 @@ describe("BugsnagClient", () => {
 
   describe("configuration validation", () => {
     it("should pass correct authToken to Configuration", async () => {
-      const { Configuration } = await import("./client/api/index.js");
+      const { Configuration } = await import("./client/api/index.ts");
       const MockedConfiguration = vi.mocked(Configuration);
       const testToken = "super-secret-token-123";
 
@@ -668,7 +668,7 @@ describe("BugsnagClient", () => {
     });
 
     it("should include all required headers", async () => {
-      const { Configuration } = await import("./client/api/index.js");
+      const { Configuration } = await import("./client/api/index.ts");
       const MockedConfiguration = vi.mocked(Configuration);
 
       await createConfiguredClient("test-token");
@@ -686,23 +686,23 @@ describe("BugsnagClient", () => {
   describe("API client initialization", () => {
     it("should initialize all required API clients", async () => {
       const { CurrentUserAPI, ErrorAPI, ProjectAPI } = await import(
-        "./client/api/index.js"
+        "./client/api/index.ts"
       );
 
-      const MockedCurrentUserAPI = vi.mocked(CurrentUserAPI);
-      const MockedErrorAPI = vi.mocked(ErrorAPI);
-      const MockedProjectAPI = vi.mocked(ProjectAPI);
+      const MockedCurrentUserApi = vi.mocked(CurrentUserAPI);
+      const MockedErrorApi = vi.mocked(ErrorAPI);
+      const MockedProjectApi = vi.mocked(ProjectAPI);
 
       // Clear previous calls from beforeEach and other tests
-      MockedCurrentUserAPI.mockClear();
-      MockedErrorAPI.mockClear();
-      MockedProjectAPI.mockClear();
+      MockedCurrentUserApi.mockClear();
+      MockedErrorApi.mockClear();
+      MockedProjectApi.mockClear();
 
       await createConfiguredClient("test-token");
 
-      expect(MockedCurrentUserAPI).toHaveBeenCalledOnce();
-      expect(MockedErrorAPI).toHaveBeenCalledOnce();
-      expect(MockedProjectAPI).toHaveBeenCalledOnce();
+      expect(MockedCurrentUserApi).toHaveBeenCalledOnce();
+      expect(MockedErrorApi).toHaveBeenCalledOnce();
+      expect(MockedProjectApi).toHaveBeenCalledOnce();
     });
 
     it("should use cache from server.getCache()", async () => {
@@ -721,10 +721,10 @@ describe("BugsnagClient", () => {
 
       const mockOrg = getMockOrganization("org-1", "Test Org");
       const mockProjects = [getMockProject("proj-1", "Project 1")];
-      mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
+      mockCurrentUserApi.listUserOrganizations.mockResolvedValue({
         body: [mockOrg],
       });
-      mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
+      mockCurrentUserApi.getOrganizationProjects.mockResolvedValue({
         body: mockProjects,
       });
 
@@ -783,13 +783,13 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(null) // First call for projects
           .mockReturnValueOnce(mockOrg); // Second call for org
-        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
+        mockCurrentUserApi.getOrganizationProjects.mockResolvedValue({
           body: mockProjects,
         });
 
         const result = await client.getProjects();
 
-        expect(mockCurrentUserAPI.getOrganizationProjects).toHaveBeenCalledWith(
+        expect(mockCurrentUserApi.getOrganizationProjects).toHaveBeenCalledWith(
           "org-1",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
@@ -803,7 +803,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(null) // First call for projects
           .mockReturnValueOnce(mockOrg); // Second call for org
-        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
+        mockCurrentUserApi.getOrganizationProjects.mockResolvedValue({
           body: [],
         });
 
@@ -822,20 +822,20 @@ describe("BugsnagClient", () => {
 
         mockCache.get.mockReturnValueOnce(mockProjects);
         mockCache.get.mockReturnValueOnce(mockOrgs);
-        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
+        mockCurrentUserApi.getOrganizationProjects.mockResolvedValue({
           body: mockProjects,
         });
-        mockErrorAPI.viewEventById
+        mockErrorApi.viewEventById
           .mockRejectedValueOnce(new Error("Not found")) // proj-1
           .mockResolvedValueOnce({ body: mockEvent }); // proj-2
 
         const result = await client.getEvent("event-1");
 
-        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith(
+        expect(mockErrorApi.viewEventById).toHaveBeenCalledWith(
           "proj-1",
           "event-1",
         );
-        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith(
+        expect(mockErrorApi.viewEventById).toHaveBeenCalledWith(
           "proj-2",
           "event-1",
         );
@@ -843,13 +843,13 @@ describe("BugsnagClient", () => {
       });
 
       it("should return null when event not found in any project", async () => {
-        mockCurrentUserAPI.listUserOrganizations.mockResolvedValue({
+        mockCurrentUserApi.listUserOrganizations.mockResolvedValue({
           body: mockOrgs,
         });
-        mockCurrentUserAPI.getOrganizationProjects.mockResolvedValue({
+        mockCurrentUserApi.getOrganizationProjects.mockResolvedValue({
           body: mockProjects,
         });
-        mockErrorAPI.viewEventById.mockRejectedValue(new Error("Not found"));
+        mockErrorApi.viewEventById.mockRejectedValue(new Error("Not found"));
 
         const result = await client.getEvent("event-1");
 
@@ -944,7 +944,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce([mockProject])
           .mockReturnValueOnce(mockEventFields); // event fields
-        mockErrorAPI.listProjectErrors.mockResolvedValue({
+        mockErrorApi.listProjectErrors.mockResolvedValue({
           body: mockErrors,
           totalCount: 1,
         });
@@ -968,7 +968,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject) // current project
           .mockReturnValueOnce(mockEventFields);
-        mockErrorAPI.listProjectErrors.mockResolvedValue({
+        mockErrorApi.listProjectErrors.mockResolvedValue({
           body: mockErrors,
           totalCount: 1,
         });
@@ -1071,7 +1071,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
-        mockProjectAPI.listProjectEventFields.mockResolvedValue({
+        mockProjectApi.listProjectEventFields.mockResolvedValue({
           body: [
             getMockEventField("error"),
             getMockEventField("error.status"),
@@ -1079,13 +1079,13 @@ describe("BugsnagClient", () => {
             getMockEventField("event.since"),
           ],
         });
-        mockErrorAPI.viewErrorOnProject.mockResolvedValue({
+        mockErrorApi.viewErrorOnProject.mockResolvedValue({
           body: mockError,
         });
-        mockErrorAPI.listEventsOnProject.mockResolvedValue({
+        mockErrorApi.listEventsOnProject.mockResolvedValue({
           body: mockEvents,
         });
-        mockErrorAPI.getPivotValuesOnAnError.mockResolvedValue({
+        mockErrorApi.getPivotValuesOnAnError.mockResolvedValue({
           body: mockPivots,
         });
 
@@ -1096,7 +1096,7 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({ errorId: "error-1" });
 
-        expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.viewErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
         );
@@ -1114,7 +1114,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
-        mockProjectAPI.listProjectEventFields.mockResolvedValue({
+        mockProjectApi.listProjectEventFields.mockResolvedValue({
           body: [
             getMockEventField("error"),
             getMockEventField("error.status"),
@@ -1122,13 +1122,13 @@ describe("BugsnagClient", () => {
             getMockEventField("event.since"),
           ],
         });
-        mockErrorAPI.viewErrorOnProject.mockResolvedValue({
+        mockErrorApi.viewErrorOnProject.mockResolvedValue({
           body: mockError,
         });
-        mockErrorAPI.listEventsOnProject.mockResolvedValue({
+        mockErrorApi.listEventsOnProject.mockResolvedValue({
           body: [],
         });
-        mockErrorAPI.getPivotValuesOnAnError.mockResolvedValue({
+        mockErrorApi.getPivotValuesOnAnError.mockResolvedValue({
           body: [],
         });
 
@@ -1139,7 +1139,7 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({ errorId: "error-1" });
 
-        expect(mockErrorAPI.viewErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.viewErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
         );
@@ -1157,7 +1157,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject)
           .mockReturnValueOnce(mockOrg);
-        mockErrorAPI.viewErrorOnProject.mockResolvedValue({ body: null });
+        mockErrorApi.viewErrorOnProject.mockResolvedValue({ body: null });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
           (call: any) => call[0].title === "Get Error",
@@ -1181,7 +1181,7 @@ describe("BugsnagClient", () => {
 
         mockCache.get.mockReturnValue(mockProjects);
 
-        mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
+        mockErrorApi.viewEventById.mockResolvedValue({ body: mockEvent });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -1193,7 +1193,7 @@ describe("BugsnagClient", () => {
           eventId: "event-1",
         });
 
-        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith(
+        expect(mockErrorApi.viewEventById).toHaveBeenCalledWith(
           "proj-1",
           "event-1",
         );
@@ -1212,7 +1212,7 @@ describe("BugsnagClient", () => {
 
         mockCache.get.mockReturnValue(mockProjects);
 
-        mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
+        mockErrorApi.viewEventById.mockResolvedValue({ body: mockEvent });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -1224,7 +1224,7 @@ describe("BugsnagClient", () => {
           link: "https://app.bugsnag.com/my-org/my-project/errors/error-123?event_id=event-1",
         });
 
-        expect(mockErrorAPI.viewEventById).toHaveBeenCalledWith(
+        expect(mockErrorApi.viewEventById).toHaveBeenCalledWith(
           "proj-1",
           "event-1",
         );
@@ -1298,7 +1298,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject) // current project
           .mockReturnValueOnce(mockEventFields); // event fields
-        mockErrorAPI.listProjectErrors.mockResolvedValue({
+        mockErrorApi.listProjectErrors.mockResolvedValue({
           body: mockErrors,
           totalCount: 1,
         });
@@ -1315,7 +1315,7 @@ describe("BugsnagClient", () => {
           perPage: 50,
         });
 
-        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith(
+        expect(mockErrorApi.listProjectErrors).toHaveBeenCalledWith(
           "proj-1",
           null,
           "last_seen",
@@ -1351,7 +1351,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProject) // current project
           .mockReturnValueOnce(mockEventFields); // event fields
-        mockErrorAPI.listProjectErrors.mockResolvedValue({
+        mockErrorApi.listProjectErrors.mockResolvedValue({
           body: mockErrors,
           totalCount: 3,
         });
@@ -1367,7 +1367,7 @@ describe("BugsnagClient", () => {
           perPage: 50,
         });
 
-        expect(mockErrorAPI.listProjectErrors).toHaveBeenCalledWith(
+        expect(mockErrorApi.listProjectErrors).toHaveBeenCalledWith(
           "proj-1",
           null,
           "last_seen",
@@ -1438,7 +1438,7 @@ describe("BugsnagClient", () => {
         };
 
         mockCache.get.mockReturnValueOnce(mockProject); // current project
-        mockErrorAPI.listErrorEvents.mockResolvedValue({
+        mockErrorApi.listErrorEvents.mockResolvedValue({
           body: mockEvents,
           totalCount: 2,
         });
@@ -1455,7 +1455,7 @@ describe("BugsnagClient", () => {
           perPage: 50,
         });
 
-        expect(mockErrorAPI.listErrorEvents).toHaveBeenCalledWith(
+        expect(mockErrorApi.listErrorEvents).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           undefined,
@@ -1563,7 +1563,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProjects[0])
           .mockReturnValueOnce([mockProjects[0]]);
-        mockProjectAPI.getProjectReleaseById.mockResolvedValue({
+        mockProjectApi.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
         });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1573,7 +1573,7 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({ buildId: "rel-1" });
 
-        expect(mockProjectAPI.getProjectReleaseById).toHaveBeenCalledWith(
+        expect(mockProjectApi.getProjectReleaseById).toHaveBeenCalledWith(
           "proj-1",
           "rel-1",
         );
@@ -1601,7 +1601,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProjects[0])
           .mockReturnValueOnce([mockProjects[0]]);
-        mockProjectAPI.getProjectReleaseById.mockResolvedValue({
+        mockProjectApi.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
         });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1611,7 +1611,7 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({ buildId: "rel-1" });
 
-        expect(mockProjectAPI.getProjectReleaseById).toHaveBeenCalledWith(
+        expect(mockProjectApi.getProjectReleaseById).toHaveBeenCalledWith(
           "proj-1",
           "rel-1",
         );
@@ -1648,7 +1648,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProjectSessionStability)
           .mockReturnValueOnce([mockProjectSessionStability]);
-        mockProjectAPI.getProjectReleaseById.mockResolvedValue({
+        mockProjectApi.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
         });
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -1658,7 +1658,7 @@ describe("BugsnagClient", () => {
 
         const result = await toolHandler({ buildId: "rel-1" });
 
-        expect(mockProjectAPI.getProjectReleaseById).toHaveBeenCalledWith(
+        expect(mockProjectApi.getProjectReleaseById).toHaveBeenCalledWith(
           "proj-1",
           "rel-1",
         );
@@ -1688,7 +1688,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProjects)
           .mockReturnValueOnce(mockProjects);
-        mockProjectAPI.getProjectReleaseById.mockResolvedValue({
+        mockProjectApi.getProjectReleaseById.mockResolvedValue({
           body: basicBuild,
         });
 
@@ -1702,7 +1702,7 @@ describe("BugsnagClient", () => {
           buildId: "rel-1",
         });
 
-        expect(mockProjectAPI.getProjectReleaseById).toHaveBeenCalledWith(
+        expect(mockProjectApi.getProjectReleaseById).toHaveBeenCalledWith(
           "proj-1",
           "rel-1",
         );
@@ -1724,7 +1724,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProjects[0])
           .mockReturnValueOnce([mockProjects[0]]);
-        mockProjectAPI.getProjectReleaseById.mockResolvedValue({ body: null });
+        mockProjectApi.getProjectReleaseById.mockResolvedValue({ body: null });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -1778,7 +1778,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProjects[1])
           .mockReturnValueOnce([mockProjects[1]]);
-        mockProjectAPI.listProjectReleaseGroups.mockResolvedValue({
+        mockProjectApi.listProjectReleaseGroups.mockResolvedValue({
           body: mockReleases,
         });
 
@@ -1792,7 +1792,7 @@ describe("BugsnagClient", () => {
           visibleOnly: true,
         });
 
-        expect(mockProjectAPI.listProjectReleaseGroups).toHaveBeenCalledWith(
+        expect(mockProjectApi.listProjectReleaseGroups).toHaveBeenCalledWith(
           "proj-2",
           "production",
           false,
@@ -1834,7 +1834,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProjects)
           .mockReturnValueOnce(mockProjects);
-        mockProjectAPI.listProjectReleaseGroups.mockResolvedValue({
+        mockProjectApi.listProjectReleaseGroups.mockResolvedValue({
           body: mockReleases,
         });
 
@@ -1849,7 +1849,7 @@ describe("BugsnagClient", () => {
           visibleOnly: false,
         });
 
-        expect(mockProjectAPI.listProjectReleaseGroups).toHaveBeenCalledWith(
+        expect(mockProjectApi.listProjectReleaseGroups).toHaveBeenCalledWith(
           "proj-2",
           "staging",
           false,
@@ -1879,7 +1879,7 @@ describe("BugsnagClient", () => {
       it("should handle empty releases list", async () => {
         // Mock project cache to return the project
         mockCache.get.mockReturnValueOnce(mockProjects[0]);
-        mockProjectAPI.listProjectReleaseGroups.mockResolvedValue({ body: [] });
+        mockProjectApi.listProjectReleaseGroups.mockResolvedValue({ body: [] });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -1890,7 +1890,7 @@ describe("BugsnagClient", () => {
           visibleOnly: true,
         });
 
-        expect(mockProjectAPI.listProjectReleaseGroups).toHaveBeenCalledWith(
+        expect(mockProjectApi.listProjectReleaseGroups).toHaveBeenCalledWith(
           "proj-1",
           "production",
           false,
@@ -1955,11 +1955,11 @@ describe("BugsnagClient", () => {
           .mockReturnValueOnce(mockProjects)
           .mockReturnValueOnce(mockProjects)
           .mockReturnValueOnce(mockProjects);
-        mockProjectAPI.getReleaseGroup.mockResolvedValue({
+        mockProjectApi.getReleaseGroup.mockResolvedValue({
           body: mockRelease,
         });
 
-        mockProjectAPI.listBuildsInRelease.mockResolvedValue({
+        mockProjectApi.listBuildsInRelease.mockResolvedValue({
           body: mockBuildsInRelease,
         });
 
@@ -1973,7 +1973,7 @@ describe("BugsnagClient", () => {
           releaseId: "rel-group-2",
         });
 
-        expect(mockProjectAPI.getReleaseGroup).toHaveBeenCalledWith(
+        expect(mockProjectApi.getReleaseGroup).toHaveBeenCalledWith(
           "rel-group-2",
         );
         expect(result.content[0].text).toBe(
@@ -2008,7 +2008,7 @@ describe("BugsnagClient", () => {
         mockCache.get
           .mockReturnValueOnce(mockProjects[0])
           .mockReturnValueOnce(null);
-        mockProjectAPI.getReleaseGroup.mockResolvedValue({ body: null });
+        mockProjectApi.getReleaseGroup.mockResolvedValue({ body: null });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2026,7 +2026,7 @@ describe("BugsnagClient", () => {
 
       it("should link a Jira issue to an error (link_issue)", async () => {
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2039,7 +2039,7 @@ describe("BugsnagClient", () => {
           issue_url: "https://jira.example.com/browse/ISSUE-123",
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           {
@@ -2053,7 +2053,7 @@ describe("BugsnagClient", () => {
 
       it("should unlink a Jira issue from an error (unlink_issue)", async () => {
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2065,7 +2065,7 @@ describe("BugsnagClient", () => {
           operation: "unlink_issue",
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           {
@@ -2077,7 +2077,7 @@ describe("BugsnagClient", () => {
 
       it("should update error status to snooze for 1 hour with project from cache", async () => {
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2093,7 +2093,7 @@ describe("BugsnagClient", () => {
           },
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           {
@@ -2109,7 +2109,7 @@ describe("BugsnagClient", () => {
 
       it("should update error status to snooze until 10 additional users affected", async () => {
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2125,7 +2125,7 @@ describe("BugsnagClient", () => {
           },
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           {
@@ -2141,7 +2141,7 @@ describe("BugsnagClient", () => {
 
       it("should update error status to snooze until 10 additional occurrences", async () => {
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2157,7 +2157,7 @@ describe("BugsnagClient", () => {
           },
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           {
@@ -2173,7 +2173,7 @@ describe("BugsnagClient", () => {
 
       it("should update error status to snooze until 10 occurrences in 2 hours", async () => {
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2190,7 +2190,7 @@ describe("BugsnagClient", () => {
           },
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           {
@@ -2207,7 +2207,7 @@ describe("BugsnagClient", () => {
 
       it("should update error successfully with project from cache", async () => {
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2219,7 +2219,7 @@ describe("BugsnagClient", () => {
           operation: "fix",
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           { operation: "fix" },
@@ -2233,7 +2233,7 @@ describe("BugsnagClient", () => {
           getMockProject("proj-2", "Project 2"),
         ];
         mockCache.get.mockReturnValue(mockProjects);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 204 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 204 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2246,7 +2246,7 @@ describe("BugsnagClient", () => {
           operation: "ignore",
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           { operation: "ignore" },
@@ -2259,7 +2259,7 @@ describe("BugsnagClient", () => {
         const operations = ["open", "fix", "ignore", "discard", "undiscard"];
 
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2272,14 +2272,14 @@ describe("BugsnagClient", () => {
             operation: operation as any,
           });
 
-          expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+          expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
             "proj-1",
             "error-1",
             { operation, severity: undefined },
           );
         }
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledTimes(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledTimes(
           operations.length,
         );
       });
@@ -2291,7 +2291,7 @@ describe("BugsnagClient", () => {
         });
 
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2319,7 +2319,7 @@ describe("BugsnagClient", () => {
           },
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           { operation: "override_severity", severity: "warning" },
@@ -2333,7 +2333,7 @@ describe("BugsnagClient", () => {
         });
 
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 200 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 200 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2345,7 +2345,7 @@ describe("BugsnagClient", () => {
           operation: "override_severity",
         });
 
-        expect(mockErrorAPI.updateErrorOnProject).toHaveBeenCalledWith(
+        expect(mockErrorApi.updateErrorOnProject).toHaveBeenCalledWith(
           "proj-1",
           "error-1",
           { operation: "override_severity", severity: undefined },
@@ -2355,7 +2355,7 @@ describe("BugsnagClient", () => {
 
       it("should return false when API returns non-success status", async () => {
         mockCache.get.mockReturnValue(mockProject);
-        mockErrorAPI.updateErrorOnProject.mockResolvedValue({ status: 400 });
+        mockErrorApi.updateErrorOnProject.mockResolvedValue({ status: 400 });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
         const toolHandler = registerToolsSpy.mock.calls.find(
@@ -2418,7 +2418,7 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get.mockReturnValue(mockProject);
-        mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
+        mockProjectApi.listProjectSpanGroups.mockResolvedValue({
           body: mockSpanGroups,
           nextUrl: null,
         });
@@ -2431,7 +2431,7 @@ describe("BugsnagClient", () => {
 
         const result = await listSpanGroupsHandler({});
 
-        expect(mockProjectAPI.listProjectSpanGroups).toHaveBeenCalledWith(
+        expect(mockProjectApi.listProjectSpanGroups).toHaveBeenCalledWith(
           "proj-1",
           undefined,
           "desc",
@@ -2471,7 +2471,7 @@ describe("BugsnagClient", () => {
         };
 
         mockCache.get.mockReturnValue(mockProject);
-        mockProjectAPI.listProjectSpanGroups.mockResolvedValue({
+        mockProjectApi.listProjectSpanGroups.mockResolvedValue({
           body: mockSpanGroups,
           nextUrl: "/next",
         });
@@ -2487,10 +2487,10 @@ describe("BugsnagClient", () => {
           direction: "desc",
           perPage: 10,
           starredOnly: true,
-          filters: filters,
+          filters,
         });
 
-        expect(mockProjectAPI.listProjectSpanGroups).toHaveBeenCalledWith(
+        expect(mockProjectApi.listProjectSpanGroups).toHaveBeenCalledWith(
           "proj-1",
           "duration_p95",
           "desc",
@@ -2530,13 +2530,13 @@ describe("BugsnagClient", () => {
         const mockDistribution = { buckets: [{ range: "0-100ms", count: 50 }] };
 
         mockCache.get.mockReturnValue(mockProject);
-        mockProjectAPI.getProjectSpanGroup.mockResolvedValue({
+        mockProjectApi.getProjectSpanGroup.mockResolvedValue({
           body: mockSpanGroup,
         });
-        mockProjectAPI.getProjectSpanGroupTimeline.mockResolvedValue({
+        mockProjectApi.getProjectSpanGroupTimeline.mockResolvedValue({
           body: mockTimeline,
         });
-        mockProjectAPI.getProjectSpanGroupDistribution.mockResolvedValue({
+        mockProjectApi.getProjectSpanGroupDistribution.mockResolvedValue({
           body: mockDistribution,
         });
 
@@ -2550,7 +2550,7 @@ describe("BugsnagClient", () => {
           spanGroupId: "span-group-1",
         });
 
-        expect(mockProjectAPI.getProjectSpanGroup).toHaveBeenCalledWith(
+        expect(mockProjectApi.getProjectSpanGroup).toHaveBeenCalledWith(
           "proj-1",
           "span-group-1",
           {
@@ -2562,7 +2562,7 @@ describe("BugsnagClient", () => {
             ],
           },
         );
-        expect(mockProjectAPI.getProjectSpanGroupTimeline).toHaveBeenCalledWith(
+        expect(mockProjectApi.getProjectSpanGroupTimeline).toHaveBeenCalledWith(
           "proj-1",
           "span-group-1",
           {
@@ -2575,7 +2575,7 @@ describe("BugsnagClient", () => {
           },
         );
         expect(
-          mockProjectAPI.getProjectSpanGroupDistribution,
+          mockProjectApi.getProjectSpanGroupDistribution,
         ).toHaveBeenCalledWith("proj-1", "span-group-1", {
           "span.since": [
             {
@@ -2609,7 +2609,7 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get.mockReturnValue(mockProject);
-        mockProjectAPI.listSpansBySpanGroupId.mockResolvedValue({
+        mockProjectApi.listSpansBySpanGroupId.mockResolvedValue({
           body: mockSpans,
           nextUrl: null,
         });
@@ -2627,7 +2627,7 @@ describe("BugsnagClient", () => {
           perPage: 20,
         });
 
-        expect(mockProjectAPI.listSpansBySpanGroupId).toHaveBeenCalledWith(
+        expect(mockProjectApi.listSpansBySpanGroupId).toHaveBeenCalledWith(
           "proj-1",
           "span-group-1",
           {
@@ -2668,7 +2668,7 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get.mockReturnValue(mockProject);
-        mockProjectAPI.listSpansByTraceId.mockResolvedValue({
+        mockProjectApi.listSpansByTraceId.mockResolvedValue({
           body: mockSpans,
           nextUrl: null,
         });
@@ -2687,7 +2687,7 @@ describe("BugsnagClient", () => {
           perPage: 50,
         });
 
-        expect(mockProjectAPI.listSpansByTraceId).toHaveBeenCalledWith(
+        expect(mockProjectApi.listSpansByTraceId).toHaveBeenCalledWith(
           "proj-1",
           "trace-abc",
           "2024-01-01T00:00:00Z",
@@ -2725,9 +2725,8 @@ describe("BugsnagClient", () => {
           if (key === "bugsnag_current_project") {
             return mockProject;
           }
-          return undefined;
         });
-        mockProjectAPI.listProjectTraceFields.mockResolvedValue({
+        mockProjectApi.listProjectTraceFields.mockResolvedValue({
           body: mockTraceFields,
         });
 
@@ -2739,7 +2738,7 @@ describe("BugsnagClient", () => {
 
         const result = await listTraceFieldsHandler({});
 
-        expect(mockProjectAPI.listProjectTraceFields).toHaveBeenCalledWith(
+        expect(mockProjectApi.listProjectTraceFields).toHaveBeenCalledWith(
           "proj-1",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
@@ -2771,7 +2770,6 @@ describe("BugsnagClient", () => {
           if (key === "bugsnag_current_project") {
             return mockProject;
           }
-          return undefined;
         });
 
         client.registerTools(registerToolsSpy, getInputFunctionSpy);
@@ -2783,7 +2781,7 @@ describe("BugsnagClient", () => {
         const result = await listTraceFieldsHandler({});
 
         // Should use cache and not call API
-        expect(mockProjectAPI.listProjectTraceFields).not.toHaveBeenCalled();
+        expect(mockProjectApi.listProjectTraceFields).not.toHaveBeenCalled();
         expect(result).toEqual({
           content: [
             {
@@ -2807,9 +2805,8 @@ describe("BugsnagClient", () => {
           if (key === "bugsnag_projects") {
             return mockProjects;
           }
-          return undefined;
         });
-        mockProjectAPI.listProjectTraceFields.mockResolvedValue({
+        mockProjectApi.listProjectTraceFields.mockResolvedValue({
           body: mockTraceFields,
         });
 
@@ -2823,7 +2820,7 @@ describe("BugsnagClient", () => {
           projectId: "proj-2",
         });
 
-        expect(mockProjectAPI.listProjectTraceFields).toHaveBeenCalledWith(
+        expect(mockProjectApi.listProjectTraceFields).toHaveBeenCalledWith(
           "proj-2",
         );
         expect(mockCache.set).toHaveBeenCalledWith(
@@ -2861,14 +2858,14 @@ describe("BugsnagClient", () => {
         };
 
         mockCache.get.mockReturnValueOnce(mockProject);
-        mockProjectAPI.getProjectNetworkGroupingRuleset.mockResolvedValue({
+        mockProjectApi.getProjectNetworkGroupingRuleset.mockResolvedValue({
           body: mockRuleset,
         });
 
         const result = await getNetworkGroupingHandler({}, {});
 
         expect(
-          mockProjectAPI.getProjectNetworkGroupingRuleset,
+          mockProjectApi.getProjectNetworkGroupingRuleset,
         ).toHaveBeenCalledWith("proj-1");
         expect(JSON.parse(result.content[0].text)).toEqual(
           mockRuleset.endpoints,
@@ -2891,7 +2888,7 @@ describe("BugsnagClient", () => {
         };
 
         mockCache.get.mockReturnValueOnce(mockProjects);
-        mockProjectAPI.getProjectNetworkGroupingRuleset.mockResolvedValue({
+        mockProjectApi.getProjectNetworkGroupingRuleset.mockResolvedValue({
           body: mockRuleset,
         });
 
@@ -2901,7 +2898,7 @@ describe("BugsnagClient", () => {
         );
 
         expect(
-          mockProjectAPI.getProjectNetworkGroupingRuleset,
+          mockProjectApi.getProjectNetworkGroupingRuleset,
         ).toHaveBeenCalledWith("proj-2");
         expect(JSON.parse(result.content[0].text)).toEqual(
           mockRuleset.endpoints,
@@ -2921,7 +2918,7 @@ describe("BugsnagClient", () => {
         };
 
         mockCache.get.mockReturnValueOnce(mockProject);
-        mockProjectAPI.getProjectNetworkGroupingRuleset.mockResolvedValue({
+        mockProjectApi.getProjectNetworkGroupingRuleset.mockResolvedValue({
           body: mockRuleset,
         });
 
@@ -2959,11 +2956,11 @@ describe("BugsnagClient", () => {
         ];
         const mockRuleset = {
           projectId: "proj-1",
-          endpoints: endpoints,
+          endpoints,
         };
 
         mockCache.get.mockReturnValueOnce(mockProject);
-        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+        mockProjectApi.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 200,
           body: mockRuleset,
         });
@@ -2971,7 +2968,7 @@ describe("BugsnagClient", () => {
         const result = await setNetworkGroupingHandler({ endpoints }, {});
 
         expect(
-          mockProjectAPI.updateProjectNetworkGroupingRuleset,
+          mockProjectApi.updateProjectNetworkGroupingRuleset,
         ).toHaveBeenCalledWith("proj-1", endpoints);
         const response = JSON.parse(result.content[0].text);
         expect(response.success).toBe(true);
@@ -2994,11 +2991,11 @@ describe("BugsnagClient", () => {
         ];
         const mockRuleset = {
           projectId: "proj-2",
-          endpoints: endpoints,
+          endpoints,
         };
 
         mockCache.get.mockReturnValueOnce(mockProjects);
-        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+        mockProjectApi.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 200,
           body: mockRuleset,
         });
@@ -3009,7 +3006,7 @@ describe("BugsnagClient", () => {
         );
 
         expect(
-          mockProjectAPI.updateProjectNetworkGroupingRuleset,
+          mockProjectApi.updateProjectNetworkGroupingRuleset,
         ).toHaveBeenCalledWith("proj-2", endpoints);
         const response = JSON.parse(result.content[0].text);
         expect(response.success).toBe(true);
@@ -3027,7 +3024,7 @@ describe("BugsnagClient", () => {
         const endpoints = ["/api/{version}/items/{itemId}"];
 
         mockCache.get.mockReturnValueOnce(mockProject);
-        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+        mockProjectApi.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 204,
           body: { projectId: "proj-1", endpoints },
         });
@@ -3048,7 +3045,7 @@ describe("BugsnagClient", () => {
         const endpoints: string[] = [];
 
         mockCache.get.mockReturnValueOnce(mockProject);
-        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+        mockProjectApi.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 200,
           body: { projectId: "proj-1", endpoints },
         });
@@ -3056,7 +3053,7 @@ describe("BugsnagClient", () => {
         const result = await setNetworkGroupingHandler({ endpoints }, {});
 
         expect(
-          mockProjectAPI.updateProjectNetworkGroupingRuleset,
+          mockProjectApi.updateProjectNetworkGroupingRuleset,
         ).toHaveBeenCalledWith("proj-1", []);
         const response = JSON.parse(result.content[0].text);
         expect(response.success).toBe(true);
@@ -3078,7 +3075,7 @@ describe("BugsnagClient", () => {
         ];
 
         mockCache.get.mockReturnValueOnce(mockProject);
-        mockProjectAPI.updateProjectNetworkGroupingRuleset.mockResolvedValue({
+        mockProjectApi.updateProjectNetworkGroupingRuleset.mockResolvedValue({
           status: 200,
           body: { projectId: "proj-1", endpoints },
         });
@@ -3086,7 +3083,7 @@ describe("BugsnagClient", () => {
         const result = await setNetworkGroupingHandler({ endpoints }, {});
 
         expect(
-          mockProjectAPI.updateProjectNetworkGroupingRuleset,
+          mockProjectApi.updateProjectNetworkGroupingRuleset,
         ).toHaveBeenCalledWith("proj-1", endpoints);
         const response = JSON.parse(result.content[0].text);
         expect(response.endpoints).toEqual(endpoints);
@@ -3120,7 +3117,7 @@ describe("BugsnagClient", () => {
         const mockProjects = [getMockProject("proj-1", "Project 1")];
 
         mockCache.get.mockReturnValueOnce(mockProjects);
-        mockErrorAPI.viewEventById.mockResolvedValue({ body: mockEvent });
+        mockErrorApi.viewEventById.mockResolvedValue({ body: mockEvent });
 
         await client.registerResources(registerResourcesSpy);
         const resourceHandler = registerResourcesSpy.mock.calls[0][1];

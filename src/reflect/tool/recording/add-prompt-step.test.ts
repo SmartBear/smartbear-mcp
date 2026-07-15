@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AddPromptStep } from "./add-prompt-step";
+import { AddPromptStep } from "./add-prompt-step.ts";
 
 describe("AddPromptStep", () => {
   let mockClient: any;

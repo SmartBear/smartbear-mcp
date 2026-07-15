@@ -1,10 +1,10 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
-import { toolInputParameters } from "../../input-schemas";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { BugsnagClient } from "../../client.ts";
+import { toolInputParameters } from "../../input-schemas.ts";
 
 const inputSchema = z.object({
   projectId: toolInputParameters.projectId,
@@ -66,7 +66,7 @@ export class GetTrace extends Tool<BugsnagClient> {
   handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
     const params = inputSchema.parse(args);
     const project = await this.client.getInputProject(params.projectId);
-    if (!params.traceId || !params.from || !params.to) {
+    if (!(params.traceId && params.from && params.to)) {
       throw new ToolError("traceId, from, and to are required");
     }
     const result = await this.client.projectApi.listSpansByTraceId(

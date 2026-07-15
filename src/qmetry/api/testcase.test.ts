@@ -6,8 +6,8 @@ import {
   fetchTestCases,
   fetchTestCasesLinkedToRequirement,
   fetchTestCaseVersionDetails,
-} from "../client/testcase.js";
-import { DEFAULT_FETCH_TESTCASES_PAYLOAD } from "../types/testcase.js";
+} from "../client/testcase.ts";
+import { DEFAULT_FETCH_TESTCASES_PAYLOAD } from "../types/testcase.ts";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -220,7 +220,7 @@ describe("testcase API clients", () => {
 
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
-      const payload = { rqID: 2499315, getLinked: true };
+      const payload = { rqID: 2_499_315, getLinked: true };
       const result = await fetchTestCasesLinkedToRequirement(
         token,
         baseUrl,
@@ -290,7 +290,7 @@ describe("testcase API clients", () => {
 
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
-      const payload = { rqID: 2499315, getLinked: false };
+      const payload = { rqID: 2_499_315, getLinked: false };
       const result = await fetchTestCasesLinkedToRequirement(
         token,
         baseUrl,
@@ -315,7 +315,7 @@ describe("testcase API clients", () => {
         .fn()
         .mockResolvedValue(mockFail(404, "Requirement not found"));
 
-      const payload = { rqID: 99999, getLinked: true };
+      const payload = { rqID: 99_999, getLinked: true };
 
       await expect(
         fetchTestCasesLinkedToRequirement(token, baseUrl, projectKey, payload),
@@ -327,14 +327,14 @@ describe("testcase API clients", () => {
 
   describe("fetchTestCaseExecutions", () => {
     it("should POST with correct URL and required parameters", async () => {
-      const payload = { tcid: 1223922 };
+      const payload = { tcid: 1_223_922 };
       const mockResponse = {
         data: [
           {
             id: 1,
             executionStatus: "PASS",
             testSuiteName: "Regression Suite",
-            platformID: 12345,
+            platformID: 12_345,
             executedBy: "john.doe",
             executedDate: "2024-10-15T10:30:00Z",
             executedVersion: 1,
@@ -343,7 +343,7 @@ describe("testcase API clients", () => {
             id: 2,
             executionStatus: "FAIL",
             testSuiteName: "Smoke Suite",
-            platformID: 67890,
+            platformID: 67_890,
             executedBy: "jane.smith",
             executedDate: "2024-10-14T14:20:00Z",
             executedVersion: 2,
@@ -382,7 +382,7 @@ describe("testcase API clients", () => {
 
     it("should include optional parameters in the request", async () => {
       const payload = {
-        tcid: 1223922,
+        tcid: 1_223_922,
         tcversion: 3,
         filter: '[{"value":["PASS"],"type":"list","field":"executionStatus"}]',
         limit: 5,
@@ -395,7 +395,7 @@ describe("testcase API clients", () => {
             id: 3,
             executionStatus: "PASS",
             testSuiteName: "API Test Suite",
-            platformID: 11111,
+            platformID: 11_111,
             executedBy: "automation.user",
             executedDate: "2024-10-15T16:45:00Z",
             executedVersion: 3,
@@ -445,7 +445,7 @@ describe("testcase API clients", () => {
         .fn()
         .mockResolvedValue(mockFail(404, "Test case not found"));
 
-      const payload = { tcid: 99999 };
+      const payload = { tcid: 99_999 };
 
       await expect(
         fetchTestCaseExecutions(token, baseUrl, projectKey, payload),

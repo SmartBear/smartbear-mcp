@@ -1,5 +1,5 @@
 import z from "zod";
-import { SearchTestCaseResponse } from "./get-test-case.schema";
+import { SearchTestCaseResponse } from "./get-test-case.schema.ts";
 
 // ─── Get Linked Requirements ──────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../config/constants";
-import { ResolverKeys } from "../config/field-resolution.types";
-import { TestCaseUidResolver } from "./resolvers/test-case-uid-resolver";
+import { ENDPOINTS } from "../config/constants.ts";
+import { ResolverKeys } from "../config/field-resolution.types.ts";
+import { TestCaseUidResolver } from "./resolvers/test-case-uid-resolver.ts";
 
 describe("TestCaseUidResolver", () => {
   let mockApiClient: any;
@@ -23,7 +23,7 @@ describe("TestCaseUidResolver", () => {
 
   describe("resolveAndReturn", () => {
     it("should return empty object when keys array is empty", async () => {
-      const result = await resolver.resolveAndReturn(10000, []);
+      const result = await resolver.resolveAndReturn(10_000, []);
       expect(result).toEqual({});
       expect(mockApiClient.get).not.toHaveBeenCalled();
     });
@@ -35,13 +35,13 @@ describe("TestCaseUidResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(10000, [
+      const result = await resolver.resolveAndReturn(10_000, [
         "SCRUM-TC-1",
         "SCRUM-TC-2",
       ]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.RESOLVE_TEST_CASE_IDS(10000),
+        ENDPOINTS.RESOLVE_TEST_CASE_IDS(10_000),
         { keys: "SCRUM-TC-1,SCRUM-TC-2" },
       );
       expect(result).toEqual(mockResponse);
@@ -53,10 +53,10 @@ describe("TestCaseUidResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(10000, ["SCRUM-TC-145"]);
+      const result = await resolver.resolveAndReturn(10_000, ["SCRUM-TC-145"]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.RESOLVE_TEST_CASE_IDS(10000),
+        ENDPOINTS.RESOLVE_TEST_CASE_IDS(10_000),
         { keys: "SCRUM-TC-145" },
       );
       expect(result).toEqual(mockResponse);
@@ -66,7 +66,7 @@ describe("TestCaseUidResolver", () => {
       mockApiClient.get.mockRejectedValueOnce(new Error("Network Error"));
 
       await expect(
-        resolver.resolveAndReturn(10000, ["SCRUM-TC-1"]),
+        resolver.resolveAndReturn(10_000, ["SCRUM-TC-1"]),
       ).rejects.toThrow("Network Error");
     });
   });

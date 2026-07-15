@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
+import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ShutdownManager } from "./shutdown";
+import { ShutdownManager } from "./shutdown.ts";
 
 /**
  * Build a fake process.on/off surface so tests can fire signals at the
@@ -231,7 +232,7 @@ describe("ShutdownManager signal handling", () => {
       process: proc,
       exit,
       logger,
-      timeoutMs: 5_000,
+      timeoutMs: 5000,
     });
     m.register("slow", () => new Promise((r) => setTimeout(r, 200)));
     m.installSignalHandlers();

@@ -7,7 +7,7 @@ import {
   getProjectInfo,
   getReleasesCycles,
   updateCycle,
-} from "../client/project.js";
+} from "../client/project.ts";
 
 describe("getProjectInfo", () => {
   const token = "fake-token";
@@ -88,17 +88,17 @@ describe("getReleasesCycles", () => {
       text: ".",
       children: [
         {
-          projID: 12997,
+          projID: 12_997,
           type: "Test Project",
           isArchived: false,
           children: [
             {
-              relID: 75414,
+              relID: 75_414,
               type: "Default Release",
               isArchived: false,
               children: [
                 {
-                  cyclID: 176734,
+                  cyclID: 176_734,
                   type: "Default Cycle",
                   isArchived: false,
                 },
@@ -138,29 +138,29 @@ describe("getReleasesCycles", () => {
       text: ".",
       children: [
         {
-          projID: 12997,
+          projID: 12_997,
           type: "Test Project",
           isArchived: false,
           children: [
             {
-              relID: 75414,
+              relID: 75_414,
               type: "Default Release",
               isArchived: false,
               children: [
                 {
-                  cyclID: 176734,
+                  cyclID: 176_734,
                   type: "Default Cycle",
                   isArchived: false,
                 },
               ],
             },
             {
-              relID: 75415,
+              relID: 75_415,
               type: "Archived Release",
               isArchived: true,
               children: [
                 {
-                  cyclID: 176735,
+                  cyclID: 176_735,
                   type: "Archived Cycle",
                   isArchived: true,
                 },
@@ -202,17 +202,17 @@ describe("getReleasesCycles", () => {
       text: ".",
       children: [
         {
-          projID: 12997,
+          projID: 12_997,
           type: "Test Project",
           isArchived: false,
           children: [
             {
-              relID: 75414,
+              relID: 75_414,
               type: "Default Release",
               isArchived: false,
               children: [
                 {
-                  cyclID: 176734,
+                  cyclID: 176_734,
                   type: "Default Cycle",
                   isArchived: false,
                 },
@@ -341,7 +341,7 @@ describe("getReleasesCycles", () => {
       text: ".",
       children: [
         {
-          projID: 15266,
+          projID: 15_266,
           type: "VK Testi",
           isArchived: false,
           isLocked: false,
@@ -349,7 +349,7 @@ describe("getReleasesCycles", () => {
           expanded: true,
           children: [
             {
-              relID: 111840,
+              relID: 111_840,
               type: "release 1",
               isLocked: false,
               scope: "release",
@@ -358,7 +358,7 @@ describe("getReleasesCycles", () => {
               expanded: true,
               children: [
                 {
-                  cyclID: 226970,
+                  cyclID: 226_970,
                   type: "Default Cycle",
                   isLocked: false,
                   scope: "cycle",
@@ -367,7 +367,7 @@ describe("getReleasesCycles", () => {
                   leaf: true,
                 },
                 {
-                  cyclID: 226972,
+                  cyclID: 226_972,
                   type: "My_Cycle1.1",
                   isLocked: false,
                   scope: "cycle",
@@ -410,7 +410,7 @@ describe("getBuilds", () => {
     const mockResponse = {
       data: [
         {
-          buildID: 12345,
+          buildID: 12_345,
           name: "Build 1.0",
           isArchived: false,
           createdDate: "01-01-2024 10:00:00",
@@ -449,7 +449,7 @@ describe("getBuilds", () => {
     const mockResponse = {
       data: [
         {
-          buildID: 12346,
+          buildID: 12_346,
           name: "Build 2.0",
           isArchived: true,
           createdDate: "02-01-2024 10:00:00",
@@ -515,7 +515,7 @@ describe("getPlatforms", () => {
     const mockResponse = {
       data: [
         {
-          platformID: 18994,
+          platformID: 18_994,
           name: "Android",
           isPlatformArchived: false,
           createdDate: "16-02-2021 12:45:26",
@@ -566,7 +566,7 @@ describe("getPlatforms", () => {
     const mockResponse = {
       data: [
         {
-          platformID: 15139,
+          platformID: 15_139,
           name: "Mac Pro",
           isPlatformArchived: true,
           createdDate: "15-05-2020 00:29:40",
@@ -638,7 +638,7 @@ describe("createRelease", () => {
   it("should call fetch with correct URL and headers for creating a release with cycle", async () => {
     const mockResponse = {
       success: true,
-      releaseID: 12345,
+      releaseID: 12_345,
       message: "Release created successfully",
     };
 
@@ -722,7 +722,7 @@ describe("createCycle", () => {
   it("should call fetch with correct URL and headers for creating a cycle", async () => {
     const mockResponse = {
       success: true,
-      cycleID: 67890,
+      cycleID: 67_890,
       message: "Cycle created successfully",
     };
 
@@ -736,7 +736,7 @@ describe("createCycle", () => {
         name: "Sprint 2",
         startDate: "01-02-2024",
         targetDate: "15-02-2024",
-        releaseID: 12345,
+        releaseID: 12_345,
       },
     };
 
@@ -762,7 +762,7 @@ describe("createCycle", () => {
     const payload = {
       cycle: {
         name: undefined as any,
-        releaseID: 12345,
+        releaseID: 12_345,
       },
     };
 

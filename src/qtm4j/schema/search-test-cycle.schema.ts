@@ -8,7 +8,7 @@
  * projectId is auto-injected by the tool — never passed by the LLM.
  */
 import * as zod from "zod";
-import { PAGINATION, SORT_DEFAULTS } from "../config/constants";
+import { PAGINATION, SORT_DEFAULTS } from "../config/constants.ts";
 
 // Date range format: "dd/MMM/yyyy,dd/MMM/yyyy" (case-sensitive month, e.g. "02/Apr/2026,15/May/2026")
 const DATE_RANGE_REGEX =

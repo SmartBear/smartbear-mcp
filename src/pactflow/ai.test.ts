@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RefineInputSchema } from "./client/ai";
+import { RefineInputSchema } from "./client/ai.ts";
 
 describe("AI zod schemas validation tests", () => {
   it("Parses RefineInputSchema with partial input", () => {

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Qtm4jClient } from "./client";
-import { ApiClient } from "./http/api-client";
+import { Qtm4jClient } from "./client.ts";
+import { ApiClient } from "./http/api-client.ts";
 
 vi.mock("../common/request-context", () => ({
   getRequestHeader: vi.fn().mockReturnValue(null),
 }));
 
-import { getRequestHeader } from "../common/request-context";
+import { getRequestHeader } from "../common/request-context.ts";
 
 describe("Qtm4jClient", () => {
   beforeEach(() => {

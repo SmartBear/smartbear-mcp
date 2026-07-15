@@ -1,12 +1,12 @@
-import type { CacheService } from "../../../common/cache";
-import { ENDPOINTS } from "../../config/constants";
+import type { CacheService } from "../../../common/cache.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
 import {
   type FieldValues,
   type ProjectContext,
   ResolverKeys,
-} from "../../config/field-resolution.types";
-import type { ApiClient } from "../../http/api-client";
-import { Cache } from "../cache/cache";
+} from "../../config/field-resolution.types.ts";
+import type { ApiClient } from "../../http/api-client.ts";
+import { Cache } from "../cache/cache.ts";
 import { Resolver } from "./resolver.ts";
 
 export class CommonAttributeResolver extends Resolver {
@@ -40,13 +40,13 @@ export class CommonAttributeResolver extends Resolver {
       resolverKey,
       name as string,
     );
-    if (id !== undefined) {
-      body[inputField] = Number(id);
-    } else {
+    if (id === undefined) {
       delete body[inputField];
       warnings.push(
         `Skipped ${inputField} '${name}' — not available in the current project.`,
       );
+    } else {
+      body[inputField] = Number(id);
     }
   }
 

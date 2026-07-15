@@ -1,20 +1,20 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
+import { Tool } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import {
   ENDPOINTS,
   PAGINATION,
   RESPONSE_FIELDS,
   TOOL_NAMES,
   TOOLSETS,
-} from "../../config/constants";
+} from "../../config/constants.ts";
 import {
   GetProjectsBody,
   GetProjectsResponse,
   type GetProjectsResponseType,
-} from "../../schema/project.schema";
+} from "../../schema/project.schema.ts";
 
 /**
  * GetProjects Tool
@@ -61,7 +61,7 @@ export class GetProjects extends Tool<Qtm4jClient> {
       {
         description: "Get a specific project by ID",
         parameters: {
-          projectId: 10000,
+          projectId: 10_000,
         },
         expectedOutput:
           "Single project with ID 10000 including key, name, and QMetry status",

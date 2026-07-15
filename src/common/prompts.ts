@@ -1,6 +1,6 @@
 import type { PromptCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
-import type { Client, PromptParams } from "./types";
+import type { Client, PromptParams } from "./types.ts";
 
 /**
  * Base class encapsulating a prompt's configuration and callback, with reference to its client.

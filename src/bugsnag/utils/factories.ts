@@ -6,8 +6,8 @@ import type {
   Span,
   SpanGroup,
   TraceField,
-} from "../client/api/api.js";
-import type { EventField, Organization, Project } from "../client/api/index.js";
+} from "../client/api/api.ts";
+import type { EventField, Organization, Project } from "../client/api/index.ts";
 
 export function getMockOrganization(
   id: string,
@@ -115,7 +115,7 @@ export function getMockSpan(
   id: number,
   name: string,
   category: string,
-  isFirstClass: boolean = true,
+  isFirstClass = true,
   extra: Partial<Span> = {},
 ): Span {
   return {
@@ -138,7 +138,7 @@ export function getMockTrace(name: string, type: string): TraceField {
     display_id: name,
     field_type: <any>type,
     filter_options: {
-      name: name,
+      name,
       description: "Cached field",
       searchable: true,
       match_types: [<any>"eq"],

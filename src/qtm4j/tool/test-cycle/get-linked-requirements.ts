@@ -1,10 +1,10 @@
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import type { ResolvedTestCycle } from "../../resolver/resolvers/test-cycle-uid-resolver";
-import { GetLinkedRequirementsResponse } from "../../schema/linked-items.schema";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import type { ResolvedTestCycle } from "../../resolver/resolvers/test-cycle-uid-resolver.ts";
+import { GetLinkedRequirementsResponse } from "../../schema/linked-items.schema.ts";
 import { GetLinkedRequirementsForCycleBody } from "../../schema/test-cycle.link.schema.ts";
 
 export class GetLinkedRequirementsForCycle extends Tool<Qtm4jClient> {

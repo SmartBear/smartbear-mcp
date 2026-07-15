@@ -1,4 +1,4 @@
-import { QMetryToolsHandlers } from "../../config/constants";
+import { QMetryToolsHandlers } from "../../config/constants.ts";
 import {
   CreateTestCaseArgsSchema,
   TestCaseDetailsArgsSchema,
@@ -7,8 +7,8 @@ import {
   TestCaseStepsArgsSchema,
   TestCaseVersionDetailsArgsSchema,
   UpdateTestCaseArgsSchema,
-} from "../../types/common";
-import type { QMetryToolParams } from "./types";
+} from "../../types/common.ts";
+import type { QMetryToolParams } from "./types.ts";
 
 export const TESTCASE_TOOLS: QMetryToolParams[] = [
   {
@@ -68,19 +68,19 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               },
             },
           ],
-          priority: 2025268,
-          component: [2025328],
+          priority: 2_025_268,
+          component: [2_025_328],
           testcaseOwner: 1467,
-          testCaseState: 2025271,
-          testCaseType: 2025282,
+          testCaseState: 2_025_271,
+          testCaseType: 2_025_282,
           estimatedTime: 10,
           description: "Description",
-          testingType: 2025275,
+          testingType: 2_025_275,
           associateRelCyc: true,
           releaseCycleMapping: [
             {
-              release: 14239,
-              cycle: [21395],
+              release: 14_239,
+              cycle: [21_395],
               version: 1,
             },
           ],
@@ -156,8 +156,8 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update test case summary (existing version update)",
         parameters: {
-          tcID: 4519260,
-          tcVersionID: 5448492,
+          tcID: 4_519_260,
+          tcVersionID: 5_448_492,
           name: "MAC Test11",
         },
         expectedOutput:
@@ -166,8 +166,8 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create NEW VERSION with updated summary and description",
         parameters: {
-          tcID: 4572654,
-          tcVersionID: 5514384,
+          tcID: 4_572_654,
+          tcVersionID: 5_514_384,
           tcVersion: 1,
           name: "Add two numbers 2 v2",
           description: "Test Description version 2",
@@ -183,21 +183,21 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Create NEW VERSION with all metadata fields (release, cycle, priority, owner, etc.)",
         parameters: {
-          tcID: 4572654,
-          tcVersionID: 5514384,
+          tcID: 4_572_654,
+          tcVersionID: 5_514_384,
           tcVersion: 1,
           name: "Facebook Login Validation Failed update from MCP V2",
           description: "Existing description V2",
-          priority: 2355751,
+          priority: 2_355_751,
           testcaseOwner: 6963,
-          testCaseState: 2355753,
-          testCaseType: 2355762,
+          testCaseState: 2_355_753,
+          testCaseType: 2_355_762,
           estimatedTime: 7200,
           withVersion: true,
           versionComment: "Created version 2 with updated metadata",
           notruncurrent: true,
           notrunall: true,
-          folderPath: 602290,
+          folderPath: 602_290,
           scope: "project",
         },
         expectedOutput:
@@ -206,10 +206,10 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update EXISTING VERSION 2 (not creating new version)",
         parameters: {
-          tcID: 4572654,
-          tcVersionID: 5514385,
+          tcID: 4_572_654,
+          tcVersionID: 5_514_385,
           name: "Updated version 2 name",
-          priority: 2355752,
+          priority: 2_355_752,
         },
         expectedOutput:
           "Version 2 updated with new name and priority. No new version created because withVersion flag is not set. This is a normal update of existing version.",
@@ -218,9 +218,9 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Update priority to High and owner to john.doe (existing version)",
         parameters: {
-          tcID: 4519260,
-          tcVersionID: 5448492,
-          priority: 505015,
+          tcID: 4_519_260,
+          tcVersionID: 5_448_492,
+          priority: 505_015,
           testcaseOwner: 6963,
         },
         expectedOutput:
@@ -229,15 +229,15 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update steps (edit, add, remove) - existing version",
         parameters: {
-          tcID: 4519260,
-          tcVersionID: 5448492,
+          tcID: 4_519_260,
+          tcVersionID: 5_448_492,
           steps: [
             {
               orderId: 1,
               description: "Step 22",
               inputData: "Input 22",
               expectedOutcome: "Outcome 22",
-              tcStepID: 3014032, // CRITICAL: Include tcStepID to UPDATE existing step (not create duplicate)
+              tcStepID: 3_014_032, // CRITICAL: Include tcStepID to UPDATE existing step (not create duplicate)
             },
             {
               orderId: 2,
@@ -248,7 +248,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
             },
           ],
           removeSteps: [
-            { tcStepID: 3014031, description: "Step 1", orderId: 1 },
+            { tcStepID: 3_014_031, description: "Step 1", orderId: 1 },
           ],
           isStepUpdated: true,
         },
@@ -258,8 +258,8 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Create NEW VERSION with updated steps",
         parameters: {
-          tcID: 4572654,
-          tcVersionID: 5514384,
+          tcID: 4_572_654,
+          tcVersionID: 5_514_384,
           tcVersion: 1,
           name: "Add two numbers 2 v2",
           steps: [
@@ -268,21 +268,21 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               description: "I and u have a calculator",
               inputData: "",
               expectedOutcome: "",
-              tcStepID: 38001791,
+              tcStepID: 38_001_791,
             },
             {
               orderId: 2,
               description: "I add 41 and 31",
               inputData: "",
               expectedOutcome: "",
-              tcStepID: 38001793,
+              tcStepID: 38_001_793,
             },
             {
               orderId: 3,
               description: "the result should be 72",
               inputData: "",
               expectedOutcome: "",
-              tcStepID: 38001792,
+              tcStepID: 38_001_792,
             },
           ],
           withVersion: true,
@@ -297,8 +297,8 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update only metadata (no steps) - existing version",
         parameters: {
-          tcID: 4519260,
-          tcVersionID: 5448492,
+          tcID: 4_519_260,
+          tcVersionID: 5_448_492,
           updateOnlyMetadata: true,
           name: "New Name",
         },
@@ -309,8 +309,8 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
         description:
           "Create NEW VERSION from existing version 2 with updated steps (working payload for linked test cases)",
         parameters: {
-          tcID: 4594145,
-          tcVersionID: 5536706,
+          tcID: 4_594_145,
+          tcVersionID: 5_536_706,
           tcVersion: 2,
           name: "Mock Test Case - E-commerce Checkout Flow - v3",
           steps: [
@@ -320,35 +320,35 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
               expectedOutcome:
                 "Homepage loads successfully with product catalog",
               inputData: "URL: https://example-shop.com",
-              tcStepID: 38129471,
+              tcStepID: 38_129_471,
             },
             {
               orderId: 2,
               description: "Search for product",
               expectedOutcome: "Search results display relevant products",
               inputData: "Search term: 'wireless headphones'",
-              tcStepID: 38129475,
+              tcStepID: 38_129_475,
             },
             {
               orderId: 3,
               description: "Select product and add to cart",
               expectedOutcome: "Product added to cart, cart counter increments",
               inputData: "Click 'Add to Cart' button",
-              tcStepID: 38129472,
+              tcStepID: 38_129_472,
             },
             {
               orderId: 4,
               description: "Proceed to checkout",
               expectedOutcome: "Checkout page displays with cart summary",
               inputData: "Click cart icon and 'Proceed to Checkout'",
-              tcStepID: 38129473,
+              tcStepID: 38_129_473,
             },
             {
               orderId: 5,
               description: "Complete payment",
               expectedOutcome: "Order confirmation page displayed",
               inputData: "Fill payment details and submit",
-              tcStepID: 38129474,
+              tcStepID: 38_129_474,
             },
             {
               orderId: 6,
@@ -801,7 +801,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get test cases with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 167136, folderPath: "" }, // This is an example viewId, must be resolved per project Test Case ViewId
+        parameters: { projectKey: "MAC", viewId: 167_136, folderPath: "" }, // This is an example viewId, must be resolved per project Test Case ViewId
         expectedOutput: "Test cases using manually specified viewId 167136",
       },
       {
@@ -927,7 +927,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get test case details by numeric ID",
-        parameters: { tcID: 4468020 },
+        parameters: { tcID: 4_468_020 },
         expectedOutput:
           "Detailed test case information including summary, description, status",
       },
@@ -1049,7 +1049,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all executions for test case ID 1223922",
-        parameters: { tcid: 1223922 },
+        parameters: { tcid: 1_223_922 },
         expectedOutput:
           "Present as ONE unified table — never as a separate type+value UDF breakdown. Example:\n" +
           "| Test Suite Key | Test Suite Name  | Release | Cycle  | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type |\n" +
@@ -1060,13 +1060,13 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get executions for specific test case version",
-        parameters: { tcid: 1223922, tcversion: 2 },
+        parameters: { tcid: 1_223_922, tcversion: 2 },
         expectedOutput: "Execution records for version 2 of the test case",
       },
       {
         description: "Filter executions by test suite and platform",
         parameters: {
-          tcid: 1223922,
+          tcid: 1_223_922,
           filter:
             '[{"value":"Sample Test Suite","type":"string","field":"testSuiteName"},{"value":[12345],"type":"list","field":"platformID"}]',
         },
@@ -1076,7 +1076,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by execution status",
         parameters: {
-          tcid: 1223922,
+          tcid: 1_223_922,
           filter:
             '[{"value":["PASS"],"type":"list","field":"executionStatus"}]',
         },
@@ -1085,7 +1085,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by release and cycle",
         parameters: {
-          tcid: 1223922,
+          tcid: 1_223_922,
           filter:
             '[{"value":[55178],"type":"list","field":"release"},{"value":[111577],"type":"list","field":"cycle"}]',
         },
@@ -1095,7 +1095,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by date range",
         parameters: {
-          tcid: 1223922,
+          tcid: 1_223_922,
           filter:
             '[{"value":"2024-01-01","type":"date","field":"executedDate","comparison":"gt"},{"value":"2024-12-31","type":"date","field":"executedDate","comparison":"lt"}]',
         },
@@ -1104,7 +1104,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by user",
         parameters: {
-          tcid: 1223922,
+          tcid: 1_223_922,
           filter: '[{"value":["john.doe"],"type":"list","field":"executedBy"}]',
         },
         expectedOutput: "Execution records executed by specific user",
@@ -1112,7 +1112,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Fetch Test Run UDF values for all executions of test case ID 41571999",
-        parameters: { tcid: 41571999 },
+        parameters: { tcid: 41_571_999 },
         expectedOutput:
           "Present as ONE unified table combining identification fields and UDF values — never a separate type+value breakdown. Example:\n" +
           "| Test Suite Key | Test Suite Name | Release | Cycle   | Platform | Executed Version | Execution Status | Tested By | Environments UDF     | Execution Type | Country    |\n" +
@@ -1122,7 +1122,7 @@ export const TESTCASE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Check if project has Test Run UDFs — response includes hasTcRunUdf flag",
-        parameters: { tcid: 1223922 },
+        parameters: { tcid: 1_223_922 },
         expectedOutput:
           "Response contains hasTcRunUdf: true (UDFs present, testRunUdfs populated) or hasTcRunUdf: false (no UDFs configured, testRunUdfNote explains this)",
       },

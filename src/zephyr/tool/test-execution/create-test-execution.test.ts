@@ -7,14 +7,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CreateTestExecutionBody,
   CreateTestExecution201Response as CreateTestExecutionResponse,
-} from "../../common/rest-api-schemas";
-import { CreateTestExecution } from "./create-test-execution";
+} from "../../common/rest-api-schemas.ts";
+import { CreateTestExecution } from "./create-test-execution.ts";
 
 describe("CreateTestExecution", () => {
   let mockClient: any;
   let instance: CreateTestExecution;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -66,7 +66,7 @@ describe("CreateTestExecution", () => {
       statusName: "Pass",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testexecutions/",
@@ -110,7 +110,7 @@ describe("CreateTestExecution", () => {
       },
     };
 
-    const result = await instance.handle(fullArgs, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(fullArgs, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testexecutions/",
@@ -129,9 +129,7 @@ describe("CreateTestExecution", () => {
       extraParam: "This should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -146,7 +144,7 @@ describe("CreateTestExecution", () => {
       statusName: "Pass",
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -161,7 +159,7 @@ describe("CreateTestExecution", () => {
       statusName: "Pass",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(result.structuredContent).toBeUndefined();
   });
@@ -173,9 +171,7 @@ describe("CreateTestExecution", () => {
       statusName: "Pass",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if testCaseKey is missing", async () => {
@@ -185,9 +181,7 @@ describe("CreateTestExecution", () => {
       statusName: "Pass",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if testCycleKey is missing", async () => {
@@ -197,9 +191,7 @@ describe("CreateTestExecution", () => {
       statusName: "Pass",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if statusName is missing", async () => {
@@ -209,8 +201,6 @@ describe("CreateTestExecution", () => {
       testCycleKey: "SA-R1",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

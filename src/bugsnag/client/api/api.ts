@@ -28,7 +28,7 @@
  */
 
 import * as url from "node:url";
-import type { Configuration } from "./configuration";
+import type { Configuration } from "./configuration.ts";
 
 /**
  *
@@ -4971,9 +4971,9 @@ export const CurrentUserApiFetchParamCreator = (
     body?: SavedSearchCreateRequest,
     options: any = {},
   ): FetchArgs {
-    const localVarPath = `/saved_searches`;
+    const localVarPath = "/saved_searches";
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarRequestOptions = { method: "POST", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -4988,19 +4988,17 @@ export const CurrentUserApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"SavedSearchCreateRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -5028,12 +5026,12 @@ export const CurrentUserApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling deleteSavedSearchById.",
       );
     }
-    const localVarPath = `/saved_searches/{id}`.replace(
+    const localVarPath = "/saved_searches/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5046,19 +5044,17 @@ export const CurrentUserApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5077,26 +5073,26 @@ export const CurrentUserApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getOrganizationProjects(
-    organization_id: string,
+    organizationId: string,
     q?: string,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'organization_id' is not null or undefined
-    if (organization_id === null || organization_id === undefined) {
+    if (organizationId === null || organizationId === undefined) {
       throw new RequiredError(
         "organization_id",
         "Required parameter organization_id was null or undefined when calling getOrganizationProjects.",
       );
     }
-    const localVarPath = `/organizations/{organization_id}/projects`.replace(
+    const localVarPath = "/organizations/{organization_id}/projects".replace(
       `{${"organization_id"}}`,
-      encodeURIComponent(String(organization_id)),
+      encodeURIComponent(String(organizationId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5121,23 +5117,21 @@ export const CurrentUserApiFetchParamCreator = (
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5159,12 +5153,12 @@ export const CurrentUserApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getSavedSearchById.",
       );
     }
-    const localVarPath = `/saved_searches/{id}`.replace(
+    const localVarPath = "/saved_searches/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5177,19 +5171,17 @@ export const CurrentUserApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5211,12 +5203,12 @@ export const CurrentUserApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getSavedSearchUsageSummary.",
       );
     }
-    const localVarPath = `/saved_searches/{id}/usage_summary`.replace(
+    const localVarPath = "/saved_searches/{id}/usage_summary".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5229,19 +5221,17 @@ export const CurrentUserApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5257,23 +5247,23 @@ export const CurrentUserApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectSavedSearches(
-    project_id: string,
+    projectId: string,
     shared?: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectSavedSearches.",
       );
     }
-    const localVarPath = `/projects/{project_id}/saved_searches`.replace(
+    const localVarPath = "/projects/{project_id}/saved_searches".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5290,19 +5280,17 @@ export const CurrentUserApiFetchParamCreator = (
       localVarQueryParameter["shared"] = shared;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5319,12 +5307,12 @@ export const CurrentUserApiFetchParamCreator = (
    */
   listUserOrganizations(
     admin?: boolean,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
-    const localVarPath = `/user/organizations`;
+    const localVarPath = "/user/organizations";
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5341,23 +5329,21 @@ export const CurrentUserApiFetchParamCreator = (
       localVarQueryParameter["admin"] = admin;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5384,12 +5370,12 @@ export const CurrentUserApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling updateSavedSearchById.",
       );
     }
-    const localVarPath = `/saved_searches/{id}`.replace(
+    const localVarPath = "/saved_searches/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarRequestOptions = { method: "PATCH", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5404,19 +5390,17 @@ export const CurrentUserApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"SavedSearchUpdateRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -5447,8 +5431,8 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    */
   bulkUpdateErrors(
     body: ErrorUpdateRequest,
-    project_id: string,
-    error_ids: Array<string>,
+    projectId: string,
+    errorIds: Array<string>,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -5459,25 +5443,25 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling bulkUpdateErrors.",
       );
     }
     // verify required parameter 'error_ids' is not null or undefined
-    if (error_ids === null || error_ids === undefined) {
+    if (errorIds === null || errorIds === undefined) {
       throw new RequiredError(
         "error_ids",
         "Required parameter error_ids was null or undefined when calling bulkUpdateErrors.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors`.replace(
+    const localVarPath = "/projects/{project_id}/errors".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarRequestOptions = { method: "PATCH", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5490,25 +5474,23 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (error_ids) {
-      localVarQueryParameter["error_ids"] = error_ids;
+    if (errorIds) {
+      localVarQueryParameter["error_ids"] = errorIds;
     }
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ErrorUpdateRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -5528,20 +5510,20 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  deleteAllErrorsInProject(project_id: string, options: any = {}): FetchArgs {
+  deleteAllErrorsInProject(projectId: string, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling deleteAllErrorsInProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors`.replace(
+    const localVarPath = "/projects/{project_id}/errors".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5554,19 +5536,17 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5582,29 +5562,29 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   deleteErrorOnProject(
-    project_id: string,
-    error_id: string,
+    projectId: string,
+    errorId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling deleteErrorOnProject.",
       );
     }
     // verify required parameter 'error_id' is not null or undefined
-    if (error_id === null || error_id === undefined) {
+    if (errorId === null || errorId === undefined) {
       throw new RequiredError(
         "error_id",
         "Required parameter error_id was null or undefined when calling deleteErrorOnProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors/{error_id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)));
+    const localVarPath = "/projects/{project_id}/errors/{error_id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"error_id"}}`, encodeURIComponent(String(errorId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5617,19 +5597,17 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5645,29 +5623,29 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   deleteEventById(
-    project_id: string,
-    event_id: string,
+    projectId: string,
+    eventId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling deleteEventById.",
       );
     }
     // verify required parameter 'event_id' is not null or undefined
-    if (event_id === null || event_id === undefined) {
+    if (eventId === null || eventId === undefined) {
       throw new RequiredError(
         "event_id",
         "Required parameter event_id was null or undefined when calling deleteEventById.",
       );
     }
-    const localVarPath = `/projects/{project_id}/events/{event_id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"event_id"}}`, encodeURIComponent(String(event_id)));
+    const localVarPath = "/projects/{project_id}/events/{event_id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"event_id"}}`, encodeURIComponent(String(eventId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5680,19 +5658,17 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5711,32 +5687,32 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   getBucketedAndUnbucketedTrendsOnError(
-    project_id: string,
-    error_id: string,
+    projectId: string,
+    errorId: string,
     filters?: Filters,
-    buckets_count?: number,
+    bucketsCount?: number,
     resolution?: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getBucketedAndUnbucketedTrendsOnError.",
       );
     }
     // verify required parameter 'error_id' is not null or undefined
-    if (error_id === null || error_id === undefined) {
+    if (errorId === null || errorId === undefined) {
       throw new RequiredError(
         "error_id",
         "Required parameter error_id was null or undefined when calling getBucketedAndUnbucketedTrendsOnError.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors/{error_id}/trends`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)));
+    const localVarPath = "/projects/{project_id}/errors/{error_id}/trends"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"error_id"}}`, encodeURIComponent(String(errorId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5753,27 +5729,25 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["filters"] = filters;
     }
 
-    if (buckets_count !== undefined) {
-      localVarQueryParameter["buckets_count"] = buckets_count;
+    if (bucketsCount !== undefined) {
+      localVarQueryParameter["buckets_count"] = bucketsCount;
     }
 
     if (resolution !== undefined) {
       localVarQueryParameter["resolution"] = resolution;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5791,25 +5765,25 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   getBucketedAndUnbucketedTrendsOnProject(
-    project_id: string,
+    projectId: string,
     filters?: Filters,
-    buckets_count?: number,
+    bucketsCount?: number,
     resolution?: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getBucketedAndUnbucketedTrendsOnProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}/trends`.replace(
+    const localVarPath = "/projects/{project_id}/trends".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5826,27 +5800,25 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["filters"] = filters;
     }
 
-    if (buckets_count !== undefined) {
-      localVarQueryParameter["buckets_count"] = buckets_count;
+    if (bucketsCount !== undefined) {
+      localVarQueryParameter["buckets_count"] = bucketsCount;
     }
 
     if (resolution !== undefined) {
       localVarQueryParameter["resolution"] = resolution;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5866,40 +5838,37 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   getPivotValuesOnAProject(
-    project_id: string,
-    event_field_display_id: string,
+    projectId: string,
+    eventFieldDisplayId: string,
     filters?: Filters,
     sort?: string,
     base?: Date,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getPivotValuesOnAProject.",
       );
     }
     // verify required parameter 'event_field_display_id' is not null or undefined
-    if (
-      event_field_display_id === null ||
-      event_field_display_id === undefined
-    ) {
+    if (eventFieldDisplayId === null || eventFieldDisplayId === undefined) {
       throw new RequiredError(
         "event_field_display_id",
         "Required parameter event_field_display_id was null or undefined when calling getPivotValuesOnAProject.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/pivots/{event_field_display_id}/values`
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+      "/projects/{project_id}/pivots/{event_field_display_id}/values"
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
         .replace(
           `{${"event_field_display_id"}}`,
-          encodeURIComponent(String(event_field_display_id)),
+          encodeURIComponent(String(eventFieldDisplayId)),
         );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -5924,23 +5893,21 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["base"] = (base as any).toISOString();
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -5961,49 +5928,46 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   getPivotValuesOnAnError(
-    project_id: string,
-    error_id: string,
-    event_field_display_id: string,
+    projectId: string,
+    errorId: string,
+    eventFieldDisplayId: string,
     filters?: Filters,
     sort?: string,
     base?: Date,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getPivotValuesOnAnError.",
       );
     }
     // verify required parameter 'error_id' is not null or undefined
-    if (error_id === null || error_id === undefined) {
+    if (errorId === null || errorId === undefined) {
       throw new RequiredError(
         "error_id",
         "Required parameter error_id was null or undefined when calling getPivotValuesOnAnError.",
       );
     }
     // verify required parameter 'event_field_display_id' is not null or undefined
-    if (
-      event_field_display_id === null ||
-      event_field_display_id === undefined
-    ) {
+    if (eventFieldDisplayId === null || eventFieldDisplayId === undefined) {
       throw new RequiredError(
         "event_field_display_id",
         "Required parameter event_field_display_id was null or undefined when calling getPivotValuesOnAnError.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/errors/{error_id}/pivots/{event_field_display_id}/values`
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-        .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)))
+      "/projects/{project_id}/errors/{error_id}/pivots/{event_field_display_id}/values"
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+        .replace(`{${"error_id"}}`, encodeURIComponent(String(errorId)))
         .replace(
           `{${"event_field_display_id"}}`,
-          encodeURIComponent(String(event_field_display_id)),
+          encodeURIComponent(String(eventFieldDisplayId)),
         );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6028,23 +5992,21 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["base"] = (base as any).toISOString();
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6062,25 +6024,25 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   getPivotsOnAProject(
-    project_id: string,
+    projectId: string,
     filters?: Filters,
-    summary_size?: number,
+    summarySize?: number,
     pivots?: Array<string>,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getPivotsOnAProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}/pivots`.replace(
+    const localVarPath = "/projects/{project_id}/pivots".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6097,27 +6059,25 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["filters"] = filters;
     }
 
-    if (summary_size !== undefined) {
-      localVarQueryParameter["summary_size"] = summary_size;
+    if (summarySize !== undefined) {
+      localVarQueryParameter["summary_size"] = summarySize;
     }
 
     if (pivots) {
       localVarQueryParameter["pivots"] = pivots;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6139,35 +6099,35 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   listEventsOnError(
-    project_id: string,
-    error_id: string,
+    projectId: string,
+    errorId: string,
     base?: Date,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     filters?: Filters,
-    full_reports?: boolean,
+    fullReports?: boolean,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listEventsOnError.",
       );
     }
     // verify required parameter 'error_id' is not null or undefined
-    if (error_id === null || error_id === undefined) {
+    if (errorId === null || errorId === undefined) {
       throw new RequiredError(
         "error_id",
         "Required parameter error_id was null or undefined when calling listEventsOnError.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors/{error_id}/events`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)));
+    const localVarPath = "/projects/{project_id}/errors/{error_id}/events"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"error_id"}}`, encodeURIComponent(String(errorId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6192,31 +6152,29 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
-    if (full_reports !== undefined) {
-      localVarQueryParameter["full_reports"] = full_reports;
+    if (fullReports !== undefined) {
+      localVarQueryParameter["full_reports"] = fullReports;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6237,28 +6195,28 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   listEventsOnProject(
-    project_id: string,
+    projectId: string,
     base?: Date,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     filters?: Filters,
-    full_reports?: boolean,
+    fullReports?: boolean,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listEventsOnProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}/events`.replace(
+    const localVarPath = "/projects/{project_id}/events".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6283,31 +6241,29 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
     if (filters !== undefined) {
       localVarQueryParameter["filters"] = filters;
     }
 
-    if (full_reports !== undefined) {
-      localVarQueryParameter["full_reports"] = full_reports;
+    if (fullReports !== undefined) {
+      localVarQueryParameter["full_reports"] = fullReports;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6327,33 +6283,33 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   listPivotsOnAnError(
-    project_id: string,
-    error_id: string,
+    projectId: string,
+    errorId: string,
     filters?: Filters,
-    summary_size?: number,
+    summarySize?: number,
     pivots?: Array<string>,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listPivotsOnAnError.",
       );
     }
     // verify required parameter 'error_id' is not null or undefined
-    if (error_id === null || error_id === undefined) {
+    if (errorId === null || errorId === undefined) {
       throw new RequiredError(
         "error_id",
         "Required parameter error_id was null or undefined when calling listPivotsOnAnError.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors/{error_id}/pivots`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)));
+    const localVarPath = "/projects/{project_id}/errors/{error_id}/pivots"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"error_id"}}`, encodeURIComponent(String(errorId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6370,31 +6326,29 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["filters"] = filters;
     }
 
-    if (summary_size !== undefined) {
-      localVarQueryParameter["summary_size"] = summary_size;
+    if (summarySize !== undefined) {
+      localVarQueryParameter["summary_size"] = summarySize;
     }
 
     if (pivots) {
       localVarQueryParameter["pivots"] = pivots;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6415,28 +6369,28 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   listProjectErrors(
-    project_id: string,
+    projectId: string,
     base?: Date,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     filters?: Filters,
     histogram?: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectErrors.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors`.replace(
+    const localVarPath = "/projects/{project_id}/errors".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6461,8 +6415,8 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
     if (filters !== undefined) {
@@ -6473,19 +6427,17 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarQueryParameter["histogram"] = histogram;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6503,8 +6455,8 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    */
   updateErrorOnProject(
     body: ErrorUpdateRequest,
-    project_id: string,
-    error_id: string,
+    projectId: string,
+    errorId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -6515,24 +6467,24 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling updateErrorOnProject.",
       );
     }
     // verify required parameter 'error_id' is not null or undefined
-    if (error_id === null || error_id === undefined) {
+    if (errorId === null || errorId === undefined) {
       throw new RequiredError(
         "error_id",
         "Required parameter error_id was null or undefined when calling updateErrorOnProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors/{error_id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)));
+    const localVarPath = "/projects/{project_id}/errors/{error_id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"error_id"}}`, encodeURIComponent(String(errorId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarRequestOptions = { method: "PATCH", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6547,19 +6499,17 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ErrorUpdateRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -6581,29 +6531,29 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   viewErrorOnProject(
-    project_id: string,
-    error_id: string,
+    projectId: string,
+    errorId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling viewErrorOnProject.",
       );
     }
     // verify required parameter 'error_id' is not null or undefined
-    if (error_id === null || error_id === undefined) {
+    if (errorId === null || errorId === undefined) {
       throw new RequiredError(
         "error_id",
         "Required parameter error_id was null or undefined when calling viewErrorOnProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}/errors/{error_id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"error_id"}}`, encodeURIComponent(String(error_id)));
+    const localVarPath = "/projects/{project_id}/errors/{error_id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"error_id"}}`, encodeURIComponent(String(errorId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6616,19 +6566,17 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6644,29 +6592,29 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @throws {RequiredError}
    */
   viewEventById(
-    project_id: string,
-    event_id: string,
+    projectId: string,
+    eventId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling viewEventById.",
       );
     }
     // verify required parameter 'event_id' is not null or undefined
-    if (event_id === null || event_id === undefined) {
+    if (eventId === null || eventId === undefined) {
       throw new RequiredError(
         "event_id",
         "Required parameter event_id was null or undefined when calling viewEventById.",
       );
     }
-    const localVarPath = `/projects/{project_id}/events/{event_id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"event_id"}}`, encodeURIComponent(String(event_id)));
+    const localVarPath = "/projects/{project_id}/events/{event_id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"event_id"}}`, encodeURIComponent(String(eventId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6679,19 +6627,17 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6705,20 +6651,20 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  viewLatestEventOnError(error_id: string, options: any = {}): FetchArgs {
+  viewLatestEventOnError(errorId: string, options: any = {}): FetchArgs {
     // verify required parameter 'error_id' is not null or undefined
-    if (error_id === null || error_id === undefined) {
+    if (errorId === null || errorId === undefined) {
       throw new RequiredError(
         "error_id",
         "Required parameter error_id was null or undefined when calling viewLatestEventOnError.",
       );
     }
-    const localVarPath = `/errors/{error_id}/latest_event`.replace(
+    const localVarPath = "/errors/{error_id}/latest_event".replace(
       `{${"error_id"}}`,
-      encodeURIComponent(String(error_id)),
+      encodeURIComponent(String(errorId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6731,19 +6677,17 @@ export const ErrorsApiFetchParamCreator = (configuration?: Configuration) => ({
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6768,12 +6712,12 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   confirmProjectEventDataDeletion(
-    project_id: string,
+    projectId: string,
     id: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling confirmProjectEventDataDeletion.",
@@ -6787,11 +6731,11 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     const localVarPath =
-      `/projects/{project_id}/event_data_deletions/{id}/confirm`
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+      "/projects/{project_id}/event_data_deletions/{id}/confirm"
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
         .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarRequestOptions = { method: "POST", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6804,19 +6748,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -6833,7 +6775,7 @@ export const ProjectsApiFetchParamCreator = (
    */
   createOrganizationProject(
     body: ProjectCreateRequest,
-    organization_id: string,
+    organizationId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -6844,18 +6786,18 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'organization_id' is not null or undefined
-    if (organization_id === null || organization_id === undefined) {
+    if (organizationId === null || organizationId === undefined) {
       throw new RequiredError(
         "organization_id",
         "Required parameter organization_id was null or undefined when calling createOrganizationProject.",
       );
     }
-    const localVarPath = `/organizations/{organization_id}/projects`.replace(
+    const localVarPath = "/organizations/{organization_id}/projects".replace(
       `{${"organization_id"}}`,
-      encodeURIComponent(String(organization_id)),
+      encodeURIComponent(String(organizationId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarRequestOptions = { method: "POST", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6870,19 +6812,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ProjectCreateRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -6905,7 +6845,7 @@ export const ProjectsApiFetchParamCreator = (
    */
   createProjectEventDataDeletion(
     body: ProjectIdEventDataDeletionsBody,
-    project_id: string,
+    projectId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -6916,18 +6856,18 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling createProjectEventDataDeletion.",
       );
     }
-    const localVarPath = `/projects/{project_id}/event_data_deletions`.replace(
+    const localVarPath = "/projects/{project_id}/event_data_deletions".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarRequestOptions = { method: "POST", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -6942,19 +6882,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ProjectIdEventDataDeletionsBody" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -6977,7 +6915,7 @@ export const ProjectsApiFetchParamCreator = (
    */
   createProjectEventDataRequest(
     body: ProjectIdEventDataRequestsBody,
-    project_id: string,
+    projectId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -6988,18 +6926,18 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling createProjectEventDataRequest.",
       );
     }
-    const localVarPath = `/projects/{project_id}/event_data_requests`.replace(
+    const localVarPath = "/projects/{project_id}/event_data_requests".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarRequestOptions = { method: "POST", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7014,19 +6952,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ProjectIdEventDataRequestsBody" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -7049,7 +6985,7 @@ export const ProjectsApiFetchParamCreator = (
    */
   createProjectEventField(
     body: EventFieldCreateRequest,
-    project_id: string,
+    projectId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -7060,18 +6996,18 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling createProjectEventField.",
       );
     }
-    const localVarPath = `/projects/{project_id}/event_fields`.replace(
+    const localVarPath = "/projects/{project_id}/event_fields".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarRequestOptions = { method: "POST", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7086,19 +7022,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"EventFieldCreateRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -7121,7 +7055,7 @@ export const ProjectsApiFetchParamCreator = (
    */
   createUserStarredFeatureFlag(
     body: ProjectIdStarredFeatureFlagsBody,
-    project_id: string,
+    projectId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -7132,19 +7066,19 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling createUserStarredFeatureFlag.",
       );
     }
     const localVarPath =
-      `/user/projects/{project_id}/starred_feature_flags`.replace(
+      "/user/projects/{project_id}/starred_feature_flags".replace(
         `{${"project_id"}}`,
-        encodeURIComponent(String(project_id)),
+        encodeURIComponent(String(projectId)),
       );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "POST" }, options);
+    const localVarRequestOptions = { method: "POST", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7159,19 +7093,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ProjectIdStarredFeatureFlagsBody" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -7191,20 +7123,20 @@ export const ProjectsApiFetchParamCreator = (
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  deleteProject(project_id: string, options: any = {}): FetchArgs {
+  deleteProject(projectId: string, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling deleteProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}`.replace(
+    const localVarPath = "/projects/{project_id}".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7217,19 +7149,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7245,29 +7175,29 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   deleteProjectEventFieldByDisplayId(
-    project_id: string,
-    display_id: string,
+    projectId: string,
+    displayId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling deleteProjectEventFieldByDisplayId.",
       );
     }
     // verify required parameter 'display_id' is not null or undefined
-    if (display_id === null || display_id === undefined) {
+    if (displayId === null || displayId === undefined) {
       throw new RequiredError(
         "display_id",
         "Required parameter display_id was null or undefined when calling deleteProjectEventFieldByDisplayId.",
       );
     }
-    const localVarPath = `/projects/{project_id}/event_fields/{display_id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"display_id"}}`, encodeURIComponent(String(display_id)));
+    const localVarPath = "/projects/{project_id}/event_fields/{display_id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"display_id"}}`, encodeURIComponent(String(displayId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7280,19 +7210,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7308,12 +7236,12 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   deleteProjectFeatureFlag(
-    project_id: string,
+    projectId: string,
     id: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling deleteProjectFeatureFlag.",
@@ -7326,11 +7254,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling deleteProjectFeatureFlag.",
       );
     }
-    const localVarPath = `/projects/{project_id}/feature_flags/{id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/feature_flags/{id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7343,19 +7271,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7371,12 +7297,12 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   deleteUserProjectStarredFeatureFlag(
-    project_id: string,
+    projectId: string,
     id: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling deleteUserProjectStarredFeatureFlag.",
@@ -7390,11 +7316,11 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     const localVarPath =
-      `/user/projects/{project_id}/starred_feature_flags/{id}`
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+      "/user/projects/{project_id}/starred_feature_flags/{id}"
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
         .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7407,19 +7333,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7438,26 +7362,26 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getOrganizationProjects(
-    organization_id: string,
+    organizationId: string,
     q?: string,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'organization_id' is not null or undefined
-    if (organization_id === null || organization_id === undefined) {
+    if (organizationId === null || organizationId === undefined) {
       throw new RequiredError(
         "organization_id",
         "Required parameter organization_id was null or undefined when calling getOrganizationProjects.",
       );
     }
-    const localVarPath = `/organizations/{organization_id}/projects`.replace(
+    const localVarPath = "/organizations/{organization_id}/projects".replace(
       `{${"organization_id"}}`,
-      encodeURIComponent(String(organization_id)),
+      encodeURIComponent(String(organizationId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7482,23 +7406,21 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7512,20 +7434,20 @@ export const ProjectsApiFetchParamCreator = (
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  getProject(project_id: string, options: any = {}): FetchArgs {
+  getProject(projectId: string, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}`.replace(
+    const localVarPath = "/projects/{project_id}".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7538,19 +7460,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7566,12 +7486,12 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getProjectEventDataDeletionById(
-    project_id: string,
+    projectId: string,
     id: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectEventDataDeletionById.",
@@ -7584,11 +7504,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getProjectEventDataDeletionById.",
       );
     }
-    const localVarPath = `/projects/{project_id}/event_data_deletions/{id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/event_data_deletions/{id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7601,19 +7521,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7629,12 +7547,12 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getProjectEventDataRequestById(
-    project_id: string,
+    projectId: string,
     id: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectEventDataRequestById.",
@@ -7647,11 +7565,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getProjectEventDataRequestById.",
       );
     }
-    const localVarPath = `/projects/{project_id}/event_data_requests/{id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/event_data_requests/{id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7664,19 +7582,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7695,9 +7611,9 @@ export const ProjectsApiFetchParamCreator = (
    */
   getProjectFeatureFlag(
     id: string,
-    project_id: string,
-    release_stage_name: string,
-    include_variant_summary?: boolean,
+    projectId: string,
+    releaseStageName: string,
+    includeVariantSummary?: boolean,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'id' is not null or undefined
@@ -7708,24 +7624,24 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectFeatureFlag.",
       );
     }
     // verify required parameter 'release_stage_name' is not null or undefined
-    if (release_stage_name === null || release_stage_name === undefined) {
+    if (releaseStageName === null || releaseStageName === undefined) {
       throw new RequiredError(
         "release_stage_name",
         "Required parameter release_stage_name was null or undefined when calling getProjectFeatureFlag.",
       );
     }
-    const localVarPath = `/projects/{project_id}/feature_flags/{id}`
+    const localVarPath = "/projects/{project_id}/feature_flags/{id}"
       .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)));
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7738,28 +7654,25 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (release_stage_name !== undefined) {
-      localVarQueryParameter["release_stage_name"] = release_stage_name;
+    if (releaseStageName !== undefined) {
+      localVarQueryParameter["release_stage_name"] = releaseStageName;
     }
 
-    if (include_variant_summary !== undefined) {
-      localVarQueryParameter["include_variant_summary"] =
-        include_variant_summary;
+    if (includeVariantSummary !== undefined) {
+      localVarQueryParameter["include_variant_summary"] = includeVariantSummary;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7777,8 +7690,8 @@ export const ProjectsApiFetchParamCreator = (
    */
   getProjectFeatureFlagErrorOverview(
     id: string,
-    project_id: string,
-    release_stage_name: string,
+    projectId: string,
+    releaseStageName: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'id' is not null or undefined
@@ -7789,25 +7702,25 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectFeatureFlagErrorOverview.",
       );
     }
     // verify required parameter 'release_stage_name' is not null or undefined
-    if (release_stage_name === null || release_stage_name === undefined) {
+    if (releaseStageName === null || releaseStageName === undefined) {
       throw new RequiredError(
         "release_stage_name",
         "Required parameter release_stage_name was null or undefined when calling getProjectFeatureFlagErrorOverview.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/feature_flags/{id}/error_overview`
+      "/projects/{project_id}/feature_flags/{id}/error_overview"
         .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)));
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7820,23 +7733,21 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (release_stage_name !== undefined) {
-      localVarQueryParameter["release_stage_name"] = release_stage_name;
+    if (releaseStageName !== undefined) {
+      localVarQueryParameter["release_stage_name"] = releaseStageName;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7856,10 +7767,10 @@ export const ProjectsApiFetchParamCreator = (
    */
   getProjectFeatureFlagVariants(
     id: string,
-    project_id: string,
-    release_stage_name?: string,
+    projectId: string,
+    releaseStageName?: string,
     q?: string,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'id' is not null or undefined
@@ -7870,17 +7781,17 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectFeatureFlagVariants.",
       );
     }
-    const localVarPath = `/projects/{project_id}/feature_flags/{id}/variants`
+    const localVarPath = "/projects/{project_id}/feature_flags/{id}/variants"
       .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)));
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7893,31 +7804,29 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (release_stage_name !== undefined) {
-      localVarQueryParameter["release_stage_name"] = release_stage_name;
+    if (releaseStageName !== undefined) {
+      localVarQueryParameter["release_stage_name"] = releaseStageName;
     }
 
     if (q !== undefined) {
       localVarQueryParameter["q"] = q;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -7937,10 +7846,10 @@ export const ProjectsApiFetchParamCreator = (
    */
   getProjectFeatureFlagVariantsByName(
     name: string,
-    project_id: string,
-    release_stage_name?: string,
+    projectId: string,
+    releaseStageName?: string,
     q?: string,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'name' is not null or undefined
@@ -7951,18 +7860,18 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectFeatureFlagVariantsByName.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/feature_flags/by_name/{name}/variants`
+      "/projects/{project_id}/feature_flags/by_name/{name}/variants"
         .replace(`{${"name"}}`, encodeURIComponent(String(name)))
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)));
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -7975,31 +7884,29 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (release_stage_name !== undefined) {
-      localVarQueryParameter["release_stage_name"] = release_stage_name;
+    if (releaseStageName !== undefined) {
+      localVarQueryParameter["release_stage_name"] = releaseStageName;
     }
 
     if (q !== undefined) {
       localVarQueryParameter["q"] = q;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8018,9 +7925,9 @@ export const ProjectsApiFetchParamCreator = (
    */
   getProjectFeatureFlagVariantsErrorOverview(
     id: string,
-    project_id: string,
-    variant_ids: Array<string>,
-    release_stage_name: string,
+    projectId: string,
+    variantIds: Array<string>,
+    releaseStageName: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'id' is not null or undefined
@@ -8031,32 +7938,32 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectFeatureFlagVariantsErrorOverview.",
       );
     }
     // verify required parameter 'variant_ids' is not null or undefined
-    if (variant_ids === null || variant_ids === undefined) {
+    if (variantIds === null || variantIds === undefined) {
       throw new RequiredError(
         "variant_ids",
         "Required parameter variant_ids was null or undefined when calling getProjectFeatureFlagVariantsErrorOverview.",
       );
     }
     // verify required parameter 'release_stage_name' is not null or undefined
-    if (release_stage_name === null || release_stage_name === undefined) {
+    if (releaseStageName === null || releaseStageName === undefined) {
       throw new RequiredError(
         "release_stage_name",
         "Required parameter release_stage_name was null or undefined when calling getProjectFeatureFlagVariantsErrorOverview.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/feature_flags/{id}/variants/error_overview`
+      "/projects/{project_id}/feature_flags/{id}/variants/error_overview"
         .replace(`{${"id"}}`, encodeURIComponent(String(id)))
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)));
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8069,27 +7976,25 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (variant_ids) {
-      localVarQueryParameter["variant_ids"] = variant_ids;
+    if (variantIds) {
+      localVarQueryParameter["variant_ids"] = variantIds;
     }
 
-    if (release_stage_name !== undefined) {
-      localVarQueryParameter["release_stage_name"] = release_stage_name;
+    if (releaseStageName !== undefined) {
+      localVarQueryParameter["release_stage_name"] = releaseStageName;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8104,23 +8009,23 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getProjectNetworkGroupingRuleset(
-    project_id: string,
+    projectId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectNetworkGroupingRuleset.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/network_endpoint_grouping`.replace(
+      "/projects/{project_id}/network_endpoint_grouping".replace(
         `{${"project_id"}}`,
-        encodeURIComponent(String(project_id)),
+        encodeURIComponent(String(projectId)),
       );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8133,19 +8038,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8162,13 +8065,13 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getProjectPageLoadSpanGroupById(
-    project_id: string,
+    projectId: string,
     id: string,
     filters?: Array<PerformanceFilter>,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectPageLoadSpanGroupById.",
@@ -8181,11 +8084,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getProjectPageLoadSpanGroupById.",
       );
     }
-    const localVarPath = `/projects/{project_id}/page_load_span_groups/{id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/page_load_span_groups/{id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8202,19 +8105,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["filters"] = filters;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8230,29 +8131,29 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getProjectReleaseById(
-    project_id: string,
-    release_id: string,
+    projectId: string,
+    releaseId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectReleaseById.",
       );
     }
     // verify required parameter 'release_id' is not null or undefined
-    if (release_id === null || release_id === undefined) {
+    if (releaseId === null || releaseId === undefined) {
       throw new RequiredError(
         "release_id",
         "Required parameter release_id was null or undefined when calling getProjectReleaseById.",
       );
     }
-    const localVarPath = `/projects/{project_id}/releases/{release_id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"release_id"}}`, encodeURIComponent(String(release_id)));
+    const localVarPath = "/projects/{project_id}/releases/{release_id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"release_id"}}`, encodeURIComponent(String(releaseId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8265,19 +8166,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8294,13 +8193,13 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getProjectSpanGroup(
-    project_id: string,
+    projectId: string,
     id: string,
     filters?: Array<PerformanceFilter>,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectSpanGroup.",
@@ -8313,11 +8212,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getProjectSpanGroup.",
       );
     }
-    const localVarPath = `/projects/{project_id}/span_groups/{id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/span_groups/{id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8334,19 +8233,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["filters"] = filters;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8363,13 +8260,13 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getProjectSpanGroupDistribution(
-    project_id: string,
+    projectId: string,
     id: string,
     filters?: Array<PerformanceFilter>,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectSpanGroupDistribution.",
@@ -8382,11 +8279,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getProjectSpanGroupDistribution.",
       );
     }
-    const localVarPath = `/projects/{project_id}/span_groups/{id}/distribution`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/span_groups/{id}/distribution"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8403,19 +8300,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["filters"] = filters;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8432,13 +8327,13 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getProjectSpanGroupTimeline(
-    project_id: string,
+    projectId: string,
     id: string,
     filters?: Array<PerformanceFilter>,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectSpanGroupTimeline.",
@@ -8451,11 +8346,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getProjectSpanGroupTimeline.",
       );
     }
-    const localVarPath = `/projects/{project_id}/span_groups/{id}/timeline`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/span_groups/{id}/timeline"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8472,19 +8367,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["filters"] = filters;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8498,20 +8391,20 @@ export const ProjectsApiFetchParamCreator = (
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  getProjectStabilityTrend(project_id: string, options: any = {}): FetchArgs {
+  getProjectStabilityTrend(projectId: string, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getProjectStabilityTrend.",
       );
     }
-    const localVarPath = `/projects/{project_id}/stability_trend`.replace(
+    const localVarPath = "/projects/{project_id}/stability_trend".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8524,19 +8417,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8558,12 +8449,12 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling getReleaseGroup.",
       );
     }
-    const localVarPath = `/release_groups/{id}`.replace(
+    const localVarPath = "/release_groups/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8576,19 +8467,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8605,13 +8494,13 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   getSpansByCategoryAndName(
-    project_id: string,
+    projectId: string,
     category: string,
     name: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling getSpansByCategoryAndName.",
@@ -8632,12 +8521,12 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     const localVarPath =
-      `/projects/{project_id}/span_group_categories/{category}/span_groups/{name}/spans`
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+      "/projects/{project_id}/span_group_categories/{category}/span_groups/{name}/spans"
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
         .replace(`{${"category"}}`, encodeURIComponent(String(category)))
         .replace(`{${"name"}}`, encodeURIComponent(String(name)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8650,19 +8539,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8676,20 +8563,20 @@ export const ProjectsApiFetchParamCreator = (
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  listProjectEventFields(project_id: string, options: any = {}): FetchArgs {
+  listProjectEventFields(projectId: string, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectEventFields.",
       );
     }
-    const localVarPath = `/projects/{project_id}/event_fields`.replace(
+    const localVarPath = "/projects/{project_id}/event_fields".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8702,19 +8589,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8731,25 +8616,25 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectFeatureFlagSummaries(
-    project_id: string,
+    projectId: string,
     q?: string,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectFeatureFlagSummaries.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/feature_flag_summaries`.replace(
+      "/projects/{project_id}/feature_flag_summaries".replace(
         `{${"project_id"}}`,
-        encodeURIComponent(String(project_id)),
+        encodeURIComponent(String(projectId)),
       );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8766,23 +8651,21 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["q"] = q;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8806,38 +8689,38 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectFeatureFlags(
-    project_id: string,
-    release_stage_name: string,
-    starred_at_top?: boolean,
-    include_variant_summary?: boolean,
+    projectId: string,
+    releaseStageName: string,
+    starredAtTop?: boolean,
+    includeVariantSummary?: boolean,
     q?: string,
-    first_seen?: string,
-    include_inactive?: boolean,
+    firstSeen?: string,
+    includeInactive?: boolean,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectFeatureFlags.",
       );
     }
     // verify required parameter 'release_stage_name' is not null or undefined
-    if (release_stage_name === null || release_stage_name === undefined) {
+    if (releaseStageName === null || releaseStageName === undefined) {
       throw new RequiredError(
         "release_stage_name",
         "Required parameter release_stage_name was null or undefined when calling listProjectFeatureFlags.",
       );
     }
-    const localVarPath = `/projects/{project_id}/feature_flags`.replace(
+    const localVarPath = "/projects/{project_id}/feature_flags".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8850,29 +8733,28 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (release_stage_name !== undefined) {
-      localVarQueryParameter["release_stage_name"] = release_stage_name;
+    if (releaseStageName !== undefined) {
+      localVarQueryParameter["release_stage_name"] = releaseStageName;
     }
 
-    if (starred_at_top !== undefined) {
-      localVarQueryParameter["starred_at_top"] = starred_at_top;
+    if (starredAtTop !== undefined) {
+      localVarQueryParameter["starred_at_top"] = starredAtTop;
     }
 
-    if (include_variant_summary !== undefined) {
-      localVarQueryParameter["include_variant_summary"] =
-        include_variant_summary;
+    if (includeVariantSummary !== undefined) {
+      localVarQueryParameter["include_variant_summary"] = includeVariantSummary;
     }
 
     if (q !== undefined) {
       localVarQueryParameter["q"] = q;
     }
 
-    if (first_seen !== undefined) {
-      localVarQueryParameter["first_seen"] = first_seen;
+    if (firstSeen !== undefined) {
+      localVarQueryParameter["first_seen"] = firstSeen;
     }
 
-    if (include_inactive !== undefined) {
-      localVarQueryParameter["include_inactive"] = include_inactive;
+    if (includeInactive !== undefined) {
+      localVarQueryParameter["include_inactive"] = includeInactive;
     }
 
     if (sort !== undefined) {
@@ -8883,23 +8765,21 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -8920,28 +8800,28 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectPageLoadSpanGroups(
-    project_id: string,
+    projectId: string,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     offset?: number,
     filters?: Array<PerformanceFilter>,
-    starred_only?: boolean,
+    starredOnly?: boolean,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectPageLoadSpanGroups.",
       );
     }
-    const localVarPath = `/projects/{project_id}/page_load_span_groups`.replace(
+    const localVarPath = "/projects/{project_id}/page_load_span_groups".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -8962,8 +8842,8 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
     if (offset !== undefined) {
@@ -8974,23 +8854,21 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["filters"] = filters;
     }
 
-    if (starred_only !== undefined) {
-      localVarQueryParameter["starred_only"] = starred_only;
+    if (starredOnly !== undefined) {
+      localVarQueryParameter["starred_only"] = starredOnly;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9010,34 +8888,34 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectReleaseGroups(
-    project_id: string,
-    release_stage_name: string,
-    top_only?: boolean,
-    visible_only?: boolean,
-    per_page?: number,
-    page_token?: string,
+    projectId: string,
+    releaseStageName: string,
+    topOnly?: boolean,
+    visibleOnly?: boolean,
+    perPage?: number,
+    pageToken?: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectReleaseGroups.",
       );
     }
     // verify required parameter 'release_stage_name' is not null or undefined
-    if (release_stage_name === null || release_stage_name === undefined) {
+    if (releaseStageName === null || releaseStageName === undefined) {
       throw new RequiredError(
         "release_stage_name",
         "Required parameter release_stage_name was null or undefined when calling listProjectReleaseGroups.",
       );
     }
-    const localVarPath = `/projects/{project_id}/release_groups`.replace(
+    const localVarPath = "/projects/{project_id}/release_groups".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9050,39 +8928,37 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (release_stage_name !== undefined) {
-      localVarQueryParameter["release_stage_name"] = release_stage_name;
+    if (releaseStageName !== undefined) {
+      localVarQueryParameter["release_stage_name"] = releaseStageName;
     }
 
-    if (top_only !== undefined) {
-      localVarQueryParameter["top_only"] = top_only;
+    if (topOnly !== undefined) {
+      localVarQueryParameter["top_only"] = topOnly;
     }
 
-    if (visible_only !== undefined) {
-      localVarQueryParameter["visible_only"] = visible_only;
+    if (visibleOnly !== undefined) {
+      localVarQueryParameter["visible_only"] = visibleOnly;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    if (page_token !== undefined) {
-      localVarQueryParameter["page_token"] = page_token;
+    if (pageToken !== undefined) {
+      localVarQueryParameter["page_token"] = pageToken;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9102,27 +8978,27 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectReleases(
-    project_id: string,
-    release_stage?: string,
+    projectId: string,
+    releaseStage?: string,
     base?: string,
     sort?: string,
     offset?: number,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectReleases.",
       );
     }
-    const localVarPath = `/projects/{project_id}/releases`.replace(
+    const localVarPath = "/projects/{project_id}/releases".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9135,8 +9011,8 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (release_stage !== undefined) {
-      localVarQueryParameter["release_stage"] = release_stage;
+    if (releaseStage !== undefined) {
+      localVarQueryParameter["release_stage"] = releaseStage;
     }
 
     if (base !== undefined) {
@@ -9151,23 +9027,21 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["offset"] = offset;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9183,12 +9057,12 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectSpanGroupPerformanceTargets(
-    project_id: string,
+    projectId: string,
     id: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectSpanGroupPerformanceTargets.",
@@ -9202,11 +9076,11 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     const localVarPath =
-      `/projects/{project_id}/span_groups/{id}/performance_targets`
-        .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+      "/projects/{project_id}/span_groups/{id}/performance_targets"
+        .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
         .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9219,19 +9093,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9249,25 +9121,25 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectSpanGroupSummaries(
-    project_id: string,
-    per_page?: number,
+    projectId: string,
+    perPage?: number,
     offset?: number,
     filters?: Array<PerformanceFilter>,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectSpanGroupSummaries.",
       );
     }
-    const localVarPath = `/projects/{project_id}/span_group_summaries`.replace(
+    const localVarPath = "/projects/{project_id}/span_group_summaries".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9280,8 +9152,8 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
     if (offset !== undefined) {
@@ -9292,19 +9164,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["filters"] = filters;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9325,28 +9195,28 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectSpanGroups(
-    project_id: string,
+    projectId: string,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     offset?: number,
     filters?: Array<PerformanceFilter>,
-    starred_only?: boolean,
+    starredOnly?: boolean,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectSpanGroups.",
       );
     }
-    const localVarPath = `/projects/{project_id}/span_groups`.replace(
+    const localVarPath = "/projects/{project_id}/span_groups".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9367,8 +9237,8 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
     if (offset !== undefined) {
@@ -9379,23 +9249,21 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["filters"] = filters;
     }
 
-    if (starred_only !== undefined) {
-      localVarQueryParameter["starred_only"] = starred_only;
+    if (starredOnly !== undefined) {
+      localVarQueryParameter["starred_only"] = starredOnly;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9413,25 +9281,25 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listProjectStarredSpanGroups(
-    project_id: string,
+    projectId: string,
     categories?: Array<string>,
-    per_page?: number,
+    perPage?: number,
     offset?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectStarredSpanGroups.",
       );
     }
-    const localVarPath = `/projects/{project_id}/starred_span_groups`.replace(
+    const localVarPath = "/projects/{project_id}/starred_span_groups".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9448,27 +9316,25 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["categories"] = categories;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
     if (offset !== undefined) {
       localVarQueryParameter["offset"] = offset;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9482,20 +9348,20 @@ export const ProjectsApiFetchParamCreator = (
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  listProjectTraceFields(project_id: string, options: any = {}): FetchArgs {
+  listProjectTraceFields(projectId: string, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listProjectTraceFields.",
       );
     }
-    const localVarPath = `/projects/{project_id}/trace_fields`.replace(
+    const localVarPath = "/projects/{project_id}/trace_fields".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9508,19 +9374,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9537,24 +9401,24 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listReleaseGroupReleases(
-    release_group_id: string,
-    per_page?: number,
-    page_token?: string,
+    releaseGroupId: string,
+    perPage?: number,
+    pageToken?: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'release_group_id' is not null or undefined
-    if (release_group_id === null || release_group_id === undefined) {
+    if (releaseGroupId === null || releaseGroupId === undefined) {
       throw new RequiredError(
         "release_group_id",
         "Required parameter release_group_id was null or undefined when calling listReleaseGroupReleases.",
       );
     }
-    const localVarPath = `/release_groups/{release_group_id}/releases`.replace(
+    const localVarPath = "/release_groups/{release_group_id}/releases".replace(
       `{${"release_group_id"}}`,
-      encodeURIComponent(String(release_group_id)),
+      encodeURIComponent(String(releaseGroupId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9567,27 +9431,25 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    if (page_token !== undefined) {
-      localVarQueryParameter["page_token"] = page_token;
+    if (pageToken !== undefined) {
+      localVarQueryParameter["page_token"] = pageToken;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9607,16 +9469,16 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listSpansBySpanGroupId(
-    project_id: string,
+    projectId: string,
     id: string,
     filters?: Array<PerformanceFilter>,
     sort?: string,
     direction?: string,
-    per_page?: number,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listSpansBySpanGroupId.",
@@ -9629,11 +9491,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling listSpansBySpanGroupId.",
       );
     }
-    const localVarPath = `/projects/{project_id}/span_groups/{id}/spans`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/span_groups/{id}/spans"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9658,23 +9520,21 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["direction"] = direction;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9694,23 +9554,23 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   listSpansByTraceId(
-    project_id: string,
-    trace_id: string,
+    projectId: string,
+    traceId: string,
     from: string,
     to: string,
-    target_span_id?: string,
-    per_page?: number,
+    targetSpanId?: string,
+    perPage?: number,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling listSpansByTraceId.",
       );
     }
     // verify required parameter 'trace_id' is not null or undefined
-    if (trace_id === null || trace_id === undefined) {
+    if (traceId === null || traceId === undefined) {
       throw new RequiredError(
         "trace_id",
         "Required parameter trace_id was null or undefined when calling listSpansByTraceId.",
@@ -9730,11 +9590,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter to was null or undefined when calling listSpansByTraceId.",
       );
     }
-    const localVarPath = `/projects/{project_id}/traces/{trace_id}/spans`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"trace_id"}}`, encodeURIComponent(String(trace_id)));
+    const localVarPath = "/projects/{project_id}/traces/{trace_id}/spans"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"trace_id"}}`, encodeURIComponent(String(traceId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "GET" }, options);
+    const localVarRequestOptions = { method: "GET", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9755,27 +9615,25 @@ export const ProjectsApiFetchParamCreator = (
       localVarQueryParameter["to"] = to;
     }
 
-    if (target_span_id !== undefined) {
-      localVarQueryParameter["target_span_id"] = target_span_id;
+    if (targetSpanId !== undefined) {
+      localVarQueryParameter["target_span_id"] = targetSpanId;
     }
 
-    if (per_page !== undefined) {
-      localVarQueryParameter["per_page"] = per_page;
+    if (perPage !== undefined) {
+      localVarQueryParameter["per_page"] = perPage;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9789,20 +9647,20 @@ export const ProjectsApiFetchParamCreator = (
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    */
-  regenerateProjectApiKey(project_id: string, options: any = {}): FetchArgs {
+  regenerateProjectApiKey(projectId: string, options: any = {}): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling regenerateProjectApiKey.",
       );
     }
-    const localVarPath = `/projects/{project_id}/api_key`.replace(
+    const localVarPath = "/projects/{project_id}/api_key".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "DELETE" }, options);
+    const localVarRequestOptions = { method: "DELETE", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9815,19 +9673,17 @@ export const ProjectsApiFetchParamCreator = (
       localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
     }
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
 
     return {
       url: url.format(localVarUrlObj),
@@ -9844,7 +9700,7 @@ export const ProjectsApiFetchParamCreator = (
    */
   replaceProjectErrorAssignmentRules(
     body: ErrorAssignmentRulesReplaceRequest,
-    project_id: string,
+    projectId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -9855,19 +9711,19 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling replaceProjectErrorAssignmentRules.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/error_assignment_rules`.replace(
+      "/projects/{project_id}/error_assignment_rules".replace(
         `{${"project_id"}}`,
-        encodeURIComponent(String(project_id)),
+        encodeURIComponent(String(projectId)),
       );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PUT" }, options);
+    const localVarRequestOptions = { method: "PUT", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9882,19 +9738,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ErrorAssignmentRulesReplaceRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -9917,7 +9771,7 @@ export const ProjectsApiFetchParamCreator = (
    */
   updateProject(
     body: ProjectUpdateRequest,
-    project_id: string,
+    projectId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -9928,18 +9782,18 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling updateProject.",
       );
     }
-    const localVarPath = `/projects/{project_id}`.replace(
+    const localVarPath = "/projects/{project_id}".replace(
       `{${"project_id"}}`,
-      encodeURIComponent(String(project_id)),
+      encodeURIComponent(String(projectId)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarRequestOptions = { method: "PATCH", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -9954,19 +9808,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ProjectUpdateRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -9990,8 +9842,8 @@ export const ProjectsApiFetchParamCreator = (
    */
   updateProjectEventFieldByDisplayId(
     body: EventFieldCreateRequest,
-    project_id: string,
-    display_id: string,
+    projectId: string,
+    displayId: string,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'body' is not null or undefined
@@ -10002,24 +9854,24 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling updateProjectEventFieldByDisplayId.",
       );
     }
     // verify required parameter 'display_id' is not null or undefined
-    if (display_id === null || display_id === undefined) {
+    if (displayId === null || displayId === undefined) {
       throw new RequiredError(
         "display_id",
         "Required parameter display_id was null or undefined when calling updateProjectEventFieldByDisplayId.",
       );
     }
-    const localVarPath = `/projects/{project_id}/event_fields/{display_id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
-      .replace(`{${"display_id"}}`, encodeURIComponent(String(display_id)));
+    const localVarPath = "/projects/{project_id}/event_fields/{display_id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
+      .replace(`{${"display_id"}}`, encodeURIComponent(String(displayId)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarRequestOptions = { method: "PATCH", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -10034,19 +9886,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"EventFieldCreateRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -10068,24 +9918,24 @@ export const ProjectsApiFetchParamCreator = (
    * @throws {RequiredError}
    */
   updateProjectNetworkGroupingRuleset(
-    project_id: string,
+    projectId: string,
     body?: NetworkGroupingRulesetRequest,
     options: any = {},
   ): FetchArgs {
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling updateProjectNetworkGroupingRuleset.",
       );
     }
     const localVarPath =
-      `/projects/{project_id}/network_endpoint_grouping`.replace(
+      "/projects/{project_id}/network_endpoint_grouping".replace(
         `{${"project_id"}}`,
-        encodeURIComponent(String(project_id)),
+        encodeURIComponent(String(projectId)),
       );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PUT" }, options);
+    const localVarRequestOptions = { method: "PUT", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -10100,19 +9950,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"NetworkGroupingRulesetRequest" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -10136,7 +9984,7 @@ export const ProjectsApiFetchParamCreator = (
    */
   updateProjectSpanGroup(
     body: SpanGroupsIdBody,
-    project_id: string,
+    projectId: string,
     id: string,
     options: any = {},
   ): FetchArgs {
@@ -10148,7 +9996,7 @@ export const ProjectsApiFetchParamCreator = (
       );
     }
     // verify required parameter 'project_id' is not null or undefined
-    if (project_id === null || project_id === undefined) {
+    if (projectId === null || projectId === undefined) {
       throw new RequiredError(
         "project_id",
         "Required parameter project_id was null or undefined when calling updateProjectSpanGroup.",
@@ -10161,11 +10009,11 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling updateProjectSpanGroup.",
       );
     }
-    const localVarPath = `/projects/{project_id}/span_groups/{id}`
-      .replace(`{${"project_id"}}`, encodeURIComponent(String(project_id)))
+    const localVarPath = "/projects/{project_id}/span_groups/{id}"
+      .replace(`{${"project_id"}}`, encodeURIComponent(String(projectId)))
       .replace(`{${"id"}}`, encodeURIComponent(String(id)));
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarRequestOptions = { method: "PATCH", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -10180,19 +10028,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"SpanGroupsIdBody" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";
@@ -10232,12 +10078,12 @@ export const ProjectsApiFetchParamCreator = (
         "Required parameter id was null or undefined when calling updateReleaseGroup.",
       );
     }
-    const localVarPath = `/release_groups/{id}`.replace(
+    const localVarPath = "/release_groups/{id}".replace(
       `{${"id"}}`,
       encodeURIComponent(String(id)),
     );
     const localVarUrlObj = url.parse(localVarPath, true);
-    const localVarRequestOptions = Object.assign({ method: "PATCH" }, options);
+    const localVarRequestOptions = { method: "PATCH", ...options };
     const localVarHeaderParameter = {} as any;
     const localVarQueryParameter = {} as any;
 
@@ -10252,19 +10098,17 @@ export const ProjectsApiFetchParamCreator = (
 
     localVarHeaderParameter["Content-Type"] = "application/json";
 
-    localVarUrlObj.query = Object.assign(
-      {},
-      localVarUrlObj.query,
-      localVarQueryParameter,
-      options.query,
-    );
+    localVarUrlObj.query = {
+      ...localVarUrlObj.query,
+      ...localVarQueryParameter,
+      ...options.query,
+    };
     // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
     localVarUrlObj.search = null;
-    localVarRequestOptions.headers = Object.assign(
-      {},
-      localVarHeaderParameter,
-      options.headers,
-    );
+    localVarRequestOptions.headers = {
+      ...localVarHeaderParameter,
+      ...options.headers,
+    };
     const needsSerialization =
       <any>"ReleaseGroupsIdBody" !== "string" ||
       localVarRequestOptions.headers["Content-Type"] === "application/json";

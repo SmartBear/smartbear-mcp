@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { USER_AGENT } from "../../common/info";
-import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants";
-import { AuthService } from "../http/auth-service";
+import { USER_AGENT } from "../../common/info.ts";
+import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants.ts";
+import { AuthService } from "../http/auth-service.ts";
 
 describe("AuthService", () => {
   it("should create instance with api key", () => {

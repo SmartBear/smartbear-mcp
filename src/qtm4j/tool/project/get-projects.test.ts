@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../config/constants";
-import { GetProjectsResponse } from "../../schema/project.schema";
-import { GetProjects } from "./get-projects";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { GetProjectsResponse } from "../../schema/project.schema.ts";
+import { GetProjects } from "./get-projects.ts";
 
 describe("GetProjects", () => {
   let mockClient: any;
@@ -32,7 +32,7 @@ describe("GetProjects", () => {
       total: 1,
       data: [
         {
-          id: 10000,
+          id: 10_000,
           key: "PROJ",
           name: "Project Name",
           favorite: false,

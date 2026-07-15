@@ -1,4 +1,4 @@
-import { ToolError } from "../../common/tools";
+import { ToolError } from "../../common/tools.ts";
 import {
   CONTENT_TYPES,
   EMPTY_VALUES,
@@ -6,8 +6,8 @@ import {
   HTTP_HEADERS,
   HTTP_METHODS,
   HTTP_STATUS,
-} from "../config/constants";
-import { AuthService } from "./auth-service";
+} from "../config/constants.ts";
+import { AuthService } from "./auth-service.ts";
 
 /**
  * ApiClient handles HTTP communication with QTM4J REST API
@@ -192,7 +192,7 @@ export class ApiClient {
         ...this.getHeaders(),
         [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.JSON,
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : JSON.stringify(body),
     });
     return await this.validateAndGetResponseBody(response);
   }

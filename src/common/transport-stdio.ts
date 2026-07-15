@@ -1,12 +1,12 @@
 import { enableCompileCache } from "node:module";
+import process from "node:process";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-
-import { clientRegistry } from "./client-registry";
-import { USER_AGENT } from "./info";
-import { handleInitializeMessage } from "./initialize";
-import { SmartBearMcpServer } from "./server";
-import { registerShutdownHandler } from "./shutdown";
-import { getTypeDescription, isOptionalType } from "./zod-utils";
+import { clientRegistry } from "./client-registry.ts";
+import { USER_AGENT } from "./info.ts";
+import { handleInitializeMessage } from "./initialize.ts";
+import { SmartBearMcpServer } from "./server.ts";
+import { registerShutdownHandler } from "./shutdown.ts";
+import { getTypeDescription, isOptionalType } from "./zod-utils.ts";
 
 /**
  * Generate a dynamic error message listing all available clients and their required env vars

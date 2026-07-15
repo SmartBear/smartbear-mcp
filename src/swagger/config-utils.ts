@@ -8,6 +8,7 @@
  * This modifies process.env to enable backward compatibility
  * @deprecated API_HUB_API_KEY support - TODO: Remove after migration period (May 2026)
  */
+import process from "node:process";
 export function applySwaggerApiKeyFallback(): void {
   // If SWAGGER_API_KEY is not set but API_HUB_API_KEY is, use the legacy variable
   if (!process.env.SWAGGER_API_KEY && process.env.API_HUB_API_KEY) {

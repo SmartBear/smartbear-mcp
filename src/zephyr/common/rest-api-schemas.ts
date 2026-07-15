@@ -65,7 +65,7 @@ export const listTestCasesQueryMaxResultsDefault = 10;
 
 export const listTestCasesQueryStartAtDefault = 0;
 export const listTestCasesQueryStartAtMin = 0;
-export const listTestCasesQueryStartAtMax = 1000000;
+export const listTestCasesQueryStartAtMax = 1_000_000;
 
 export const ListTestCasesQueryParams = zod.object({
   projectKey: zod
@@ -1508,7 +1508,7 @@ export const listTestCaseVersionsQueryMaxResultsDefault = 10;
 
 export const listTestCaseVersionsQueryStartAtDefault = 0;
 export const listTestCaseVersionsQueryStartAtMin = 0;
-export const listTestCaseVersionsQueryStartAtMax = 1000000;
+export const listTestCaseVersionsQueryStartAtMax = 1_000_000;
 
 export const ListTestCaseVersionsQueryParams = zod.object({
   maxResults: zod
@@ -2017,7 +2017,7 @@ export const getTestCaseTestStepsQueryMaxResultsDefault = 10;
 
 export const getTestCaseTestStepsQueryStartAtDefault = 0;
 export const getTestCaseTestStepsQueryStartAtMin = 0;
-export const getTestCaseTestStepsQueryStartAtMax = 1000000;
+export const getTestCaseTestStepsQueryStartAtMax = 1_000_000;
 
 export const GetTestCaseTestStepsQueryParams = zod.object({
   maxResults: zod
@@ -2794,7 +2794,7 @@ export const listTestCyclesQueryMaxResultsDefault = 10;
 
 export const listTestCyclesQueryStartAtDefault = 0;
 export const listTestCyclesQueryStartAtMin = 0;
-export const listTestCyclesQueryStartAtMax = 1000000;
+export const listTestCyclesQueryStartAtMax = 1_000_000;
 
 export const ListTestCyclesQueryParams = zod.object({
   projectKey: zod
@@ -5350,7 +5350,7 @@ export const listTestPlansQueryMaxResultsDefault = 10;
 
 export const listTestPlansQueryStartAtDefault = 0;
 export const listTestPlansQueryStartAtMin = 0;
-export const listTestPlansQueryStartAtMax = 1000000;
+export const listTestPlansQueryStartAtMax = 1_000_000;
 
 export const ListTestPlansQueryParams = zod.object({
   projectKey: zod
@@ -6661,7 +6661,7 @@ export const listTestExecutionsQueryMaxResultsDefault = 10;
 
 export const listTestExecutionsQueryStartAtDefault = 0;
 export const listTestExecutionsQueryStartAtMin = 0;
-export const listTestExecutionsQueryStartAtMax = 1000000;
+export const listTestExecutionsQueryStartAtMax = 1_000_000;
 
 export const ListTestExecutionsQueryParams = zod.object({
   projectKey: zod
@@ -7835,7 +7835,7 @@ export const getTestExecutionTestStepsQueryMaxResultsDefault = 10;
 
 export const getTestExecutionTestStepsQueryStartAtDefault = 0;
 export const getTestExecutionTestStepsQueryStartAtMin = 0;
-export const getTestExecutionTestStepsQueryStartAtMax = 1000000;
+export const getTestExecutionTestStepsQueryStartAtMax = 1_000_000;
 
 export const getTestExecutionTestStepsQueryTestDataRowNumberMin = 0;
 
@@ -8735,7 +8735,7 @@ export const listProjectsQueryMaxResultsDefault = 10;
 
 export const listProjectsQueryStartAtDefault = 0;
 export const listProjectsQueryStartAtMin = 0;
-export const listProjectsQueryStartAtMax = 1000000;
+export const listProjectsQueryStartAtMax = 1_000_000;
 
 export const ListProjectsQueryParams = zod.object({
   maxResults: zod
@@ -8895,7 +8895,7 @@ export const listFoldersQueryMaxResultsDefault = 10;
 
 export const listFoldersQueryStartAtDefault = 0;
 export const listFoldersQueryStartAtMin = 0;
-export const listFoldersQueryStartAtMax = 1000000;
+export const listFoldersQueryStartAtMax = 1_000_000;
 
 export const listFoldersQueryProjectKeyRegExp = /([A-Z][A-Z_0-9]+)/;
 
@@ -9173,7 +9173,7 @@ export const listPrioritiesQueryMaxResultsDefault = 10;
 
 export const listPrioritiesQueryStartAtDefault = 0;
 export const listPrioritiesQueryStartAtMin = 0;
-export const listPrioritiesQueryStartAtMax = 1000000;
+export const listPrioritiesQueryStartAtMax = 1_000_000;
 
 export const listPrioritiesQueryProjectKeyRegExp = /([A-Z][A-Z_0-9]+)/;
 
@@ -9548,7 +9548,7 @@ export const listStatusesQueryMaxResultsDefault = 10;
 
 export const listStatusesQueryStartAtDefault = 0;
 export const listStatusesQueryStartAtMin = 0;
-export const listStatusesQueryStartAtMax = 1000000;
+export const listStatusesQueryStartAtMax = 1_000_000;
 
 export const listStatusesQueryProjectKeyRegExp = /([A-Z][A-Z_0-9]+)/;
 
@@ -9933,7 +9933,7 @@ export const listEnvironmentsQueryMaxResultsDefault = 10;
 
 export const listEnvironmentsQueryStartAtDefault = 0;
 export const listEnvironmentsQueryStartAtMin = 0;
-export const listEnvironmentsQueryStartAtMax = 1000000;
+export const listEnvironmentsQueryStartAtMax = 1_000_000;
 
 export const ListEnvironmentsQueryParams = zod.object({
   projectKey: zod

@@ -44,6 +44,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import process from "node:process";
 import readline from "node:readline";
 
 const DEFAULT_REGISTRY = "https://registry.modelcontextprotocol.io";
@@ -123,16 +124,16 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(
-    `Remove a remote URL from versions of an MCP registry server.\n\n` +
-      `Required:\n` +
-      `  --server <name>        e.g. com.smartbear/smartbear-mcp\n` +
-      `  --remote-url <url>     the remotes[].url to strip\n\n` +
-      `Optional:\n` +
-      `  --versions a,b,c       explicit versions (default: every version that has the URL)\n` +
+    "Remove a remote URL from versions of an MCP registry server.\n\n" +
+      "Required:\n" +
+      "  --server <name>        e.g. com.smartbear/smartbear-mcp\n" +
+      "  --remote-url <url>     the remotes[].url to strip\n\n" +
+      "Optional:\n" +
+      "  --versions a,b,c       explicit versions (default: every version that has the URL)\n" +
       `  --registry <url>       default: ${DEFAULT_REGISTRY}\n` +
-      `  --token <jwt>          default: $MCP_REGISTRY_TOKEN or ~/.config/mcp-publisher/token.json\n` +
-      `  --apply                perform the edits (default is a dry run)\n` +
-      `  --yes, -y              skip the confirmation prompt when applying\n`,
+      "  --token <jwt>          default: $MCP_REGISTRY_TOKEN or ~/.config/mcp-publisher/token.json\n" +
+      "  --apply                perform the edits (default is a dry run)\n" +
+      "  --yes, -y              skip the confirmation prompt when applying\n",
   );
 }
 
@@ -157,7 +158,7 @@ function resolveToken(cliToken) {
     }
   }
   fail(
-    `No registry token found. Provide --token, set $MCP_REGISTRY_TOKEN, or run ` +
+    "No registry token found. Provide --token, set $MCP_REGISTRY_TOKEN, or run " +
       `\`mcp-publisher login <method>\` first (writes ${TOKEN_FILE}).`,
   );
 }
@@ -252,7 +253,7 @@ async function main() {
   if (malformed.length > 0) {
     fail(
       `${malformed.length} registry record(s) are missing a 'server' object — ` +
-        `unexpected API response shape, aborting.`,
+        "unexpected API response shape, aborting.",
     );
   }
 
@@ -282,7 +283,7 @@ async function main() {
 
   if (candidates.length === 0) {
     console.log(
-      `✅ Nothing to do — no matching version references the remote URL.`,
+      "✅ Nothing to do — no matching version references the remote URL.",
     );
     return;
   }
@@ -301,7 +302,7 @@ async function main() {
   console.log("");
 
   if (!args.apply) {
-    console.log(`Dry run — re-run with --apply to perform these edits.`);
+    console.log("Dry run — re-run with --apply to perform these edits.");
     return;
   }
 
@@ -343,11 +344,11 @@ async function main() {
   if (failures > 0) {
     fail(
       `${failures} edit(s) failed. A 403 means the token lacks 'edit' scope for ` +
-        `this namespace — escalate to the OSS admins in Discord #registry-dev.`,
+        "this namespace — escalate to the OSS admins in Discord #registry-dev.",
     );
   }
   console.log(
-    `\n✅ Done. The remote URL is now free to claim on another server.`,
+    "\n✅ Done. The remote URL is now free to claim on another server.",
   );
 }
 

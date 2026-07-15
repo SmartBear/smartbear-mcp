@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { Cache } from "./cache/cache";
+import { Cache } from "./cache/cache.ts";
 
 function makeMockCacheService() {
   const store = new Map<string, unknown>();

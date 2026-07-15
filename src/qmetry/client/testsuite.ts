@@ -1,4 +1,4 @@
-import { QMETRY_PATHS } from "../config/rest-endpoints";
+import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import {
   type BulkUpdateExecutionStatusPayload,
   type CreateTestSuitePayload,
@@ -24,9 +24,9 @@ import {
   type LinkedTestCasesToTestSuitePayload,
   type ReqLinkedTestCasesToTestSuitePayload,
   type UpdateTestSuitePayload,
-} from "../types/testsuite";
-import { qmetryRequest } from "./api/client-api";
-import { resolveDefaults } from "./utils";
+} from "../types/testsuite.ts";
+import { qmetryRequest } from "./api/client-api.ts";
+import { resolveDefaults } from "./utils.ts";
 
 /**
  * Create test suites.

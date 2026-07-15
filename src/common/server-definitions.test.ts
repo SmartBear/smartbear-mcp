@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { SmartBearMcpServer } from "./server";
+import { SmartBearMcpServer } from "./server.ts";
 
-import "./register-clients";
+import "./register-clients.ts";
 import type { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { clientRegistry } from "./client-registry";
+import { clientRegistry } from "./client-registry.ts";
 
 // outputSchema/inputSchema may be a raw shape (plain object of Zod fields) or a
 // full Zod object schema (e.g. z.looseObject) — normalize to a sorted list of
@@ -11,7 +11,7 @@ import { clientRegistry } from "./client-registry";
 // runtime representation.
 function schemaFieldNames(schema: any): string[] | undefined {
   if (!schema) {
-    return undefined;
+    return;
   }
   const shape = schema.shape ?? schema;
   return Object.keys(shape).sort();

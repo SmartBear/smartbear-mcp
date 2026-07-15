@@ -4,13 +4,13 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UpdateTestCycle } from "./update-test-cycle";
+import { UpdateTestCycle } from "./update-test-cycle.ts";
 
 describe("UpdateTestCycle", () => {
   let mockClient: any;
   let instance: UpdateTestCycle;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -63,19 +63,19 @@ describe("UpdateTestCycle", () => {
       key: "SA-R40",
       name: "Original Test Cycle",
       project: {
-        id: 10005,
+        id: 10_005,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/10005",
       },
       jiraProjectVersion: {
-        id: 10000,
+        id: 10_000,
         self: "https://jira.example/rest/api/2/version/10000",
       },
       status: {
-        id: 10000,
+        id: 10_000,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/10000",
       },
       folder: {
-        id: 100006,
+        id: 100_006,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/folders/10006",
       },
       description: "Original description",
@@ -116,7 +116,7 @@ describe("UpdateTestCycle", () => {
         description: "Updated description",
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
         "/testcycles/SA-R40",
@@ -135,11 +135,11 @@ describe("UpdateTestCycle", () => {
             Implemented: false,
           },
           project: {
-            id: 10005,
+            id: 10_005,
             self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/10005",
           },
           status: {
-            id: 10000,
+            id: 10_000,
             self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/10000",
           },
         }),
@@ -154,7 +154,7 @@ describe("UpdateTestCycle", () => {
         name: "Updated Name Only",
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
 
@@ -179,9 +179,9 @@ describe("UpdateTestCycle", () => {
         name: "Updated Name",
       };
 
-      await expect(
-        instance.handle(args, EXTRA_REQUEST_HANDLER),
-      ).rejects.toThrow("Test cycle not found");
+      await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
+        "Test cycle not found",
+      );
     });
 
     it("should handle API errors when updating test cycle", async () => {
@@ -194,9 +194,9 @@ describe("UpdateTestCycle", () => {
         name: "Updated Name",
       };
 
-      await expect(
-        instance.handle(args, EXTRA_REQUEST_HANDLER),
-      ).rejects.toThrow("Update failed");
+      await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
+        "Update failed",
+      );
     });
   });
 
@@ -206,19 +206,19 @@ describe("UpdateTestCycle", () => {
       key: "SA-R40",
       name: "Original Test Cycle",
       project: {
-        id: 10005,
+        id: 10_005,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/10005",
       },
       jiraProjectVersion: {
-        id: 10000,
+        id: 10_000,
         self: "https://jira.example/rest/api/2/version/10000",
       },
       status: {
-        id: 10000,
+        id: 10_000,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/10000",
       },
       folder: {
-        id: 100006,
+        id: 100_006,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/folders/10006",
       },
       description: "Original description",
@@ -256,7 +256,7 @@ describe("UpdateTestCycle", () => {
         },
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
 
@@ -276,7 +276,7 @@ describe("UpdateTestCycle", () => {
         description: undefined,
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
       expect(mergedBody.description).toBe("Original description");
@@ -289,7 +289,7 @@ describe("UpdateTestCycle", () => {
         description: null,
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
       expect(mergedBody.description).toBeNull();
@@ -301,7 +301,7 @@ describe("UpdateTestCycle", () => {
         plannedStartDate: null as any,
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
       expect(mergedBody.plannedStartDate).toBe("2018-05-19T13:15:13Z");
@@ -313,7 +313,7 @@ describe("UpdateTestCycle", () => {
         plannedEndDate: null as any,
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
       expect(mergedBody.plannedEndDate).toBe("2018-05-20T13:15:13Z");
@@ -326,7 +326,7 @@ describe("UpdateTestCycle", () => {
         plannedEndDate: "2018-06-10T00:00:00Z",
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
       expect(mergedBody.plannedStartDate).toBe("2018-06-01T00:00:00Z");
@@ -339,7 +339,7 @@ describe("UpdateTestCycle", () => {
         customFields: {},
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
       expect(mergedBody.customFields).toEqual({
@@ -384,7 +384,7 @@ describe("UpdateTestCycle", () => {
         },
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
       expect(mergedBody.customFields.nested).toEqual({
@@ -404,13 +404,13 @@ describe("UpdateTestCycle", () => {
         testCycleIdOrKey: "SA-R40",
         name: "Updated Test Cycle",
         project: {
-          id: 10006,
+          id: 10_006,
         },
-        jiraProjectVersion: 10006,
+        jiraProjectVersion: 10_006,
         status: {
-          id: 10006,
+          id: 10_006,
         },
-        folder: 10006,
+        folder: 10_006,
         description: "Updated description",
         plannedStartDate: "2035-03-19T13:15:13Z",
         plannedEndDate: "2035-05-20T13:15:13Z",
@@ -423,24 +423,24 @@ describe("UpdateTestCycle", () => {
         },
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
 
       expect(mergedBody.name).toEqual("Updated Test Cycle");
       expect(mergedBody.project).toEqual({
-        id: 10006,
+        id: 10_006,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/projects/10005",
       });
       expect(mergedBody.jiraProjectVersion).toEqual({
-        id: 10006,
+        id: 10_006,
         self: "https://jira.example/rest/api/2/version/10000",
       });
       expect(mergedBody.status).toEqual({
-        id: 10006,
+        id: 10_006,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/statuses/10000",
       });
       expect(mergedBody.folder).toEqual({
-        id: 10006,
+        id: 10_006,
         self: "https://api.zephyrscale-dev.smartbear.com/v2/folders/10006",
       });
       expect(mergedBody.description).toEqual("Updated description");
@@ -465,7 +465,7 @@ describe("UpdateTestCycle", () => {
         name: "Updated Name",
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const mergedBody = mockClient.getApiClient().put.mock.calls[0][1];
       expect(mergedBody.links).toBeUndefined();

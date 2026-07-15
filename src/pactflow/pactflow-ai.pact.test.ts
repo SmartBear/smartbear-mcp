@@ -6,6 +6,7 @@
  */
 
 import path from "node:path";
+import process from "node:process";
 import { Matchers, PactV4 } from "@pact-foundation/pact";
 import { describe, expect, it } from "vitest";
 

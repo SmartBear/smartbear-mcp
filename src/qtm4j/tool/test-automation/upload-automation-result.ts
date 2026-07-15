@@ -138,9 +138,9 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
 
     // Enforce maximum file size
     if (fileBuffer.byteLength > AUTOMATION_LIMITS.MAX_FILE_SIZE_BYTES) {
-      const sizeMB = (fileBuffer.byteLength / (1024 * 1024)).toFixed(2);
+      const sizeMb = (fileBuffer.byteLength / (1024 * 1024)).toFixed(2);
       throw new ToolError(
-        `File is too large (${sizeMB} MB). Maximum allowed size is 10 MB.`,
+        `File is too large (${sizeMb} MB). Maximum allowed size is 10 MB.`,
       );
     }
 
@@ -162,7 +162,7 @@ export class UploadAutomationResult extends Tool<Qtm4jClient> {
     const uploadUrl: string | undefined = initResponse?.url;
     const trackingId: string | undefined = initResponse?.trackingId;
 
-    if (!uploadUrl || !trackingId) {
+    if (!(uploadUrl && trackingId)) {
       throw new ToolError(
         "QTM4J did not return a valid upload URL. Check your API key and project configuration.",
       );

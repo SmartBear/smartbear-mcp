@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ListStatusesQueryParams,
   ListStatuses200Response as ListStatusesResponse,
-} from "../../common/rest-api-schemas";
-import { GetStatuses } from "./get-statuses";
+} from "../../common/rest-api-schemas.ts";
+import { GetStatuses } from "./get-statuses.ts";
 
 const responseMock = {
   next: null,

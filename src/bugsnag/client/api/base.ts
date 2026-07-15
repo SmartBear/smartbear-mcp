@@ -1,5 +1,5 @@
-import { ToolError } from "../../../common/tools";
-import type { Configuration } from "./configuration";
+import { ToolError } from "../../../common/tools.ts";
+import type { Configuration } from "./configuration.ts";
 
 export interface ApiResponse<T> {
   status: number;
@@ -44,7 +44,7 @@ function getTotalCountFromHeader(headers: Headers): number | null {
   if (!headers) return null;
   const totalCount = headers.get("X-Total-Count");
   if (!totalCount) return null;
-  const parsed = parseInt(totalCount, 10);
+  const parsed = Number.parseInt(totalCount, 10);
   return Number.isNaN(parsed) ? null : parsed;
 }
 
@@ -155,7 +155,7 @@ export class BaseAPI {
   async requestArray<T extends Record<string, any>>(
     url: string,
     options: Record<string, any> = {},
-    fetchAll: boolean = true,
+    fetchAll = true,
     fields?: (keyof T)[],
   ): Promise<ApiResponse<T[]>> {
     let results: T[] = [];
@@ -190,7 +190,7 @@ export class BaseAPI {
       apiResponse = {
         status: response.status,
         headers: response.headers,
-        nextUrl: nextUrl,
+        nextUrl,
         totalCount: getTotalCountFromHeader(response.headers),
         body: results,
       };

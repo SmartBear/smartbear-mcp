@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { LinkTestCasesToRequirement } from "./link-testcases";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { LinkTestCasesToRequirement } from "./link-testcases.ts";
 
 describe("LinkTestCasesToRequirement", () => {
   let mockClient: any;
@@ -14,7 +14,7 @@ describe("LinkTestCasesToRequirement", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -81,15 +81,15 @@ describe("LinkTestCasesToRequirement", () => {
         testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-11"],
       });
 
-      expect(mockReqResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockReqResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-1",
       ]);
-      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TC-10",
         "SCRUM-TC-11",
       ]);
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        ENDPOINTS.LINK_TESTCASES_TO_REQUIREMENT(10001),
+        ENDPOINTS.LINK_TESTCASES_TO_REQUIREMENT(10_001),
         {
           testcases: [
             { id: "uid-tc-10", versionNo: 1 },
@@ -115,9 +115,9 @@ describe("LinkTestCasesToRequirement", () => {
       });
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
-        ENDPOINTS.LINK_TESTCASES_TO_REQUIREMENT(10001),
+        ENDPOINTS.LINK_TESTCASES_TO_REQUIREMENT(10_001),
         {
-          filter: { priority: ["High"], status: ["To Do"], projectId: 10000 },
+          filter: { priority: ["High"], status: ["To Do"], projectId: 10_000 },
         },
       );
     });

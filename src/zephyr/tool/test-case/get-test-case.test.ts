@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GetTestCaseParams,
   GetTestCase200Response as GetTestCaseResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestCase } from "./get-test-case";
+} from "../../common/rest-api-schemas.ts";
+import { GetTestCase } from "./get-test-case.ts";
 
 describe("GetTestCase", () => {
   let mockClient: any;
@@ -35,28 +35,28 @@ describe("GetTestCase", () => {
       key: "SA-T10",
       name: "Check axial pump",
       project: {
-        id: 10005,
+        id: 10_005,
         self: "https://api.example.com/projects/10005",
       },
       createdOn: "2018-05-15T13:15:13Z",
       objective: "To ensure the axial pump can be enabled",
       precondition: "Latest version of the axial pump available",
-      estimatedTime: 138000,
+      estimatedTime: 138_000,
       labels: ["Regression", "Performance", "Automated"],
       component: {
-        id: 10001,
+        id: 10_001,
         self: "https://<jira-instance>.atlassian.net/rest/api/2/component/10001",
       },
       priority: {
-        id: 10002,
+        id: 10_002,
         self: "https://<api-base-url>/priorities/10002",
       },
       status: {
-        id: 10000,
+        id: 10_000,
         self: "https://<api-base-url>/statuses/10000",
       },
       folder: {
-        id: 100006,
+        id: 100_006,
         self: "https://<api-base-url>/folders/10006",
       },
       owner: {
@@ -80,7 +80,7 @@ describe("GetTestCase", () => {
         issues: [
           {
             self: "https://api.zephyrscale.smartbear.com/v2/testcases/14/links",
-            issueId: 10100,
+            issueId: 10_100,
             id: 1,
             target:
               "https://<jira-instance>.atlassian.net/rest/api/2/issue/10000",

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { RunRegressionTests } from "./run-regression-tests";
+import { RunRegressionTests } from "./run-regression-tests.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

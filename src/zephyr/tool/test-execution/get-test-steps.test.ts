@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GetTestExecutionTestSteps200Response as getTestExecutionStepsResponse } from "../../common/rest-api-schemas";
-import { GetTestExecutionSteps } from "./get-test-steps";
+import { GetTestExecutionTestSteps200Response as getTestExecutionStepsResponse } from "../../common/rest-api-schemas.ts";
+import { GetTestExecutionSteps } from "./get-test-steps.ts";
 
 describe("GetTestExecutionSteps", () => {
   let mockClient: any;
@@ -45,7 +45,7 @@ describe("GetTestExecutionSteps", () => {
             testDataRowNumber: 1,
             reflectRef: "Not available yet",
             status: {
-              id: 10000,
+              id: 10_000,
               self: "https://api.example.com/statuses/10000",
             },
           },

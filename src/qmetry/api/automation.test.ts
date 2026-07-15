@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getAutomationStatus,
   importAutomationResults,
-} from "../client/automation.js";
-import type { ImportAutomationResultsPayload } from "../types/automation.js";
+} from "../client/automation.ts";
+import type { ImportAutomationResultsPayload } from "../types/automation.ts";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -29,7 +29,7 @@ describe("automation API clients", () => {
       };
 
       const mockResponse = {
-        requestId: 12345,
+        requestId: 12_345,
         success: true,
         code: "CO.IMPORT_SCHEDULED",
         message: "Import has begun. Go to Scheduled Task to view progress.",
@@ -68,7 +68,7 @@ describe("automation API clients", () => {
       };
 
       const mockResponse = {
-        requestId: 67890,
+        requestId: 67_890,
         success: true,
         code: "CO.IMPORT_SCHEDULED",
       };
@@ -92,7 +92,7 @@ describe("automation API clients", () => {
 
   describe("getAutomationStatus", () => {
     it("should GET automation status with correct URL and headers", async () => {
-      const requestID = 12345;
+      const requestId = 12_345;
       const mockResponse = {
         requestId: "12345",
         automationFramework: "TestNG",
@@ -112,7 +112,7 @@ describe("automation API clients", () => {
         token,
         baseUrl,
         projectKey,
-        requestID,
+        requestId,
       );
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
@@ -130,7 +130,7 @@ describe("automation API clients", () => {
     });
 
     it("should handle requestID as object with requestID property", async () => {
-      const requestIDObj = { requestID: 67890 };
+      const requestIdObj = { requestID: 67_890 };
       const mockResponse = {
         requestId: "67890",
         automationFramework: "Cucumber",
@@ -143,7 +143,7 @@ describe("automation API clients", () => {
         token,
         baseUrl,
         projectKey,
-        requestIDObj as any,
+        requestIdObj as any,
       );
 
       expect(globalThis.fetch).toHaveBeenCalledWith(

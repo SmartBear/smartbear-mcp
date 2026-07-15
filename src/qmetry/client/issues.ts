@@ -1,4 +1,4 @@
-import { QMETRY_PATHS } from "../config/rest-endpoints";
+import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import {
   type CreateIssuePayload,
   DEFAULT_CREATE_ISSUE_PAYLOAD,
@@ -12,9 +12,9 @@ import {
   type FetchIssuesPayload,
   type LinkIssuesToTestcaseRunPayload,
   type UpdateIssuePayload,
-} from "../types/issues";
-import { qmetryRequest } from "./api/client-api";
-import { resolveDefaults } from "./utils";
+} from "../types/issues.ts";
+import { qmetryRequest } from "./api/client-api.ts";
+import { resolveDefaults } from "./utils.ts";
 
 /**
  * Create Defect/Issue.

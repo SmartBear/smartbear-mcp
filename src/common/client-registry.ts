@@ -1,7 +1,8 @@
+import process from "node:process";
 import { type ZodType, ZodURL } from "zod";
-import type { SmartBearMcpServer } from "./server";
-import type { Client } from "./types";
-import { fullyUnwrapZodType, isOptionalType } from "./zod-utils";
+import type { SmartBearMcpServer } from "./server.ts";
+import type { Client } from "./types.ts";
+import { fullyUnwrapZodType, isOptionalType } from "./zod-utils.ts";
 
 /**
  * Central registry for all MCP clients
@@ -129,8 +130,10 @@ class ClientRegistry {
           this.validateAllowedEndpoint(entry.config.shape[configKey], value);
           config[configKey] = value;
         } else if (
-          !ignoreMissingRequiredConfigs &&
-          !isOptionalType(entry.config.shape[configKey])
+          !(
+            ignoreMissingRequiredConfigs ||
+            isOptionalType(entry.config.shape[configKey])
+          )
         ) {
           continue entryLoop; // Skip configuring this client - missing required config
         }

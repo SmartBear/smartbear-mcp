@@ -7,13 +7,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CreateTestCaseBody,
   CreateTestCase201Response as CreateTestCaseResponse,
-} from "../../common/rest-api-schemas";
-import { CreateTestCase } from "./create-test-case";
+} from "../../common/rest-api-schemas.ts";
+import { CreateTestCase } from "./create-test-case.ts";
 
 describe("CreateTestCase", () => {
   let mockClient: any;
   let instance: CreateTestCase;
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -59,7 +59,7 @@ describe("CreateTestCase", () => {
       name: "New Test Case",
       objective: "This is a new test case created via the API for testing",
     };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcases/",
       args,
@@ -75,9 +75,7 @@ describe("CreateTestCase", () => {
       extraParam: "This should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -89,7 +87,7 @@ describe("CreateTestCase", () => {
       name: "New Test Case",
       objective: "This is a new test case created via the API for testing",
     };
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -101,7 +99,7 @@ describe("CreateTestCase", () => {
       name: "New Test Case",
       objective: "This is a new test case created via the API for testing",
     };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
     expect(result.structuredContent).toBeUndefined();
   });
 
@@ -110,9 +108,7 @@ describe("CreateTestCase", () => {
       name: "New Test Case",
       objective: "This is a new test case created via the API for testing",
     };
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if name is missing", async () => {
@@ -120,8 +116,6 @@ describe("CreateTestCase", () => {
       projectKey: "SA",
       precondition: "Name should have been provided",
     };
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

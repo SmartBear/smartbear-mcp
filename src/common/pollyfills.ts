@@ -3,8 +3,8 @@ import type {
   ElicitRequest,
   ElicitResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { SmartBearMcpServer } from "./server";
-import { ToolError } from "./tools";
+import type { SmartBearMcpServer } from "./server.ts";
+import { ToolError } from "./tools.ts";
 
 export interface SamplingPolyfillResult {
   requiresPromptExecution: true;

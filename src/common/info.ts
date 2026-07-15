@@ -1,8 +1,9 @@
+import process from "node:process";
 import packageJson from "../../package.json" with { type: "json" };
 import {
   getCurrentClientIdentity,
   type McpClientIdentity,
-} from "./client-identity";
+} from "./client-identity.ts";
 
 export const MCP_SERVER_NAME = packageJson.config.mcpServerName;
 export const MCP_SERVER_VERSION = packageJson.version;

@@ -12,7 +12,7 @@ import type {
   ElicitResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodObject, ZodRawShape, ZodType } from "zod";
-import type { SmartBearMcpServer } from "./server";
+import type { SmartBearMcpServer } from "./server.ts";
 
 export interface ToolParams {
   title: string;

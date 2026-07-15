@@ -1,11 +1,11 @@
-import { type ApiResponse, BaseAPI } from "./base";
+import { type ApiResponse, BaseAPI } from "./base.ts";
 import {
   CurrentUserApiFetchParamCreator,
   type Organization,
   type OrganizationApiView,
   type Project,
-} from "./index";
-import { ProjectAPI } from "./Project";
+} from "./index.ts";
+import { ProjectAPI } from "./Project.ts";
 
 export class CurrentUserAPI extends BaseAPI {
   static organizationFields: (keyof OrganizationApiView)[] = [

@@ -1,5 +1,5 @@
-import { QMetryToolsHandlers } from "../config/constants";
-import { getAutomationStatus, importAutomationResults } from "./automation";
+import { QMetryToolsHandlers } from "../config/constants.ts";
+import { getAutomationStatus, importAutomationResults } from "./automation.ts";
 import {
   createIssue,
   fetchIssueExecutions,
@@ -7,7 +7,7 @@ import {
   fetchIssuesLinkedToTestCase,
   linkIssuesToTestcaseRun,
   updateIssue,
-} from "./issues";
+} from "./issues.ts";
 import {
   createCycle,
   createRelease,
@@ -17,12 +17,12 @@ import {
   getProjects,
   getReleasesCycles,
   updateCycle,
-} from "./project";
+} from "./project.ts";
 import {
   fetchRequirementDetails,
   fetchRequirements,
   fetchRequirementsLinkedToTestCase,
-} from "./requirement";
+} from "./requirement.ts";
 import {
   createTestCases,
   fetchTestCaseDetails,
@@ -33,7 +33,7 @@ import {
   fetchTestCaseVersionDetails,
   linkRequirementToTestCase,
   updateTestCase,
-} from "./testcase";
+} from "./testcase.ts";
 import {
   bulkUpdateExecutionStatus,
   createTestSuites,
@@ -47,7 +47,7 @@ import {
   linkTestCasesToTestSuite,
   reqLinkedTestCasesToTestSuite,
   updateTestSuite,
-} from "./testsuite";
+} from "./testsuite.ts";
 import {
   bulkUpdateTestRunUdfs,
   fetchCascadeChildValues,
@@ -55,7 +55,7 @@ import {
   fetchTestRunUdfValues,
   fetchUdfFieldTypes,
   fetchUdfModules,
-} from "./udf";
+} from "./udf.ts";
 
 /**
  * Mapping of QMetry tool handlers to their implementation functions

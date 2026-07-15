@@ -1,4 +1,4 @@
-import { QMetryToolsHandlers } from "../../config/constants";
+import { QMetryToolsHandlers } from "../../config/constants.ts";
 import {
   BulkUpdateExecutionStatusArgsSchema,
   CreateTestSuiteArgsSchema,
@@ -11,8 +11,8 @@ import {
   TestSuiteListArgsSchema,
   TestSuitesForTestCaseArgsSchema,
   UpdateTestSuiteArgsSchema,
-} from "../../types/common";
-import type { QMetryToolParams } from "./types";
+} from "../../types/common.ts";
+import type { QMetryToolParams } from "./types.ts";
 
 export const TESTSUITE_TOOLS: QMetryToolParams[] = [
   {
@@ -62,12 +62,12 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           name: "Testsuite Summary",
           description: "desc",
           testsuiteOwner: 6963,
-          testSuiteState: 505035,
+          testSuiteState: 505_035,
           associateRelCyc: true,
           releaseCycleMapping: [
             {
-              buildID: 18411,
-              releaseId: 10286,
+              buildID: 18_411,
+              releaseId: 10_286,
             },
           ],
         },
@@ -121,9 +121,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update test suite summary (updated name)",
         parameters: {
-          id: 1505898,
+          id: 1_505_898,
           entityKey: "VT-TS-7",
-          TsFolderID: 1644087,
+          TsFolderID: 1_644_087,
           name: "MAC Test11",
         },
         expectedOutput:
@@ -132,10 +132,10 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update state to Open and owner of the test suite",
         parameters: {
-          id: 1505898,
+          id: 1_505_898,
           entityKey: "VT-TS-7",
-          TsFolderID: 1644087,
-          testSuiteState: 505036,
+          TsFolderID: 1_644_087,
+          testSuiteState: 505_036,
           testsuiteOwner: 6963,
         },
         expectedOutput:
@@ -144,9 +144,9 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update only description of the test suite",
         parameters: {
-          id: 1505898,
+          id: 1_505_898,
           entityKey: "VT-TS-7",
-          TsFolderID: 1644087,
+          TsFolderID: 1_644_087,
           description: "Updated description for the test suite.",
         },
         expectedOutput:
@@ -203,7 +203,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get test suites with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 103097, folderPath: "" }, // This is an example viewId, must be resolved per project TS viewId
+        parameters: { projectKey: "MAC", viewId: 103_097, folderPath: "" }, // This is an example viewId, must be resolved per project TS viewId
         expectedOutput: "Test suites using manually specified viewId 103097", // This is an example viewId, must be resolved per project TS viewId
       },
       {
@@ -319,20 +319,20 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get test suites from root folder using auto-resolved viewId",
-        parameters: { tsFolderID: 113557 },
+        parameters: { tsFolderID: 113_557 },
         expectedOutput:
           "List of test suites available in the root test suite folder with auto-resolved viewId",
       },
       {
         description:
           "Get test suites with custom pagination and auto-resolved viewId",
-        parameters: { tsFolderID: 113557, page: 1, limit: 25 },
+        parameters: { tsFolderID: 113_557, page: 1, limit: 25 },
         expectedOutput: "Paginated list of test suites with 20 items per page",
       },
       {
         description: "Filter test suites by release with auto-resolved viewId",
         parameters: {
-          tsFolderID: 113557,
+          tsFolderID: 113_557,
           filter: '[{"type":"list","value":[55178],"field":"release"}]',
         },
         expectedOutput: "Test suites associated with Release 8.12 (ID: 55178)",
@@ -340,7 +340,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter test suites by cycle with auto-resolved viewId",
         parameters: {
-          tsFolderID: 113557,
+          tsFolderID: 113_557,
           filter: '[{"type":"list","value":[111577],"field":"cycle"}]',
         },
         expectedOutput: "Test suites associated with Cycle 8.12.1 (ID: 111577)",
@@ -348,7 +348,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only active (non-archived) test suites",
         parameters: {
-          tsFolderID: 113557,
+          tsFolderID: 113_557,
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         },
         expectedOutput: "List of active test suites (not archived)",
@@ -356,7 +356,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter test suites by release and cycle",
         parameters: {
-          tsFolderID: 113557,
+          tsFolderID: 113_557,
           filter:
             '[{"type":"list","value":[55178],"field":"release"},{"type":"list","value":[111577],"field":"cycle"}]',
         },
@@ -365,14 +365,14 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get test suites with column information",
-        parameters: { tsFolderID: 113557, getColumns: true },
+        parameters: { tsFolderID: 113_557, getColumns: true },
         expectedOutput:
           "Test suites list with detailed column metadata for better interpretation",
       },
       {
         description:
           "Search test suites from specific sub-folder with manual viewId",
-        parameters: { tsFolderID: 42, viewId: 104316 }, // This is an example viewId, must be resolved per project TS viewId
+        parameters: { tsFolderID: 42, viewId: 104_316 }, // This is an example viewId, must be resolved per project TS viewId
         expectedOutput:
           "Test suites available in specific folder ID 42 for test case linking",
       },
@@ -430,7 +430,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description: "Link test cases to a test suite",
         parameters: {
           tsID: 8674,
-          tcvdIDs: [5448504, 5448503],
+          tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: false,
         },
         expectedOutput:
@@ -440,8 +440,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Link test cases directly to test suites with test cases entityKeys VT-TC-9, VT-TC-10 to test suite id 1487397",
         parameters: {
-          tsID: 1487397,
-          tcvdIDs: [5448504, 5448503],
+          tsID: 1_487_397,
+          tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: false,
         },
         expectedOutput:
@@ -451,8 +451,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Link test case VT-TC-4, VT-TC-1,VT-TC-101, VT-TC-22 to test suite VT-TS-3",
         parameters: {
-          tsID: 1487397,
-          tcvdIDs: [5448504, 5448503, 5448505, 5448506],
+          tsID: 1_487_397,
+          tcvdIDs: [5_448_504, 5_448_503, 5_448_505, 5_448_506],
           fromReqs: false,
         },
         expectedOutput:
@@ -487,7 +487,11 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "VT-RQ-18 Requirements Linked test cases to a test suite",
-        parameters: { tsID: 8674, tcvdIDs: [5448504, 5448503], fromReqs: true },
+        parameters: {
+          tsID: 8674,
+          tcvdIDs: [5_448_504, 5_448_503],
+          fromReqs: true,
+        },
         expectedOutput:
           "Test cases QTM-TC-32 and QTM-TC-35 linked to test suite 8674.",
       },
@@ -495,8 +499,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "VT-RQ-19 Requirements Linked test cases to test suites id 1487397",
         parameters: {
-          tsID: 1487397,
-          tcvdIDs: [5448504, 5448503],
+          tsID: 1_487_397,
+          tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: true,
         },
         expectedOutput:
@@ -506,8 +510,8 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "VT-RQ-20 Requirements Linked test case to test suite VT-TS-3",
         parameters: {
-          tsID: 1487397,
-          tcvdIDs: [5448504, 5448503, 5448505, 5448506],
+          tsID: 1_487_397,
+          tcvdIDs: [5_448_504, 5_448_503, 5_448_505, 5_448_506],
           fromReqs: true,
         },
         expectedOutput:
@@ -543,7 +547,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Link single platform to a test suite",
         parameters: {
-          qmTsId: 1511970,
+          qmTsId: 1_511_970,
           qmPlatformId: "63004",
         },
         expectedOutput:
@@ -552,7 +556,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Link multiple platforms to a test suite",
         parameters: {
-          qmTsId: 1511970,
+          qmTsId: 1_511_970,
           qmPlatformId: "63004,63005,63006",
         },
         expectedOutput:
@@ -611,26 +615,26 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get all test cases linked to test suite ID 1497291 (default behavior)",
-        parameters: { tsID: 1497291 },
+        parameters: { tsID: 1_497_291 },
         expectedOutput:
           "List of test cases linked to the test suite with test case details and metadata",
       },
       {
         description:
           "Get all test cases linked to test suite ID 1497291 (explicit)",
-        parameters: { tsID: 1497291, getLinked: true },
+        parameters: { tsID: 1_497_291, getLinked: true },
         expectedOutput:
           "List of test cases linked to the test suite with test case details and metadata",
       },
       {
         description: "Get test cases NOT linked to test suite (gap analysis)",
-        parameters: { tsID: 1497291, getLinked: false },
+        parameters: { tsID: 1_497_291, getLinked: false },
         expectedOutput:
           "List of test cases that are NOT linked to the test suite",
       },
       {
         description: "Get linked test cases with custom pagination",
-        parameters: { tsID: 1497291, getLinked: true, page: 1, limit: 25 },
+        parameters: { tsID: 1_497_291, getLinked: true, page: 1, limit: 25 },
         expectedOutput:
           "Paginated list of linked test cases with 50 items per page",
       },
@@ -638,7 +642,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter linked test cases by priority (using default getLinked=true)",
         parameters: {
-          tsID: 1497291,
+          tsID: 1_497_291,
           filter: '[{"value":[1,2],"type":"list","field":"priorityAlias"}]',
         },
         expectedOutput:
@@ -647,7 +651,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by status",
         parameters: {
-          tsID: 1497291,
+          tsID: 1_497_291,
           getLinked: true,
           filter: '[{"value":[1],"type":"list","field":"testCaseStateAlias"}]',
         },
@@ -708,16 +712,16 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all executions for test suite ID 194955",
-        parameters: { tsID: 194955 },
+        parameters: { tsID: 194_955 },
         expectedOutput:
           "List of executions for the test suite with execution details, status, and metadata",
       },
       {
         description: "Get executions with test suite folder and view ID",
         parameters: {
-          tsID: 194955,
-          tsFolderID: 126554,
-          viewId: 41799, // This is an example viewId, must be resolved per project TEL viewId
+          tsID: 194_955,
+          tsFolderID: 126_554,
+          viewId: 41_799, // This is an example viewId, must be resolved per project TEL viewId
         },
         expectedOutput:
           "Executions filtered by test suite folder and specific view configuration",
@@ -725,7 +729,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by release and cycle",
         parameters: {
-          tsID: 194955,
+          tsID: 194_955,
           filter:
             '[{"type":"list","value":[55178],"field":"releaseID"},{"type":"list","value":[111577],"field":"cycleID"}]',
         },
@@ -735,7 +739,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by platform and automation status",
         parameters: {
-          tsID: 194955,
+          tsID: 194_955,
           filter:
             '[{"type":"list","value":[12345],"field":"platformID"},{"type":"boolean","value":true,"field":"isAutomatedFlag"}]',
         },
@@ -745,7 +749,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only active (non-archived) executions",
         parameters: {
-          tsID: 194955,
+          tsID: 194_955,
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         },
         expectedOutput: "Active executions that are not archived",
@@ -753,7 +757,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get executions with custom pagination and grid name",
         parameters: {
-          tsID: 194955,
+          tsID: 194_955,
           gridName: "TESTEXECUTIONLIST",
           page: 1,
           limit: 25,
@@ -816,7 +820,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
     handler: QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
     inputSchema: TestCaseRunsByTestSuiteRunArgsSchema,
     formatResponse: (result: any) => {
-      if (!result?.data || !Array.isArray(result.data)) return result;
+      if (!(result?.data && Array.isArray(result.data))) return result;
       if (result.hasTcRunUdf === false) {
         return {
           ...result,
@@ -901,7 +905,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Fetch Test Run UDF values for all executions in test suite run '728995'",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           start: 0,
           page: 1,
           limit: 20,
@@ -917,7 +921,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Filter by Test Run UDF list/dropdown field (single-select or multi-select lookup) — runs where UDF '8260LUP' has list item IDs 5108701 or 5108697",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           tcrUdfFilter:
             '[{"type":"list","value":[5108701,5108697],"field":"8260LUP"}]',
         },
@@ -929,7 +933,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Filter by Test Run UDF multi-lookup list field — runs where multi-select UDF 'PGTE_MULTILOOKUPLIST' contains list item IDs 5126503 or 5126502",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           tcrUdfFilter:
             '[{"type":"list","value":[5126503,5126502],"field":"PGTE_MULTILOOKUPLIST"}]',
         },
@@ -941,7 +945,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Filter by Test Run UDF cascading dropdown field — runs where cascading UDF 'cascade_vK' has list item IDs 5126498 or 5126499 (must set isCascading:true)",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           tcrUdfFilter:
             '[{"type":"list","value":[5126498,5126499],"field":"cascade_vK","isCascading":true}]',
         },
@@ -953,7 +957,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Filter by Test Run UDF short text field — runs where text UDF 'TRString' contains the value 'str'",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           tcrUdfFilter: '[{"type":"string","field":"TRString","value":"str"}]',
         },
         expectedOutput:
@@ -964,7 +968,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Filter by Test Run UDF large text field — runs where large text UDF 'vk_large_text' contains 'this is large text'",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           tcrUdfFilter:
             '[{"type":"string","field":"vk_large_text","value":"this is large text"}]',
         },
@@ -976,7 +980,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Filter by Test Run UDF date field — runs where date UDF 'PGTE_DATEPICKER' is after a specific date (comparison: gt) and before another date (comparison: lt)",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           tcrUdfFilter:
             '[{"type":"date","field":"PGTE_DATEPICKER","comparison":"gt","value":"06-01-2026"},{"type":"date","field":"PGTE_DATEPICKER","comparison":"lt","value":"06-30-2026"}]',
         },
@@ -988,7 +992,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Filter by Test Run UDF numeric field — runs where numeric UDF 'NB_number_TR' equals 2",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           tcrUdfFilter: '[{"type":"numeric","value":2,"field":"NB_number_TR"}]',
         },
         expectedOutput:
@@ -999,7 +1003,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Combine multiple Test Run UDF filters — filter by list UDF AND string UDF AND numeric UDF simultaneously",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           start: 0,
           page: 1,
           limit: 20,
@@ -1014,7 +1018,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Full filter combination — standard field filter + Test Run UDF filter + show only runs with defects",
         parameters: {
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           start: 0,
           page: 1,
           limit: 20,
@@ -1032,7 +1036,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           "Get paginated test case runs with standard runStatus filter",
         parameters: {
           tsrunID: "2362144",
-          viewId: 104123,
+          viewId: 104_123,
           start: 0,
           page: 1,
           limit: 25,
@@ -1320,7 +1324,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
-          runStatusID: 123266,
+          runStatusID: 123_266,
           isBulkOperation: false,
         },
         expectedOutput:
@@ -1333,7 +1337,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           entityIDs: "66095069,66095075",
           entityType: "TCR",
           qmTsRunId: "2720260",
-          runStatusID: 123268,
+          runStatusID: 123_268,
           isBulkOperation: true,
           comments: "All test cases passed successfully",
         },
@@ -1348,7 +1352,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
             "66095069,66095075,66095081,66095087,66095093,66095099,66095105",
           entityType: "TCR",
           qmTsRunId: "2720260",
-          runStatusID: 123269,
+          runStatusID: 123_269,
           isBulkOperation: true,
         },
         expectedOutput:
@@ -1360,7 +1364,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
-          runStatusID: 123266,
+          runStatusID: 123_266,
           dropID: 947,
           isBulkOperation: false,
         },
@@ -1374,7 +1378,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           entityIDs: "66095069,66095075",
           entityType: "TCR",
           qmTsRunId: "2720260",
-          runStatusID: 123268,
+          runStatusID: 123_268,
           isAutoExecuted: "1",
           isBulkOperation: true,
           comments: "Automated test execution completed",
@@ -1389,7 +1393,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           entityIDs: "66095087",
           entityType: "TCR",
           qmTsRunId: "2720260",
-          runStatusID: 123266,
+          runStatusID: 123_266,
           username: "test.user",
           password: "password",
           isBulkOperation: false,
@@ -1404,7 +1408,7 @@ export const TESTSUITE_TOOLS: QMetryToolParams[] = [
           entityIDs: "66341841,66342887,66342893,66342899",
           entityType: "TCR",
           qmTsRunId: "2733104",
-          runStatusID: 123269,
+          runStatusID: 123_269,
           isBulkOperation: true,
         },
         expectedOutput:

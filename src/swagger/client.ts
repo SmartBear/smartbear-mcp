@@ -1,19 +1,19 @@
 import { z } from "zod";
-import { USER_AGENT } from "../common/info";
-import { getRequestHeader } from "../common/request-context";
-import type { SmartBearMcpServer } from "../common/server";
-import { ToolError } from "../common/tools";
+import { USER_AGENT } from "../common/info.ts";
+import { getRequestHeader } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
+import { ToolError } from "../common/tools.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types";
+} from "../common/types.ts";
 // Apply backward compatibility for API_HUB_API_KEY
-import "./config-utils";
+import "./config-utils.ts";
 import {
   FUNCTIONAL_TESTING_API_KEY_HEADER,
   FunctionalTestingAPI,
-} from "./client/functional-testing-api";
+} from "./client/functional-testing-api.ts";
 import type {
   CancelFunctionalTestingSuiteExecutionParams,
   GetFunctionalTestingExecutionTestParams,
@@ -21,7 +21,7 @@ import type {
   ListFunctionalTestingSuiteExecutionsParams,
   RunFunctionalTestingSuiteParams,
   RunFunctionalTestingTestParams,
-} from "./client/functional-testing-types";
+} from "./client/functional-testing-types.ts";
 import {
   type ApiDefinitionParams,
   type ApiSearchParams,
@@ -65,11 +65,11 @@ import {
   type UpdateDocumentArgs,
   type UpdatePortalArgs,
   type UpdateProductArgs,
-} from "./client/index";
+} from "./client/index.ts";
 import type {
   OrganizationsListResponse,
   OrganizationsQueryParams,
-} from "./client/user-management-types";
+} from "./client/user-management-types.ts";
 
 const ConfigurationSchema = z.object({
   api_key: z.string().optional().describe("Swagger API key for authentication"),

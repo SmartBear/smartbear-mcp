@@ -1,4 +1,4 @@
-import { QMETRY_PATHS } from "../config/rest-endpoints";
+import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import {
   type CreateTestCasesPayload,
   DEFAULT_CREATE_TESTCASES_PAYLOAD,
@@ -18,9 +18,9 @@ import {
   type FetchTestCaseVersionDetailsPayload,
   type linkRequirementToTestCasePayload,
   type UpdateTestCasesPayload,
-} from "../types/testcase.js";
-import { qmetryRequest } from "./api/client-api";
-import { resolveDefaults } from "./utils";
+} from "../types/testcase.ts";
+import { qmetryRequest } from "./api/client-api.ts";
+import { resolveDefaults } from "./utils.ts";
 
 /**
  * Create test cases.

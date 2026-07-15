@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../config/constants";
+import { ENDPOINTS } from "../config/constants.ts";
 import {
   InputField,
   type ProjectContext,
   ResolverKeys,
-} from "../config/field-resolution.types";
-import { Cache } from "./cache/cache";
-import { LabelResolver } from "./resolvers/label-resolver";
+} from "../config/field-resolution.types.ts";
+import { Cache } from "./cache/cache.ts";
+import { LabelResolver } from "./resolvers/label-resolver.ts";
 
 vi.mock("./cache/cache");
 
@@ -33,7 +33,7 @@ describe("LabelResolver", () => {
   let mockCache: any;
   const context: ProjectContext = {
     projectKey: "PROJ",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Project Name",
   };
 
@@ -60,7 +60,7 @@ describe("LabelResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.SearchableField.LABEL,
         "Release_1",
       );
@@ -80,12 +80,12 @@ describe("LabelResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.SearchableField.LABEL,
         "Release_1",
       );
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(ENDPOINTS.LABELS(10000), {
+      expect(mockApiClient.get).toHaveBeenCalledWith(ENDPOINTS.LABELS(10_000), {
         search: "Release_1",
       });
       expect(mockCache.set).toHaveBeenCalledWith(
@@ -102,7 +102,7 @@ describe("LabelResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.SearchableField.LABEL,
         "NonExistent",
       );
@@ -117,7 +117,7 @@ describe("LabelResolver", () => {
       await expect(
         resolver.resolveAndReturn(
           "PROJ",
-          10000,
+          10_000,
           ResolverKeys.SearchableField.LABEL,
           "Release_1",
         ),

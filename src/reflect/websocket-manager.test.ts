@@ -1,23 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { WebSocketManager } from "./websocket-manager";
+import { WebSocketManager } from "./websocket-manager.ts";
 
 const apiKeyHeader = (key = "test-api-key") => ({ "X-API-KEY": key });
 
 // Mock the ws module
 vi.mock("ws", () => {
-  const OPEN = 1;
-  const CONNECTING = 0;
+  const Open = 1;
+  const Connecting = 0;
 
   const MockWebSocket = vi.fn().mockImplementation(() => ({
-    readyState: OPEN,
+    readyState: Open,
     on: vi.fn(),
     send: vi.fn(),
     close: vi.fn(),
     removeAllListeners: vi.fn(),
   }));
 
-  (MockWebSocket as any).OPEN = OPEN;
-  (MockWebSocket as any).CONNECTING = CONNECTING;
+  (MockWebSocket as any).OPEN = Open;
+  (MockWebSocket as any).CONNECTING = Connecting;
 
   return { default: MockWebSocket };
 });

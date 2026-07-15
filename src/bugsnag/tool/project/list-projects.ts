@@ -1,10 +1,10 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
-import type { Project } from "../../client/api/index";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Project } from "../../client/api/index.ts";
+import type { BugsnagClient } from "../../client.ts";
 
 const inputSchema = z.object({
   apiKey: z

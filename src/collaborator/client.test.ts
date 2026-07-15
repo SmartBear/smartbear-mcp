@@ -2,7 +2,7 @@ import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
 import type { ZodRawShape } from "zod";
-import { CollaboratorClient } from "./client";
+import { CollaboratorClient } from "./client.ts";
 
 const fetchMock = createFetchMock(vi);
 
@@ -15,7 +15,7 @@ async function createConfiguredClient(
   const client = new CollaboratorClient();
   await client.configure({} as any, {
     base_url: baseUrl,
-    username: username,
+    username,
     login_ticket: loginTicket,
   });
   return client;

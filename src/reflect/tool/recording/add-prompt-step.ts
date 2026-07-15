@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { ReflectClient } from "../../client";
-import type { MCPAddPromptStepSuccessResponse } from "../../types/mcp";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { ReflectClient } from "../../client.ts";
+import type { MCPAddPromptStepSuccessResponse } from "../../types/mcp.ts";
 
 export class AddPromptStep extends Tool<ReflectClient> {
   specification: ToolParams = {

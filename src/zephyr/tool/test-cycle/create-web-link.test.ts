@@ -4,13 +4,13 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestCycleWebLink } from "./create-web-link";
+import { CreateTestCycleWebLink } from "./create-web-link.ts";
 
 describe("CreateTestCycleWebLink", () => {
   let mockClient: any;
   let instance: CreateTestCycleWebLink;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -57,7 +57,7 @@ describe("CreateTestCycleWebLink", () => {
       description: "Link to documentation",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/SA-R1/links/weblinks",
@@ -84,7 +84,7 @@ describe("CreateTestCycleWebLink", () => {
       description: "Link to documentation",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcycles/10001/links/weblinks",
@@ -105,9 +105,7 @@ describe("CreateTestCycleWebLink", () => {
       extraField: "should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -121,7 +119,7 @@ describe("CreateTestCycleWebLink", () => {
       description: "Link to documentation",
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -132,9 +130,7 @@ describe("CreateTestCycleWebLink", () => {
       description: "Link to documentation",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if testCycleIdOrKey is missing", async () => {
@@ -143,8 +139,6 @@ describe("CreateTestCycleWebLink", () => {
       description: "Link to documentation",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

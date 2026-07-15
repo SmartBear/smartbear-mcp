@@ -1,13 +1,13 @@
-import type { CacheService } from "../../common/cache";
-import type { ProjectContext } from "../config/field-resolution.types";
-import type { ApiClient } from "../http/api-client";
-import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver";
-import { ComponentResolver } from "./resolvers/component-resolver";
-import { LabelResolver } from "./resolvers/label-resolver";
-import { RequirementIdResolver } from "./resolvers/requirement-id-resolver";
+import type { CacheService } from "../../common/cache.ts";
+import type { ProjectContext } from "../config/field-resolution.types.ts";
+import type { ApiClient } from "../http/api-client.ts";
+import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver.ts";
+import { ComponentResolver } from "./resolvers/component-resolver.ts";
+import { LabelResolver } from "./resolvers/label-resolver.ts";
+import { RequirementIdResolver } from "./resolvers/requirement-id-resolver.ts";
 import type { Resolver } from "./resolvers/resolver.ts";
 import { TestCaseUidResolver } from "./resolvers/test-case-uid-resolver.ts";
-import { TestCycleUidResolver } from "./resolvers/test-cycle-uid-resolver";
+import { TestCycleUidResolver } from "./resolvers/test-cycle-uid-resolver.ts";
 
 const ERROR_NO_PROJECT_CONTEXT =
   "No active project set. Please call set_project_context before performing this operation.";

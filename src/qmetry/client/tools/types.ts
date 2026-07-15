@@ -1,4 +1,4 @@
-import type { ToolParams } from "../../../common/types";
+import type { ToolParams } from "../../../common/types.ts";
 
 export interface QMetryToolParams extends ToolParams {
   handler: string;

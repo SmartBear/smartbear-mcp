@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { AUTOMATION_LIMITS, ENDPOINTS } from "../../config/constants";
-import { UploadAutomationResult } from "../test-automation/upload-automation-result";
+import { ToolError } from "../../../common/tools.ts";
+import { AUTOMATION_LIMITS, ENDPOINTS } from "../../config/constants.ts";
+import { UploadAutomationResult } from "../test-automation/upload-automation-result.ts";
 
 vi.mock("node:fs/promises", () => ({
   readFile: vi.fn(),

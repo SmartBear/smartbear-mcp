@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GetProjectParams,
   GetProject200Response as GetProjectResponse,
-} from "../../common/rest-api-schemas";
-import { GetProject } from "./get-project";
+} from "../../common/rest-api-schemas.ts";
+import { GetProject } from "./get-project.ts";
 
 describe("GetProject", () => {
   let mockClient: any;
@@ -32,7 +32,7 @@ describe("GetProject", () => {
   it("should call apiClient.get with string projectIdOrKey and return formatted content", async () => {
     const responseMock = {
       id: 1,
-      jiraProjectId: 10000,
+      jiraProjectId: 10_000,
       key: "PROJ",
       enabled: true,
     };
@@ -48,7 +48,7 @@ describe("GetProject", () => {
   it("should call apiClient.get with numeric string projectIdOrKey and return formatted content", async () => {
     const responseMock = {
       id: 39,
-      jiraProjectId: 10003,
+      jiraProjectId: 10_003,
       key: "PRIV",
       enabled: true,
     };

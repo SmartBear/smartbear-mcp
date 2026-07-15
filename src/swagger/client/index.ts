@@ -1,9 +1,9 @@
-export { SwaggerAPI } from "./api";
+export { SwaggerAPI } from "./api.ts";
 export {
   SwaggerConfiguration,
   type SwaggerConfigurationParameters,
-} from "./configuration";
-export * from "./portal-types";
-export * from "./registry-types";
-export { type SwaggerToolParams, TOOLS } from "./tools";
-export * from "./user-management-types";
+} from "./configuration.ts";
+export * from "./portal-types.ts";
+export * from "./registry-types.ts";
+export { type SwaggerToolParams, TOOLS } from "./tools.ts";
+export * from "./user-management-types.ts";

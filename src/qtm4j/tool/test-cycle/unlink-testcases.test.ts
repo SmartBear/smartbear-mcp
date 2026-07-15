@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { UnlinkTestCasesFromCycle } from "./unlink-testcases";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { UnlinkTestCasesFromCycle } from "./unlink-testcases.ts";
 
 describe("UnlinkTestCasesFromCycle", () => {
   let mockClient: any;
@@ -14,7 +14,7 @@ describe("UnlinkTestCasesFromCycle", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -81,10 +81,10 @@ describe("UnlinkTestCasesFromCycle", () => {
         testCaseKeys: ["SCRUM-TC-10", "SCRUM-TC-11"],
       });
 
-      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TR-1",
       ]);
-      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TC-10",
         "SCRUM-TC-11",
       ]);
@@ -134,7 +134,7 @@ describe("UnlinkTestCasesFromCycle", () => {
           filter: {
             executionResult: ["PASS"],
             labels: ["Deprecated"],
-            projectId: 10000,
+            projectId: 10_000,
           },
         },
       );

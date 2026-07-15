@@ -1,38 +1,38 @@
 import { z } from "zod";
 
-import { getUserAgent } from "../common/info";
-import { getRequestHeader } from "../common/request-context";
-import type { SmartBearMcpServer } from "../common/server";
-import { ToolError } from "../common/tools";
+import { getUserAgent } from "../common/info.ts";
+import { getRequestHeader } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
+import { ToolError } from "../common/tools.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterPromptFunction,
   RegisterToolsFunction,
-} from "../common/types";
+} from "../common/types.ts";
 import {
   API_KEY_HEADER,
   AUTHORIZATION_HEADER,
   REFLECT_API_TOKEN_HEADER,
-} from "./config/constants";
-import { SapTest } from "./prompt/sap-test";
-import { AddPromptStep } from "./tool/recording/add-prompt-step";
-import { AddSegment } from "./tool/recording/add-segment";
-import { ConnectToSession } from "./tool/recording/connect-to-session";
-import { DeletePreviousStep } from "./tool/recording/delete-previous-step";
-import { GetScreenshot } from "./tool/recording/get-screenshot";
-import { CancelSuiteExecution } from "./tool/suites/cancel-suite-execution";
-import { ExecuteSuite } from "./tool/suites/execute-suite";
-import { GetSuiteExecutionStatus } from "./tool/suites/get-suite-execution-status";
-import { ListSuiteExecutions } from "./tool/suites/list-suite-executions";
-import { ListSuites } from "./tool/suites/list-suites";
-import { GetTestDetail } from "./tool/tests/get-test-detail";
-import { GetTestStatus } from "./tool/tests/get-test-status";
-import { ListSegments } from "./tool/tests/list-segments";
-import { ListTests } from "./tool/tests/list-tests";
-import { RunTest } from "./tool/tests/run-test";
-import type { TestPlatform } from "./types/common";
-import type { WebSocketManager } from "./websocket-manager";
+} from "./config/constants.ts";
+import { SapTest } from "./prompt/sap-test.ts";
+import { AddPromptStep } from "./tool/recording/add-prompt-step.ts";
+import { AddSegment } from "./tool/recording/add-segment.ts";
+import { ConnectToSession } from "./tool/recording/connect-to-session.ts";
+import { DeletePreviousStep } from "./tool/recording/delete-previous-step.ts";
+import { GetScreenshot } from "./tool/recording/get-screenshot.ts";
+import { CancelSuiteExecution } from "./tool/suites/cancel-suite-execution.ts";
+import { ExecuteSuite } from "./tool/suites/execute-suite.ts";
+import { GetSuiteExecutionStatus } from "./tool/suites/get-suite-execution-status.ts";
+import { ListSuiteExecutions } from "./tool/suites/list-suite-executions.ts";
+import { ListSuites } from "./tool/suites/list-suites.ts";
+import { GetTestDetail } from "./tool/tests/get-test-detail.ts";
+import { GetTestStatus } from "./tool/tests/get-test-status.ts";
+import { ListSegments } from "./tool/tests/list-segments.ts";
+import { ListTests } from "./tool/tests/list-tests.ts";
+import { RunTest } from "./tool/tests/run-test.ts";
+import type { TestPlatform } from "./types/common.ts";
+import type { WebSocketManager } from "./websocket-manager.ts";
 
 const ConfigurationSchema = z.object({
   api_token: z.string().describe("Reflect API authentication token"),
@@ -192,7 +192,7 @@ export class ReflectClient implements Client {
     ];
 
     // Available for both OAuth and API key authentication
-    const oAuthAndAPISupportedTools = [
+    const oAuthAndApiSupportedTools = [
       new ListSegments(this),
       new ConnectToSession(this),
       new AddPromptStep(this),
@@ -202,8 +202,8 @@ export class ReflectClient implements Client {
     ];
 
     const tools = this.isOAuthRequest()
-      ? oAuthAndAPISupportedTools
-      : [...oAuthAndAPISupportedTools, ...apiOnlyTools];
+      ? oAuthAndApiSupportedTools
+      : [...oAuthAndApiSupportedTools, ...apiOnlyTools];
 
     for (const tool of tools) {
       register(tool.specification, tool.handle);

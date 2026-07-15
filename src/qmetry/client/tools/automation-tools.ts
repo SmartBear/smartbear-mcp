@@ -1,9 +1,9 @@
-import { QMetryToolsHandlers } from "../../config/constants";
+import { QMetryToolsHandlers } from "../../config/constants.ts";
 import {
   FetchAutomationStatusPayloadSchema,
   ImportAutomationResultsPayloadSchema,
-} from "../../types/common";
-import type { QMetryToolParams } from "./types";
+} from "../../types/common.ts";
+import type { QMetryToolParams } from "./types.ts";
 
 export const AUTOMATION_TOOLS: QMetryToolParams[] = [
   {
@@ -301,7 +301,7 @@ export const AUTOMATION_TOOLS: QMetryToolParams[] = [
       {
         description: "Fetch status for request ID 12345",
         parameters: {
-          requestID: 12345,
+          requestID: 12_345,
         },
         expectedOutput:
           "Status, progress, and details of the automation import job for request ID 12345.",

@@ -7,14 +7,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CreateFolderBody,
   CreateFolder201Response as createFolderResponse,
-} from "../../common/rest-api-schemas";
-import { CreateFolder } from "./create-folder";
+} from "../../common/rest-api-schemas.ts";
+import { CreateFolder } from "./create-folder.ts";
 
 describe("CreateFolder", () => {
   let mockClient: any;
   let instance: CreateFolder;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -63,7 +63,7 @@ describe("CreateFolder", () => {
       folderType: "TEST_CASE",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/folders",
@@ -81,9 +81,7 @@ describe("CreateFolder", () => {
       extraParam: "This should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -98,7 +96,7 @@ describe("CreateFolder", () => {
       folderType: "TEST_CYCLE",
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -110,9 +108,7 @@ describe("CreateFolder", () => {
       folderType: "TEST_CASE",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if name is missing", async () => {
@@ -122,9 +118,7 @@ describe("CreateFolder", () => {
       folderType: "TEST_CASE",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if folderType is missing", async () => {
@@ -134,8 +128,6 @@ describe("CreateFolder", () => {
       name: "Invalid Folder",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

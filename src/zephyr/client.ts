@@ -1,46 +1,46 @@
+import process from "node:process";
 import z from "zod";
-import { getRequestHeader } from "../common/request-context";
+import { getRequestHeader } from "../common/request-context.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types";
-import { ApiClient } from "./common/api-client";
-
-import { GetEnvironments } from "./tool/environment/get-environments";
-import { CreateFolder } from "./tool/folder/create-folder";
-import { GetTestCases as GetIssueLinkTestCases } from "./tool/issue-link/get-test-cases";
-import { GetTestCycles as GetIssueLinkTestCycles } from "./tool/issue-link/get-test-cycles";
+} from "../common/types.ts";
+import { ApiClient } from "./common/api-client.ts";
+import { GetEnvironments } from "./tool/environment/get-environments.ts";
+import { CreateFolder } from "./tool/folder/create-folder.ts";
+import { GetTestCases as GetIssueLinkTestCases } from "./tool/issue-link/get-test-cases.ts";
+import { GetTestCycles as GetIssueLinkTestCycles } from "./tool/issue-link/get-test-cycles.ts";
 import { GetTestExecutions as GetIssueLinkTestExecutions } from "./tool/issue-link/get-test-executions.ts";
-import { GetPriorities } from "./tool/priority/get-priorities";
-import { GetProject } from "./tool/project/get-project";
-import { GetProjects } from "./tool/project/get-projects";
-import { GetStatuses } from "./tool/status/get-statuses";
-import { CreateTestCaseIssueLink } from "./tool/test-case/create-issue-link";
-import { CreateTestCase } from "./tool/test-case/create-test-case";
-import { CreateTestScript } from "./tool/test-case/create-test-script";
+import { GetPriorities } from "./tool/priority/get-priorities.ts";
+import { GetProject } from "./tool/project/get-project.ts";
+import { GetProjects } from "./tool/project/get-projects.ts";
+import { GetStatuses } from "./tool/status/get-statuses.ts";
+import { CreateTestCaseIssueLink } from "./tool/test-case/create-issue-link.ts";
+import { CreateTestCase } from "./tool/test-case/create-test-case.ts";
+import { CreateTestScript } from "./tool/test-case/create-test-script.ts";
 import { CreateTestSteps } from "./tool/test-case/create-test-steps.ts";
 import { CreateTestCaseWebLink } from "./tool/test-case/create-web-link.ts";
-import { GetTestCaseLinks } from "./tool/test-case/get-links";
-import { GetTestCase } from "./tool/test-case/get-test-case";
-import { GetTestCases } from "./tool/test-case/get-test-cases";
-import { GetTestScript } from "./tool/test-case/get-test-script";
+import { GetTestCaseLinks } from "./tool/test-case/get-links.ts";
+import { GetTestCase } from "./tool/test-case/get-test-case.ts";
+import { GetTestCases } from "./tool/test-case/get-test-cases.ts";
+import { GetTestScript } from "./tool/test-case/get-test-script.ts";
 import { GetTestCaseSteps } from "./tool/test-case/get-test-steps.ts";
 import { UpdateTestCase } from "./tool/test-case/update-test-case.ts";
-import { CreateTestCycleIssueLink } from "./tool/test-cycle/create-issue-link";
-import { CreateTestCycle } from "./tool/test-cycle/create-test-cycle";
+import { CreateTestCycleIssueLink } from "./tool/test-cycle/create-issue-link.ts";
+import { CreateTestCycle } from "./tool/test-cycle/create-test-cycle.ts";
 import { CreateTestCycleWebLink } from "./tool/test-cycle/create-web-link.ts";
-import { GetTestCycleLinks } from "./tool/test-cycle/get-links";
-import { GetTestCycle } from "./tool/test-cycle/get-test-cycle";
-import { GetTestCycles } from "./tool/test-cycle/get-test-cycles";
+import { GetTestCycleLinks } from "./tool/test-cycle/get-links.ts";
+import { GetTestCycle } from "./tool/test-cycle/get-test-cycle.ts";
+import { GetTestCycles } from "./tool/test-cycle/get-test-cycles.ts";
 import { UpdateTestCycle } from "./tool/test-cycle/update-test-cycle.ts";
-import { CreateTestExecutionIssueLink } from "./tool/test-execution/create-issue-link";
-import { CreateTestExecution } from "./tool/test-execution/create-test-execution";
-import { GetTestExecution } from "./tool/test-execution/get-test-execution";
-import { GetTestExecutionLinks } from "./tool/test-execution/get-test-execution-links";
-import { GetTestExecutions } from "./tool/test-execution/get-test-executions";
+import { CreateTestExecutionIssueLink } from "./tool/test-execution/create-issue-link.ts";
+import { CreateTestExecution } from "./tool/test-execution/create-test-execution.ts";
+import { GetTestExecution } from "./tool/test-execution/get-test-execution.ts";
+import { GetTestExecutionLinks } from "./tool/test-execution/get-test-execution-links.ts";
+import { GetTestExecutions } from "./tool/test-execution/get-test-executions.ts";
 import { GetTestExecutionSteps } from "./tool/test-execution/get-test-steps.ts";
-import { UpdateTestExecution } from "./tool/test-execution/update-test-execution";
+import { UpdateTestExecution } from "./tool/test-execution/update-test-execution.ts";
 import { UpdateTestExecutionSteps } from "./tool/test-execution/update-test-steps.ts";
 
 const BASE_URL_DEFAULT = "https://api.zephyrscale.smartbear.com/v2";

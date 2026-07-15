@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../common/tools";
-import { ApiClient } from "./api-client";
-import { AuthService } from "./auth-service";
+import { ToolError } from "../../common/tools.ts";
+import { ApiClient } from "./api-client.ts";
+import { AuthService } from "./auth-service.ts";
 
 describe("ApiClient", () => {
   const token = "test-token";

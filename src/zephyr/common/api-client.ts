@@ -1,5 +1,5 @@
-import { ToolError } from "../../common/tools";
-import { AuthService } from "./auth-service";
+import { ToolError } from "../../common/tools.ts";
+import { AuthService } from "./auth-service.ts";
 
 export class ApiClient {
   public readonly baseUrl: string;

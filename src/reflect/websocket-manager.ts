@@ -4,8 +4,8 @@
  */
 
 import WebSocket from "ws";
-import { WEBSOCKET_HOSTNAME } from "./config/constants";
-import type { MCPMessage } from "./types/mcp";
+import { WEBSOCKET_HOSTNAME } from "./config/constants.ts";
+import type { MCPMessage } from "./types/mcp.ts";
 
 interface PendingResponse {
   resolve: (msg: unknown) => void;

@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { IncomingMessage } from "node:http";
-import type { McpClientIdentity } from "./client-identity";
+import type { McpClientIdentity } from "./client-identity.ts";
 
 // Storage for pre-request data that can be retrieved from a tool to prevent caching as part of the server instance in a session.
 // For example, the auth token.
@@ -46,7 +46,7 @@ export function setRequestMcpClient(identity: McpClientIdentity): void {
  */
 export function getRequestHeader(name: string): string | string[] | undefined {
   const context = getRequestContext();
-  if (!context?.headers) return undefined;
+  if (!context?.headers) return;
 
   // Headers are typically case-insensitive, but node http headers are lowercased
   // We'll try exact match first, then lowercase match

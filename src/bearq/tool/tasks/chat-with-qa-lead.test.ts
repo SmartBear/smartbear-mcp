@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { ChatWithQaLead } from "./chat-with-qa-lead";
+import { ChatWithQaLead } from "./chat-with-qa-lead.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

@@ -28,96 +28,96 @@ export interface QMetryErrorContext {
  */
 const ERROR_TEMPLATES = {
   AUTHENTICATION_FAILED: (baseUrl: string, errorText: string) =>
-    `QMetry API Authentication Failed: Invalid or expired API key.\n\n` +
-    `To resolve this issue:\n` +
+    "QMetry API Authentication Failed: Invalid or expired API key.\n\n" +
+    "To resolve this issue:\n" +
     `1. Log into your QMetry Test Management instance: ${baseUrl}\n` +
-    `2. Search Open API → Go To Open API Page\n` +
-    `3. Generate a new API key OR copy an existing valid key\n` +
-    `4. Copy the API key to your clipboard\n` +
-    `5. Restart VS Code or reload the MCP server\n` +
+    "2. Search Open API → Go To Open API Page\n" +
+    "3. Generate a new API key OR copy an existing valid key\n" +
+    "4. Copy the API key to your clipboard\n" +
+    "5. Restart VS Code or reload the MCP server\n" +
     `6. When prompted, paste the new API key for 'QMetry Open API Key'\n\n` +
-    `Note: API keys may expire or be revoked. Always use the latest key from your QMetry instance.\n` +
+    "Note: API keys may expire or be revoked. Always use the latest key from your QMetry instance.\n" +
     `Original error: ${errorText}`,
 
   AUTHORIZATION_ERROR: (errorText: string) =>
-    `QMetry Authorization Error: Insufficient permissions.\n\n` +
-    `Your API key is valid but lacks the necessary permissions for this operation.\n\n` +
-    `Possible causes:\n` +
+    "QMetry Authorization Error: Insufficient permissions.\n\n" +
+    "Your API key is valid but lacks the necessary permissions for this operation.\n\n" +
+    "Possible causes:\n" +
     `1. Your user role doesn't have access to this resource\n` +
-    `2. The project permissions are restricted\n` +
-    `3. The specific operation requires higher privileges\n\n` +
-    `To resolve:\n` +
-    `1. Contact your QMetry administrator to review your permissions\n` +
-    `2. Verify you have the correct project access\n` +
-    `3. Check if your user role includes the required privileges\n\n` +
+    "2. The project permissions are restricted\n" +
+    "3. The specific operation requires higher privileges\n\n" +
+    "To resolve:\n" +
+    "1. Contact your QMetry administrator to review your permissions\n" +
+    "2. Verify you have the correct project access\n" +
+    "3. Check if your user role includes the required privileges\n\n" +
     `Original error: ${errorText}`,
 
   PROJECT_ACCESS_ERROR: (project: string, errorText: string) =>
     `QMetry Project Access Error: Cannot access project '${project}'.\n\n` +
-    `Possible causes:\n` +
-    `1. API key lacks permissions for this project\n` +
+    "Possible causes:\n" +
+    "1. API key lacks permissions for this project\n" +
     `2. Project key '${project}' doesn't exist or is archived\n` +
     `3. Your user account doesn't have access to this project\n\n` +
-    `To resolve:\n` +
-    `1. Verify the project key is correct\n` +
-    `2. Check your QMetry permissions for this project\n` +
-    `3. Contact your QMetry administrator if needed\n\n` +
+    "To resolve:\n" +
+    "1. Verify the project key is correct\n" +
+    "2. Check your QMetry permissions for this project\n" +
+    "3. Contact your QMetry administrator if needed\n\n" +
     `Original error: ${errorText}`,
 
   GENERIC_API_ERROR: (status: number, baseUrl: string, errorText: string) =>
     `QMetry API request failed (${status}): ${errorText}\n\n` +
-    `Troubleshooting tips:\n` +
+    "Troubleshooting tips:\n" +
     `Verify your QMetry instance URL: ${baseUrl}\n` +
-    `Check if your API key is valid and not expired\n` +
-    `Ensure you have the necessary permissions\n` +
-    `Try accessing QMetry directly in your browser to confirm connectivity`,
+    "Check if your API key is valid and not expired\n" +
+    "Ensure you have the necessary permissions\n" +
+    "Try accessing QMetry directly in your browser to confirm connectivity",
 
   CORS_ERROR: (baseUrl: string, errorText: string) =>
-    `QMetry API CORS Error: Cross-Origin Request Blocked.\n\n` +
-    `CORS (Cross-Origin Resource Sharing) issue detected:\n` +
-    `Your browser is blocking the request due to CORS policy\n` +
-    `The QMetry server may not be configured to allow requests from this origin\n\n` +
-    `Possible solutions:\n` +
-    `1. Contact your QMetry administrator to configure CORS headers\n` +
+    "QMetry API CORS Error: Cross-Origin Request Blocked.\n\n" +
+    "CORS (Cross-Origin Resource Sharing) issue detected:\n" +
+    "Your browser is blocking the request due to CORS policy\n" +
+    "The QMetry server may not be configured to allow requests from this origin\n\n" +
+    "Possible solutions:\n" +
+    "1. Contact your QMetry administrator to configure CORS headers\n" +
     `2. Ensure the QMetry instance URL is correct: ${baseUrl}\n` +
-    `3. If using a proxy, verify proxy CORS configuration\n` +
-    `4. Try accessing QMetry from the same domain/protocol\n` +
-    `5. Check if browser extensions are blocking the request\n\n` +
+    "3. If using a proxy, verify proxy CORS configuration\n" +
+    "4. Try accessing QMetry from the same domain/protocol\n" +
+    "5. Check if browser extensions are blocking the request\n\n" +
     `Technical details: ${errorText}`,
 
   SSL_CERTIFICATE_ERROR: (baseUrl: string, errorText: string) =>
-    `QMetry API SSL Certificate Error: Unable to verify certificate.\n\n` +
-    `SSL/TLS Certificate verification failed - Common in corporate networks:\n` +
-    `• Corporate proxy/firewall (Zscaler, Forcepoint, etc.) is intercepting HTTPS traffic\n` +
-    `• Self-signed or corporate certificates are being used\n` +
-    `• Certificate chain validation is failing\n\n` +
-    `Solution for corporate network environments:\n` +
-    `Contact your IT administrator to:\n` +
-    `• Add QMetry domain to certificate bypass list\n` +
-    `• Configure corporate certificates properly\n` +
-    `• Whitelist the QMetry API endpoints\n` +
+    "QMetry API SSL Certificate Error: Unable to verify certificate.\n\n" +
+    "SSL/TLS Certificate verification failed - Common in corporate networks:\n" +
+    "• Corporate proxy/firewall (Zscaler, Forcepoint, etc.) is intercepting HTTPS traffic\n" +
+    "• Self-signed or corporate certificates are being used\n" +
+    "• Certificate chain validation is failing\n\n" +
+    "Solution for corporate network environments:\n" +
+    "Contact your IT administrator to:\n" +
+    "• Add QMetry domain to certificate bypass list\n" +
+    "• Configure corporate certificates properly\n" +
+    "• Whitelist the QMetry API endpoints\n" +
     `Target URL: ${baseUrl}\n` +
     `Technical details: ${errorText}`,
 
   INVALID_URL_ERROR: (baseUrl: string, path: string, errorText: string) =>
-    `QMetry API Invalid URL Error: The API endpoint appears to be incorrect.\n\n` +
-    `Request details:\n` +
+    "QMetry API Invalid URL Error: The API endpoint appears to be incorrect.\n\n" +
+    "Request details:\n" +
     `• Base URL: ${baseUrl}\n` +
     `• API Path: ${path}\n` +
     `• Full URL: ${baseUrl}${path}\n\n` +
-    `Common URL issues:\n` +
-    `1. Wrong API endpoint path (check QMetry API documentation)\n` +
+    "Common URL issues:\n" +
+    "1. Wrong API endpoint path (check QMetry API documentation)\n" +
     `2. Typo in the URL path (missing '/', wrong spelling)\n` +
-    `3. API version mismatch (v1, v2, etc.)\n` +
-    `4. Incorrect base URL (should end with QMetry instance domain)\n` +
-    `5. Body stream errors (often caused by malformed URLs or wrong HTTP method)\n\n` +
-    `Troubleshooting steps:\n` +
-    `1. Verify the API endpoint in QMetry documentation\n` +
-    `2. Check the QMetry instance URL is correct\n` +
-    `3. Test the endpoint manually using a REST client\n` +
-    `4. Ensure the API path matches the expected format\n` +
+    "3. API version mismatch (v1, v2, etc.)\n" +
+    "4. Incorrect base URL (should end with QMetry instance domain)\n" +
+    "5. Body stream errors (often caused by malformed URLs or wrong HTTP method)\n\n" +
+    "Troubleshooting steps:\n" +
+    "1. Verify the API endpoint in QMetry documentation\n" +
+    "2. Check the QMetry instance URL is correct\n" +
+    "3. Test the endpoint manually using a REST client\n" +
+    "4. Ensure the API path matches the expected format\n" +
     `5. If you see 'Body is unusable' errors, check for URL typos or wrong endpoints\n\n` +
-    `Expected URL format: https://your-qmetry-instance.com/rest/...\n` +
+    "Expected URL format: https://your-qmetry-instance.com/rest/...\n" +
     `Server response: ${errorText}`,
 };
 
@@ -407,8 +407,8 @@ export function handleQMetryFetchError(
     project,
     path,
   };
-  const isSSLError = isSslCertificateError(tempContext);
-  const isURLError = isInvalidUrlError(tempContext);
+  const isSslError = isSslCertificateError(tempContext);
+  const isUrlError = isInvalidUrlError(tempContext);
 
   const context: QMetryErrorContext = {
     status: 0, // Status 0 typically indicates network/CORS/SSL issues
@@ -417,7 +417,7 @@ export function handleQMetryFetchError(
     project,
     path,
     // Only assume CORS if it's not an SSL or URL error
-    isCorsError: !isSSLError && !isURLError,
+    isCorsError: !(isSslError || isUrlError),
   };
 
   throw createQMetryError(context);

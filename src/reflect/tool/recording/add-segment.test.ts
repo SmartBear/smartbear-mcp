@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AddSegment } from "./add-segment";
+import { AddSegment } from "./add-segment.ts";
 
 describe("AddSegment", () => {
   let mockClient: any;

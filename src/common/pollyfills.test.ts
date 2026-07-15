@@ -6,8 +6,8 @@ import {
   isElicitationPolyfillResult,
   isSamplingPolyfillResult,
   type SamplingPolyfillResult,
-} from "./pollyfills";
-import type { SmartBearMcpServer } from "./server";
+} from "./pollyfills.ts";
+import type { SmartBearMcpServer } from "./server.ts";
 
 describe("Polyfills", () => {
   describe("executeSamplingOrPolyfill", () => {

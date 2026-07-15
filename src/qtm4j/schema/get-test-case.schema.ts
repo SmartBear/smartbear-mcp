@@ -1,5 +1,5 @@
 import * as zod from "zod";
-import { PAGINATION } from "../config/constants";
+import { PAGINATION } from "../config/constants.ts";
 
 export const SearchTestCaseFilter = zod
   .object({

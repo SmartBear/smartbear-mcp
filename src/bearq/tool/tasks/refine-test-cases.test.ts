@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { RefineTestCases } from "./refine-test-cases";
+import { RefineTestCases } from "./refine-test-cases.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

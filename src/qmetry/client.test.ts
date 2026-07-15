@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { QmetryClient } from "./client";
-import { TOOLS } from "./client/tools/index";
+import { TOOLS } from "./client/tools/index.ts";
+import { QmetryClient } from "./client.ts";
 
 const fetchMock = createFetchMock(vi);
 

@@ -47,7 +47,7 @@ export const UpdateTestCycleBody = zod.object({
     .describe("Updated test cycle name / title. Max 255 characters."),
   description: zod
     .string()
-    .max(65535, "Description must not exceed 65,535 characters.")
+    .max(65_535, "Description must not exceed 65,535 characters.")
     .nullable()
     .optional()
     .describe(

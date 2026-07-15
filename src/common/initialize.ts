@@ -1,6 +1,9 @@
-import { setProcessClientIdentity, toClientIdentity } from "./client-identity";
-import type { SmartBearMcpServer } from "./server";
-import type { ClientInfo } from "./types";
+import {
+  setProcessClientIdentity,
+  toClientIdentity,
+} from "./client-identity.ts";
+import type { SmartBearMcpServer } from "./server.ts";
+import type { ClientInfo } from "./types.ts";
 
 /**
  * Applies the client info and capability flags carried by an MCP `initialize`

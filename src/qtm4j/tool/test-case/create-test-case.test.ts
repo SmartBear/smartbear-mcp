@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../config/constants";
-import { CreateTestCase } from "./create-test-case";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { CreateTestCase } from "./create-test-case.ts";
 
 describe("CreateTestCase", () => {
   let mockClient: any;
@@ -15,7 +15,7 @@ describe("CreateTestCase", () => {
     mockFieldResolver = {
       requireProjectContext: vi.fn().mockReturnValue({
         projectKey: "PROJ",
-        projectId: 10000,
+        projectId: 10_000,
         projectName: "Project Name",
       }),
       getResolver: vi.fn().mockReturnValue({ resolve: mockResolve }),

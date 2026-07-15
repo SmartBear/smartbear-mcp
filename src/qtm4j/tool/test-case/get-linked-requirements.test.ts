@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { GetLinkedRequirements } from "./get-linked-requirements";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { GetLinkedRequirements } from "./get-linked-requirements.ts";
 
 describe("GetLinkedRequirements", () => {
   let mockClient: any;
@@ -13,7 +13,7 @@ describe("GetLinkedRequirements", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -23,7 +23,7 @@ describe("GetLinkedRequirements", () => {
     maxResults: 50,
     data: [
       {
-        id: 10001,
+        id: 10_001,
         key: "SCRUM-1",
         summary: "User login story",
         status: { name: "In Progress" },
@@ -32,7 +32,7 @@ describe("GetLinkedRequirements", () => {
         tcVersionNo: 2,
       },
       {
-        id: 10002,
+        id: 10_002,
         key: "SCRUM-2",
         summary: "User logout story",
         status: { name: "To Do" },
@@ -93,7 +93,7 @@ describe("GetLinkedRequirements", () => {
       expect(mockRegistry.getResolver).toHaveBeenCalledWith(
         ResolverKeys.SearchableField.TEST_CASE_KEY_TO_UID,
       );
-      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockTcResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TC-145",
       ]);
       expect(mockApiClient.get).toHaveBeenCalledWith(

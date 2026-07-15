@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GetScreenshot } from "./get-screenshot";
+import { GetScreenshot } from "./get-screenshot.ts";
 
 describe("GetScreenshot", () => {
   let mockClient: any;

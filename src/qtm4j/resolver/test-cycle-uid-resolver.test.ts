@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../config/constants";
-import { ResolverKeys } from "../config/field-resolution.types";
-import { TestCycleUidResolver } from "./resolvers/test-cycle-uid-resolver";
+import { ENDPOINTS } from "../config/constants.ts";
+import { ResolverKeys } from "../config/field-resolution.types.ts";
+import { TestCycleUidResolver } from "./resolvers/test-cycle-uid-resolver.ts";
 
 describe("TestCycleUidResolver", () => {
   let mockApiClient: any;
@@ -23,7 +23,7 @@ describe("TestCycleUidResolver", () => {
 
   describe("resolveAndReturn", () => {
     it("should return empty object when keys array is empty", async () => {
-      const result = await resolver.resolveAndReturn(10000, []);
+      const result = await resolver.resolveAndReturn(10_000, []);
       expect(result).toEqual({});
       expect(mockApiClient.get).not.toHaveBeenCalled();
     });
@@ -35,13 +35,13 @@ describe("TestCycleUidResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(10000, [
+      const result = await resolver.resolveAndReturn(10_000, [
         "SCRUM-TR-1",
         "SCRUM-TR-2",
       ]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(10000),
+        ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(10_000),
         { keys: "SCRUM-TR-1,SCRUM-TR-2" },
       );
       expect(result).toEqual(mockResponse);
@@ -53,10 +53,10 @@ describe("TestCycleUidResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(10000, ["SCRUM-TR-10"]);
+      const result = await resolver.resolveAndReturn(10_000, ["SCRUM-TR-10"]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(10000),
+        ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(10_000),
         { keys: "SCRUM-TR-10" },
       );
       expect(result).toEqual(mockResponse);
@@ -65,10 +65,10 @@ describe("TestCycleUidResolver", () => {
     it("should use provided projectId in endpoint", async () => {
       mockApiClient.get.mockResolvedValueOnce({});
 
-      await resolver.resolveAndReturn(99999, ["SCRUM-TR-1"]);
+      await resolver.resolveAndReturn(99_999, ["SCRUM-TR-1"]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(99999),
+        ENDPOINTS.RESOLVE_TEST_CYCLE_IDS(99_999),
         expect.any(Object),
       );
     });
@@ -81,7 +81,7 @@ describe("TestCycleUidResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(20000, [
+      const result = await resolver.resolveAndReturn(20_000, [
         "AD-CY-1",
         "AD-CY-2",
         "AD-CY-3",
@@ -94,7 +94,7 @@ describe("TestCycleUidResolver", () => {
       mockApiClient.get.mockRejectedValueOnce(new Error("Network Error"));
 
       await expect(
-        resolver.resolveAndReturn(10000, ["SCRUM-TR-1"]),
+        resolver.resolveAndReturn(10_000, ["SCRUM-TR-1"]),
       ).rejects.toThrow("Network Error");
     });
   });

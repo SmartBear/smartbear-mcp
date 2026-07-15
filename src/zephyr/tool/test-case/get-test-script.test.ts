@@ -4,14 +4,14 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GetTestCaseTestScript200Response as GetTestScriptResponse } from "../../common/rest-api-schemas";
-import { GetTestScript } from "./get-test-script";
+import { GetTestCaseTestScript200Response as GetTestScriptResponse } from "../../common/rest-api-schemas.ts";
+import { GetTestScript } from "./get-test-script.ts";
 
 describe("GetTestScript", () => {
   let mockClient: any;
   let instance: GetTestScript;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -58,7 +58,7 @@ describe("GetTestScript", () => {
       testCaseKey: "SA-T1",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/SA-T1/testscript",
@@ -80,7 +80,7 @@ describe("GetTestScript", () => {
       testCaseKey: "MM2-T15",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/MM2-T15/testscript",
@@ -95,9 +95,7 @@ describe("GetTestScript", () => {
       extraParam: "should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.get throwing error", async () => {
@@ -107,7 +105,7 @@ describe("GetTestScript", () => {
       testCaseKey: "SA-T3",
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -119,7 +117,7 @@ describe("GetTestScript", () => {
       testCaseKey: "SA-T4",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(result.structuredContent).toBeUndefined();
   });
@@ -127,9 +125,7 @@ describe("GetTestScript", () => {
   it("should throw validation error if testCaseKey is missing", async () => {
     const args = {};
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if testCaseKey has invalid format", async () => {
@@ -137,8 +133,6 @@ describe("GetTestScript", () => {
       testCaseKey: "invalid-key",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

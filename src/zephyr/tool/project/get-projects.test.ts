@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ListProjectsQueryParams,
   ListProjects200Response as ListProjectsResponse,
-} from "../../common/rest-api-schemas";
-import { GetProjects } from "./get-projects";
+} from "../../common/rest-api-schemas.ts";
+import { GetProjects } from "./get-projects.ts";
 
 describe("GetProjects", () => {
   let mockClient: any;
@@ -39,7 +39,7 @@ describe("GetProjects", () => {
       values: [
         {
           id: 1,
-          jiraProjectId: 10000,
+          jiraProjectId: 10_000,
           key: "PROJ",
           enabled: true,
         },
@@ -65,7 +65,7 @@ describe("GetProjects", () => {
       values: [
         {
           id: 1,
-          jiraProjectId: 10000,
+          jiraProjectId: 10_000,
           key: "PROJ",
           enabled: true,
         },

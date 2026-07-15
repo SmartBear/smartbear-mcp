@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { RefineTestsInFunctionalAreas } from "./refine-tests-in-functional-areas";
+import { RefineTestsInFunctionalAreas } from "./refine-tests-in-functional-areas.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

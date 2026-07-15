@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../config/constants";
+import { ENDPOINTS } from "../config/constants.ts";
 import {
   InputField,
   type ProjectContext,
   ResolverKeys,
-} from "../config/field-resolution.types";
-import { Cache } from "./cache/cache";
-import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver";
+} from "../config/field-resolution.types.ts";
+import { Cache } from "./cache/cache.ts";
+import { CommonAttributeResolver } from "./resolvers/common-attribute-resolver.ts";
 
 vi.mock("./cache/cache");
 
@@ -33,7 +33,7 @@ describe("CommonAttributeResolver", () => {
   let mockCache: any;
   const context: ProjectContext = {
     projectKey: "PROJ",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Project Name",
   };
 
@@ -65,7 +65,7 @@ describe("CommonAttributeResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.CommonAttribute.PRIORITY,
         "High",
       );
@@ -88,13 +88,13 @@ describe("CommonAttributeResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.CommonAttribute.PRIORITY,
         "High",
       );
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.COMMON_ATTRIBUTES(10000),
+        ENDPOINTS.COMMON_ATTRIBUTES(10_000),
       );
       expect(mockCache.set).toHaveBeenCalledTimes(2);
       expect(result).toBe("1");
@@ -108,7 +108,7 @@ describe("CommonAttributeResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.CommonAttribute.PRIORITY,
         "NonExistent",
       );
@@ -123,7 +123,7 @@ describe("CommonAttributeResolver", () => {
       await expect(
         resolver.resolveAndReturn(
           "PROJ",
-          10000,
+          10_000,
           ResolverKeys.CommonAttribute.PRIORITY,
           "High",
         ),
@@ -221,10 +221,10 @@ describe("CommonAttributeResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockAttributes);
 
-      const result = await resolver.preload("PROJ", 10000);
+      const result = await resolver.preload("PROJ", 10_000);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.COMMON_ATTRIBUTES(10000),
+        ENDPOINTS.COMMON_ATTRIBUTES(10_000),
       );
       expect(mockCache.set).toHaveBeenCalledWith(
         "PROJ",
@@ -246,14 +246,14 @@ describe("CommonAttributeResolver", () => {
 
     it("should handle empty attributes response", async () => {
       mockApiClient.get.mockResolvedValueOnce({});
-      const result = await resolver.preload("PROJ", 10000);
+      const result = await resolver.preload("PROJ", 10_000);
       expect(result).toEqual({});
       expect(mockCache.set).not.toHaveBeenCalled();
     });
 
     it("should propagate API errors", async () => {
       mockApiClient.get.mockRejectedValueOnce(new Error("Network Error"));
-      await expect(resolver.preload("PROJ", 10000)).rejects.toThrow(
+      await expect(resolver.preload("PROJ", 10_000)).rejects.toThrow(
         "Network Error",
       );
     });

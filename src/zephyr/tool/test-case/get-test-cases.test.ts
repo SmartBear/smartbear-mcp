@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ListTestCasesCursorPaginatedQueryParams,
   ListTestCasesCursorPaginated200Response as ListTestCasesCursorPaginatedResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestCases } from "./get-test-cases";
+} from "../../common/rest-api-schemas.ts";
+import { GetTestCases } from "./get-test-cases.ts";
 
 describe("GetTestCases", () => {
   let mockClient: any;
@@ -43,27 +43,27 @@ describe("GetTestCases", () => {
           key: "PROJ-T1",
           name: "Test Case 1",
           project: {
-            id: 10000,
+            id: 10_000,
           },
           createdOn: "2023-01-01T00:00:00Z",
           objective: "Ensure feature X works as expected",
           precondition: "User is logged in",
-          estimatedTime: 138000,
+          estimatedTime: 138_000,
           labels: ["Regression", "Performance", "Automated"],
           component: {
-            id: 10001,
+            id: 10_001,
             self: "https://jira.example.com/rest/api/2/component/10001",
           },
           priority: {
-            id: 10002,
+            id: 10_002,
             self: "https://api.example.com/priorities/10002",
           },
           status: {
-            id: 10000,
+            id: 10_000,
             self: "https://api.example.com/statuses/10000",
           },
           folder: {
-            id: 100006,
+            id: 100_006,
             self: "https://api.example.com/folders/10006",
           },
           owner: {
@@ -86,7 +86,7 @@ describe("GetTestCases", () => {
             self: "http://example.com",
             issues: [
               {
-                issueId: 10100,
+                issueId: 10_100,
                 self: "http://example.com",
                 id: 1,
                 target:
@@ -127,27 +127,27 @@ describe("GetTestCases", () => {
           key: "PROJ-T1",
           name: "Test Case 1",
           project: {
-            id: 10000,
+            id: 10_000,
           },
           createdOn: "2023-01-01T00:00:00Z",
           objective: "Ensure feature X works as expected",
           precondition: "User is logged in",
-          estimatedTime: 138000,
+          estimatedTime: 138_000,
           labels: ["Regression", "Performance", "Automated"],
           component: {
-            id: 10001,
+            id: 10_001,
             self: "https://jira.example.com/rest/api/2/component/10001",
           },
           priority: {
-            id: 10002,
+            id: 10_002,
             self: "https://api.example.com/priorities/10002",
           },
           status: {
-            id: 10000,
+            id: 10_000,
             self: "https://api.example.com/statuses/10000",
           },
           folder: {
-            id: 100006,
+            id: 100_006,
             self: "https://api.example.com/folders/10006",
           },
           owner: {
@@ -170,7 +170,7 @@ describe("GetTestCases", () => {
             self: "http://example.com",
             issues: [
               {
-                issueId: 10100,
+                issueId: 10_100,
                 self: "http://example.com",
                 id: 1,
                 target:

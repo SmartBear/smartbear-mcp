@@ -1,4 +1,4 @@
-import { QMetryToolsHandlers } from "../config/constants";
+import { QMetryToolsHandlers } from "../config/constants.ts";
 
 /**
  * Configuration for auto-resolving viewId and folderPath for different QMetry modules
@@ -165,12 +165,13 @@ export function extractProjectContext(projectInfo: any): {
   orgCode: string | undefined;
 } {
   const rawScopeId = projectInfo?.currentProjectId;
-  const parsedScopeId = rawScopeId !== undefined ? Number(rawScopeId) : NaN;
+  const parsedScopeId =
+    rawScopeId === undefined ? Number.NaN : Number(rawScopeId);
   return {
     scopeId: Number.isFinite(parsedScopeId) ? parsedScopeId : undefined,
     orgCode:
-      projectInfo?.clientCode !== undefined
-        ? String(projectInfo.clientCode)
-        : undefined,
+      projectInfo?.clientCode === undefined
+        ? undefined
+        : String(projectInfo.clientCode),
   };
 }

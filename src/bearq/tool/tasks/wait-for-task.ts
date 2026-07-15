@@ -1,9 +1,9 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { BearQClient } from "../../client";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { BearQClient } from "../../client.ts";
 
 const inputSchema = z.object({
   taskId: z.number().int().positive().describe("BearQ task ID."),
@@ -17,7 +17,7 @@ function parseFrame(frame: string): { event: string; data: string } | null {
     if (line.startsWith("event:")) event = line.slice(6).trim();
     else if (line.startsWith("data:")) data = line.slice(5).trim();
   }
-  if (!event || !data) return null;
+  if (!(event && data)) return null;
   return { event, data };
 }
 

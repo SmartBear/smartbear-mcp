@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ListEnvironmentsQueryParams,
   ListEnvironments200Response as ListEnvironmentsResponse,
-} from "../../common/rest-api-schemas";
-import { GetEnvironments } from "./get-environments";
+} from "../../common/rest-api-schemas.ts";
+import { GetEnvironments } from "./get-environments.ts";
 
 const responseFromSpecificProjectMock = {
   next: null,

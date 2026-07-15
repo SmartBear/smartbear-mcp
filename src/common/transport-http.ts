@@ -1,18 +1,18 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
+import process from "node:process";
 import querystring from "node:querystring";
-
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { clientRegistry } from "./client-registry";
-import { handleInitializeMessage } from "./initialize";
-import { setRequestMcpClient, withRequestContext } from "./request-context";
-import { SmartBearMcpServer } from "./server";
-import { isDraining, registerShutdownHandler } from "./shutdown";
-import { getEnvVarName } from "./transport-stdio";
-import { getTypeDescription, isOptionalType } from "./zod-utils";
+import { clientRegistry } from "./client-registry.ts";
+import { handleInitializeMessage } from "./initialize.ts";
+import { setRequestMcpClient, withRequestContext } from "./request-context.ts";
+import { SmartBearMcpServer } from "./server.ts";
+import { isDraining, registerShutdownHandler } from "./shutdown.ts";
+import { getEnvVarName } from "./transport-stdio.ts";
+import { getTypeDescription, isOptionalType } from "./zod-utils.ts";
 
 type SessionEntry = {
   server: SmartBearMcpServer;
@@ -82,7 +82,7 @@ export function getBaseUrl(req: IncomingMessage): string {
  * Supports both SSE (legacy) and StreamableHTTP transports for backwards compatibility
  */
 export async function runHttpMode() {
-  const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3000;
+  const Port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3000;
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
     "http://localhost:3000",
   ];
@@ -180,15 +180,15 @@ export async function runHttpMode() {
     },
   );
 
-  httpServer.listen(PORT, () => {
-    console.log(`[MCP HTTP Server] Listening on http://localhost:${PORT}`);
-    console.log(`[MCP HTTP Server] Liveness:  http://localhost:${PORT}/health`);
-    console.log(`[MCP HTTP Server] Readiness: http://localhost:${PORT}/ready`);
+  httpServer.listen(Port, () => {
+    console.log(`[MCP HTTP Server] Listening on http://localhost:${Port}`);
+    console.log(`[MCP HTTP Server] Liveness:  http://localhost:${Port}/health`);
+    console.log(`[MCP HTTP Server] Readiness: http://localhost:${Port}/ready`);
     console.log(
-      `[MCP HTTP Server] Modern endpoint: http://localhost:${PORT}/mcp (Streamable HTTP)`,
+      `[MCP HTTP Server] Modern endpoint: http://localhost:${Port}/mcp (Streamable HTTP)`,
     );
     console.log(
-      `[MCP HTTP Server] Legacy endpoint: http://localhost:${PORT}/sse (SSE)`,
+      `[MCP HTTP Server] Legacy endpoint: http://localhost:${Port}/sse (SSE)`,
     );
 
     const headerHelp = getHttpHeadersHelp();
@@ -198,7 +198,7 @@ export async function runHttpMode() {
       );
     } else {
       console.warn(
-        `[MCP HTTP Server] No clients support HTTP header configuration`,
+        "[MCP HTTP Server] No clients support HTTP header configuration",
       );
     }
   });
@@ -267,7 +267,7 @@ export async function drainHttpTransport(
  */
 async function parseRequestBody(req: IncomingMessage): Promise<unknown> {
   if (req.method !== "POST") {
-    return undefined;
+    return;
   }
 
   let body = "";
@@ -314,7 +314,7 @@ function getExistingTransport(
     JSON.stringify({
       jsonrpc: "2.0",
       error: {
-        code: -32000,
+        code: -32_000,
         message:
           "Bad Request: Session exists but uses a different transport protocol",
       },
@@ -412,7 +412,7 @@ export async function handleStreamableHttpRequest(
         JSON.stringify({
           jsonrpc: "2.0",
           error: {
-            code: -32001,
+            code: -32_001,
             message: "Session not found",
           },
           id: null,
@@ -452,7 +452,7 @@ export async function handleStreamableHttpRequest(
         JSON.stringify({
           jsonrpc: "2.0",
           error: {
-            code: -32000,
+            code: -32_000,
             message: "Bad Request: Invalid request",
           },
           id: null,
@@ -651,9 +651,7 @@ export async function newServer(
     const configuredCount = await withRequestContext(req, () =>
       clientRegistry.configure(
         server,
-        (client, key) => {
-          return getConfigValue(client.configPrefix, key, req);
-        },
+        (client, key) => getConfigValue(client.configPrefix, key, req),
         true, // ignoreMissingRequiredConfigs
       ),
     );

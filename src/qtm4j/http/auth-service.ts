@@ -1,5 +1,5 @@
-import { getUserAgent } from "../../common/info";
-import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants";
+import { getUserAgent } from "../../common/info.ts";
+import { CONTENT_TYPES, HTTP_HEADERS } from "../config/constants.ts";
 
 /**
  * AuthService handles authentication for QTM4J API requests

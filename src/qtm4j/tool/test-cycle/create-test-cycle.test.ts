@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../config/constants";
-import { CreateTestCycle } from "./create-test-cycle";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { CreateTestCycle } from "./create-test-cycle.ts";
 
 describe("CreateTestCycle", () => {
   let mockClient: any;
@@ -8,21 +8,21 @@ describe("CreateTestCycle", () => {
   let mockFieldResolver: any;
   let instance: CreateTestCycle;
 
-  const PROJECT_CONTEXT = {
-    projectId: 10000,
+  const ProjectContext = {
+    projectId: 10_000,
     projectKey: "PROJ",
     projectName: "Project Name",
   };
 
-  const MINIMAL_RESPONSE = { id: "amKIREkhbN8", key: "PROJ-TR-1" };
-  const MINIMAL_ARGS = { summary: "Smoke Test Cycle" };
+  const MinimalResponse = { id: "amKIREkhbN8", key: "PROJ-TR-1" };
+  const MinimalArgs = { summary: "Smoke Test Cycle" };
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     const mockResolve = vi.fn().mockResolvedValue(undefined);
     mockFieldResolver = {
-      requireProjectContext: vi.fn().mockReturnValue(PROJECT_CONTEXT),
+      requireProjectContext: vi.fn().mockReturnValue(ProjectContext),
       getResolver: vi.fn().mockReturnValue({ resolve: mockResolve }),
     };
 
@@ -61,9 +61,9 @@ describe("CreateTestCycle", () => {
 
   describe("handle", () => {
     it("should resolve all configured fields and call the create endpoint", async () => {
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
-      const result = await instance.handle(MINIMAL_ARGS);
+      const result = await instance.handle(MinimalArgs);
 
       // FIELD_CONFIG has 5 entries: PRIORITY, STATUS, FOLDER, LABELS, COMPONENTS
       expect(mockFieldResolver.getResolver).toHaveBeenCalledTimes(5);
@@ -72,17 +72,17 @@ describe("CreateTestCycle", () => {
         ENDPOINTS.CREATE_TEST_CYCLE,
         expect.objectContaining({
           summary: "Smoke Test Cycle",
-          projectId: 10000,
+          projectId: 10_000,
         }),
       );
-      expect(result.structuredContent).toEqual(MINIMAL_RESPONSE);
+      expect(result.structuredContent).toEqual(MinimalResponse);
       expect(result.content).toEqual([]);
     });
 
     it("should always set folderId to 'MCP Generated' before resolution", async () => {
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
-      await instance.handle(MINIMAL_ARGS);
+      await instance.handle(MinimalArgs);
 
       const resolveCall = mockFieldResolver
         .getResolver()
@@ -92,18 +92,18 @@ describe("CreateTestCycle", () => {
     });
 
     it("should call the create endpoint with projectId from context", async () => {
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
-      await instance.handle(MINIMAL_ARGS);
+      await instance.handle(MinimalArgs);
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
         ENDPOINTS.CREATE_TEST_CYCLE,
-        expect.objectContaining({ projectId: 10000 }),
+        expect.objectContaining({ projectId: 10_000 }),
       );
     });
 
     it("should include all optional scalar fields in the request body", async () => {
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
       const rawArgs = {
         summary: "Full Regression",
@@ -150,7 +150,7 @@ describe("CreateTestCycle", () => {
             },
           ),
       });
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
       const result = await instance.handle({
         summary: "Cycle",
@@ -184,7 +184,7 @@ describe("CreateTestCycle", () => {
             },
           ),
       });
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
       const result = await instance.handle({
         summary: "Cycle",
@@ -213,7 +213,7 @@ describe("CreateTestCycle", () => {
             },
           ),
       });
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
       const result = await instance.handle({
         summary: "Cycle",
@@ -242,7 +242,7 @@ describe("CreateTestCycle", () => {
             },
           ),
       });
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
       const result = await instance.handle({
         summary: "Cycle",
@@ -271,7 +271,7 @@ describe("CreateTestCycle", () => {
             },
           ),
       });
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
       const result = await instance.handle({
         summary: "Cycle",
@@ -282,9 +282,9 @@ describe("CreateTestCycle", () => {
     });
 
     it("should return empty content when no warnings", async () => {
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
-      const result = await instance.handle(MINIMAL_ARGS);
+      const result = await instance.handle(MinimalArgs);
 
       expect(result.content).toEqual([]);
     });
@@ -294,7 +294,7 @@ describe("CreateTestCycle", () => {
         throw new Error("No active project set");
       });
 
-      await expect(instance.handle(MINIMAL_ARGS)).rejects.toThrow(
+      await expect(instance.handle(MinimalArgs)).rejects.toThrow(
         "No active project set",
       );
     });
@@ -302,13 +302,13 @@ describe("CreateTestCycle", () => {
     it("should propagate API errors", async () => {
       mockApiClient.post.mockRejectedValueOnce(new Error("API Error"));
 
-      await expect(instance.handle(MINIMAL_ARGS)).rejects.toThrow("API Error");
+      await expect(instance.handle(MinimalArgs)).rejects.toThrow("API Error");
     });
 
     it("should validate API response against schema", async () => {
       mockApiClient.post.mockResolvedValueOnce({ invalid: "response" });
 
-      await expect(instance.handle(MINIMAL_ARGS)).rejects.toThrow();
+      await expect(instance.handle(MinimalArgs)).rejects.toThrow();
     });
 
     it("should reject an invalid plannedStartDate format", async () => {
@@ -340,7 +340,7 @@ describe("CreateTestCycle", () => {
     });
 
     it("should include description in the request body", async () => {
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
       await instance.handle({
         summary: "Cycle",
@@ -354,7 +354,7 @@ describe("CreateTestCycle", () => {
     });
 
     it("should include reporter in the request body", async () => {
-      mockApiClient.post.mockResolvedValueOnce(MINIMAL_RESPONSE);
+      mockApiClient.post.mockResolvedValueOnce(MinimalResponse);
 
       await instance.handle({
         summary: "Cycle",

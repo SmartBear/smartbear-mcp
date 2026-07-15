@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { QMETRY_HANDLER_MAP } from "../client/handlers.js";
+import { QMETRY_HANDLER_MAP } from "../client/handlers.ts";
 import {
   fetchRequirementDetails,
   fetchRequirements,
-} from "../client/requirement.js";
-import { fetchTestCasesLinkedToRequirement } from "../client/testcase.js";
-import { QMetryToolsHandlers } from "../config/constants.js";
-import { DEFAULT_FETCH_REQUIREMENTS_PAYLOAD } from "../types/requirements.js";
+} from "../client/requirement.ts";
+import { fetchTestCasesLinkedToRequirement } from "../client/testcase.ts";
+import { QMetryToolsHandlers } from "../config/constants.ts";
+import { DEFAULT_FETCH_REQUIREMENTS_PAYLOAD } from "../types/requirements.ts";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -56,7 +56,7 @@ describe("requirement API clients", () => {
     it("should POST with correct URL and headers", async () => {
       const payload = {
         ...DEFAULT_FETCH_REQUIREMENTS_PAYLOAD,
-        viewId: 54321,
+        viewId: 54_321,
         folderPath: "",
       };
       const mockResponse = {
@@ -105,7 +105,7 @@ describe("requirement API clients", () => {
     });
 
     it("should throw error when folderPath is missing", async () => {
-      const payload = { viewId: 54321 };
+      const payload = { viewId: 54_321 };
 
       await expect(
         fetchRequirements(token, baseUrl, projectKey, payload as any),
@@ -118,7 +118,7 @@ describe("requirement API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockFail(403, "Access denied"));
 
       const payload = {
-        viewId: 54321,
+        viewId: 54_321,
         folderPath: "",
         isFilterSaveRequired: false,
       };
@@ -132,7 +132,7 @@ describe("requirement API clients", () => {
   describe("fetchRequirementDetails", () => {
     it("should POST with correct URL and headers for requirement details", async () => {
       const mockResponse = {
-        id: 2499315,
+        id: 2_499_315,
         entityKey: "MAC-RQ-748",
         name: "Accessories & OS",
         summary: "Requirement for accessories and OS compatibility",
@@ -142,7 +142,7 @@ describe("requirement API clients", () => {
 
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockResponse));
 
-      const payload = { id: 2499315, version: 1 };
+      const payload = { id: 2_499_315, version: 1 };
       const result = await fetchRequirementDetails(
         token,
         baseUrl,
@@ -163,7 +163,7 @@ describe("requirement API clients", () => {
         }),
       );
 
-      expect(result).toHaveProperty("id", 2499315);
+      expect(result).toHaveProperty("id", 2_499_315);
       expect(result).toHaveProperty("entityKey", "MAC-RQ-748");
       expect(result).toHaveProperty("name", "Accessories & OS");
     });
@@ -179,7 +179,7 @@ describe("requirement API clients", () => {
     });
 
     it("should throw error when version is missing", async () => {
-      const payload = { id: 2499315 };
+      const payload = { id: 2_499_315 };
 
       await expect(
         fetchRequirementDetails(token, baseUrl, projectKey, payload as any),
@@ -203,7 +203,7 @@ describe("requirement API clients", () => {
         .fn()
         .mockResolvedValue(mockFail(404, "Requirement not found"));
 
-      const payload = { id: 99999, version: 1 };
+      const payload = { id: 99_999, version: 1 };
 
       await expect(
         fetchRequirementDetails(token, baseUrl, projectKey, payload),
@@ -221,7 +221,7 @@ describe("requirement API clients", () => {
         json: async () => errorResponse,
       });
 
-      const payload = { id: 2499315, version: 1 };
+      const payload = { id: 2_499_315, version: 1 };
 
       await expect(
         fetchRequirementDetails(token, baseUrl, projectKey, payload),

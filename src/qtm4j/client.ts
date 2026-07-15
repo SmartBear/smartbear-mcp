@@ -1,20 +1,20 @@
 import z from "zod";
-import { getRequestHeader } from "../common/request-context";
-import type { SmartBearMcpServer } from "../common/server";
+import { getRequestHeader } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types";
+} from "../common/types.ts";
 import {
   API_CONFIG,
   CLIENT_CONFIG,
   CONFIG_KEYS,
   ERROR_MESSAGES,
   SCHEMA_DESCRIPTIONS,
-} from "./config/constants";
-import { ApiClient } from "./http/api-client";
-import { ResolverRegistry } from "./resolver/resolver-registry";
+} from "./config/constants.ts";
+import { ApiClient } from "./http/api-client.ts";
+import { ResolverRegistry } from "./resolver/resolver-registry.ts";
 
 /**
  * Configuration schema for QTM4J client
@@ -181,70 +181,70 @@ export class Qtm4jClient implements Client {
     register: RegisterToolsFunction,
     _getInput: GetInputFunction,
   ): Promise<void> {
-    const { GetProjects } = await import("./tool/project/get-projects");
+    const { GetProjects } = await import("./tool/project/get-projects.ts");
     const { SetProjectContext } = await import(
-      "./tool/project/set-project-context"
+      "./tool/project/set-project-context.ts"
     );
     const { CreateTestCase } = await import(
-      "./tool/test-case/create-test-case"
+      "./tool/test-case/create-test-case.ts"
     );
-    const { GetTestCases } = await import("./tool/test-case/get-test-cases");
-    const { GetTestSteps } = await import("./tool/test-case/get-test-steps");
+    const { GetTestCases } = await import("./tool/test-case/get-test-cases.ts");
+    const { GetTestSteps } = await import("./tool/test-case/get-test-steps.ts");
     const { UpdateTestCase } = await import(
-      "./tool/test-case/update-test-case"
+      "./tool/test-case/update-test-case.ts"
     );
     const { UploadAutomationResult } = await import(
-      "./tool/test-automation/upload-automation-result"
+      "./tool/test-automation/upload-automation-result.ts"
     );
     const { GetAutomationHistory } = await import(
-      "./tool/test-automation/get-automation-history"
+      "./tool/test-automation/get-automation-history.ts"
     );
 
     const { CreateTestCycle } = await import(
-      "./tool/test-cycle/create-test-cycle"
+      "./tool/test-cycle/create-test-cycle.ts"
     );
     const { SearchTestCycles } = await import(
-      "./tool/test-cycle/search-test-cycle"
+      "./tool/test-cycle/search-test-cycle.ts"
     );
     const { UpdateTestCycle } = await import(
-      "./tool/test-cycle/update-test-cycle"
+      "./tool/test-cycle/update-test-cycle.ts"
     );
 
     const { LinkRequirements } = await import(
-      "./tool/test-case/link-requirements"
+      "./tool/test-case/link-requirements.ts"
     );
     const { UnlinkRequirements } = await import(
-      "./tool/test-case/unlink-requirements"
+      "./tool/test-case/unlink-requirements.ts"
     );
     const { LinkTestCasesToRequirement } = await import(
-      "./tool/requirement/link-testcases"
+      "./tool/requirement/link-testcases.ts"
     );
     const { UnlinkTestCasesFromRequirement } = await import(
-      "./tool/requirement/unlink-testcases"
+      "./tool/requirement/unlink-testcases.ts"
     );
     const { GetLinkedRequirements } = await import(
-      "./tool/test-case/get-linked-requirements"
+      "./tool/test-case/get-linked-requirements.ts"
     );
     const { GetLinkedTestCasesForRequirement } = await import(
-      "./tool/requirement/get-linked-testcases"
+      "./tool/requirement/get-linked-testcases.ts"
     );
     const { LinkTestCasesToCycle } = await import(
-      "./tool/test-cycle/link-testcases"
+      "./tool/test-cycle/link-testcases.ts"
     );
     const { UnlinkTestCasesFromCycle } = await import(
-      "./tool/test-cycle/unlink-testcases"
+      "./tool/test-cycle/unlink-testcases.ts"
     );
     const { SearchLinkedTestCasesInCycle } = await import(
-      "./tool/test-cycle/search-linked-testcases"
+      "./tool/test-cycle/search-linked-testcases.ts"
     );
     const { LinkRequirementsToCycle } = await import(
-      "./tool/test-cycle/link-requirements"
+      "./tool/test-cycle/link-requirements.ts"
     );
     const { UnlinkRequirementsFromCycle } = await import(
-      "./tool/test-cycle/unlink-requirements"
+      "./tool/test-cycle/unlink-requirements.ts"
     );
     const { GetLinkedRequirementsForCycle } = await import(
-      "./tool/test-cycle/get-linked-requirements"
+      "./tool/test-cycle/get-linked-requirements.ts"
     );
 
     const tools = [

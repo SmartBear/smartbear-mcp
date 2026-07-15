@@ -1,10 +1,10 @@
-import { getUserAgent } from "../../common/info";
-import { QMETRY_DEFAULTS } from "../config/constants";
-import { QMETRY_PATHS } from "../config/rest-endpoints";
-import type { ImportAutomationResultsPayload } from "../types/automation";
-import { DEFAULT_IMPORT_AUTOMATION_PAYLOAD } from "../types/automation";
-import { qmetryRequest } from "./api/client-api";
-import { handleQMetryApiError } from "./api/error-handler";
+import { getUserAgent } from "../../common/info.ts";
+import { QMETRY_DEFAULTS } from "../config/constants.ts";
+import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
+import type { ImportAutomationResultsPayload } from "../types/automation.ts";
+import { DEFAULT_IMPORT_AUTOMATION_PAYLOAD } from "../types/automation.ts";
+import { qmetryRequest } from "./api/client-api.ts";
+import { handleQMetryApiError } from "./api/error-handler.ts";
 
 /**
  * Imports automation test results into QMetry
@@ -180,27 +180,27 @@ export async function getAutomationStatus(
   token: string,
   baseUrl: string,
   project: string | undefined,
-  requestID: number,
+  requestId: number,
 ) {
-  let numericRequestID: number;
+  let numericRequestId: number;
   if (
-    typeof requestID === "object" &&
-    requestID !== null &&
-    "requestID" in requestID &&
-    typeof (requestID as any).requestID !== "undefined"
+    typeof requestId === "object" &&
+    requestId !== null &&
+    "requestID" in requestId &&
+    typeof (requestId as any).requestID !== "undefined"
   ) {
-    numericRequestID = Number((requestID as any).requestID);
+    numericRequestId = Number((requestId as any).requestID);
   } else {
-    numericRequestID = Number(requestID);
+    numericRequestId = Number(requestId);
   }
-  if (!numericRequestID || Number.isNaN(numericRequestID)) {
+  if (!numericRequestId || Number.isNaN(numericRequestId)) {
     throw new Error("requestID must be a valid number");
   }
   return qmetryRequest({
     method: "GET",
     path: QMETRY_PATHS.AUTOMATION.GET_STATUS.replace(
       ":requestID",
-      String(numericRequestID),
+      String(numericRequestId),
     ),
     token,
     baseUrl: baseUrl || QMETRY_DEFAULTS.BASE_URL,

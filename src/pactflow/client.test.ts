@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { PactflowClient } from "./client";
-import { GenerationInputSchema, type GenerationResponse } from "./client/ai";
-import * as toolsModule from "./client/tools";
+import { GenerationInputSchema, type GenerationResponse } from "./client/ai.ts";
+import * as toolsModule from "./client/tools.ts";
+import { PactflowClient } from "./client.ts";
 
 const fetchMock = createFetchMock(vi);
 
@@ -270,7 +270,7 @@ describe("PactFlowClient", () => {
       });
 
       it("should handle review with OpenAPI document and matcher", async () => {
-        const inputWithOpenAPI = {
+        const inputWithOpenApi = {
           ...mockReviewInput,
           openapi: {
             document: {
@@ -293,14 +293,14 @@ describe("PactFlowClient", () => {
 
         fetchMock.mockResponseOnce(JSON.stringify(mockStatusResponse));
 
-        const result = await client.review(inputWithOpenAPI, vi.fn());
+        const result = await client.review(inputWithOpenApi, vi.fn());
 
         expect(fetchMock).toHaveBeenCalledWith(
           "https://example.com/api/ai/review",
           {
             method: "POST",
             headers: client.requestHeaders,
-            body: JSON.stringify(inputWithOpenAPI),
+            body: JSON.stringify(inputWithOpenApi),
           },
         );
         expect(result).toEqual(mockReviewResponse);
@@ -712,7 +712,7 @@ describe("PactFlowClient", () => {
       });
 
       it("should handle generation with OpenAPI document and matcher", async () => {
-        const inputWithOpenAPI = {
+        const inputWithOpenApi = {
           ...mockGenerationInput,
           openapi: {
             document: {
@@ -736,7 +736,7 @@ describe("PactFlowClient", () => {
         fetchMock.mockResponseOnce(JSON.stringify(mockStatusResponse));
 
         const result = await client.generate(
-          await GenerationInputSchema.parseAsync(inputWithOpenAPI),
+          await GenerationInputSchema.parseAsync(inputWithOpenApi),
           vi.fn(),
         );
 
@@ -746,7 +746,7 @@ describe("PactFlowClient", () => {
             method: "POST",
             headers: client.requestHeaders,
             body: JSON.stringify(
-              await GenerationInputSchema.parseAsync(inputWithOpenAPI),
+              await GenerationInputSchema.parseAsync(inputWithOpenApi),
             ),
           },
         );
@@ -1032,7 +1032,7 @@ describe("PactFlowClient", () => {
       });
 
       it("should resolve when status becomes 200", async () => {
-        const status_response = {
+        const statusResponse = {
           status_url: "https://example.com/status/123",
           result_url: "https://example.com/result/123",
         };
@@ -1056,7 +1056,7 @@ describe("PactFlowClient", () => {
         const spyGetResult = vi.spyOn(client, "getResult");
         spyGetResult.mockResolvedValue({ result: "done" });
         const result = await (client as any).pollForCompletion(
-          status_response as any,
+          statusResponse as any,
           "TestOp",
         );
         expect(result).toEqual({ result: "done" });
@@ -1067,14 +1067,14 @@ describe("PactFlowClient", () => {
       });
 
       it("should throw error if status is not 202 or 200", async () => {
-        const status_response = {
+        const statusResponse = {
           status_url: "https://example.com/status/123",
           result_url: "https://example.com/result/123",
         };
         const spyGetStatus = vi.spyOn(client, "getStatus");
         spyGetStatus.mockResolvedValue({ status: 500, isComplete: false });
         await expect(
-          (client as any).pollForCompletion(status_response as any, "TestOp"),
+          (client as any).pollForCompletion(statusResponse as any, "TestOp"),
         ).rejects.toThrow("TestOp failed with status: 500");
       });
     });

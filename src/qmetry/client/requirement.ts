@@ -1,4 +1,4 @@
-import { QMETRY_PATHS } from "../config/rest-endpoints";
+import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import {
   DEFAULT_FETCH_REQUIREMENT_DETAILS_PAYLOAD,
   DEFAULT_FETCH_REQUIREMENTS_LINKED_TO_TESTCASE_PAYLOAD,
@@ -6,9 +6,9 @@ import {
   type FetchRequirementDetailsPayload,
   type FetchRequirementsLinkedToTestCasePayload,
   type FetchRequirementsPayload,
-} from "../types/requirements";
-import { qmetryRequest } from "./api/client-api";
-import { resolveDefaults } from "./utils";
+} from "../types/requirements.ts";
+import { qmetryRequest } from "./api/client-api.ts";
+import { resolveDefaults } from "./utils.ts";
 
 /**
  * Fetches a list of requirements.

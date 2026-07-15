@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { QmetryClient } from "./client";
-import * as issues from "./client/issues";
+import * as issues from "./client/issues.ts";
 // Mock API clients
-import * as project from "./client/project";
-import * as requirement from "./client/requirement";
-import * as testcase from "./client/testcase";
-import * as testsuite from "./client/testsuite";
+import * as project from "./client/project.ts";
+import * as requirement from "./client/requirement.ts";
+import * as testcase from "./client/testcase.ts";
+import * as testsuite from "./client/testsuite.ts";
+import { QmetryClient } from "./client.ts";
 
 vi.mock("./client/project");
 vi.mock("./client/testcase");
@@ -93,7 +93,7 @@ describe("QmetryClient tools", () => {
     it("should auto-resolve viewId and call fetchTestCases with default pagination", async () => {
       // Mock project info response for auto-resolution
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TC: { viewId: 12345 } },
+        latestViews: { TC: { viewId: 12_345 } },
       });
       (testcase.fetchTestCases as any).mockResolvedValue({
         data: [
@@ -119,7 +119,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          viewId: 12345, // Auto-resolved from project info
+          viewId: 12_345, // Auto-resolved from project info
           folderPath: "", // Auto-set to empty string for root
         }),
       );
@@ -134,7 +134,7 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Test Cases");
-      const result = await handler({ viewId: 99999, folderPath: "test" });
+      const result = await handler({ viewId: 99_999, folderPath: "test" });
 
       // Should not call getProjectInfo when viewId is provided
       expect(project.getProjectInfo).not.toHaveBeenCalled();
@@ -145,7 +145,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          viewId: 99999,
+          viewId: 99_999,
           folderPath: "test",
         }),
       );
@@ -248,7 +248,7 @@ describe("QmetryClient tools", () => {
     it("should auto-resolve viewId and call fetchRequirements with default pagination", async () => {
       // Mock project info response for auto-resolution
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { RQ: { viewId: 54321 } },
+        latestViews: { RQ: { viewId: 54_321 } },
       });
       (requirement.fetchRequirements as any).mockResolvedValue({
         data: [
@@ -273,7 +273,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          viewId: 54321,
+          viewId: 54_321,
           folderPath: "",
         }),
       );
@@ -309,14 +309,14 @@ describe("QmetryClient tools", () => {
     it("should use manual viewId when provided", async () => {
       // Mock project info for auto-resolution of folderPath
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { RQ: { viewId: 54321 } },
+        latestViews: { RQ: { viewId: 54_321 } },
       });
       (requirement.fetchRequirements as any).mockResolvedValue({
         data: [{ id: 1, name: "Requirement1" }],
       });
 
       const handler = getHandler("Fetch Requirements");
-      const result = await handler({ viewId: 99999, projectKey: "TEST" });
+      const result = await handler({ viewId: 99_999, projectKey: "TEST" });
 
       // Even when viewId is provided, auto-resolution still calls getProjectInfo to resolve folderPath
       expect(project.getProjectInfo).toHaveBeenCalledWith(
@@ -330,7 +330,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "TEST",
         expect.objectContaining({
-          viewId: 99999,
+          viewId: 99_999,
         }),
       );
 
@@ -341,7 +341,7 @@ describe("QmetryClient tools", () => {
   describe("Fetch Requirement Details", () => {
     it("should fetch requirement details with required parameters", async () => {
       (requirement.fetchRequirementDetails as any).mockResolvedValue({
-        id: 12345,
+        id: 12_345,
         entityKey: "MAC-RQ-748",
         name: "Test Requirement",
         summary: "This is a test requirement",
@@ -349,14 +349,14 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Requirement Details");
-      const result = await handler({ id: 12345, version: 1 });
+      const result = await handler({ id: 12_345, version: 1 });
 
       expect(requirement.fetchRequirementDetails).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          id: 12345,
+          id: 12_345,
           version: 1,
         }),
       );
@@ -375,7 +375,7 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Requirement Details");
-      const result = await handler({ id: 99999, version: 1 });
+      const result = await handler({ id: 99_999, version: 1 });
 
       expect(result).toEqual({
         content: [
@@ -392,13 +392,13 @@ describe("QmetryClient tools", () => {
 
     it("should use custom project key when provided", async () => {
       (requirement.fetchRequirementDetails as any).mockResolvedValue({
-        id: 67890,
+        id: 67_890,
         entityKey: "PROJ-RQ-123",
       });
 
       const handler = getHandler("Fetch Requirement Details");
       const result = await handler({
-        id: 67890,
+        id: 67_890,
         version: 2,
         projectKey: "PROJ",
       });
@@ -408,7 +408,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "PROJ",
         expect.objectContaining({
-          id: 67890,
+          id: 67_890,
           version: 2,
         }),
       );
@@ -438,14 +438,14 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Test Cases Linked to Requirement");
-      const result = await handler({ rqID: 2499315 });
+      const result = await handler({ rqID: 2_499_315 });
 
       expect(testcase.fetchTestCasesLinkedToRequirement).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          rqID: 2499315,
+          rqID: 2_499_315,
         }),
       );
 
@@ -468,7 +468,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Test Cases Linked to Requirement");
       const result = await handler({
-        rqID: 2499315,
+        rqID: 2_499_315,
         getLinked: false, // Get NOT linked test cases
       });
 
@@ -477,7 +477,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          rqID: 2499315,
+          rqID: 2_499_315,
           getLinked: false,
         }),
       );
@@ -496,7 +496,7 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Test Cases Linked to Requirement");
-      const result = await handler({ rqID: 99999 });
+      const result = await handler({ rqID: 99_999 });
 
       expect(result).toEqual({
         content: [
@@ -520,7 +520,7 @@ describe("QmetryClient tools", () => {
             id: 1,
             executionStatus: "PASS",
             testSuiteName: "Regression Suite",
-            platformID: 12345,
+            platformID: 12_345,
             executedBy: "john.doe",
             executedDate: "2024-10-15T10:30:00Z",
             executedVersion: 1,
@@ -529,7 +529,7 @@ describe("QmetryClient tools", () => {
             id: 2,
             executionStatus: "FAIL",
             testSuiteName: "Smoke Suite",
-            platformID: 67890,
+            platformID: 67_890,
             executedBy: "jane.smith",
             executedDate: "2024-10-14T14:20:00Z",
             executedVersion: 2,
@@ -543,14 +543,14 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Test Case Executions");
-      const result = await handler({ tcid: 1223922 });
+      const result = await handler({ tcid: 1_223_922 });
 
       expect(testcase.fetchTestCaseExecutions).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tcid: 1223922,
+          tcid: 1_223_922,
         }),
       );
 
@@ -567,7 +567,7 @@ describe("QmetryClient tools", () => {
             id: 3,
             executionStatus: "PASS",
             testSuiteName: "API Test Suite",
-            platformID: 11111,
+            platformID: 11_111,
             executedBy: "automation.user",
             executedDate: "2024-10-15T16:45:00Z",
             executedVersion: 3,
@@ -582,7 +582,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Test Case Executions");
       const result = await handler({
-        tcid: 1223922,
+        tcid: 1_223_922,
         tcversion: 3,
         filter:
           '[{"value":["PASS"],"type":"list","field":"executionStatus"},{"value":"API Test Suite","type":"string","field":"testSuiteName"}]',
@@ -595,7 +595,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tcid: 1223922,
+          tcid: 1_223_922,
           tcversion: 3,
           filter:
             '[{"value":["PASS"],"type":"list","field":"executionStatus"},{"value":"API Test Suite","type":"string","field":"testSuiteName"}]',
@@ -619,7 +619,7 @@ describe("QmetryClient tools", () => {
       );
 
       const handler = getHandler("Fetch Test Case Executions");
-      const result = await handler({ tcid: 99999 });
+      const result = await handler({ tcid: 99_999 });
 
       expect(result).toEqual({
         content: [
@@ -667,7 +667,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Issues Linked to Test Case");
       const result = await handler({
-        linkedAsset: { type: "TC", id: 3878816 },
+        linkedAsset: { type: "TC", id: 3_878_816 },
       });
 
       expect(issues.fetchIssuesLinkedToTestCase).toHaveBeenCalledWith(
@@ -675,7 +675,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          linkedAsset: { type: "TC", id: 3878816 },
+          linkedAsset: { type: "TC", id: 3_878_816 },
         }),
       );
 
@@ -709,7 +709,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Issues Linked to Test Case");
       const result = await handler({
-        linkedAsset: { type: "TC", id: 3878816 },
+        linkedAsset: { type: "TC", id: 3_878_816 },
         filter:
           '[{"value":"authentication","type":"string","field":"summary"},{"value":[1],"type":"list","field":"issuePriority"}]',
         limit: 20,
@@ -721,7 +721,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          linkedAsset: { type: "TC", id: 3878816 },
+          linkedAsset: { type: "TC", id: 3_878_816 },
           filter:
             '[{"value":"authentication","type":"string","field":"summary"},{"value":[1],"type":"list","field":"issuePriority"}]',
           limit: 20,
@@ -745,7 +745,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Issues Linked to Test Case");
       const result = await handler({
-        linkedAsset: { type: "TC", id: 99999 },
+        linkedAsset: { type: "TC", id: 99_999 },
       });
 
       expect(result).toEqual({
@@ -767,7 +767,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchTestCasesByTestSuite as any).mockResolvedValue({
         data: [
           {
-            tcID: 123456,
+            tcID: 123_456,
             entityKey: "MAC-TC-1684",
             name: "User Login Test",
             priorityAlias: "High",
@@ -776,7 +776,7 @@ describe("QmetryClient tools", () => {
             owner: "test.user",
           },
           {
-            tcID: 123457,
+            tcID: 123_457,
             entityKey: "MAC-TC-1685",
             name: "Password Reset Test",
             priorityAlias: "Medium",
@@ -791,14 +791,14 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Test Cases Linked to Test Suite");
-      const result = await handler({ tsID: 92091 });
+      const result = await handler({ tsID: 92_091 });
 
       expect(testsuite.fetchTestCasesByTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsID: 92091,
+          tsID: 92_091,
         }),
       );
 
@@ -812,7 +812,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchTestCasesByTestSuite as any).mockResolvedValue({
         data: [
           {
-            tcID: 123456,
+            tcID: 123_456,
             entityKey: "MAC-TC-1684",
             name: "Automated Login Test",
             priorityAlias: "High",
@@ -829,7 +829,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Test Cases Linked to Test Suite");
       const result = await handler({
-        tsID: 92091,
+        tsID: 92_091,
         filter:
           '[{"value":[2],"type":"list","field":"testingTypeAlias"},{"value":[1],"type":"list","field":"priorityAlias"}]',
         limit: 25,
@@ -841,7 +841,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsID: 92091,
+          tsID: 92_091,
           filter:
             '[{"value":[2],"type":"list","field":"testingTypeAlias"},{"value":[1],"type":"list","field":"priorityAlias"}]',
           limit: 25,
@@ -860,7 +860,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchExecutionsByTestSuite as any).mockResolvedValue({
         data: [
           {
-            executionID: 789123,
+            executionID: 789_123,
             testCaseName: "User Login Test",
             executionStatus: "PASS",
             executedBy: "test.user",
@@ -871,7 +871,7 @@ describe("QmetryClient tools", () => {
             isAutomated: false,
           },
           {
-            executionID: 789124,
+            executionID: 789_124,
             testCaseName: "Password Reset Test",
             executionStatus: "FAIL",
             executedBy: "automation.user",
@@ -888,14 +888,14 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Executions by Test Suite");
-      const result = await handler({ tsID: 194955 });
+      const result = await handler({ tsID: 194_955 });
 
       expect(testsuite.fetchExecutionsByTestSuite).toHaveBeenCalledWith(
         "fake-token",
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsID: 194955,
+          tsID: 194_955,
         }),
       );
 
@@ -911,7 +911,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchExecutionsByTestSuite as any).mockResolvedValue({
         data: [
           {
-            executionID: 789125,
+            executionID: 789_125,
             testCaseName: "Automated API Test",
             executionStatus: "PASS",
             executedBy: "automation.user",
@@ -930,9 +930,9 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Executions by Test Suite");
       const result = await handler({
-        tsID: 194955,
-        tsFolderID: 126554,
-        viewId: 41799,
+        tsID: 194_955,
+        tsFolderID: 126_554,
+        viewId: 41_799,
         gridName: "TESTEXECUTIONLIST",
         filter:
           '[{"type":"boolean","value":true,"field":"isAutomatedFlag"},{"value":[0],"type":"list","field":"isArchived"}]',
@@ -945,9 +945,9 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsID: 194955,
-          tsFolderID: 126554,
-          viewId: 41799,
+          tsID: 194_955,
+          tsFolderID: 126_554,
+          viewId: 41_799,
           gridName: "TESTEXECUTIONLIST",
           filter:
             '[{"type":"boolean","value":true,"field":"isAutomatedFlag"},{"value":[0],"type":"list","field":"isArchived"}]',
@@ -967,7 +967,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
         data: [
           {
-            id: 123456,
+            id: 123_456,
             entityKey: "MAC-TC-1001",
             name: "Login Authentication Test",
             executionStatus: "PASS",
@@ -978,7 +978,7 @@ describe("QmetryClient tools", () => {
             defectCount: 0,
           },
           {
-            id: 123457,
+            id: 123_457,
             entityKey: "MAC-TC-1002",
             name: "Password Reset Test",
             executionStatus: "FAIL",
@@ -998,8 +998,8 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
       const result = await handler({
-        tsrunID: 78901,
-        viewId: 12345,
+        tsrunID: 78_901,
+        viewId: 12_345,
         projectKey: "MAC",
         start: 0,
         page: 1,
@@ -1011,8 +1011,8 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "MAC",
         expect.objectContaining({
-          tsrunID: 78901,
-          viewId: 12345,
+          tsrunID: 78_901,
+          viewId: 12_345,
           start: 0,
           page: 1,
           limit: 10,
@@ -1029,7 +1029,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
         data: [
           {
-            id: 123458,
+            id: 123_458,
             entityKey: "MAC-TC-1003",
             name: "Data Validation Test",
             executionStatus: "BLOCKED",
@@ -1056,8 +1056,8 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
       const result = await handler({
-        tsrunID: 78901,
-        viewId: 12345,
+        tsrunID: 78_901,
+        viewId: 12_345,
         projectKey: "MAC",
         showTcWithDefects: true,
         filter:
@@ -1071,8 +1071,8 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "MAC",
         expect.objectContaining({
-          tsrunID: 78901,
-          viewId: 12345,
+          tsrunID: 78_901,
+          viewId: 12_345,
           showTcWithDefects: true,
           filter:
             '[{"type":"string","value":"BLOCKED","field":"executionStatus"}]',
@@ -1091,7 +1091,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
         data: [
           {
-            tcRunID: 41572006,
+            tcRunID: 41_572_006,
             entityKey: "VKT-TC-19",
             runStatus: "Failed",
             udfjson: '{"8260LUP":"l1","look_554":"99"}',
@@ -1104,7 +1104,7 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
       const result = await handler({
         tsrunID: "728995",
-        viewId: 79451,
+        viewId: 79_451,
         projectKey: "VKT",
         tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
         page: 1,
@@ -1117,7 +1117,7 @@ describe("QmetryClient tools", () => {
         "VKT",
         expect.objectContaining({
           tsrunID: "728995",
-          viewId: 79451,
+          viewId: 79_451,
           tcrUdfFilter: '[{"type":"list","value":[5108701],"field":"8260LUP"}]',
         }),
       );
@@ -1132,14 +1132,14 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchTestCaseRunsByTestSuiteRun as any).mockResolvedValue({
         data: [
           {
-            tcRunID: 41572006,
+            tcRunID: 41_572_006,
             entityKey: "VKT-TC-19",
             runStatus: "Failed",
             udfjson:
               '{"8260LUP":"l1","NB_Multilppup_TR":["ahd"],"Jal_Largetext":"<b>hello</b><div>world</div>","cascade_vK":{"child":"aa","parent":"abc"}}',
           },
           {
-            tcRunID: 41572007,
+            tcRunID: 41_572_007,
             entityKey: "VKT-TC-20",
             runStatus: "Passed",
           },
@@ -1150,7 +1150,7 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Fetch Test Case Runs by Test Suite Run");
       const result = await handler({
         tsrunID: "728995",
-        viewId: 79451,
+        viewId: 79_451,
         projectKey: "VKT",
       });
 
@@ -1180,7 +1180,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchLinkedIssuesByTestCaseRun as any).mockResolvedValue({
         data: [
           {
-            id: 456789,
+            id: 456_789,
             entityKey: "BUG-001",
             name: "Login functionality failure",
             type: "Bug",
@@ -1194,7 +1194,7 @@ describe("QmetryClient tools", () => {
             attachmentCount: 2,
           },
           {
-            id: 456790,
+            id: 456_790,
             entityKey: "BUG-002",
             name: "Data validation error",
             type: "Bug",
@@ -1217,7 +1217,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Linked Issues of Test Case Run");
       const result = await handler({
-        entityId: 1121218,
+        entityId: 1_121_218,
         projectKey: "MAC",
         start: 0,
         page: 1,
@@ -1229,7 +1229,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "MAC",
         expect.objectContaining({
-          entityId: 1121218,
+          entityId: 1_121_218,
           start: 0,
           page: 1,
           limit: 10,
@@ -1246,7 +1246,7 @@ describe("QmetryClient tools", () => {
       (testsuite.fetchLinkedIssuesByTestCaseRun as any).mockResolvedValue({
         data: [
           {
-            id: 456791,
+            id: 456_791,
             entityKey: "ENH-001",
             name: "Performance improvement request",
             type: "Enhancement",
@@ -1271,7 +1271,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Linked Issues of Test Case Run");
       const result = await handler({
-        entityId: 1121218,
+        entityId: 1_121_218,
         projectKey: "MAC",
         getLinked: false,
         istcrFlag: true,
@@ -1286,7 +1286,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "MAC",
         expect.objectContaining({
-          entityId: 1121218,
+          entityId: 1_121_218,
           getLinked: false,
           istcrFlag: true,
           filter:
@@ -1573,7 +1573,7 @@ describe("QmetryClient tools", () => {
   describe("Create Test Case", () => {
     it("should create test case with required parameters", async () => {
       (testcase.createTestCases as any).mockResolvedValue({
-        id: 12345,
+        id: 12_345,
         entityKey: "TC-001",
         name: "New Test Case",
       });
@@ -1600,7 +1600,7 @@ describe("QmetryClient tools", () => {
 
     it("should create test case with steps and metadata", async () => {
       (testcase.createTestCases as any).mockResolvedValue({
-        id: 12346,
+        id: 12_346,
         entityKey: "TC-002",
         name: "Test with Steps",
       });
@@ -1644,15 +1644,15 @@ describe("QmetryClient tools", () => {
   describe("Update Test Case", () => {
     it("should update test case with basic fields", async () => {
       (testcase.updateTestCase as any).mockResolvedValue({
-        id: 4519260,
+        id: 4_519_260,
         entityKey: "TC-003",
         name: "Updated Test Case",
       });
 
       const handler = getHandler("Update Test Case");
       const result = await handler({
-        tcID: 4519260,
-        tcVersionID: 5448492,
+        tcID: 4_519_260,
+        tcVersionID: 5_448_492,
         name: "Updated Test Case",
       });
 
@@ -1661,8 +1661,8 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tcID: 4519260,
-          tcVersionID: 5448492,
+          tcID: 4_519_260,
+          tcVersionID: 5_448_492,
           name: "Updated Test Case",
         }),
       );
@@ -1672,20 +1672,20 @@ describe("QmetryClient tools", () => {
 
     it("should update test case with steps", async () => {
       (testcase.updateTestCase as any).mockResolvedValue({
-        id: 4519260,
+        id: 4_519_260,
         entityKey: "TC-004",
         name: "Test with Updated Steps",
       });
 
       const handler = getHandler("Update Test Case");
       const result = await handler({
-        tcID: 4519260,
-        tcVersionID: 5448492,
+        tcID: 4_519_260,
+        tcVersionID: 5_448_492,
         steps: [
           {
             orderId: 1,
             description: "Updated Step",
-            tcStepID: 3014032,
+            tcStepID: 3_014_032,
           },
         ],
         isStepUpdated: true,
@@ -1696,8 +1696,8 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tcID: 4519260,
-          tcVersionID: 5448492,
+          tcID: 4_519_260,
+          tcVersionID: 5_448_492,
           steps: expect.arrayContaining([
             expect.objectContaining({
               orderId: 1,
@@ -1715,7 +1715,7 @@ describe("QmetryClient tools", () => {
   describe("Create Test Suite", () => {
     it("should create test suite with required parameters", async () => {
       (testsuite.createTestSuites as any).mockResolvedValue({
-        id: 1505898,
+        id: 1_505_898,
         entityKey: "TS-001",
         name: "New Test Suite",
       });
@@ -1742,7 +1742,7 @@ describe("QmetryClient tools", () => {
 
     it("should create test suite with metadata and release mapping", async () => {
       (testsuite.createTestSuites as any).mockResolvedValue({
-        id: 1505899,
+        id: 1_505_899,
         entityKey: "TS-002",
         name: "Suite with Metadata",
       });
@@ -1754,7 +1754,7 @@ describe("QmetryClient tools", () => {
         description: "Test suite description",
         testsuiteOwner: 6963,
         associateRelCyc: true,
-        releaseCycleMapping: [{ buildID: 18411, releaseId: 10286 }],
+        releaseCycleMapping: [{ buildID: 18_411, releaseId: 10_286 }],
       });
 
       expect(testsuite.createTestSuites).toHaveBeenCalledWith(
@@ -1776,16 +1776,16 @@ describe("QmetryClient tools", () => {
   describe("Update Test Suite", () => {
     it("should update test suite name", async () => {
       (testsuite.updateTestSuite as any).mockResolvedValue({
-        id: 1505898,
+        id: 1_505_898,
         entityKey: "TS-003",
         name: "Updated Suite Name",
       });
 
       const handler = getHandler("Update Test Suite");
       const result = await handler({
-        id: 1505898,
+        id: 1_505_898,
         entityKey: "TS-003",
-        TsFolderID: 1644087,
+        TsFolderID: 1_644_087,
         name: "Updated Suite Name",
       });
 
@@ -1794,9 +1794,9 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          id: 1505898,
+          id: 1_505_898,
           entityKey: "TS-003",
-          TsFolderID: 1644087,
+          TsFolderID: 1_644_087,
           name: "Updated Suite Name",
         }),
       );
@@ -1806,18 +1806,18 @@ describe("QmetryClient tools", () => {
 
     it("should update test suite state and owner", async () => {
       (testsuite.updateTestSuite as any).mockResolvedValue({
-        id: 1505898,
+        id: 1_505_898,
         entityKey: "TS-004",
-        testSuiteState: 505036,
+        testSuiteState: 505_036,
         testsuiteOwner: 6963,
       });
 
       const handler = getHandler("Update Test Suite");
       const result = await handler({
-        id: 1505898,
+        id: 1_505_898,
         entityKey: "TS-004",
-        TsFolderID: 1644087,
-        testSuiteState: 505036,
+        TsFolderID: 1_644_087,
+        testSuiteState: 505_036,
         testsuiteOwner: 6963,
       });
 
@@ -1826,8 +1826,8 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          id: 1505898,
-          testSuiteState: 505036,
+          id: 1_505_898,
+          testSuiteState: 505_036,
           testsuiteOwner: 6963,
         }),
       );
@@ -1839,7 +1839,7 @@ describe("QmetryClient tools", () => {
   describe("Fetch Test Suites", () => {
     it("should auto-resolve viewId and fetch test suites", async () => {
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TS: { viewId: 103097 } },
+        latestViews: { TS: { viewId: 103_097 } },
       });
       (testsuite.fetchTestSuites as any).mockResolvedValue({
         data: [
@@ -1857,7 +1857,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          viewId: 103097,
+          viewId: 103_097,
           folderPath: "",
         }),
       );
@@ -1872,7 +1872,7 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Test Suites");
-      const result = await handler({ viewId: 99999, folderPath: "" });
+      const result = await handler({ viewId: 99_999, folderPath: "" });
 
       expect(project.getProjectInfo).not.toHaveBeenCalled();
       expect(testsuite.fetchTestSuites).toHaveBeenCalledWith(
@@ -1880,7 +1880,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          viewId: 99999,
+          viewId: 99_999,
           folderPath: "",
         }),
       );
@@ -1892,7 +1892,7 @@ describe("QmetryClient tools", () => {
   describe("Fetch Test Suites for Test Case", () => {
     it("should fetch test suites for test case with auto-resolution", async () => {
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TSFS: { viewId: 104316 } },
+        latestViews: { TSFS: { viewId: 104_316 } },
       });
       (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
         data: [
@@ -1902,7 +1902,7 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Test Suites for Test Case");
-      const result = await handler({ tsFolderID: 113557 });
+      const result = await handler({ tsFolderID: 113_557 });
 
       expect(project.getProjectInfo).toHaveBeenCalled();
       expect(testsuite.fetchTestSuitesForTestCase).toHaveBeenCalledWith(
@@ -1910,8 +1910,8 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsFolderID: 113557,
-          viewId: 104316,
+          tsFolderID: 113_557,
+          viewId: 104_316,
         }),
       );
 
@@ -1920,7 +1920,7 @@ describe("QmetryClient tools", () => {
 
     it("should fetch test suites with filter", async () => {
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { TSFS: { viewId: 104316 } },
+        latestViews: { TSFS: { viewId: 104_316 } },
       });
       (testsuite.fetchTestSuitesForTestCase as any).mockResolvedValue({
         data: [{ id: 103, name: "Filtered Suite" }],
@@ -1928,7 +1928,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Fetch Test Suites for Test Case");
       const result = await handler({
-        tsFolderID: 113557,
+        tsFolderID: 113_557,
         filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
       });
 
@@ -1937,7 +1937,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsFolderID: 113557,
+          tsFolderID: 113_557,
           filter: '[{"value":[0],"type":"list","field":"isArchived"}]',
         }),
       );
@@ -1956,7 +1956,7 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Link Requirements to Testcase");
       const result = await handler({
         tcID: "VT-TC-26",
-        tcVersionId: 5448515,
+        tcVersionId: 5_448_515,
         rqVersionIds: "5009939,5009937",
       });
 
@@ -1966,7 +1966,7 @@ describe("QmetryClient tools", () => {
         "default",
         expect.objectContaining({
           tcID: "VT-TC-26",
-          tcVersionId: 5448515,
+          tcVersionId: 5_448_515,
           rqVersionIds: "5009939,5009937",
         }),
       );
@@ -2007,7 +2007,7 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Requirements Linked to Test Case");
-      const result = await handler({ tcID: 594294 });
+      const result = await handler({ tcID: 594_294 });
 
       expect(
         requirement.fetchRequirementsLinkedToTestCase,
@@ -2016,7 +2016,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tcID: 594294,
+          tcID: 594_294,
         }),
       );
 
@@ -2030,7 +2030,7 @@ describe("QmetryClient tools", () => {
       });
 
       const handler = getHandler("Fetch Requirements Linked to Test Case");
-      const result = await handler({ tcID: 594294, getLinked: false });
+      const result = await handler({ tcID: 594_294, getLinked: false });
 
       expect(
         requirement.fetchRequirementsLinkedToTestCase,
@@ -2039,7 +2039,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tcID: 594294,
+          tcID: 594_294,
           getLinked: false,
         }),
       );
@@ -2057,8 +2057,8 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Link Test Cases to Test Suite");
       const result = await handler({
-        tsID: 1487397,
-        tcvdIDs: [5448504, 5448503],
+        tsID: 1_487_397,
+        tcvdIDs: [5_448_504, 5_448_503],
         fromReqs: false,
       });
 
@@ -2067,8 +2067,8 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsID: 1487397,
-          tcvdIDs: [5448504, 5448503],
+          tsID: 1_487_397,
+          tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: false,
         }),
       );
@@ -2084,8 +2084,8 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Link Test Cases to Test Suite");
       const result = await handler({
-        tsID: 1487397,
-        tcvdIDs: [5448504, 5448503, 5448505, 5448506],
+        tsID: 1_487_397,
+        tcvdIDs: [5_448_504, 5_448_503, 5_448_505, 5_448_506],
         fromReqs: false,
       });
 
@@ -2094,8 +2094,10 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsID: 1487397,
-          tcvdIDs: expect.arrayContaining([5448504, 5448503, 5448505, 5448506]),
+          tsID: 1_487_397,
+          tcvdIDs: expect.arrayContaining([
+            5_448_504, 5_448_503, 5_448_505, 5_448_506,
+          ]),
         }),
       );
 
@@ -2114,8 +2116,8 @@ describe("QmetryClient tools", () => {
         "Requirements Linked Test Cases to Test Suite",
       );
       const result = await handler({
-        tsID: 1487397,
-        tcvdIDs: [5448504, 5448503],
+        tsID: 1_487_397,
+        tcvdIDs: [5_448_504, 5_448_503],
         fromReqs: true,
       });
 
@@ -2124,8 +2126,8 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          tsID: 1487397,
-          tcvdIDs: [5448504, 5448503],
+          tsID: 1_487_397,
+          tcvdIDs: [5_448_504, 5_448_503],
           fromReqs: true,
         }),
       );
@@ -2144,7 +2146,7 @@ describe("QmetryClient tools", () => {
       );
       const result = await handler({
         tsID: 8674,
-        tcvdIDs: [5448504, 5448503, 5448505, 5448506],
+        tcvdIDs: [5_448_504, 5_448_503, 5_448_505, 5_448_506],
         fromReqs: true,
       });
 
@@ -2165,7 +2167,7 @@ describe("QmetryClient tools", () => {
   describe("Create Defect or Issue", () => {
     it("should create issue with required parameters", async () => {
       (issues.createIssue as any).mockResolvedValue({
-        id: 5057882,
+        id: 5_057_882,
         entityKey: "IS-001",
         summary: "Login button not working",
       });
@@ -2173,8 +2175,8 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Create Defect or Issue");
       const result = await handler({
         summary: "Login button not working",
-        issueType: 2231983,
-        issuePriority: 2231988,
+        issueType: 2_231_983,
+        issuePriority: 2_231_988,
       });
 
       expect(issues.createIssue).toHaveBeenCalledWith(
@@ -2183,8 +2185,8 @@ describe("QmetryClient tools", () => {
         "default",
         expect.objectContaining({
           summary: "Login button not working",
-          issueType: 2231983,
-          issuePriority: 2231988,
+          issueType: 2_231_983,
+          issuePriority: 2_231_988,
         }),
       );
 
@@ -2194,7 +2196,7 @@ describe("QmetryClient tools", () => {
 
     it("should create issue with all optional parameters", async () => {
       (issues.createIssue as any).mockResolvedValue({
-        id: 5057883,
+        id: 5_057_883,
         entityKey: "IS-002",
         summary: "Complete Issue",
       });
@@ -2202,13 +2204,13 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Create Defect or Issue");
       const result = await handler({
         summary: "Complete Issue",
-        issueType: 2231983,
-        issuePriority: 2231988,
-        issueOwner: 15112,
+        issueType: 2_231_983,
+        issuePriority: 2_231_988,
+        issueOwner: 15_112,
         description: "Detailed description",
-        affectedRelease: [111840],
-        affectedCycles: [112345],
-        tcRunID: 567890,
+        affectedRelease: [111_840],
+        affectedCycles: [112_345],
+        tcRunID: 567_890,
       });
 
       expect(issues.createIssue).toHaveBeenCalledWith(
@@ -2217,9 +2219,9 @@ describe("QmetryClient tools", () => {
         "default",
         expect.objectContaining({
           summary: "Complete Issue",
-          issueOwner: 15112,
-          affectedRelease: [111840],
-          tcRunID: 567890,
+          issueOwner: 15_112,
+          affectedRelease: [111_840],
+          tcRunID: 567_890,
         }),
       );
 
@@ -2230,13 +2232,13 @@ describe("QmetryClient tools", () => {
   describe("Update Issue", () => {
     it("should update issue summary", async () => {
       (issues.updateIssue as any).mockResolvedValue({
-        id: 118150,
+        id: 118_150,
         summary: "Updated summary",
       });
 
       const handler = getHandler("Update Issue");
       const result = await handler({
-        DefectId: 118150,
+        DefectId: 118_150,
         summary: "Updated summary",
       });
 
@@ -2245,7 +2247,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          DefectId: 118150,
+          DefectId: 118_150,
           summary: "Updated summary",
         }),
       );
@@ -2255,16 +2257,16 @@ describe("QmetryClient tools", () => {
 
     it("should update issue priority and type", async () => {
       (issues.updateIssue as any).mockResolvedValue({
-        id: 118150,
-        issuePriority: 189340,
-        issueType: 189337,
+        id: 118_150,
+        issuePriority: 189_340,
+        issueType: 189_337,
       });
 
       const handler = getHandler("Update Issue");
       const result = await handler({
-        DefectId: 118150,
-        issuePriority: 189340,
-        issueType: 189337,
+        DefectId: 118_150,
+        issuePriority: 189_340,
+        issueType: 189_337,
       });
 
       expect(issues.updateIssue).toHaveBeenCalledWith(
@@ -2272,9 +2274,9 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          DefectId: 118150,
-          issuePriority: 189340,
-          issueType: 189337,
+          DefectId: 118_150,
+          issuePriority: 189_340,
+          issueType: 189_337,
         }),
       );
 
@@ -2285,7 +2287,7 @@ describe("QmetryClient tools", () => {
   describe("Fetch Defects or Issues", () => {
     it("should auto-resolve viewId and fetch issues", async () => {
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { IS: { viewId: 169424 } },
+        latestViews: { IS: { viewId: 169_424 } },
       });
       (issues.fetchIssues as any).mockResolvedValue({
         data: [
@@ -2303,7 +2305,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          viewId: 169424,
+          viewId: 169_424,
         }),
       );
 
@@ -2313,7 +2315,7 @@ describe("QmetryClient tools", () => {
 
     it("should fetch issues with filter", async () => {
       (project.getProjectInfo as any).mockResolvedValue({
-        latestViews: { IS: { viewId: 169424 } },
+        latestViews: { IS: { viewId: 169_424 } },
       });
       (issues.fetchIssues as any).mockResolvedValue({
         data: [{ id: 3, entityKey: "IS-003", name: "Filtered Issue" }],
@@ -2347,7 +2349,7 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Link Issues to Testcase Run");
       const result = await handler({
         issueIds: ["5054834"],
-        tcrId: 567890,
+        tcrId: 567_890,
       });
 
       expect(issues.linkIssuesToTestcaseRun).toHaveBeenCalledWith(
@@ -2356,7 +2358,7 @@ describe("QmetryClient tools", () => {
         "default",
         expect.objectContaining({
           issueIds: ["5054834"],
-          tcrId: 567890,
+          tcrId: 567_890,
         }),
       );
 
@@ -2372,7 +2374,7 @@ describe("QmetryClient tools", () => {
       const handler = getHandler("Link Issues to Testcase Run");
       const result = await handler({
         issueIds: ["5054834", "5054835"],
-        tcrId: 567890,
+        tcrId: 567_890,
       });
 
       expect(issues.linkIssuesToTestcaseRun).toHaveBeenCalledWith(
@@ -2381,7 +2383,7 @@ describe("QmetryClient tools", () => {
         "default",
         expect.objectContaining({
           issueIds: ["5054834", "5054835"],
-          tcrId: 567890,
+          tcrId: 567_890,
         }),
       );
 
@@ -2398,7 +2400,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Link Platforms to Test Suite");
       const result = await handler({
-        qmTsId: 1511970,
+        qmTsId: 1_511_970,
         qmPlatformId: "63004",
       });
 
@@ -2407,7 +2409,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          qmTsId: 1511970,
+          qmTsId: 1_511_970,
           qmPlatformId: "63004",
         }),
       );
@@ -2423,7 +2425,7 @@ describe("QmetryClient tools", () => {
 
       const handler = getHandler("Link Platforms to Test Suite");
       const result = await handler({
-        qmTsId: 1511970,
+        qmTsId: 1_511_970,
         qmPlatformId: "63004,63005,63006",
       });
 
@@ -2432,7 +2434,7 @@ describe("QmetryClient tools", () => {
         "https://qmetry.example",
         "default",
         expect.objectContaining({
-          qmTsId: 1511970,
+          qmTsId: 1_511_970,
           qmPlatformId: "63004,63005,63006",
         }),
       );

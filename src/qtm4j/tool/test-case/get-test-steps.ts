@@ -1,19 +1,19 @@
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import {
   ENDPOINTS,
   RESPONSE_FIELDS,
   TOOL_NAMES,
   TOOLSETS,
-} from "../../config/constants";
+} from "../../config/constants.ts";
 import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import type { ResolvedTestCase } from "../../resolver/resolvers/test-case-uid-resolver.ts";
 import {
   GetTestStepsBody,
   GetTestStepsResponse,
   type GetTestStepsResponseType,
-} from "../../schema/get-test-steps.schema";
+} from "../../schema/get-test-steps.schema.ts";
 
 export class GetTestSteps extends Tool<Qtm4jClient> {
   specification: ToolParams = {

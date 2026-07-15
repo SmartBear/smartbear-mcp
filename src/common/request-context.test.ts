@@ -5,7 +5,7 @@ import {
   getRequestHeader,
   requestContextStorage,
   withRequestContext,
-} from "./request-context";
+} from "./request-context.ts";
 
 function fakeRequest(
   headers: Record<string, string | string[] | undefined>,
@@ -32,9 +32,9 @@ describe("request-context", () => {
 
     it("should work with async callbacks", async () => {
       const req = fakeRequest({ "x-token": "secret" });
-      const result = await withRequestContext(req, async () => {
-        return getRequestHeader("x-token");
-      });
+      const result = await withRequestContext(req, async () =>
+        getRequestHeader("x-token"),
+      );
       expect(result).toBe("secret");
     });
 

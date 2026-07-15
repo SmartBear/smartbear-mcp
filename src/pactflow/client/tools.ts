@@ -11,8 +11,8 @@
  */
 
 import { z } from "zod";
-import type { ToolParams } from "../../common/types";
-import { GenerationInputSchema, RefineInputSchema } from "./ai";
+import type { ToolParams } from "../../common/types.ts";
+import { GenerationInputSchema, RefineInputSchema } from "./ai.ts";
 import {
   AdminRoleIdSchema,
   AdminTeamIdSchema,
@@ -74,7 +74,7 @@ import {
   UpdateWebhookSchema,
   UserRoleSchema,
   WebhookIdSchema,
-} from "./base";
+} from "./base.ts";
 
 export type ClientType = "pactflow" | "pact_broker";
 

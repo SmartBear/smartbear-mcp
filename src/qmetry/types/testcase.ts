@@ -5,7 +5,7 @@ import {
   type FilterPayload,
   type FolderPayload,
   type PaginationPayload,
-} from "./common";
+} from "./common.ts";
 
 export interface CreateTestCaseStep {
   orderId: number;

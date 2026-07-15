@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { SwaggerAPI } from "./client/api";
-import { SwaggerConfiguration } from "./client/configuration";
+import { SwaggerAPI } from "./client/api.ts";
+import { SwaggerConfiguration } from "./client/configuration.ts";
 
 const fetchMock = createFetchMock(vi);
 
@@ -698,7 +698,7 @@ describe("SwaggerAPI", () => {
   });
 
   describe("createDocumentationPage", () => {
-    const BASE = "https://api.portal.swaggerhub.com/v1";
+    const Base = "https://api.portal.swaggerhub.com/v1";
     const headers = {
       Authorization: "Bearer test-token",
       "Content-Type": "application/json",
@@ -750,22 +750,22 @@ describe("SwaggerAPI", () => {
       fetchMock.mockResponse((req) => {
         const { url, method } = req;
 
-        if (url === `${BASE}/portals/${portalId}`) {
+        if (url === `${Base}/portals/${portalId}`) {
           return Promise.resolve(JSON.stringify(portalResponse));
         }
-        if (url === `${BASE}/products/${productId}` && method === "GET") {
+        if (url === `${Base}/products/${productId}` && method === "GET") {
           return Promise.resolve(JSON.stringify(productResponse));
         }
-        if (url === `${BASE}/products/${productId}/sections`) {
+        if (url === `${Base}/products/${productId}/sections`) {
           return Promise.resolve(JSON.stringify(sectionsResponse));
         }
-        if (url.startsWith(`${BASE}/products/${productId}/sections?`)) {
+        if (url.startsWith(`${Base}/products/${productId}/sections?`)) {
           return Promise.resolve(JSON.stringify(sectionsWithEmbedResponse));
         }
-        if (url === `${BASE}/sections/${sectionId}/table-of-contents`) {
+        if (url === `${Base}/sections/${sectionId}/table-of-contents`) {
           return Promise.resolve(JSON.stringify(tocItemResponse));
         }
-        if (url === `${BASE}/documents/${documentId}`) {
+        if (url === `${Base}/documents/${documentId}`) {
           return Promise.resolve(JSON.stringify(updateDocumentResponse));
         }
 
@@ -783,20 +783,20 @@ describe("SwaggerAPI", () => {
         pageContent: "# Hello",
       });
 
-      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/portals/${portalId}`, {
+      expect(fetchMock).toHaveBeenCalledWith(`${Base}/portals/${portalId}`, {
         method: "GET",
         headers,
       });
-      expect(fetchMock).toHaveBeenCalledWith(`${BASE}/products/${productId}`, {
+      expect(fetchMock).toHaveBeenCalledWith(`${Base}/products/${productId}`, {
         method: "GET",
         headers,
       });
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/products/${productId}/sections`,
+        `${Base}/products/${productId}/sections`,
         { method: "GET", headers },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${Base}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -811,7 +811,7 @@ describe("SwaggerAPI", () => {
         },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/documents/${documentId}`,
+        `${Base}/documents/${documentId}`,
         {
           method: "PATCH",
           headers,
@@ -847,7 +847,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${Base}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -886,13 +886,13 @@ describe("SwaggerAPI", () => {
 
       fetchMock.mockResponse((req) => {
         const { url } = req;
-        if (url === `${BASE}/portals/${portalId}`) {
+        if (url === `${Base}/portals/${portalId}`) {
           return Promise.resolve(JSON.stringify(portalResponse));
         }
-        if (url === `${BASE}/products/${productId}`) {
+        if (url === `${Base}/products/${productId}`) {
           return Promise.resolve(JSON.stringify(productResponse));
         }
-        if (url === `${BASE}/products/${productId}/sections`) {
+        if (url === `${Base}/products/${productId}/sections`) {
           return Promise.resolve(JSON.stringify(emptySections));
         }
         return Promise.reject(new Error(`Unexpected fetch: ${url}`));
@@ -921,7 +921,7 @@ describe("SwaggerAPI", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${Base}/sections/${sectionId}/table-of-contents`,
         {
           method: "POST",
           headers,
@@ -936,7 +936,7 @@ describe("SwaggerAPI", () => {
         },
       );
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/documents/${documentId}`,
+        `${Base}/documents/${documentId}`,
         {
           method: "PATCH",
           headers,
@@ -980,7 +980,7 @@ describe("SwaggerAPI", () => {
 
       expect(result.pageDetails.slug).toBe("my-custom-slug");
       expect(fetchMock).toHaveBeenCalledWith(
-        `${BASE}/sections/${sectionId}/table-of-contents`,
+        `${Base}/sections/${sectionId}/table-of-contents`,
         expect.objectContaining({
           body: expect.stringContaining('"slug":"my-custom-slug"'),
         }),

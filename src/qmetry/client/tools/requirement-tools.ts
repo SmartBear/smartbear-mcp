@@ -1,12 +1,12 @@
-import { QMetryToolsHandlers } from "../../config/constants";
+import { QMetryToolsHandlers } from "../../config/constants.ts";
 import {
   LinkRequirementToTestCaseArgsSchema,
   RequirementDetailsArgsSchema,
   RequirementListArgsSchema,
   RequirementsLinkedToTestCaseArgsSchema,
   TestCasesLinkedToRequirementArgsSchema,
-} from "../../types/common";
-import type { QMetryToolParams } from "./types";
+} from "../../types/common.ts";
+import type { QMetryToolParams } from "./types.ts";
 
 export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
   {
@@ -227,7 +227,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get requirement details by numeric ID",
-        parameters: { id: 4791316, version: 1 },
+        parameters: { id: 4_791_316, version: 1 },
         expectedOutput:
           "Detailed requirement information including summary, description, status, and all fields",
       },
@@ -265,7 +265,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
         description: "Link requirements to test case VT-TC-26",
         parameters: {
           tcID: "VT-TC-26",
-          tcVersionId: 5448515,
+          tcVersionId: 5_448_515,
           rqVersionIds: "5009939,5009937,4970699",
         },
         expectedOutput:
@@ -311,26 +311,26 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all test cases linked to requirement ID 4791316",
-        parameters: { rqID: 4791316 },
+        parameters: { rqID: 4_791_316 },
         expectedOutput:
           "List of test cases that are linked to requirement MAC-RQ-1011",
       },
       {
         description: "Get test cases NOT linked to requirement (gap analysis)",
-        parameters: { rqID: 4791316, getLinked: false },
+        parameters: { rqID: 4_791_316, getLinked: false },
         expectedOutput:
           "List of test cases that are NOT linked to requirement MAC-RQ-1011",
       },
       {
         description: "Get linked test cases filtered by specific release",
-        parameters: { rqID: 4791316, releaseID: "55178" },
+        parameters: { rqID: 4_791_316, releaseID: "55178" },
         expectedOutput:
           "Linked test cases associated with Release 8.12 (ID: 55178)",
       },
       {
         description: "Get linked test cases filtered by release and cycle",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           releaseID: "55178",
           cycleID: "111577",
           showEntityWithReleaseCycle: true,
@@ -340,7 +340,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get linked test cases from specific folder",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           tcFolderPath: "/Sample Template",
         },
         expectedOutput:
@@ -349,7 +349,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked test cases by entity key",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter:
             '[{"type":"string","value":"MAC-TC-1684,MAC-TC-1685","field":"entityKeyId"}]',
         },
@@ -358,7 +358,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by priority",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter: '[{"type":"list","value":[1,2],"field":"priorityAlias"}]',
         },
         expectedOutput: "Linked test cases with High or Medium priority",
@@ -366,7 +366,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by status",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter:
             '[{"type":"list","value":[1,2],"field":"testCaseStateAlias"}]',
         },
@@ -375,7 +375,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by test case type",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter: '[{"type":"list","value":[1],"field":"testCaseTypeAlias"}]',
         },
         expectedOutput: "Linked functional test cases",
@@ -383,7 +383,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by testing type (automation)",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter: '[{"type":"list","value":[2],"field":"testingTypeAlias"}]',
         },
         expectedOutput: "Linked automated test cases",
@@ -391,7 +391,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Get only parameterized linked test cases",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter: '[{"type":"list","value":[1],"field":"isParameterized"}]',
         },
         expectedOutput:
@@ -400,7 +400,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by archive status",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter: '[{"type":"list","value":[0],"field":"isArchived"}]',
         },
         expectedOutput: "Active (non-archived) linked test cases",
@@ -408,7 +408,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked test cases by summary content",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter: '[{"type":"string","value":"login","field":"summary"}]',
         },
         expectedOutput: "Linked test cases with 'login' in their summary",
@@ -416,7 +416,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked test cases by requirement version",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter: '[{"type":"string","value":"1","field":"rqVersion"}]',
         },
         expectedOutput: "Test cases linked to version 1 of the requirement",
@@ -425,7 +425,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
         description:
           "Complex filter: Active, high priority, automated test cases",
         parameters: {
-          rqID: 4791316,
+          rqID: 4_791_316,
           filter:
             '[{"type":"list","value":[0],"field":"isArchived"},{"type":"list","value":[1],"field":"priorityAlias"},{"type":"list","value":[2],"field":"testingTypeAlias"}]',
         },
@@ -491,20 +491,20 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Get all requirements linked to test case ID 594294",
-        parameters: { tcID: 594294 },
+        parameters: { tcID: 594_294 },
         expectedOutput:
           "List of requirements that are linked to test case MAC-TC-1684",
       },
       {
         description: "Get requirements NOT linked to test case (gap analysis)",
-        parameters: { tcID: 594294, getLinked: false },
+        parameters: { tcID: 594_294, getLinked: false },
         expectedOutput:
           "List of requirements that are NOT linked to test case MAC-TC-1684",
       },
       {
         description: "Get linked requirements from specific folder",
         parameters: {
-          tcID: 594294,
+          tcID: 594_294,
           rqFolderPath: "/CodeSnippets",
         },
         expectedOutput:
@@ -513,7 +513,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked requirements by entity key",
         parameters: {
-          tcID: 594294,
+          tcID: 594_294,
           filter:
             '[{"type":"string","value":"MAC-RQ-730,MAC-RQ-731","field":"entityKeyId"}]',
         },
@@ -522,7 +522,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by status",
         parameters: {
-          tcID: 594294,
+          tcID: 594_294,
           filter:
             '[{"type":"list","value":[1,2],"field":"requirementStateAlias"}]',
         },
@@ -531,7 +531,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by priority",
         parameters: {
-          tcID: 594294,
+          tcID: 594_294,
           filter: '[{"type":"list","value":[1],"field":"priorityAlias"}]',
         },
         expectedOutput: "Linked requirements with High priority",
@@ -539,7 +539,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by archive status",
         parameters: {
-          tcID: 594294,
+          tcID: 594_294,
           filter: '[{"type":"list","value":[0],"field":"isArchived"}]',
         },
         expectedOutput: "Active (non-archived) linked requirements",
@@ -547,7 +547,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked requirements by name content",
         parameters: {
-          tcID: 594294,
+          tcID: 594_294,
           filter: '[{"type":"string","value":"authentication","field":"name"}]',
         },
         expectedOutput:
@@ -556,7 +556,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by test case version",
         parameters: {
-          tcID: 594294,
+          tcID: 594_294,
           filter: '[{"type":"string","value":"1","field":"tcVersion"}]',
         },
         expectedOutput: "Requirements linked to version 1 of the test case",
@@ -564,7 +564,7 @@ export const REQUIREMENT_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked requirements by release and cycle",
         parameters: {
-          tcID: 594294,
+          tcID: 594_294,
           filter:
             '[{"type":"list","value":[55178],"field":"release"},{"type":"list","value":[111577],"field":"cycle"}]',
         },

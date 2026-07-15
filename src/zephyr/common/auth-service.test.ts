@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { USER_AGENT } from "../../common/info";
-import { AuthService } from "./auth-service";
+import { USER_AGENT } from "../../common/info.ts";
+import { AuthService } from "./auth-service.ts";
 
 describe("AuthService", () => {
   it("should trim and store the bearer token", () => {

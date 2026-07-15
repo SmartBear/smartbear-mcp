@@ -4,14 +4,14 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestCaseTestSteps201Response as createTestCaseTestStepsResponse } from "../../common/rest-api-schemas";
-import { CreateTestSteps } from "./create-test-steps";
+import { CreateTestCaseTestSteps201Response as createTestCaseTestStepsResponse } from "../../common/rest-api-schemas.ts";
+import { CreateTestSteps } from "./create-test-steps.ts";
 
 describe("CreateTestSteps", () => {
   let mockClient: any;
   let instance: CreateTestSteps;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -69,7 +69,7 @@ describe("CreateTestSteps", () => {
       ],
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcases/SA-T1/teststeps",
@@ -97,9 +97,7 @@ describe("CreateTestSteps", () => {
       extraField: "should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -120,7 +118,7 @@ describe("CreateTestSteps", () => {
       ],
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -137,9 +135,7 @@ describe("CreateTestSteps", () => {
       ],
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if mode is missing", async () => {
@@ -154,9 +150,7 @@ describe("CreateTestSteps", () => {
       ],
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if items is missing", async () => {
@@ -165,8 +159,6 @@ describe("CreateTestSteps", () => {
       mode: "APPEND",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

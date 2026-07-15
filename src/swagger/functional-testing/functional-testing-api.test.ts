@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { FunctionalTestingAPI } from "../client/functional-testing-api";
+import { FunctionalTestingAPI } from "../client/functional-testing-api.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();
@@ -23,7 +23,7 @@ const suitesResponseMock = {
       accountId: 42,
       name: "Smoke Suite",
       slug: "smoke-suite",
-      created: 1719400000000,
+      created: 1_719_400_000_000,
       numTestInstances: 3,
     },
     {
@@ -31,7 +31,7 @@ const suitesResponseMock = {
       accountId: 42,
       name: "Regression Suite",
       slug: "regression-suite",
-      created: 1719500000000,
+      created: 1_719_500_000_000,
       numTestInstances: 12,
     },
   ],

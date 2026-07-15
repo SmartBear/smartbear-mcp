@@ -1,19 +1,19 @@
 import z from "zod";
 
-import { USER_AGENT } from "../common/info";
+import { USER_AGENT } from "../common/info.ts";
 import {
   isSamplingPolyfillResult,
   type SamplingPolyfillResult,
-} from "../common/pollyfills";
-import { getRequestHeader } from "../common/request-context";
-import type { SmartBearMcpServer } from "../common/server";
-import { ToolError } from "../common/tools";
+} from "../common/pollyfills.ts";
+import { getRequestHeader } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
+import { ToolError } from "../common/tools.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterPromptFunction,
   RegisterToolsFunction,
-} from "../common/types";
+} from "../common/types.ts";
 import type {
   Entitlement,
   GenerationInput,
@@ -21,7 +21,7 @@ import type {
   RefineInput,
   RefineResponse,
   StatusResponse,
-} from "./client/ai";
+} from "./client/ai.ts";
 import type {
   CanIDeployInput,
   CanIDeployResponse,
@@ -52,13 +52,13 @@ import type {
   TeamMetricsResponse,
   UpdatePacticipantInput,
   UpdateVersionInput,
-} from "./client/base";
+} from "./client/base.ts";
 import {
   getOADMatcherRecommendations,
   getUserMatcherSelection,
-} from "./client/prompt-utils";
-import { PROMPTS } from "./client/prompts";
-import { type ClientType, TOOLS } from "./client/tools";
+} from "./client/prompt-utils.ts";
+import { PROMPTS } from "./client/prompts.ts";
+import { type ClientType, TOOLS } from "./client/tools.ts";
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Pact Broker or PactFlow base URL"),
@@ -175,12 +175,12 @@ export class PactflowClient implements Client {
     }
 
     // Submit the generation request
-    const status_response = await this.submitHttpCallback(
+    const statusResponse = await this.submitHttpCallback(
       "/generate",
       toolInput,
     );
     return await this.pollForCompletion<GenerationResponse>(
-      status_response,
+      statusResponse,
       "Generation",
     );
   }
@@ -226,9 +226,9 @@ export class PactflowClient implements Client {
     }
 
     // Submit review request
-    const status_response = await this.submitHttpCallback("/review", toolInput);
+    const statusResponse = await this.submitHttpCallback("/review", toolInput);
     return await this.pollForCompletion<RefineResponse>(
-      status_response,
+      statusResponse,
       "Review Pacts",
     );
   }
@@ -251,9 +251,8 @@ export class PactflowClient implements Client {
           errorContext: "PactFlow AI Entitlements Request",
         },
       );
-    } else {
-      return null;
     }
+    return null;
   }
 
   /**
@@ -295,8 +294,10 @@ export class PactflowClient implements Client {
     if (contextToken) {
       let authHeader = contextToken;
       if (
-        !contextToken.startsWith("Basic ") &&
-        !contextToken.startsWith("Bearer ")
+        !(
+          contextToken.startsWith("Basic ") ||
+          contextToken.startsWith("Bearer ")
+        )
       ) {
         authHeader = `Bearer ${contextToken}`;
       }
@@ -313,8 +314,7 @@ export class PactflowClient implements Client {
     if (this.token) {
       let authHeader = this.token;
       if (
-        !authHeader.startsWith("Basic ") &&
-        !authHeader.startsWith("Bearer ")
+        !(authHeader.startsWith("Basic ") || authHeader.startsWith("Bearer "))
       ) {
         authHeader = `Bearer ${authHeader}`;
       }
@@ -324,7 +324,8 @@ export class PactflowClient implements Client {
         "User-Agent": USER_AGENT,
         ...sourceApplicationHeader,
       };
-    } else if (this.username && this.password) {
+    }
+    if (this.username && this.password) {
       const authString = `${this.username}:${this.password}`;
       return {
         Authorization: `Basic ${Buffer.from(authString).toString("base64")}`,
@@ -333,7 +334,6 @@ export class PactflowClient implements Client {
         ...sourceApplicationHeader,
       };
     }
-    return undefined;
   }
 
   /**
@@ -365,20 +365,20 @@ export class PactflowClient implements Client {
    * @throws ToolError on non-202 status or timeout.
    */
   private async pollForCompletion<T>(
-    status_response: StatusResponse,
+    statusResponse: StatusResponse,
     operationName: string,
   ): Promise<T> {
     // Polling for completion
     const startTime = Date.now();
-    const timeout = 120000; // 120 seconds
+    const timeout = 120_000; // 120 seconds
     const pollInterval = 1000; // 1 second
 
     while (Date.now() - startTime < timeout) {
-      const statusCheck = await this.getStatus(status_response.status_url);
+      const statusCheck = await this.getStatus(statusResponse.status_url);
 
       if (statusCheck.isComplete) {
         // Operation is complete, get the result
-        return await this.getResult<T>(status_response.result_url);
+        return await this.getResult<T>(statusResponse.result_url);
       }
 
       if (statusCheck.status !== 202) {
@@ -487,9 +487,9 @@ export class PactflowClient implements Client {
   }: {
     provider: string;
   }): Promise<ProviderStatesResponse> {
-    const uri_encoded_provider_name = encodeURIComponent(provider);
+    const uriEncodedProviderName = encodeURIComponent(provider);
     return await this.fetchJson<ProviderStatesResponse>(
-      `${this.baseUrl}/pacts/provider/${uri_encoded_provider_name}/provider-states`,
+      `${this.baseUrl}/pacts/provider/${uriEncodedProviderName}/provider-states`,
       {
         method: "GET",
         errorContext: "Get Provider States",
@@ -2401,16 +2401,16 @@ export class PactflowClient implements Client {
 
       const { handler, clients: _, formatResponse, ...toolParams } = tool;
       register(toolParams, async (args, _extra) => {
-        const handler_fn = (this as any)[handler];
-        if (typeof handler_fn !== "function") {
+        const handlerFn = (this as any)[handler];
+        if (typeof handlerFn !== "function") {
           throw new Error(`Handler '${handler}' not found on PactClient`);
         }
 
         let result: any;
         if (tool.enableElicitation) {
-          result = await handler_fn.call(this, args, getInput);
+          result = await handlerFn.call(this, args, getInput);
         } else {
-          result = await handler_fn.call(this, args);
+          result = await handlerFn.call(this, args);
         }
 
         // Use custom response formatter if provided

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../config/constants";
-import { ResolverKeys } from "../config/field-resolution.types";
-import { RequirementIdResolver } from "./resolvers/requirement-id-resolver";
+import { ENDPOINTS } from "../config/constants.ts";
+import { ResolverKeys } from "../config/field-resolution.types.ts";
+import { RequirementIdResolver } from "./resolvers/requirement-id-resolver.ts";
 
 describe("RequirementIdResolver", () => {
   let mockApiClient: any;
@@ -23,7 +23,7 @@ describe("RequirementIdResolver", () => {
 
   describe("resolveAndReturn", () => {
     it("should return empty object when keys array is empty", async () => {
-      const result = await resolver.resolveAndReturn(10000, []);
+      const result = await resolver.resolveAndReturn(10_000, []);
       expect(result).toEqual({});
       expect(mockApiClient.get).not.toHaveBeenCalled();
     });
@@ -35,13 +35,13 @@ describe("RequirementIdResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(10000, [
+      const result = await resolver.resolveAndReturn(10_000, [
         "SCRUM-145",
         "SCRUM-146",
       ]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.RESOLVE_REQUIREMENT_IDS(10000),
+        ENDPOINTS.RESOLVE_REQUIREMENT_IDS(10_000),
         { keys: "SCRUM-145,SCRUM-146" },
       );
       expect(result).toEqual(mockResponse);
@@ -53,10 +53,10 @@ describe("RequirementIdResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(10000, ["SCRUM-200"]);
+      const result = await resolver.resolveAndReturn(10_000, ["SCRUM-200"]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.RESOLVE_REQUIREMENT_IDS(10000),
+        ENDPOINTS.RESOLVE_REQUIREMENT_IDS(10_000),
         { keys: "SCRUM-200" },
       );
       expect(result).toEqual(mockResponse);
@@ -65,10 +65,10 @@ describe("RequirementIdResolver", () => {
     it("should use provided projectId in endpoint", async () => {
       mockApiClient.get.mockResolvedValueOnce({});
 
-      await resolver.resolveAndReturn(99999, ["SCRUM-1"]);
+      await resolver.resolveAndReturn(99_999, ["SCRUM-1"]);
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.RESOLVE_REQUIREMENT_IDS(99999),
+        ENDPOINTS.RESOLVE_REQUIREMENT_IDS(99_999),
         expect.any(Object),
       );
     });
@@ -81,7 +81,7 @@ describe("RequirementIdResolver", () => {
       };
       mockApiClient.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await resolver.resolveAndReturn(20000, [
+      const result = await resolver.resolveAndReturn(20_000, [
         "AD-10",
         "AD-11",
         "AD-12",
@@ -94,7 +94,7 @@ describe("RequirementIdResolver", () => {
       mockApiClient.get.mockRejectedValueOnce(new Error("Network Error"));
 
       await expect(
-        resolver.resolveAndReturn(10000, ["SCRUM-1"]),
+        resolver.resolveAndReturn(10_000, ["SCRUM-1"]),
       ).rejects.toThrow("Network Error");
     });
   });

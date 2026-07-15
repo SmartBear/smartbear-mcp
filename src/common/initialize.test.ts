@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { handleInitializeMessage } from "./initialize";
-import type { SmartBearMcpServer } from "./server";
+import { handleInitializeMessage } from "./initialize.ts";
+import type { SmartBearMcpServer } from "./server.ts";
 
 function fakeServer() {
   return {

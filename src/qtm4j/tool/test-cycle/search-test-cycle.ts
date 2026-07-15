@@ -1,17 +1,17 @@
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
+import { Tool } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import {
   ENDPOINTS,
   RESPONSE_FIELDS,
   TOOL_NAMES,
   TOOLSETS,
-} from "../../config/constants";
+} from "../../config/constants.ts";
 import {
   SearchTestCycleBody,
   SearchTestCycleResponse,
   type SearchTestCycleResponseType,
-} from "../../schema/search-test-cycle.schema";
+} from "../../schema/search-test-cycle.schema.ts";
 
 /**
  * SearchTestCycles Tool
@@ -109,7 +109,7 @@ export class SearchTestCycles extends Tool<Qtm4jClient> {
             status: ["In Progress"],
             priority: ["High", "Medium"],
             assignee: ["5b10a2844c20165700ede21f"],
-            folderId: 109987,
+            folderId: 109_987,
             plannedStartDate: "02/Apr/2026,15/May/2026",
             searchText: "regression",
           },

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { statSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+import process from "node:process";
 
 function ts(): string {
   return new Date().toISOString().replace("T", " ").slice(0, 19);
@@ -61,7 +62,7 @@ async function main(): Promise<void> {
     );
 
     if (result.status === 0) {
-      info(`  ✓ Valid`);
+      info("  ✓ Valid");
     } else {
       const output = (result.stdout + result.stderr).trim();
       for (const line of output.split("\n").filter(Boolean)) {

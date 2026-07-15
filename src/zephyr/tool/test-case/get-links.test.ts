@@ -7,14 +7,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GetTestCaseLinksParams,
   GetTestCaseLinks200Response as GetTestCaseLinksResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestCaseLinks } from "./get-links";
+} from "../../common/rest-api-schemas.ts";
+import { GetTestCaseLinks } from "./get-links.ts";
 
 describe("GetTestCaseLinks", () => {
   let mockClient: any;
   let instance: GetTestCaseLinks;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -53,14 +53,14 @@ describe("GetTestCaseLinks", () => {
       self: "https://api.zephyrscale.smartbear.com/v2/testcases/SA-T10/links",
       issues: [
         {
-          issueId: 10100,
+          issueId: 10_100,
           self: "https://api.zephyrscale.smartbear.com/v2/testcases/14/links/issues/1",
           id: 1,
           target: "https://example.atlassian.net/rest/api/2/issue/10100",
           type: "COVERAGE",
         },
         {
-          issueId: 10200,
+          issueId: 10_200,
           self: "https://api.zephyrscale.smartbear.com/v2/testcases/14/links/issues/2",
           id: 2,
           target: "https://example.atlassian.net/rest/api/2/issue/10200",
@@ -86,7 +86,7 @@ describe("GetTestCaseLinks", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCaseKey: "SA-T10" };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/SA-T10/links",
     );
@@ -98,7 +98,7 @@ describe("GetTestCaseLinks", () => {
       self: "https://api.zephyrscale.smartbear.com/v2/testcases/MM2-T1/links",
       issues: [
         {
-          issueId: 10100,
+          issueId: 10_100,
           self: "https://api.zephyrscale.smartbear.com/v2/testcases/14/links/issues/1",
           id: 1,
           target: "https://example.atlassian.net/rest/api/2/issue/10100",
@@ -108,7 +108,7 @@ describe("GetTestCaseLinks", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCaseKey: "MM2-T1" };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/MM2-T1/links",
     );
@@ -130,7 +130,7 @@ describe("GetTestCaseLinks", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCaseKey: "PROJ-T5" };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/PROJ-T5/links",
     );
@@ -143,7 +143,7 @@ describe("GetTestCaseLinks", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCaseKey: "ABC-T1" };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/ABC-T1/links",
     );
@@ -153,7 +153,7 @@ describe("GetTestCaseLinks", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ testCaseKey: "SA-T10" }, EXTRA_REQUEST_HANDLER),
+      instance.handle({ testCaseKey: "SA-T10" }, ExtraRequestHandler),
     ).rejects.toThrow("API error");
   });
 
@@ -161,24 +161,24 @@ describe("GetTestCaseLinks", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
     const result = await instance.handle(
       { testCaseKey: "SA-T10" },
-      EXTRA_REQUEST_HANDLER,
+      ExtraRequestHandler,
     );
     expect(result.structuredContent).toBeUndefined();
   });
 
   it("should throw validation error if testCaseKey is missing", async () => {
-    await expect(instance.handle({}, EXTRA_REQUEST_HANDLER)).rejects.toThrow();
+    await expect(instance.handle({}, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if testCaseKey has invalid format", async () => {
     await expect(
-      instance.handle({ testCaseKey: 123 }, EXTRA_REQUEST_HANDLER),
+      instance.handle({ testCaseKey: 123 }, ExtraRequestHandler),
     ).rejects.toThrow();
     await expect(
-      instance.handle({ testCaseKey: null }, EXTRA_REQUEST_HANDLER),
+      instance.handle({ testCaseKey: null }, ExtraRequestHandler),
     ).rejects.toThrow();
     await expect(
-      instance.handle({ testCaseKey: "" }, EXTRA_REQUEST_HANDLER),
+      instance.handle({ testCaseKey: "" }, ExtraRequestHandler),
     ).rejects.toThrow();
   });
 
@@ -211,7 +211,7 @@ describe("GetTestCaseLinks", () => {
     };
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCaseKey: "SA-T10" };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcases/SA-T10/links",
     );

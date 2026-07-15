@@ -4,13 +4,13 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UpdateTestExecution } from "./update-test-execution";
+import { UpdateTestExecution } from "./update-test-execution.ts";
 
 describe("UpdateTestExecution", () => {
   let mockClient: any;
   let instance: UpdateTestExecution;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -65,7 +65,7 @@ describe("UpdateTestExecution", () => {
         statusName: "In Progress",
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       expect(mockClient.getApiClient().put).toHaveBeenCalledWith(
         "/testexecutions/SA-E40",
@@ -84,7 +84,7 @@ describe("UpdateTestExecution", () => {
         environmentName: undefined,
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
 
@@ -101,7 +101,7 @@ describe("UpdateTestExecution", () => {
         comment: null,
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
 
@@ -116,7 +116,7 @@ describe("UpdateTestExecution", () => {
         actualEndDate: "2018-06-01T00:00:00Z",
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
 
@@ -133,9 +133,9 @@ describe("UpdateTestExecution", () => {
         statusName: "In Progress",
       };
 
-      await expect(
-        instance.handle(args, EXTRA_REQUEST_HANDLER),
-      ).rejects.toThrow("Update failed");
+      await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
+        "Update failed",
+      );
     });
   });
 });

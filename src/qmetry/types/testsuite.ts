@@ -5,7 +5,7 @@ import {
   type FilterPayload,
   type PaginationPayload,
   type SortPayload,
-} from "./common";
+} from "./common.ts";
 
 export interface ReleaseCycleMapping {
   releaseId: number;

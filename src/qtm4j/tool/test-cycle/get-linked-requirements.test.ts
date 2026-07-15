@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { GetLinkedRequirementsForCycle } from "./get-linked-requirements";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { GetLinkedRequirementsForCycle } from "./get-linked-requirements.ts";
 
 describe("GetLinkedRequirementsForCycle", () => {
   let mockClient: any;
@@ -13,7 +13,7 @@ describe("GetLinkedRequirementsForCycle", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -23,11 +23,11 @@ describe("GetLinkedRequirementsForCycle", () => {
     total: 2,
     data: [
       {
-        id: 10173,
+        id: 10_173,
         key: "SCRUM-3",
         summary: "Issue 3",
         status: {
-          id: 10016,
+          id: 10_016,
           name: "To Do",
           iconUrl: "https://example.com/",
           color: "blue-gray",
@@ -38,17 +38,17 @@ describe("GetLinkedRequirementsForCycle", () => {
           iconUrl: "https://example.com/medium.svg",
         },
         issueType: {
-          id: 10022,
+          id: 10_022,
           name: "Story",
           iconUrl: "https://example.com/story.svg",
         },
       },
       {
-        id: 10174,
+        id: 10_174,
         key: "SCRUM-4",
         summary: "Issue 4",
         status: {
-          id: 10017,
+          id: 10_017,
           name: "In Progress",
           iconUrl: "https://example.com/",
           color: "yellow",
@@ -59,7 +59,7 @@ describe("GetLinkedRequirementsForCycle", () => {
           iconUrl: "https://example.com/high.svg",
         },
         issueType: {
-          id: 10022,
+          id: 10_022,
           name: "Story",
           iconUrl: "https://example.com/story.svg",
         },
@@ -120,7 +120,7 @@ describe("GetLinkedRequirementsForCycle", () => {
 
       const result = await instance.handle({ cycleKey: "SCRUM-TR-1" });
 
-      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockCycleResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TR-1",
       ]);
       expect(mockApiClient.get).toHaveBeenCalledWith(
@@ -222,7 +222,7 @@ describe("GetLinkedRequirementsForCycle", () => {
       expect(result.structuredContent).toHaveProperty("maxResults", 50);
       expect(result.structuredContent.data).toHaveLength(2);
       expect(result.structuredContent.data[0]).toMatchObject({
-        id: 10173,
+        id: 10_173,
         key: "SCRUM-3",
         summary: "Issue 3",
       });

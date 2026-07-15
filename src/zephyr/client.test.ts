@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { ZephyrClient } from "./client";
-import { ApiClient } from "./common/api-client";
+import { ZephyrClient } from "./client.ts";
+import { ApiClient } from "./common/api-client.ts";
 
 describe("ZephyrClient", () => {
   it("should set name and prefix", () => {

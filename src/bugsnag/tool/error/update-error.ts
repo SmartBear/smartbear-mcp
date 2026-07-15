@@ -1,11 +1,11 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { GetInputFunction, ToolParams } from "../../../common/types";
-import type { BugsnagClient } from "../../client";
-import { ErrorUpdateRequest } from "../../client/api/index";
-import { toolInputParameters } from "../../input-schemas";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { GetInputFunction, ToolParams } from "../../../common/types.ts";
+import { ErrorUpdateRequest } from "../../client/api/index.ts";
+import type { BugsnagClient } from "../../client.ts";
+import { toolInputParameters } from "../../input-schemas.ts";
 
 const PERMITTED_UPDATE_OPERATIONS = [
   "override_severity",
@@ -46,7 +46,7 @@ const inputSchema = z.object({
       additionalUsers: z
         .number()
         .min(1)
-        .max(100000)
+        .max(100_000)
         .optional()
         .describe(
           "for n_additional_users reopen rules, the number of additional users to be affected by an Error before the Error is automatically reopened.",
@@ -229,7 +229,7 @@ export class UpdateError extends Tool<BugsnagClient> {
       }
       if (
         reopenIf === "n_occurrences_in_m_hours" &&
-        (!params.reopenRules.occurrences || !params.reopenRules.hours)
+        !(params.reopenRules.occurrences && params.reopenRules.hours)
       ) {
         throw new ToolError(
           "Both 'occurrences' and 'hours' parameters are required for 'n_occurrences_in_m_hours' reopen rules",

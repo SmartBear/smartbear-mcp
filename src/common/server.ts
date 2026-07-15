@@ -12,22 +12,22 @@ import {
   type ZodRawShape,
   type ZodType,
 } from "zod";
-import Bugsnag, { type BugsnagEvent } from "../common/bugsnag";
-import { CacheService } from "./cache";
-import { type McpClientIdentity, toClientIdentity } from "./client-identity";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info";
+import Bugsnag, { type BugsnagEvent } from "../common/bugsnag.ts";
+import { CacheService } from "./cache.ts";
+import { type McpClientIdentity, toClientIdentity } from "./client-identity.ts";
+import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./info.ts";
 import {
   executeElicitationOrPolyfill,
   isElicitationPolyfillResult,
-} from "./pollyfills";
-import { ToolError } from "./tools";
-import type { Client, ClientInfo, ToolParams } from "./types";
+} from "./pollyfills.ts";
+import { ToolError } from "./tools.ts";
+import type { Client, ClientInfo, ToolParams } from "./types.ts";
 import {
   getDefaultValue,
   getReadableTypeName,
   getTypeDescription,
   isOptionalType,
-} from "./zod-utils";
+} from "./zod-utils.ts";
 
 export class SmartBearMcpServer extends McpServer {
   private cache: CacheService;
@@ -187,13 +187,12 @@ export class SmartBearMcpServer extends McpServer {
                     },
                   ],
                 };
-              } else {
-                Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
-                  event.addMetadata("app", { tool: toolName });
-                  this.addClientMetadata(event);
-                  event.unhandled = true;
-                });
               }
+              Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
+                event.addMetadata("app", { tool: toolName });
+                this.addClientMetadata(event);
+                event.unhandled = true;
+              });
               throw e;
             }
           },
@@ -241,7 +240,7 @@ export class SmartBearMcpServer extends McpServer {
               Bugsnag.notify(e as unknown as Error, (event: BugsnagEvent) => {
                 event.addMetadata("app", {
                   resource: resourceName,
-                  url: url,
+                  url,
                 });
                 this.addClientMetadata(event);
                 event.unhandled = true;
@@ -254,8 +253,8 @@ export class SmartBearMcpServer extends McpServer {
     }
 
     if (client.registerPrompts) {
-      await client.registerPrompts((params, cb) => {
-        return super.registerPrompt(
+      await client.registerPrompts((params, cb) =>
+        super.registerPrompt(
           this.getCapabilityName(client, params.title),
           {
             title: this.getCapabilityTitle(client, params.title),
@@ -276,8 +275,8 @@ export class SmartBearMcpServer extends McpServer {
               throw e;
             }
           },
-        );
-      });
+        ),
+      );
     }
   }
 
@@ -334,7 +333,6 @@ export class SmartBearMcpServer extends McpServer {
         return { ...leftShape, ...rightShape };
       }
     }
-    return undefined;
   }
 
   private getCapabilityTitle(client: Client, title: string): string {
@@ -410,7 +408,7 @@ export class SmartBearMcpServer extends McpServer {
             `- ${key} (${getReadableTypeName(field)})` +
             `${isOptionalType(field) ? "" : " *required*"}` +
             `${description ? `: ${description}` : ""}` +
-            `${defaultValue !== null ? ` (default: ${JSON.stringify(defaultValue)})` : ""}`
+            `${defaultValue === null ? "" : ` (default: ${JSON.stringify(defaultValue)})`}`
           );
         })
         .join("\n");
@@ -432,7 +430,7 @@ export class SmartBearMcpServer extends McpServer {
     // Examples
     if (examples && examples.length > 0) {
       description +=
-        `\n\n**Examples:**\n` +
+        "\n\n**Examples:**\n" +
         examples
           .map(
             (ex, idx) =>

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../config/constants";
+import { ENDPOINTS } from "../config/constants.ts";
 import {
   InputField,
   type ProjectContext,
   ResolverKeys,
-} from "../config/field-resolution.types";
-import { Cache } from "./cache/cache";
-import { ComponentResolver } from "./resolvers/component-resolver";
+} from "../config/field-resolution.types.ts";
+import { Cache } from "./cache/cache.ts";
+import { ComponentResolver } from "./resolvers/component-resolver.ts";
 
 vi.mock("./cache/cache");
 
@@ -33,7 +33,7 @@ describe("ComponentResolver", () => {
   let mockCache: any;
   const context: ProjectContext = {
     projectKey: "PROJ",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Project Name",
   };
 
@@ -65,7 +65,7 @@ describe("ComponentResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.SearchableField.COMPONENTS,
         "UI",
       );
@@ -82,13 +82,13 @@ describe("ComponentResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.SearchableField.COMPONENTS,
         "UI",
       );
 
       expect(mockApiClient.get).toHaveBeenCalledWith(
-        ENDPOINTS.COMPONENTS(10000),
+        ENDPOINTS.COMPONENTS(10_000),
         { search: "UI" },
       );
       expect(mockCache.set).toHaveBeenCalledWith(
@@ -105,7 +105,7 @@ describe("ComponentResolver", () => {
 
       const result = await resolver.resolveAndReturn(
         "PROJ",
-        10000,
+        10_000,
         ResolverKeys.SearchableField.COMPONENTS,
         "NonExistent",
       );
@@ -120,7 +120,7 @@ describe("ComponentResolver", () => {
       await expect(
         resolver.resolveAndReturn(
           "PROJ",
-          10000,
+          10_000,
           ResolverKeys.SearchableField.COMPONENTS,
           "UI",
         ),

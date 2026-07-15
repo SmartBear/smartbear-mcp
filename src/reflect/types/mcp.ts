@@ -1,4 +1,4 @@
-import type { TestPlatform } from "./common";
+import type { TestPlatform } from "./common.ts";
 
 //
 // Requests

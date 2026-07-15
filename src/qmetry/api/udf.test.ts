@@ -3,7 +3,7 @@ import {
   bulkUpdateTestRunUdfs,
   fetchTestRunUdfMetadata,
   fetchTestRunUdfValues,
-} from "../client/udf.js";
+} from "../client/udf.ts";
 
 const token = "fake-token";
 const baseUrl = "https://qmetry.example";
@@ -31,11 +31,11 @@ describe("UDF API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       const result = await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
-        tcRunIDs: [41572006, 41572009, 41572013],
+        tcRunIDs: [41_572_006, 41_572_009, 41_572_013],
         UDF: {
-          "8190_String": { fieldID: 229241, value: "test" },
+          "8190_String": { fieldID: 229_241, value: "test" },
         },
-        scopeId: 42307,
+        scopeId: 42_307,
         orgCode: "2O5API",
       });
 
@@ -53,8 +53,8 @@ describe("UDF API clients", () => {
       const body = JSON.parse(
         (global.fetch as any).mock.calls[0][1].body as string,
       );
-      expect(body.tcRunIDs).toEqual([41572006, 41572009, 41572013]);
-      expect(body.UDF["8190_String"].fieldID).toBe(229241);
+      expect(body.tcRunIDs).toEqual([41_572_006, 41_572_009, 41_572_013]);
+      expect(body.UDF["8190_String"].fieldID).toBe(229_241);
       expect(body.UDF["8190_String"].value).toBe("test");
 
       expect((result as any).success).toBe(true);
@@ -64,11 +64,11 @@ describe("UDF API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
-        tcRunIDs: [41572006],
+        tcRunIDs: [41_572_006],
         UDF: {
-          m_selections: { fieldID: 229223, value: [5158524, 5158525] },
+          m_selections: { fieldID: 229_223, value: [5_158_524, 5_158_525] },
         },
-        scopeId: 42307,
+        scopeId: 42_307,
       });
 
       const body = JSON.parse(
@@ -81,15 +81,15 @@ describe("UDF API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
-        tcRunIDs: [41572006, 41572009],
+        tcRunIDs: [41_572_006, 41_572_009],
         UDF: {
           mullt_env: {
-            fieldID: 229425,
-            value: [5108697, 5108698],
+            fieldID: 229_425,
+            value: [5_108_697, 5_108_698],
             multiSelectAction: "replace",
           },
         },
-        scopeId: 42307,
+        scopeId: 42_307,
       });
 
       const body = JSON.parse(
@@ -102,11 +102,11 @@ describe("UDF API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
-        tcRunIDs: [41572006],
+        tcRunIDs: [41_572_006],
         UDF: {
-          defaultNum: { fieldID: 229003, value: 3 },
+          defaultNum: { fieldID: 229_003, value: 3 },
         },
-        scopeId: 42307,
+        scopeId: 42_307,
       });
 
       const body = JSON.parse(
@@ -119,22 +119,22 @@ describe("UDF API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
-        tcRunIDs: [41572006, 41572009],
+        tcRunIDs: [41_572_006, 41_572_009],
         UDF: {
           cascade_mcp: {
-            fieldID: 229426,
-            value: { parent: 5126498, child: 5126499 },
+            fieldID: 229_426,
+            value: { parent: 5_126_498, child: 5_126_499 },
           },
         },
-        scopeId: 42307,
+        scopeId: 42_307,
       });
 
       const body = JSON.parse(
         (global.fetch as any).mock.calls[0][1].body as string,
       );
       expect(body.UDF.cascade_mcp.value).toEqual({
-        parent: 5126498,
-        child: 5126499,
+        parent: 5_126_498,
+        child: 5_126_499,
       });
     });
 
@@ -142,28 +142,31 @@ describe("UDF API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockSuccessResponse));
 
       await bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
-        tcRunIDs: [41572006, 41572009, 41572013, 41572015, 41579875, 41666420],
+        tcRunIDs: [
+          41_572_006, 41_572_009, 41_572_013, 41_572_015, 41_579_875,
+          41_666_420,
+        ],
         UDF: {
-          "8190_String": { fieldID: 229241, value: "test" },
-          "8260LUP": { fieldID: 228563, value: 5108697 },
+          "8190_String": { fieldID: 229_241, value: "test" },
+          "8260LUP": { fieldID: 228_563, value: 5_108_697 },
           cascade_mcp: {
-            fieldID: 229426,
-            value: { parent: 5126498, child: 5126499 },
+            fieldID: 229_426,
+            value: { parent: 5_126_498, child: 5_126_499 },
           },
-          defaultNum: { fieldID: 229003, value: 3 },
-          KN_DATE: { fieldID: 229255, value: "06-20-2026" },
+          defaultNum: { fieldID: 229_003, value: 3 },
+          KN_DATE: { fieldID: 229_255, value: "06-20-2026" },
           m_selections: {
-            fieldID: 229223,
-            value: [5158524, 5158525],
+            fieldID: 229_223,
+            value: [5_158_524, 5_158_525],
             multiSelectAction: "append",
           },
           mullt_env: {
-            fieldID: 229425,
-            value: [5108697, 5108698],
+            fieldID: 229_425,
+            value: [5_108_697, 5_108_698],
             multiSelectAction: "replace",
           },
         },
-        scopeId: 42307,
+        scopeId: 42_307,
         orgCode: "2O5API",
       });
 
@@ -181,7 +184,7 @@ describe("UDF API clients", () => {
       await expect(
         bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
           tcRunIDs: [],
-          UDF: { "8190_String": { fieldID: 229241, value: "test" } },
+          UDF: { "8190_String": { fieldID: 229_241, value: "test" } },
         }),
       ).rejects.toThrow(/tcRunIDs.*non-empty array/);
     });
@@ -189,7 +192,7 @@ describe("UDF API clients", () => {
     it("should throw when UDF object is empty", async () => {
       await expect(
         bulkUpdateTestRunUdfs(token, baseUrl, projectKey, {
-          tcRunIDs: [41572006],
+          tcRunIDs: [41_572_006],
           UDF: {},
         }),
       ).rejects.toThrow(/UDF.*at least one/);
@@ -201,14 +204,14 @@ describe("UDF API clients", () => {
       qmUDF: {
         TCR: {
           "FLD.planned_execution_date": {
-            projectUserFieldID: 229460,
+            projectUserFieldID: 229_460,
             name: "planned_execution_date",
             fieldLabel: "Planned Execution Date",
             fieldTypeName: "DATETIMEPICKER",
             allowBlank: true,
           },
           "FLD.test_env": {
-            projectUserFieldID: 229461,
+            projectUserFieldID: 229_461,
             name: "test_env",
             fieldLabel: "Test Environment",
             fieldTypeName: "STRING",
@@ -223,7 +226,7 @@ describe("UDF API clients", () => {
       global.fetch = vi.fn().mockResolvedValue(mockOk(mockMetaResponse));
 
       await fetchTestRunUdfMetadata(token, baseUrl, projectKey, {
-        scopeId: 46270,
+        scopeId: 46_270,
         orgCode: "2O5API",
       });
 
@@ -251,7 +254,7 @@ describe("UDF API clients", () => {
         (f: any) => f.name === "planned_execution_date",
       );
       expect(dateField).toBeDefined();
-      expect(dateField.fieldID).toBe(229460);
+      expect(dateField.fieldID).toBe(229_460);
       expect(dateField.label).toBe("Planned Execution Date");
       expect(dateField.fieldType).toBe("DATETIMEPICKER");
     });
@@ -291,7 +294,7 @@ describe("UDF API clients", () => {
       total: 1,
       data: [
         {
-          tcRunID: 41667465,
+          tcRunID: 41_667_465,
           entityKey: "TC-001",
           summary: "Test Case 1",
           runStatus: "Not Run",
@@ -304,7 +307,7 @@ describe("UDF API clients", () => {
       qmUDF: {
         TCR: {
           "FLD.planned_execution_date": {
-            projectUserFieldID: 229460,
+            projectUserFieldID: 229_460,
             name: "planned_execution_date",
             fieldLabel: "Planned Execution Date",
             fieldTypeName: "DATETIMEPICKER",
@@ -323,8 +326,8 @@ describe("UDF API clients", () => {
 
       await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
-        scopeId: 46270,
+        viewId: 87_039,
+        scopeId: 46_270,
         orgCode: "2O5API",
       });
 
@@ -340,7 +343,7 @@ describe("UDF API clients", () => {
 
       const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
+        viewId: 87_039,
       })) as any;
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
@@ -357,14 +360,14 @@ describe("UDF API clients", () => {
 
       const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
+        viewId: 87_039,
       })) as any;
 
       expect(result.runs).toHaveLength(1);
       const udf = result.runs[0].testRunUdfs[0];
       expect(udf.name).toBe("planned_execution_date");
       expect(udf.label).toBe("Planned Execution Date");
-      expect(udf.fieldID).toBe(229460);
+      expect(udf.fieldID).toBe(229_460);
       expect(udf.value).toBe("06-23-2026");
     });
 
@@ -372,7 +375,7 @@ describe("UDF API clients", () => {
       await expect(
         fetchTestRunUdfValues(token, baseUrl, projectKey, {
           tsrunID: "",
-          viewId: 87039,
+          viewId: 87_039,
         }),
       ).rejects.toThrow("tsrunID");
     });
@@ -394,11 +397,11 @@ describe("UDF API clients", () => {
 
       const result = (await fetchTestRunUdfValues(token, baseUrl, projectKey, {
         tsrunID: "731600",
-        viewId: 87039,
+        viewId: 87_039,
       })) as any;
 
       expect(result.availableUdfFields).toHaveLength(1);
-      expect(result.availableUdfFields[0].fieldID).toBe(229460);
+      expect(result.availableUdfFields[0].fieldID).toBe(229_460);
     });
   });
 });

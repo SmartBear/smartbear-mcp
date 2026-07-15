@@ -5,8 +5,8 @@ import {
   ListFunctionalTestingSuiteExecutionsSchema,
   RunFunctionalTestingSuiteParamsSchema,
   RunFunctionalTestingTestParamsSchema,
-} from "./functional-testing-types";
-import type { SwaggerToolParams } from "./tools";
+} from "./functional-testing-types.ts";
+import type { SwaggerToolParams } from "./tools.ts";
 
 export const FUNCTIONAL_TESTING_TOOLS: SwaggerToolParams[] = [
   {

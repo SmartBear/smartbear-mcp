@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ListPrioritiesQueryParams,
   ListPriorities200Response as ListPrioritiesResponse,
-} from "../../common/rest-api-schemas";
-import { GetPriorities } from "./get-priorities";
+} from "../../common/rest-api-schemas.ts";
+import { GetPriorities } from "./get-priorities.ts";
 
 describe("GetProjectPriorities", () => {
   let mockClient: any;
@@ -38,9 +38,9 @@ describe("GetProjectPriorities", () => {
       isLast: true,
       values: [
         {
-          id: 829899,
+          id: 829_899,
           project: {
-            id: 47432,
+            id: 47_432,
             self: "https://api.zephyrscale.smartbear.com/v2/projects/47432",
           },
           name: "High",
@@ -50,9 +50,9 @@ describe("GetProjectPriorities", () => {
           default: false,
         },
         {
-          id: 829900,
+          id: 829_900,
           project: {
-            id: 47432,
+            id: 47_432,
             self: "https://api.zephyrscale.smartbear.com/v2/projects/47432",
           },
           name: "Normal",
@@ -62,9 +62,9 @@ describe("GetProjectPriorities", () => {
           default: true,
         },
         {
-          id: 829901,
+          id: 829_901,
           project: {
-            id: 47432,
+            id: 47_432,
             self: "https://api.zephyrscale.smartbear.com/v2/projects/47432",
           },
           name: "Low",
@@ -95,9 +95,9 @@ describe("GetProjectPriorities", () => {
       isLast: true,
       values: [
         {
-          id: 825179,
+          id: 825_179,
           project: {
-            id: 47165,
+            id: 47_165,
             self: "https://api.zephyrscale.smartbear.com/v2/projects/47165",
           },
           name: "Normal",

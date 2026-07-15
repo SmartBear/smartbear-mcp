@@ -6,8 +6,8 @@
  * This follows the pattern established in the pactflow module.
  */
 
-import type { ToolParams } from "../../common/types";
-import { FUNCTIONAL_TESTING_TOOLS } from "./functional-testing-tools";
+import type { ToolParams } from "../../common/types.ts";
+import { FUNCTIONAL_TESTING_TOOLS } from "./functional-testing-tools.ts";
 import {
   CreateDocPageOutputSchema,
   CreateDocumentationPageArgsSchema,
@@ -37,7 +37,7 @@ import {
   UpdateDocumentArgsSchema,
   UpdatePortalArgsSchema,
   UpdateProductArgsSchema,
-} from "./portal-types";
+} from "./portal-types.ts";
 import {
   ApiDefinitionOutputSchema,
   ApiDefinitionParamsSchema,
@@ -53,12 +53,12 @@ import {
   SearchApisOutputSchema,
   StandardizeApiParamsSchema,
   StandardizeOutputSchema,
-} from "./registry-types";
-import { READ_ONLY, WRITE, WRITE_DESTRUCTIVE } from "./tool-constants";
+} from "./registry-types.ts";
+import { READ_ONLY, WRITE, WRITE_DESTRUCTIVE } from "./tool-constants.ts";
 import {
   OrganizationsListOutputSchema,
   OrganizationsQuerySchema,
-} from "./user-management-types";
+} from "./user-management-types.ts";
 
 export interface SwaggerToolParams extends ToolParams {
   handler: string;

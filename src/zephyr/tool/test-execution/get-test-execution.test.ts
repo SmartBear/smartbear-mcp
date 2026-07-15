@@ -2,41 +2,41 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GetTestExecutionParams,
   GetTestExecution200Response as GetTestExecutionResponse,
-} from "../../common/rest-api-schemas.js";
-import { GetTestExecution } from "./get-test-execution.js";
+} from "../../common/rest-api-schemas.ts";
+import { GetTestExecution } from "./get-test-execution.ts";
 
 const responseMock = {
   id: 1,
   key: "SA-E10",
   project: {
-    id: 10005,
+    id: 10_005,
     self: "https://api.example.com/projects/10005",
   },
   testCase: {
-    id: 10002,
+    id: 10_002,
     self: "https://api.example.com/testcases/PROJ-T1/versions/1",
   },
   environment: {
-    id: 10005,
+    id: 10_005,
     self: "https://example.com/rest/api/v2/environment/10005",
   },
   jiraProjectVersion: {
-    id: 10000,
+    id: 10_000,
     self: "https://jira.example.com.atlassian.net/rest/api/2/version/10000",
   },
   testExecutionStatus: {
-    id: 10000,
+    id: 10_000,
     self: "https://api.example.com/statuses/10000",
   },
   actualEndDate: "2018-05-20T13:15:13Z",
-  estimatedTime: 138000,
-  executionTime: 120000,
+  estimatedTime: 138_000,
+  executionTime: 120_000,
   executedById: "5b10a2844c20165700ede21g",
   assignedToId: "5b10a2844c20165700ede21g",
   comment: "Test failed user could not login",
   automated: true,
   testCycle: {
-    id: 10010,
+    id: 10_010,
     self: "https://api.example.com/testcycles/10010",
   },
   customFields: {
@@ -52,7 +52,7 @@ const responseMock = {
     self: "http://example.com",
     issues: [
       {
-        issueId: 10100,
+        issueId: 10_100,
         self: "http://example.com",
         id: 1,
         target: "https://jira.example.com.atlassian.net/rest/api/2/issue/10000",

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ListTestExecutionLinks200Response as getTestExecutionLinksResponse } from "../../common/rest-api-schemas";
-import { GetTestExecutionLinks } from "./get-test-execution-links";
+import { ListTestExecutionLinks200Response as getTestExecutionLinksResponse } from "../../common/rest-api-schemas.ts";
+import { GetTestExecutionLinks } from "./get-test-execution-links.ts";
 
 describe("GetTestExecutionLinks", () => {
   let mockClient: any;
@@ -34,14 +34,14 @@ describe("GetTestExecutionLinks", () => {
       self: "https://api.example.com/testexecutions/1/links",
       issues: [
         {
-          issueId: 10001,
+          issueId: 10_001,
           id: 1,
           type: "RELATED",
           self: "https://api.example.com/link/1",
           target: "https://jira.example.com/rest/api/3/issue/10001",
         },
         {
-          issueId: 10002,
+          issueId: 10_002,
           id: 2,
           type: "BLOCKS",
           self: "https://api.example.com/link/2",
@@ -69,14 +69,14 @@ describe("GetTestExecutionLinks", () => {
       self: "https://api.example.com/testexecutions/1/links",
       issues: [
         {
-          issueId: 10001,
+          issueId: 10_001,
           id: 1,
           type: "RELATED",
           self: "https://api.example.com/link/1",
           target: "https://jira.example.com/rest/api/3/issue/10001",
         },
         {
-          issueId: 10002,
+          issueId: 10_002,
           id: 2,
           type: "BLOCKS",
           self: "https://api.example.com/link/2",

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { SetProjectContext } from "./set-project-context";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { SetProjectContext } from "./set-project-context.ts";
 
 describe("SetProjectContext", () => {
   let mockClient: any;
@@ -53,7 +53,7 @@ describe("SetProjectContext", () => {
         total: 1,
         data: [
           {
-            id: 10000,
+            id: 10_000,
             key: "SCRUM",
             name: "Scrum Project",
             favorite: false,
@@ -81,13 +81,13 @@ describe("SetProjectContext", () => {
         search: "SCRUM",
       });
       expect(mockFieldResolver.setProjectContext).toHaveBeenCalledWith({
-        projectId: 10000,
+        projectId: 10_000,
         projectKey: "SCRUM",
         projectName: "Scrum Project",
       });
-      expect(mockPreload).toHaveBeenCalledWith("SCRUM", 10000);
+      expect(mockPreload).toHaveBeenCalledWith("SCRUM", 10_000);
       expect(result.structuredContent).toMatchObject({
-        projectId: 10000,
+        projectId: 10_000,
         projectKey: "SCRUM",
         projectName: "Scrum Project",
         availableFields: mockAvailableFields,
@@ -99,7 +99,7 @@ describe("SetProjectContext", () => {
         total: 1,
         data: [
           {
-            id: 10000,
+            id: 10_000,
             key: "SCRUM",
             name: "Scrum Project",
             favorite: false,
@@ -117,7 +117,7 @@ describe("SetProjectContext", () => {
       const result = await instance.handle({ projectKey: "scrum" }, {} as any);
 
       expect(mockFieldResolver.setProjectContext).toHaveBeenCalledWith({
-        projectId: 10000,
+        projectId: 10_000,
         projectKey: "SCRUM",
         projectName: "Scrum Project",
       });
@@ -129,7 +129,7 @@ describe("SetProjectContext", () => {
         total: 1,
         data: [
           {
-            id: 20000,
+            id: 20_000,
             key: "AD",
             name: "Ad Project",
             favorite: false,
@@ -141,7 +141,7 @@ describe("SetProjectContext", () => {
       mockApiClient.post.mockResolvedValueOnce(mockProjects);
       mockFieldResolver.requireProjectContext.mockReturnValueOnce({
         projectKey: "SCRUM",
-        projectId: 10000,
+        projectId: 10_000,
         projectName: "Scrum Project",
       });
       mockPreload.mockResolvedValueOnce({});
@@ -150,7 +150,7 @@ describe("SetProjectContext", () => {
 
       expect(mockFieldResolver.clearProjectCache).toHaveBeenCalledWith("SCRUM");
       expect(mockFieldResolver.setProjectContext).toHaveBeenCalledWith({
-        projectId: 20000,
+        projectId: 20_000,
         projectKey: "AD",
         projectName: "Ad Project",
       });
@@ -161,7 +161,7 @@ describe("SetProjectContext", () => {
         total: 1,
         data: [
           {
-            id: 10000,
+            id: 10_000,
             key: "SCRUM",
             name: "Scrum Project",
             favorite: false,
@@ -173,7 +173,7 @@ describe("SetProjectContext", () => {
       mockApiClient.post.mockResolvedValueOnce(mockProjects);
       mockFieldResolver.requireProjectContext.mockReturnValueOnce({
         projectKey: "SCRUM",
-        projectId: 10000,
+        projectId: 10_000,
         projectName: "Scrum Project",
       });
       mockPreload.mockResolvedValueOnce({});
@@ -209,14 +209,14 @@ describe("SetProjectContext", () => {
         total: 2,
         data: [
           {
-            id: 10000,
+            id: 10_000,
             key: "SCRUM",
             name: "Scrum Project",
             favorite: false,
             qmetryEnabled: true,
           },
           {
-            id: 20000,
+            id: 20_000,
             key: "SCRUMTEST",
             name: "Scrum Test Project",
             favorite: false,
@@ -245,7 +245,7 @@ describe("SetProjectContext", () => {
         total: 1,
         data: [
           {
-            id: 10000,
+            id: 10_000,
             key: "SCRUM",
             name: "Scrum Project",
             favorite: false,
@@ -263,7 +263,7 @@ describe("SetProjectContext", () => {
       const result = await instance.handle({ projectKey: "SCRUM" }, {} as any);
 
       expect(result.structuredContent).toMatchObject({
-        projectId: 10000,
+        projectId: 10_000,
         projectKey: "SCRUM",
         projectName: "Scrum Project",
         availableFields: {},

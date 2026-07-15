@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { getUserAgent } from "../common/info";
-import { getRequestHeader } from "../common/request-context";
-import type { SmartBearMcpServer } from "../common/server";
+import { getUserAgent } from "../common/info.ts";
+import { getRequestHeader } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types";
+} from "../common/types.ts";
 
 const ConfigurationSchema = z.object({
   base_url: z.url().describe("Collaborator server base URL"),

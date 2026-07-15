@@ -4,14 +4,14 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestCaseTestScript201Response as createTestCaseScriptResponse } from "../../common/rest-api-schemas";
-import { CreateTestScript } from "./create-test-script";
+import { CreateTestCaseTestScript201Response as createTestCaseScriptResponse } from "../../common/rest-api-schemas.ts";
+import { CreateTestScript } from "./create-test-script.ts";
 
 describe("CreateTestScript", () => {
   let mockClient: any;
   let instance: CreateTestScript;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -61,7 +61,7 @@ describe("CreateTestScript", () => {
       text: "1. Navigate to Pump Settings\n2. Enable Axial Pump\n3. Verify pump status is 'Active'",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcases/SA-T1/testscript",
@@ -82,9 +82,7 @@ describe("CreateTestScript", () => {
       extraParam: "should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -98,7 +96,7 @@ describe("CreateTestScript", () => {
       text: "1. Step one\n2. Step two",
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -112,7 +110,7 @@ describe("CreateTestScript", () => {
       text: "1. Step one\n2. Step two",
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(result.structuredContent).toBeUndefined();
   });
@@ -123,9 +121,7 @@ describe("CreateTestScript", () => {
       text: "1. Step one\n2. Step two",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if type is missing", async () => {
@@ -134,9 +130,7 @@ describe("CreateTestScript", () => {
       text: "1. Step one\n2. Step two",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if text is missing", async () => {
@@ -145,8 +139,6 @@ describe("CreateTestScript", () => {
       type: "plain",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../config/constants";
-import { GetTestCases } from "./get-test-cases";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { GetTestCases } from "./get-test-cases.ts";
 
 describe("SearchTestCases", () => {
   let mockClient: any;
@@ -10,7 +10,7 @@ describe("SearchTestCases", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 

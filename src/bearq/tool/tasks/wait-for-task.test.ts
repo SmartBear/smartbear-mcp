@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { WaitForTask } from "./wait-for-task";
+import { WaitForTask } from "./wait-for-task.ts";
 
 function makeStream(...chunks: string[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();

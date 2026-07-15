@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ToolError } from "../../../common/tools";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
-import { UpdateTestCase } from "./update-test-case";
+import { ToolError } from "../../../common/tools.ts";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
+import { UpdateTestCase } from "./update-test-case.ts";
 
 describe("UpdateTestCase", () => {
   let mockClient: any;
@@ -13,7 +13,7 @@ describe("UpdateTestCase", () => {
 
   const mockContext = {
     projectKey: "SCRUM",
-    projectId: 10000,
+    projectId: 10_000,
     projectName: "Scrum Project",
   };
 
@@ -37,12 +37,12 @@ describe("UpdateTestCase", () => {
             const ids: number[] = [];
             for (const name of names) {
               const id = idMap[name];
-              if (id !== undefined) {
-                ids.push(id);
-              } else {
+              if (id === undefined) {
                 warnings.push(
                   `Skipped ${inputField} '${name}' — not available in the current project.`,
                 );
+              } else {
+                ids.push(id);
               }
             }
             if (ids.length > 0) {
@@ -107,7 +107,7 @@ describe("UpdateTestCase", () => {
     it("should resolve key via TestCaseUidResolver and PUT to correct endpoint", async () => {
       await instance.handle({ key: "SCRUM-TC-145", summary: "New summary" });
 
-      expect(mockUidResolver.resolveAndReturn).toHaveBeenCalledWith(10000, [
+      expect(mockUidResolver.resolveAndReturn).toHaveBeenCalledWith(10_000, [
         "SCRUM-TC-145",
       ]);
       expect(mockApiClient.put).toHaveBeenCalledWith(

@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import process from "node:process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clientRegistry } from "./client-registry";
+import { clientRegistry } from "./client-registry.ts";
 import {
   drainHttpTransport,
   getBaseUrl,
@@ -10,8 +11,8 @@ import {
   handleReadyRequest,
   handleStreamableHttpRequest,
   newServer,
-} from "./transport-http";
-import type { Client } from "./types";
+} from "./transport-http.ts";
+import type { Client } from "./types.ts";
 
 function fakeRequest(
   headers: Record<string, string | string[] | undefined>,
@@ -269,7 +270,7 @@ describe("newServer (OAuth flow)", () => {
     clientRegistry.getAll = () => [testClient];
 
     // Mock SmartBearMcpServer.getClients to return the client
-    const { SmartBearMcpServer } = await import("./server.js");
+    const { SmartBearMcpServer } = await import("./server.ts");
     vi.mocked(SmartBearMcpServer).mockImplementation(
       () =>
         ({
@@ -309,7 +310,7 @@ describe("newServer (OAuth flow)", () => {
     });
     clientRegistry.getAll = () => [testClient];
 
-    const { SmartBearMcpServer } = await import("./server.js");
+    const { SmartBearMcpServer } = await import("./server.ts");
     vi.mocked(SmartBearMcpServer).mockImplementation(
       () =>
         ({
@@ -346,7 +347,7 @@ describe("newServer (OAuth flow)", () => {
     });
     clientRegistry.getAll = () => [testClient];
 
-    const { SmartBearMcpServer } = await import("./server.js");
+    const { SmartBearMcpServer } = await import("./server.ts");
     vi.mocked(SmartBearMcpServer).mockImplementation(
       () =>
         ({
@@ -378,7 +379,7 @@ describe("newServer (OAuth flow)", () => {
     });
     clientRegistry.getAll = () => [testClient];
 
-    const { SmartBearMcpServer } = await import("./server.js");
+    const { SmartBearMcpServer } = await import("./server.ts");
     vi.mocked(SmartBearMcpServer).mockImplementation(
       () =>
         ({
@@ -420,7 +421,7 @@ describe("newServer (OAuth flow)", () => {
     });
     clientRegistry.getAll = () => [testClient];
 
-    const { SmartBearMcpServer } = await import("./server.js");
+    const { SmartBearMcpServer } = await import("./server.ts");
     vi.mocked(SmartBearMcpServer).mockImplementation(
       () =>
         ({
@@ -628,7 +629,7 @@ describe("handleStreamableHttpRequest (session routing)", () => {
     const parsed = JSON.parse(res._body);
     expect(parsed).toEqual({
       jsonrpc: "2.0",
-      error: { code: -32001, message: "Session not found" },
+      error: { code: -32_001, message: "Session not found" },
       id: null,
     });
   });
@@ -646,7 +647,7 @@ describe("handleStreamableHttpRequest (session routing)", () => {
 
     expect(res._status).toBe(400);
     const parsed = JSON.parse(res._body);
-    expect(parsed.error.code).toBe(-32000);
+    expect(parsed.error.code).toBe(-32_000);
     expect(parsed.error.message).toContain("Bad Request");
   });
 
@@ -678,7 +679,7 @@ describe("handleStreamableHttpRequest (session routing)", () => {
 
     // Capture the connect spy so we can assert dispatch into createNewTransport.
     let capturedConnect: ReturnType<typeof vi.fn> | undefined;
-    const { SmartBearMcpServer } = await import("./server.js");
+    const { SmartBearMcpServer } = await import("./server.ts");
     vi.mocked(SmartBearMcpServer).mockImplementation(() => {
       capturedConnect = vi.fn();
       return {

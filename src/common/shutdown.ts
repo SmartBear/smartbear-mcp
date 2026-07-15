@@ -20,6 +20,7 @@
  *   1  deadline exceeded, or forced exit via second signal
  */
 
+import process from "node:process";
 export type ShutdownHandler = () => Promise<void> | void;
 
 interface RegisteredHandler {

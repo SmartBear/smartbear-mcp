@@ -1,4 +1,4 @@
-import { QMetryToolsHandlers } from "../../config/constants";
+import { QMetryToolsHandlers } from "../../config/constants.ts";
 import {
   CreateIssueArgsSchema,
   IssueExecutionsArgsSchema,
@@ -7,8 +7,8 @@ import {
   LinkedIssuesByTestCaseRunArgsSchema,
   LinkIssuesToTestcaseRunArgsSchema,
   UpdateIssueArgsSchema,
-} from "../../types/common";
-import type { QMetryToolParams } from "./types";
+} from "../../types/common.ts";
+import type { QMetryToolParams } from "./types.ts";
 
 export const ISSUE_TOOLS: QMetryToolParams[] = [
   {
@@ -34,8 +34,8 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description: "Create an issue with summary 'Login Issue'",
         parameters: {
           name: "Login Issue",
-          issuePriority: 2231988,
-          issueType: 2231983,
+          issuePriority: 2_231_988,
+          issueType: 2_231_983,
         },
         expectedOutput: "Issue created in summary details",
       },
@@ -44,8 +44,8 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           "Create an issue with Major priority and Bug type to Bug with summary 'Login Issue'",
         parameters: {
           name: "Login Issue",
-          issuePriority: 2231988,
-          issueType: 2231983,
+          issuePriority: 2_231_988,
+          issueType: 2_231_983,
         },
         expectedOutput:
           "Issue created in summary details with priority and Bug type",
@@ -55,9 +55,9 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           "Create an issue with summary 'Login Issue' and set issueOwner to 'John Doe'",
         parameters: {
           name: "Login Issue",
-          issueOwner: 15112,
-          issuePriority: 2231988,
-          issueType: 2231983,
+          issueOwner: 15_112,
+          issuePriority: 2_231_988,
+          issueType: 2_231_983,
         },
         expectedOutput:
           "Issue created in summary details with owner, priority and Bug type",
@@ -67,10 +67,10 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           "Create an issue with summary 'Login Issue' and link it to test case run ID 567890",
         parameters: {
           name: "Login Issue",
-          issueOwner: 15112,
-          issuePriority: 2231988,
-          issueType: 2231983,
-          tcRunID: 567890,
+          issueOwner: 15_112,
+          issuePriority: 2_231_988,
+          issueType: 2_231_983,
+          tcRunID: 567_890,
         },
         expectedOutput:
           "Issue created in summary details and linked to test case run ID 567890",
@@ -80,10 +80,10 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           "Create an issue with summary 'Login Issue' and set description to 'User is unable to login' and owner to 'John Doe' and link it to test case run ID 567890",
         parameters: {
           name: "Login Issue",
-          issueOwner: 15112,
-          issuePriority: 2231988,
-          issueType: 2231983,
-          tcRunID: 567890,
+          issueOwner: 15_112,
+          issuePriority: 2_231_988,
+          issueType: 2_231_983,
+          tcRunID: 567_890,
           description: "User is unable to login",
         },
         expectedOutput:
@@ -94,11 +94,11 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           "Create an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycles and owner to 'John Doe'",
         parameters: {
           name: "Login Issue",
-          issueOwner: 15112,
-          issuePriority: 2231988,
-          issueType: 2231983,
-          affectedRelease: [111840],
-          affectedCycles: [112345, 112346],
+          issueOwner: 15_112,
+          issuePriority: 2_231_988,
+          issueType: 2_231_983,
+          affectedRelease: [111_840],
+          affectedCycles: [112_345, 112_346],
         },
         expectedOutput:
           "Issue created in summary details with release and associated all cycles, owner",
@@ -108,10 +108,10 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
           "Create an issue with summary 'Login Issue' and set release to 'Release 1.0' and its associated all cycle 'Cycle 1.0.1', 'Cycle 1.0.2'",
         parameters: {
           name: "Login Issue",
-          issuePriority: 2231988,
-          issueType: 2231983,
-          affectedRelease: [111840],
-          affectedCycles: [112345, 112346],
+          issuePriority: 2_231_988,
+          issueType: 2_231_983,
+          affectedRelease: [111_840],
+          affectedCycles: [112_345, 112_346],
         },
         expectedOutput:
           "Issue created in summary details with release and cycles",
@@ -168,7 +168,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Update issue summary",
         parameters: {
-          DefectId: 118150,
+          DefectId: 118_150,
           summary:
             "Money withdrawal is success even if insufficient amount_updated",
         },
@@ -176,17 +176,17 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Update issue priority",
-        parameters: { DefectId: 118150, issuePriority: 189340 },
+        parameters: { DefectId: 118_150, issuePriority: 189_340 },
         expectedOutput: "Issue priority updated successfully.",
       },
       {
         description: "Update issue type",
-        parameters: { DefectId: 118150, issueType: 189337 },
+        parameters: { DefectId: 118_150, issueType: 189_337 },
         expectedOutput: "Issue type updated successfully.",
       },
       {
         description: "Update affected release",
-        parameters: { DefectId: 118150, affectedRelease: 3730 },
+        parameters: { DefectId: 118_150, affectedRelease: 3730 },
         expectedOutput: "Affected release updated successfully.",
       },
     ],
@@ -233,7 +233,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       },
       {
         description: "Get issues with manual viewId (skip auto-resolution)",
-        parameters: { projectKey: "MAC", viewId: 166065 }, // This is an example viewId, must be resolved per project IS viewId
+        parameters: { projectKey: "MAC", viewId: 166_065 }, // This is an example viewId, must be resolved per project IS viewId
         expectedOutput: "Issues using manually specified viewId 166065",
       },
       {
@@ -352,7 +352,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get all issues linked to test case run ID 1121218",
         parameters: {
-          entityId: 1121218,
+          entityId: 1_121_218,
           getColumns: true,
           getLinked: true,
         },
@@ -362,7 +362,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get issues NOT linked to test case run (gap analysis)",
         parameters: {
-          entityId: 1121218,
+          entityId: 1_121_218,
           getColumns: true,
           getLinked: false,
         },
@@ -372,7 +372,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked issues by issue type and status",
         parameters: {
-          entityId: 1121218,
+          entityId: 1_121_218,
           getColumns: true,
           getLinked: true,
           filter:
@@ -383,7 +383,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Search linked issues by name and priority",
         parameters: {
-          entityId: 1121218,
+          entityId: 1_121_218,
           getColumns: true,
           getLinked: true,
           filter:
@@ -394,7 +394,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter issues by date range and entity key",
         parameters: {
-          entityId: 1121218,
+          entityId: 1_121_218,
           getColumns: true,
           getLinked: true,
           filter:
@@ -405,7 +405,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter issues by owner and created system",
         parameters: {
-          entityId: 1121218,
+          entityId: 1_121_218,
           getColumns: true,
           getLinked: true,
           filter:
@@ -484,13 +484,13 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
     examples: [
       {
         description: "Link one issue to a testcase run",
-        parameters: { issueIds: ["5054834"], tcrId: 567890 },
+        parameters: { issueIds: ["5054834"], tcrId: 567_890 },
         expectedOutput:
           "Issue 5054834 linked to testcase run 567890 successfully.",
       },
       {
         description: "Link multiple issues to a testcase run",
-        parameters: { issueIds: ["5054834", "5054835"], tcrId: 567890 },
+        parameters: { issueIds: ["5054834", "5054835"], tcrId: 567_890 },
         expectedOutput:
           "Issues 5054834, 5054835 linked to testcase run 567890 successfully.",
       },
@@ -541,7 +541,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get all executions linked to issue ID 9598240",
         parameters: {
-          linkedAssetId: 9598240,
+          linkedAssetId: 9_598_240,
         },
         expectedOutput:
           "Present as ONE unified table — never as a separate type+value UDF breakdown. Example:\n" +
@@ -554,7 +554,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Get executions with pagination (page 1, 20 records)",
         parameters: {
-          linkedAssetId: 9598240,
+          linkedAssetId: 9_598_240,
           page: 1,
           start: 0,
           limit: 20,
@@ -564,7 +564,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by run status (failed or passed)",
         parameters: {
-          linkedAssetId: 9509016,
+          linkedAssetId: 9_509_016,
           filter:
             '[{"type":"list","field":"runStatusName","value":["failed","passed"]}]',
           page: 1,
@@ -576,7 +576,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter executions by test case name",
         parameters: {
-          linkedAssetId: 9509016,
+          linkedAssetId: 9_509_016,
           filter: '[{"type":"string","value":"login","field":"tcName"}]',
           page: 1,
           start: 0,
@@ -587,7 +587,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter by platform, status, and tester",
         parameters: {
-          linkedAssetId: 9509016,
+          linkedAssetId: 9_509_016,
           filter:
             '[{"type":"list","field":"runStatusName","value":["failed"]},{"type":"list","field":"platformID","value":[100145]},{"type":"list","field":"executionCreatedByLoginAlias","value":["Varis Khan"]}]',
           page: 1,
@@ -601,7 +601,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
         description:
           "Filter by status and include archived test suite executions",
         parameters: {
-          linkedAssetId: 9509016,
+          linkedAssetId: 9_509_016,
           filter:
             '[{"type":"list","field":"runStatusName","value":["failed","passed"]},{"value":[1,0],"type":"list","field":"isTestSuiteArchived"}]',
           page: 1,
@@ -614,7 +614,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter by execution version and linkage level",
         parameters: {
-          linkedAssetId: 9509016,
+          linkedAssetId: 9_509_016,
           filter:
             '[{"type":"string","value":"1","field":"executedVersion"},{"type":"string","value":"Test Case","field":"linkageLevel"}]',
           page: 1,
@@ -732,31 +732,31 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description:
           "Get all issues linked to test case ID 4495658 (default behavior)",
-        parameters: { tcID: 4495658 },
+        parameters: { tcID: 4_495_658 },
         expectedOutput:
           "List of issues linked to the test case with issue details, status, and metadata",
       },
       {
         description: "Get all issues linked to test case ID 4495658 (explicit)",
-        parameters: { tcID: 4495658, getLinked: true },
+        parameters: { tcID: 4_495_658, getLinked: true },
         expectedOutput:
           "List of issues linked to the test case with issue details, status, and metadata",
       },
       {
         description: "Get issues NOT linked to test case (gap analysis)",
-        parameters: { tcID: 4495658, getLinked: false },
+        parameters: { tcID: 4_495_658, getLinked: false },
         expectedOutput: "List of issues that are NOT linked to the test case",
       },
       {
         description: "Get linked issues with pagination",
-        parameters: { tcID: 4495658, getLinked: true, limit: 25, page: 1 },
+        parameters: { tcID: 4_495_658, getLinked: true, limit: 25, page: 1 },
         expectedOutput: "Paginated list of issues linked to the test case",
       },
       {
         description:
           "Filter linked issues by summary content (using default getLinked=true)",
         parameters: {
-          tcID: 4495658,
+          tcID: 4_495_658,
           filter: '[{"value":"login","type":"string","field":"summary"}]',
         },
         expectedOutput:
@@ -765,7 +765,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter linked issues by status and priority",
         parameters: {
-          tcID: 4495658,
+          tcID: 4_495_658,
           getLinked: true,
           filter:
             '[{"value":[1,2],"type":"list","field":"issueState"},{"value":[1],"type":"list","field":"issuePriority"}]',
@@ -775,7 +775,7 @@ export const ISSUE_TOOLS: QMetryToolParams[] = [
       {
         description: "Filter issues by execution version",
         parameters: {
-          tcID: 4495658,
+          tcID: 4_495_658,
           getLinked: true,
           filter: '[{"value":"2","type":"string","field":"executedVersion"}]',
         },

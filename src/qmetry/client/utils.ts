@@ -1,4 +1,4 @@
-import { QMETRY_DEFAULTS } from "../config/constants";
+import { QMETRY_DEFAULTS } from "../config/constants.ts";
 
 /**
  * Shared utility functions for QMetry client modules

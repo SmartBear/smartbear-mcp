@@ -1,11 +1,11 @@
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ZodRawShape } from "zod";
 import { z } from "zod";
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { ReflectClient } from "../../client";
-import { API_HOSTNAME, WEB_APP_HOSTNAME } from "../../config/constants";
-import type { TestPlatform } from "../../types/common";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { ReflectClient } from "../../client.ts";
+import { API_HOSTNAME, WEB_APP_HOSTNAME } from "../../config/constants.ts";
+import type { TestPlatform } from "../../types/common.ts";
 
 export class ListSegments extends Tool<ReflectClient> {
   specification: ToolParams = {

@@ -6,8 +6,8 @@ import {
   getQueryParams,
   pickFields,
   pickFieldsFromArray,
-} from "../client/api/base";
-import { Configuration } from "../client/api/configuration";
+} from "../client/api/base.ts";
+import { Configuration } from "../client/api/configuration.ts";
 
 describe("base.ts", () => {
   describe("pickFields", () => {
@@ -556,7 +556,7 @@ describe("base.ts", () => {
         const mockResponse = {
           ok: true,
           status: 200,
-          headers: headers,
+          headers,
           json: vi.fn().mockResolvedValue([{ id: "1" }]),
           text: vi.fn(),
         };
@@ -582,7 +582,7 @@ describe("base.ts", () => {
         const mockResponse = {
           ok: true,
           status: 200,
-          headers: headers,
+          headers,
           json: vi.fn().mockResolvedValue([{ id: "1" }]),
           text: vi.fn(),
         };
@@ -599,7 +599,7 @@ describe("base.ts", () => {
         const mockResponse = {
           ok: true,
           status: 200,
-          headers: headers,
+          headers,
           json: vi.fn().mockResolvedValue([{ id: "1" }]),
           text: vi.fn(),
         };

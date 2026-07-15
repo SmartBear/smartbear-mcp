@@ -1,5 +1,5 @@
-import type { CacheService } from "../../../common/cache";
-import type { FieldValues } from "../../config/field-resolution.types";
+import type { CacheService } from "../../../common/cache.ts";
+import type { FieldValues } from "../../config/field-resolution.types.ts";
 
 /** In-memory cache for field metadata, keyed by projectKey → fieldKey → name→ID map. */
 export class Cache {

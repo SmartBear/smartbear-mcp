@@ -1,18 +1,18 @@
 import { z } from "zod";
-import type { CacheService } from "../common/cache";
-import { getUserAgent } from "../common/info";
-import { getRequestHeader } from "../common/request-context";
-import type { SmartBearMcpServer } from "../common/server";
-import { ToolError } from "../common/tools";
+import type { CacheService } from "../common/cache.ts";
+import { getUserAgent } from "../common/info.ts";
+import { getRequestHeader } from "../common/request-context.ts";
+import type { SmartBearMcpServer } from "../common/server.ts";
+import { ToolError } from "../common/tools.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterResourceFunction,
   RegisterToolsFunction,
-} from "../common/types";
-import { CurrentUserAPI } from "./client/api/CurrentUser";
-import { Configuration } from "./client/api/configuration";
-import { ErrorAPI } from "./client/api/Error";
+} from "../common/types.ts";
+import { CurrentUserAPI } from "./client/api/CurrentUser.ts";
+import { Configuration } from "./client/api/configuration.ts";
+import { ErrorAPI } from "./client/api/Error.ts";
 import type {
   Build,
   EventField,
@@ -20,28 +20,28 @@ import type {
   Project,
   Release,
   TraceField,
-} from "./client/api/index";
-import { ProjectAPI } from "./client/api/Project";
-import type { FilterObject } from "./client/filters";
-import { GetError } from "./tool/error/get-error";
-import { ListProjectErrors } from "./tool/error/list-project-errors";
-import { UpdateError } from "./tool/error/update-error";
-import { GetEvent } from "./tool/event/get-event";
-import { GetEventDetailsFromDashboardUrl } from "./tool/event/get-event-details-from-dashboard-url";
-import { ListErrorEvents } from "./tool/event/list-error-events";
-import { GetNetworkEndpointGroupings } from "./tool/performance/get-network-endpoint-groupings";
-import { GetSpanGroup } from "./tool/performance/get-span-group";
-import { GetTrace } from "./tool/performance/get-trace";
-import { ListSpanGroups } from "./tool/performance/list-span-groups";
-import { ListSpans } from "./tool/performance/list-spans";
-import { ListTraceFields } from "./tool/performance/list-trace-fields";
-import { SetNetworkEndpointGroupings } from "./tool/performance/set-network-endpoint-groupings";
-import { GetCurrentProject } from "./tool/project/get-current-project";
-import { ListProjectEventFilters } from "./tool/project/list-project-event-filters";
-import { ListProjects } from "./tool/project/list-projects";
-import { GetBuild } from "./tool/release/get-build";
-import { GetRelease } from "./tool/release/get-release";
-import { ListReleases } from "./tool/release/list-releases";
+} from "./client/api/index.ts";
+import { ProjectAPI } from "./client/api/Project.ts";
+import type { FilterObject } from "./client/filters.ts";
+import { GetError } from "./tool/error/get-error.ts";
+import { ListProjectErrors } from "./tool/error/list-project-errors.ts";
+import { UpdateError } from "./tool/error/update-error.ts";
+import { GetEvent } from "./tool/event/get-event.ts";
+import { GetEventDetailsFromDashboardUrl } from "./tool/event/get-event-details-from-dashboard-url.ts";
+import { ListErrorEvents } from "./tool/event/list-error-events.ts";
+import { GetNetworkEndpointGroupings } from "./tool/performance/get-network-endpoint-groupings.ts";
+import { GetSpanGroup } from "./tool/performance/get-span-group.ts";
+import { GetTrace } from "./tool/performance/get-trace.ts";
+import { ListSpanGroups } from "./tool/performance/list-span-groups.ts";
+import { ListSpans } from "./tool/performance/list-spans.ts";
+import { ListTraceFields } from "./tool/performance/list-trace-fields.ts";
+import { SetNetworkEndpointGroupings } from "./tool/performance/set-network-endpoint-groupings.ts";
+import { GetCurrentProject } from "./tool/project/get-current-project.ts";
+import { ListProjectEventFilters } from "./tool/project/list-project-event-filters.ts";
+import { ListProjects } from "./tool/project/list-projects.ts";
+import { GetBuild } from "./tool/release/get-build.ts";
+import { GetRelease } from "./tool/release/get-release.ts";
+import { ListReleases } from "./tool/release/list-releases.ts";
 
 const HUB_PREFIX = "00000";
 const DEFAULT_DOMAIN = "bugsnag.com";
@@ -79,7 +79,7 @@ const ConfigurationSchema = z.object({
 export class BugsnagClient implements Client {
   private cache?: CacheService;
   private _projectApiKey?: string;
-  private _isConfigured: boolean = false;
+  private _isConfigured = false;
   private _currentUserApi: CurrentUserAPI | undefined;
   private _errorsApi: ErrorAPI | undefined;
   private _projectApi: ProjectAPI | undefined;
@@ -213,13 +213,7 @@ export class BugsnagClient implements Client {
   // if the endpoint is provided, it will be used as is for custom domains, or normalized for known domains.
   getEndpoint(subdomain: string, apiKey?: string, endpoint?: string): string {
     let subDomainEndpoint: string;
-    if (!endpoint) {
-      if (apiKey?.startsWith(HUB_PREFIX)) {
-        subDomainEndpoint = `https://${subdomain}.${HUB_DOMAIN}`;
-      } else {
-        subDomainEndpoint = `https://${subdomain}.${DEFAULT_DOMAIN}`;
-      }
-    } else {
+    if (endpoint) {
       // check if the endpoint matches either the HUB_DOMAIN or DEFAULT_DOMAIN
       const url = new URL(endpoint);
       if (
@@ -236,6 +230,10 @@ export class BugsnagClient implements Client {
         // For custom domains, use the endpoint exactly as provided
         subDomainEndpoint = endpoint;
       }
+    } else if (apiKey?.startsWith(HUB_PREFIX)) {
+      subDomainEndpoint = `https://${subdomain}.${HUB_DOMAIN}`;
+    } else {
+      subDomainEndpoint = `https://${subdomain}.${DEFAULT_DOMAIN}`;
     }
     return subDomainEndpoint;
   }
@@ -370,15 +368,14 @@ export class BugsnagClient implements Client {
         this.cache?.set(cacheKeys.CURRENT_PROJECT, maybeProject);
       }
       return maybeProject;
-    } else {
-      const currentProject = await this.getCurrentProject();
-      if (!currentProject) {
-        throw new ToolError(
-          "No current project found. Please provide a projectId or configure a project API key.",
-        );
-      }
-      return currentProject;
     }
+    const currentProject = await this.getCurrentProject();
+    if (!currentProject) {
+      throw new ToolError(
+        "No current project found. Please provide a projectId or configure a project API key.",
+      );
+    }
+    return currentProject;
   }
 
   public addStabilityData<T extends Release | Build>(
@@ -465,16 +462,14 @@ export class BugsnagClient implements Client {
         path: "{id}",
         description: "Retrieve a specific event by its ID.",
       },
-      async (uri, variables, _extra) => {
-        return {
-          contents: [
-            {
-              uri: uri.href,
-              text: JSON.stringify(await this.getEvent(variables.id as string)),
-            },
-          ],
-        };
-      },
+      async (uri, variables, _extra) => ({
+        contents: [
+          {
+            uri: uri.href,
+            text: JSON.stringify(await this.getEvent(variables.id as string)),
+          },
+        ],
+      }),
     );
   }
 }

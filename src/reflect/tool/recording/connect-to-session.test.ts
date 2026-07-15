@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ConnectToSession } from "./connect-to-session";
+import { ConnectToSession } from "./connect-to-session.ts";
 
 const mockWsManager = {
   connect: vi.fn().mockResolvedValue(undefined),

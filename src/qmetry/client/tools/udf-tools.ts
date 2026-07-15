@@ -1,11 +1,11 @@
-import { QMetryToolsHandlers } from "../../config/constants";
+import { QMetryToolsHandlers } from "../../config/constants.ts";
 import {
   BulkUpdateTestRunUdfsArgsSchema,
   FetchCascadeChildValuesArgsSchema,
   FetchTestRunUdfMetadataArgsSchema,
   FetchTestRunUdfValuesArgsSchema,
-} from "../../types/udf";
-import type { QMetryToolParams } from "./types";
+} from "../../types/udf.ts";
+import type { QMetryToolParams } from "./types.ts";
 
 export const UDF_TOOLS: QMetryToolParams[] = [
   {
@@ -40,10 +40,10 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       {
         description: "Bulk update a STRING UDF for multiple test runs",
         parameters: {
-          tcRunIDs: [41572006, 41572009, 41572013],
+          tcRunIDs: [41_572_006, 41_572_009, 41_572_013],
           UDF: {
             "8190_String": {
-              fieldID: 229241,
+              fieldID: 229_241,
               value: "regression-v2.1",
             },
           },
@@ -55,10 +55,10 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a DATE UDF field for multiple test runs (MM-DD-YYYY format)",
         parameters: {
-          tcRunIDs: [41572006, 41572009],
+          tcRunIDs: [41_572_006, 41_572_009],
           UDF: {
             KN_DATE: {
-              fieldID: 229255,
+              fieldID: 229_255,
               value: "06-20-2026",
             },
           },
@@ -69,10 +69,10 @@ export const UDF_TOOLS: QMetryToolParams[] = [
       {
         description: "Bulk update a NUMBER UDF field for multiple test runs",
         parameters: {
-          tcRunIDs: [41572006, 41572009, 41572013, 41572015],
+          tcRunIDs: [41_572_006, 41_572_009, 41_572_013, 41_572_015],
           UDF: {
             defaultNum: {
-              fieldID: 229003,
+              fieldID: 229_003,
               value: 5,
             },
           },
@@ -84,11 +84,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a single-select LOOKUPLIST UDF for multiple test runs",
         parameters: {
-          tcRunIDs: [41572006, 41572009],
+          tcRunIDs: [41_572_006, 41_572_009],
           UDF: {
             "8260LUP": {
-              fieldID: 228563,
-              value: 5108697,
+              fieldID: 228_563,
+              value: 5_108_697,
             },
           },
         },
@@ -99,11 +99,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a MULTILOOKUPLIST UDF — APPEND new values to existing selections",
         parameters: {
-          tcRunIDs: [41572006, 41572009, 41572013],
+          tcRunIDs: [41_572_006, 41_572_009, 41_572_013],
           UDF: {
             m_selections: {
-              fieldID: 229223,
-              value: [5158524, 5158525],
+              fieldID: 229_223,
+              value: [5_158_524, 5_158_525],
               multiSelectAction: "append",
             },
           },
@@ -115,11 +115,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a MULTILOOKUPLIST UDF — REPLACE existing selections with new values",
         parameters: {
-          tcRunIDs: [41572006, 41572009],
+          tcRunIDs: [41_572_006, 41_572_009],
           UDF: {
             mullt_env: {
-              fieldID: 229425,
-              value: [5108697, 5108698],
+              fieldID: 229_425,
+              value: [5_108_697, 5_108_698],
               multiSelectAction: "replace",
             },
           },
@@ -131,11 +131,11 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update a CASCADINGLIST UDF (parent + child) for multiple test runs",
         parameters: {
-          tcRunIDs: [41572006, 41572009, 41572013],
+          tcRunIDs: [41_572_006, 41_572_009, 41_572_013],
           UDF: {
             cascade_mcp: {
-              fieldID: 229426,
-              value: { parent: 5126498, child: 5126499 },
+              fieldID: 229_426,
+              value: { parent: 5_126_498, child: 5_126_499 },
             },
           },
         },
@@ -146,37 +146,39 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Bulk update multiple UDF fields of different types in a single operation",
         parameters: {
-          tcRunIDs: [41572006, 41572009, 41572013, 41572015, 41579875],
+          tcRunIDs: [
+            41_572_006, 41_572_009, 41_572_013, 41_572_015, 41_579_875,
+          ],
           UDF: {
             "8190_String": {
-              fieldID: 229241,
+              fieldID: 229_241,
               value: "smoke-test",
             },
             KN_DATE: {
-              fieldID: 229255,
+              fieldID: 229_255,
               value: "06-20-2026",
             },
             defaultNum: {
-              fieldID: 229003,
+              fieldID: 229_003,
               value: 3,
             },
             "8260LUP": {
-              fieldID: 228563,
-              value: 5108697,
+              fieldID: 228_563,
+              value: 5_108_697,
             },
             m_selections: {
-              fieldID: 229223,
-              value: [5158524, 5158525],
+              fieldID: 229_223,
+              value: [5_158_524, 5_158_525],
               multiSelectAction: "append",
             },
             mullt_env: {
-              fieldID: 229425,
-              value: [5108697, 5108698],
+              fieldID: 229_425,
+              value: [5_108_697, 5_108_698],
               multiSelectAction: "replace",
             },
             cascade_mcp: {
-              fieldID: 229426,
-              value: { parent: 5126498, child: 5126499 },
+              fieldID: 229_426,
+              value: { parent: 5_126_498, child: 5_126_499 },
             },
           },
         },
@@ -356,7 +358,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Fetch child values for parent cascade item with ID 5173534",
         parameters: {
-          id: 5173534,
+          id: 5_173_534,
         },
         expectedOutput:
           '{ parentId: 5173534, parentName: "India", children: [{ id: 5173535, name: "i1", uniqueLabel: "i1", isArchived: false }, ...], _note: "Use \'id\' from \'children\' as the \'child\' value in the CASCADINGLIST update." }',
@@ -365,7 +367,7 @@ export const UDF_TOOLS: QMetryToolParams[] = [
         description:
           "Fetch child values including archived items for parent ID 5126498",
         parameters: {
-          id: 5126498,
+          id: 5_126_498,
           isArchReq: true,
         },
         expectedOutput:

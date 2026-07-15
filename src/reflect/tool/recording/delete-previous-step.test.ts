@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DeletePreviousStep } from "./delete-previous-step";
+import { DeletePreviousStep } from "./delete-previous-step.ts";
 
 describe("DeletePreviousStep", () => {
   let mockClient: any;

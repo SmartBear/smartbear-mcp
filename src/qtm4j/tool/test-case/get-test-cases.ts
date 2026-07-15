@@ -1,17 +1,17 @@
-import { Tool } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
+import { Tool } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
 import {
   ENDPOINTS,
   RESPONSE_FIELDS,
   TOOL_NAMES,
   TOOLSETS,
-} from "../../config/constants";
+} from "../../config/constants.ts";
 import {
   SearchTestCaseBody,
   SearchTestCaseResponse,
   type SearchTestCaseResponseType,
-} from "../../schema/get-test-case.schema";
+} from "../../schema/get-test-case.schema.ts";
 
 export class GetTestCases extends Tool<Qtm4jClient> {
   specification: ToolParams = {

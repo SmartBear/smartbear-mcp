@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { requestContextStorage } from "../common/request-context";
-import { ReflectClient } from "./client";
+import { requestContextStorage } from "../common/request-context.ts";
+import { ReflectClient } from "./client.ts";
 
 describe("ReflectClient", () => {
   let client: ReflectClient;

@@ -4,7 +4,7 @@ import {
   getNextUrlPathFromHeader,
   pickFields,
   pickFieldsFromArray,
-} from "./client/api/base.js";
+} from "./client/api/base.ts";
 
 describe("API Utilities", () => {
   describe("pickFields", () => {

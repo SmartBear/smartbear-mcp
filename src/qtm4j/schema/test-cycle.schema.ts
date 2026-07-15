@@ -20,7 +20,7 @@ export const CreateTestCycleBody = zod.object({
     ),
   description: zod
     .string()
-    .max(65535)
+    .max(65_535)
     .optional()
     .describe("Detailed description of the test cycle. Max 65 535 characters."),
   priority: zod

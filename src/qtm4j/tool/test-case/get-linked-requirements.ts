@@ -1,13 +1,13 @@
-import { Tool, ToolError } from "../../../common/tools";
-import type { ToolParams } from "../../../common/types";
-import type { Qtm4jClient } from "../../client";
-import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
+import { Tool, ToolError } from "../../../common/tools.ts";
+import type { ToolParams } from "../../../common/types.ts";
+import type { Qtm4jClient } from "../../client.ts";
+import { ENDPOINTS, TOOL_NAMES, TOOLSETS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import type { ResolvedTestCase } from "../../resolver/resolvers/test-case-uid-resolver.ts";
 import {
   GetLinkedRequirementsBody,
   GetLinkedRequirementsResponse,
-} from "../../schema/linked-items.schema";
+} from "../../schema/linked-items.schema.ts";
 
 export class GetLinkedRequirements extends Tool<Qtm4jClient> {
   specification: ToolParams = {

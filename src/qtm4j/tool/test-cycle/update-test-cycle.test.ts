@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../config/constants";
-import { ResolverKeys } from "../../config/field-resolution.types";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { ResolverKeys } from "../../config/field-resolution.types.ts";
 import {
   UpdateTestCycleBody,
   UpdateTestCycleResponse,
-} from "../../schema/update-test-cycle.schema";
-import { UpdateTestCycle } from "./update-test-cycle";
+} from "../../schema/update-test-cycle.schema.ts";
+import { UpdateTestCycle } from "./update-test-cycle.ts";
 
 describe("UpdateTestCycle", () => {
   let mockClient: any;
@@ -15,7 +15,7 @@ describe("UpdateTestCycle", () => {
 
   const mockContext = {
     projectKey: "PROJ",
-    projectId: 10066,
+    projectId: 10_066,
     projectName: "Test Project",
   };
 
@@ -39,12 +39,12 @@ describe("UpdateTestCycle", () => {
             const ids: number[] = [];
             for (const name of names) {
               const id = idMap[name];
-              if (id !== undefined) {
-                ids.push(id);
-              } else {
+              if (id === undefined) {
                 warnings.push(
                   `Skipped ${inputField} '${name}' — not available in the current project.`,
                 );
+              } else {
+                ids.push(id);
               }
             }
             if (ids.length > 0) {
@@ -205,7 +205,7 @@ describe("UpdateTestCycle", () => {
     it("should resolve status name to numeric ID", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
         if (key === ResolverKeys.CommonAttribute.TEST_CYCLE_STATUS)
-          return makeResolverMock({ "In Progress": 44893 });
+          return makeResolverMock({ "In Progress": 44_893 });
         return makeResolverMock();
       });
 
@@ -213,14 +213,14 @@ describe("UpdateTestCycle", () => {
 
       expect(mockApiClient.put).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ status: 44893 }),
+        expect.objectContaining({ status: 44_893 }),
       );
     });
 
     it("should resolve priority name to numeric ID", async () => {
       mockRegistry.getResolver.mockImplementation((key: string) => {
         if (key === ResolverKeys.CommonAttribute.PRIORITY)
-          return makeResolverMock({ High: 25510 });
+          return makeResolverMock({ High: 25_510 });
         return makeResolverMock();
       });
 
@@ -228,7 +228,7 @@ describe("UpdateTestCycle", () => {
 
       expect(mockApiClient.put).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ priority: 25510 }),
+        expect.objectContaining({ priority: 25_510 }),
       );
     });
 
@@ -604,12 +604,12 @@ describe("UpdateTestCycleBody", () => {
   });
 
   describe("plannedStartDate and plannedEndDate", () => {
-    const VALID_DATE = "15/May/2026 09:00";
+    const ValidDate = "15/May/2026 09:00";
 
     it("should accept a valid date string", () => {
       const result = UpdateTestCycleBody.safeParse({
         key: "SCRUM-TR-1",
-        plannedStartDate: VALID_DATE,
+        plannedStartDate: ValidDate,
       });
       expect(result.success).toBe(true);
     });

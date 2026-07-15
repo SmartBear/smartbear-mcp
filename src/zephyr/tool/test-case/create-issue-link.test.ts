@@ -4,14 +4,14 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateTestCaseIssueLink201Response as createTestCaseIssueLinkResponse } from "../../common/rest-api-schemas";
-import { CreateTestCaseIssueLink } from "./create-issue-link";
+import { CreateTestCaseIssueLink201Response as createTestCaseIssueLinkResponse } from "../../common/rest-api-schemas.ts";
+import { CreateTestCaseIssueLink } from "./create-issue-link.ts";
 
 describe("CreateTestCaseIssueLink", () => {
   let mockClient: any;
   let instance: CreateTestCaseIssueLink;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -60,7 +60,7 @@ describe("CreateTestCaseIssueLink", () => {
       issueId: 53,
     };
 
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().post).toHaveBeenCalledWith(
       "/testcases/SA-T1/links/issues",
@@ -79,9 +79,7 @@ describe("CreateTestCaseIssueLink", () => {
       extraField: "should be rejected",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should handle apiClient.post throwing error", async () => {
@@ -94,7 +92,7 @@ describe("CreateTestCaseIssueLink", () => {
       issueId: 53,
     };
 
-    await expect(instance.handle(args, EXTRA_REQUEST_HANDLER)).rejects.toThrow(
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
       "API error",
     );
   });
@@ -104,8 +102,6 @@ describe("CreateTestCaseIssueLink", () => {
       testCaseKey: "SA-T1",
     };
 
-    await expect(
-      instance.handle(args, EXTRA_REQUEST_HANDLER),
-    ).rejects.toThrow();
+    await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow();
   });
 });

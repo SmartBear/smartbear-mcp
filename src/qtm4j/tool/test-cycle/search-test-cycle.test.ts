@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENDPOINTS } from "../../config/constants";
-import { SearchTestCycles } from "./search-test-cycle";
+import { ENDPOINTS } from "../../config/constants.ts";
+import { SearchTestCycles } from "./search-test-cycle.ts";
 
 describe("SearchTestCycles", () => {
   let mockClient: any;
@@ -10,7 +10,7 @@ describe("SearchTestCycles", () => {
 
   const mockContext = {
     projectKey: "PROJ",
-    projectId: 10066,
+    projectId: 10_066,
     projectName: "Test Project",
   };
 
@@ -24,7 +24,7 @@ describe("SearchTestCycles", () => {
         key: "PROJ-TR-26",
         status: {},
         priority: {},
-        projectId: 10066,
+        projectId: 10_066,
         archived: false,
       },
       {
@@ -32,7 +32,7 @@ describe("SearchTestCycles", () => {
         key: "PROJ-TR-25",
         status: {},
         priority: {},
-        projectId: 10066,
+        projectId: 10_066,
         archived: false,
       },
     ],
@@ -105,7 +105,7 @@ describe("SearchTestCycles", () => {
 
       expect(mockApiClient.post).toHaveBeenCalledWith(
         expect.stringContaining(ENDPOINTS.SEARCH_TEST_CYCLES),
-        { filter: expect.objectContaining({ projectId: 10066 }) },
+        { filter: expect.objectContaining({ projectId: 10_066 }) },
       );
     });
 
@@ -205,7 +205,7 @@ describe("SearchTestCycles", () => {
         filter: {
           status: ["In Progress"],
           assignee: ["user-123"],
-          folderId: 109987,
+          folderId: 109_987,
           searchText: "regression",
         },
       });
@@ -214,9 +214,9 @@ describe("SearchTestCycles", () => {
         filter: expect.objectContaining({
           status: ["In Progress"],
           assignee: ["user-123"],
-          folderId: 109987,
+          folderId: 109_987,
           searchText: "regression",
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -231,7 +231,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           createdOn: "01/May/2026,20/May/2026",
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -246,7 +246,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           updatedOn: "01/May/2026,21/May/2026",
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -261,7 +261,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           priority: ["High", "Medium"],
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -276,7 +276,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           reporter: ["5b10a2844c20165700ede21f"],
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -291,7 +291,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           labels: ["Release_1", "Sprint 1"],
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -306,7 +306,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           components: ["UI", "Cloud"],
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -319,7 +319,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           isAutomated: true,
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -332,7 +332,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           aiGenerated: false,
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -353,7 +353,7 @@ describe("SearchTestCycles", () => {
       expect(mockApiClient.post).toHaveBeenCalledWith(expect.any(String), {
         filter: expect.objectContaining({
           plannedStartDate: "01/Apr/2026,30/Apr/2026",
-          projectId: 10066,
+          projectId: 10_066,
         }),
       });
     });
@@ -461,7 +461,7 @@ describe("SearchTestCycles", () => {
           {
             id: "PrCE68uGK8m",
             key: "PROJ-TR-26",
-            projectId: 10066,
+            projectId: 10_066,
             summary: "Smoke Test",
             description: "Cycle description",
             status: { id: 31, name: "To Do", color: "#75b7bc" },

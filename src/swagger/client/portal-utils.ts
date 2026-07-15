@@ -1,4 +1,4 @@
-import { ToolError } from "../../common/tools";
+import { ToolError } from "../../common/tools.ts";
 
 // Length constraints enforced by the Portal API. Reused across portal and
 // product helpers so the limits live in a single place.
@@ -85,7 +85,7 @@ export function buildSuffixedSubdomain(
 export function buildPortalName(organizationName?: string): string | undefined {
   const trimmed = organizationName?.trim();
   if (!trimmed || trimmed.length < PORTAL_NAME_MIN_LENGTH) {
-    return undefined;
+    return;
   }
   return trimmed.slice(0, PORTAL_NAME_MAX_LENGTH);
 }

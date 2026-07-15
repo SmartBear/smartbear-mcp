@@ -5,7 +5,7 @@ import {
   getReadableTypeName,
   getTypeDescription,
   isOptionalType,
-} from "./zod-utils";
+} from "./zod-utils.ts";
 
 describe("zod-utils", () => {
   describe("isOptionalType", () => {

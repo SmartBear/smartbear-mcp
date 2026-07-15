@@ -3,7 +3,7 @@ import type {
   ProjectApiView,
   ReleaseApiView,
   ReleaseGroup,
-} from "./api";
+} from "./api.ts";
 
 // Exporting all the types required outside of the api module - all imports from the tool should come from here
 
@@ -21,11 +21,11 @@ export {
   Span,
   SpanGroup,
   TraceField,
-} from "./api";
-export { CurrentUserAPI } from "./CurrentUser";
-export { Configuration } from "./configuration";
-export { ErrorAPI } from "./Error";
-export { ProjectAPI } from "./Project";
+} from "./api.ts";
+export { CurrentUserAPI } from "./CurrentUser.ts";
+export { Configuration } from "./configuration.ts";
+export { ErrorAPI } from "./Error.ts";
+export { ProjectAPI } from "./Project.ts";
 
 export interface Organization extends OrganizationApiView {
   id: string; // ID is always present

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GetTestCaseTestSteps200Response as getTestCaseStepsResponse } from "../../common/rest-api-schemas";
-import { GetTestCaseSteps } from "./get-test-steps";
+import { GetTestCaseTestSteps200Response as getTestCaseStepsResponse } from "../../common/rest-api-schemas.ts";
+import { GetTestCaseSteps } from "./get-test-steps.ts";
 
 describe("GetTestCaseSteps", () => {
   let mockClient: any;
@@ -41,7 +41,7 @@ describe("GetTestCaseSteps", () => {
           },
           testCase: {
             key: "SA-T1",
-            id: 10001,
+            id: 10_001,
           },
         },
       ],
@@ -77,7 +77,7 @@ describe("GetTestCaseSteps", () => {
           },
           testCase: {
             key: "SA-T1",
-            id: 10001,
+            id: 10_001,
           },
         },
       ],

@@ -4,13 +4,13 @@ import type {
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UpdateTestExecutionSteps } from "./update-test-steps";
+import { UpdateTestExecutionSteps } from "./update-test-steps.ts";
 
 describe("UpdateTestExecutionSteps", () => {
   let mockClient: any;
   let instance: UpdateTestExecutionSteps;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -92,7 +92,7 @@ describe("UpdateTestExecutionSteps", () => {
         ],
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
         "/testexecutions/SA-E1/teststeps",
@@ -151,7 +151,7 @@ describe("UpdateTestExecutionSteps", () => {
             { actualResult: "API returned 500 error", statusName: "Fail" },
           ],
         },
-        EXTRA_REQUEST_HANDLER,
+        ExtraRequestHandler,
       );
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
@@ -187,7 +187,7 @@ describe("UpdateTestExecutionSteps", () => {
 
       await instance.handle(
         { testExecutionIdOrKey: "10", steps: [{ statusName: "Fail" }] },
-        EXTRA_REQUEST_HANDLER,
+        ExtraRequestHandler,
       );
 
       expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
@@ -244,7 +244,7 @@ describe("UpdateTestExecutionSteps", () => {
         ],
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
 
@@ -296,7 +296,7 @@ describe("UpdateTestExecutionSteps", () => {
           testExecutionIdOrKey: "SA-E3",
           steps: stepUpdates,
         },
-        EXTRA_REQUEST_HANDLER,
+        ExtraRequestHandler,
       );
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
@@ -335,7 +335,7 @@ describe("UpdateTestExecutionSteps", () => {
         steps: [{ statusName: "Fail" }],
       };
 
-      await instance.handle(args, EXTRA_REQUEST_HANDLER);
+      await instance.handle(args, ExtraRequestHandler);
 
       const body = mockClient.getApiClient().put.mock.calls[0][1];
       expect(body.steps[0]).toEqual({
@@ -365,7 +365,7 @@ describe("UpdateTestExecutionSteps", () => {
 
       const result = await instance.handle(
         { testExecutionIdOrKey: "SA-E1", steps: [{ statusName: "Pass" }] },
-        EXTRA_REQUEST_HANDLER,
+        ExtraRequestHandler,
       );
 
       expect(result.structuredContent).toEqual({});
@@ -396,7 +396,7 @@ describe("UpdateTestExecutionSteps", () => {
       await expect(
         instance.handle(
           { testExecutionIdOrKey: "SA-E1", steps: [{ statusName: "Pass" }] },
-          EXTRA_REQUEST_HANDLER,
+          ExtraRequestHandler,
         ),
       ).rejects.toThrow("Update failed");
     });
@@ -411,9 +411,9 @@ describe("UpdateTestExecutionSteps", () => {
         steps: [{ statusName: "Pass", actualResult: "Step executed" }],
       };
 
-      await expect(
-        instance.handle(args, EXTRA_REQUEST_HANDLER),
-      ).rejects.toThrow("Test Execution not found");
+      await expect(instance.handle(args, ExtraRequestHandler)).rejects.toThrow(
+        "Test Execution not found",
+      );
     });
 
     it("should throw validation error when testExecutionIdOrKey is missing", async () => {
@@ -437,7 +437,7 @@ describe("UpdateTestExecutionSteps", () => {
       await expect(
         instance.handle(
           { steps: [{ statusName: "Pass" }] },
-          EXTRA_REQUEST_HANDLER,
+          ExtraRequestHandler,
         ),
       ).rejects.toThrow();
     });

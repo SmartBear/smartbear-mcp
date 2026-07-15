@@ -1,19 +1,19 @@
 import z from "zod";
-import { getRequestHeader } from "../common/request-context";
+import { getRequestHeader } from "../common/request-context.ts";
 import type {
   Client,
   GetInputFunction,
   RegisterToolsFunction,
-} from "../common/types";
+} from "../common/types.ts";
 import {
   autoResolveViewIdAndFolderPath,
   extractProjectContext,
   findAutoResolveConfig,
-} from "./client/auto-resolve";
-import { QMETRY_HANDLER_MAP } from "./client/handlers";
-import { getProjectInfo } from "./client/project";
-import { TOOLS } from "./client/tools/index";
-import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants";
+} from "./client/auto-resolve.ts";
+import { QMETRY_HANDLER_MAP } from "./client/handlers.ts";
+import { getProjectInfo } from "./client/project.ts";
+import { TOOLS } from "./client/tools/index.ts";
+import { QMETRY_DEFAULTS, QMetryToolsHandlers } from "./config/constants.ts";
 
 const ConfigurationSchema = z.object({
   api_key: z.string().describe("QMetry API key for authentication"),
@@ -153,7 +153,7 @@ export class QmetryClient implements Client {
               } catch (err) {
                 throw new Error(
                   `Failed to auto-resolve viewId/folderPath/folderID for ${autoResolveConfig.moduleName} in project ${projectKey}. ` +
-                    `Please provide them manually or check project access. ` +
+                    "Please provide them manually or check project access. " +
                     `Error: ${err instanceof Error ? err.message : String(err)}`,
                 );
               }
@@ -179,14 +179,14 @@ export class QmetryClient implements Client {
           // Inject persisted numeric project context only for handlers that explicitly support
           // scope/orgcode headers and strip them from the request body before forwarding.
           // Injecting into all handlers would silently add these fields to API request bodies.
-          const SCOPE_AWARE_HANDLERS = new Set([
+          const ScopeAwareHandlers = new Set([
             QMetryToolsHandlers.FETCH_TESTCASE_RUNS_BY_TESTSUITE_RUN,
             QMetryToolsHandlers.BULK_UPDATE_TEST_RUN_UDFS,
             QMetryToolsHandlers.FETCH_TEST_RUN_UDF_METADATA,
             QMetryToolsHandlers.FETCH_TEST_RUN_UDF_VALUES,
             QMetryToolsHandlers.FETCH_CASCADE_CHILD_VALUES,
           ]);
-          const isScopeAware = SCOPE_AWARE_HANDLERS.has(tool.handler);
+          const isScopeAware = ScopeAwareHandlers.has(tool.handler);
           const enrichedArgs = {
             ...cleanArgs,
             ...(isScopeAware &&

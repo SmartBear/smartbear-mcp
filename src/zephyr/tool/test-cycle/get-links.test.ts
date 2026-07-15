@@ -7,14 +7,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GetTestCycleLinksParams,
   GetTestCycleLinks200Response as GetTestCycleLinksResponse,
-} from "../../common/rest-api-schemas";
-import { GetTestCycleLinks } from "./get-links";
+} from "../../common/rest-api-schemas.ts";
+import { GetTestCycleLinks } from "./get-links.ts";
 
 describe("GetTestCycleLinks", () => {
   let mockClient: any;
   let instance: GetTestCycleLinks;
 
-  const EXTRA_REQUEST_HANDLER: RequestHandlerExtra<
+  const ExtraRequestHandler: RequestHandlerExtra<
     ServerRequest,
     ServerNotification
   > = {
@@ -54,14 +54,14 @@ describe("GetTestCycleLinks", () => {
       issues: [
         {
           self: "http://localhost:5051/v2/links/531",
-          issueId: 10200,
+          issueId: 10_200,
           id: 531,
           target: "https://test.atlassian.net/rest/api/2/issue/10200",
           type: "RELATED",
         },
         {
           self: "http://localhost:5051/v2/links/532",
-          issueId: 10201,
+          issueId: 10_201,
           id: 532,
           target: "https://test.atlassian.net/rest/api/2/issue/10201",
           type: "BLOCKS",
@@ -89,7 +89,7 @@ describe("GetTestCycleLinks", () => {
 
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCycleIdOrKey: "SA-R40" };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcycles/SA-R40/links",
@@ -103,7 +103,7 @@ describe("GetTestCycleLinks", () => {
       issues: [
         {
           self: "http://localhost:5051/v2/links/100",
-          issueId: 10100,
+          issueId: 10_100,
           id: 100,
           target: "https://test.atlassian.net/rest/api/2/issue/10100",
           type: "COVERAGE",
@@ -115,7 +115,7 @@ describe("GetTestCycleLinks", () => {
 
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCycleIdOrKey: "1" };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcycles/1/links",
@@ -133,7 +133,7 @@ describe("GetTestCycleLinks", () => {
 
     mockClient.getApiClient().get.mockResolvedValueOnce(responseMock);
     const args = { testCycleIdOrKey: "100" };
-    const result = await instance.handle(args, EXTRA_REQUEST_HANDLER);
+    const result = await instance.handle(args, ExtraRequestHandler);
 
     expect(mockClient.getApiClient().get).toHaveBeenCalledWith(
       "/testcycles/100/links",
@@ -144,7 +144,7 @@ describe("GetTestCycleLinks", () => {
   it("should handle apiClient.get throwing error", async () => {
     mockClient.getApiClient().get.mockRejectedValueOnce(new Error("API error"));
     await expect(
-      instance.handle({ testCycleIdOrKey: "1" }, EXTRA_REQUEST_HANDLER),
+      instance.handle({ testCycleIdOrKey: "1" }, ExtraRequestHandler),
     ).rejects.toThrow("API error");
   });
 
@@ -152,21 +152,18 @@ describe("GetTestCycleLinks", () => {
     mockClient.getApiClient().get.mockResolvedValueOnce(undefined);
     const result = await instance.handle(
       { testCycleIdOrKey: "1" },
-      EXTRA_REQUEST_HANDLER,
+      ExtraRequestHandler,
     );
     expect(result.structuredContent).toBeUndefined();
   });
 
   it("should throw validation error if testCycleIdOrKey is missing", async () => {
-    await expect(instance.handle({}, EXTRA_REQUEST_HANDLER)).rejects.toThrow();
+    await expect(instance.handle({}, ExtraRequestHandler)).rejects.toThrow();
   });
 
   it("should throw validation error if testCycleIdOrKey has invalid format", async () => {
     await expect(
-      instance.handle(
-        { testCycleIdOrKey: "invalid-key" },
-        EXTRA_REQUEST_HANDLER,
-      ),
+      instance.handle({ testCycleIdOrKey: "invalid-key" }, ExtraRequestHandler),
     ).rejects.toThrow();
   });
 });

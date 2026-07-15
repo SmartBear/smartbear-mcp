@@ -1,13 +1,13 @@
-import { UDF_FIELD_TYPES, UDF_MODULES } from "../config/constants";
-import { QMETRY_PATHS } from "../config/rest-endpoints";
+import { UDF_FIELD_TYPES, UDF_MODULES } from "../config/constants.ts";
+import { QMETRY_PATHS } from "../config/rest-endpoints.ts";
 import type {
   BulkUpdateTestRunUdfsPayload,
   FetchCascadeChildValuesPayload,
   FetchTestRunUdfMetadataPayload,
   FetchTestRunUdfValuesPayload,
-} from "../types/udf";
-import { qmetryRequest } from "./api/client-api";
-import { resolveDefaults } from "./utils";
+} from "../types/udf.ts";
+import { qmetryRequest } from "./api/client-api.ts";
+import { resolveDefaults } from "./utils.ts";
 
 type TestRunUdfSourceContext = NonNullable<
   FetchTestRunUdfValuesPayload["sourceContext"]
@@ -219,7 +219,7 @@ export async function bulkUpdateTestRunUdfs(
   }
 
   // Apply default multiSelectAction for all UDF field entries
-  const normalizedUDF: Record<string, any> = {};
+  const normalizedUdf: Record<string, any> = {};
   for (const [fieldName, fieldEntry] of Object.entries(payload.UDF)) {
     const entry: Record<string, any> = {
       fieldID: fieldEntry.fieldID,
@@ -228,12 +228,12 @@ export async function bulkUpdateTestRunUdfs(
     if (Array.isArray(fieldEntry.value)) {
       entry.multiSelectAction = fieldEntry.multiSelectAction ?? "append";
     }
-    normalizedUDF[fieldName] = entry;
+    normalizedUdf[fieldName] = entry;
   }
 
   const body = {
     tcRunIDs: payload.tcRunIDs,
-    UDF: normalizedUDF,
+    UDF: normalizedUdf,
   };
 
   return qmetryRequest<unknown>({

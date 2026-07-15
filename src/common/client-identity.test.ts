@@ -3,9 +3,9 @@ import {
   getCurrentClientIdentity,
   setProcessClientIdentity,
   toClientIdentity,
-} from "./client-identity";
-import { appendClientIdentity, getUserAgent } from "./info";
-import { requestContextStorage } from "./request-context";
+} from "./client-identity.ts";
+import { appendClientIdentity, getUserAgent } from "./info.ts";
+import { requestContextStorage } from "./request-context.ts";
 
 describe("client-identity", () => {
   afterEach(() => {

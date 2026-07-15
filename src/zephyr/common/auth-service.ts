@@ -1,4 +1,4 @@
-import { getUserAgent } from "../../common/info";
+import { getUserAgent } from "../../common/info.ts";
 
 export class AuthService {
   private readonly bearerToken: string;

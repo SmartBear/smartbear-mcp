@@ -7,7 +7,7 @@ import {
   type FolderPayload,
   type PaginationPayload,
   type SortPayload,
-} from "./common";
+} from "./common.ts";
 
 export interface FetchRequirementsPayload
   extends PaginationPayload,

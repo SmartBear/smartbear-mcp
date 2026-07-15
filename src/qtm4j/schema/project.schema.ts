@@ -4,7 +4,7 @@
  * Zod schemas for project-related API requests and responses.
  */
 import * as zod from "zod";
-import { PAGINATION, SCHEMA_DESCRIPTIONS } from "../config/constants";
+import { PAGINATION, SCHEMA_DESCRIPTIONS } from "../config/constants.ts";
 
 export const ProjectSchema = zod
   .object({

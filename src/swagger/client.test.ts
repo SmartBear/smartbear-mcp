@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { withRequestContext } from "../common/request-context";
-import { SwaggerClient } from "./client";
-import { TOOLS } from "./client/tools";
+import { withRequestContext } from "../common/request-context.ts";
+import { SwaggerClient } from "./client/index.ts";
+import { TOOLS } from "./client/tools.ts";
 
 const fetchMock = createFetchMock(vi);
 

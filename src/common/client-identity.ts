@@ -1,4 +1,4 @@
-import { getRequestContext } from "./request-context";
+import { getRequestContext } from "./request-context.ts";
 
 /**
  * Client identity captured from the MCP `initialize` handshake.

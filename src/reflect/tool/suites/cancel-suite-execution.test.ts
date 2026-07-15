@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import createFetchMock from "vitest-fetch-mock";
-import { CancelSuiteExecution } from "./cancel-suite-execution";
+import { CancelSuiteExecution } from "./cancel-suite-execution.ts";
 
 const fetchMock = createFetchMock(vi);
 fetchMock.enableMocks();

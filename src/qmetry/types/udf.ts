@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CommonFields } from "./common";
+import { CommonFields } from "./common.ts";
 
 export interface UdfModule {
   moduleID: number;

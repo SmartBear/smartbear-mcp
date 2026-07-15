@@ -1,9 +1,9 @@
-import { ENDPOINTS } from "../../config/constants";
+import { ENDPOINTS } from "../../config/constants.ts";
 import {
   type ProjectContext,
   ResolverKeys,
-} from "../../config/field-resolution.types";
-import type { ApiClient } from "../../http/api-client";
+} from "../../config/field-resolution.types.ts";
+import type { ApiClient } from "../../http/api-client.ts";
 import { Resolver } from "./resolver.ts";
 
 export interface ResolvedTestCase {
