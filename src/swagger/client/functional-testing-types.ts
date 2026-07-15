@@ -147,7 +147,7 @@ export type GetFunctionalTestHistoryParams = z.infer<
 export interface TestRun {
   id: number;
   passed: boolean;
-  created: string;
+  created: number;
   runTime: number;
   failureDetails?: {
     stepCount: number;
