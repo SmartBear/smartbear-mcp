@@ -198,6 +198,4 @@ export const GetBugsResponse = zod.object({
     .describe("Linked bugs on the current page; empty when total is 0."),
 });
 
-export type GetTestCaseBugsBodyType = zod.infer<typeof GetTestCaseBugsBody>;
-export type GetTestStepBugsBodyType = zod.infer<typeof GetTestStepBugsBody>;
 export type GetBugsResponseType = zod.infer<typeof GetBugsResponse>;
